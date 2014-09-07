@@ -85,12 +85,19 @@
   <ItemGroup>
     <ClInclude Include="..\SPTLib\detoursutils.hpp" />
     <ClInclude Include="..\SPTLib\Hooks.hpp" />
+    <ClInclude Include="..\SPTLib\IHookableDirFilter.hpp" />
     <ClInclude Include="..\SPTLib\IHookableModule.hpp" />
     <ClInclude Include="..\SPTLib\IHookableNameFilter.hpp" />
     <ClInclude Include="..\SPTLib\memutils.hpp" />
     <ClInclude Include="..\SPTLib\sptlib-stdafx.hpp" />
     <ClInclude Include="..\SPTLib\sptlib.hpp" />
     <ClInclude Include="bunnymodxt.hpp" />
+    <ClInclude Include="conutils.hpp" />
+    <ClInclude Include="modules.hpp" />
+    <ClInclude Include="modules\ClientDLL.hpp" />
+    <ClInclude Include="modules\ServerDLL.hpp" />
+    <ClInclude Include="patterns.hpp" />
+    <ClInclude Include="sptlib-wrapper.hpp" />
     <ClInclude Include="stdafx.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -105,6 +112,10 @@
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <ClCompile Include="..\SPTLib\IHookableDirFilter.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="..\SPTLib\IHookableModule.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
@@ -139,6 +150,7 @@
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
     </ClCompile>
     <ClCompile Include="bunnymodxt.cpp" />
+    <ClCompile Include="conutils.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -147,6 +159,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="modules.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="modules\ClientDLL.cpp" />
+    <ClCompile Include="modules\ServerDLL.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

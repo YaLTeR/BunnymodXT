@@ -16,6 +16,9 @@
     <Filter Include="SPTLib">
       <UniqueIdentifier>{cd2f578c-8b97-4218-b6b4-dc743c8135e1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\modules">
+      <UniqueIdentifier>{970d36e4-12ad-4844-b830-22be3dd4fc79}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bunnymodxt.hpp">
@@ -44,6 +47,27 @@
     </ClInclude>
     <ClInclude Include="..\SPTLib\sptlib-stdafx.hpp">
       <Filter>SPTLib</Filter>
+    </ClInclude>
+    <ClInclude Include="sptlib-wrapper.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="conutils.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\ServerDLL.hpp">
+      <Filter>Source Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SPTLib\IHookableDirFilter.hpp">
+      <Filter>SPTLib</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\ClientDLL.hpp">
+      <Filter>Source Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="patterns.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="modules.hpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -76,6 +100,21 @@
     </ClCompile>
     <ClCompile Include="..\SPTLib\sptlib-stdafx.cpp">
       <Filter>SPTLib</Filter>
+    </ClCompile>
+    <ClCompile Include="conutils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\ServerDLL.cpp">
+      <Filter>Source Files\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SPTLib\IHookableDirFilter.cpp">
+      <Filter>SPTLib</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\ClientDLL.cpp">
+      <Filter>Source Files\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="modules.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

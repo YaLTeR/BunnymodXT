@@ -40,6 +40,13 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 			ppmove = *(uintptr_t *)(pPMJump + 2);
 			offOldbuttons = 200;
 			offOnground = 224;
+			break;
+
+		case 1:
+			ppmove = *(uintptr_t *)(pPMJump + 2);
+			offOldbuttons = 200;
+			offOnground = 224;
+			break;
 		}
 	}
 	else

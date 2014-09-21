@@ -16,6 +16,11 @@ void __cdecl ClientDLL::HOOKED_PM_Jump()
 	return clientDLL.HOOKED_PM_Jump_Func();
 }
 
+void __cdecl ClientDLL::HOOKED_PM_PreventMegaBunnyJumping()
+{
+	return serverDLL.HOOKED_PM_PreventMegaBunnyJumping_Func();
+}
+
 void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t moduleStart, size_t moduleLength)
 {
 	Clear(); // Just in case.
@@ -27,7 +32,11 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 
 	MemUtils::ptnvec_size ptnNumber;
 
-	uintptr_t pPMJump = NULL;
+	uintptr_t pPMJump = NULL,
+		pPMPreventMegaBunnyJumping = NULL;
+
+	auto fPMPreventMegaBunnyJumping = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleStart, moduleLength, Patterns::ptnsPMPreventMegaBunnyJumping, &pPMPreventMegaBunnyJumping);
+
 	ptnNumber = MemUtils::FindUniqueSequence(moduleStart, moduleLength, Patterns::ptnsPMJump, &pPMJump);
 	if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
 	{
@@ -55,15 +64,29 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 		EngineWarning("y_bxt_autojump has no effect.\n");
 	}
 
+	ptnNumber = fPMPreventMegaBunnyJumping.get();
+	if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
+	{
+		ORIG_PM_PreventMegaBunnyJumping = (_PM_PreventMegaBunnyJumping)pPMPreventMegaBunnyJumping;
+		EngineDevMsg("[client dll] Found PM_PreventMegaBunnyJumping at %p (using the build %s pattern).\n", pPMPreventMegaBunnyJumping, Patterns::ptnsPMPreventMegaBunnyJumping[ptnNumber].build.c_str());
+	}
+	else
+	{
+		EngineDevWarning("[client dll] Could not find PM_PreventMegaBunnyJumping!\n");
+		EngineWarning("y_bxt_bhopcap has no effect.\n");
+	}
+
 	DetoursUtils::AttachDetours(moduleName, {
-		{ (PVOID *)(&ORIG_PM_Jump), HOOKED_PM_Jump }
+		{ (PVOID *)(&ORIG_PM_Jump), HOOKED_PM_Jump },
+		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping }
 	});
 }
 
 void ClientDLL::Unhook()
 {
 	DetoursUtils::DetachDetours(moduleName, {
-		{ (PVOID *)(&ORIG_PM_Jump), HOOKED_PM_Jump }
+		{ (PVOID *)(&ORIG_PM_Jump), HOOKED_PM_Jump },
+		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping }
 	});
 
 	Clear();
@@ -73,6 +96,7 @@ void ClientDLL::Clear()
 {
 	IHookableNameFilter::Clear();
 	ORIG_PM_Jump = nullptr;
+	ORIG_PM_PreventMegaBunnyJumping = nullptr;
 	ppmove = 0;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -102,3 +126,7 @@ void __cdecl ClientDLL::HOOKED_PM_Jump_Func()
 	*oldbuttons = orig_oldbuttons;
 }
 
+void __cdecl ClientDLL::HOOKED_PM_PreventMegaBunnyJumping_Func()
+{
+	return;
+}

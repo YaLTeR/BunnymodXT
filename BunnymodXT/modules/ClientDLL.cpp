@@ -18,7 +18,7 @@ void __cdecl ClientDLL::HOOKED_PM_Jump()
 
 void __cdecl ClientDLL::HOOKED_PM_PreventMegaBunnyJumping()
 {
-	return serverDLL.HOOKED_PM_PreventMegaBunnyJumping_Func();
+	return clientDLL.HOOKED_PM_PreventMegaBunnyJumping_Func();
 }
 
 void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t moduleStart, size_t moduleLength)
@@ -61,7 +61,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 	else
 	{
 		EngineDevWarning("[client dll] Could not find PM_Jump!\n");
-		EngineWarning("y_bxt_autojump has no effect.\n");
+		EngineWarning("y_bxt_autojump has no prediction.\n");
 	}
 
 	ptnNumber = fPMPreventMegaBunnyJumping.get();
@@ -73,7 +73,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 	else
 	{
 		EngineDevWarning("[client dll] Could not find PM_PreventMegaBunnyJumping!\n");
-		EngineWarning("y_bxt_bhopcap has no effect.\n");
+		EngineWarning("y_bxt_bhopcap has no prediction.\n");
 	}
 
 	DetoursUtils::AttachDetours(moduleName, {

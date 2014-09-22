@@ -81,7 +81,12 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 		EngineWarning("Bhopcap disabling prediction is not available.\n");
 	}
 
-	_Initialize pInitialize = (_Initialize)GetProcAddress(hModule, "Initialize");
+	// In AG, this thing is the main function, so check that first.
+	_Initialize pInitialize = (_Initialize)GetProcAddress(hModule, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z");
+
+	if (!pInitialize)
+		pInitialize = (_Initialize)GetProcAddress(hModule, "Initialize");
+
 	if (pInitialize != NULL)
 	{
 		// Find "mov edi, offset dword; rep movsd" inside Initialize. The pointer to gEngfuncs is that dword.

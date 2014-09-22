@@ -83,6 +83,12 @@ void ServerDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 			offOldbuttons = 200;
 			offOnground = 224;
 			break;
+
+		case 2:
+			ppmove = *(uintptr_t *)(pPMJump + 3);
+			offOldbuttons = 200;
+			offOnground = 224;
+			break;
 		}
 	}
 	else

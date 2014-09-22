@@ -1,5 +1,7 @@
 #include "stdafx.hpp"
 
+#include <fstream>
+
 #include "..\sptlib-wrapper.hpp"
 #include <SPTLib\memutils.hpp>
 #include <SPTLib\detoursutils.hpp>
@@ -10,6 +12,26 @@
 
 using std::uintptr_t;
 using std::size_t;
+
+bool ServerDLL::CanHook(const std::wstring& moduleFullName)
+{
+	if ( !IHookableDirFilter::CanHook(moduleFullName) )
+		return false;
+
+	// Filter out addons like metamod which may be located into a "dlls" folder under addons.
+	std::wstring pathToLiblist = moduleFullName.substr(0, moduleFullName.rfind(GetFolderName(moduleFullName))).append(L"liblist.gam");
+
+	// If liblist.gam exists in the parent directory, then we're (hopefully) good.
+	std::ifstream liblist(pathToLiblist);
+	if (liblist.good())
+	{
+		liblist.close();
+		return true;
+	}
+
+	liblist.close();
+	return false;
+}
 
 void __cdecl ServerDLL::HOOKED_PM_Jump()
 {

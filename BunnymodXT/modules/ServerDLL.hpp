@@ -17,6 +17,7 @@ public:
 	virtual void Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t moduleStart, size_t moduleLength);
 	virtual void Unhook();
 	virtual void Clear();
+	virtual bool CanHook(const std::wstring& moduleFullName);
 
 	static void __cdecl HOOKED_PM_Jump();
 	void __cdecl HOOKED_PM_Jump_Func();

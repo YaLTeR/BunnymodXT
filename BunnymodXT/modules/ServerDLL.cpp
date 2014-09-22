@@ -106,6 +106,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 	}
 	else
 	{
+		EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll!\n");
 		EngineWarning("Serverside CVars and commands are not available.\n");
 	}
 
@@ -145,8 +146,11 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (!pEngfuncs || !*(uintptr_t *)pEngfuncs)
 		return;
 
-	pEngfuncs->pfnCVarRegister(&y_bxt_autojump);
-	pEngfuncs->pfnCVarRegister(&y_bxt_bhopcap);
+	if (ORIG_PM_Jump)
+		pEngfuncs->pfnCVarRegister(&y_bxt_autojump);
+
+	if (ORIG_PM_PreventMegaBunnyJumping)
+		pEngfuncs->pfnCVarRegister(&y_bxt_bhopcap);
 
 	EngineDevMsg("[server dll] Registered CVars.\n");
 }

@@ -7,3 +7,7 @@
 #include <windows.h>
 
 #include "HLSDK\dlls\extdll.h"
+#include "HLSDK\cl_dll\wrect.h"
+
+typedef int(*pfnUserMsgHook)(const char *pszName, int iSize, void *pbuf);
+#include "HLSDK\engine\cdll_int.h"

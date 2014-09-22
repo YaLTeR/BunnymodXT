@@ -83,6 +83,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\HLSDK\cl_dll\wrect.h" />
     <ClInclude Include="..\HLSDK\common\const.h" />
     <ClInclude Include="..\HLSDK\common\crc.h" />
     <ClInclude Include="..\HLSDK\common\cvardef.h" />
@@ -90,6 +91,7 @@
     <ClInclude Include="..\HLSDK\dlls\cdll_dll.h" />
     <ClInclude Include="..\HLSDK\dlls\extdll.h" />
     <ClInclude Include="..\HLSDK\dlls\vector.h" />
+    <ClInclude Include="..\HLSDK\engine\cdll_int.h" />
     <ClInclude Include="..\HLSDK\engine\custom.h" />
     <ClInclude Include="..\HLSDK\engine\edict.h" />
     <ClInclude Include="..\HLSDK\engine\eiface.h" />

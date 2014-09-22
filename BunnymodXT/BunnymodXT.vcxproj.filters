@@ -31,6 +31,9 @@
     <Filter Include="HLSDK\engine">
       <UniqueIdentifier>{cd4bf383-6c59-451a-b7c1-55cfbc61cdb7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HLSDK\cl_dll">
+      <UniqueIdentifier>{795baffa-11df-4325-9dc2-6de13bc216e6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bunnymodxt.hpp">
@@ -116,6 +119,12 @@
     </ClInclude>
     <ClInclude Include="patterns.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\engine\cdll_int.h">
+      <Filter>HLSDK\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\cl_dll\wrect.h">
+      <Filter>HLSDK\cl_dll</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

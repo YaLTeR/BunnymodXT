@@ -83,6 +83,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\HLSDK\common\const.h" />
+    <ClInclude Include="..\HLSDK\common\crc.h" />
+    <ClInclude Include="..\HLSDK\common\cvardef.h" />
+    <ClInclude Include="..\HLSDK\common\in_buttons.h" />
+    <ClInclude Include="..\HLSDK\dlls\cdll_dll.h" />
+    <ClInclude Include="..\HLSDK\dlls\extdll.h" />
+    <ClInclude Include="..\HLSDK\dlls\vector.h" />
+    <ClInclude Include="..\HLSDK\engine\custom.h" />
+    <ClInclude Include="..\HLSDK\engine\edict.h" />
+    <ClInclude Include="..\HLSDK\engine\eiface.h" />
+    <ClInclude Include="..\HLSDK\engine\progdefs.h" />
     <ClInclude Include="..\SPTLib\detoursutils.hpp" />
     <ClInclude Include="..\SPTLib\Hooks.hpp" />
     <ClInclude Include="..\SPTLib\IHookableDirFilter.hpp" />
@@ -93,6 +104,7 @@
     <ClInclude Include="..\SPTLib\sptlib.hpp" />
     <ClInclude Include="bunnymodxt.hpp" />
     <ClInclude Include="conutils.hpp" />
+    <ClInclude Include="cvars.hpp" />
     <ClInclude Include="modules.hpp" />
     <ClInclude Include="modules\ClientDLL.hpp" />
     <ClInclude Include="modules\ServerDLL.hpp" />
@@ -151,6 +163,7 @@
     </ClCompile>
     <ClCompile Include="bunnymodxt.cpp" />
     <ClCompile Include="conutils.cpp" />
+    <ClCompile Include="cvars.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -160,8 +173,8 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="modules.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="modules\ClientDLL.cpp" />
     <ClCompile Include="modules\ServerDLL.cpp" />

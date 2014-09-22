@@ -1,3 +1,5 @@
+#include "stdafx.hpp"
+
 #include "modules\ClientDLL.hpp"
 #include "modules\ServerDLL.hpp"
 

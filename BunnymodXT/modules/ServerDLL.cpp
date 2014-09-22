@@ -4,9 +4,9 @@
 #include <SPTLib\memutils.hpp>
 #include <SPTLib\detoursutils.hpp>
 #include <SPTLib\hooks.hpp>
-#include "ServerDLL.hpp"
 #include "..\modules.hpp"
 #include "..\patterns.hpp"
+#include "..\cvars.hpp"
 
 using std::uintptr_t;
 using std::size_t;
@@ -19,6 +19,11 @@ void __cdecl ServerDLL::HOOKED_PM_Jump()
 void __cdecl ServerDLL::HOOKED_PM_PreventMegaBunnyJumping()
 {
 	return serverDLL.HOOKED_PM_PreventMegaBunnyJumping_Func();
+}
+
+void __stdcall ServerDLL::HOOKED_GiveFnptrsToDll(enginefuncs_t* pEngfuncsFromEngine, const void* pGlobals)
+{
+	return serverDLL.HOOKED_GiveFnptrsToDll_Func(pEngfuncsFromEngine, pGlobals);
 }
 
 void ServerDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t moduleStart, size_t moduleLength)
@@ -61,7 +66,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 	else
 	{
 		EngineDevWarning("[server dll] Could not find PM_Jump!\n");
-		EngineWarning("y_bxt_autojump has no effect.\n");
+		EngineWarning("Autojump is not available.\n");
 	}
 
 	ptnNumber = fPMPreventMegaBunnyJumping.get();
@@ -73,12 +78,41 @@ void ServerDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 	else
 	{
 		EngineDevWarning("[server dll] Could not find PM_PreventMegaBunnyJumping!\n");
-		EngineWarning("y_bxt_bhopcap has no effect.\n");
+		EngineWarning("Bhopcap disabling is not available.\n");
+	}
+
+	_GiveFnptrsToDll pGiveFnptrsToDll = (_GiveFnptrsToDll)GetProcAddress(hModule, "GiveFnptrsToDll");
+	if (pGiveFnptrsToDll != NULL)
+	{
+		// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
+		const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
+		uintptr_t addr = MemUtils::FindPattern((uintptr_t)pGiveFnptrsToDll, 40, pattern, "x????xx");
+		if (addr != NULL)
+		{
+			pEngfuncs = *(enginefuncs_t **)(addr + 1);
+			EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
+
+			// If we have engfuncs, do stuff right away. Otherwise wait till the engine gives us engfuncs.
+			if (*(uintptr_t *)pEngfuncs)
+				RegisterCVarsAndCommands();
+			else
+				ORIG_GiveFnptrsToDll = pGiveFnptrsToDll;
+		}
+		else
+		{
+			EngineDevWarning("[server dll] Couldn't find the pattern in GiveFnptrsToDll!\n");
+			EngineWarning("Serverside CVars and commands are not available.\n");
+		}
+	}
+	else
+	{
+		EngineWarning("Serverside CVars and commands are not available.\n");
 	}
 
 	DetoursUtils::AttachDetours(moduleName, {
 		{ (PVOID *)(&ORIG_PM_Jump), HOOKED_PM_Jump },
-		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping }
+		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
+		{ (PVOID *)(&ORIG_GiveFnptrsToDll), HOOKED_GiveFnptrsToDll }
 	});
 }
 
@@ -86,7 +120,8 @@ void ServerDLL::Unhook()
 {
 	DetoursUtils::DetachDetours(moduleName, {
 		{ (PVOID *)(&ORIG_PM_Jump), HOOKED_PM_Jump },
-		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping }
+		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
+		{ (PVOID *)(&ORIG_GiveFnptrsToDll), HOOKED_GiveFnptrsToDll }
 	});
 
 	Clear();
@@ -97,24 +132,38 @@ void ServerDLL::Clear()
 	IHookableDirFilter::Clear();
 	ORIG_PM_Jump = nullptr;
 	ORIG_PM_PreventMegaBunnyJumping = nullptr;
+	ORIG_GiveFnptrsToDll = nullptr;
 	ppmove = 0;
 	offOldbuttons = 0;
 	offOnground = 0;
+	pEngfuncs = nullptr;
 	cantJumpNextTime = false;
+}
+
+void ServerDLL::RegisterCVarsAndCommands()
+{
+	if (!pEngfuncs || !*(uintptr_t *)pEngfuncs)
+		return;
+
+	pEngfuncs->pfnCVarRegister(&y_bxt_autojump);
+	pEngfuncs->pfnCVarRegister(&y_bxt_bhopcap);
+
+	EngineDevMsg("[server dll] Registered CVars.\n");
 }
 
 void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
 {
-	const int IN_JUMP = (1 << 1);
-
 	int *onground = (int *)(*(uintptr_t *)ppmove + offOnground);
 	int orig_onground = *onground;
 
 	int *oldbuttons = (int *)(*(uintptr_t *)ppmove + offOldbuttons);
 	int orig_oldbuttons = *oldbuttons;
 
-	if ((orig_onground != -1) && !cantJumpNextTime)
-		*oldbuttons &= ~IN_JUMP;
+	if (y_bxt_autojump.value != 0.0f)
+	{
+		if ((orig_onground != -1) && !cantJumpNextTime)
+			*oldbuttons &= ~IN_JUMP;
+	}
 
 	cantJumpNextTime = false;
 
@@ -123,10 +172,21 @@ void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
 	if ((orig_onground != -1) && (*onground == -1))
 		cantJumpNextTime = true;
 
-	*oldbuttons = orig_oldbuttons;
+	if (y_bxt_autojump.value != 0.0f)
+	{
+		*oldbuttons = orig_oldbuttons;
+	}
 }
 
 void __cdecl ServerDLL::HOOKED_PM_PreventMegaBunnyJumping_Func()
 {
-	return;
+	if (y_bxt_bhopcap.value != 0.0f)
+		return ORIG_PM_PreventMegaBunnyJumping();
+}
+
+void __stdcall ServerDLL::HOOKED_GiveFnptrsToDll_Func(enginefuncs_t* pEngfuncsFromEngine, const void* pGlobals)
+{
+	ORIG_GiveFnptrsToDll(pEngfuncsFromEngine, pGlobals);
+
+	RegisterCVarsAndCommands();
 }

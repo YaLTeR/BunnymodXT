@@ -19,6 +19,18 @@
     <Filter Include="Source Files\modules">
       <UniqueIdentifier>{970d36e4-12ad-4844-b830-22be3dd4fc79}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HLSDK">
+      <UniqueIdentifier>{eb4becb5-2156-40c7-a979-7f7c716cafaa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HLSDK\common">
+      <UniqueIdentifier>{f45a0d8a-ac24-42fc-86b4-46d31e9e0572}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HLSDK\dlls">
+      <UniqueIdentifier>{e415d4b7-8199-47b1-9b95-a21b1ad317bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HLSDK\engine">
+      <UniqueIdentifier>{cd4bf383-6c59-451a-b7c1-55cfbc61cdb7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bunnymodxt.hpp">
@@ -48,12 +60,6 @@
     <ClInclude Include="..\SPTLib\sptlib-stdafx.hpp">
       <Filter>SPTLib</Filter>
     </ClInclude>
-    <ClInclude Include="sptlib-wrapper.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="conutils.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="modules\ServerDLL.hpp">
       <Filter>Source Files\modules</Filter>
     </ClInclude>
@@ -63,11 +69,53 @@
     <ClInclude Include="modules\ClientDLL.hpp">
       <Filter>Source Files\modules</Filter>
     </ClInclude>
-    <ClInclude Include="patterns.hpp">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="..\HLSDK\common\const.h">
+      <Filter>HLSDK\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\common\crc.h">
+      <Filter>HLSDK\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\common\cvardef.h">
+      <Filter>HLSDK\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\dlls\cdll_dll.h">
+      <Filter>HLSDK\dlls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\dlls\extdll.h">
+      <Filter>HLSDK\dlls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\dlls\vector.h">
+      <Filter>HLSDK\dlls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\engine\custom.h">
+      <Filter>HLSDK\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\engine\edict.h">
+      <Filter>HLSDK\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\engine\eiface.h">
+      <Filter>HLSDK\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\engine\progdefs.h">
+      <Filter>HLSDK\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\common\in_buttons.h">
+      <Filter>HLSDK\common</Filter>
+    </ClInclude>
+    <ClInclude Include="cvars.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="conutils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sptlib-wrapper.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="modules.hpp">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="patterns.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -114,6 +162,9 @@
       <Filter>Source Files\modules</Filter>
     </ClCompile>
     <ClCompile Include="modules.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cvars.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -4,7 +4,6 @@
 #include <SPTLib\memutils.hpp>
 #include <SPTLib\detoursutils.hpp>
 #include <SPTLib\hooks.hpp>
-#include "ClientDLL.hpp"
 #include "..\modules.hpp"
 #include "..\patterns.hpp"
 
@@ -61,7 +60,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 	else
 	{
 		EngineDevWarning("[client dll] Could not find PM_Jump!\n");
-		EngineWarning("y_bxt_autojump has no prediction.\n");
+		EngineWarning("Autojump prediction is not available.\n");
 	}
 
 	ptnNumber = fPMPreventMegaBunnyJumping.get();
@@ -73,7 +72,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 	else
 	{
 		EngineDevWarning("[client dll] Could not find PM_PreventMegaBunnyJumping!\n");
-		EngineWarning("y_bxt_bhopcap has no prediction.\n");
+		EngineWarning("Bhopcap disabling prediction is not available.\n");
 	}
 
 	DetoursUtils::AttachDetours(moduleName, {
@@ -105,8 +104,6 @@ void ClientDLL::Clear()
 
 void __cdecl ClientDLL::HOOKED_PM_Jump_Func()
 {
-	const int IN_JUMP = (1 << 1);
-
 	int *onground = (int *)(*(uintptr_t *)ppmove + offOnground);
 	int orig_onground = *onground;
 

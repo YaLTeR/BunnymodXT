@@ -5,7 +5,7 @@
 #include "conutils.hpp"
 #include "modules.hpp"
 
-#define BUNNYMODXT_VERSION "0.2-beta"
+#define BUNNYMODXT_VERSION "0.2"
 
 void PrintMessage(const char* format, ...)
 {

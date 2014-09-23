@@ -61,6 +61,18 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 			offOldbuttons = 200;
 			offOnground = 224;
 			break;
+
+		case 2: // AG-Server, shouldn't happen here but who knows.
+			ppmove = *(uintptr_t *)(pPMJump + 3);
+			offOldbuttons = 200;
+			offOnground = 224;
+			break;
+
+		case 3:
+			ppmove = *(uintptr_t *)(pPMJump + 3);
+			offOldbuttons = 200;
+			offOnground = 224;
+			break;
 		}
 	}
 	else

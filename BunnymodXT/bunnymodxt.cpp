@@ -59,7 +59,7 @@ void PrintDevWarning(const char* format, ...)
 	ConUtils::Log(temp, FOREGROUND_RED);
 }
 
-unsigned int __stdcall MainThread(void *args)
+unsigned int __stdcall MainThread(void* args)
 {
 	ConUtils::Init();
 	ConUtils::Log("Bunnymod XT version " BUNNYMODXT_VERSION ".\n", FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);

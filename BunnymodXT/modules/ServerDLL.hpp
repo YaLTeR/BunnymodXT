@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include <SPTLib\IHookableDirFilter.hpp>
 
 using std::uintptr_t;
@@ -38,6 +40,7 @@ protected:
 	_GiveFnptrsToDll ORIG_GiveFnptrsToDll;
 
 	uintptr_t ppmove;
+	ptrdiff_t offPlayerIndex;
 	ptrdiff_t offOldbuttons;
 	ptrdiff_t offOnground;
 	ptrdiff_t offVelocity;
@@ -46,5 +49,5 @@ protected:
 
 	enginefuncs_t *pEngfuncs;
 
-	bool cantJumpNextTime;
+	std::unordered_map<int, bool> cantJumpNextTime;
 };

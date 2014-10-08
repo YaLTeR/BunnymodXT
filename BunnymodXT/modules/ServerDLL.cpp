@@ -61,24 +61,28 @@ void ServerDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 		{
 		case 0:
 			ppmove = *(uintptr_t *)(pPMJump + 2);
+			offPlayerIndex = 0;
 			offOldbuttons = 200;
 			offOnground = 224;
 			break;
 
 		case 1:
 			ppmove = *(uintptr_t *)(pPMJump + 2);
+			offPlayerIndex = 0;
 			offOldbuttons = 200;
 			offOnground = 224;
 			break;
 
 		case 2:
 			ppmove = *(uintptr_t *)(pPMJump + 3);
+			offPlayerIndex = 0;
 			offOldbuttons = 200;
 			offOnground = 224;
 			break;
 
 		case 3: // AG-Client, shouldn't happen here but who knows.
 			ppmove = *(uintptr_t *)(pPMJump + 3);
+			offPlayerIndex = 0;
 			offOldbuttons = 200;
 			offOnground = 224;
 			break;
@@ -111,9 +115,11 @@ void ServerDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 		switch (ptnNumber)
 		{
 		case 0:
+			offPlayerIndex = 0;
 			offVelocity = 92;
 			offOrigin = 56;
 			offAngles = 68;
+			break;
 		}
 	}
 	else
@@ -180,13 +186,14 @@ void ServerDLL::Clear()
 	ORIG_PM_PlayerMove = nullptr;
 	ORIG_GiveFnptrsToDll = nullptr;
 	ppmove = 0;
+	offPlayerIndex = 0;
 	offOldbuttons = 0;
 	offOnground = 0;
 	offVelocity = 0;
 	offOrigin = 0;
 	offAngles = 0;
 	pEngfuncs = nullptr;
-	cantJumpNextTime = false;
+	cantJumpNextTime.clear();
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -228,6 +235,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 
 void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
 {
+	int playerIndex = *(int *)(*(uintptr_t *)ppmove + offPlayerIndex);
+
 	int *onground = (int *)(*(uintptr_t *)ppmove + offOnground);
 	int orig_onground = *onground;
 
@@ -236,16 +245,16 @@ void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
 
 	if (y_bxt_autojump.value != 0.0f)
 	{
-		if ((orig_onground != -1) && !cantJumpNextTime)
+		if ((orig_onground != -1) && !cantJumpNextTime[playerIndex])
 			*oldbuttons &= ~IN_JUMP;
 	}
 
-	cantJumpNextTime = false;
+	cantJumpNextTime[playerIndex] = false;
 
 	ORIG_PM_Jump();
 
 	if ((orig_onground != -1) && (*onground == -1))
-		cantJumpNextTime = true;
+		cantJumpNextTime[playerIndex] = true;
 
 	if (y_bxt_autojump.value != 0.0f)
 	{
@@ -261,6 +270,11 @@ void __cdecl ServerDLL::HOOKED_PM_PreventMegaBunnyJumping_Func()
 
 void __cdecl ServerDLL::HOOKED_PM_PlayerMove_Func(qboolean server)
 {
+	if (!ppmove)
+		return ORIG_PM_PlayerMove(server);
+
+	int playerIndex = *(int *)(*(uintptr_t *)ppmove + offPlayerIndex);
+
 	float *velocity, *origin, *angles;
 	velocity = (float *)(*(uintptr_t *)ppmove + offVelocity);
 	origin =   (float *)(*(uintptr_t *)ppmove + offOrigin);
@@ -269,6 +283,7 @@ void __cdecl ServerDLL::HOOKED_PM_PlayerMove_Func(qboolean server)
 	if (_y_bxt_taslog.value != 0.0f)
 	{
 		pEngfuncs->pfnAlertMessage(at_console, "-- BXT TAS Log Start --\n");
+		pEngfuncs->pfnAlertMessage(at_console, "Player index: %d\n", playerIndex);
 		pEngfuncs->pfnAlertMessage(at_console, "Velocity: %.8f; %.8f; %.8f; origin: %.8f; %.8f; %.8f\n",velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
 	}
 

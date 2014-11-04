@@ -57,6 +57,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;BUNNYMODXT_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeaderFile>stdafx.hpp</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -74,6 +75,7 @@
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeaderFile>stdafx.hpp</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -83,6 +85,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\HLSDK\cl_dll\hud.h" />
     <ClInclude Include="..\HLSDK\cl_dll\wrect.h" />
     <ClInclude Include="..\HLSDK\common\const.h" />
     <ClInclude Include="..\HLSDK\common\crc.h" />
@@ -107,6 +110,7 @@
     <ClInclude Include="bunnymodxt.hpp" />
     <ClInclude Include="conutils.hpp" />
     <ClInclude Include="cvars.hpp" />
+    <ClInclude Include="hud_custom.hpp" />
     <ClInclude Include="modules.hpp" />
     <ClInclude Include="modules\ClientDLL.hpp" />
     <ClInclude Include="modules\ServerDLL.hpp" />
@@ -174,6 +178,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="hud_custom.cpp" />
     <ClCompile Include="modules.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>

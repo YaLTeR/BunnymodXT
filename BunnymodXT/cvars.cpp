@@ -11,3 +11,6 @@ cvar_t _y_bxt_taslog =  { "_y_bxt_taslog",  "0", 0 };
 cvar_t *y_bxt_autojump_prediction;
 cvar_t *y_bxt_bhopcap_prediction;
 cvar_t *y_bxt_hud;
+cvar_t *y_bxt_hud_precision;
+cvar_t *y_bxt_hud_velocity;
+cvar_t *y_bxt_hud_velocity_pos;

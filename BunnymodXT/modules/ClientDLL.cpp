@@ -124,6 +124,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 			EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
 
 			// If we have engfuncs, register cvars and whatnot right away (in the end of this function because other stuff need to be done first). Otherwise wait till the engine gives us engfuncs.
+			// This works because global variables are zero by default.
 			if (!*(uintptr_t *)pEngfuncs)
 				ORIG_Initialize = pInitialize;
 		}
@@ -139,82 +140,64 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 		EngineWarning("Clientside CVars and commands are not available.\n");
 	}
 
-	void *pHUD_Init = GetProcAddress(hModule, "HUD_Init");
-	if (pHUD_Init)
+	// We can draw stuff only if we know that we have already received / will receive engfuncs.
+	if (pEngfuncs != NULL)
 	{
-		// Just in case some HUD_Init contains extra stuff, find the first "mov ecx, offset dword; call func" sequence. Dword is the pointer to gHud and func is CHud::Init.
-		const byte pattern[] = { 0xB9, '?', '?', '?', '?', 0xE8 };
-
-		// BS has jmp instead of call.
-		const byte pattern_bs[] = { 0xB9, '?', '?', '?', '?', 0xE9 };
-
-		// OP4 contains some stuff between our instructions.
-		const byte pattern_op4[] = { 0xB9, '?', '?', '?', '?', 0xA3, '?', '?', '?', '?',
-		                             0xC7, 0x05, '?', '?', '?', '?', 0xA0, 0x00, 0x00, 0x00,
-		                             0xA3, '?', '?', '?', '?', 0xE8 };
-
-		ptrdiff_t offCallOffset = 6;
-		uintptr_t addr = MemUtils::FindPattern((uintptr_t)pHUD_Init, 0x15, pattern, "x????x");
-		if (addr == NULL)
-			addr = MemUtils::FindPattern((uintptr_t)pHUD_Init, 0x15, pattern_bs, "x????x");
-
-		if (addr == NULL)
+		void *pHUD_Init = GetProcAddress(hModule, "HUD_Init");
+		if (pHUD_Init)
 		{
-			addr = MemUtils::FindPattern((uintptr_t)pHUD_Init, 0x15, pattern_op4, "x????x????xx????xxxxx????x");
-			offCallOffset = 26;
-			novd = true;
-			EngineDevMsg("[client dll] Using CHudBase without a virtual destructor.\n");
-		}
-		else
-		{
-			// Check for GMC.
-			if (fIsGMC.get() != NULL)
+			// Just in case some HUD_Init contains extra stuff, find the first "mov ecx, offset dword; call func" sequence. Dword is the pointer to gHud and func is CHud::Init.
+			const byte pattern[] = { 0xB9, '?', '?', '?', '?', 0xE8 };
+
+			// BS has jmp instead of call.
+			const byte pattern_bs[] = { 0xB9, '?', '?', '?', '?', 0xE9 };
+
+			// OP4 contains some stuff between our instructions.
+			const byte pattern_op4[] = { 0xB9, '?', '?', '?', '?', 0xA3, '?', '?', '?', '?',
+				0xC7, 0x05, '?', '?', '?', '?', 0xA0, 0x00, 0x00, 0x00,
+				0xA3, '?', '?', '?', '?', 0xE8 };
+
+			ptrdiff_t offCallOffset = 6;
+			uintptr_t addr = MemUtils::FindPattern((uintptr_t)pHUD_Init, 0x15, pattern, "x????x");
+			if (addr == NULL)
+				addr = MemUtils::FindPattern((uintptr_t)pHUD_Init, 0x15, pattern_bs, "x????x");
+
+			if (addr == NULL)
 			{
+				addr = MemUtils::FindPattern((uintptr_t)pHUD_Init, 0x15, pattern_op4, "x????x????xx????xxxxx????x");
+				offCallOffset = 26;
 				novd = true;
 				EngineDevMsg("[client dll] Using CHudBase without a virtual destructor.\n");
 			}
-		}
-
-		if (addr != NULL)
-		{
-			pHud = *(uintptr_t *)(addr + 1);
-			ORIG_CHud_Init = (_CHud_InitFunc)(*(uintptr_t *)(addr + offCallOffset) + (addr + offCallOffset + 4)); // Call by offset.
-			EngineDevMsg("[client dll] pHud is %p; CHud::Init is located at %p.\n", pHud, ORIG_CHud_Init);
-
-			void *pHUD_Reset = GetProcAddress(hModule, "HUD_Reset");
-			if (pHUD_Reset)
+			else
 			{
-				// Same as with HUD_Init earlier, but we have another possibility - jmp instead of call.
-				#define getbyte(a, n) (byte)((a >> n*8) & 0xFF)
-				const byte ptn1[] = { 0xB9, getbyte(pHud, 0), getbyte(pHud, 1), getbyte(pHud, 2), getbyte(pHud, 3), 0xE8 },
-				           ptn2[] = { 0xB9, getbyte(pHud, 0), getbyte(pHud, 1), getbyte(pHud, 2), getbyte(pHud, 3), 0xE9 };
-				#undef getbyte
-
-				uintptr_t addr_ = MemUtils::FindPattern((uintptr_t)pHUD_Reset, 0x10, ptn1, "xxxxxx");
-				if (addr_ == NULL)
-					addr_ = MemUtils::FindPattern((uintptr_t)pHUD_Reset, 0x10, ptn2, "xxxxxx");
-
-				if (addr_ != NULL)
+				// Check for GMC.
+				if (fIsGMC.get() != NULL)
 				{
-					ORIG_CHud_VidInit = (_CHud_InitFunc)(*(uintptr_t *)(addr_ + 6) + (addr_ + 10));
-					EngineDevMsg("[client dll] CHud::VidInit is located at %p.\n", ORIG_CHud_VidInit);
-				}
-				else
-				{
-					pHUD_Reset = nullptr; // Try with HUD_VidInit.
+					novd = true;
+					EngineDevMsg("[client dll] Using CHudBase without a virtual destructor.\n");
 				}
 			}
 
-			if (!pHUD_Reset)
+			if (addr != NULL)
 			{
-				void *pHUD_VidInit = GetProcAddress(hModule, "HUD_VidInit");
-				if (pHUD_VidInit)
+				pHud = *(uintptr_t *)(addr + 1);
+				ORIG_CHud_Init = (_CHud_InitFunc)(*(uintptr_t *)(addr + offCallOffset) + (addr + offCallOffset + 4)); // Call by offset.
+				EngineDevMsg("[client dll] pHud is %p; CHud::Init is located at %p.\n", pHud, ORIG_CHud_Init);
+
+				void *pHUD_Reset = GetProcAddress(hModule, "HUD_Reset");
+				if (pHUD_Reset)
 				{
+					// Same as with HUD_Init earlier, but we have another possibility - jmp instead of call.
 					#define getbyte(a, n) (byte)((a >> n*8) & 0xFF)
-					const byte ptn[] = { 0xB9, getbyte(pHud, 0), getbyte(pHud, 1), getbyte(pHud, 2), getbyte(pHud, 3), 0xE8 };
+					const byte ptn1[] = { 0xB9, getbyte(pHud, 0), getbyte(pHud, 1), getbyte(pHud, 2), getbyte(pHud, 3), 0xE8 },
+						ptn2[] = { 0xB9, getbyte(pHud, 0), getbyte(pHud, 1), getbyte(pHud, 2), getbyte(pHud, 3), 0xE9 };
 					#undef getbyte
 
-					uintptr_t addr_ = MemUtils::FindPattern((uintptr_t)pHUD_VidInit, 0x10, ptn, "xxxxxx");
+					uintptr_t addr_ = MemUtils::FindPattern((uintptr_t)pHUD_Reset, 0x10, ptn1, "xxxxxx");
+					if (addr_ == NULL)
+						addr_ = MemUtils::FindPattern((uintptr_t)pHUD_Reset, 0x10, ptn2, "xxxxxx");
+
 					if (addr_ != NULL)
 					{
 						ORIG_CHud_VidInit = (_CHud_InitFunc)(*(uintptr_t *)(addr_ + 6) + (addr_ + 10));
@@ -222,48 +205,70 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 					}
 					else
 					{
+						pHUD_Reset = nullptr; // Try with HUD_VidInit.
+					}
+				}
+
+				if (!pHUD_Reset)
+				{
+					void *pHUD_VidInit = GetProcAddress(hModule, "HUD_VidInit");
+					if (pHUD_VidInit)
+					{
+						#define getbyte(a, n) (byte)((a >> n*8) & 0xFF)
+						const byte ptn[] = { 0xB9, getbyte(pHud, 0), getbyte(pHud, 1), getbyte(pHud, 2), getbyte(pHud, 3), 0xE8 };
+						#undef getbyte
+
+						uintptr_t addr_ = MemUtils::FindPattern((uintptr_t)pHUD_VidInit, 0x10, ptn, "xxxxxx");
+						if (addr_ != NULL)
+						{
+							ORIG_CHud_VidInit = (_CHud_InitFunc)(*(uintptr_t *)(addr_ + 6) + (addr_ + 10));
+							EngineDevMsg("[client dll] CHud::VidInit is located at %p.\n", ORIG_CHud_VidInit);
+						}
+						else
+						{
+							ORIG_CHud_Init = nullptr;
+
+							EngineDevWarning("[client dll] Couldn't find the pattern in HUD_Reset or HUD_VidInit!\n");
+							EngineWarning("Custom HUD is not available.\n");
+						}
+					}
+					else
+					{
 						ORIG_CHud_Init = nullptr;
 
-						EngineDevWarning("[client dll] Couldn't find the pattern in HUD_Reset or HUD_VidInit!\n");
+						EngineDevWarning("[client dll] Couldn't get the address of HUD_Reset or HUD_VidInit!\n");
 						EngineWarning("Custom HUD is not available.\n");
 					}
 				}
-				else
-				{
-					ORIG_CHud_Init = nullptr;
-
-					EngineDevWarning("[client dll] Couldn't get the address of HUD_Reset or HUD_VidInit!\n");
-					EngineWarning("Custom HUD is not available.\n");
-				}
+			}
+			else
+			{
+				EngineDevWarning("[client dll] Couldn't find the pattern in HUD_Init!\n");
+				EngineWarning("Custom HUD is not available.\n");
 			}
 		}
 		else
 		{
-			EngineDevWarning("[client dll] Couldn't find the pattern in HUD_Init!\n");
+			EngineDevWarning("[client dll] Couldn't get the address of HUD_Init!\n");
 			EngineWarning("Custom HUD is not available.\n");
 		}
-	}
-	else
-	{
-		EngineDevWarning("[client dll] Couldn't get the address of HUD_Init!\n");
-		EngineWarning("Custom HUD is not available.\n");
-	}
 
-	if (ORIG_CHud_Init)
-	{
-		ptnNumber = fCHud_AddHudElem.get();
-		if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
+		if (ORIG_CHud_Init)
 		{
-			CHud_AddHudElem = (_CHud_AddHudElem)pCHud_AddHudElem;
-			EngineDevMsg("[client dll] Found CHud::AddHudElem at %p (using the %s pattern).\n", pCHud_AddHudElem, Patterns::ptnsCHud_AddHudElem[ptnNumber].build.c_str());
-		}
-		else
-		{
-			ORIG_CHud_Init = nullptr;
-			ORIG_CHud_VidInit = nullptr;
+			ptnNumber = fCHud_AddHudElem.get();
+			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
+			{
+				CHud_AddHudElem = (_CHud_AddHudElem)pCHud_AddHudElem;
+				EngineDevMsg("[client dll] Found CHud::AddHudElem at %p (using the %s pattern).\n", pCHud_AddHudElem, Patterns::ptnsCHud_AddHudElem[ptnNumber].build.c_str());
+			}
+			else
+			{
+				ORIG_CHud_Init = nullptr;
+				ORIG_CHud_VidInit = nullptr;
 
-			EngineDevWarning("[client dll] Could not find CHud::AddHudElem!\n");
-			EngineWarning("Custom HUD is not available.\n");
+				EngineDevWarning("[client dll] Could not find CHud::AddHudElem!\n");
+				EngineWarning("Custom HUD is not available.\n");
+			}
 		}
 	}
 	
@@ -323,7 +328,12 @@ void ClientDLL::RegisterCVarsAndCommands()
 		y_bxt_bhopcap_prediction = pEngfuncs->pfnRegisterVariable("y_bxt_bhopcap_prediction", "0", 0);
 
 	if (ORIG_CHud_Init)
+	{
 		y_bxt_hud = pEngfuncs->pfnRegisterVariable("y_bxt_hud", "1", 0);
+		y_bxt_hud_precision = pEngfuncs->pfnRegisterVariable("y_bxt_hud_precision", "0", 0);
+		y_bxt_hud_velocity = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity", "1", 0);
+		y_bxt_hud_velocity_pos = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity_pos", "-200 0", 0);
+	}
 
 	EngineDevMsg("[client dll] Registered CVars.\n");
 }

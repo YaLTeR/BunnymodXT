@@ -54,7 +54,6 @@ protected:
 	bool cantJumpNextTime;
 
 	bool novd; // Use the CHudBase w/o virtual destructor.
-
 	CHudCustom_Wrapper customHudWrapper;
 	CHudCustom_Wrapper_NoVD customHudWrapper_NoVD;
 };

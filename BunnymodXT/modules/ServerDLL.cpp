@@ -295,6 +295,8 @@ void __cdecl ServerDLL::HOOKED_PM_PlayerMove_Func(qboolean server)
 		pEngfuncs->pfnAlertMessage(at_console, "New velocity: %.8f; %.8f; %.8f; new origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
 		pEngfuncs->pfnAlertMessage(at_console, "-- BXT TAS Log End --\n");
 	}
+
+	CustomHud::UpdateVelocity(velocity);
 }
 
 void __stdcall ServerDLL::HOOKED_GiveFnptrsToDll_Func(enginefuncs_t* pEngfuncsFromEngine, const void* pGlobals)

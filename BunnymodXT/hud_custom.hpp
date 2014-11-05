@@ -5,6 +5,8 @@ namespace CustomHud
 	void Init();
 	void VidInit();
 	void Draw(float flTime);
+
+	void UpdateVelocity(float vel[3]);
 };
 
 // For insertion into the HUDLIST.

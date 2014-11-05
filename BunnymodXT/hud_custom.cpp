@@ -9,6 +9,8 @@
 namespace CustomHud
 {
 	static SCREENINFO si;
+	static float consoleColor[3] = { 1.0f, (180 / 255.0f), (30 / 255.0f) };
+	static bool receivedAccurateInfo = false;
 	static float velocity[3];
 
 	static double length(double x, double y)
@@ -27,13 +29,24 @@ namespace CustomHud
 		clientDLL.pEngfuncs->pfnGetScreenInfo(&si);
 	}
 
-	static void DrawString(int x, int y, std::string s)
+	static void DrawString(int x, int y, char* s, float r, float g, float b)
+	{
+		clientDLL.pEngfuncs->pfnDrawSetTextColor(r, g, b);
+		clientDLL.pEngfuncs->pfnDrawConsoleString(x, y, s);
+	}
+
+	static void DrawString(int x, int y, char* s)
+	{
+		DrawString(x, y, s, consoleColor[0], consoleColor[1], consoleColor[2]);
+	}
+
+	static void DrawMultilineString(int x, int y, std::string s)
 	{
 		while (s.size() > 0)
 		{
 			auto pos = s.find('\n');
 
-			clientDLL.pEngfuncs->pfnDrawConsoleString(x, y, const_cast<char*>(s.substr(0, pos).c_str()));
+			DrawString(x, y, const_cast<char*>(s.substr(0, pos).c_str()));
 			y += si.iCharHeight;
 
 			if (pos != std::string::npos)
@@ -41,6 +54,20 @@ namespace CustomHud
 			else
 				s.erase();
 		};
+	}
+
+	static void UpdateConsoleColor()
+	{
+		if (!con_color)
+			return;
+
+		unsigned r = 0, g = 0, b = 0;
+		std::istringstream ss(con_color->string);
+		ss >> r >> g >> b;
+
+		consoleColor[0] = r / 255.0f;
+		consoleColor[1] = g / 255.0f;
+		consoleColor[2] = b / 255.0f;
 	}
 
 	void Init()
@@ -65,26 +92,35 @@ namespace CustomHud
 		if (precision > 16)
 			precision = 16;
 
-		clientDLL.pEngfuncs->pfnDrawSetTextColor(g_DefaultTextColor[0], g_DefaultTextColor[1], g_DefaultTextColor[2]);
+		UpdateConsoleColor();
 		
 		if (y_bxt_hud_velocity->value != 0.0f)
 		{
 			int x = 0, y = 0;
 			std::istringstream pos_ss(y_bxt_hud_velocity_pos->string);
 			pos_ss >> x >> y;
+			x += si.iWidth;
+			
+			if (receivedAccurateInfo)
+				DrawString(x, y, "Velocity:");
+			else
+				DrawString(x, y, "Velocity:", 1.0f, 0.0f, 0.0f);
+
+			y += si.iCharHeight;
 			
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
 			out.precision(precision);
-			out << "Velocity:\n"
-				<< "X: " << velocity[0] << "\n"
+			out << "X: " << velocity[0] << "\n"
 				<< "Y: " << velocity[1] << "\n"
 				<< "Z: " << velocity[2] << "\n"
 				<< "XY: " << length(velocity[0], velocity[1]) << "\n"
 				<< "XYZ: " << length(velocity[0], velocity[1], velocity[2]);
 
-			DrawString(si.iWidth + x, y, out.str());
+			DrawMultilineString(x, y, out.str());
 		}
+
+		receivedAccurateInfo = false;
 	}
 
 	void UpdateVelocity(float vel[3])
@@ -92,6 +128,18 @@ namespace CustomHud
 		velocity[0] = vel[0];
 		velocity[1] = vel[1];
 		velocity[2] = vel[2];
+
+		receivedAccurateInfo = true;
+	}
+
+	void UpdateVelocityInaccurate(float vel[3])
+	{
+		if (!receivedAccurateInfo)
+		{
+			velocity[0] = vel[0];
+			velocity[1] = vel[1];
+			velocity[2] = vel[2];
+		}
 	}
 }
 

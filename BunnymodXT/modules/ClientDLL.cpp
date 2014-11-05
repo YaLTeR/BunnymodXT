@@ -37,6 +37,11 @@ void __fastcall ClientDLL::HOOKED_CHud_VidInit(void* thisptr, int edx)
 	return clientDLL.HOOKED_CHud_VidInit_Func(thisptr, edx);
 }
 
+void __cdecl ClientDLL::HOOKED_V_CalcRefdef(ref_params_t* pparams)
+{
+	return clientDLL.HOOKED_V_CalcRefdef_Func(pparams);
+}
+
 void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t moduleStart, size_t moduleLength)
 {
 	Clear(); // Just in case.
@@ -132,12 +137,14 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 		{
 			EngineDevWarning("[client dll] Couldn't find the pattern in Initialize!\n");
 			EngineWarning("Clientside CVars and commands are not available.\n");
+			EngineWarning("Custom HUD is not available.\n");
 		}
 	}
 	else
 	{
 		EngineDevWarning("[client dll] Couldn't get the address of Initialize!\n");
 		EngineWarning("Clientside CVars and commands are not available.\n");
+		EngineWarning("Custom HUD is not available.\n");
 	}
 
 	// We can draw stuff only if we know that we have already received / will receive engfuncs.
@@ -271,6 +278,13 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 			}
 		}
 	}
+
+	ORIG_V_CalcRefdef = (_V_CalcRefdef)GetProcAddress(hModule, "V_CalcRefdef");
+	if (!ORIG_V_CalcRefdef)
+	{
+		EngineDevWarning("[client dll] Couldn't find V_CalcRefdef!\n");
+		EngineWarning("Velocity display during demo playback is not available.\n");
+	}
 	
 	// Now we can register cvars and commands provided that we already have engfuncs.
 	if (*(uintptr_t *)pEngfuncs)
@@ -281,7 +295,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
 		{ (PVOID *)(&ORIG_Initialize), HOOKED_Initialize },
 		{ (PVOID *)(&ORIG_CHud_Init), HOOKED_CHud_Init },
-		{ (PVOID *)(&ORIG_CHud_VidInit), HOOKED_CHud_VidInit }
+		{ (PVOID *)(&ORIG_CHud_VidInit), HOOKED_CHud_VidInit },
+		{ (PVOID *)(&ORIG_V_CalcRefdef), HOOKED_V_CalcRefdef }
 	});
 }
 
@@ -292,7 +307,8 @@ void ClientDLL::Unhook()
 		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
 		{ (PVOID *)(&ORIG_Initialize), HOOKED_Initialize },
 		{ (PVOID *)(&ORIG_CHud_Init), HOOKED_CHud_Init },
-		{ (PVOID *)(&ORIG_CHud_VidInit), HOOKED_CHud_VidInit }
+		{ (PVOID *)(&ORIG_CHud_VidInit), HOOKED_CHud_VidInit },
+		{ (PVOID *)(&ORIG_V_CalcRefdef), HOOKED_V_CalcRefdef }
 	});
 
 	Clear();
@@ -307,6 +323,7 @@ void ClientDLL::Clear()
 	ORIG_CHud_Init = nullptr;
 	ORIG_CHud_VidInit = nullptr;
 	CHud_AddHudElem = nullptr;
+	ORIG_V_CalcRefdef = nullptr;
 	ppmove = 0;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -329,6 +346,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_CHud_Init)
 	{
+		con_color = pEngfuncs->pfnGetCvarPointer("con_color");
 		y_bxt_hud = pEngfuncs->pfnRegisterVariable("y_bxt_hud", "1", 0);
 		y_bxt_hud_precision = pEngfuncs->pfnRegisterVariable("y_bxt_hud_precision", "0", 0);
 		y_bxt_hud_velocity = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity", "1", 0);
@@ -410,4 +428,11 @@ void __fastcall ClientDLL::HOOKED_CHud_VidInit_Func(void* thisptr, int edx)
 		customHudWrapper.InitIfNecessary();
 		customHudWrapper.VidInit();
 	}
+}
+
+void __cdecl ClientDLL::HOOKED_V_CalcRefdef_Func(ref_params_t* pparams)
+{
+	ORIG_V_CalcRefdef(pparams);
+
+	CustomHud::UpdateVelocityInaccurate(pparams->simvel);
 }

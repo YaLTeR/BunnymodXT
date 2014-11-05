@@ -12,6 +12,7 @@ typedef void(__cdecl *_PM_PreventMegaBunnyJumping) ();
 typedef int(__cdecl *_Initialize) (cl_enginefunc_t* pEnginefuncs, int iVersion);
 typedef void(__fastcall *_CHud_InitFunc) (void* thisptr, int edx); // For both CHud::Init and CHud::VidInit.
 typedef void(__fastcall *_CHud_AddHudElem) (void* thisptr, int edx, void* pHudElem);
+typedef void(__cdecl *_V_CalcRefdef) (ref_params_t* pparams);
 
 class ClientDLL : public IHookableNameFilter
 {
@@ -31,6 +32,8 @@ public:
 	void __fastcall HOOKED_CHud_Init_Func(void* thisptr, int edx);
 	static void __fastcall HOOKED_CHud_VidInit(void* thisptr, int edx);
 	void __fastcall HOOKED_CHud_VidInit_Func(void* thisptr, int edx);
+	static void __cdecl HOOKED_V_CalcRefdef(ref_params_t* pparams);
+	void __cdecl HOOKED_V_CalcRefdef_Func(ref_params_t* pparams);
 
 	void RegisterCVarsAndCommands();
 	void AddHudElem(void* pHudElem);
@@ -44,6 +47,7 @@ protected:
 	_CHud_InitFunc ORIG_CHud_Init;
 	_CHud_InitFunc ORIG_CHud_VidInit;
 	_CHud_AddHudElem CHud_AddHudElem;
+	_V_CalcRefdef ORIG_V_CalcRefdef;
 
 	uintptr_t ppmove;
 	ptrdiff_t offOldbuttons;

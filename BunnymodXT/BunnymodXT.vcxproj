@@ -91,6 +91,7 @@
     <ClInclude Include="..\HLSDK\common\crc.h" />
     <ClInclude Include="..\HLSDK\common\cvardef.h" />
     <ClInclude Include="..\HLSDK\common\in_buttons.h" />
+    <ClInclude Include="..\HLSDK\common\ref_params.h" />
     <ClInclude Include="..\HLSDK\dlls\cdll_dll.h" />
     <ClInclude Include="..\HLSDK\dlls\extdll.h" />
     <ClInclude Include="..\HLSDK\dlls\vector.h" />

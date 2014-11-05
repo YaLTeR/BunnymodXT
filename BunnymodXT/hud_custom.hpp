@@ -7,6 +7,7 @@ namespace CustomHud
 	void Draw(float flTime);
 
 	void UpdateVelocity(float vel[3]);
+	void UpdateVelocityInaccurate(float vel[3]);
 };
 
 // For insertion into the HUDLIST.

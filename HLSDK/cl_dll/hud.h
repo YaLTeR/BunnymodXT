@@ -69,6 +69,3 @@ public:
 	virtual void InitHUDData(void) {}		// called every time a server is connected to
 
 };
-
-// YaLTeR
-const float g_DefaultTextColor[3] = { 1.0f, (160.0f / 255.0f), 0.0f };

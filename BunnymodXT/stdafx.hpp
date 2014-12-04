@@ -1,11 +1,17 @@
 #pragma once
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
+#if defined(__GNUC__)
+#define __cdecl __attribute__((cdecl))
+#define __fastcall __attribute__((fastcall))
+#define __stdcall
+#endif
+
 
 #include <cmath>
 #include <cstddef>

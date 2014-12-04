@@ -1,4 +1,4 @@
-#include "stdafx.hpp"
+#include "../stdafx.hpp"
 
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
@@ -119,7 +119,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	{
 		// Find "mov edi, offset dword; rep movsd" inside Initialize. The pointer to gEngfuncs is that dword.
 		const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
-		auto addr = MemUtils::FindPattern(pInitialize, 40, pattern, "x????xx");
+		auto addr = MemUtils::FindPattern(reinterpret_cast<void*>(pInitialize), 40, pattern, "x????xx");
 		if (addr)
 		{
 			pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(addr) + 1);
@@ -290,12 +290,12 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
-			{ reinterpret_cast<void**>(&ORIG_PM_Jump), HOOKED_PM_Jump },
-			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
-			{ reinterpret_cast<void**>(&ORIG_Initialize), HOOKED_Initialize },
-			{ reinterpret_cast<void**>(&ORIG_CHud_Init), HOOKED_CHud_Init },
-			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), HOOKED_CHud_VidInit },
-			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), HOOKED_V_CalcRefdef }
+			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
+			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
+			{ reinterpret_cast<void**>(&ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize) },
+			{ reinterpret_cast<void**>(&ORIG_CHud_Init), reinterpret_cast<void*>(HOOKED_CHud_Init) },
+			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), reinterpret_cast<void*>(HOOKED_CHud_VidInit) },
+			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) }
 		});
 }
 
@@ -303,12 +303,12 @@ void ClientDLL::Unhook()
 {
 	if (m_Intercepted)
 		MemUtils::RemoveInterception(m_Name, {
-			{ reinterpret_cast<void**>(&ORIG_PM_Jump), HOOKED_PM_Jump },
-			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
-			{ reinterpret_cast<void**>(&ORIG_Initialize), HOOKED_Initialize },
-			{ reinterpret_cast<void**>(&ORIG_CHud_Init), HOOKED_CHud_Init },
-			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), HOOKED_CHud_VidInit },
-			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), HOOKED_V_CalcRefdef }
+			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
+			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
+			{ reinterpret_cast<void**>(&ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize) },
+			{ reinterpret_cast<void**>(&ORIG_CHud_Init), reinterpret_cast<void*>(HOOKED_CHud_Init) },
+			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), reinterpret_cast<void*>(HOOKED_CHud_VidInit) },
+			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) }
 		});
 
 	Clear();

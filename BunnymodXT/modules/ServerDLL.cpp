@@ -1,4 +1,4 @@
-#include "stdafx.hpp"
+#include "../stdafx.hpp"
 
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
@@ -128,7 +128,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	{
 		// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
 		const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
-		auto addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern, "x????xx");
+		auto addr = MemUtils::FindPattern(reinterpret_cast<void*>(pGiveFnptrsToDll), 40, pattern, "x????xx");
 		if (addr)
 		{
 			pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr) + 1);
@@ -154,10 +154,10 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
-			{ reinterpret_cast<void**>(&ORIG_PM_Jump), HOOKED_PM_Jump },
-			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
-			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), HOOKED_PM_PlayerMove },
-			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), HOOKED_GiveFnptrsToDll }
+			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
+			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
+			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
+			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll) }
 		});
 }
 
@@ -165,10 +165,10 @@ void ServerDLL::Unhook()
 {
 	if (m_Intercepted)
 		MemUtils::RemoveInterception(m_Name, {
-			{ reinterpret_cast<void**>(&ORIG_PM_Jump), HOOKED_PM_Jump },
-			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
-			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), HOOKED_PM_PlayerMove },
-			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), HOOKED_GiveFnptrsToDll }
+			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
+			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
+			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
+			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll) }
 		});
 
 	Clear();
@@ -202,7 +202,7 @@ bool ServerDLL::CanHook(const std::wstring& moduleFullName)
 	std::wstring pathToLiblist = moduleFullName.substr(0, moduleFullName.rfind(GetFolderName(moduleFullName))).append(L"liblist.gam");
 
 	// If liblist.gam exists in the parent directory, then we're (hopefully) good.
-	std::ifstream liblist(pathToLiblist);
+	std::ifstream liblist(Convert(pathToLiblist));
 	if (liblist.good())
 	{
 		liblist.close();

@@ -46,10 +46,10 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 {
 	Clear(); // Just in case.
 
-	this->hModule = hModule;
-	this->moduleStart = moduleStart;
-	this->moduleLength = moduleLength;
-	this->moduleName = moduleName;
+	m_hModule = hModule;
+	m_Start = moduleStart;
+	m_Length = moduleLength;
+	m_Name = moduleName;
 
 	MemUtils::ptnvec_size ptnNumber;
 
@@ -302,7 +302,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 
 void ClientDLL::Unhook()
 {
-	DetoursUtils::DetachDetours(moduleName, {
+	DetoursUtils::DetachDetours(m_Name, {
 		{ (PVOID *)(&ORIG_PM_Jump), HOOKED_PM_Jump },
 		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
 		{ (PVOID *)(&ORIG_Initialize), HOOKED_Initialize },
@@ -348,9 +348,11 @@ void ClientDLL::RegisterCVarsAndCommands()
 	{
 		con_color = pEngfuncs->pfnGetCvarPointer("con_color");
 		y_bxt_hud = pEngfuncs->pfnRegisterVariable("y_bxt_hud", "1", 0);
-		y_bxt_hud_precision = pEngfuncs->pfnRegisterVariable("y_bxt_hud_precision", "0", 0);
+		y_bxt_hud_precision = pEngfuncs->pfnRegisterVariable("y_bxt_hud_precision", "6", 0);
 		y_bxt_hud_velocity = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity", "1", 0);
 		y_bxt_hud_velocity_pos = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity_pos", "-200 0", 0);
+		y_bxt_hud_origin = pEngfuncs->pfnRegisterVariable("y_bxt_hud_origin", "0", 0);
+		y_bxt_hud_origin_pos = pEngfuncs->pfnRegisterVariable("y_bxt_hud_origin_pos", "-200 115", 0);
 	}
 
 	EngineDevMsg("[client dll] Registered CVars.\n");
@@ -434,5 +436,5 @@ void __cdecl ClientDLL::HOOKED_V_CalcRefdef_Func(ref_params_t* pparams)
 {
 	ORIG_V_CalcRefdef(pparams);
 
-	CustomHud::UpdateVelocityInaccurate(pparams->simvel);
+	CustomHud::UpdatePlayerInfoInaccurate(pparams->simvel, pparams->simorg);
 }

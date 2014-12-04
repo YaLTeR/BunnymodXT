@@ -12,6 +12,7 @@ namespace CustomHud
 	static float consoleColor[3] = { 1.0f, (180 / 255.0f), (30 / 255.0f) };
 	static bool receivedAccurateInfo = false;
 	static float velocity[3];
+	static float origin[3];
 
 	static double length(double x, double y)
 	{
@@ -120,25 +121,55 @@ namespace CustomHud
 			DrawMultilineString(x, y, out.str());
 		}
 
+		if (y_bxt_hud_origin->value != 0.0f)
+		{
+			int x = 0, y = 0;
+			std::istringstream pos_ss(y_bxt_hud_origin_pos->string);
+			pos_ss >> x >> y;
+			x += si.iWidth;
+
+			if (receivedAccurateInfo)
+				DrawString(x, y, "Origin:");
+			else
+				DrawString(x, y, "Origin:", 1.0f, 0.0f, 0.0f);
+
+			y += si.iCharHeight;
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "X: " << origin[0] << "\n"
+				<< "Y: " << origin[1] << "\n"
+				<< "Z: " << origin[2];
+
+			DrawMultilineString(x, y, out.str());
+		}
+
 		receivedAccurateInfo = false;
 	}
 
-	void UpdateVelocity(float vel[3])
+	void UpdatePlayerInfo(float vel[3], float org[3])
 	{
 		velocity[0] = vel[0];
 		velocity[1] = vel[1];
 		velocity[2] = vel[2];
+		origin[0] = org[0];
+		origin[1] = org[1];
+		origin[2] = org[2];
 
 		receivedAccurateInfo = true;
 	}
 
-	void UpdateVelocityInaccurate(float vel[3])
+	void UpdatePlayerInfoInaccurate(float vel[3], float org[3])
 	{
 		if (!receivedAccurateInfo)
 		{
 			velocity[0] = vel[0];
 			velocity[1] = vel[1];
 			velocity[2] = vel[2];
+			origin[0] = org[0];
+			origin[1] = org[1];
+			origin[2] = org[2];
 		}
 	}
 }

@@ -15,3 +15,5 @@ cvar_t *y_bxt_hud;
 cvar_t *y_bxt_hud_precision;
 cvar_t *y_bxt_hud_velocity;
 cvar_t *y_bxt_hud_velocity_pos;
+cvar_t *y_bxt_hud_origin;
+cvar_t *y_bxt_hud_origin_pos;

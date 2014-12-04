@@ -37,10 +37,10 @@ void ServerDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 {
 	Clear(); // Just in case.
 
-	this->hModule = hModule;
-	this->moduleStart = moduleStart;
-	this->moduleLength = moduleLength;
-	this->moduleName = moduleName;
+	m_hModule = hModule;
+	m_Start = moduleStart;
+	m_Length = moduleLength;
+	m_Name = moduleName;
 
 	MemUtils::ptnvec_size ptnNumber;
 
@@ -168,7 +168,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 
 void ServerDLL::Unhook()
 {
-	DetoursUtils::DetachDetours(moduleName, {
+	DetoursUtils::DetachDetours(m_Name, {
 		{ (PVOID *)(&ORIG_PM_Jump), HOOKED_PM_Jump },
 		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
 		{ (PVOID *)(&ORIG_PM_PlayerMove), HOOKED_PM_PlayerMove },
@@ -296,7 +296,7 @@ void __cdecl ServerDLL::HOOKED_PM_PlayerMove_Func(qboolean server)
 		pEngfuncs->pfnAlertMessage(at_console, "-- BXT TAS Log End --\n");
 	}
 
-	CustomHud::UpdateVelocity(velocity);
+	CustomHud::UpdatePlayerInfo(velocity, origin);
 }
 
 void __stdcall ServerDLL::HOOKED_GiveFnptrsToDll_Func(enginefuncs_t* pEngfuncsFromEngine, const void* pGlobals)

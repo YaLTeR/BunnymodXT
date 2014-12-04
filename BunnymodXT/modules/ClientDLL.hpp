@@ -1,11 +1,9 @@
 #pragma once
 
-#include <SPTLib\IHookableNameFilter.hpp>
-#include "hud_custom.hpp"
+#include "../stdafx.hpp"
 
-using std::uintptr_t;
-using std::size_t;
-using std::ptrdiff_t;
+#include <SPTLib/IHookableNameFilter.hpp>
+#include "../hud_custom.hpp"
 
 typedef void(__cdecl *_PM_Jump) ();
 typedef void(__cdecl *_PM_PreventMegaBunnyJumping) ();
@@ -18,7 +16,7 @@ class ClientDLL : public IHookableNameFilter
 {
 public:
 	ClientDLL() : IHookableNameFilter({ L"client.dll" }) {};
-	virtual void Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t moduleStart, size_t moduleLength);
+	virtual void Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept);
 	virtual void Unhook();
 	virtual void Clear();
 
@@ -49,11 +47,11 @@ protected:
 	_CHud_AddHudElem CHud_AddHudElem;
 	_V_CalcRefdef ORIG_V_CalcRefdef;
 
-	uintptr_t ppmove;
+	void **ppmove;
 	ptrdiff_t offOldbuttons;
 	ptrdiff_t offOnground;
 
-	uintptr_t pHud;
+	void *pHud;
 
 	bool cantJumpNextTime;
 

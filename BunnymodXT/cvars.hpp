@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stdafx.hpp"
+
 // Serverside CVars
 extern cvar_t y_bxt_autojump;
 extern cvar_t y_bxt_bhopcap;

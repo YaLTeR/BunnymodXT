@@ -1,16 +1,12 @@
 #include "stdafx.hpp"
 
-#include "..\sptlib-wrapper.hpp"
-#include <SPTLib\memutils.hpp>
-#include <SPTLib\detoursutils.hpp>
-#include <SPTLib\hooks.hpp>
-#include "..\modules.hpp"
-#include "..\patterns.hpp"
-#include "..\cvars.hpp"
-#include "..\hud_custom.hpp"
-
-using std::uintptr_t;
-using std::size_t;
+#include "../sptlib-wrapper.hpp"
+#include <SPTLib/MemUtils.hpp>
+#include <SPTLib/Hooks.hpp>
+#include "../modules.hpp"
+#include "../patterns.hpp"
+#include "../cvars.hpp"
+#include "../hud_custom.hpp"
 
 void __cdecl ClientDLL::HOOKED_PM_Jump()
 {
@@ -42,53 +38,54 @@ void __cdecl ClientDLL::HOOKED_V_CalcRefdef(ref_params_t* pparams)
 	return clientDLL.HOOKED_V_CalcRefdef_Func(pparams);
 }
 
-void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t moduleStart, size_t moduleLength)
+void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
 {
 	Clear(); // Just in case.
 
-	m_hModule = hModule;
-	m_Start = moduleStart;
+	m_Handle = moduleHandle;
+	m_Base = moduleBase;
 	m_Length = moduleLength;
 	m_Name = moduleName;
+	m_Intercepted = needToIntercept;
 
 	MemUtils::ptnvec_size ptnNumber;
 
-	uintptr_t pPMJump = NULL,
-		pPMPreventMegaBunnyJumping = NULL,
-		pCHud_AddHudElem = NULL;
+	void *pPMJump = nullptr,
+		*pPMPreventMegaBunnyJumping = nullptr,
+		*pCHud_AddHudElem = nullptr;
 
-	auto fPMPreventMegaBunnyJumping = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleStart, moduleLength, Patterns::ptnsPMPreventMegaBunnyJumping, &pPMPreventMegaBunnyJumping);
-	auto fCHud_AddHudElem = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleStart, moduleLength, Patterns::ptnsCHud_AddHudElem, &pCHud_AddHudElem);
-	auto fIsGMC = std::async(std::launch::deferred, MemUtils::FindPattern, moduleStart, moduleLength, (const byte *)"weapon_SPchemicalgun", "xxxxxxxxxxxxxxxxxxxx");
+	auto fPMPreventMegaBunnyJumping = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPreventMegaBunnyJumping, &pPMPreventMegaBunnyJumping);
+	auto fCHud_AddHudElem = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCHud_AddHudElem, &pCHud_AddHudElem);
+	auto fIsGMC = std::async(std::launch::deferred, MemUtils::FindPattern, moduleBase, moduleLength, reinterpret_cast<const byte *>("weapon_SPchemicalgun"), "xxxxxxxxxxxxxxxxxxxx");
 
-	ptnNumber = MemUtils::FindUniqueSequence(moduleStart, moduleLength, Patterns::ptnsPMJump, &pPMJump);
+	ptnNumber = MemUtils::FindUniqueSequence(moduleBase, moduleLength, Patterns::ptnsPMJump, &pPMJump);
 	if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
 	{
-		ORIG_PM_Jump = (_PM_Jump)pPMJump;
+		ORIG_PM_Jump = reinterpret_cast<_PM_Jump>(pPMJump);
 		EngineDevMsg("[client dll] Found PM_Jump at %p (using the %s pattern).\n", pPMJump, Patterns::ptnsPMJump[ptnNumber].build.c_str());
 
 		switch (ptnNumber)
 		{
 		case 0:
-			ppmove = *(uintptr_t *)(pPMJump + 2);
+			ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 2);
 			offOldbuttons = 200;
 			offOnground = 224;
 			break;
 
 		case 1:
-			ppmove = *(uintptr_t *)(pPMJump + 2);
+			ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 2);
 			offOldbuttons = 200;
 			offOnground = 224;
 			break;
 
 		case 2: // AG-Server, shouldn't happen here but who knows.
-			ppmove = *(uintptr_t *)(pPMJump + 3);
+			ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 3);
 			offOldbuttons = 200;
 			offOnground = 224;
 			break;
 
 		case 3:
-			ppmove = *(uintptr_t *)(pPMJump + 3);
+			ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 3);
 			offOldbuttons = 200;
 			offOnground = 224;
 			break;
@@ -103,7 +100,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 	ptnNumber = fPMPreventMegaBunnyJumping.get();
 	if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
 	{
-		ORIG_PM_PreventMegaBunnyJumping = (_PM_PreventMegaBunnyJumping)pPMPreventMegaBunnyJumping;
+		ORIG_PM_PreventMegaBunnyJumping = reinterpret_cast<_PM_PreventMegaBunnyJumping>(pPMPreventMegaBunnyJumping);
 		EngineDevMsg("[client dll] Found PM_PreventMegaBunnyJumping at %p (using the %s pattern).\n", pPMPreventMegaBunnyJumping, Patterns::ptnsPMPreventMegaBunnyJumping[ptnNumber].build.c_str());
 	}
 	else
@@ -113,24 +110,24 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 	}
 
 	// In AG, this thing is the main function, so check that first.
-	_Initialize pInitialize = (_Initialize)GetProcAddress(hModule, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z");
+	_Initialize pInitialize = reinterpret_cast<_Initialize>(MemUtils::GetFunctionAddress(moduleHandle, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z"));
 
 	if (!pInitialize)
-		pInitialize = (_Initialize)GetProcAddress(hModule, "Initialize");
+		pInitialize = reinterpret_cast<_Initialize>(MemUtils::GetFunctionAddress(moduleHandle, "Initialize"));
 
 	if (pInitialize)
 	{
 		// Find "mov edi, offset dword; rep movsd" inside Initialize. The pointer to gEngfuncs is that dword.
 		const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
-		uintptr_t addr = MemUtils::FindPattern((uintptr_t)pInitialize, 40, pattern, "x????xx");
-		if (addr != NULL)
+		auto addr = MemUtils::FindPattern(pInitialize, 40, pattern, "x????xx");
+		if (addr)
 		{
-			pEngfuncs = *(cl_enginefunc_t **)(addr + 1);
+			pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(addr) + 1);
 			EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
 
 			// If we have engfuncs, register cvars and whatnot right away (in the end of this function because other stuff need to be done first). Otherwise wait till the engine gives us engfuncs.
 			// This works because global variables are zero by default.
-			if (!*(uintptr_t *)pEngfuncs)
+			if (!*reinterpret_cast<uintptr_t*>(pEngfuncs))
 				ORIG_Initialize = pInitialize;
 		}
 		else
@@ -148,9 +145,9 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 	}
 
 	// We can draw stuff only if we know that we have already received / will receive engfuncs.
-	if (pEngfuncs != NULL)
+	if (pEngfuncs)
 	{
-		void *pHUD_Init = GetProcAddress(hModule, "HUD_Init");
+		auto pHUD_Init = MemUtils::GetFunctionAddress(moduleHandle, "HUD_Init");
 		if (pHUD_Init)
 		{
 			// Just in case some HUD_Init contains extra stuff, find the first "mov ecx, offset dword; call func" sequence. Dword is the pointer to gHud and func is CHud::Init.
@@ -165,13 +162,12 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 				0xA3, '?', '?', '?', '?', 0xE8 };
 
 			ptrdiff_t offCallOffset = 6;
-			uintptr_t addr = MemUtils::FindPattern((uintptr_t)pHUD_Init, 0x15, pattern, "x????x");
-			if (addr == NULL)
-				addr = MemUtils::FindPattern((uintptr_t)pHUD_Init, 0x15, pattern_bs, "x????x");
-
-			if (addr == NULL)
+			auto addr = MemUtils::FindPattern(pHUD_Init, 0x15, pattern, "x????x");
+			if (!addr)
+				addr = MemUtils::FindPattern(pHUD_Init, 0x15, pattern_bs, "x????x");
+			if (!addr)
 			{
-				addr = MemUtils::FindPattern((uintptr_t)pHUD_Init, 0x15, pattern_op4, "x????x????xx????xxxxx????x");
+				addr = MemUtils::FindPattern(pHUD_Init, 0x15, pattern_op4, "x????x????xx????xxxxx????x");
 				offCallOffset = 26;
 				novd = true;
 				EngineDevMsg("[client dll] Using CHudBase without a virtual destructor.\n");
@@ -186,28 +182,29 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 				}
 			}
 
-			if (addr != NULL)
+			if (addr)
 			{
-				pHud = *(uintptr_t *)(addr + 1);
-				ORIG_CHud_Init = (_CHud_InitFunc)(*(uintptr_t *)(addr + offCallOffset) + (addr + offCallOffset + 4)); // Call by offset.
+				pHud = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(addr) + 1);
+				ORIG_CHud_Init = reinterpret_cast<_CHud_InitFunc>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr) + offCallOffset) + (reinterpret_cast<uintptr_t>(addr) + offCallOffset + 4)); // Call by offset.
 				EngineDevMsg("[client dll] pHud is %p; CHud::Init is located at %p.\n", pHud, ORIG_CHud_Init);
 
-				void *pHUD_Reset = GetProcAddress(hModule, "HUD_Reset");
+				auto pHUD_Reset = MemUtils::GetFunctionAddress(moduleHandle, "HUD_Reset");
 				if (pHUD_Reset)
 				{
 					// Same as with HUD_Init earlier, but we have another possibility - jmp instead of call.
-					#define getbyte(a, n) (byte)((a >> n*8) & 0xFF)
-					const byte ptn1[] = { 0xB9, getbyte(pHud, 0), getbyte(pHud, 1), getbyte(pHud, 2), getbyte(pHud, 3), 0xE8 },
-						ptn2[] = { 0xB9, getbyte(pHud, 0), getbyte(pHud, 1), getbyte(pHud, 2), getbyte(pHud, 3), 0xE9 };
+					auto pHud_uintptr = reinterpret_cast<uintptr_t>(pHud);
+					#define getbyte(a, n) static_cast<byte>((a >> n*8) & 0xFF)
+					const byte ptn1[] = { 0xB9, getbyte(pHud_uintptr, 0), getbyte(pHud_uintptr, 1), getbyte(pHud_uintptr, 2), getbyte(pHud_uintptr, 3), 0xE8 },
+						ptn2[] = { 0xB9, getbyte(pHud_uintptr, 0), getbyte(pHud_uintptr, 1), getbyte(pHud_uintptr, 2), getbyte(pHud_uintptr, 3), 0xE9 };
 					#undef getbyte
 
-					uintptr_t addr_ = MemUtils::FindPattern((uintptr_t)pHUD_Reset, 0x10, ptn1, "xxxxxx");
-					if (addr_ == NULL)
-						addr_ = MemUtils::FindPattern((uintptr_t)pHUD_Reset, 0x10, ptn2, "xxxxxx");
+					auto addr_ = MemUtils::FindPattern(pHUD_Reset, 0x10, ptn1, "xxxxxx");
+					if (!addr_)
+						addr_ = MemUtils::FindPattern(pHUD_Reset, 0x10, ptn2, "xxxxxx");
 
-					if (addr_ != NULL)
+					if (addr_)
 					{
-						ORIG_CHud_VidInit = (_CHud_InitFunc)(*(uintptr_t *)(addr_ + 6) + (addr_ + 10));
+						ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr_) + 6) + (reinterpret_cast<uintptr_t>(addr_) + 10));
 						EngineDevMsg("[client dll] CHud::VidInit is located at %p.\n", ORIG_CHud_VidInit);
 					}
 					else
@@ -218,17 +215,18 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 
 				if (!pHUD_Reset)
 				{
-					void *pHUD_VidInit = GetProcAddress(hModule, "HUD_VidInit");
+					auto pHUD_VidInit = MemUtils::GetFunctionAddress(moduleHandle, "HUD_VidInit");
 					if (pHUD_VidInit)
 					{
+						auto pHud_uintptr = reinterpret_cast<uintptr_t>(pHud);
 						#define getbyte(a, n) (byte)((a >> n*8) & 0xFF)
-						const byte ptn[] = { 0xB9, getbyte(pHud, 0), getbyte(pHud, 1), getbyte(pHud, 2), getbyte(pHud, 3), 0xE8 };
+						const byte ptn[] = { 0xB9, getbyte(pHud_uintptr, 0), getbyte(pHud_uintptr, 1), getbyte(pHud_uintptr, 2), getbyte(pHud_uintptr, 3), 0xE8 };
 						#undef getbyte
 
-						uintptr_t addr_ = MemUtils::FindPattern((uintptr_t)pHUD_VidInit, 0x10, ptn, "xxxxxx");
-						if (addr_ != NULL)
+						auto addr_ = MemUtils::FindPattern(pHUD_VidInit, 0x10, ptn, "xxxxxx");
+						if (addr_)
 						{
-							ORIG_CHud_VidInit = (_CHud_InitFunc)(*(uintptr_t *)(addr_ + 6) + (addr_ + 10));
+							ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr_) + 6) + (reinterpret_cast<uintptr_t>(addr_) + 10));
 							EngineDevMsg("[client dll] CHud::VidInit is located at %p.\n", ORIG_CHud_VidInit);
 						}
 						else
@@ -265,7 +263,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 			ptnNumber = fCHud_AddHudElem.get();
 			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
 			{
-				CHud_AddHudElem = (_CHud_AddHudElem)pCHud_AddHudElem;
+				CHud_AddHudElem = reinterpret_cast<_CHud_AddHudElem>(pCHud_AddHudElem);
 				EngineDevMsg("[client dll] Found CHud::AddHudElem at %p (using the %s pattern).\n", pCHud_AddHudElem, Patterns::ptnsCHud_AddHudElem[ptnNumber].build.c_str());
 			}
 			else
@@ -279,7 +277,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 		}
 	}
 
-	ORIG_V_CalcRefdef = (_V_CalcRefdef)GetProcAddress(hModule, "V_CalcRefdef");
+	ORIG_V_CalcRefdef = reinterpret_cast<_V_CalcRefdef>(MemUtils::GetFunctionAddress(moduleHandle, "V_CalcRefdef"));
 	if (!ORIG_V_CalcRefdef)
 	{
 		EngineDevWarning("[client dll] Couldn't find V_CalcRefdef!\n");
@@ -287,29 +285,31 @@ void ClientDLL::Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t 
 	}
 	
 	// Now we can register cvars and commands provided that we already have engfuncs.
-	if (*(uintptr_t *)pEngfuncs)
+	if (*reinterpret_cast<uintptr_t*>(pEngfuncs))
 		RegisterCVarsAndCommands();
 
-	DetoursUtils::AttachDetours(moduleName, {
-		{ (PVOID *)(&ORIG_PM_Jump), HOOKED_PM_Jump },
-		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
-		{ (PVOID *)(&ORIG_Initialize), HOOKED_Initialize },
-		{ (PVOID *)(&ORIG_CHud_Init), HOOKED_CHud_Init },
-		{ (PVOID *)(&ORIG_CHud_VidInit), HOOKED_CHud_VidInit },
-		{ (PVOID *)(&ORIG_V_CalcRefdef), HOOKED_V_CalcRefdef }
-	});
+	if (needToIntercept)
+		MemUtils::Intercept(moduleName, {
+			{ reinterpret_cast<void**>(&ORIG_PM_Jump), HOOKED_PM_Jump },
+			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
+			{ reinterpret_cast<void**>(&ORIG_Initialize), HOOKED_Initialize },
+			{ reinterpret_cast<void**>(&ORIG_CHud_Init), HOOKED_CHud_Init },
+			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), HOOKED_CHud_VidInit },
+			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), HOOKED_V_CalcRefdef }
+		});
 }
 
 void ClientDLL::Unhook()
 {
-	DetoursUtils::DetachDetours(m_Name, {
-		{ (PVOID *)(&ORIG_PM_Jump), HOOKED_PM_Jump },
-		{ (PVOID *)(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
-		{ (PVOID *)(&ORIG_Initialize), HOOKED_Initialize },
-		{ (PVOID *)(&ORIG_CHud_Init), HOOKED_CHud_Init },
-		{ (PVOID *)(&ORIG_CHud_VidInit), HOOKED_CHud_VidInit },
-		{ (PVOID *)(&ORIG_V_CalcRefdef), HOOKED_V_CalcRefdef }
-	});
+	if (m_Intercepted)
+		MemUtils::RemoveInterception(m_Name, {
+			{ reinterpret_cast<void**>(&ORIG_PM_Jump), HOOKED_PM_Jump },
+			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), HOOKED_PM_PreventMegaBunnyJumping },
+			{ reinterpret_cast<void**>(&ORIG_Initialize), HOOKED_Initialize },
+			{ reinterpret_cast<void**>(&ORIG_CHud_Init), HOOKED_CHud_Init },
+			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), HOOKED_CHud_VidInit },
+			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), HOOKED_V_CalcRefdef }
+		});
 
 	Clear();
 }
@@ -324,18 +324,19 @@ void ClientDLL::Clear()
 	ORIG_CHud_VidInit = nullptr;
 	CHud_AddHudElem = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
-	ppmove = 0;
+	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
 	pEngfuncs = nullptr;
-	pHud = 0;
+	pHud = nullptr;
 	cantJumpNextTime = false;
 	novd = false;
+	m_Intercepted = false;
 }
 
 void ClientDLL::RegisterCVarsAndCommands()
 {
-	if (!pEngfuncs || !*(uintptr_t *)pEngfuncs)
+	if (!pEngfuncs || !*reinterpret_cast<uintptr_t*>(pEngfuncs))
 		return;
 
 	if (ORIG_PM_Jump)
@@ -361,15 +362,16 @@ void ClientDLL::RegisterCVarsAndCommands()
 void ClientDLL::AddHudElem(void* pHudElem)
 {
 	if (pHud && CHud_AddHudElem)
-		CHud_AddHudElem((void *)pHud, 0, pHudElem);
+		CHud_AddHudElem(pHud, 0, pHudElem);
 }
 
 void __cdecl ClientDLL::HOOKED_PM_Jump_Func()
 {
-	int *onground = (int *)(*(uintptr_t *)ppmove + offOnground);
+	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
+	int *onground = reinterpret_cast<int*>(pmove + offOnground);
 	int orig_onground = *onground;
 
-	int *oldbuttons = (int *)(*(uintptr_t *)ppmove + offOldbuttons);
+	int *oldbuttons = reinterpret_cast<int*>(pmove + offOldbuttons);
 	int orig_oldbuttons = *oldbuttons;
 
 	if (!y_bxt_autojump_prediction || (y_bxt_autojump_prediction->value != 0.0f))

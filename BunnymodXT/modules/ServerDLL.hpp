@@ -1,12 +1,8 @@
 #pragma once
 
-#include <unordered_map>
+#include "../stdafx.hpp"
 
-#include <SPTLib\IHookableDirFilter.hpp>
-
-using std::uintptr_t;
-using std::size_t;
-using std::ptrdiff_t;
+#include <SPTLib/IHookableDirFilter.hpp>
 
 typedef void(__cdecl *_PM_Jump) ();
 typedef void(__cdecl *_PM_PreventMegaBunnyJumping) ();
@@ -17,7 +13,7 @@ class ServerDLL : public IHookableDirFilter
 {
 public:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
-	virtual void Hook(const std::wstring& moduleName, HMODULE hModule, uintptr_t moduleStart, size_t moduleLength);
+	virtual void Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept);
 	virtual void Unhook();
 	virtual void Clear();
 	virtual bool CanHook(const std::wstring& moduleFullName);
@@ -39,7 +35,7 @@ protected:
 	_PM_PlayerMove ORIG_PM_PlayerMove;
 	_GiveFnptrsToDll ORIG_GiveFnptrsToDll;
 
-	uintptr_t ppmove;
+	void **ppmove;
 	ptrdiff_t offPlayerIndex;
 	ptrdiff_t offOldbuttons;
 	ptrdiff_t offOnground;

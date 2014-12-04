@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-#include "..\common\const.h"
+#include "../common/const.h"
 
 
 // this file is included by both the engine and the client-dll,
@@ -253,7 +253,7 @@ typedef struct cl_enginefuncs_s
 } cl_enginefunc_t;
 
 #ifndef IN_BUTTONS_H
-#include "..\common\in_buttons.h"
+#include "../common/in_buttons.h"
 #endif
 
 #define CLDLL_INTERFACE_VERSION		7

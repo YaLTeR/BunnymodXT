@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SPTLib\memutils.hpp>
+#include <SPTLib/MemUtils.hpp>
 
 namespace Patterns
 {

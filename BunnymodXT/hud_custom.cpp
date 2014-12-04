@@ -1,7 +1,5 @@
 #include "stdafx.hpp"
 
-#include <sstream>
-
 #include "cvars.hpp"
 #include "modules.hpp"
 #include "hud_custom.hpp"

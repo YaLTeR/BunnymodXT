@@ -1,3 +1,3 @@
 #pragma once
 
-unsigned int __stdcall MainThread(void *);
+#define BUNNYMODXT_VERSION "0.3-beta"

@@ -57,11 +57,11 @@ namespace CustomHud
 
 	static void UpdateConsoleColor()
 	{
-		if (!con_color)
+		if (!con_color_)
 			return;
 
 		unsigned r = 0, g = 0, b = 0;
-		std::istringstream ss(con_color->string);
+		std::istringstream ss(con_color_->string);
 		ss >> r >> g >> b;
 
 		consoleColor[0] = r / 255.0f;

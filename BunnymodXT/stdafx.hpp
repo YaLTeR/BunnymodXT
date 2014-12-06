@@ -12,11 +12,14 @@
 #define __stdcall
 #endif
 
-
 #include <cmath>
+#include <cstdarg>
 #include <cstddef>
+#include <ctime>
 
+#include <chrono>
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 #include <unordered_map>
 

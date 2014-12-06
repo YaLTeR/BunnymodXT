@@ -285,7 +285,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	}
 	
 	// Now we can register cvars and commands provided that we already have engfuncs.
-	if (*reinterpret_cast<uintptr_t*>(pEngfuncs))
+	if (pEngfuncs && *reinterpret_cast<uintptr_t*>(pEngfuncs))
 		RegisterCVarsAndCommands();
 
 	if (needToIntercept)
@@ -347,7 +347,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_CHud_Init)
 	{
-		con_color = pEngfuncs->pfnGetCvarPointer("con_color");
+		con_color_ = pEngfuncs->pfnGetCvarPointer("con_color_");
 		y_bxt_hud = pEngfuncs->pfnRegisterVariable("y_bxt_hud", "1", 0);
 		y_bxt_hud_precision = pEngfuncs->pfnRegisterVariable("y_bxt_hud_precision", "6", 0);
 		y_bxt_hud_velocity = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity", "1", 0);

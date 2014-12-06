@@ -8,16 +8,19 @@ include_directories(".")
 set(LIBRARY_OUTPUT_DIRECTORY ".")
 
 set(SOURCE_FILES
+    SPTLib/IHookableModule.cpp
+    SPTLib/IHookableDirFilter.cpp
+    SPTLib/IHookableNameFilter.cpp
+    SPTLib/Hooks.cpp
+    SPTLib/Linux/Hooks_linux.cpp
+    SPTLib/MemUtils.cpp
+    SPTLib/Linux/MemUtils_linux.cpp
+    SPTLib/sptlib.cpp
     BunnymodXT/modules/ClientDLL.cpp
     BunnymodXT/modules/ServerDLL.cpp
     BunnymodXT/cvars.cpp
     BunnymodXT/hud_custom.cpp
     BunnymodXT/modules.cpp
-    SPTLib/IHookableModule.cpp
-    SPTLib/Hooks.cpp
-    SPTLib/MemUtils.cpp
-    SPTLib/IHookableDirFilter.cpp
-    SPTLib/IHookableNameFilter.cpp
-    SPTLib/sptlib.cpp)
+    BunnymodXT/Linux/main_linux.cpp)
 
 add_library(BunnymodXT SHARED ${SOURCE_FILES})

@@ -202,14 +202,23 @@ bool ServerDLL::CanHook(const std::wstring& moduleFullName)
 	std::wstring pathToLiblist = moduleFullName.substr(0, moduleFullName.rfind(GetFolderName(moduleFullName))).append(L"liblist.gam");
 
 	// If liblist.gam exists in the parent directory, then we're (hopefully) good.
-	std::ifstream liblist(Convert(pathToLiblist));
-	if (liblist.good())
-	{
-		liblist.close();
-		return true;
-	}
+	struct wrapper {
+		wrapper(FILE* f) : file(f) {};
+		~wrapper() {
+			if (file)
+				fclose(file);
+		}
+		operator FILE*() const
+		{
+			return file;
+		}
 
-	liblist.close();
+		FILE* file;
+	} liblist(fopen(Convert(pathToLiblist).c_str(), "r"));
+
+	if (liblist)
+		return true;
+
 	return false;
 }
 

@@ -4,6 +4,7 @@
 
 #include <SPTLib/IHookableNameFilter.hpp>
 #include "../hud_custom.hpp"
+#include "../sptlib-wrapper.hpp"
 
 typedef void(__cdecl *_PM_Jump) ();
 typedef void(__cdecl *_PM_PreventMegaBunnyJumping) ();
@@ -15,7 +16,7 @@ typedef void(__cdecl *_V_CalcRefdef) (ref_params_t* pparams);
 class ClientDLL : public IHookableNameFilter
 {
 public:
-	ClientDLL() : IHookableNameFilter({ L"client.dll" }) {};
+	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};
 	virtual void Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept);
 	virtual void Unhook();
 	virtual void Clear();

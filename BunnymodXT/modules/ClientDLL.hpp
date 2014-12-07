@@ -36,12 +36,20 @@ public:
 	void __cdecl HOOKED_PM_PreventMegaBunnyJumping_Func();
 	static int __cdecl HOOKED_Initialize(cl_enginefunc_t* pEnginefuncs, int iVersion);
 	int __cdecl HOOKED_Initialize_Func(cl_enginefunc_t* pEnginefuncs, int iVersion);
+	static void __cdecl HOOKED_V_CalcRefdef(ref_params_t* pparams);
+	void __cdecl HOOKED_V_CalcRefdef_Func(ref_params_t* pparams);
+
+	#ifdef _WIN32
 	static void __fastcall HOOKED_CHud_Init(void* thisptr, int edx);
 	void __fastcall HOOKED_CHud_Init_Func(void* thisptr, int edx);
 	static void __fastcall HOOKED_CHud_VidInit(void* thisptr, int edx);
 	void __fastcall HOOKED_CHud_VidInit_Func(void* thisptr, int edx);
-	static void __cdecl HOOKED_V_CalcRefdef(ref_params_t* pparams);
-	void __cdecl HOOKED_V_CalcRefdef_Func(ref_params_t* pparams);
+	#else
+	static void __cdecl HOOKED_CHud_Init(void* thisptr);
+	void __cdecl HOOKED_CHud_Init_Func(void* thisptr);
+	static void __cdecl HOOKED_CHud_VidInit(void* thisptr);
+	void __cdecl HOOKED_CHud_VidInit_Func(void* thisptr);
+	#endif
 
 	void RegisterCVarsAndCommands();
 	void AddHudElem(void* pHudElem);

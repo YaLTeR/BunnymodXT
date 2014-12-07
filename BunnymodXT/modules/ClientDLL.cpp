@@ -28,6 +28,12 @@ int __cdecl ClientDLL::HOOKED_Initialize(cl_enginefunc_t* pEnginefuncs, int iVer
 	return clientDLL.HOOKED_Initialize_Func(pEnginefuncs, iVersion);
 }
 
+void __cdecl ClientDLL::HOOKED_V_CalcRefdef(ref_params_t* pparams)
+{
+	return clientDLL.HOOKED_V_CalcRefdef_Func(pparams);
+}
+
+#ifdef _WIN32
 void __fastcall ClientDLL::HOOKED_CHud_Init(void* thisptr, int edx)
 {
 	return clientDLL.HOOKED_CHud_Init_Func(thisptr, edx);
@@ -37,13 +43,20 @@ void __fastcall ClientDLL::HOOKED_CHud_VidInit(void* thisptr, int edx)
 {
 	return clientDLL.HOOKED_CHud_VidInit_Func(thisptr, edx);
 }
-
-void __cdecl ClientDLL::HOOKED_V_CalcRefdef(ref_params_t* pparams)
+#else
+void __cdecl ClientDLL::HOOKED_CHud_Init(void* thisptr)
 {
-	return clientDLL.HOOKED_V_CalcRefdef_Func(pparams);
+	return clientDLL.HOOKED_CHud_Init_Func(thisptr);
 }
 
+void __cdecl ClientDLL::HOOKED_CHud_VidInit(void* thisptr)
+{
+	return clientDLL.HOOKED_CHud_VidInit_Func(thisptr);
+}
+#endif
+
 // Linux hooks.
+#ifndef _WIN32
 extern "C" int __cdecl Initialize(cl_enginefunc_t* pEnginefuncs, int iVersion)
 {
 	return ClientDLL::HOOKED_Initialize(pEnginefuncs, iVersion);
@@ -51,18 +64,19 @@ extern "C" int __cdecl Initialize(cl_enginefunc_t* pEnginefuncs, int iVersion)
 
 extern "C" void __cdecl _ZN4CHud4InitEv(void* thisptr)
 {
-	return ClientDLL::HOOKED_CHud_Init(thisptr, 0);
+	return ClientDLL::HOOKED_CHud_Init(thisptr);
 }
 
 extern "C" void __cdecl _ZN4CHud7VidInitEv(void* thisptr)
 {
-	return ClientDLL::HOOKED_CHud_VidInit(thisptr, 0);
+	return ClientDLL::HOOKED_CHud_VidInit(thisptr);
 }
 
 extern "C" void __cdecl V_CalcRefdef(ref_params_t* pparams)
 {
 	return ClientDLL::HOOKED_V_CalcRefdef(pparams);
 }
+#endif
 
 void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
 {
@@ -540,7 +554,11 @@ int __cdecl ClientDLL::HOOKED_Initialize_Func(cl_enginefunc_t* pEnginefuncs, int
 	return rv;
 }
 
+#ifdef _WIN32
 void __fastcall ClientDLL::HOOKED_CHud_Init_Func(void* thisptr, int edx)
+#else
+void __cdecl ClientDLL::HOOKED_CHud_Init_Func(void* thisptr)
+#endif
 {
 	#ifdef _WIN32
 	ORIG_CHud_Init(thisptr, edx);
@@ -554,7 +572,11 @@ void __fastcall ClientDLL::HOOKED_CHud_Init_Func(void* thisptr, int edx)
 		customHudWrapper.Init();
 }
 
+#ifdef _WIN32
 void __fastcall ClientDLL::HOOKED_CHud_VidInit_Func(void* thisptr, int edx)
+#else
+void __cdecl ClientDLL::HOOKED_CHud_VidInit_Func(void* thisptr)
+#endif
 {
 	#ifdef _WIN32
 	ORIG_CHud_VidInit(thisptr, edx);

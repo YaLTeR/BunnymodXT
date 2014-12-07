@@ -111,6 +111,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	if (!pCHud_AddHudElem)
 		fCHud_AddHudElem = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCHud_AddHudElem, &pCHud_AddHudElem);
 
+	auto fIsOP4 = std::async(std::launch::deferred, MemUtils::FindPattern, moduleBase, moduleLength, reinterpret_cast<const byte *>("weapon_pipewrench"), "xxxxxxxxxxxxxxxxx");
 	auto fIsGMC = std::async(std::launch::deferred, MemUtils::FindPattern, moduleBase, moduleLength, reinterpret_cast<const byte *>("weapon_SPchemicalgun"), "xxxxxxxxxxxxxxxxxxxx");
 
 	pPMJump = MemUtils::GetSymbolAddress(moduleHandle, "PM_Jump");
@@ -286,8 +287,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			}
 			else
 			{
-				// Check for GMC.
-				if (fIsGMC.get() != NULL)
+				// Check for GMC or Linux OP4.
+				if (fIsGMC.get() || fIsOP4.get())
 				{
 					novd = true;
 					EngineDevMsg("[client dll] Using CHudBase without a virtual destructor.\n");
@@ -422,6 +423,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	if (pEngfuncs && *reinterpret_cast<uintptr_t*>(pEngfuncs))
 		RegisterCVarsAndCommands();
 
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize));
+
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
@@ -444,6 +447,8 @@ void ClientDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), reinterpret_cast<void*>(HOOKED_CHud_VidInit) },
 			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) }
 		});
+
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_Initialize));
 
 	Clear();
 }

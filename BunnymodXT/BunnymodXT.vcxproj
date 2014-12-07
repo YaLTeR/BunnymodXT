@@ -100,16 +100,15 @@
     <ClInclude Include="..\HLSDK\engine\edict.h" />
     <ClInclude Include="..\HLSDK\engine\eiface.h" />
     <ClInclude Include="..\HLSDK\engine\progdefs.h" />
-    <ClInclude Include="..\SPTLib\detoursutils.hpp" />
     <ClInclude Include="..\SPTLib\Hooks.hpp" />
     <ClInclude Include="..\SPTLib\IHookableDirFilter.hpp" />
     <ClInclude Include="..\SPTLib\IHookableModule.hpp" />
     <ClInclude Include="..\SPTLib\IHookableNameFilter.hpp" />
-    <ClInclude Include="..\SPTLib\memutils.hpp" />
+    <ClInclude Include="..\SPTLib\MemUtils.hpp" />
     <ClInclude Include="..\SPTLib\sptlib-stdafx.hpp" />
     <ClInclude Include="..\SPTLib\sptlib.hpp" />
+    <ClInclude Include="..\SPTLib\Windows\DetoursUtils.hpp" />
     <ClInclude Include="bunnymodxt.hpp" />
-    <ClInclude Include="conutils.hpp" />
     <ClInclude Include="cvars.hpp" />
     <ClInclude Include="hud_custom.hpp" />
     <ClInclude Include="modules.hpp" />
@@ -118,14 +117,9 @@
     <ClInclude Include="patterns.hpp" />
     <ClInclude Include="sptlib-wrapper.hpp" />
     <ClInclude Include="stdafx.hpp" />
+    <ClInclude Include="Windows\conutils.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\SPTLib\detoursutils.cpp">
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
-    </ClCompile>
     <ClCompile Include="..\SPTLib\Hooks.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
@@ -148,10 +142,10 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
     </ClCompile>
-    <ClCompile Include="..\SPTLib\memutils.cpp">
+    <ClCompile Include="..\SPTLib\MemUtils.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
     </ClCompile>
     <ClCompile Include="..\SPTLib\sptlib-stdafx.cpp">
@@ -168,28 +162,44 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
     </ClCompile>
-    <ClCompile Include="bunnymodxt.cpp" />
-    <ClCompile Include="conutils.cpp" />
-    <ClCompile Include="cvars.cpp" />
-    <ClCompile Include="dllmain.cpp">
-      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </PrecompiledHeader>
-      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</CompileAsManaged>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </PrecompiledHeader>
+    <ClCompile Include="..\SPTLib\Windows\DetoursUtils.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
     </ClCompile>
+    <ClCompile Include="..\SPTLib\Windows\Hooks_win.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <ClCompile Include="..\SPTLib\Windows\MemUtils_win.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <ClCompile Include="cvars.cpp" />
     <ClCompile Include="hud_custom.cpp" />
     <ClCompile Include="modules.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="modules\ClientDLL.cpp" />
-    <ClCompile Include="modules\ServerDLL.cpp" />
+    <ClCompile Include="modules\ClientDLL.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="modules\ServerDLL.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Windows\conutils.cpp" />
+    <ClCompile Include="Windows\dllmain.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

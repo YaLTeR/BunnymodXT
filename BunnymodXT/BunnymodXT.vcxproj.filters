@@ -34,6 +34,18 @@
     <Filter Include="HLSDK\cl_dll">
       <UniqueIdentifier>{795baffa-11df-4325-9dc2-6de13bc216e6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SPTLib\Windows">
+      <UniqueIdentifier>{0a7adf91-2232-4f28-b26e-88afbccc9ccf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Windows">
+      <UniqueIdentifier>{189e2208-bd6d-4743-ae67-f6bdaa711f3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Windows">
+      <UniqueIdentifier>{594f37f2-ef74-4516-ab27-f76dc784b151}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\modules">
+      <UniqueIdentifier>{0cd38ac8-f433-4192-b5bb-2caf67378a84}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bunnymodxt.hpp">
@@ -41,9 +53,6 @@
     </ClInclude>
     <ClInclude Include="stdafx.hpp">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SPTLib\detoursutils.hpp">
-      <Filter>SPTLib</Filter>
     </ClInclude>
     <ClInclude Include="..\SPTLib\Hooks.hpp">
       <Filter>SPTLib</Filter>
@@ -54,23 +63,14 @@
     <ClInclude Include="..\SPTLib\IHookableNameFilter.hpp">
       <Filter>SPTLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\SPTLib\memutils.hpp">
-      <Filter>SPTLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\SPTLib\sptlib.hpp">
       <Filter>SPTLib</Filter>
     </ClInclude>
     <ClInclude Include="..\SPTLib\sptlib-stdafx.hpp">
       <Filter>SPTLib</Filter>
     </ClInclude>
-    <ClInclude Include="modules\ServerDLL.hpp">
-      <Filter>Source Files\modules</Filter>
-    </ClInclude>
     <ClInclude Include="..\SPTLib\IHookableDirFilter.hpp">
       <Filter>SPTLib</Filter>
-    </ClInclude>
-    <ClInclude Include="modules\ClientDLL.hpp">
-      <Filter>Source Files\modules</Filter>
     </ClInclude>
     <ClInclude Include="..\HLSDK\common\const.h">
       <Filter>HLSDK\common</Filter>
@@ -108,9 +108,6 @@
     <ClInclude Include="cvars.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="conutils.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="sptlib-wrapper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -135,19 +132,25 @@
     <ClInclude Include="..\HLSDK\common\ref_params.h">
       <Filter>HLSDK\common</Filter>
     </ClInclude>
+    <ClInclude Include="..\SPTLib\MemUtils.hpp">
+      <Filter>SPTLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SPTLib\Windows\DetoursUtils.hpp">
+      <Filter>SPTLib\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Windows\conutils.hpp">
+      <Filter>Header Files\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\ClientDLL.hpp">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\ServerDLL.hpp">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bunnymodxt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SPTLib\detoursutils.cpp">
-      <Filter>SPTLib</Filter>
     </ClCompile>
     <ClCompile Include="..\SPTLib\Hooks.cpp">
       <Filter>SPTLib</Filter>
@@ -158,17 +161,11 @@
     <ClCompile Include="..\SPTLib\IHookableNameFilter.cpp">
       <Filter>SPTLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\SPTLib\memutils.cpp">
-      <Filter>SPTLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\SPTLib\sptlib.cpp">
       <Filter>SPTLib</Filter>
     </ClCompile>
     <ClCompile Include="..\SPTLib\sptlib-stdafx.cpp">
       <Filter>SPTLib</Filter>
-    </ClCompile>
-    <ClCompile Include="conutils.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\ServerDLL.cpp">
       <Filter>Source Files\modules</Filter>
@@ -187,6 +184,24 @@
     </ClCompile>
     <ClCompile Include="hud_custom.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SPTLib\MemUtils.cpp">
+      <Filter>SPTLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SPTLib\Windows\DetoursUtils.cpp">
+      <Filter>SPTLib\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SPTLib\Windows\Hooks_win.cpp">
+      <Filter>SPTLib\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SPTLib\Windows\MemUtils_win.cpp">
+      <Filter>SPTLib\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="Windows\dllmain.cpp">
+      <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="Windows\conutils.cpp">
+      <Filter>Source Files\Windows</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

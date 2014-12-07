@@ -129,7 +129,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		}
 	}
 
-	if (!pPMPreventMegaBunnyJumping)
+	if (!ORIG_PM_PreventMegaBunnyJumping)
 	{
 		ptnNumber = fPMPreventMegaBunnyJumping.get();
 		if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
@@ -144,7 +144,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		}
 	}
 
-	if (!pPMPlayerMove)
+	if (!ORIG_PM_PlayerMove)
 	{
 		ptnNumber = fPMPlayerMove.get();
 		if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
@@ -233,7 +233,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		MemUtils::Intercept(moduleName, {
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
-			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) }
+			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
+			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll) }
 		});
 }
 
@@ -243,7 +244,8 @@ void ServerDLL::Unhook()
 		MemUtils::RemoveInterception(m_Name, {
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
-			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) }
+			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
+			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll) }
 		});
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_GiveFnptrsToDll));

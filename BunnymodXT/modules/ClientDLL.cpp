@@ -108,7 +108,12 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		fPMPreventMegaBunnyJumping = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPreventMegaBunnyJumping, &pPMPreventMegaBunnyJumping);
 
 	pCHud_AddHudElem = MemUtils::GetSymbolAddress(moduleHandle, "_ZN4CHud10AddHudElemEP8CHudBase");
-	if (!pCHud_AddHudElem)
+	if (pCHud_AddHudElem)
+	{
+		CHud_AddHudElem = reinterpret_cast<_CHud_AddHudElem>(pCHud_AddHudElem);
+		EngineDevMsg("[client dll] Found CHud::AddHudElem at %p.\n", pCHud_AddHudElem);
+	}
+	else
 		fCHud_AddHudElem = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCHud_AddHudElem, &pCHud_AddHudElem);
 
 	auto fIsOP4 = std::async(std::launch::deferred, MemUtils::FindPattern, moduleBase, moduleLength, reinterpret_cast<const byte *>("weapon_pipewrench"), "xxxxxxxxxxxxxxxxx");
@@ -171,7 +176,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		}
 	}
 
-	if (!pPMPreventMegaBunnyJumping)
+	if (!ORIG_PM_PreventMegaBunnyJumping)
 	{
 		ptnNumber = fPMPreventMegaBunnyJumping.get();
 		if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
@@ -387,12 +392,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 		if (ORIG_CHud_Init)
 		{
-			if (pCHud_AddHudElem)
-			{
-				CHud_AddHudElem = reinterpret_cast<_CHud_AddHudElem>(pCHud_AddHudElem);
-				EngineDevMsg("[client dll] Found CHud::AddHudElem at %p.\n", pCHud_AddHudElem);
-			}
-			else
+			if (!CHud_AddHudElem)
 			{
 				ptnNumber = fCHud_AddHudElem.get();
 				if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)

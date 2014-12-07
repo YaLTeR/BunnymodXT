@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.4)
 project(BunnymodXT)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -m32")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -m32 -g")
 
 include_directories(".")
 
@@ -18,6 +18,7 @@ set(SOURCE_FILES
     SPTLib/sptlib.cpp
     BunnymodXT/modules/ClientDLL.cpp
     BunnymodXT/modules/ServerDLL.cpp
+    BunnymodXT/modules/PMSharedHooks_linux.cpp
     BunnymodXT/cvars.cpp
     BunnymodXT/hud_custom.cpp
     BunnymodXT/modules.cpp

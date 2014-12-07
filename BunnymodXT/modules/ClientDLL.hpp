@@ -7,11 +7,18 @@
 #include "../sptlib-wrapper.hpp"
 
 typedef void(__cdecl *_PM_Jump) ();
+typedef void(__cdecl *_PM_PlayerMove) (qboolean);
 typedef void(__cdecl *_PM_PreventMegaBunnyJumping) ();
 typedef int(__cdecl *_Initialize) (cl_enginefunc_t* pEnginefuncs, int iVersion);
+typedef void(__cdecl *_V_CalcRefdef) (ref_params_t* pparams);
+
+#ifdef _WIN32
 typedef void(__fastcall *_CHud_InitFunc) (void* thisptr, int edx); // For both CHud::Init and CHud::VidInit.
 typedef void(__fastcall *_CHud_AddHudElem) (void* thisptr, int edx, void* pHudElem);
-typedef void(__cdecl *_V_CalcRefdef) (ref_params_t* pparams);
+#else
+typedef void(__cdecl *_CHud_InitFunc) (void* thisptr); // For both CHud::Init and CHud::VidInit.
+typedef void(__cdecl *_CHud_AddHudElem) (void* thisptr, void* pHudElem);
+#endif
 
 class ClientDLL : public IHookableNameFilter
 {
@@ -23,6 +30,8 @@ public:
 
 	static void __cdecl HOOKED_PM_Jump();
 	void __cdecl HOOKED_PM_Jump_Func();
+	static void __cdecl HOOKED_PM_PlayerMove(qboolean server); // Needed only for the Linux hook.
+	void __cdecl HOOKED_PM_PlayerMove_Func(qboolean server);
 	static void __cdecl HOOKED_PM_PreventMegaBunnyJumping();
 	void __cdecl HOOKED_PM_PreventMegaBunnyJumping_Func();
 	static int __cdecl HOOKED_Initialize(cl_enginefunc_t* pEnginefuncs, int iVersion);
@@ -41,6 +50,7 @@ public:
 
 protected:
 	_PM_Jump ORIG_PM_Jump;
+	_PM_PlayerMove ORIG_PM_PlayerMove;
 	_PM_PreventMegaBunnyJumping ORIG_PM_PreventMegaBunnyJumping;
 	_Initialize ORIG_Initialize;
 	_CHud_InitFunc ORIG_CHud_Init;

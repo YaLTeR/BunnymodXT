@@ -19,4 +19,4 @@ This is the Bunnymod for Half-Life mods. Its primary function is to remove the b
 
 ###Environment variables (Linux)
 - **BXT_LOGFILE** - if set, logs all Bunnymod XT messages into a file with that filename.
-- **SPT_DEBUG** - if set to 1, logs all dlopen, dlclose and dlsym calls.
+- **SPTLIB_DEBUG** - if set to 1, logs all dlopen, dlclose and dlsym calls.

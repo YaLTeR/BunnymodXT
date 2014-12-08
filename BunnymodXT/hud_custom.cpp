@@ -96,8 +96,14 @@ namespace CustomHud
 		if (y_bxt_hud_velocity->value != 0.0f)
 		{
 			int x = 0, y = 0;
-			std::istringstream pos_ss(y_bxt_hud_velocity_pos->string);
-			pos_ss >> x >> y;
+			if (y_bxt_hud_velocity_pos->string[0])
+			{
+				std::istringstream pos_ss(y_bxt_hud_velocity_pos->string);
+				pos_ss >> x >> y;
+			}
+			else
+				x = -200;
+
 			x += si.iWidth;
 			
 			if (receivedAccurateInfo)
@@ -122,8 +128,17 @@ namespace CustomHud
 		if (y_bxt_hud_origin->value != 0.0f)
 		{
 			int x = 0, y = 0;
-			std::istringstream pos_ss(y_bxt_hud_origin_pos->string);
-			pos_ss >> x >> y;
+			if (y_bxt_hud_origin_pos->string[0])
+			{
+				std::istringstream pos_ss(y_bxt_hud_origin_pos->string);
+				pos_ss >> x >> y;
+			}
+			else
+			{
+				x = -200;
+				y = (si.iCharHeight * 6) + 1;
+			}
+
 			x += si.iWidth;
 
 			if (receivedAccurateInfo)

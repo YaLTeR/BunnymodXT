@@ -502,9 +502,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		y_bxt_hud = pEngfuncs->pfnRegisterVariable("y_bxt_hud", "1", 0);
 		y_bxt_hud_precision = pEngfuncs->pfnRegisterVariable("y_bxt_hud_precision", "6", 0);
 		y_bxt_hud_velocity = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity", "1", 0);
-		y_bxt_hud_velocity_pos = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity_pos", "-200 0", 0);
+		y_bxt_hud_velocity_pos = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity_pos", "", 0);
 		y_bxt_hud_origin = pEngfuncs->pfnRegisterVariable("y_bxt_hud_origin", "0", 0);
-		y_bxt_hud_origin_pos = pEngfuncs->pfnRegisterVariable("y_bxt_hud_origin_pos", "-200 115", 0);
+		y_bxt_hud_origin_pos = pEngfuncs->pfnRegisterVariable("y_bxt_hud_origin_pos", "", 0);
 	}
 
 	EngineDevMsg("[client dll] Registered CVars.\n");

@@ -14,7 +14,7 @@ namespace CustomHud
 
 	static double length(double x, double y)
 	{
-		return std::sqrt((x * x) + (y * y));
+		return std::hypot(x, y);
 	}
 
 	static double length(double x, double y, double z)
@@ -28,13 +28,13 @@ namespace CustomHud
 		clientDLL.pEngfuncs->pfnGetScreenInfo(&si);
 	}
 
-	static void DrawString(int x, int y, char* s, float r, float g, float b)
+	static void DrawString(int x, int y, const char* s, float r, float g, float b)
 	{
 		clientDLL.pEngfuncs->pfnDrawSetTextColor(r, g, b);
-		clientDLL.pEngfuncs->pfnDrawConsoleString(x, y, s);
+		clientDLL.pEngfuncs->pfnDrawConsoleString(x, y, const_cast<char*>(s));
 	}
 
-	static void DrawString(int x, int y, char* s)
+	static void DrawString(int x, int y, const char* s)
 	{
 		DrawString(x, y, s, consoleColor[0], consoleColor[1], consoleColor[2]);
 	}
@@ -57,11 +57,11 @@ namespace CustomHud
 
 	static void UpdateConsoleColor()
 	{
-		if (!con_color_)
+		if (con_color_.IsEmpty())
 			return;
 
 		unsigned r = 0, g = 0, b = 0;
-		std::istringstream ss(con_color_->string);
+		std::istringstream ss(con_color_.GetString());
 		ss >> r >> g >> b;
 
 		consoleColor[0] = r / 255.0f;
@@ -80,29 +80,27 @@ namespace CustomHud
 
 	void Draw(float flTime)
 	{
-		if (y_bxt_hud && (y_bxt_hud->value == 0.0f))
+		if (!y_bxt_hud.GetBool())
 			return;
 
-		// Let's just assume that every HUD-related cvar was successfully allocated by that point,
-		// that'll save us from a huge amount of spaghetti code.
-		unsigned precision = 0;
-		std::istringstream ss(y_bxt_hud_precision->string);
-		ss >> precision;
+		int precision = y_bxt_hud_precision.GetInt();
 		if (precision > 16)
 			precision = 16;
 
 		UpdateConsoleColor();
 		
-		if (y_bxt_hud_velocity->value != 0.0f)
+		if (y_bxt_hud_velocity.GetBool())
 		{
 			int x = 0, y = 0;
-			if (y_bxt_hud_velocity_pos->string[0])
+			if (y_bxt_hud_velocity_pos.IsEmpty())
 			{
-				std::istringstream pos_ss(y_bxt_hud_velocity_pos->string);
-				pos_ss >> x >> y;
+				x = -200;
 			}
 			else
-				x = -200;
+			{
+				std::istringstream pos_ss(y_bxt_hud_velocity_pos.GetString());
+				pos_ss >> x >> y;
+			}
 
 			x += si.iWidth;
 			
@@ -125,18 +123,18 @@ namespace CustomHud
 			DrawMultilineString(x, y, out.str());
 		}
 
-		if (y_bxt_hud_origin->value != 0.0f)
+		if (y_bxt_hud_origin.GetBool())
 		{
 			int x = 0, y = 0;
-			if (y_bxt_hud_origin_pos->string[0])
-			{
-				std::istringstream pos_ss(y_bxt_hud_origin_pos->string);
-				pos_ss >> x >> y;
-			}
-			else
+			if (y_bxt_hud_origin_pos.IsEmpty())
 			{
 				x = -200;
 				y = (si.iCharHeight * 6) + 1;
+			}
+			else
+			{
+				std::istringstream pos_ss(y_bxt_hud_origin_pos.GetString());
+				pos_ss >> x >> y;
 			}
 
 			x += si.iWidth;

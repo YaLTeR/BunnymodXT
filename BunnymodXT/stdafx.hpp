@@ -12,6 +12,7 @@
 #define __stdcall
 #endif
 
+#include <cassert>
 #include <cmath>
 #include <cstdarg>
 #include <cstddef>

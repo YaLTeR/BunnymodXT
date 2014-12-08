@@ -318,13 +318,13 @@ void ServerDLL::RegisterCVarsAndCommands()
 		return;
 
 	if (ORIG_PM_Jump)
-		pEngfuncs->pfnCVarRegister(&y_bxt_autojump);
+		pEngfuncs->pfnCVarRegister(y_bxt_autojump.GetPointer());
 
 	if (ORIG_PM_PreventMegaBunnyJumping)
-		pEngfuncs->pfnCVarRegister(&y_bxt_bhopcap);
+		pEngfuncs->pfnCVarRegister(y_bxt_bhopcap.GetPointer());
 
 	if (ORIG_PM_PlayerMove)
-		pEngfuncs->pfnCVarRegister(&_y_bxt_taslog);
+		pEngfuncs->pfnCVarRegister(_y_bxt_taslog.GetPointer());
 
 	EngineDevMsg("[server dll] Registered CVars.\n");
 }
@@ -340,7 +340,7 @@ void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
 	int *oldbuttons = reinterpret_cast<int*>(pmove + offOldbuttons);
 	int orig_oldbuttons = *oldbuttons;
 
-	if (y_bxt_autojump.value != 0.0f)
+	if (y_bxt_autojump.GetBool())
 	{
 		if ((orig_onground != -1) && !cantJumpNextTime[playerIndex])
 			*oldbuttons &= ~IN_JUMP;
@@ -351,7 +351,7 @@ void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
 	if (offBhopcap)
 	{
 		auto pPMJump = reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump);
-		if (y_bxt_bhopcap.value != 0.0f)
+		if (y_bxt_bhopcap.GetBool())
 		{
 			if (*reinterpret_cast<byte*>(pPMJump + offBhopcap) == 0x90
 				&& *reinterpret_cast<byte*>(pPMJump + offBhopcap + 1) == 0x90)
@@ -367,7 +367,7 @@ void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
 	if ((orig_onground != -1) && (*onground == -1))
 		cantJumpNextTime[playerIndex] = true;
 
-	if (y_bxt_autojump.value != 0.0f)
+	if (y_bxt_autojump.GetBool())
 	{
 		*oldbuttons = orig_oldbuttons;
 	}
@@ -375,7 +375,7 @@ void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
 
 void __cdecl ServerDLL::HOOKED_PM_PreventMegaBunnyJumping_Func()
 {
-	if (y_bxt_bhopcap.value != 0.0f)
+	if (y_bxt_bhopcap.GetBool())
 		return ORIG_PM_PreventMegaBunnyJumping();
 }
 
@@ -393,21 +393,25 @@ void __cdecl ServerDLL::HOOKED_PM_PlayerMove_Func(qboolean server)
 	origin =   reinterpret_cast<float*>(pmove + offOrigin);
 	angles =   reinterpret_cast<float*>(pmove + offAngles);
 
-	if (_y_bxt_taslog.value != 0.0f)
+	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
+
+	if (_y_bxt_taslog.GetBool())
 	{
-		pEngfuncs->pfnAlertMessage(at_console, "-- BXT TAS Log Start --\n");
-		pEngfuncs->pfnAlertMessage(at_console, "Player index: %d\n", playerIndex);
-		pEngfuncs->pfnAlertMessage(at_console, "Velocity: %.8f; %.8f; %.8f; origin: %.8f; %.8f; %.8f\n",velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
+		ALERT(at_console, "-- BXT TAS Log Start --\n");
+		ALERT(at_console, "Player index: %d\n", playerIndex);
+		ALERT(at_console, "Velocity: %.8f; %.8f; %.8f; origin: %.8f; %.8f; %.8f\n",velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
 	}
 
 	ORIG_PM_PlayerMove(server);
 
-	if (_y_bxt_taslog.value != 0.0f)
+	if (_y_bxt_taslog.GetBool())
 	{
-		pEngfuncs->pfnAlertMessage(at_console, "Angles: %.8f; %.8f; %.8f\n", angles[0], angles[1], angles[2]);
-		pEngfuncs->pfnAlertMessage(at_console, "New velocity: %.8f; %.8f; %.8f; new origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
-		pEngfuncs->pfnAlertMessage(at_console, "-- BXT TAS Log End --\n");
+		ALERT(at_console, "Angles: %.8f; %.8f; %.8f\n", angles[0], angles[1], angles[2]);
+		ALERT(at_console, "New velocity: %.8f; %.8f; %.8f; new origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
+		ALERT(at_console, "-- BXT TAS Log End --\n");
 	}
+
+	#undef ALERT
 
 	CustomHud::UpdatePlayerInfo(velocity, origin);
 }

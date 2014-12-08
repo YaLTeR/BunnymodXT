@@ -490,22 +490,27 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (!pEngfuncs || !*reinterpret_cast<uintptr_t*>(pEngfuncs))
 		return;
 
+	#define REG(name, str) pEngfuncs->pfnRegisterVariable(const_cast<char*>(name), const_cast<char*>(str), 0)
+
 	if (ORIG_PM_Jump)
-		y_bxt_autojump_prediction = pEngfuncs->pfnRegisterVariable("y_bxt_autojump_prediction", "0", 0);
+		y_bxt_autojump_prediction.Assign(REG("y_bxt_autojump_prediction", "0"));
 
 	if (ORIG_PM_PreventMegaBunnyJumping)
-		y_bxt_bhopcap_prediction = pEngfuncs->pfnRegisterVariable("y_bxt_bhopcap_prediction", "0", 0);
+		y_bxt_bhopcap_prediction.Assign(REG("y_bxt_bhopcap_prediction", "0"));
 
 	if (ORIG_CHud_Init)
 	{
-		con_color_ = pEngfuncs->pfnGetCvarPointer("con_color");
-		y_bxt_hud = pEngfuncs->pfnRegisterVariable("y_bxt_hud", "1", 0);
-		y_bxt_hud_precision = pEngfuncs->pfnRegisterVariable("y_bxt_hud_precision", "6", 0);
-		y_bxt_hud_velocity = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity", "1", 0);
-		y_bxt_hud_velocity_pos = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity_pos", "", 0);
-		y_bxt_hud_origin = pEngfuncs->pfnRegisterVariable("y_bxt_hud_origin", "0", 0);
-		y_bxt_hud_origin_pos = pEngfuncs->pfnRegisterVariable("y_bxt_hud_origin_pos", "", 0);
+
+		con_color_.Assign(pEngfuncs->pfnGetCvarPointer("con_color"));
+		y_bxt_hud.Assign(REG("y_bxt_hud", "1"));
+		y_bxt_hud_precision.Assign(REG("y_bxt_hud_precision", "6"));
+		y_bxt_hud_velocity.Assign(REG("y_bxt_hud_velocity", "1"));
+		y_bxt_hud_velocity_pos.Assign(REG("y_bxt_hud_velocity_pos", ""));
+		y_bxt_hud_origin.Assign(REG("y_bxt_hud_origin", "0"));
+		y_bxt_hud_origin_pos.Assign(REG("y_bxt_hud_origin_pos", ""));
 	}
+
+	#undef REG
 
 	EngineDevMsg("[client dll] Registered CVars.\n");
 }
@@ -531,7 +536,7 @@ void __cdecl ClientDLL::HOOKED_PM_Jump_Func()
 	int *oldbuttons = reinterpret_cast<int*>(pmove + offOldbuttons);
 	int orig_oldbuttons = *oldbuttons;
 
-	if (!y_bxt_autojump_prediction || (y_bxt_autojump_prediction->value != 0.0f))
+	if (y_bxt_autojump_prediction.GetBool())
 	{
 		if ((orig_onground != -1) && !cantJumpNextTime)
 			*oldbuttons &= ~IN_JUMP;
@@ -542,7 +547,7 @@ void __cdecl ClientDLL::HOOKED_PM_Jump_Func()
 	if (offBhopcap)
 	{
 		auto pPMJump = reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump);
-		if (y_bxt_bhopcap_prediction && (y_bxt_bhopcap_prediction->value != 0.0f))
+		if (y_bxt_bhopcap_prediction.GetBool())
 		{
 			if (*reinterpret_cast<byte*>(pPMJump + offBhopcap) == 0x90
 				&& *reinterpret_cast<byte*>(pPMJump + offBhopcap + 1) == 0x90)
@@ -558,7 +563,7 @@ void __cdecl ClientDLL::HOOKED_PM_Jump_Func()
 	if ((orig_onground != -1) && (*onground == -1))
 		cantJumpNextTime = true;
 
-	if (!y_bxt_autojump_prediction || (y_bxt_autojump_prediction->value != 0.0f))
+	if (y_bxt_autojump_prediction.GetBool())
 	{
 		*oldbuttons = orig_oldbuttons;
 	}
@@ -571,7 +576,7 @@ void __cdecl ClientDLL::HOOKED_PM_PlayerMove_Func(qboolean server)
 
 void __cdecl ClientDLL::HOOKED_PM_PreventMegaBunnyJumping_Func()
 {
-	if (y_bxt_bhopcap_prediction && (y_bxt_bhopcap_prediction->value != 0.0f))
+	if (y_bxt_bhopcap_prediction.GetBool())
 		ORIG_PM_PreventMegaBunnyJumping();
 }
 

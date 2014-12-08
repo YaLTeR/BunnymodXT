@@ -78,6 +78,15 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			offPlayerIndex = 0;
 			offOldbuttons = 200;
 			offOnground = 224;
+
+			const byte bhopcapPattern[] = { 0xD9, 0x05, '?', '?', '?', '?', 0xBA, 0xFF, 0xFF, 0xFF, 0xFF, 0xD8, 0x89, '?', '?', '?', '?', 0xD9, 0xC9, 0x89, 0x91, '?', '?', '?', '?', 0xDF, 0xE9, 0x0F, 0x82 };
+			auto bhopcapAddr = MemUtils::FindPattern(moduleBase, moduleLength, bhopcapPattern, "xx????xxxxxxx????xxxx????xxxx");
+			if (bhopcapAddr)
+			{
+				EngineDevMsg("Found the bhopcap pattern at %p.\n", bhopcapAddr);
+				offBhopcap = reinterpret_cast<ptrdiff_t>(bhopcapAddr) - reinterpret_cast<ptrdiff_t>(pPMJump) + 27;
+				memcpy(originalBhopcapInsn, reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(bhopcapAddr) + 27), sizeof(originalBhopcapInsn));
+			}
 		}
 		else
 			pPMJump = nullptr; // Try pattern searching.
@@ -265,6 +274,8 @@ void ServerDLL::Clear()
 	offVelocity = 0;
 	offOrigin = 0;
 	offAngles = 0;
+	offBhopcap = 0;
+	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	pEngfuncs = nullptr;
 	cantJumpNextTime.clear();
 	m_Intercepted = false;
@@ -334,6 +345,20 @@ void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
 	}
 
 	cantJumpNextTime[playerIndex] = false;
+
+	if (offBhopcap)
+	{
+		auto pPMJump = reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump);
+		if (y_bxt_bhopcap.value != 0.0f)
+		{
+			if (*reinterpret_cast<byte*>(pPMJump + offBhopcap) == 0x90
+				&& *reinterpret_cast<byte*>(pPMJump + offBhopcap + 1) == 0x90)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pPMJump + offBhopcap), 6, originalBhopcapInsn);
+		}
+		else if (*reinterpret_cast<byte*>(pPMJump + offBhopcap) == 0x0F
+				&& *reinterpret_cast<byte*>(pPMJump + offBhopcap + 1) == 0x82)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pPMJump + offBhopcap), 6, reinterpret_cast<const byte*>("\x90\x90\x90\x90\x90\x90"));
+	}
 
 	ORIG_PM_Jump();
 

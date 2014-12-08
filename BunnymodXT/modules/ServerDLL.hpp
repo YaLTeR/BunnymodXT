@@ -43,6 +43,9 @@ protected:
 	ptrdiff_t offOrigin;
 	ptrdiff_t offAngles;
 
+	ptrdiff_t offBhopcap;
+	byte originalBhopcapInsn[6];
+
 	enginefuncs_t *pEngfuncs;
 
 	std::unordered_map<int, bool> cantJumpNextTime;

@@ -69,6 +69,9 @@ protected:
 	void **ppmove;
 	ptrdiff_t offOldbuttons;
 	ptrdiff_t offOnground;
+	
+	ptrdiff_t offBhopcap;
+	byte originalBhopcapInsn[6];
 
 	void *pHud;
 

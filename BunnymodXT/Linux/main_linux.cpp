@@ -78,9 +78,13 @@ static __attribute__((constructor)) void Construct()
 {
 	puts("Bunnymod XT version " BUNNYMODXT_VERSION ".");
 
-	logfile = fopen("BunnymodXT.log", "a");
-	if (!logfile)
-		perror("Could not open BunnymodXT.log");
+	auto bxtLogfile = getenv("BXT_LOGFILE");
+	if (bxtLogfile)
+	{
+		logfile = fopen(bxtLogfile, "a");
+		if (!logfile)
+			perror("Could not open the BXT logfile");
+	}
 
 	_EngineMsg = PrintMessage;
 	_EngineDevMsg = PrintDevMessage;

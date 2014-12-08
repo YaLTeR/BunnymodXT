@@ -498,7 +498,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_CHud_Init)
 	{
-		con_color_ = pEngfuncs->pfnGetCvarPointer("con_color_");
+		con_color_ = pEngfuncs->pfnGetCvarPointer("con_color");
 		y_bxt_hud = pEngfuncs->pfnRegisterVariable("y_bxt_hud", "1", 0);
 		y_bxt_hud_precision = pEngfuncs->pfnRegisterVariable("y_bxt_hud_precision", "6", 0);
 		y_bxt_hud_velocity = pEngfuncs->pfnRegisterVariable("y_bxt_hud_velocity", "1", 0);

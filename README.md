@@ -20,3 +20,7 @@ This is the Bunnymod for Half-Life mods. Its primary function is to remove the b
 ###Environment variables (Linux)
 - **BXT_LOGFILE** - if set, logs all Bunnymod XT messages into a file with that filename.
 - **SPTLIB_DEBUG** - if set to 1, logs all dlopen, dlclose and dlsym calls.
+
+#Building
+- Windows: You will need [Detours Express 3.0](http://research.microsoft.com/en-us/downloads/d36340fb-4d3c-4ddd-bf5b-1db25d03713d/default.aspx) and Visual Studio 2013 or later (express version will do).
+- Linux: Clone this repository and execute **cmake .** and **make** in its directory.

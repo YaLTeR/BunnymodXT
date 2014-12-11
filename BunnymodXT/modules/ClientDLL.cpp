@@ -90,9 +90,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 	MemUtils::ptnvec_size ptnNumber;
 
-	void *pPMJump = nullptr,
-		*pPMPreventMegaBunnyJumping = nullptr,
-		*pCHud_AddHudElem = nullptr;
+	void *pPMJump, *pPMPreventMegaBunnyJumping, *pCHud_AddHudElem;
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(moduleHandle, "PM_PlayerMove"));
 

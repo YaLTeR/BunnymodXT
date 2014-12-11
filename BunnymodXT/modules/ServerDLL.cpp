@@ -39,9 +39,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 	MemUtils::ptnvec_size ptnNumber;
 
-	void *pPMJump = nullptr,
-		*pPMPreventMegaBunnyJumping = nullptr,
-		*pPMPlayerMove = nullptr;
+	void *pPMJump, *pPMPreventMegaBunnyJumping, *pPMPlayerMove;
 
 	std::future<MemUtils::ptnvec_size> fPMPreventMegaBunnyJumping, fPMPlayerMove;
 

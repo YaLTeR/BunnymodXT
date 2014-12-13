@@ -4,7 +4,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <Windows.h>
+#include <process.h>
 #endif
 #if defined(__GNUC__)
 #define __cdecl __attribute__((cdecl))
@@ -20,6 +21,7 @@
 
 #include <chrono>
 #include <fstream>
+#include <future>
 #include <iomanip>
 #include <sstream>
 #include <unordered_map>

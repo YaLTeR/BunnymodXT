@@ -2,6 +2,12 @@
 
 namespace CustomHud
 {
+	typedef struct
+	{
+		float origin[3];
+		float velocity[3];
+	} playerinfo;
+
 	void Init();
 	void VidInit();
 	void Draw(float flTime);

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "stdafx.hpp"
-
 class CVarWrapper
 {
 public:
@@ -20,6 +18,26 @@ protected:
 	cvar_t *m_CVar;
 	bool m_Serverside;
 };
+
+inline cvar_t* CVarWrapper::GetPointer() const
+{
+	return m_CVar;
+}
+
+inline bool CVarWrapper::IsEmpty() const
+{
+	return !m_CVar || !m_CVar->string[0];
+}
+
+inline bool CVarWrapper::GetBool() const
+{
+	return m_CVar && (m_CVar->value != 0.0f);
+}
+
+inline int CVarWrapper::GetInt() const
+{
+	return m_CVar ? atoi(m_CVar->string) : 0;
+}
 
 // Serverside CVars
 extern const CVarWrapper y_bxt_autojump;

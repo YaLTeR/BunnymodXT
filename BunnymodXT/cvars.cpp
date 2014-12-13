@@ -4,6 +4,7 @@
 
 CVarWrapper::CVarWrapper()
 {
+	m_CVar = nullptr;
 	m_Serverside = false;
 }
 
@@ -31,29 +32,6 @@ void CVarWrapper::Assign(cvar_t* cvar)
 	assert(!m_Serverside);
 
 	m_CVar = cvar;
-}
-
-cvar_t* CVarWrapper::GetPointer() const
-{
-	return m_CVar;
-}
-
-bool CVarWrapper::IsEmpty() const
-{
-	return !m_CVar || !m_CVar->string[0];
-}
-
-bool CVarWrapper::GetBool() const
-{
-	return m_CVar && (m_CVar->value != 0.0f);
-}
-
-int CVarWrapper::GetInt() const
-{
-	if (!m_CVar)
-		return 0;
-
-	return atoi(m_CVar->string);
 }
 
 std::string CVarWrapper::GetString() const

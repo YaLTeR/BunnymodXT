@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../stdafx.hpp"
-
 namespace ConUtils
 {
     void Init();

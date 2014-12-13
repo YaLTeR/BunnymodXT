@@ -1,12 +1,10 @@
 #include "stdafx.hpp"
 
-#include <process.h>
-
 #include "../sptlib-wrapper.hpp"
-#include "conutils.hpp"
 #include <SPTLib/Hooks.hpp>
 #include "../bunnymodxt.hpp"
 #include "../modules.hpp"
+#include "conutils.hpp"
 
 void PrintMessage(const char* format, ...)
 {

@@ -50,6 +50,17 @@ namespace Patterns
 			"xxx????xx????xx????xxxxxx????xxxxxxxxx"
 		}
 	};
+	
+	const MemUtils::ptnvec ptnsBhopcap =
+	{
+		{
+			"HL-SteamPipe",
+			{
+				0xD9, 0x05, '?', '?', '?', '?', 0xBA, 0xFF, 0xFF, 0xFF, 0xFF, 0xD8, 0x89, '?', '?', '?', '?', 0xD9, 0xC9, 0x89, 0x91, '?', '?', '?', '?', 0xDF, 0xE9, 0x0F, 0x82
+			},
+			"xx????xxxxxxx????xxxx????xxxx"
+		}
+	};
 
 	const MemUtils::ptnvec ptnsPMPlayerMove =
 	{

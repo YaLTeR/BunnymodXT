@@ -128,9 +128,9 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			offOldbuttons = 200;
 			offOnground = 224;
 
-			const byte bhopcapPattern[] = { 0xD9, 0x05, '?', '?', '?', '?', 0xBA, 0xFF, 0xFF, 0xFF, 0xFF, 0xD8, 0x89, '?', '?', '?', '?', 0xD9, 0xC9, 0x89, 0x91, '?', '?', '?', '?', 0xDF, 0xE9, 0x0F, 0x82 };
-			auto bhopcapAddr = MemUtils::FindPattern(moduleBase, moduleLength, bhopcapPattern, "xx????xxxxxxx????xxxx????xxxx");
-			if (bhopcapAddr)
+			void *bhopcapAddr;
+			ptnNumber = MemUtils::FindUniqueSequence(moduleBase, moduleLength, Patterns::ptnsBhopcap, &bhopcapAddr);
+			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
 			{
 				EngineDevMsg("Found the bhopcap pattern at %p.\n", bhopcapAddr);
 				offBhopcap = reinterpret_cast<ptrdiff_t>(bhopcapAddr) - reinterpret_cast<ptrdiff_t>(pPMJump) + 27;
@@ -152,11 +152,6 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			switch (ptnNumber)
 			{
 			case 0:
-				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 2);
-				offOldbuttons = 200;
-				offOnground = 224;
-				break;
-
 			case 1:
 				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 2);
 				offOldbuttons = 200;
@@ -164,11 +159,6 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 				break;
 
 			case 2: // AG-Server, shouldn't happen here but who knows.
-				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 3);
-				offOldbuttons = 200;
-				offOnground = 224;
-				break;
-
 			case 3:
 				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 3);
 				offOldbuttons = 200;
@@ -313,9 +303,11 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 				ORIG_CHud_Init = reinterpret_cast<_CHud_InitFunc>(MemUtils::GetSymbolAddress(moduleHandle, "_ZN4CHud4InitEv"));
 				if (!ORIG_CHud_Init)
-					ORIG_CHud_Init = reinterpret_cast<_CHud_InitFunc>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr) + offCallOffset) + (reinterpret_cast<uintptr_t>(addr) + offCallOffset + 4)); // Call by offset.
-				EngineDevMsg("[client dll] pHud is %p; CHud::Init is located at %p.\n", pHud, ORIG_CHud_Init);
+					ORIG_CHud_Init = reinterpret_cast<_CHud_InitFunc>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr) + offCallOffset)
+						+ (reinterpret_cast<uintptr_t>(addr) + offCallOffset + 4)); // Call by offset.
 
+				EngineDevMsg("[client dll] pHud is %p; CHud::Init is located at %p.\n", pHud, ORIG_CHud_Init);
 
 				ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(MemUtils::GetSymbolAddress(moduleHandle, "_ZN4CHud7VidInitEv"));
 				if (!ORIG_CHud_VidInit)
@@ -339,7 +331,9 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 						if (addr_)
 						{
-							ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr_) + 6) + (reinterpret_cast<uintptr_t>(addr_) + 10));
+							ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(
+								*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr_) + 6)
+								+ (reinterpret_cast<uintptr_t>(addr_) + 10));
 							EngineDevMsg("[client dll] CHud::VidInit is located at %p.\n", ORIG_CHud_VidInit);
 						}
 						else
@@ -364,7 +358,9 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 								addr_ = MemUtils::FindPattern(pHUD_VidInit, 40, ptn2, "xxxxxx");
 							if (addr_)
 							{
-								ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr_) + 6) + (reinterpret_cast<uintptr_t>(addr_) + 10));
+								ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(
+									*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr_) + 6)
+									+ (reinterpret_cast<uintptr_t>(addr_) + 10));
 								EngineDevMsg("[client dll] CHud::VidInit is located at %p.\n", ORIG_CHud_VidInit);
 							}
 							else
@@ -562,9 +558,7 @@ void __cdecl ClientDLL::HOOKED_PM_Jump_Func()
 		cantJumpNextTime = true;
 
 	if (y_bxt_autojump_prediction.GetBool())
-	{
 		*oldbuttons = orig_oldbuttons;
-	}
 }
 
 void __cdecl ClientDLL::HOOKED_PM_PlayerMove_Func(qboolean server)

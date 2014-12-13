@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../stdafx.hpp"
-
 #include <SPTLib/IHookableDirFilter.hpp>
 
 typedef void(__cdecl *_PM_Jump) ();

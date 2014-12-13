@@ -1,10 +1,8 @@
 #pragma once
 
-#include "../stdafx.hpp"
-
+#include "../sptlib-wrapper.hpp"
 #include <SPTLib/IHookableNameFilter.hpp>
 #include "../hud_custom.hpp"
-#include "../sptlib-wrapper.hpp"
 
 typedef void(__cdecl *_PM_Jump) ();
 typedef void(__cdecl *_PM_PlayerMove) (qboolean);

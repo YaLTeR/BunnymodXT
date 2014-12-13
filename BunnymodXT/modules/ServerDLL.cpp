@@ -77,9 +77,9 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			offOldbuttons = 200;
 			offOnground = 224;
 
-			const byte bhopcapPattern[] = { 0xD9, 0x05, '?', '?', '?', '?', 0xBA, 0xFF, 0xFF, 0xFF, 0xFF, 0xD8, 0x89, '?', '?', '?', '?', 0xD9, 0xC9, 0x89, 0x91, '?', '?', '?', '?', 0xDF, 0xE9, 0x0F, 0x82 };
-			auto bhopcapAddr = MemUtils::FindPattern(moduleBase, moduleLength, bhopcapPattern, "xx????xxxxxxx????xxxx????xxxx");
-			if (bhopcapAddr)
+			void *bhopcapAddr;
+			ptnNumber = MemUtils::FindUniqueSequence(moduleBase, moduleLength, Patterns::ptnsBhopcap, &bhopcapAddr);
+			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
 			{
 				EngineDevMsg("Found the bhopcap pattern at %p.\n", bhopcapAddr);
 				offBhopcap = reinterpret_cast<ptrdiff_t>(bhopcapAddr) - reinterpret_cast<ptrdiff_t>(pPMJump) + 27;
@@ -101,12 +101,6 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			switch (ptnNumber)
 			{
 			case 0:
-				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 2);
-				offPlayerIndex = 0;
-				offOldbuttons = 200;
-				offOnground = 224;
-				break;
-
 			case 1:
 				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 2);
 				offPlayerIndex = 0;
@@ -115,12 +109,6 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 				break;
 
 			case 2:
-				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 3);
-				offPlayerIndex = 0;
-				offOldbuttons = 200;
-				offOnground = 224;
-				break;
-
 			case 3: // AG-Client, shouldn't happen here but who knows.
 				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 3);
 				offPlayerIndex = 0;
@@ -366,9 +354,7 @@ void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
 		cantJumpNextTime[playerIndex] = true;
 
 	if (y_bxt_autojump.GetBool())
-	{
 		*oldbuttons = orig_oldbuttons;
-	}
 }
 
 void __cdecl ServerDLL::HOOKED_PM_PreventMegaBunnyJumping_Func()

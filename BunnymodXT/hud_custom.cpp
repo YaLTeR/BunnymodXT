@@ -9,8 +9,7 @@ namespace CustomHud
 	static SCREENINFO si;
 	static float consoleColor[3] = { 1.0f, (180 / 255.0f), (30 / 255.0f) };
 	static bool receivedAccurateInfo = false;
-	static float velocity[3];
-	static float origin[3];
+	static playerinfo player;
 
 	static double length(double x, double y)
 	{
@@ -114,11 +113,11 @@ namespace CustomHud
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
 			out.precision(precision);
-			out << "X: " << velocity[0] << "\n"
-				<< "Y: " << velocity[1] << "\n"
-				<< "Z: " << velocity[2] << "\n"
-				<< "XY: " << length(velocity[0], velocity[1]) << "\n"
-				<< "XYZ: " << length(velocity[0], velocity[1], velocity[2]);
+			out << "X: " << player.velocity[0] << "\n"
+				<< "Y: " << player.velocity[1] << "\n"
+				<< "Z: " << player.velocity[2] << "\n"
+				<< "XY: " << length(player.velocity[0], player.velocity[1]) << "\n"
+				<< "XYZ: " << length(player.velocity[0], player.velocity[1], player.velocity[2]);
 
 			DrawMultilineString(x, y, out.str());
 		}
@@ -149,9 +148,9 @@ namespace CustomHud
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
 			out.precision(precision);
-			out << "X: " << origin[0] << "\n"
-				<< "Y: " << origin[1] << "\n"
-				<< "Z: " << origin[2];
+			out << "X: " << player.origin[0] << "\n"
+				<< "Y: " << player.origin[1] << "\n"
+				<< "Z: " << player.origin[2];
 
 			DrawMultilineString(x, y, out.str());
 		}
@@ -161,12 +160,12 @@ namespace CustomHud
 
 	void UpdatePlayerInfo(float vel[3], float org[3])
 	{
-		velocity[0] = vel[0];
-		velocity[1] = vel[1];
-		velocity[2] = vel[2];
-		origin[0] = org[0];
-		origin[1] = org[1];
-		origin[2] = org[2];
+		player.velocity[0] = vel[0];
+		player.velocity[1] = vel[1];
+		player.velocity[2] = vel[2];
+		player.origin[0] = org[0];
+		player.origin[1] = org[1];
+		player.origin[2] = org[2];
 
 		receivedAccurateInfo = true;
 	}
@@ -175,12 +174,12 @@ namespace CustomHud
 	{
 		if (!receivedAccurateInfo)
 		{
-			velocity[0] = vel[0];
-			velocity[1] = vel[1];
-			velocity[2] = vel[2];
-			origin[0] = org[0];
-			origin[1] = org[1];
-			origin[2] = org[2];
+			player.velocity[0] = vel[0];
+			player.velocity[1] = vel[1];
+			player.velocity[2] = vel[2];
+			player.origin[0] = org[0];
+			player.origin[1] = org[1];
+			player.origin[2] = org[2];
 		}
 	}
 }

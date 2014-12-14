@@ -280,7 +280,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			if (!addr)
 			{
 				addr = MemUtils::FindPattern(pHUD_Init, 16, pattern_bs, "x????x");
-				ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(pHUD_Init);
+				if (addr)
+					ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(pHUD_Init);
 			}
 			if (!addr)
 			{
@@ -323,7 +324,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 						+ (reinterpret_cast<uintptr_t>(addr)+offCallOffset + 4)); // Call by offset.
 					EngineDevMsg("[client dll] pHud is %p; CHud::Init is located at %p.\n", pHud, ORIG_CHud_Init);
 				}
-				else
+				
+				if (ORIG_HUD_Init)
 					EngineDevMsg("[client dll] pHud is %p; hooking HUD_Init at %p.\n", pHud, ORIG_HUD_Init);
 
 				ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(MemUtils::GetSymbolAddress(moduleHandle, "_ZN4CHud7VidInitEv"));

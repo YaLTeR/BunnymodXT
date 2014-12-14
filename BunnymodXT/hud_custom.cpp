@@ -160,7 +160,7 @@ namespace CustomHud
 		// Based on a similar procedure from hud.cpp.
 		if (!SpriteList)
 		{
-			SpriteList = clientDLL.pEngfuncs->pfnSPR_GetList("sprites/hud.txt", &SpriteCount);
+			SpriteList = clientDLL.pEngfuncs->pfnSPR_GetList(const_cast<char*>("sprites/hud.txt"), &SpriteCount);
 			if (SpriteList)
 			{
 				for (client_sprite_t *p = SpriteList; p < (SpriteList + SpriteCount); ++p)

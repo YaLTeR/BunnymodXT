@@ -1,3 +1,3 @@
 #pragma once
 
-#define BUNNYMODXT_VERSION "0.3-beta"
+#define BUNNYMODXT_VERSION "0.3"

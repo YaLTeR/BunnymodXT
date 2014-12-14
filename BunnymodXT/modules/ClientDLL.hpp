@@ -9,6 +9,7 @@ typedef void(__cdecl *_PM_PlayerMove) (qboolean);
 typedef void(__cdecl *_PM_PreventMegaBunnyJumping) ();
 typedef int(__cdecl *_Initialize) (cl_enginefunc_t* pEnginefuncs, int iVersion);
 typedef void(__cdecl *_V_CalcRefdef) (ref_params_t* pparams);
+typedef void(__cdecl *_HUD_Init) ();
 
 #ifdef _WIN32
 typedef void(__fastcall *_CHud_InitFunc) (void* thisptr, int edx); // For both CHud::Init and CHud::VidInit.
@@ -36,6 +37,8 @@ public:
 	int __cdecl HOOKED_Initialize_Func(cl_enginefunc_t* pEnginefuncs, int iVersion);
 	static void __cdecl HOOKED_V_CalcRefdef(ref_params_t* pparams);
 	void __cdecl HOOKED_V_CalcRefdef_Func(ref_params_t* pparams);
+	static void __cdecl HOOKED_HUD_Init();
+	void __cdecl HOOKED_HUD_Init_Func();
 
 	#ifdef _WIN32
 	static void __fastcall HOOKED_CHud_Init(void* thisptr, int edx);
@@ -63,6 +66,7 @@ protected:
 	_CHud_InitFunc ORIG_CHud_VidInit;
 	_CHud_AddHudElem CHud_AddHudElem;
 	_V_CalcRefdef ORIG_V_CalcRefdef;
+	_HUD_Init ORIG_HUD_Init;
 
 	void **ppmove;
 	ptrdiff_t offOldbuttons;

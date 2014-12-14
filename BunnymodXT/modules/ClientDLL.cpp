@@ -33,6 +33,11 @@ void __cdecl ClientDLL::HOOKED_V_CalcRefdef(ref_params_t* pparams)
 	return clientDLL.HOOKED_V_CalcRefdef_Func(pparams);
 }
 
+void __cdecl ClientDLL::HOOKED_HUD_Init()
+{
+	return clientDLL.HOOKED_HUD_Init_Func();
+}
+
 #ifdef _WIN32
 void __fastcall ClientDLL::HOOKED_CHud_Init(void* thisptr, int edx)
 {
@@ -271,21 +276,30 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 			ptrdiff_t offGHudOffset = 1;
 			ptrdiff_t offCallOffset = 6;
-			auto addr = MemUtils::FindPattern(pHUD_Init, 40, pattern, "x????x");
+			auto addr = MemUtils::FindPattern(pHUD_Init, 16, pattern, "x????x");
 			if (!addr)
-				addr = MemUtils::FindPattern(pHUD_Init, 40, pattern_bs, "x????x");
+			{
+				addr = MemUtils::FindPattern(pHUD_Init, 16, pattern_bs, "x????x");
+				ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(pHUD_Init);
+			}
 			if (!addr)
 			{
 				addr = MemUtils::FindPattern(pHUD_Init, 40, pattern_linux, "xxx????x");
-				offCallOffset = 8;
-				offGHudOffset = 3;
+				if (addr)
+				{
+					offCallOffset = 8;
+					offGHudOffset = 3;
+				}
 			}
 			if (!addr)
 			{
 				addr = MemUtils::FindPattern(pHUD_Init, 40, pattern_op4, "x????x????xx????xxxxx????x");
-				offCallOffset = 26;
-				novd = true;
-				EngineDevMsg("[client dll] Using CHudBase without a virtual destructor.\n");
+				if (addr)
+				{
+					offCallOffset = 26;
+					novd = true;
+					EngineDevMsg("[client dll] Using CHudBase without a virtual destructor.\n");
+				}
 			}
 			else
 			{
@@ -302,12 +316,15 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 				pHud = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(addr) + offGHudOffset);
 
 				ORIG_CHud_Init = reinterpret_cast<_CHud_InitFunc>(MemUtils::GetSymbolAddress(moduleHandle, "_ZN4CHud4InitEv"));
-				if (!ORIG_CHud_Init)
+				if (!ORIG_CHud_Init && !ORIG_HUD_Init)
+				{
 					ORIG_CHud_Init = reinterpret_cast<_CHud_InitFunc>(
-						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr) + offCallOffset)
-						+ (reinterpret_cast<uintptr_t>(addr) + offCallOffset + 4)); // Call by offset.
-
-				EngineDevMsg("[client dll] pHud is %p; CHud::Init is located at %p.\n", pHud, ORIG_CHud_Init);
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr)+offCallOffset)
+						+ (reinterpret_cast<uintptr_t>(addr)+offCallOffset + 4)); // Call by offset.
+					EngineDevMsg("[client dll] pHud is %p; CHud::Init is located at %p.\n", pHud, ORIG_CHud_Init);
+				}
+				else
+					EngineDevMsg("[client dll] pHud is %p; hooking HUD_Init at %p.\n", pHud, ORIG_HUD_Init);
 
 				ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(MemUtils::GetSymbolAddress(moduleHandle, "_ZN4CHud7VidInitEv"));
 				if (!ORIG_CHud_VidInit)
@@ -323,17 +340,18 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 							ptn3[] = { 0x24, getbyte(pHud_uintptr, 0), getbyte(pHud_uintptr, 1), getbyte(pHud_uintptr, 2), getbyte(pHud_uintptr, 3), 0xE8 };
 						#undef getbyte
 
-						auto addr_ = MemUtils::FindPattern(pHUD_Reset, 40, ptn1, "xxxxxx");
+						auto addr_ = MemUtils::FindPattern(pHUD_Reset, 20, ptn1, "xxxxxx");
 						if (!addr_)
-							addr_ = MemUtils::FindPattern(pHUD_Reset, 40, ptn2, "xxxxxx");
+							addr_ = MemUtils::FindPattern(pHUD_Reset, 20, ptn2, "xxxxxx");
 						if (!addr_)
-							addr_ = MemUtils::FindPattern(pHUD_Reset, 40, ptn3, "xxxxxx");
+							addr_ = MemUtils::FindPattern(pHUD_Reset, 20, ptn3, "xxxxxx");
 
 						if (addr_)
 						{
 							ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(
 								*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr_) + 6)
 								+ (reinterpret_cast<uintptr_t>(addr_) + 10));
+
 							EngineDevMsg("[client dll] CHud::VidInit is located at %p.\n", ORIG_CHud_VidInit);
 						}
 						else
@@ -353,9 +371,9 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 								ptn2[] = { 0x24, getbyte(pHud_uintptr, 0), getbyte(pHud_uintptr, 1), getbyte(pHud_uintptr, 2), getbyte(pHud_uintptr, 3), 0xE8 };
 							#undef getbyte
 
-							auto addr_ = MemUtils::FindPattern(pHUD_VidInit, 40, ptn, "xxxxxx");
+							auto addr_ = MemUtils::FindPattern(pHUD_VidInit, 20, ptn, "xxxxxx");
 							if (!addr_)
-								addr_ = MemUtils::FindPattern(pHUD_VidInit, 40, ptn2, "xxxxxx");
+								addr_ = MemUtils::FindPattern(pHUD_VidInit, 20, ptn2, "xxxxxx");
 							if (addr_)
 							{
 								ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(
@@ -393,7 +411,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			EngineWarning("Custom HUD is not available.\n");
 		}
 
-		if (ORIG_CHud_Init)
+		if (ORIG_CHud_Init || ORIG_HUD_Init)
 		{
 			if (!CHud_AddHudElem)
 			{
@@ -427,6 +445,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		RegisterCVarsAndCommands();
 
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init));
 
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
@@ -435,7 +454,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize) },
 			{ reinterpret_cast<void**>(&ORIG_CHud_Init), reinterpret_cast<void*>(HOOKED_CHud_Init) },
 			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), reinterpret_cast<void*>(HOOKED_CHud_VidInit) },
-			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) }
+			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) }
 		});
 }
 
@@ -448,10 +468,12 @@ void ClientDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize) },
 			{ reinterpret_cast<void**>(&ORIG_CHud_Init), reinterpret_cast<void*>(HOOKED_CHud_Init) },
 			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), reinterpret_cast<void*>(HOOKED_CHud_VidInit) },
-			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) }
+			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) }
 		});
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_Initialize));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
 
 	Clear();
 }
@@ -467,6 +489,7 @@ void ClientDLL::Clear()
 	ORIG_CHud_VidInit = nullptr;
 	CHud_AddHudElem = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
+	ORIG_HUD_Init = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -492,16 +515,19 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (ORIG_PM_PreventMegaBunnyJumping)
 		y_bxt_bhopcap_prediction.Assign(REG("y_bxt_bhopcap_prediction", "0"));
 
-	if (ORIG_CHud_Init)
+	if (ORIG_CHud_Init || ORIG_HUD_Init)
 	{
 
 		con_color_.Assign(pEngfuncs->pfnGetCvarPointer("con_color"));
 		y_bxt_hud.Assign(REG("y_bxt_hud", "1"));
+		y_bxt_hud_color.Assign(REG("y_bxt_hud_color", ""));
 		y_bxt_hud_precision.Assign(REG("y_bxt_hud_precision", "6"));
-		y_bxt_hud_velocity.Assign(REG("y_bxt_hud_velocity", "1"));
+		y_bxt_hud_velocity.Assign(REG("y_bxt_hud_velocity", "0"));
 		y_bxt_hud_velocity_pos.Assign(REG("y_bxt_hud_velocity_pos", ""));
 		y_bxt_hud_origin.Assign(REG("y_bxt_hud_origin", "0"));
 		y_bxt_hud_origin_pos.Assign(REG("y_bxt_hud_origin_pos", ""));
+		y_bxt_hud_speedometer.Assign(REG("y_bxt_hud_speedometer", "1"));
+		y_bxt_hud_speedometer_pos.Assign(REG("y_bxt_hud_speedometer_pos", ""));
 	}
 
 	#undef REG
@@ -628,4 +654,14 @@ void __cdecl ClientDLL::HOOKED_V_CalcRefdef_Func(ref_params_t* pparams)
 	ORIG_V_CalcRefdef(pparams);
 
 	CustomHud::UpdatePlayerInfoInaccurate(pparams->simvel, pparams->simorg);
+}
+
+void __cdecl ClientDLL::HOOKED_HUD_Init_Func()
+{
+	ORIG_HUD_Init();
+
+	if (novd)
+		customHudWrapper_NoVD.Init();
+	else
+		customHudWrapper.Init();
 }

@@ -14,11 +14,16 @@
 #endif
 
 #include <cassert>
+#include <cctype>
 #include <cmath>
 #include <cstdarg>
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <ctime>
 
+#include <array>
 #include <chrono>
 #include <fstream>
 #include <future>

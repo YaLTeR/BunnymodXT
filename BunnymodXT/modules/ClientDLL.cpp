@@ -526,12 +526,16 @@ void ClientDLL::RegisterCVarsAndCommands()
 		y_bxt_hud_precision.Assign(REG("y_bxt_hud_precision", "6"));
 		y_bxt_hud_velocity.Assign(REG("y_bxt_hud_velocity", "0"));
 		y_bxt_hud_velocity_pos.Assign(REG("y_bxt_hud_velocity_pos", ""));
+		y_bxt_hud_velocity_anchor.Assign(REG("y_bxt_hud_velocity_anchor", "1 0"));
 		y_bxt_hud_origin.Assign(REG("y_bxt_hud_origin", "0"));
 		y_bxt_hud_origin_pos.Assign(REG("y_bxt_hud_origin_pos", ""));
+		y_bxt_hud_origin_anchor.Assign(REG("y_bxt_hud_origin_anchor", "1 0"));
 		y_bxt_hud_speedometer.Assign(REG("y_bxt_hud_speedometer", "1"));
 		y_bxt_hud_speedometer_pos.Assign(REG("y_bxt_hud_speedometer_pos", ""));
+		y_bxt_hud_speedometer_anchor.Assign(REG("y_bxt_hud_speedometer_anchor", "0.5 1"));
 		y_bxt_hud_jumpspeed.Assign(REG("y_bxt_hud_jumpspeed", "0"));
 		y_bxt_hud_jumpspeed_pos.Assign(REG("y_bxt_hud_jumpspeed_pos", ""));
+		y_bxt_hud_jumpspeed_anchor.Assign(REG("y_bxt_hud_jumpspeed_anchor", "0.5 1"));
 	}
 
 	#undef REG

@@ -9,8 +9,9 @@ namespace CustomHud
 	static const float FADE_DURATION_JUMPSPEED = 0.7f;
 
 	static SCREENINFO si;
-	static float consoleColor[3] = { 1.0f, (180 / 255.0f), (30 / 255.0f) };
-	static int hudColor[3] = { 255, 160, 0 }; // Yellowish.
+	static int precision;
+	static float consoleColor[3];
+	static int hudColor[3];
 	static bool receivedAccurateInfo = false;
 	static playerinfo player;
 
@@ -136,8 +137,44 @@ namespace CustomHud
 		DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2]);
 	}
 
+	static void GetPosition(const CVarWrapper& Pos, const CVarWrapper& Anchor, int* x, int* y, int rx = 0, int ry = 0)
+	{
+		std::istringstream iss;
+
+		if (!Pos.IsEmpty())
+		{
+			iss.str(Pos.GetString());
+			iss >> rx >> ry;
+			iss.str(std::string());
+			iss.clear();
+		}
+
+		iss.str(Anchor.GetString());
+		float w = 0, h = 0;
+		iss >> w >> h;
+
+		rx += w * si.iWidth;
+		ry += h * si.iHeight;
+
+		if (x) *x = rx;
+		if (y) *y = ry;
+	}
+
+	static void UpdatePrecision()
+	{
+		if (!y_bxt_hud_precision.IsEmpty())
+		{
+			precision = y_bxt_hud_precision.GetInt();
+			if (precision > 16)
+				precision = 16;
+		}
+		else
+			precision = 6;
+	}
+
 	static void UpdateColors()
 	{
+		// Default: taken from con_color of HL 6153.
 		consoleColor[0] = 1.0f;
 		consoleColor[1] = 180 / 255.0f;
 		consoleColor[2] = 30 / 255.0f;
@@ -153,6 +190,7 @@ namespace CustomHud
 			consoleColor[2] = b / 255.0f;
 		}
 
+		// Default: yellowish.
 		hudColor[0] = 255;
 		hudColor[1] = 160;
 		hudColor[2] = 0;
@@ -166,6 +204,122 @@ namespace CustomHud
 				color_ss >> hudColor[0] >> hudColor[1] >> hudColor[2];
 			}
 		}
+	}
+
+	static void DrawVelocity(float flTime)
+	{
+		if (y_bxt_hud_velocity.GetBool())
+		{
+			int x, y;
+			GetPosition(y_bxt_hud_velocity_pos, y_bxt_hud_velocity_anchor, &x, &y, -200, 0);
+			
+			if (receivedAccurateInfo)
+				DrawString(x, y, "Velocity:");
+			else
+				DrawString(x, y, "Velocity:", 1.0f, 0.0f, 0.0f);
+
+			y += si.iCharHeight;
+			
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "X: " << player.velocity[0] << "\n"
+				<< "Y: " << player.velocity[1] << "\n"
+				<< "Z: " << player.velocity[2] << "\n"
+				<< "XY: " << length(player.velocity[0], player.velocity[1]) << "\n"
+				<< "XYZ: " << length(player.velocity[0], player.velocity[1], player.velocity[2]);
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
+	static void DrawOrigin(float flTime)
+	{
+		if (y_bxt_hud_origin.GetBool())
+		{
+			int x, y;
+			GetPosition(y_bxt_hud_origin_pos, y_bxt_hud_origin_anchor, &x, &y, -200, (si.iCharHeight * 6) + 1);
+
+			if (receivedAccurateInfo)
+				DrawString(x, y, "Origin:");
+			else
+				DrawString(x, y, "Origin:", 1.0f, 0.0f, 0.0f);
+
+			y += si.iCharHeight;
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "X: " << player.origin[0] << "\n"
+				<< "Y: " << player.origin[1] << "\n"
+				<< "Z: " << player.origin[2];
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
+	static void DrawSpeedometer(float flTime)
+	{
+		if (y_bxt_hud_speedometer.GetBool())
+		{
+			int x, y;
+			GetPosition(y_bxt_hud_speedometer_pos, y_bxt_hud_speedometer_anchor, &x, &y, 0, -2 * NumberHeight);
+			DrawNumber(static_cast<int>(trunc(length(player.velocity[0], player.velocity[1]))), x, y);
+		}
+	}
+
+	static void DrawJumpspeed(float flTime)
+	{
+		static float prevVel[3] = { 0.0f, 0.0f, 0.0f };
+
+		if (y_bxt_hud_jumpspeed.GetBool())
+		{
+			static float fadeEndTime = 0.0f;
+			static int fadingFrom[3] = { hudColor[0], hudColor[1], hudColor[2] };
+			static double jumpSpeed = 0.0;
+
+			int r = hudColor[0],
+				g = hudColor[1],
+				b = hudColor[2];
+
+			if (FADE_DURATION_JUMPSPEED > 0.0f)
+			{
+				if ((player.velocity[2] != 0.0f && prevVel[2] == 0.0f)
+					|| (player.velocity[2] > 0.0f && prevVel[2] < 0.0f))
+				{
+					double difference = length(player.velocity[0], player.velocity[1]) - jumpSpeed;
+					if (difference != 0.0f)
+					{
+						if (difference > 0.0f)
+							vecCopy({ 0, 255, 0 }, fadingFrom);
+						else
+							vecCopy({ 255, 0, 0 }, fadingFrom);
+
+						fadeEndTime = flTime + FADE_DURATION_JUMPSPEED;
+						jumpSpeed = length(player.velocity[0], player.velocity[1]);
+					}
+				}
+
+				double passedTime = flTime - fadeEndTime + FADE_DURATION_JUMPSPEED;
+				if (passedTime <= 0.0f)
+					passedTime = 0.0f;
+				else if (passedTime > FADE_DURATION_JUMPSPEED || !std::isnormal(passedTime)) // Check for Inf, NaN, etc.
+					passedTime = FADE_DURATION_JUMPSPEED;
+
+				float colorVel[3] = { hudColor[0] - fadingFrom[0] / FADE_DURATION_JUMPSPEED,
+				                      hudColor[1] - fadingFrom[1] / FADE_DURATION_JUMPSPEED,
+				                      hudColor[2] - fadingFrom[2] / FADE_DURATION_JUMPSPEED };
+				r = hudColor[0] - colorVel[0] * (FADE_DURATION_JUMPSPEED - passedTime);
+				g = hudColor[1] - colorVel[1] * (FADE_DURATION_JUMPSPEED - passedTime);
+				b = hudColor[2] - colorVel[2] * (FADE_DURATION_JUMPSPEED - passedTime);
+			}
+
+			int x, y;
+			GetPosition(y_bxt_hud_jumpspeed_pos, y_bxt_hud_jumpspeed_anchor, &x, &y, 0, -3 * NumberHeight);
+			DrawNumber(static_cast<int>(trunc(jumpSpeed)), x, y, r, g, b);
+		}
+
+		vecCopy(player.velocity, prevVel);
 	}
 
 	void Init()
@@ -232,147 +386,14 @@ namespace CustomHud
 		if (!y_bxt_hud.GetBool())
 			return;
 
-		int precision = y_bxt_hud_precision.GetInt();
-		if (precision > 16)
-			precision = 16;
-
+		UpdatePrecision();
 		UpdateColors();
 
-		static float prevVel[3] = { 0.0f, 0.0f, 0.0f };
-		
-		if (y_bxt_hud_velocity.GetBool())
-		{
-			int x = -200,
-				y = 0;
-			if (!y_bxt_hud_velocity_pos.IsEmpty())
-			{
-				std::istringstream pos_ss(y_bxt_hud_velocity_pos.GetString());
-				pos_ss >> x >> y;
-			}
+		DrawVelocity(flTime);
+		DrawOrigin(flTime);
+		DrawSpeedometer(flTime);
+		DrawJumpspeed(flTime);
 
-			x += si.iWidth;
-			
-			if (receivedAccurateInfo)
-				DrawString(x, y, "Velocity:");
-			else
-				DrawString(x, y, "Velocity:", 1.0f, 0.0f, 0.0f);
-
-			y += si.iCharHeight;
-			
-			std::ostringstream out;
-			out.setf(std::ios::fixed);
-			out.precision(precision);
-			out << "X: " << player.velocity[0] << "\n"
-				<< "Y: " << player.velocity[1] << "\n"
-				<< "Z: " << player.velocity[2] << "\n"
-				<< "XY: " << length(player.velocity[0], player.velocity[1]) << "\n"
-				<< "XYZ: " << length(player.velocity[0], player.velocity[1], player.velocity[2]);
-
-			DrawMultilineString(x, y, out.str());
-		}
-
-		if (y_bxt_hud_origin.GetBool())
-		{
-			int x = -200,
-				y = (si.iCharHeight * 6) + 1;
-			if (!y_bxt_hud_origin_pos.IsEmpty())
-			{
-				std::istringstream pos_ss(y_bxt_hud_origin_pos.GetString());
-				pos_ss >> x >> y;
-			}
-
-			x += si.iWidth;
-
-			if (receivedAccurateInfo)
-				DrawString(x, y, "Origin:");
-			else
-				DrawString(x, y, "Origin:", 1.0f, 0.0f, 0.0f);
-
-			y += si.iCharHeight;
-
-			std::ostringstream out;
-			out.setf(std::ios::fixed);
-			out.precision(precision);
-			out << "X: " << player.origin[0] << "\n"
-				<< "Y: " << player.origin[1] << "\n"
-				<< "Z: " << player.origin[2];
-
-			DrawMultilineString(x, y, out.str());
-		}
-
-		if (y_bxt_hud_speedometer.GetBool())
-		{
-			int x = 0,
-				y = -2 * NumberHeight;
-			if (!y_bxt_hud_speedometer_pos.IsEmpty())
-			{
-				std::istringstream pos_ss(y_bxt_hud_speedometer_pos.GetString());
-				pos_ss >> x >> y;
-			}
-
-			x += si.iWidth / 2;
-			y += si.iHeight;
-
-			DrawNumber(static_cast<int>(trunc(length(player.velocity[0], player.velocity[1]))), x, y);
-		}
-
-		if (y_bxt_hud_jumpspeed.GetBool())
-		{
-			static float fadeEndTime = 0.0f;
-			static int fadingFrom[3] = { hudColor[0], hudColor[1], hudColor[2] };
-			static double jumpSpeed = length(player.velocity[0], player.velocity[1]);
-
-			int r = hudColor[0],
-				g = hudColor[1],
-				b = hudColor[2];
-
-			if (FADE_DURATION_JUMPSPEED > 0.0f)
-			{
-				if ((player.velocity[2] != 0.0f && prevVel[2] == 0.0f)
-					|| (player.velocity[2] > 0.0f && prevVel[2] < 0.0f))
-				{
-					double difference = length(player.velocity[0], player.velocity[1]) - jumpSpeed;
-					if (difference != 0.0f)
-					{
-						if (difference > 0.0f)
-							vecCopy({ 0, 255, 0 }, fadingFrom);
-						else
-							vecCopy({ 255, 0, 0 }, fadingFrom);
-
-						fadeEndTime = flTime + FADE_DURATION_JUMPSPEED;
-						jumpSpeed = length(player.velocity[0], player.velocity[1]);
-					}
-				}
-
-				double passedTime = flTime - fadeEndTime + FADE_DURATION_JUMPSPEED;
-				if (passedTime <= 0.0f)
-					passedTime = 0.0f;
-				else if (passedTime > FADE_DURATION_JUMPSPEED || !std::isnormal(passedTime)) // Check for Inf, NaN, etc.
-					passedTime = FADE_DURATION_JUMPSPEED;
-
-				float colorVel[3] = { hudColor[0] - fadingFrom[0] / FADE_DURATION_JUMPSPEED,
-				                      hudColor[1] - fadingFrom[1] / FADE_DURATION_JUMPSPEED,
-				                      hudColor[2] - fadingFrom[2] / FADE_DURATION_JUMPSPEED };
-				r = hudColor[0] - colorVel[0] * (FADE_DURATION_JUMPSPEED - passedTime);
-				g = hudColor[1] - colorVel[1] * (FADE_DURATION_JUMPSPEED - passedTime);
-				b = hudColor[2] - colorVel[2] * (FADE_DURATION_JUMPSPEED - passedTime);
-			}
-
-			int x = 0,
-				y = -3 * NumberHeight;
-			if (!y_bxt_hud_jumpspeed_pos.IsEmpty())
-			{
-				std::istringstream pos_ss(y_bxt_hud_jumpspeed_pos.GetString());
-				pos_ss >> x >> y;
-			}
-
-			x += si.iWidth / 2;
-			y += si.iHeight;
-
-			DrawNumber(static_cast<int>(trunc(jumpSpeed)), x, y, r, g, b);
-		}
-
-		vecCopy(player.velocity, prevVel);
 		receivedAccurateInfo = false;
 	}
 

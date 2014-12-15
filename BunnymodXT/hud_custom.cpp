@@ -30,13 +30,6 @@ namespace CustomHud
 			dest[i] = src[i];
 	}
 
-	template<typename T, size_t size = 3>
-	static inline void vecCopy(const std::vector<T>& src, T dest[])
-	{
-		for (size_t i = 0; i < size; ++i)
-			dest[i] = src[i];
-	}
-
 	static inline double sqr(double a)
 	{
 		return a * a;
@@ -291,9 +284,17 @@ namespace CustomHud
 					if (difference != 0.0f)
 					{
 						if (difference > 0.0f)
-							vecCopy<int>({ 0, 255, 0 }, fadingFrom);
+						{
+							fadingFrom[0] = 0;
+							fadingFrom[1] = 255;
+							fadingFrom[2] = 0;
+						}
 						else
-							vecCopy<int>({ 255, 0, 0 }, fadingFrom);
+						{
+							fadingFrom[0] = 255;
+							fadingFrom[1] = 0;
+							fadingFrom[2] = 0;
+						}
 
 						fadeEndTime = flTime + FADE_DURATION_JUMPSPEED;
 						jumpSpeed = length(player.velocity[0], player.velocity[1]);

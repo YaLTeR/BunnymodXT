@@ -24,14 +24,14 @@ namespace CustomHud
 	static int NumberHeight;
 
 	template<typename T, size_t size = 3>
-	static inline void vecCopy(const T src[size], T dest[size])
+	static inline void vecCopy(const T src[], T dest[])
 	{
 		for (size_t i = 0; i < size; ++i)
 			dest[i] = src[i];
 	}
 
 	template<typename T, size_t size = 3>
-	static inline void vecCopy(const std::array<T, size> src, T dest[size])
+	static inline void vecCopy(const std::vector<T>& src, T dest[])
 	{
 		for (size_t i = 0; i < size; ++i)
 			dest[i] = src[i];
@@ -153,8 +153,8 @@ namespace CustomHud
 		float w = 0, h = 0;
 		iss >> w >> h;
 
-		rx += w * si.iWidth;
-		ry += h * si.iHeight;
+		rx += static_cast<int>(w * si.iWidth);
+		ry += static_cast<int>(h * si.iHeight);
 
 		if (x) *x = rx;
 		if (y) *y = ry;
@@ -291,9 +291,9 @@ namespace CustomHud
 					if (difference != 0.0f)
 					{
 						if (difference > 0.0f)
-							vecCopy({ 0, 255, 0 }, fadingFrom);
+							vecCopy<int>({ 0, 255, 0 }, fadingFrom);
 						else
-							vecCopy({ 255, 0, 0 }, fadingFrom);
+							vecCopy<int>({ 255, 0, 0 }, fadingFrom);
 
 						fadeEndTime = flTime + FADE_DURATION_JUMPSPEED;
 						jumpSpeed = length(player.velocity[0], player.velocity[1]);
@@ -309,9 +309,9 @@ namespace CustomHud
 				float colorVel[3] = { hudColor[0] - fadingFrom[0] / FADE_DURATION_JUMPSPEED,
 				                      hudColor[1] - fadingFrom[1] / FADE_DURATION_JUMPSPEED,
 				                      hudColor[2] - fadingFrom[2] / FADE_DURATION_JUMPSPEED };
-				r = hudColor[0] - colorVel[0] * (FADE_DURATION_JUMPSPEED - passedTime);
-				g = hudColor[1] - colorVel[1] * (FADE_DURATION_JUMPSPEED - passedTime);
-				b = hudColor[2] - colorVel[2] * (FADE_DURATION_JUMPSPEED - passedTime);
+				r = static_cast<int>(hudColor[0] - colorVel[0] * (FADE_DURATION_JUMPSPEED - passedTime));
+				g = static_cast<int>(hudColor[1] - colorVel[1] * (FADE_DURATION_JUMPSPEED - passedTime));
+				b = static_cast<int>(hudColor[2] - colorVel[2] * (FADE_DURATION_JUMPSPEED - passedTime));
 			}
 
 			int x, y;

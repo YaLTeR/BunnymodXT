@@ -137,13 +137,13 @@ namespace CustomHud
 		DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2]);
 	}
 
-	static void GetPosition(const CVarWrapper& Pos, const CVarWrapper& Anchor, int* x, int* y, int rx = 0, int ry = 0)
+	static void GetPosition(const CVarWrapper& Offset, const CVarWrapper& Anchor, int* x, int* y, int rx = 0, int ry = 0)
 	{
 		std::istringstream iss;
 
-		if (!Pos.IsEmpty())
+		if (!Offset.IsEmpty())
 		{
-			iss.str(Pos.GetString());
+			iss.str(Offset.GetString());
 			iss >> rx >> ry;
 			iss.str(std::string());
 			iss.clear();
@@ -211,7 +211,7 @@ namespace CustomHud
 		if (y_bxt_hud_velocity.GetBool())
 		{
 			int x, y;
-			GetPosition(y_bxt_hud_velocity_pos, y_bxt_hud_velocity_anchor, &x, &y, -200, 0);
+			GetPosition(y_bxt_hud_velocity_offset, y_bxt_hud_velocity_anchor, &x, &y, -200, 0);
 			
 			if (receivedAccurateInfo)
 				DrawString(x, y, "Velocity:");
@@ -238,7 +238,7 @@ namespace CustomHud
 		if (y_bxt_hud_origin.GetBool())
 		{
 			int x, y;
-			GetPosition(y_bxt_hud_origin_pos, y_bxt_hud_origin_anchor, &x, &y, -200, (si.iCharHeight * 6) + 1);
+			GetPosition(y_bxt_hud_origin_offset, y_bxt_hud_origin_anchor, &x, &y, -200, (si.iCharHeight * 6) + 1);
 
 			if (receivedAccurateInfo)
 				DrawString(x, y, "Origin:");
@@ -263,7 +263,7 @@ namespace CustomHud
 		if (y_bxt_hud_speedometer.GetBool())
 		{
 			int x, y;
-			GetPosition(y_bxt_hud_speedometer_pos, y_bxt_hud_speedometer_anchor, &x, &y, 0, -2 * NumberHeight);
+			GetPosition(y_bxt_hud_speedometer_offset, y_bxt_hud_speedometer_anchor, &x, &y, 0, -2 * NumberHeight);
 			DrawNumber(static_cast<int>(trunc(length(player.velocity[0], player.velocity[1]))), x, y);
 		}
 	}
@@ -315,7 +315,7 @@ namespace CustomHud
 			}
 
 			int x, y;
-			GetPosition(y_bxt_hud_jumpspeed_pos, y_bxt_hud_jumpspeed_anchor, &x, &y, 0, -3 * NumberHeight);
+			GetPosition(y_bxt_hud_jumpspeed_offset, y_bxt_hud_jumpspeed_anchor, &x, &y, 0, -3 * NumberHeight);
 			DrawNumber(static_cast<int>(trunc(jumpSpeed)), x, y, r, g, b);
 		}
 

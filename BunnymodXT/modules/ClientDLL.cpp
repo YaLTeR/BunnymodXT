@@ -530,6 +530,8 @@ void ClientDLL::RegisterCVarsAndCommands()
 		y_bxt_hud_origin_pos.Assign(REG("y_bxt_hud_origin_pos", ""));
 		y_bxt_hud_speedometer.Assign(REG("y_bxt_hud_speedometer", "1"));
 		y_bxt_hud_speedometer_pos.Assign(REG("y_bxt_hud_speedometer_pos", ""));
+		y_bxt_hud_jumpspeed.Assign(REG("y_bxt_hud_jumpspeed", "0"));
+		y_bxt_hud_jumpspeed_pos.Assign(REG("y_bxt_hud_jumpspeed_pos", ""));
 	}
 
 	#undef REG

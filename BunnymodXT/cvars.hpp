@@ -57,3 +57,5 @@ extern CVarWrapper y_bxt_hud_origin;
 extern CVarWrapper y_bxt_hud_origin_pos;
 extern CVarWrapper y_bxt_hud_speedometer;
 extern CVarWrapper y_bxt_hud_speedometer_pos;
+extern CVarWrapper y_bxt_hud_jumpspeed;
+extern CVarWrapper y_bxt_hud_jumpspeed_pos;

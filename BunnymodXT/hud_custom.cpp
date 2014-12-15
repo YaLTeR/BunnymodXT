@@ -6,6 +6,8 @@
 
 namespace CustomHud
 {
+	static const float FADE_DURATION_JUMPSPEED = 0.7f;
+
 	static SCREENINFO si;
 	static float consoleColor[3] = { 1.0f, (180 / 255.0f), (30 / 255.0f) };
 	static int hudColor[3] = { 255, 160, 0 }; // Yellowish.
@@ -18,6 +20,26 @@ namespace CustomHud
 	static std::array<wrect_t, 10> NumberSpriteRects;
 	static std::array<client_sprite_t*, 10> NumberSpritePointers;
 	static int NumberWidth;
+	static int NumberHeight;
+
+	template<typename T, size_t size = 3>
+	static inline void vecCopy(const T src[size], T dest[size])
+	{
+		for (size_t i = 0; i < size; ++i)
+			dest[i] = src[i];
+	}
+
+	template<typename T, size_t size = 3>
+	static inline void vecCopy(const std::array<T, size> src, T dest[size])
+	{
+		for (size_t i = 0; i < size; ++i)
+			dest[i] = src[i];
+	}
+
+	static inline double sqr(double a)
+	{
+		return a * a;
+	}
 
 	static inline double length(double x, double y)
 	{
@@ -26,7 +48,7 @@ namespace CustomHud
 
 	static inline double length(double x, double y, double z)
 	{
-		return std::sqrt((x * x) + (y * y) + (z * z));
+		return std::sqrt(sqr(x) + sqr(y) + sqr(z));
 	}
 
 	static int pow(int a, int p)
@@ -181,7 +203,10 @@ namespace CustomHud
 						NumberSprites[digit] = clientDLL.pEngfuncs->pfnSPR_Load(path.c_str());
 						
 						if (!digit)
+						{
 							NumberWidth = p->rc.right - p->rc.left;
+							NumberHeight = p->rc.bottom - p->rc.top;
+						}
 
 						EngineDevMsg("[client dll] Loaded the digit %d sprite from \"%s\".\n", digit, path.c_str());
 					}
@@ -212,6 +237,8 @@ namespace CustomHud
 			precision = 16;
 
 		UpdateColors();
+
+		static float prevVel[3] = { 0.0f, 0.0f, 0.0f };
 		
 		if (y_bxt_hud_velocity.GetBool())
 		{
@@ -276,10 +303,10 @@ namespace CustomHud
 		if (y_bxt_hud_speedometer.GetBool())
 		{
 			int x = 0,
-				y = -100;
+				y = -2 * NumberHeight;
 			if (!y_bxt_hud_speedometer_pos.IsEmpty())
 			{
-				std::istringstream pos_ss(y_bxt_hud_velocity_pos.GetString());
+				std::istringstream pos_ss(y_bxt_hud_speedometer_pos.GetString());
 				pos_ss >> x >> y;
 			}
 
@@ -289,17 +316,70 @@ namespace CustomHud
 			DrawNumber(static_cast<int>(trunc(length(player.velocity[0], player.velocity[1]))), x, y);
 		}
 
+		if (y_bxt_hud_jumpspeed.GetBool())
+		{
+			static float fadeEndTime = 0.0f;
+			static int fadingFrom[3] = { hudColor[0], hudColor[1], hudColor[2] };
+			static double jumpSpeed = length(player.velocity[0], player.velocity[1]);
+
+			int r = hudColor[0],
+				g = hudColor[1],
+				b = hudColor[2];
+
+			if (FADE_DURATION_JUMPSPEED > 0.0f)
+			{
+				if ((player.velocity[2] != 0.0f && prevVel[2] == 0.0f)
+					|| (player.velocity[2] > 0.0f && prevVel[2] < 0.0f))
+				{
+					double difference = length(player.velocity[0], player.velocity[1]) - jumpSpeed;
+					if (difference != 0.0f)
+					{
+						if (difference > 0.0f)
+							vecCopy({ 0, 255, 0 }, fadingFrom);
+						else
+							vecCopy({ 255, 0, 0 }, fadingFrom);
+
+						fadeEndTime = flTime + FADE_DURATION_JUMPSPEED;
+						jumpSpeed = length(player.velocity[0], player.velocity[1]);
+					}
+				}
+
+				double passedTime = flTime - fadeEndTime + FADE_DURATION_JUMPSPEED;
+				if (passedTime <= 0.0f)
+					passedTime = 0.0f;
+				else if (passedTime > FADE_DURATION_JUMPSPEED || !std::isnormal(passedTime)) // Check for Inf, NaN, etc.
+					passedTime = FADE_DURATION_JUMPSPEED;
+
+				float colorVel[3] = { hudColor[0] - fadingFrom[0] / FADE_DURATION_JUMPSPEED,
+				                      hudColor[1] - fadingFrom[1] / FADE_DURATION_JUMPSPEED,
+				                      hudColor[2] - fadingFrom[2] / FADE_DURATION_JUMPSPEED };
+				r = hudColor[0] - colorVel[0] * (FADE_DURATION_JUMPSPEED - passedTime);
+				g = hudColor[1] - colorVel[1] * (FADE_DURATION_JUMPSPEED - passedTime);
+				b = hudColor[2] - colorVel[2] * (FADE_DURATION_JUMPSPEED - passedTime);
+			}
+
+			int x = 0,
+				y = -3 * NumberHeight;
+			if (!y_bxt_hud_jumpspeed_pos.IsEmpty())
+			{
+				std::istringstream pos_ss(y_bxt_hud_jumpspeed_pos.GetString());
+				pos_ss >> x >> y;
+			}
+
+			x += si.iWidth / 2;
+			y += si.iHeight;
+
+			DrawNumber(static_cast<int>(trunc(jumpSpeed)), x, y, r, g, b);
+		}
+
+		vecCopy(player.velocity, prevVel);
 		receivedAccurateInfo = false;
 	}
 
 	void UpdatePlayerInfo(float vel[3], float org[3])
 	{
-		player.velocity[0] = vel[0];
-		player.velocity[1] = vel[1];
-		player.velocity[2] = vel[2];
-		player.origin[0] = org[0];
-		player.origin[1] = org[1];
-		player.origin[2] = org[2];
+		vecCopy(vel, player.velocity);
+		vecCopy(org, player.origin);
 
 		receivedAccurateInfo = true;
 	}
@@ -308,12 +388,8 @@ namespace CustomHud
 	{
 		if (!receivedAccurateInfo)
 		{
-			player.velocity[0] = vel[0];
-			player.velocity[1] = vel[1];
-			player.velocity[2] = vel[2];
-			player.origin[0] = org[0];
-			player.origin[1] = org[1];
-			player.origin[2] = org[2];
+			vecCopy(vel, player.velocity);
+			vecCopy(org, player.origin);
 		}
 	}
 }

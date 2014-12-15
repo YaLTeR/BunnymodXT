@@ -519,7 +519,6 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_CHud_Init || ORIG_HUD_Init)
 	{
-
 		con_color_.Assign(pEngfuncs->pfnGetCvarPointer("con_color"));
 		y_bxt_hud.Assign(REG("y_bxt_hud", "1"));
 		y_bxt_hud_color.Assign(REG("y_bxt_hud_color", ""));

@@ -658,9 +658,9 @@ void __cdecl ClientDLL::HOOKED_CHud_VidInit_Func(void* thisptr)
 
 void __cdecl ClientDLL::HOOKED_V_CalcRefdef_Func(ref_params_t* pparams)
 {
-	ORIG_V_CalcRefdef(pparams);
-
 	CustomHud::UpdatePlayerInfoInaccurate(pparams->simvel, pparams->simorg);
+
+	ORIG_V_CalcRefdef(pparams);
 }
 
 void __cdecl ClientDLL::HOOKED_HUD_Init_Func()

@@ -40,26 +40,26 @@ inline int CVarWrapper::GetInt() const
 }
 
 // Serverside CVars
-extern const CVarWrapper y_bxt_autojump;
-extern const CVarWrapper y_bxt_bhopcap;
-extern const CVarWrapper _y_bxt_taslog;
+extern const CVarWrapper bxt_autojump;
+extern const CVarWrapper bxt_bhopcap;
+extern const CVarWrapper _bxt_taslog;
 
 // Clientside CVars
 extern CVarWrapper con_color_;
-extern CVarWrapper y_bxt_autojump_prediction;
-extern CVarWrapper y_bxt_bhopcap_prediction;
-extern CVarWrapper y_bxt_hud;
-extern CVarWrapper y_bxt_hud_color;
-extern CVarWrapper y_bxt_hud_precision;
-extern CVarWrapper y_bxt_hud_velocity;
-extern CVarWrapper y_bxt_hud_velocity_offset;
-extern CVarWrapper y_bxt_hud_velocity_anchor;
-extern CVarWrapper y_bxt_hud_origin;
-extern CVarWrapper y_bxt_hud_origin_offset;
-extern CVarWrapper y_bxt_hud_origin_anchor;
-extern CVarWrapper y_bxt_hud_speedometer;
-extern CVarWrapper y_bxt_hud_speedometer_offset;
-extern CVarWrapper y_bxt_hud_speedometer_anchor;
-extern CVarWrapper y_bxt_hud_jumpspeed;
-extern CVarWrapper y_bxt_hud_jumpspeed_offset;
-extern CVarWrapper y_bxt_hud_jumpspeed_anchor;
+extern CVarWrapper bxt_autojump_prediction;
+extern CVarWrapper bxt_bhopcap_prediction;
+extern CVarWrapper bxt_hud;
+extern CVarWrapper bxt_hud_color;
+extern CVarWrapper bxt_hud_precision;
+extern CVarWrapper bxt_hud_velocity;
+extern CVarWrapper bxt_hud_velocity_offset;
+extern CVarWrapper bxt_hud_velocity_anchor;
+extern CVarWrapper bxt_hud_origin;
+extern CVarWrapper bxt_hud_origin_offset;
+extern CVarWrapper bxt_hud_origin_anchor;
+extern CVarWrapper bxt_hud_speedometer;
+extern CVarWrapper bxt_hud_speedometer_offset;
+extern CVarWrapper bxt_hud_speedometer_anchor;
+extern CVarWrapper bxt_hud_jumpspeed;
+extern CVarWrapper bxt_hud_jumpspeed_offset;
+extern CVarWrapper bxt_hud_jumpspeed_anchor;

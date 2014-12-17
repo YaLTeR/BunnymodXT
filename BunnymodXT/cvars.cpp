@@ -43,26 +43,26 @@ std::string CVarWrapper::GetString() const
 }
 
 // Serverside CVars
-const CVarWrapper y_bxt_autojump("y_bxt_autojump", "0");
-const CVarWrapper y_bxt_bhopcap("y_bxt_bhopcap", "0");
-const CVarWrapper _y_bxt_taslog("_y_bxt_taslog", "0");
+const CVarWrapper bxt_autojump("bxt_autojump", "0");
+const CVarWrapper bxt_bhopcap("bxt_bhopcap", "0");
+const CVarWrapper _bxt_taslog("_bxt_taslog", "0");
 
 // Clientside CVars
 CVarWrapper con_color_;
-CVarWrapper y_bxt_autojump_prediction;
-CVarWrapper y_bxt_bhopcap_prediction;
-CVarWrapper y_bxt_hud;
-CVarWrapper y_bxt_hud_color;
-CVarWrapper y_bxt_hud_precision;
-CVarWrapper y_bxt_hud_velocity;
-CVarWrapper y_bxt_hud_velocity_offset;
-CVarWrapper y_bxt_hud_velocity_anchor;
-CVarWrapper y_bxt_hud_origin;
-CVarWrapper y_bxt_hud_origin_offset;
-CVarWrapper y_bxt_hud_origin_anchor;
-CVarWrapper y_bxt_hud_speedometer;
-CVarWrapper y_bxt_hud_speedometer_offset;
-CVarWrapper y_bxt_hud_speedometer_anchor;
-CVarWrapper y_bxt_hud_jumpspeed;
-CVarWrapper y_bxt_hud_jumpspeed_offset;
-CVarWrapper y_bxt_hud_jumpspeed_anchor;
+CVarWrapper bxt_autojump_prediction;
+CVarWrapper bxt_bhopcap_prediction;
+CVarWrapper bxt_hud;
+CVarWrapper bxt_hud_color;
+CVarWrapper bxt_hud_precision;
+CVarWrapper bxt_hud_velocity;
+CVarWrapper bxt_hud_velocity_offset;
+CVarWrapper bxt_hud_velocity_anchor;
+CVarWrapper bxt_hud_origin;
+CVarWrapper bxt_hud_origin_offset;
+CVarWrapper bxt_hud_origin_anchor;
+CVarWrapper bxt_hud_speedometer;
+CVarWrapper bxt_hud_speedometer_offset;
+CVarWrapper bxt_hud_speedometer_anchor;
+CVarWrapper bxt_hud_jumpspeed;
+CVarWrapper bxt_hud_jumpspeed_offset;
+CVarWrapper bxt_hud_jumpspeed_anchor;

@@ -44,7 +44,7 @@ std::string CVarWrapper::GetString() const
 
 // Serverside CVars
 const CVarWrapper bxt_autojump("bxt_autojump", "0");
-const CVarWrapper bxt_bhopcap("bxt_bhopcap", "0");
+const CVarWrapper bxt_bhopcap("bxt_bhopcap", "1");
 const CVarWrapper _bxt_taslog("_bxt_taslog", "0");
 
 // Clientside CVars

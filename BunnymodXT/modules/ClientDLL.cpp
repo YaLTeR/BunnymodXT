@@ -515,7 +515,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		bxt_autojump_prediction.Assign(REG("bxt_autojump_prediction", "0"));
 
 	if (ORIG_PM_PreventMegaBunnyJumping)
-		bxt_bhopcap_prediction.Assign(REG("bxt_bhopcap_prediction", "0"));
+		bxt_bhopcap_prediction.Assign(REG("bxt_bhopcap_prediction", "1"));
 
 	if (ORIG_CHud_Init || ORIG_HUD_Init)
 	{

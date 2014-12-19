@@ -383,7 +383,7 @@ void __cdecl ServerDLL::HOOKED_PM_PlayerMove_Func(qboolean server)
 	{
 		ALERT(at_console, "-- BXT TAS Log Start --\n");
 		ALERT(at_console, "Player index: %d\n", playerIndex);
-		ALERT(at_console, "Velocity: %.8f; %.8f; %.8f; origin: %.8f; %.8f; %.8f\n",velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
+		ALERT(at_console, "Velocity: %.8f; %.8f; %.8f; origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
 	}
 
 	ORIG_PM_PlayerMove(server);

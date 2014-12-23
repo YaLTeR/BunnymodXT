@@ -38,32 +38,20 @@ void __cdecl ClientDLL::HOOKED_HUD_Init()
 	return clientDLL.HOOKED_HUD_Init_Func();
 }
 
+void __cdecl ClientDLL::HOOKED_HUD_VidInit()
+{
+	return clientDLL.HOOKED_HUD_VidInit_Func();
+}
+
+void __cdecl ClientDLL::HOOKED_HUD_Reset()
+{
+	return clientDLL.HOOKED_HUD_Reset_Func();
+}
+
 void __cdecl ClientDLL::HOOKED_HUD_Redraw(float time, int intermission)
 {
 	return clientDLL.HOOKED_HUD_Redraw_Func(time, intermission);
 }
-
-#ifdef _WIN32
-void __fastcall ClientDLL::HOOKED_CHud_Init(void* thisptr, int edx)
-{
-	return clientDLL.HOOKED_CHud_Init_Func(thisptr, edx);
-}
-
-void __fastcall ClientDLL::HOOKED_CHud_VidInit(void* thisptr, int edx)
-{
-	return clientDLL.HOOKED_CHud_VidInit_Func(thisptr, edx);
-}
-#else
-void __cdecl ClientDLL::HOOKED_CHud_Init(void* thisptr)
-{
-	return clientDLL.HOOKED_CHud_Init_Func(thisptr);
-}
-
-void __cdecl ClientDLL::HOOKED_CHud_VidInit(void* thisptr)
-{
-	return clientDLL.HOOKED_CHud_VidInit_Func(thisptr);
-}
-#endif
 
 // Linux hooks.
 #ifndef _WIN32
@@ -72,19 +60,24 @@ extern "C" int __cdecl Initialize(cl_enginefunc_t* pEnginefuncs, int iVersion)
 	return ClientDLL::HOOKED_Initialize(pEnginefuncs, iVersion);
 }
 
+extern "C" void __cdecl HUD_Init()
+{
+	return ClientDLL::HOOKED_HUD_Init();
+}
+
+extern "C" void __cdecl HUD_VidInit()
+{
+	return ClientDLL::HOOKED_HUD_VidInit();
+}
+
+extern "C" void __cdecl HUD_Reset()
+{
+	return ClientDLL::HOOKED_HUD_Reset();
+}
+
 extern "C" void __cdecl HUD_Redraw(float time, int intermission)
 {
 	return ClientDLL::HOOKED_HUD_Redraw(time, intermission);
-}
-
-extern "C" void __cdecl _ZN4CHud4InitEv(void* thisptr)
-{
-	return ClientDLL::HOOKED_CHud_Init(thisptr);
-}
-
-extern "C" void __cdecl _ZN4CHud7VidInitEv(void* thisptr)
-{
-	return ClientDLL::HOOKED_CHud_VidInit(thisptr);
 }
 
 extern "C" void __cdecl V_CalcRefdef(ref_params_t* pparams)
@@ -109,7 +102,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(moduleHandle, "PM_PlayerMove"));
 
-	std::future<MemUtils::ptnvec_size> fPMPreventMegaBunnyJumping, fCHud_AddHudElem;
+	std::future<MemUtils::ptnvec_size> fPMPreventMegaBunnyJumping;
 
 	pPMPreventMegaBunnyJumping = MemUtils::GetSymbolAddress(moduleHandle, "PM_PreventMegaBunnyJumping");
 	if (pPMPreventMegaBunnyJumping)
@@ -118,7 +111,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		EngineDevMsg("[client dll] Found PM_PreventMegaBunnyJumping at %p.\n", pPMPreventMegaBunnyJumping);
 	}
 	else
-		fPMPreventMegaBunnyJumping = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPreventMegaBunnyJumping, &pPMPreventMegaBunnyJumping);
+		fPMPreventMegaBunnyJumping = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPreventMegaBunnyJumping, &pPMPreventMegaBunnyJumping);
 
 	pPMJump = MemUtils::GetSymbolAddress(moduleHandle, "PM_Jump");
 	if (pPMJump)
@@ -254,169 +247,13 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 	// We can draw stuff only if we know that we have already received / will receive engfuncs.
 	if (pEngfuncs)
-	{
-		auto pHUD_Init = MemUtils::GetSymbolAddress(moduleHandle, "HUD_Init");
-		if (pHUD_Init)
-		{
-			// Just in case some HUD_Init contains extra stuff, find the first "mov ecx, offset dword; call func" sequence. Dword is the pointer to gHud and func is CHud::Init.
-			const byte pattern[] = { 0xB9, '?', '?', '?', '?', 0xE8 };
-
-			// BS has jmp instead of call.
-			const byte pattern_bs[] = { 0xB9, '?', '?', '?', '?', 0xE9 };
-
-			// The Linux version has a more complicated mov.
-			const byte pattern_linux[] = { 0xC7, 0x04, 0x24, '?', '?', '?', '?', 0xE8 };
-
-			// OP4 contains some stuff between our instructions.
-			const byte pattern_op4[] = { 0xB9, '?', '?', '?', '?', 0xA3, '?', '?', '?', '?',
-				0xC7, 0x05, '?', '?', '?', '?', 0xA0, 0x00, 0x00, 0x00,
-				0xA3, '?', '?', '?', '?', 0xE8 };
-
-			ptrdiff_t offGHudOffset = 1;
-			ptrdiff_t offCallOffset = 6;
-			auto addr = MemUtils::FindPattern(pHUD_Init, 16, pattern, "x????x");
-			if (!addr)
-			{
-				addr = MemUtils::FindPattern(pHUD_Init, 16, pattern_bs, "x????x");
-				if (addr)
-					ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(pHUD_Init);
-			}
-			if (!addr)
-			{
-				addr = MemUtils::FindPattern(pHUD_Init, 40, pattern_linux, "xxx????x");
-				if (addr)
-				{
-					offCallOffset = 8;
-					offGHudOffset = 3;
-				}
-			}
-			if (!addr)
-			{
-				addr = MemUtils::FindPattern(pHUD_Init, 40, pattern_op4, "x????x????xx????xxxxx????x");
-				if (addr)
-				{
-					offCallOffset = 26;
-				}
-			}
-
-			if (addr)
-			{
-				pHud = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(addr) + offGHudOffset);
-
-				ORIG_CHud_Init = reinterpret_cast<_CHud_InitFunc>(MemUtils::GetSymbolAddress(moduleHandle, "_ZN4CHud4InitEv"));
-				if (!ORIG_CHud_Init && !ORIG_HUD_Init)
-				{
-					ORIG_CHud_Init = reinterpret_cast<_CHud_InitFunc>(
-						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr)+offCallOffset)
-						+ (reinterpret_cast<uintptr_t>(addr)+offCallOffset + 4)); // Call by offset.
-					EngineDevMsg("[client dll] pHud is %p; CHud::Init is located at %p.\n", pHud, ORIG_CHud_Init);
-				}
-				
-				if (ORIG_HUD_Init)
-					EngineDevMsg("[client dll] pHud is %p; hooking HUD_Init at %p.\n", pHud, ORIG_HUD_Init);
-
-				ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(MemUtils::GetSymbolAddress(moduleHandle, "_ZN4CHud7VidInitEv"));
-				if (!ORIG_CHud_VidInit)
-				{
-					auto pHUD_Reset = MemUtils::GetSymbolAddress(moduleHandle, "HUD_Reset");
-					if (pHUD_Reset)
-					{
-						// Same as with HUD_Init earlier, but we have another possibility - jmp instead of call.
-						auto pHud_uintptr = reinterpret_cast<uintptr_t>(pHud);
-						#define getbyte(a, n) static_cast<byte>((a >> n*8) & 0xFF)
-						const byte ptn1[] = { 0xB9, getbyte(pHud_uintptr, 0), getbyte(pHud_uintptr, 1), getbyte(pHud_uintptr, 2), getbyte(pHud_uintptr, 3), 0xE8 },
-							ptn2[] = { 0xB9, getbyte(pHud_uintptr, 0), getbyte(pHud_uintptr, 1), getbyte(pHud_uintptr, 2), getbyte(pHud_uintptr, 3), 0xE9 },
-							ptn3[] = { 0x24, getbyte(pHud_uintptr, 0), getbyte(pHud_uintptr, 1), getbyte(pHud_uintptr, 2), getbyte(pHud_uintptr, 3), 0xE8 };
-						#undef getbyte
-
-						auto addr_ = MemUtils::FindPattern(pHUD_Reset, 20, ptn1, "xxxxxx");
-						if (!addr_)
-							addr_ = MemUtils::FindPattern(pHUD_Reset, 20, ptn2, "xxxxxx");
-						if (!addr_)
-							addr_ = MemUtils::FindPattern(pHUD_Reset, 20, ptn3, "xxxxxx");
-
-						if (addr_)
-						{
-							ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(
-								*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr_) + 6)
-								+ (reinterpret_cast<uintptr_t>(addr_) + 10));
-
-							EngineDevMsg("[client dll] CHud::VidInit is located at %p.\n", ORIG_CHud_VidInit);
-						}
-						else
-						{
-							pHUD_Reset = nullptr; // Try with HUD_VidInit.
-						}
-					}
-
-					if (!pHUD_Reset)
-					{
-						auto pHUD_VidInit = MemUtils::GetSymbolAddress(moduleHandle, "HUD_VidInit");
-						if (pHUD_VidInit)
-						{
-							auto pHud_uintptr = reinterpret_cast<uintptr_t>(pHud);
-							#define getbyte(a, n) (byte)((a >> n*8) & 0xFF)
-							const byte ptn[] = { 0xB9, getbyte(pHud_uintptr, 0), getbyte(pHud_uintptr, 1), getbyte(pHud_uintptr, 2), getbyte(pHud_uintptr, 3), 0xE8 },
-								ptn2[] = { 0x24, getbyte(pHud_uintptr, 0), getbyte(pHud_uintptr, 1), getbyte(pHud_uintptr, 2), getbyte(pHud_uintptr, 3), 0xE8 };
-							#undef getbyte
-
-							auto addr_ = MemUtils::FindPattern(pHUD_VidInit, 20, ptn, "xxxxxx");
-							if (!addr_)
-								addr_ = MemUtils::FindPattern(pHUD_VidInit, 20, ptn2, "xxxxxx");
-							if (addr_)
-							{
-								ORIG_CHud_VidInit = reinterpret_cast<_CHud_InitFunc>(
-									*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(addr_) + 6)
-									+ (reinterpret_cast<uintptr_t>(addr_) + 10));
-								EngineDevMsg("[client dll] CHud::VidInit is located at %p.\n", ORIG_CHud_VidInit);
-							}
-							else
-							{
-								ORIG_CHud_Init = nullptr;
-
-								EngineDevWarning("[client dll] Couldn't find the pattern in HUD_Reset or HUD_VidInit!\n");
-								EngineWarning("Custom HUD is not available.\n");
-							}
-						}
-						else
-						{
-							ORIG_CHud_Init = nullptr;
-
-							EngineDevWarning("[client dll] Couldn't get the address of HUD_Reset or HUD_VidInit!\n");
-							EngineWarning("Custom HUD is not available.\n");
-						}
-					}
-				}
-			}
-			else
-			{
-				EngineDevWarning("[client dll] Couldn't find the pattern in HUD_Init!\n");
-				EngineWarning("Custom HUD is not available.\n");
-			}
+		if (!FindHUDFunctions()) {
+			ORIG_HUD_Init = nullptr;
+			ORIG_HUD_VidInit = nullptr;
+			ORIG_HUD_Reset = nullptr;
+			ORIG_HUD_Redraw = nullptr;
+			EngineDevWarning("Custom HUD is not available.\n");
 		}
-		else
-		{
-			EngineDevWarning("[client dll] Couldn't get the address of HUD_Init!\n");
-			EngineWarning("Custom HUD is not available.\n");
-		}
-
-		if (ORIG_CHud_Init || ORIG_HUD_Init)
-		{
-			ORIG_HUD_Redraw = reinterpret_cast<_HUD_Redraw>(MemUtils::GetSymbolAddress(moduleHandle, "HUD_Redraw"));
-			if (ORIG_HUD_Redraw)
-			{
-				EngineDevMsg("[client dll] HUD_Redraw is located at %p.\n", ORIG_HUD_Redraw);
-			}
-			else
-			{
-				ORIG_CHud_Init = nullptr;
-				ORIG_CHud_VidInit = nullptr;
-
-				EngineDevWarning("[client dll] Could not find HUD_Redraw!\n");
-				EngineWarning("Custom HUD is not available.\n");
-			}
-		}
-	}
 
 	ORIG_V_CalcRefdef = reinterpret_cast<_V_CalcRefdef>(MemUtils::GetSymbolAddress(moduleHandle, "V_CalcRefdef"));
 	if (!ORIG_V_CalcRefdef)
@@ -431,6 +268,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw));
 
 	if (needToIntercept)
@@ -438,10 +277,10 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize) },
-			{ reinterpret_cast<void**>(&ORIG_CHud_Init), reinterpret_cast<void*>(HOOKED_CHud_Init) },
-			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), reinterpret_cast<void*>(HOOKED_CHud_VidInit) },
 			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) }
 		});
 }
@@ -453,15 +292,17 @@ void ClientDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize) },
-			{ reinterpret_cast<void**>(&ORIG_CHud_Init), reinterpret_cast<void*>(HOOKED_CHud_Init) },
-			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), reinterpret_cast<void*>(HOOKED_CHud_VidInit) },
 			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) }
 		});
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_Initialize));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_VidInit));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Reset));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Redraw));
 
 	Clear();
@@ -474,10 +315,10 @@ void ClientDLL::Clear()
 	ORIG_PM_PlayerMove = nullptr;
 	ORIG_PM_PreventMegaBunnyJumping = nullptr;
 	ORIG_Initialize = nullptr;
-	ORIG_CHud_Init = nullptr;
-	ORIG_CHud_VidInit = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
 	ORIG_HUD_Init = nullptr;
+	ORIG_HUD_VidInit = nullptr;
+	ORIG_HUD_Reset = nullptr;
 	ORIG_HUD_Redraw = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
@@ -485,9 +326,41 @@ void ClientDLL::Clear()
 	offBhopcap = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	pEngfuncs = nullptr;
-	pHud = nullptr;
 	cantJumpNextTime = false;
 	m_Intercepted = false;
+}
+
+bool ClientDLL::FindHUDFunctions()
+{
+	if (ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Init")))
+		EngineDevMsg("[client dll] Found HUD_Init at %p.\n", ORIG_HUD_Init);
+	else {
+		EngineDevMsg("[client dll] Could not HUD_Init!\n");
+		return false;
+	}
+
+	if (ORIG_HUD_VidInit = reinterpret_cast<_HUD_VidInit>(MemUtils::GetSymbolAddress(m_Handle, "HUD_VidInit")))
+		EngineDevMsg("[client dll] Found HUD_VidInit at %p.\n", ORIG_HUD_VidInit);
+	else {
+		EngineDevMsg("[client dll] Could not HUD_VidInit!\n");
+		return false;
+	}
+
+	if (ORIG_HUD_Reset = reinterpret_cast<_HUD_Reset>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Reset")))
+		EngineDevMsg("[client dll] Found HUD_Reset at %p.\n", ORIG_HUD_Reset);
+	else {
+		EngineDevMsg("[client dll] Could not HUD_Reset!\n");
+		return false;
+	}
+
+	if (ORIG_HUD_Redraw = reinterpret_cast<_HUD_Redraw>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Redraw")))
+		EngineDevMsg("[client dll] Found HUD_Redraw at %p.\n", ORIG_HUD_Redraw);
+	else {
+		EngineDevMsg("[client dll] Could not HUD_Redraw!\n");
+		return false;
+	}
+
+	return true;
 }
 
 void ClientDLL::RegisterCVarsAndCommands()
@@ -503,7 +376,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (ORIG_PM_PreventMegaBunnyJumping)
 		bxt_bhopcap_prediction.Assign(REG("bxt_bhopcap_prediction", "1"));
 
-	if (ORIG_CHud_Init || ORIG_HUD_Init)
+	if (ORIG_HUD_Init)
 	{
 		con_color_.Assign(pEngfuncs->pfnGetCvarPointer("con_color"));
 		bxt_hud.Assign(REG("bxt_hud", "1"));
@@ -588,37 +461,6 @@ int __cdecl ClientDLL::HOOKED_Initialize_Func(cl_enginefunc_t* pEnginefuncs, int
 	return rv;
 }
 
-#ifdef _WIN32
-void __fastcall ClientDLL::HOOKED_CHud_Init_Func(void* thisptr, int edx)
-#else
-void __cdecl ClientDLL::HOOKED_CHud_Init_Func(void* thisptr)
-#endif
-{
-	#ifdef _WIN32
-	ORIG_CHud_Init(thisptr, edx);
-	#else
-	ORIG_CHud_Init(thisptr);
-	#endif
-
-	CustomHud::Init();
-}
-
-#ifdef _WIN32
-void __fastcall ClientDLL::HOOKED_CHud_VidInit_Func(void* thisptr, int edx)
-#else
-void __cdecl ClientDLL::HOOKED_CHud_VidInit_Func(void* thisptr)
-#endif
-{
-	#ifdef _WIN32
-	ORIG_CHud_VidInit(thisptr, edx);
-	#else
-	ORIG_CHud_VidInit(thisptr);
-	#endif
-
-	CustomHud::InitIfNecessary();
-	CustomHud::VidInit();
-}
-
 void __cdecl ClientDLL::HOOKED_V_CalcRefdef_Func(ref_params_t* pparams)
 {
 	CustomHud::UpdatePlayerInfoInaccurate(pparams->simvel, pparams->simorg);
@@ -631,6 +473,22 @@ void __cdecl ClientDLL::HOOKED_HUD_Init_Func()
 	ORIG_HUD_Init();
 
 	CustomHud::Init();
+}
+
+void __cdecl ClientDLL::HOOKED_HUD_VidInit_Func()
+{
+	ORIG_HUD_VidInit();
+
+	CustomHud::InitIfNecessary();
+	CustomHud::VidInit();
+}
+
+void __cdecl ClientDLL::HOOKED_HUD_Reset_Func()
+{
+	ORIG_HUD_Reset();
+
+	CustomHud::InitIfNecessary();
+	CustomHud::VidInit();
 }
 
 void __cdecl ClientDLL::HOOKED_HUD_Redraw_Func(float time, int intermission)

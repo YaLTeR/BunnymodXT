@@ -5,18 +5,14 @@
 #include "../hud_custom.hpp"
 
 typedef void(__cdecl *_PM_Jump) ();
-typedef void(__cdecl *_PM_PlayerMove) (qboolean);
+typedef void(__cdecl *_PM_PlayerMove) (qboolean server);
 typedef void(__cdecl *_PM_PreventMegaBunnyJumping) ();
 typedef int(__cdecl *_Initialize) (cl_enginefunc_t* pEnginefuncs, int iVersion);
 typedef void(__cdecl *_V_CalcRefdef) (ref_params_t* pparams);
 typedef void(__cdecl *_HUD_Init) ();
+typedef void(__cdecl *_HUD_VidInit) ();
+typedef void(__cdecl *_HUD_Reset) ();
 typedef void(__cdecl *_HUD_Redraw) (float time, int intermission);
-
-#ifdef _WIN32
-typedef void(__fastcall *_CHud_InitFunc) (void* thisptr, int edx); // For both CHud::Init and CHud::VidInit.
-#else
-typedef void(__cdecl *_CHud_InitFunc) (void* thisptr); // For both CHud::Init and CHud::VidInit.
-#endif
 
 class ClientDLL : public IHookableNameFilter
 {
@@ -38,21 +34,14 @@ public:
 	void __cdecl HOOKED_V_CalcRefdef_Func(ref_params_t* pparams);
 	static void __cdecl HOOKED_HUD_Init();
 	void __cdecl HOOKED_HUD_Init_Func();
+	static void __cdecl HOOKED_HUD_VidInit();
+	void __cdecl HOOKED_HUD_VidInit_Func();
+	static void __cdecl HOOKED_HUD_Reset();
+	void __cdecl HOOKED_HUD_Reset_Func();
 	static void __cdecl HOOKED_HUD_Redraw(float time, int intermission);
 	void __cdecl HOOKED_HUD_Redraw_Func(float time, int intermission);
 
-	#ifdef _WIN32
-	static void __fastcall HOOKED_CHud_Init(void* thisptr, int edx);
-	void __fastcall HOOKED_CHud_Init_Func(void* thisptr, int edx);
-	static void __fastcall HOOKED_CHud_VidInit(void* thisptr, int edx);
-	void __fastcall HOOKED_CHud_VidInit_Func(void* thisptr, int edx);
-	#else
-	static void __cdecl HOOKED_CHud_Init(void* thisptr);
-	void __cdecl HOOKED_CHud_Init_Func(void* thisptr);
-	static void __cdecl HOOKED_CHud_VidInit(void* thisptr);
-	void __cdecl HOOKED_CHud_VidInit_Func(void* thisptr);
-	#endif
-
+	bool FindHUDFunctions();
 	void RegisterCVarsAndCommands();
 	void AddHudElem(void* pHudElem);
 
@@ -63,10 +52,10 @@ protected:
 	_PM_PlayerMove ORIG_PM_PlayerMove;
 	_PM_PreventMegaBunnyJumping ORIG_PM_PreventMegaBunnyJumping;
 	_Initialize ORIG_Initialize;
-	_CHud_InitFunc ORIG_CHud_Init;
-	_CHud_InitFunc ORIG_CHud_VidInit;
 	_V_CalcRefdef ORIG_V_CalcRefdef;
 	_HUD_Init ORIG_HUD_Init;
+	_HUD_VidInit ORIG_HUD_VidInit;
+	_HUD_Reset ORIG_HUD_Reset;
 	_HUD_Redraw ORIG_HUD_Redraw;
 
 	void **ppmove;
@@ -75,8 +64,6 @@ protected:
 	
 	ptrdiff_t offBhopcap;
 	byte originalBhopcapInsn[6];
-
-	void *pHud;
 
 	bool cantJumpNextTime;
 };

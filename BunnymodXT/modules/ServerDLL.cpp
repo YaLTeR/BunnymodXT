@@ -50,7 +50,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		EngineDevMsg("[server dll] Found PM_PreventMegaBunnyJumping at %p.\n", pPMPreventMegaBunnyJumping);
 	}
 	else
-		fPMPreventMegaBunnyJumping = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPreventMegaBunnyJumping, &pPMPreventMegaBunnyJumping);
+		fPMPreventMegaBunnyJumping = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPreventMegaBunnyJumping, &pPMPreventMegaBunnyJumping);
 
 	pPMPlayerMove = MemUtils::GetSymbolAddress(moduleHandle, "PM_PlayerMove");
 	if (pPMPlayerMove)
@@ -63,7 +63,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		offAngles = 68;
 	}
 	else
-		fPMPlayerMove = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPlayerMove, &pPMPlayerMove);
+		fPMPlayerMove = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPlayerMove, &pPMPlayerMove);
 
 	pPMJump = MemUtils::GetSymbolAddress(moduleHandle, "PM_Jump");
 	if (pPMJump)

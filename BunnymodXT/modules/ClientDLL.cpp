@@ -38,6 +38,11 @@ void __cdecl ClientDLL::HOOKED_HUD_Init()
 	return clientDLL.HOOKED_HUD_Init_Func();
 }
 
+void __cdecl ClientDLL::HOOKED_HUD_Redraw(float time, int intermission)
+{
+	return clientDLL.HOOKED_HUD_Redraw_Func(time, intermission);
+}
+
 #ifdef _WIN32
 void __fastcall ClientDLL::HOOKED_CHud_Init(void* thisptr, int edx)
 {
@@ -95,7 +100,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 	MemUtils::ptnvec_size ptnNumber;
 
-	void *pPMJump, *pPMPreventMegaBunnyJumping, *pCHud_AddHudElem;
+	void *pPMJump, *pPMPreventMegaBunnyJumping;
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(moduleHandle, "PM_PlayerMove"));
 
@@ -109,18 +114,6 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	}
 	else
 		fPMPreventMegaBunnyJumping = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPreventMegaBunnyJumping, &pPMPreventMegaBunnyJumping);
-
-	pCHud_AddHudElem = MemUtils::GetSymbolAddress(moduleHandle, "_ZN4CHud10AddHudElemEP8CHudBase");
-	if (pCHud_AddHudElem)
-	{
-		CHud_AddHudElem = reinterpret_cast<_CHud_AddHudElem>(pCHud_AddHudElem);
-		EngineDevMsg("[client dll] Found CHud::AddHudElem at %p.\n", pCHud_AddHudElem);
-	}
-	else
-		fCHud_AddHudElem = std::async(std::launch::async, MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCHud_AddHudElem, &pCHud_AddHudElem);
-
-	auto fIsOP4 = std::async(std::launch::deferred, MemUtils::FindPattern, moduleBase, moduleLength, reinterpret_cast<const byte *>("weapon_pipewrench"), "xxxxxxxxxxxxxxxxxx");
-	auto fIsGMC = std::async(std::launch::deferred, MemUtils::FindPattern, moduleBase, moduleLength, reinterpret_cast<const byte *>("weapon_SPchemicalgun"), "xxxxxxxxxxxxxxxxxxxxx");
 
 	pPMJump = MemUtils::GetSymbolAddress(moduleHandle, "PM_Jump");
 	if (pPMJump)
@@ -298,17 +291,6 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 				if (addr)
 				{
 					offCallOffset = 26;
-					novd = true;
-					EngineDevMsg("[client dll] Using CHudBase without a virtual destructor.\n");
-				}
-			}
-			else
-			{
-				// Check for GMC or Linux OP4.
-				if (fIsGMC.get() || fIsOP4.get())
-				{
-					novd = true;
-					EngineDevMsg("[client dll] Using CHudBase without a virtual destructor.\n");
 				}
 			}
 
@@ -415,22 +397,18 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 		if (ORIG_CHud_Init || ORIG_HUD_Init)
 		{
-			if (!CHud_AddHudElem)
+			ORIG_HUD_Redraw = reinterpret_cast<_HUD_Redraw>(MemUtils::GetSymbolAddress(moduleHandle, "HUD_Redraw"));
+			if (ORIG_HUD_Redraw)
 			{
-				ptnNumber = fCHud_AddHudElem.get();
-				if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-				{
-					CHud_AddHudElem = reinterpret_cast<_CHud_AddHudElem>(pCHud_AddHudElem);
-					EngineDevMsg("[client dll] Found CHud::AddHudElem at %p (using the %s pattern).\n", pCHud_AddHudElem, Patterns::ptnsCHud_AddHudElem[ptnNumber].build.c_str());
-				}
-				else
-				{
-					ORIG_CHud_Init = nullptr;
-					ORIG_CHud_VidInit = nullptr;
+				EngineDevMsg("[client dll] HUD_Redraw is located at %p.\n", ORIG_HUD_Redraw);
+			}
+			else
+			{
+				ORIG_CHud_Init = nullptr;
+				ORIG_CHud_VidInit = nullptr;
 
-					EngineDevWarning("[client dll] Could not find CHud::AddHudElem!\n");
-					EngineWarning("Custom HUD is not available.\n");
-				}
+				EngineDevWarning("[client dll] Could not find HUD_Redraw!\n");
+				EngineWarning("Custom HUD is not available.\n");
 			}
 		}
 	}
@@ -438,7 +416,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	ORIG_V_CalcRefdef = reinterpret_cast<_V_CalcRefdef>(MemUtils::GetSymbolAddress(moduleHandle, "V_CalcRefdef"));
 	if (!ORIG_V_CalcRefdef)
 	{
-		EngineDevWarning("[client dll] Couldn't find V_CalcRefdef!\n");
+		EngineDevWarning("[client dll] Could not find V_CalcRefdef!\n");
 		EngineWarning("Velocity display during demo playback is not available.\n");
 	}
 	
@@ -448,6 +426,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw));
 
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
@@ -457,7 +436,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_CHud_Init), reinterpret_cast<void*>(HOOKED_CHud_Init) },
 			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), reinterpret_cast<void*>(HOOKED_CHud_VidInit) },
 			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) }
+			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) }
 		});
 }
 
@@ -471,11 +451,13 @@ void ClientDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_CHud_Init), reinterpret_cast<void*>(HOOKED_CHud_Init) },
 			{ reinterpret_cast<void**>(&ORIG_CHud_VidInit), reinterpret_cast<void*>(HOOKED_CHud_VidInit) },
 			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) }
+			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) }
 		});
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_Initialize));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Redraw));
 
 	Clear();
 }
@@ -489,9 +471,9 @@ void ClientDLL::Clear()
 	ORIG_Initialize = nullptr;
 	ORIG_CHud_Init = nullptr;
 	ORIG_CHud_VidInit = nullptr;
-	CHud_AddHudElem = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
 	ORIG_HUD_Init = nullptr;
+	ORIG_HUD_Redraw = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -500,7 +482,6 @@ void ClientDLL::Clear()
 	pEngfuncs = nullptr;
 	pHud = nullptr;
 	cantJumpNextTime = false;
-	novd = false;
 	m_Intercepted = false;
 }
 
@@ -540,18 +521,6 @@ void ClientDLL::RegisterCVarsAndCommands()
 	#undef REG
 
 	EngineDevMsg("[client dll] Registered CVars.\n");
-}
-
-void ClientDLL::AddHudElem(void* pHudElem)
-{
-	if (pHud && CHud_AddHudElem)
-	{
-		#ifdef _WIN32
-		CHud_AddHudElem(pHud, 0, pHudElem);
-		#else
-		CHud_AddHudElem(pHud, pHudElem);
-		#endif
-	}
 }
 
 void __cdecl ClientDLL::HOOKED_PM_Jump_Func()
@@ -626,10 +595,7 @@ void __cdecl ClientDLL::HOOKED_CHud_Init_Func(void* thisptr)
 	ORIG_CHud_Init(thisptr);
 	#endif
 
-	if (novd)
-		customHudWrapper_NoVD.Init();
-	else
-		customHudWrapper.Init();
+	CustomHud::Init();
 }
 
 #ifdef _WIN32
@@ -644,16 +610,8 @@ void __cdecl ClientDLL::HOOKED_CHud_VidInit_Func(void* thisptr)
 	ORIG_CHud_VidInit(thisptr);
 	#endif
 
-	if (novd)
-	{
-		customHudWrapper_NoVD.InitIfNecessary();
-		customHudWrapper_NoVD.VidInit();
-	}
-	else
-	{
-		customHudWrapper.InitIfNecessary();
-		customHudWrapper.VidInit();
-	}
+	CustomHud::InitIfNecessary();
+	CustomHud::VidInit();
 }
 
 void __cdecl ClientDLL::HOOKED_V_CalcRefdef_Func(ref_params_t* pparams)
@@ -667,8 +625,12 @@ void __cdecl ClientDLL::HOOKED_HUD_Init_Func()
 {
 	ORIG_HUD_Init();
 
-	if (novd)
-		customHudWrapper_NoVD.Init();
-	else
-		customHudWrapper.Init();
+	CustomHud::Init();
+}
+
+void __cdecl ClientDLL::HOOKED_HUD_Redraw_Func(float time, int intermission)
+{
+	ORIG_HUD_Redraw(time, intermission);
+
+	CustomHud::Draw(time);
 }

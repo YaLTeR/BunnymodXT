@@ -8,6 +8,8 @@ namespace CustomHud
 {
 	static const float FADE_DURATION_JUMPSPEED = 0.7f;
 
+	static bool initialized = false;
+
 	static SCREENINFO si;
 	static int precision;
 	static float consoleColor[3];
@@ -326,6 +328,13 @@ namespace CustomHud
 	void Init()
 	{
 		SpriteList = nullptr;
+		initialized = true;
+	}
+
+	void InitIfNecessary()
+	{
+		if (!initialized)
+			Init();
 	}
 
 	void VidInit()
@@ -414,26 +423,4 @@ namespace CustomHud
 			vecCopy(org, player.origin);
 		}
 	}
-}
-
-int CHudCustom_Wrapper::Init()
-{
-	CustomHud::Init();
-
-	m_Initialized = true;
-	m_iFlags = HUD_ACTIVE;
-	clientDLL.AddHudElem(this);
-
-	return 1;
-}
-
-int CHudCustom_Wrapper_NoVD::Init()
-{
-	CustomHud::Init();
-
-	m_Initialized = true;
-	m_iFlags = HUD_ACTIVE;
-	clientDLL.AddHudElem(this);
-
-	return 1;
 }

@@ -36,36 +36,3 @@ typedef struct {
 
 #define HUD_ACTIVE	1
 #define HUD_INTERMISSION 2
-
-class CHudBase
-{
-public:
-	POSITION  m_pos;
-	int   m_type;
-	int	  m_iFlags; // active, moving, 
-	virtual		~CHudBase() {}
-	virtual int Init(void) { return 0; }
-	virtual int VidInit(void) { return 0; }
-	virtual int Draw(float flTime) { return 0; }
-	virtual void Think(void) { return; }
-	virtual void Reset(void) { return; }
-	virtual void InitHUDData(void) {}		// called every time a server is connected to
-
-};
-
-// YaLTeR - some mods have CHudBase without a virtual destructor.
-// For example, OP4 and GMC.
-class CHudBase_NoVD
-{
-public:
-	POSITION  m_pos;
-	int   m_type;
-	int	  m_iFlags; // active, moving, 
-	virtual int Init(void) { return 0; }
-	virtual int VidInit(void) { return 0; }
-	virtual int Draw(float flTime) { return 0; }
-	virtual void Think(void) { return; }
-	virtual void Reset(void) { return; }
-	virtual void InitHUDData(void) {}		// called every time a server is connected to
-
-};

@@ -10,13 +10,12 @@ typedef void(__cdecl *_PM_PreventMegaBunnyJumping) ();
 typedef int(__cdecl *_Initialize) (cl_enginefunc_t* pEnginefuncs, int iVersion);
 typedef void(__cdecl *_V_CalcRefdef) (ref_params_t* pparams);
 typedef void(__cdecl *_HUD_Init) ();
+typedef void(__cdecl *_HUD_Redraw) (float time, int intermission);
 
 #ifdef _WIN32
 typedef void(__fastcall *_CHud_InitFunc) (void* thisptr, int edx); // For both CHud::Init and CHud::VidInit.
-typedef void(__fastcall *_CHud_AddHudElem) (void* thisptr, int edx, void* pHudElem);
 #else
 typedef void(__cdecl *_CHud_InitFunc) (void* thisptr); // For both CHud::Init and CHud::VidInit.
-typedef void(__cdecl *_CHud_AddHudElem) (void* thisptr, void* pHudElem);
 #endif
 
 class ClientDLL : public IHookableNameFilter
@@ -39,6 +38,8 @@ public:
 	void __cdecl HOOKED_V_CalcRefdef_Func(ref_params_t* pparams);
 	static void __cdecl HOOKED_HUD_Init();
 	void __cdecl HOOKED_HUD_Init_Func();
+	static void __cdecl HOOKED_HUD_Redraw(float time, int intermission);
+	void __cdecl HOOKED_HUD_Redraw_Func(float time, int intermission);
 
 	#ifdef _WIN32
 	static void __fastcall HOOKED_CHud_Init(void* thisptr, int edx);
@@ -64,9 +65,9 @@ protected:
 	_Initialize ORIG_Initialize;
 	_CHud_InitFunc ORIG_CHud_Init;
 	_CHud_InitFunc ORIG_CHud_VidInit;
-	_CHud_AddHudElem CHud_AddHudElem;
 	_V_CalcRefdef ORIG_V_CalcRefdef;
 	_HUD_Init ORIG_HUD_Init;
+	_HUD_Redraw ORIG_HUD_Redraw;
 
 	void **ppmove;
 	ptrdiff_t offOldbuttons;
@@ -78,8 +79,4 @@ protected:
 	void *pHud;
 
 	bool cantJumpNextTime;
-
-	bool novd; // Use the CHudBase w/o virtual destructor.
-	CHudCustom_Wrapper customHudWrapper;
-	CHudCustom_Wrapper_NoVD customHudWrapper_NoVD;
 };

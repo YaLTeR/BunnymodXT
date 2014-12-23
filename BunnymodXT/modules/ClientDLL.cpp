@@ -72,6 +72,11 @@ extern "C" int __cdecl Initialize(cl_enginefunc_t* pEnginefuncs, int iVersion)
 	return ClientDLL::HOOKED_Initialize(pEnginefuncs, iVersion);
 }
 
+extern "C" void __cdecl HUD_Redraw(float time, int intermission)
+{
+	return ClientDLL::HOOKED_HUD_Redraw(time, intermission);
+}
+
 extern "C" void __cdecl _ZN4CHud4InitEv(void* thisptr)
 {
 	return ClientDLL::HOOKED_CHud_Init(thisptr);

@@ -99,10 +99,9 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	MemUtils::ptnvec_size ptnNumber;
 
 	void *pPMJump, *pPMPreventMegaBunnyJumping;
+	std::future<MemUtils::ptnvec_size> fPMPreventMegaBunnyJumping;
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(moduleHandle, "PM_PlayerMove"));
-
-	std::future<MemUtils::ptnvec_size> fPMPreventMegaBunnyJumping;
 
 	pPMPreventMegaBunnyJumping = MemUtils::GetSymbolAddress(moduleHandle, "PM_PreventMegaBunnyJumping");
 	if (pPMPreventMegaBunnyJumping)
@@ -144,21 +143,19 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		{
 			ORIG_PM_Jump = reinterpret_cast<_PM_Jump>(pPMJump);
 			EngineDevMsg("[client dll] Found PM_Jump at %p (using the %s pattern).\n", pPMJump, Patterns::ptnsPMJump[ptnNumber].build.c_str());
+			offOldbuttons = 200;
+			offOnground = 224;
 
 			switch (ptnNumber)
 			{
 			case 0:
 			case 1:
 				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 2);
-				offOldbuttons = 200;
-				offOnground = 224;
 				break;
 
 			case 2: // AG-Server, shouldn't happen here but who knows.
 			case 3:
 				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 3);
-				offOldbuttons = 200;
-				offOnground = 224;
 				break;
 			}
 		}

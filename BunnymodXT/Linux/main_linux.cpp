@@ -91,8 +91,8 @@ static __attribute__((constructor)) void Construct()
 	_EngineWarning = PrintWarning;
 	_EngineDevWarning = PrintDevWarning;
 
-	Hooks::AddToHookedModules(&clientDLL);
-	Hooks::AddToHookedModules(&serverDLL);
+	Hooks::AddToHookedModules(&ClientDLL::GetInstance());
+	Hooks::AddToHookedModules(&ServerDLL::GetInstance());
 	Hooks::Init(false);
 }
 

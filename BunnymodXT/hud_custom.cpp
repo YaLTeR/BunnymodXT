@@ -58,13 +58,13 @@ namespace CustomHud
 	static void UpdateScreenInfo()
 	{
 		si.iSize = sizeof(si);
-		clientDLL.pEngfuncs->pfnGetScreenInfo(&si);
+		ClientDLL::GetInstance().pEngfuncs->pfnGetScreenInfo(&si);
 	}
 
 	static void DrawString(int x, int y, const char* s, float r, float g, float b)
 	{
-		clientDLL.pEngfuncs->pfnDrawSetTextColor(r, g, b);
-		clientDLL.pEngfuncs->pfnDrawConsoleString(x, y, const_cast<char*>(s));
+		ClientDLL::GetInstance().pEngfuncs->pfnDrawSetTextColor(r, g, b);
+		ClientDLL::GetInstance().pEngfuncs->pfnDrawConsoleString(x, y, const_cast<char*>(s));
 	}
 
 	static inline void DrawString(int x, int y, const char* s)
@@ -92,8 +92,8 @@ namespace CustomHud
 	{
 		assert(digit >= 0 && digit <= 9);
 
-		clientDLL.pEngfuncs->pfnSPR_Set(NumberSprites[digit], r, g, b);
-		clientDLL.pEngfuncs->pfnSPR_DrawAdditive(0, x, y, &NumberSpriteRects[digit]);
+		ClientDLL::GetInstance().pEngfuncs->pfnSPR_Set(NumberSprites[digit], r, g, b);
+		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x, y, &NumberSpriteRects[digit]);
 	}
 
 	static void DrawNumber(int number, int x, int y, int r, int g, int b)
@@ -346,7 +346,7 @@ namespace CustomHud
 		// Based on a similar procedure from hud.cpp.
 		if (!SpriteList)
 		{
-			SpriteList = clientDLL.pEngfuncs->pfnSPR_GetList(const_cast<char*>("sprites/hud.txt"), &SpriteCount);
+			SpriteList = ClientDLL::GetInstance().pEngfuncs->pfnSPR_GetList(const_cast<char*>("sprites/hud.txt"), &SpriteCount);
 			if (SpriteList)
 			{
 				for (client_sprite_t *p = SpriteList; p < (SpriteList + SpriteCount); ++p)
@@ -364,7 +364,7 @@ namespace CustomHud
 						std::string path("sprites/");
 						path += p->szSprite;
 						path += ".spr";
-						NumberSprites[digit] = clientDLL.pEngfuncs->pfnSPR_Load(path.c_str());
+						NumberSprites[digit] = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Load(path.c_str());
 						
 						if (!digit)
 						{
@@ -385,7 +385,7 @@ namespace CustomHud
 				std::string path("sprites/");
 				path += (*it)->szSprite;
 				path += ".spr";
-				NumberSprites[i] = clientDLL.pEngfuncs->pfnSPR_Load(path.c_str());
+				NumberSprites[i] = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Load(path.c_str());
 				EngineDevMsg("[client dll] Reloaded the digit %d sprite from \"%s\".\n", i, path.c_str());
 			}
 		}

@@ -3,29 +3,10 @@
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
-#include "../modules.hpp"
+#include "ServerDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
-
-void __cdecl ServerDLL::HOOKED_PM_Jump()
-{
-	return serverDLL.HOOKED_PM_Jump_Func();
-}
-
-void __cdecl ServerDLL::HOOKED_PM_PreventMegaBunnyJumping()
-{
-	return serverDLL.HOOKED_PM_PreventMegaBunnyJumping_Func();
-}
-
-void __cdecl ServerDLL::HOOKED_PM_PlayerMove(qboolean server)
-{
-	return serverDLL.HOOKED_PM_PlayerMove_Func(server);
-}
-
-void __stdcall ServerDLL::HOOKED_GiveFnptrsToDll(enginefuncs_t* pEngfuncsFromEngine, const void* pGlobals)
-{
-	return serverDLL.HOOKED_GiveFnptrsToDll_Func(pEngfuncsFromEngine, pGlobals);
-}
+#include "../hud_custom.hpp"
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
 {
@@ -305,7 +286,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	EngineDevMsg("[server dll] Registered CVars.\n");
 }
 
-void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
+HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
 {
 	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
 	int playerIndex = *reinterpret_cast<int*>(pmove + offPlayerIndex);
@@ -347,13 +328,13 @@ void __cdecl ServerDLL::HOOKED_PM_Jump_Func()
 		*oldbuttons = orig_oldbuttons;
 }
 
-void __cdecl ServerDLL::HOOKED_PM_PreventMegaBunnyJumping_Func()
+HOOK_DEF_0(ServerDLL, void, __cdecl, PM_PreventMegaBunnyJumping)
 {
 	if (bxt_bhopcap.GetBool())
 		return ORIG_PM_PreventMegaBunnyJumping();
 }
 
-void __cdecl ServerDLL::HOOKED_PM_PlayerMove_Func(qboolean server)
+HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 {
 	if (!ppmove)
 		return ORIG_PM_PlayerMove(server);
@@ -390,7 +371,7 @@ void __cdecl ServerDLL::HOOKED_PM_PlayerMove_Func(qboolean server)
 	CustomHud::UpdatePlayerInfo(velocity, origin);
 }
 
-void __stdcall ServerDLL::HOOKED_GiveFnptrsToDll_Func(enginefuncs_t* pEngfuncsFromEngine, const void* pGlobals)
+HOOK_DEF_2(ServerDLL, void, __stdcall, GiveFnptrsToDll, enginefuncs_t*, pEngfuncsFromEngine, const void*, pGlobals)
 {
 	ORIG_GiveFnptrsToDll(pEngfuncsFromEngine, pGlobals);
 

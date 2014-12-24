@@ -42,3 +42,73 @@ using std::ptrdiff_t;
 
 typedef int(*pfnUserMsgHook)(const char *pszName, int iSize, void *pbuf);
 #include "HLSDK/engine/cdll_int.h"
+
+/*
+	Declare a hook. Does the following:
+	- Declares a public static function;
+	- Declares a public function;
+	- Assigns the type of the function to hook a nice name;
+	- Declares a variable of that name.
+
+	Example:
+		HOOK_DECL(void, __cdecl, PM_PlayerMove, qboolean server)
+	Expands into:
+		public:
+			static void __cdecl HOOKED_PM_PlayerMove(qboolean server);
+			void __cdecl HOOKED_PM_PlayerMove_Func(qboolean server);
+		protected:
+			typedef void(__cdecl *_PM_PlayerMove) (qboolean server);
+			_PM_PlayerMove ORIG_PlayerMove;
+*/
+#define HOOK_DECL(ret, call, name, ...) \
+	public: \
+		static ret call HOOKED_##name(__VA_ARGS__); \
+		ret call HOOKED_##name##_Func(__VA_ARGS__); \
+	protected: \
+		typedef	ret(call *_##name) (__VA_ARGS__); \
+		_##name ORIG_##name;
+
+/*
+	Define a hook. Does the following:
+	- Defines the static function to call the member function;
+	- Inserts the member function definition.
+
+	Example:
+		HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
+		{
+			// do stuff
+		}
+	Becomes:
+		void __cdecl ServerDLL::HOOKED_PM_PlayerMove(qboolean server)
+		{
+			return ServerDLL::GetInstance().HOOKED_PM_PlayerMove_Func(server);
+		}
+		void __cdecl ServerDLL::HOOKED_PM_PlayerMove_Func(qboolean server)
+		{
+			// do stuff
+		}
+*/
+
+#define HOOK_DEF_0(class, ret, call, name) \
+	ret call class::HOOKED_##name() { \
+		return class::GetInstance().HOOKED_##name##_Func(); \
+	} \
+	ret call class::HOOKED_##name##_Func()
+
+#define HOOK_DEF_1(class, ret, call, name, t1, n1) \
+	ret call class::HOOKED_##name(t1 n1) { \
+		return class::GetInstance().HOOKED_##name##_Func(n1); \
+	} \
+	ret call class::HOOKED_##name##_Func(t1 n1)
+
+#define HOOK_DEF_2(class, ret, call, name, t1, n1, t2, n2) \
+	ret call class::HOOKED_##name(t1 n1, t2 n2) { \
+		return class::GetInstance().HOOKED_##name##_Func(n1, n2); \
+	} \
+	ret call class::HOOKED_##name##_Func(t1 n1, t2 n2)
+
+#define HOOK_DEF_3(class, ret, call, name, t1, n1, t2, n2, t3, n3) \
+	ret call class::HOOKED_##name(t1 n1, t2 n2, t3 n3) { \
+		return class::GetInstance().HOOKED_##name##_Func(n1, n2, n3); \
+	} \
+	ret call class::HOOKED_##name##_Func(t1 n1, t2 n2, t3 n3)

@@ -176,9 +176,6 @@
     <ClCompile Include="modules\ClientDLL.cpp">
       <Filter>Source Files\modules</Filter>
     </ClCompile>
-    <ClCompile Include="modules.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="cvars.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

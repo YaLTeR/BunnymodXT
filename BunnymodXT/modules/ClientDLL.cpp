@@ -3,55 +3,10 @@
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
-#include "../modules.hpp"
+#include "ClientDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
-
-void __cdecl ClientDLL::HOOKED_PM_Jump()
-{
-	return clientDLL.HOOKED_PM_Jump_Func();
-}
-
-void __cdecl ClientDLL::HOOKED_PM_PlayerMove(qboolean server)
-{
-	return clientDLL.HOOKED_PM_PlayerMove_Func(server);
-}
-
-void __cdecl ClientDLL::HOOKED_PM_PreventMegaBunnyJumping()
-{
-	return clientDLL.HOOKED_PM_PreventMegaBunnyJumping_Func();
-}
-
-int __cdecl ClientDLL::HOOKED_Initialize(cl_enginefunc_t* pEnginefuncs, int iVersion)
-{
-	return clientDLL.HOOKED_Initialize_Func(pEnginefuncs, iVersion);
-}
-
-void __cdecl ClientDLL::HOOKED_V_CalcRefdef(ref_params_t* pparams)
-{
-	return clientDLL.HOOKED_V_CalcRefdef_Func(pparams);
-}
-
-void __cdecl ClientDLL::HOOKED_HUD_Init()
-{
-	return clientDLL.HOOKED_HUD_Init_Func();
-}
-
-void __cdecl ClientDLL::HOOKED_HUD_VidInit()
-{
-	return clientDLL.HOOKED_HUD_VidInit_Func();
-}
-
-void __cdecl ClientDLL::HOOKED_HUD_Reset()
-{
-	return clientDLL.HOOKED_HUD_Reset_Func();
-}
-
-void __cdecl ClientDLL::HOOKED_HUD_Redraw(float time, int intermission)
-{
-	return clientDLL.HOOKED_HUD_Redraw_Func(time, intermission);
-}
 
 // Linux hooks.
 #ifndef _WIN32
@@ -329,28 +284,28 @@ void ClientDLL::Clear()
 
 bool ClientDLL::FindHUDFunctions()
 {
-	if (ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Init")))
+	if ((ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Init"))))
 		EngineDevMsg("[client dll] Found HUD_Init at %p.\n", ORIG_HUD_Init);
 	else {
 		EngineDevMsg("[client dll] Could not HUD_Init!\n");
 		return false;
 	}
 
-	if (ORIG_HUD_VidInit = reinterpret_cast<_HUD_VidInit>(MemUtils::GetSymbolAddress(m_Handle, "HUD_VidInit")))
+	if ((ORIG_HUD_VidInit = reinterpret_cast<_HUD_VidInit>(MemUtils::GetSymbolAddress(m_Handle, "HUD_VidInit"))))
 		EngineDevMsg("[client dll] Found HUD_VidInit at %p.\n", ORIG_HUD_VidInit);
 	else {
 		EngineDevMsg("[client dll] Could not HUD_VidInit!\n");
 		return false;
 	}
 
-	if (ORIG_HUD_Reset = reinterpret_cast<_HUD_Reset>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Reset")))
+	if ((ORIG_HUD_Reset = reinterpret_cast<_HUD_Reset>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Reset"))))
 		EngineDevMsg("[client dll] Found HUD_Reset at %p.\n", ORIG_HUD_Reset);
 	else {
 		EngineDevMsg("[client dll] Could not HUD_Reset!\n");
 		return false;
 	}
 
-	if (ORIG_HUD_Redraw = reinterpret_cast<_HUD_Redraw>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Redraw")))
+	if ((ORIG_HUD_Redraw = reinterpret_cast<_HUD_Redraw>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Redraw"))))
 		EngineDevMsg("[client dll] Found HUD_Redraw at %p.\n", ORIG_HUD_Redraw);
 	else {
 		EngineDevMsg("[client dll] Could not HUD_Redraw!\n");
@@ -398,7 +353,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 	EngineDevMsg("[client dll] Registered CVars.\n");
 }
 
-void __cdecl ClientDLL::HOOKED_PM_Jump_Func()
+HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
 {
 	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
 	int *onground = reinterpret_cast<int*>(pmove + offOnground);
@@ -438,18 +393,18 @@ void __cdecl ClientDLL::HOOKED_PM_Jump_Func()
 		*oldbuttons = orig_oldbuttons;
 }
 
-void __cdecl ClientDLL::HOOKED_PM_PlayerMove_Func(qboolean server)
+HOOK_DEF_1(ClientDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 {
 	ORIG_PM_PlayerMove(server);
 }
 
-void __cdecl ClientDLL::HOOKED_PM_PreventMegaBunnyJumping_Func()
+HOOK_DEF_0(ClientDLL, void, __cdecl, PM_PreventMegaBunnyJumping)
 {
 	if (bxt_bhopcap_prediction.GetBool())
 		ORIG_PM_PreventMegaBunnyJumping();
 }
 
-int __cdecl ClientDLL::HOOKED_Initialize_Func(cl_enginefunc_t* pEnginefuncs, int iVersion)
+HOOK_DEF_2(ClientDLL, int, __cdecl, Initialize, cl_enginefunc_t*, pEnginefuncs, int, iVersion)
 {
 	int rv = ORIG_Initialize(pEnginefuncs, iVersion);
 
@@ -458,21 +413,21 @@ int __cdecl ClientDLL::HOOKED_Initialize_Func(cl_enginefunc_t* pEnginefuncs, int
 	return rv;
 }
 
-void __cdecl ClientDLL::HOOKED_V_CalcRefdef_Func(ref_params_t* pparams)
+HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 {
 	CustomHud::UpdatePlayerInfoInaccurate(pparams->simvel, pparams->simorg);
 
 	ORIG_V_CalcRefdef(pparams);
 }
 
-void __cdecl ClientDLL::HOOKED_HUD_Init_Func()
+HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Init)
 {
 	ORIG_HUD_Init();
 
 	CustomHud::Init();
 }
 
-void __cdecl ClientDLL::HOOKED_HUD_VidInit_Func()
+HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_VidInit)
 {
 	ORIG_HUD_VidInit();
 
@@ -480,7 +435,7 @@ void __cdecl ClientDLL::HOOKED_HUD_VidInit_Func()
 	CustomHud::VidInit();
 }
 
-void __cdecl ClientDLL::HOOKED_HUD_Reset_Func()
+HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Reset)
 {
 	ORIG_HUD_Reset();
 
@@ -488,7 +443,7 @@ void __cdecl ClientDLL::HOOKED_HUD_Reset_Func()
 	CustomHud::VidInit();
 }
 
-void __cdecl ClientDLL::HOOKED_HUD_Redraw_Func(float time, int intermission)
+HOOK_DEF_2(ClientDLL, void, __cdecl, HUD_Redraw, float, time, int, intermission)
 {
 	ORIG_HUD_Redraw(time, intermission);
 

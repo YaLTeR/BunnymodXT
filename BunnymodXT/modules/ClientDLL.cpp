@@ -213,6 +213,12 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		EngineDevWarning("[client dll] Could not find V_CalcRefdef!\n");
 		EngineWarning("Velocity display during demo playback is not available.\n");
 	}
+
+	ORIG_HUD_PostRunCmd = reinterpret_cast<_HUD_PostRunCmd>(MemUtils::GetSymbolAddress(moduleHandle, "HUD_PostRunCmd"));
+	if (!ORIG_HUD_PostRunCmd)
+	{
+		EngineDevMsg("[client dll] Could not find HUD_PostRunCmd!\n");
+	}
 	
 	// Now we can register cvars and commands provided that we already have engfuncs.
 	if (pEngfuncs && *reinterpret_cast<uintptr_t*>(pEngfuncs))
@@ -233,7 +239,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) }
+			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd) }
 		});
 }
 
@@ -248,7 +255,8 @@ void ClientDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) }
+			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd) }
 		});
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_Initialize));
@@ -272,6 +280,7 @@ void ClientDLL::Clear()
 	ORIG_HUD_VidInit = nullptr;
 	ORIG_HUD_Reset = nullptr;
 	ORIG_HUD_Redraw = nullptr;
+	ORIG_HUD_PostRunCmd = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -448,4 +457,20 @@ HOOK_DEF_2(ClientDLL, void, __cdecl, HUD_Redraw, float, time, int, intermission)
 	ORIG_HUD_Redraw(time, intermission);
 
 	CustomHud::Draw(time);
+}
+
+HOOK_DEF_6(ClientDLL, void, __cdecl, HUD_PostRunCmd, local_state_s*, from, local_state_s*, to, usercmd_s*, cmd, int, runfuncs, double, time, unsigned int, random_seed)
+{
+	//if (_bxt_taslog.GetBool())
+	if (pEngfuncs)
+	{
+		pEngfuncs->Con_Printf("-- HUD_PostRunCmd Start --\n");
+		pEngfuncs->Con_Printf("Msec %hhu (%Lf)\n", cmd->msec, static_cast<long double>(cmd->msec) * 0.001);
+		pEngfuncs->Con_Printf("Viewangles: %.8f %.8f %.8f; forwardmove: %f; sidemove: %f; upmove: %f\n", cmd->viewangles[0], cmd->viewangles[1], cmd->viewangles[2], cmd->forwardmove, cmd->sidemove, cmd->upmove);
+		pEngfuncs->Con_Printf("Buttons: %hu\n", cmd->buttons);
+		pEngfuncs->Con_Printf("Random seed: %d\n", random_seed);
+		pEngfuncs->Con_Printf("-- HUD_PostRunCmd End --\n");
+	}
+
+	return ORIG_HUD_PostRunCmd(from, to, cmd, runfuncs, time, random_seed);
 }

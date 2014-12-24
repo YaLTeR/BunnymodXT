@@ -68,6 +68,7 @@ unsigned int __stdcall MainThread(void* args)
 	_EngineWarning = PrintWarning;
 	_EngineDevWarning = PrintDevWarning;
 
+	Hooks::AddToHookedModules(&HwDLL::GetInstance());
 	Hooks::AddToHookedModules(&ClientDLL::GetInstance());
 	Hooks::AddToHookedModules(&ServerDLL::GetInstance());
 	Hooks::Init(true);

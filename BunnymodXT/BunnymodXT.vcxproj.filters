@@ -147,6 +147,12 @@
     <ClInclude Include="modules\ServerDLL.hpp">
       <Filter>Header Files\modules</Filter>
     </ClInclude>
+    <ClInclude Include="modules\HwDLL.hpp">
+      <Filter>Header Files\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HLSDK\common\usercmd.h">
+      <Filter>HLSDK\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -199,6 +205,9 @@
     </ClCompile>
     <ClCompile Include="Windows\conutils.cpp">
       <Filter>Source Files\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\HwDLL.cpp">
+      <Filter>Source Files\modules</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

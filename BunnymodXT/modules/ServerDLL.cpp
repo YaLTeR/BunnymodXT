@@ -127,6 +127,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			offVelocity = 92;
 			offOrigin = 56;
 			offAngles = 68;
+			offCmd = 283736;
 		}
 		else
 		{
@@ -233,6 +234,7 @@ void ServerDLL::Clear()
 	offVelocity = 0;
 	offOrigin = 0;
 	offAngles = 0;
+	offCmd = 0;
 	offBhopcap = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	pEngfuncs = nullptr;
@@ -347,19 +349,20 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	velocity = reinterpret_cast<float*>(pmove + offVelocity);
 	origin =   reinterpret_cast<float*>(pmove + offOrigin);
 	angles =   reinterpret_cast<float*>(pmove + offAngles);
+	usercmd_t *cmd = reinterpret_cast<usercmd_t*>(pmove + offCmd);
 
 	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
 
-	if (_bxt_taslog.GetBool())
+	//if (_bxt_taslog.GetBool())
 	{
 		ALERT(at_console, "-- BXT TAS Log Start --\n");
-		ALERT(at_console, "Player index: %d\n", playerIndex);
+		ALERT(at_console, "Player index: %d; msec: %hhu (%Lf)\n", playerIndex, cmd->msec, static_cast<long double>(cmd->msec) * 0.001);
 		ALERT(at_console, "Velocity: %.8f; %.8f; %.8f; origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
 	}
 
 	ORIG_PM_PlayerMove(server);
 
-	if (_bxt_taslog.GetBool())
+	//if (_bxt_taslog.GetBool())
 	{
 		ALERT(at_console, "Angles: %.8f; %.8f; %.8f\n", angles[0], angles[1], angles[2]);
 		ALERT(at_console, "New velocity: %.8f; %.8f; %.8f; new origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);

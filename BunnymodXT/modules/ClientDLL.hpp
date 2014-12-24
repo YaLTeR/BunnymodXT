@@ -15,6 +15,7 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(void, __cdecl, HUD_VidInit)
 	HOOK_DECL(void, __cdecl, HUD_Reset)
 	HOOK_DECL(void, __cdecl, HUD_Redraw, float time, int intermission)
+	HOOK_DECL(void, __cdecl, HUD_PostRunCmd, local_state_s* from, local_state_s* to, usercmd_s* cmd, int runfuncs, double time, unsigned int random_seed)
 
 public:
 	static ClientDLL& GetInstance()

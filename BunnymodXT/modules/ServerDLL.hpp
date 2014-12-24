@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../sptlib-wrapper.hpp"
 #include <SPTLib/IHookableDirFilter.hpp>
 
 class ServerDLL : public IHookableDirFilter
@@ -36,6 +37,7 @@ protected:
 	ptrdiff_t offVelocity;
 	ptrdiff_t offOrigin;
 	ptrdiff_t offAngles;
+	ptrdiff_t offCmd;
 
 	ptrdiff_t offBhopcap;
 	byte originalBhopcapInsn[6];

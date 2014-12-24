@@ -39,6 +39,7 @@ using std::ptrdiff_t;
 #include "HLSDK/cl_dll/wrect.h"
 #include "HLSDK/cl_dll/hud.h"
 #include "HLSDK/common/ref_params.h"
+#include "HLSDK/common/usercmd.h"
 
 typedef int(*pfnUserMsgHook)(const char *pszName, int iSize, void *pbuf);
 #include "HLSDK/engine/cdll_int.h"
@@ -112,3 +113,21 @@ typedef int(*pfnUserMsgHook)(const char *pszName, int iSize, void *pbuf);
 		return class::GetInstance().HOOKED_##name##_Func(n1, n2, n3); \
 	} \
 	ret call class::HOOKED_##name##_Func(t1 n1, t2 n2, t3 n3)
+
+#define HOOK_DEF_4(class, ret, call, name, t1, n1, t2, n2, t3, n3, t4, n4) \
+	ret call class::HOOKED_##name(t1 n1, t2 n2, t3 n3, t4 n4) { \
+		return class::GetInstance().HOOKED_##name##_Func(n1, n2, n3, n4); \
+	} \
+	ret call class::HOOKED_##name##_Func(t1 n1, t2 n2, t3 n3, t4 n4)
+
+#define HOOK_DEF_5(class, ret, call, name, t1, n1, t2, n2, t3, n3, t4, n4, t5, n5) \
+	ret call class::HOOKED_##name(t1 n1, t2 n2, t3 n3, t4 n4, t5 n5) { \
+		return class::GetInstance().HOOKED_##name##_Func(n1, n2, n3, n4, n5); \
+	} \
+	ret call class::HOOKED_##name##_Func(t1 n1, t2 n2, t3 n3, t4 n4, t5 n5)
+
+#define HOOK_DEF_6(class, ret, call, name, t1, n1, t2, n2, t3, n3, t4, n4, t5, n5, t6, n6) \
+	ret call class::HOOKED_##name(t1 n1, t2 n2, t3 n3, t4 n4, t5 n5, t6 n6) { \
+		return class::GetInstance().HOOKED_##name##_Func(n1, n2, n3, n4, n5, n6); \
+	} \
+	ret call class::HOOKED_##name##_Func(t1 n1, t2 n2, t3 n3, t4 n4, t5 n5, t6 n6)

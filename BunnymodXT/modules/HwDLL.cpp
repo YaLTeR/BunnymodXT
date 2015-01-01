@@ -26,8 +26,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	m_Intercepted = needToIntercept;
 
 	MemUtils::ptnvec_size ptnNumber;
-	void *pCbuf_Execute, *pCbuf_InsertText;
-	std::future<MemUtils::ptnvec_size> fCbuf_Execute, fCbuf_InsertText;
+	void *pCbuf_Execute, *pCbuf_InsertText, *pSeedRandomNumberGenerator;
+	std::future<MemUtils::ptnvec_size> fCbuf_Execute, fCbuf_InsertText, fSeedRandomNumberGenerator;
 
 	pCbuf_Execute = MemUtils::GetSymbolAddress(moduleHandle, "Cbuf_Execute");
 	if (pCbuf_Execute)
@@ -70,11 +70,21 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			EngineDevWarning("[hw dll] Couldn't get the address of Cbuf_InsertText!\n");
 			ORIG_Cbuf_Execute = nullptr;
 		}
+
+		ORIG_SeedRandomNumberGenerator = reinterpret_cast<_SeedRandomNumberGenerator>(MemUtils::GetSymbolAddress(moduleHandle, "SeedRandomNumberGenerator"));
+		if (ORIG_SeedRandomNumberGenerator)
+			EngineDevMsg("[hw dll] Found SeedRandomNumberGenerator at %p.\n", ORIG_SeedRandomNumberGenerator);
+		else
+		{
+			EngineDevWarning("[hw dll] Couldn't get the address of SeedRandomNumberGenerator!\n");
+			ORIG_Cbuf_Execute = nullptr;
+		}
 	}
 	else
 	{
 		fCbuf_Execute = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCbuf_Execute, &pCbuf_Execute);
 		fCbuf_InsertText = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCbuf_InsertText, &pCbuf_InsertText);
+		fSeedRandomNumberGenerator = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsSeedRandomNumberGenerator, &pSeedRandomNumberGenerator);
 
 		void *Host_AutoSave_f;
 		ptnNumber = MemUtils::FindUniqueSequence(moduleHandle, moduleLength, Patterns::ptnsHost_AutoSave_f, &Host_AutoSave_f);
@@ -115,6 +125,24 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 				EngineDevWarning("[hw dll] Could not find pCbuf_InsertText!\n");
 				ORIG_Cbuf_Execute = nullptr;
 			}
+
+			ptnNumber = fSeedRandomNumberGenerator.get();
+			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
+			{
+				ORIG_SeedRandomNumberGenerator = reinterpret_cast<_SeedRandomNumberGenerator>(pSeedRandomNumberGenerator);
+				EngineDevMsg("[hw dll] Found SeedRandomNumberGenerator at %p (using the %s pattern).\n", pSeedRandomNumberGenerator, Patterns::ptnsSeedRandomNumberGenerator[ptnNumber].build.c_str());
+
+				ORIG_time = reinterpret_cast<_time>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(pSeedRandomNumberGenerator) + 3)
+					+ reinterpret_cast<uintptr_t>(pSeedRandomNumberGenerator) + 7
+				);
+				EngineDevMsg("[hw dll] ORIG_time is %p.\n", ORIG_time);
+			}
+			else
+			{
+				EngineDevWarning("[hw dll] Could not find SeedRandomNumberGenerator!\n");
+				ORIG_Cbuf_Execute = nullptr;
+			}
 		}
 		else
 		{
@@ -122,9 +150,14 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 		}
 	}
 
+	if (ORIG_Cbuf_Execute && !ORIG_time)
+		ORIG_time = time;
+
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
-			{ reinterpret_cast<void**>(&ORIG_Cbuf_Execute), reinterpret_cast<void*>(HOOKED_Cbuf_Execute) }
+			{ reinterpret_cast<void**>(&ORIG_Cbuf_Execute), reinterpret_cast<void*>(HOOKED_Cbuf_Execute) },
+			{ reinterpret_cast<void**>(&ORIG_SeedRandomNumberGenerator), reinterpret_cast<void*>(HOOKED_SeedRandomNumberGenerator) },
+			{ reinterpret_cast<void**>(&ORIG_time), reinterpret_cast<void*>(HOOKED_time) }
 	});
 }
 
@@ -132,7 +165,9 @@ void HwDLL::Unhook()
 {
 	if (m_Intercepted)
 		MemUtils::RemoveInterception(m_Name, {
-			{ reinterpret_cast<void**>(&ORIG_Cbuf_Execute), reinterpret_cast<void*>(HOOKED_Cbuf_Execute) }
+			{ reinterpret_cast<void**>(&ORIG_Cbuf_Execute), reinterpret_cast<void*>(HOOKED_Cbuf_Execute) },
+			{ reinterpret_cast<void**>(&ORIG_SeedRandomNumberGenerator), reinterpret_cast<void*>(HOOKED_SeedRandomNumberGenerator) },
+			{ reinterpret_cast<void**>(&ORIG_time), reinterpret_cast<void*>(HOOKED_time) }
 	});
 
 	Clear();
@@ -141,16 +176,17 @@ void HwDLL::Unhook()
 void HwDLL::Clear()
 {
 	ORIG_Cbuf_Execute = nullptr;
+	ORIG_SeedRandomNumberGenerator = nullptr;
+	ORIG_time = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
 	cls = nullptr;
 	sv = nullptr;
+	insideSeedRNG = false;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 {
-	static bool dontPauseNextCycle = false;
-
 	int state = *reinterpret_cast<int*>(cls);
 	int paused = *(reinterpret_cast<int*>(sv) + 1);
 
@@ -161,13 +197,14 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	if (state == 4 && !paused)
 		ORIG_Cbuf_InsertText("pause\n");
 
-	// if (state == 5 && paused)
-	// 	ORIG_Cbuf_InsertText("+attack\n");
+	if (state == 5 && paused)
+		ORIG_Cbuf_InsertText("+attack\n");
 
 	ORIG_Cbuf_Execute();
 
 	// If cls.state == 3 and the game isn't paused, execute "pause" on the next cycle.
 	// This case happens when starting a map.
+	static bool dontPauseNextCycle = false;
 	if (!dontPauseNextCycle && state == 3 && !paused)
 	{
 		ORIG_Cbuf_InsertText("pause\n");
@@ -175,4 +212,23 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	}
 	else
 		dontPauseNextCycle = false;
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)
+{
+	insideSeedRNG = true;
+	EngineMsg("Calling SeedRandomNumberGenerator!\n");
+	ORIG_SeedRandomNumberGenerator();
+	insideSeedRNG = false;
+}
+
+HOOK_DEF_1(HwDLL, time_t, __cdecl, time, time_t*, Time)
+{
+	if (insideSeedRNG)
+	{
+		EngineMsg("Called time from SeedRandomNumberGenerator!\n");
+		return 0;
+	}
+
+	return ORIG_time(Time);
 }

@@ -6,6 +6,8 @@
 class HwDLL : public IHookableNameFilter
 {
 	HOOK_DECL(void, __cdecl, Cbuf_Execute)
+	HOOK_DECL(void, __cdecl, SeedRandomNumberGenerator)
+	HOOK_DECL(time_t, __cdecl, time, time_t *Time)
 
 public:
 	static HwDLL& GetInstance()
@@ -31,4 +33,6 @@ protected:
 
 	void *cls;
 	void *sv;
+
+	bool insideSeedRNG;
 };

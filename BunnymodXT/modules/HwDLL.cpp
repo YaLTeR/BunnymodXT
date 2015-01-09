@@ -26,8 +26,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	m_Intercepted = needToIntercept;
 
 	MemUtils::ptnvec_size ptnNumber;
-	void *pCbuf_Execute, *pCbuf_InsertText, *pSeedRandomNumberGenerator, *pRandomFloat, *pRandomLong;
-	std::shared_future<MemUtils::ptnvec_size> fCbuf_Execute, fCbuf_InsertText, fSeedRandomNumberGenerator, fRandomFloat, fRandomLong;
+	void *pCbuf_Execute, *pCbuf_InsertText, *pSeedRandomNumberGenerator, *pRandomFloat, *pRandomLong, *pSCR_DrawFPS;
+	std::shared_future<MemUtils::ptnvec_size> fCbuf_Execute, fCbuf_InsertText, fSeedRandomNumberGenerator, fRandomFloat, fRandomLong, fSCR_DrawFPS;
 	std::vector< std::shared_future<MemUtils::ptnvec_size> > futures;
 
 	pCbuf_Execute = MemUtils::GetSymbolAddress(moduleHandle, "Cbuf_Execute");
@@ -56,10 +56,19 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 
 		cmd_text = reinterpret_cast<cmdbuf_t*>(MemUtils::GetSymbolAddress(moduleHandle, "cmd_text"));
 		if (cmd_text)
-			EngineDevMsg("[hw dll] Found cmd_text at %p.\n", sv);
+			EngineDevMsg("[hw dll] Found cmd_text at %p.\n", cmd_text);
 		else
 		{
 			EngineDevWarning("[hw dll] Couldn't get the address of cmd_text!\n");
+			ORIG_Cbuf_Execute = nullptr;
+		}
+
+		host_frametime = reinterpret_cast<double*>(MemUtils::GetSymbolAddress(moduleHandle, "host_frametime"));
+		if (host_frametime)
+			EngineDevMsg("[hw dll] Found host_frametime at %p.\n", sv);
+		else
+		{
+			EngineDevWarning("[hw dll] Couldn't get the address of host_frametime!\n");
 			ORIG_Cbuf_Execute = nullptr;
 		}
 
@@ -88,11 +97,13 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 		fSeedRandomNumberGenerator = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsSeedRandomNumberGenerator, &pSeedRandomNumberGenerator);
 		fRandomFloat = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsRandomFloat, &pRandomFloat);
 		fRandomLong = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsRandomLong, &pRandomLong);
+		fSCR_DrawFPS = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsSCR_DrawFPS, &pSCR_DrawFPS);
 		futures.push_back(fCbuf_Execute);
 		futures.push_back(fCbuf_InsertText);
 		futures.push_back(fSeedRandomNumberGenerator);
 		futures.push_back(fRandomFloat);
 		futures.push_back(fRandomLong);
+		futures.push_back(fSCR_DrawFPS);
 
 		void *Host_AutoSave_f;
 		ptnNumber = MemUtils::FindUniqueSequence(moduleHandle, moduleLength, Patterns::ptnsHost_AutoSave_f, &Host_AutoSave_f);
@@ -117,7 +128,16 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 				ORIG_Cbuf_Execute = reinterpret_cast<_Cbuf_Execute>(pCbuf_Execute);
 				EngineDevMsg("[hw dll] Found Cbuf_Execute at %p (using the %s pattern).\n", pCbuf_Execute, Patterns::ptnsCbuf_Execute[ptnNumber].build.c_str());
 
-				cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(pCbuf_Execute)+11) - offsetof(cmdbuf_t, cursize));
+				switch (ptnNumber)
+				{
+				case 0:
+					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(pCbuf_Execute) + 11) - offsetof(cmdbuf_t, cursize));
+					break;
+
+				case 1:
+					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(pCbuf_Execute) + 2) - offsetof(cmdbuf_t, cursize));
+					break;
+				}
 				EngineDevMsg("[hw dll] Found cmd_text at %p.\n", cmd_text);
 			}
 			else
@@ -158,8 +178,22 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 				ORIG_Cbuf_Execute = nullptr;
 			}
 
-			FIND(RandomFloat)
-			FIND(RandomLong)
+			//FIND(RandomFloat)
+			//FIND(RandomLong)
+
+			ptnNumber = fSCR_DrawFPS.get();
+			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
+			{
+				EngineDevMsg("[hw dll] Found SCR_DrawFPS at %p (using the %s pattern).\n", pSCR_DrawFPS, Patterns::ptnsSCR_DrawFPS[ptnNumber].build.c_str());
+
+				host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(pSCR_DrawFPS) + 21);
+				EngineDevMsg("[hw dll] Found host_frametime at %p.\n", host_frametime);
+			}
+			else
+			{
+				EngineDevWarning("[hw dll] Could not find SCR_DrawFPS!\n");
+				ORIG_Cbuf_Execute = nullptr;
+			}
 
 #undef FIND
 		}
@@ -212,7 +246,76 @@ void HwDLL::Clear()
 	cls = nullptr;
 	sv = nullptr;
 	cmd_text = nullptr;
+	host_frametime = nullptr;
+	executing = false;
+	loading = false;
+	finishingLoad = false;
 	insideSeedRNG = false;
+}
+
+bool HwDLL::CheckLoading()
+{
+	size_t current_cmd;
+	for (size_t off = 0; off < cmd_text->cursize; ++off)
+	{
+		current_cmd = off;
+		unsigned quotes = 0;
+		for (; off < cmd_text->cursize; ++off)
+		{
+			char c = cmd_text->data[off];
+			quotes += (c == '"');
+			if (!(quotes & 1) && c == ';')
+				break;
+			if (c == '\n')
+				break;
+		}
+
+		// TODO: aliases and check for load and map commands.
+		if ((off - current_cmd >= 13 && !std::strncmp(cmd_text->data + current_cmd, "changelevel2 ", 13))
+			|| (off - current_cmd == 12 && !std::strncmp(cmd_text->data + current_cmd, "_bxt_loading", 12)))
+			return true;
+		// TODO: aliases and refactor this part into a separate function!
+		if (off - current_cmd >= 4
+			&& !std::strncmp(cmd_text->data + current_cmd, "wait", 4)
+			&& (off - current_cmd == 4 || cmd_text->data[current_cmd + 4] == ' '))
+			return false;
+	}
+
+	return false;
+}
+
+bool HwDLL::CheckUnpause()
+{
+	size_t current_cmd;
+	for (size_t off = 0; off < cmd_text->cursize; ++off)
+	{
+		current_cmd = off;
+		unsigned quotes = 0;
+		for (; off < cmd_text->cursize; ++off)
+		{
+			char c = cmd_text->data[off];
+			quotes += (c == '"');
+			if (!(quotes & 1) && c == ';')
+				break;
+			if (c == '\n')
+				break;
+		}
+
+		if (off - current_cmd == 7 && !std::strncmp(cmd_text->data + current_cmd, "unpause", 7))
+			return true;
+		// TODO: aliases and refactor this part into a separate function!
+		if (off - current_cmd >= 4
+			&& !std::strncmp(cmd_text->data + current_cmd, "wait", 4)
+			&& (off - current_cmd == 4 || cmd_text->data[current_cmd + 4] == ' '))
+			return false;
+	}
+
+	return false;
+}
+
+void HwDLL::Execute()
+{
+
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
@@ -220,35 +323,35 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	int state = *reinterpret_cast<int*>(cls);
 	int paused = *(reinterpret_cast<int*>(sv) + 1);
 
-	std::string buf(cmd_text->data, cmd_text->cursize);
-	ORIG_Con_Printf("Cbuf_Execute() begin; cls.state: %d; sv.paused: %d; time: %f; buffer: %s\n", state, paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), buf.c_str());
-
 	// If cls.state == 4 and the game isn't paused, execute "pause" right now.
 	// This case happens when loading a savegame.
 	if (state == 4 && !paused)
-		ORIG_Cbuf_InsertText("pause\n");
-
-	static bool executing = false;
-	static bool loading = false;
-	static bool saveload = false;
-	static int frames = 0;
-	if (!saveload && frames == 10)
 	{
-		saveload = true;
-		loading = true;
-		ORIG_Cbuf_InsertText("save s;load s\n");
+		ORIG_Cbuf_InsertText("pause\n");
+		finishingLoad = true;
 	}
 
+	if (CheckLoading())
+	{
+		loading = true;
+		executing = false;
+	}
 	if (!loading && state == 5)
 		executing = true;
 	if (loading && state == 3)
 		loading = false;
+	// Manually unpause in WON.
+	if (finishingLoad && state == 5 && paused && !CheckUnpause())
+		ORIG_Cbuf_InsertText("pause\n");
 
 	if (executing)
 	{
-		frames++;
-		ORIG_Cbuf_InsertText("+attack\n");
+		finishingLoad = false;
+		Execute();
 	}
+
+	std::string buf(cmd_text->data, cmd_text->cursize);
+	ORIG_Con_Printf("Cbuf_Execute() begin; cls.state: %d; sv.paused: %d; time: %f; loading: %s; executing: %s; host_frametime: %f; buffer: %s\n", state, paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (loading ? "true" : "false"), (executing ? "true" : "false"), *host_frametime, buf.c_str());
 
 	ORIG_Cbuf_Execute();
 
@@ -258,6 +361,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	if (!dontPauseNextCycle && state == 3 && !paused)
 	{
 		ORIG_Cbuf_InsertText("pause\n");
+		finishingLoad = true;
 		dontPauseNextCycle = true;
 	}
 	else

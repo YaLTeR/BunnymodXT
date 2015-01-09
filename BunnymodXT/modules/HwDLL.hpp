@@ -43,9 +43,18 @@ protected:
 	typedef void(__cdecl *_Con_Printf) (char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
 
+	bool CheckLoading();
+	bool CheckUnpause();
+	void Execute();
+
 	void *cls;
 	void *sv;
 	cmdbuf_t *cmd_text;
+	double *host_frametime;
+
+	bool executing;
+	bool loading;
+	bool finishingLoad;
 
 	bool insideSeedRNG;
 };

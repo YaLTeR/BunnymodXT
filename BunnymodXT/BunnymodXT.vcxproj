@@ -106,6 +106,7 @@
     <ClInclude Include="..\SPTLib\IHookableDirFilter.hpp" />
     <ClInclude Include="..\SPTLib\IHookableModule.hpp" />
     <ClInclude Include="..\SPTLib\IHookableNameFilter.hpp" />
+    <ClInclude Include="..\SPTLib\IHookableNameFilterOrdered.hpp" />
     <ClInclude Include="..\SPTLib\MemUtils.hpp" />
     <ClInclude Include="..\SPTLib\sptlib-stdafx.hpp" />
     <ClInclude Include="..\SPTLib\sptlib.hpp" />
@@ -142,6 +143,10 @@
     <ClCompile Include="..\SPTLib\IHookableNameFilter.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <ClCompile Include="..\SPTLib\IHookableNameFilterOrdered.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">sptlib-stdafx.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)SPTLib.pch</PrecompiledHeaderOutputFile>
     </ClCompile>

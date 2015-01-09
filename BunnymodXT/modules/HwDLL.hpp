@@ -1,13 +1,24 @@
 #pragma once
 
 #include "./sptlib-wrapper.hpp"
-#include <SPTLib/IHookableNameFilter.hpp>
+#include <SPTLib/IHookableNameFilterOrdered.hpp>
 
-class HwDLL : public IHookableNameFilter
+class HwDLL : public IHookableNameFilterOrdered
 {
 	HOOK_DECL(void, __cdecl, Cbuf_Execute)
 	HOOK_DECL(void, __cdecl, SeedRandomNumberGenerator)
 	HOOK_DECL(time_t, __cdecl, time, time_t *Time)
+	HOOK_DECL(long double, __cdecl, RandomFloat, float a1, float a2)
+	HOOK_DECL(long, __cdecl, RandomLong, long a1, long a2)
+
+	struct cmdbuf_t
+	{
+		char *name;
+		unsigned flags;
+		char *data;
+		unsigned maxsize;
+		unsigned cursize;
+	};
 
 public:
 	static HwDLL& GetInstance()
@@ -21,7 +32,8 @@ public:
 	virtual void Clear();
 
 private:
-	HwDLL() : IHookableNameFilter({ L"hw.dll", L"hw.so" }) {};
+	// Make sure to have hl.exe last here, so that it is the lowest priority.
+	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};
 	HwDLL(const HwDLL&);
 	void operator=(const HwDLL&);
 
@@ -33,6 +45,7 @@ protected:
 
 	void *cls;
 	void *sv;
+	cmdbuf_t *cmd_text;
 
 	bool insideSeedRNG;
 };

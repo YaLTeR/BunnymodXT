@@ -43,9 +43,8 @@ protected:
 	typedef void(__cdecl *_Con_Printf) (char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
 
-	bool CheckLoading();
 	bool CheckUnpause();
-	void Execute();
+	void InsertCommands();
 
 	void *cls;
 	void *sv;
@@ -54,7 +53,9 @@ protected:
 
 	bool executing;
 	bool loading;
+	bool insideCbuf_Execute;
 	bool finishingLoad;
+	bool dontPauseNextCycle;
 
 	bool insideSeedRNG;
 };

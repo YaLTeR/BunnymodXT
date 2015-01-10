@@ -249,39 +249,10 @@ void HwDLL::Clear()
 	host_frametime = nullptr;
 	executing = false;
 	loading = false;
+	insideCbuf_Execute = false;
 	finishingLoad = false;
+	dontPauseNextCycle = false;
 	insideSeedRNG = false;
-}
-
-bool HwDLL::CheckLoading()
-{
-	size_t current_cmd;
-	for (size_t off = 0; off < cmd_text->cursize; ++off)
-	{
-		current_cmd = off;
-		unsigned quotes = 0;
-		for (; off < cmd_text->cursize; ++off)
-		{
-			char c = cmd_text->data[off];
-			quotes += (c == '"');
-			if (!(quotes & 1) && c == ';')
-				break;
-			if (c == '\n')
-				break;
-		}
-
-		// TODO: aliases and check for load and map commands.
-		if ((off - current_cmd >= 13 && !std::strncmp(cmd_text->data + current_cmd, "changelevel2 ", 13))
-			|| (off - current_cmd == 12 && !std::strncmp(cmd_text->data + current_cmd, "_bxt_loading", 12)))
-			return true;
-		// TODO: aliases and refactor this part into a separate function!
-		if (off - current_cmd >= 4
-			&& !std::strncmp(cmd_text->data + current_cmd, "wait", 4)
-			&& (off - current_cmd == 4 || cmd_text->data[current_cmd + 4] == ' '))
-			return false;
-	}
-
-	return false;
 }
 
 bool HwDLL::CheckUnpause()
@@ -303,19 +274,14 @@ bool HwDLL::CheckUnpause()
 
 		if (off - current_cmd == 7 && !std::strncmp(cmd_text->data + current_cmd, "unpause", 7))
 			return true;
-		// TODO: aliases and refactor this part into a separate function!
-		if (off - current_cmd >= 4
-			&& !std::strncmp(cmd_text->data + current_cmd, "wait", 4)
-			&& (off - current_cmd == 4 || cmd_text->data[current_cmd + 4] == ' '))
-			return false;
 	}
 
 	return false;
 }
 
-void HwDLL::Execute()
+void HwDLL::InsertCommands()
 {
-
+	ORIG_Cbuf_InsertText("echo We are executing!\n");
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
@@ -331,7 +297,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		finishingLoad = true;
 	}
 
-	if (CheckLoading())
+	// All map load / change commands call Cbuf_Execute inside them, while we already are inside one.
+	if (insideCbuf_Execute)
 	{
 		loading = true;
 		executing = false;
@@ -344,20 +311,31 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	if (finishingLoad && state == 5 && paused && !CheckUnpause())
 		ORIG_Cbuf_InsertText("pause\n");
 
+	static unsigned counter = 1;
+	auto c = counter++;
+	std::string buf(cmd_text->data, cmd_text->cursize);
+	ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; loading: %s; executing: %s; host_frametime: %f; buffer: %s\n", c, state, paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (loading ? "true" : "false"), (executing ? "true" : "false"), *host_frametime, buf.c_str());
+
+	insideCbuf_Execute = true;
+	ORIG_Cbuf_Execute();
+
 	if (executing)
 	{
 		finishingLoad = false;
-		Execute();
+		// Insert our commands after any commands that might have been on this frame and
+		// call Cbuf_Execute again to execute them.
+		ORIG_Cbuf_InsertText("wait\n"); // For stopping Cbuf_Execute. Goes first because InsertCommands() inserts into beginning.
+		InsertCommands();
+		insideCbuf_Execute = true; // Once again because it might have been reset in Cbuf_Execute.
+		ORIG_Cbuf_Execute();
 	}
+	insideCbuf_Execute = false;
 
-	std::string buf(cmd_text->data, cmd_text->cursize);
-	ORIG_Con_Printf("Cbuf_Execute() begin; cls.state: %d; sv.paused: %d; time: %f; loading: %s; executing: %s; host_frametime: %f; buffer: %s\n", state, paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (loading ? "true" : "false"), (executing ? "true" : "false"), *host_frametime, buf.c_str());
-
-	ORIG_Cbuf_Execute();
+	buf.assign(cmd_text->data, cmd_text->cursize);
+	ORIG_Con_Printf("Cbuf_Execute() #%u end; host_frametime: %f; buffer: %s\n", c, *host_frametime, buf.c_str());
 
 	// If cls.state == 3 and the game isn't paused, execute "pause" on the next cycle.
 	// This case happens when starting a map.
-	static bool dontPauseNextCycle = false;
 	if (!dontPauseNextCycle && state == 3 && !paused)
 	{
 		ORIG_Cbuf_InsertText("pause\n");

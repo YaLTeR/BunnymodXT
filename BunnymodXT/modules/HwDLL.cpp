@@ -317,7 +317,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; loading: %s; executing: %s; host_frametime: %f; buffer: %s\n", c, state, paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (loading ? "true" : "false"), (executing ? "true" : "false"), *host_frametime, buf.c_str());
 
 	insideCbuf_Execute = true;
-	ORIG_Cbuf_Execute();
+	ORIG_Cbuf_Execute(); // executing might change inside if we had some kind of load command in the buffer.
 
 	if (executing)
 	{

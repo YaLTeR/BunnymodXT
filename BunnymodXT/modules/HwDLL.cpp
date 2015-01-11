@@ -319,14 +319,21 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	insideCbuf_Execute = true;
 	ORIG_Cbuf_Execute(); // executing might change inside if we had some kind of load command in the buffer.
 
+	// Insert our commands after any commands that might have been on this frame
+	// and call Cbuf_Execute again to execute them.
 	if (executing)
 	{
 		finishingLoad = false;
-		// Insert our commands after any commands that might have been on this frame and
-		// call Cbuf_Execute again to execute them.
-		ORIG_Cbuf_InsertText("wait\n"); // For stopping Cbuf_Execute. Goes first because InsertCommands() inserts into beginning.
+		// For stopping Cbuf_Execute. Goes first because InsertCommands() inserts into beginning.
+		if (cmd_text->cursize)
+			ORIG_Cbuf_InsertText("wait\n");
 		InsertCommands();
-		insideCbuf_Execute = true; // Once again because it might have been reset in Cbuf_Execute.
+
+		buf.assign(cmd_text->data, cmd_text->cursize);
+		ORIG_Con_Printf("Cbuf_Execute() #%u executing; buffer: %s\n", c, buf.c_str());
+
+		// Setting to true once again because it might have been reset in Cbuf_Execute.
+		insideCbuf_Execute = true;
 		ORIG_Cbuf_Execute();
 	}
 	insideCbuf_Execute = false;

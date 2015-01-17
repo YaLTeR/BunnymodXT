@@ -27,8 +27,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	m_Intercepted = needToIntercept;
 
 	MemUtils::ptnvec_size ptnNumber;
-	void *pCbuf_Execute, *pCvar_RegisterVariable, *pCbuf_InsertText, *pCmd_AddMallocCommand, *pSeedRandomNumberGenerator, *pRandomFloat, *pRandomLong, *pSCR_DrawFPS;
-	std::shared_future<MemUtils::ptnvec_size> fCbuf_Execute, fCvar_RegisterVariable, fCbuf_InsertText, fCmd_AddMallocCommand, fSeedRandomNumberGenerator, fRandomFloat, fRandomLong, fSCR_DrawFPS, fHost_Tell_f;
+	void *pCbuf_Execute, *pCvar_RegisterVariable, *pCvar_DirectSet, *pCbuf_InsertText, *pCmd_AddMallocCommand, *pSeedRandomNumberGenerator, *pRandomFloat, *pRandomLong, *pSCR_DrawFPS;
+	std::shared_future<MemUtils::ptnvec_size> fCbuf_Execute, fCvar_RegisterVariable, fCvar_DirectSet, fCbuf_InsertText, fCmd_AddMallocCommand, fSeedRandomNumberGenerator, fRandomFloat, fRandomLong, fSCR_DrawFPS, fHost_Tell_f;
 	std::vector< std::shared_future<MemUtils::ptnvec_size> > futures;
 
 	pCbuf_Execute = MemUtils::GetSymbolAddress(moduleHandle, "Cbuf_Execute");
@@ -85,6 +85,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 
 		FIND(Con_Printf)
 		FIND(Cvar_RegisterVariable)
+		FIND(Cvar_DirectSet)
 		FIND(Cbuf_InsertText)
 		FIND(Cmd_AddMallocCommand)
 		FIND(SeedRandomNumberGenerator)
@@ -97,6 +98,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	{
 		fCbuf_Execute = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCbuf_Execute, &pCbuf_Execute);
 		fCvar_RegisterVariable = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCvar_RegisterVariable, &pCvar_RegisterVariable);
+		fCvar_DirectSet = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCvar_DirectSet, &pCvar_DirectSet);
 		fCbuf_InsertText = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCbuf_InsertText, &pCbuf_InsertText);
 		fCmd_AddMallocCommand = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCmd_AddMallocCommand, &pCmd_AddMallocCommand);
 		fSeedRandomNumberGenerator = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsSeedRandomNumberGenerator, &pSeedRandomNumberGenerator);
@@ -107,6 +109,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 		fHost_Tell_f = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsHost_Tell_f, &Host_Tell_f);
 		futures.push_back(fCbuf_Execute);
 		futures.push_back(fCvar_RegisterVariable);
+		futures.push_back(fCvar_DirectSet);
 		futures.push_back(fCbuf_InsertText);
 		futures.push_back(fCmd_AddMallocCommand);
 		futures.push_back(fSeedRandomNumberGenerator);
@@ -169,6 +172,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	}
 
 			FIND(Cvar_RegisterVariable)
+			FIND(Cvar_DirectSet)
 			FIND(Cbuf_InsertText)
 			FIND(Cmd_AddMallocCommand)
 
@@ -294,13 +298,14 @@ void HwDLL::Unhook()
 void HwDLL::Clear()
 {
 	ORIG_Cbuf_Execute = nullptr;
-	ORIG_Cvar_RegisterVariable = nullptr;
 	ORIG_SeedRandomNumberGenerator = nullptr;
 	ORIG_time = nullptr;
 	ORIG_RandomFloat = nullptr;
 	ORIG_RandomLong = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
+	ORIG_Cvar_RegisterVariable = nullptr;
+	ORIG_Cvar_DirectSet = nullptr;
 	ORIG_Cmd_AddMallocCommand = nullptr;
 	ORIG_Cmd_Argc = nullptr;
 	ORIG_Cmd_Args = nullptr;
@@ -322,13 +327,9 @@ void HwDLL::Cmd_BXT_TAS_LoadScript()
 {
 	return HwDLL::GetInstance().Cmd_BXT_TAS_LoadScript_f();
 }
-
 void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 {
-	ORIG_Con_Printf("Argc: %d - ", ORIG_Cmd_Argc());
-	for (int i = 0; i < ORIG_Cmd_Argc(); ++i)
-		ORIG_Con_Printf("%s ", ORIG_Cmd_Argv(i));
-	ORIG_Con_Printf("\n");
+	ORIG_Cvar_DirectSet(bxt_tas.GetPointer(), "1");
 }
 
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()

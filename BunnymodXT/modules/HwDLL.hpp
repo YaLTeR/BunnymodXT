@@ -44,6 +44,8 @@ protected:
 	_Con_Printf ORIG_Con_Printf;
 	typedef void(__cdecl *_Cvar_RegisterVariable) (cvar_t* cvar);
 	_Cvar_RegisterVariable ORIG_Cvar_RegisterVariable;
+	typedef void(__cdecl *_Cvar_DirectSet) (cvar_t* cvar, const char* value);
+	_Cvar_DirectSet ORIG_Cvar_DirectSet;
 	typedef void(__cdecl *_Cmd_AddMallocCommand) (const char* name, void(*func)(void), int flags);
 	_Cmd_AddMallocCommand ORIG_Cmd_AddMallocCommand;
 	typedef int(__cdecl *_Cmd_Argc) ();

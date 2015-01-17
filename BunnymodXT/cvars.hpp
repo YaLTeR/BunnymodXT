@@ -39,10 +39,13 @@ inline int CVarWrapper::GetInt() const
 	return m_CVar ? atoi(m_CVar->string) : 0;
 }
 
+// Engine CVars
+extern const CVarWrapper _bxt_taslog;
+extern const CVarWrapper bxt_tas;
+
 // Serverside CVars
 extern const CVarWrapper bxt_autojump;
 extern const CVarWrapper bxt_bhopcap;
-extern const CVarWrapper _bxt_taslog;
 
 // Clientside CVars
 extern CVarWrapper con_color_;

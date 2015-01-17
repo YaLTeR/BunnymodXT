@@ -42,10 +42,13 @@ std::string CVarWrapper::GetString() const
 	return std::string(m_CVar->string);
 }
 
+// Engine CVars
+const CVarWrapper _bxt_taslog("_bxt_taslog", "0");
+const CVarWrapper bxt_tas("bxt_tas", "0");
+
 // Serverside CVars
 const CVarWrapper bxt_autojump("bxt_autojump", "0");
 const CVarWrapper bxt_bhopcap("bxt_bhopcap", "1");
-const CVarWrapper _bxt_taslog("_bxt_taslog", "0");
 
 // Clientside CVars
 CVarWrapper con_color_;

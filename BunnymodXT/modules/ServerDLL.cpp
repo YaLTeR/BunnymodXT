@@ -282,9 +282,6 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_PM_PreventMegaBunnyJumping)
 		pEngfuncs->pfnCVarRegister(bxt_bhopcap.GetPointer());
 
-	if (ORIG_PM_PlayerMove)
-		pEngfuncs->pfnCVarRegister(_bxt_taslog.GetPointer());
-
 	EngineDevMsg("[server dll] Registered CVars.\n");
 }
 

@@ -6,6 +6,7 @@
 #include "HwDLL.hpp"
 #include "ClientDLL.hpp"
 #include "../patterns.hpp"
+#include "../cvars.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -26,8 +27,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	m_Intercepted = needToIntercept;
 
 	MemUtils::ptnvec_size ptnNumber;
-	void *pCbuf_Execute, *pCbuf_InsertText, *pSeedRandomNumberGenerator, *pRandomFloat, *pRandomLong, *pSCR_DrawFPS;
-	std::shared_future<MemUtils::ptnvec_size> fCbuf_Execute, fCbuf_InsertText, fSeedRandomNumberGenerator, fRandomFloat, fRandomLong, fSCR_DrawFPS;
+	void *pCbuf_Execute, *pCvar_RegisterVariable, *pCbuf_InsertText, *pCmd_AddMallocCommand, *pSeedRandomNumberGenerator, *pRandomFloat, *pRandomLong, *pSCR_DrawFPS;
+	std::shared_future<MemUtils::ptnvec_size> fCbuf_Execute, fCvar_RegisterVariable, fCbuf_InsertText, fCmd_AddMallocCommand, fSeedRandomNumberGenerator, fRandomFloat, fRandomLong, fSCR_DrawFPS, fHost_Tell_f;
 	std::vector< std::shared_future<MemUtils::ptnvec_size> > futures;
 
 	pCbuf_Execute = MemUtils::GetSymbolAddress(moduleHandle, "Cbuf_Execute");
@@ -83,7 +84,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 		}
 
 		FIND(Con_Printf)
+		FIND(Cvar_RegisterVariable)
 		FIND(Cbuf_InsertText)
+		FIND(Cmd_AddMallocCommand)
 		FIND(SeedRandomNumberGenerator)
 		FIND(RandomFloat)
 		FIND(RandomLong)
@@ -93,17 +96,24 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	else
 	{
 		fCbuf_Execute = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCbuf_Execute, &pCbuf_Execute);
+		fCvar_RegisterVariable = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCvar_RegisterVariable, &pCvar_RegisterVariable);
 		fCbuf_InsertText = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCbuf_InsertText, &pCbuf_InsertText);
+		fCmd_AddMallocCommand = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCmd_AddMallocCommand, &pCmd_AddMallocCommand);
 		fSeedRandomNumberGenerator = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsSeedRandomNumberGenerator, &pSeedRandomNumberGenerator);
 		fRandomFloat = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsRandomFloat, &pRandomFloat);
 		fRandomLong = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsRandomLong, &pRandomLong);
 		fSCR_DrawFPS = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsSCR_DrawFPS, &pSCR_DrawFPS);
+		void *Host_Tell_f;
+		fHost_Tell_f = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsHost_Tell_f, &Host_Tell_f);
 		futures.push_back(fCbuf_Execute);
+		futures.push_back(fCvar_RegisterVariable);
 		futures.push_back(fCbuf_InsertText);
+		futures.push_back(fCmd_AddMallocCommand);
 		futures.push_back(fSeedRandomNumberGenerator);
 		futures.push_back(fRandomFloat);
 		futures.push_back(fRandomLong);
 		futures.push_back(fSCR_DrawFPS);
+		futures.push_back(fHost_Tell_f);
 
 		void *Host_AutoSave_f;
 		ptnNumber = MemUtils::FindUniqueSequence(moduleHandle, moduleLength, Patterns::ptnsHost_AutoSave_f, &Host_AutoSave_f);
@@ -158,7 +168,54 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 		ORIG_Cbuf_Execute = nullptr; \
 	}
 
+			FIND(Cvar_RegisterVariable)
 			FIND(Cbuf_InsertText)
+			FIND(Cmd_AddMallocCommand)
+
+			ptnNumber = fHost_Tell_f.get();
+			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
+			{
+				EngineDevMsg("[hw dll] Found Host_Tell_f at %p (using the %s pattern).\n", Host_Tell_f, Patterns::ptnsHost_Tell_f[ptnNumber].build.c_str());
+
+				uintptr_t offCmd_Argc, offCmd_Args, offCmd_Argv;
+				switch (ptnNumber)
+				{
+				// SteamPipe.
+				case 0:
+					offCmd_Argc = 28;
+					offCmd_Args = 42;
+					offCmd_Argv = 145;
+					break;
+				// NGHL.
+				case 1:
+					offCmd_Argc = 24;
+					offCmd_Args = 38;
+					offCmd_Argv = 143;
+					break;
+				}
+
+				auto f = reinterpret_cast<uintptr_t>(Host_Tell_f);
+				ORIG_Cmd_Argc = reinterpret_cast<_Cmd_Argc>(
+					*reinterpret_cast<uintptr_t*>(f + offCmd_Argc)
+					+ (f + offCmd_Argc + 4)
+				);
+				ORIG_Cmd_Args = reinterpret_cast<_Cmd_Args>(
+					*reinterpret_cast<uintptr_t*>(f + offCmd_Args)
+					+ (f + offCmd_Args + 4)
+				);
+				ORIG_Cmd_Argv = reinterpret_cast<_Cmd_Argv>(
+					*reinterpret_cast<uintptr_t*>(f + offCmd_Argv)
+					+ (f + offCmd_Argv + 4)
+				);
+				EngineDevMsg("[hw dll] Found Cmd_Argc at %p.\n", ORIG_Cmd_Argc);
+				EngineDevMsg("[hw dll] Found Cmd_Args at %p.\n", ORIG_Cmd_Args);
+				EngineDevMsg("[hw dll] Found Cmd_Argv at %p.\n", ORIG_Cmd_Argv);
+			}
+			else
+			{
+				EngineDevWarning("[hw dll] Could not find Host_Tell_f!\n");
+				ORIG_Cmd_AddMallocCommand = nullptr;
+			}
 
 			ptnNumber = fSeedRandomNumberGenerator.get();
 			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
@@ -237,12 +294,18 @@ void HwDLL::Unhook()
 void HwDLL::Clear()
 {
 	ORIG_Cbuf_Execute = nullptr;
+	ORIG_Cvar_RegisterVariable = nullptr;
 	ORIG_SeedRandomNumberGenerator = nullptr;
 	ORIG_time = nullptr;
 	ORIG_RandomFloat = nullptr;
 	ORIG_RandomLong = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
+	ORIG_Cmd_AddMallocCommand = nullptr;
+	ORIG_Cmd_Argc = nullptr;
+	ORIG_Cmd_Args = nullptr;
+	ORIG_Cmd_Argv = nullptr;
+	registeredVarsAndCmds = false;
 	cls = nullptr;
 	sv = nullptr;
 	cmd_text = nullptr;
@@ -253,6 +316,34 @@ void HwDLL::Clear()
 	finishingLoad = false;
 	dontPauseNextCycle = false;
 	insideSeedRNG = false;
+}
+
+void HwDLL::Cmd_BXT_TAS_LoadScript()
+{
+	return HwDLL::GetInstance().Cmd_BXT_TAS_LoadScript_f();
+}
+
+void HwDLL::Cmd_BXT_TAS_LoadScript_f()
+{
+	ORIG_Con_Printf("Argc: %d - ", ORIG_Cmd_Argc());
+	for (int i = 0; i < ORIG_Cmd_Argc(); ++i)
+		ORIG_Con_Printf("%s ", ORIG_Cmd_Argv(i));
+	ORIG_Con_Printf("\n");
+}
+
+void HwDLL::RegisterCVarsAndCommandsIfNeeded()
+{
+	if (!registeredVarsAndCmds)
+	{
+		registeredVarsAndCmds = true;
+		if (ORIG_Cvar_RegisterVariable)
+		{
+			ORIG_Cvar_RegisterVariable(bxt_tas.GetPointer());
+			ORIG_Cvar_RegisterVariable(_bxt_taslog.GetPointer());
+		}
+		if (ORIG_Cmd_AddMallocCommand)
+			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
+	}
 }
 
 bool HwDLL::CheckUnpause()
@@ -286,12 +377,14 @@ void HwDLL::InsertCommands()
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 {
+	RegisterCVarsAndCommandsIfNeeded();
+
 	int state = *reinterpret_cast<int*>(cls);
 	int paused = *(reinterpret_cast<int*>(sv) + 1);
 
 	// If cls.state == 4 and the game isn't paused, execute "pause" right now.
 	// This case happens when loading a savegame.
-	if (state == 4 && !paused)
+	if (state == 4 && !paused && bxt_tas.GetBool())
 	{
 		ORIG_Cbuf_InsertText("pause\n");
 		finishingLoad = true;
@@ -313,8 +406,9 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 	static unsigned counter = 1;
 	auto c = counter++;
-	std::string buf(cmd_text->data, cmd_text->cursize);
-	ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; loading: %s; executing: %s; host_frametime: %f; buffer: %s\n", c, state, paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (loading ? "true" : "false"), (executing ? "true" : "false"), *host_frametime, buf.c_str());
+	std::string buf(cmd_text->data, cmd_text->cursize); // TODO: ifdef this so it doesn't waste performance.
+	if (_bxt_taslog.GetBool())
+		ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; loading: %s; executing: %s; host_frametime: %f; buffer: %s\n", c, state, paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (loading ? "true" : "false"), (executing ? "true" : "false"), *host_frametime, buf.c_str());
 
 	insideCbuf_Execute = true;
 	ORIG_Cbuf_Execute(); // executing might change inside if we had some kind of load command in the buffer.
@@ -330,7 +424,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		InsertCommands();
 
 		buf.assign(cmd_text->data, cmd_text->cursize);
-		ORIG_Con_Printf("Cbuf_Execute() #%u executing; buffer: %s\n", c, buf.c_str());
+		if (_bxt_taslog.GetBool())
+			ORIG_Con_Printf("Cbuf_Execute() #%u executing; buffer: %s\n", c, buf.c_str());
 
 		// Setting to true once again because it might have been reset in Cbuf_Execute.
 		insideCbuf_Execute = true;
@@ -339,11 +434,12 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	insideCbuf_Execute = false;
 
 	buf.assign(cmd_text->data, cmd_text->cursize);
-	ORIG_Con_Printf("Cbuf_Execute() #%u end; host_frametime: %f; buffer: %s\n", c, *host_frametime, buf.c_str());
+	if (_bxt_taslog.GetBool())
+		ORIG_Con_Printf("Cbuf_Execute() #%u end; host_frametime: %f; buffer: %s\n", c, *host_frametime, buf.c_str());
 
 	// If cls.state == 3 and the game isn't paused, execute "pause" on the next cycle.
 	// This case happens when starting a map.
-	if (!dontPauseNextCycle && state == 3 && !paused)
+	if (!dontPauseNextCycle && state == 3 && !paused && bxt_tas.GetBool())
 	{
 		ORIG_Cbuf_InsertText("pause\n");
 		finishingLoad = true;

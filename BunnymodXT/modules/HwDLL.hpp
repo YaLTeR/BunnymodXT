@@ -42,9 +42,25 @@ protected:
 	_Cbuf_InsertText ORIG_Cbuf_InsertText;
 	typedef void(__cdecl *_Con_Printf) (char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
+	typedef void(__cdecl *_Cvar_RegisterVariable) (cvar_t* cvar);
+	_Cvar_RegisterVariable ORIG_Cvar_RegisterVariable;
+	typedef void(__cdecl *_Cmd_AddMallocCommand) (const char* name, void(*func)(void), int flags);
+	_Cmd_AddMallocCommand ORIG_Cmd_AddMallocCommand;
+	typedef int(__cdecl *_Cmd_Argc) ();
+	_Cmd_Argc ORIG_Cmd_Argc;
+	typedef char*(__cdecl *_Cmd_Args) ();
+	_Cmd_Args ORIG_Cmd_Args;
+	typedef char*(__cdecl *_Cmd_Argv) (unsigned n);
+	_Cmd_Argv ORIG_Cmd_Argv;
 
+	static void Cmd_BXT_TAS_LoadScript();
+	void Cmd_BXT_TAS_LoadScript_f();
+
+	void RegisterCVarsAndCommandsIfNeeded();
 	bool CheckUnpause();
 	void InsertCommands();
+
+	bool registeredVarsAndCmds;
 
 	void *cls;
 	void *sv;

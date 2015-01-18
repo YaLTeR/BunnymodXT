@@ -26,246 +26,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	m_Name = moduleName;
 	m_Intercepted = needToIntercept;
 
-	MemUtils::ptnvec_size ptnNumber;
-	void *pCbuf_Execute, *pCvar_RegisterVariable, *pCvar_DirectSet, *pCbuf_InsertText, *pCmd_AddMallocCommand, *pSeedRandomNumberGenerator, *pRandomFloat, *pRandomLong, *pSCR_DrawFPS;
-	std::shared_future<MemUtils::ptnvec_size> fCbuf_Execute, fCvar_RegisterVariable, fCvar_DirectSet, fCbuf_InsertText, fCmd_AddMallocCommand, fSeedRandomNumberGenerator, fRandomFloat, fRandomLong, fSCR_DrawFPS, fHost_Tell_f;
-	std::vector< std::shared_future<MemUtils::ptnvec_size> > futures;
-
-	pCbuf_Execute = MemUtils::GetSymbolAddress(moduleHandle, "Cbuf_Execute");
-	if (pCbuf_Execute)
-	{
-		ORIG_Cbuf_Execute = reinterpret_cast<_Cbuf_Execute>(pCbuf_Execute);
-		EngineDevMsg("[hw dll] Found Cbuf_Execute at %p.\n", pCbuf_Execute);
-
-		cls = MemUtils::GetSymbolAddress(moduleHandle, "cls");
-		if (cls)
-			EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
-		else
-		{
-			EngineDevWarning("[hw dll] Couldn't get the address of cls!\n");
-			ORIG_Cbuf_Execute = nullptr;
-		}
-
-		sv = MemUtils::GetSymbolAddress(moduleHandle, "sv");
-		if (sv)
-			EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
-		else
-		{
-			EngineDevWarning("[hw dll] Couldn't get the address of sv!\n");
-			ORIG_Cbuf_Execute = nullptr;
-		}
-
-		cmd_text = reinterpret_cast<cmdbuf_t*>(MemUtils::GetSymbolAddress(moduleHandle, "cmd_text"));
-		if (cmd_text)
-			EngineDevMsg("[hw dll] Found cmd_text at %p.\n", cmd_text);
-		else
-		{
-			EngineDevWarning("[hw dll] Couldn't get the address of cmd_text!\n");
-			ORIG_Cbuf_Execute = nullptr;
-		}
-
-		host_frametime = reinterpret_cast<double*>(MemUtils::GetSymbolAddress(moduleHandle, "host_frametime"));
-		if (host_frametime)
-			EngineDevMsg("[hw dll] Found host_frametime at %p.\n", sv);
-		else
-		{
-			EngineDevWarning("[hw dll] Couldn't get the address of host_frametime!\n");
-			ORIG_Cbuf_Execute = nullptr;
-		}
-
-#define FIND(f) \
-	ORIG_##f = reinterpret_cast<_##f>(MemUtils::GetSymbolAddress(moduleHandle, #f)); \
-	if (ORIG_##f) \
-		EngineDevMsg("[hw dll] Found " #f " at %p.\n", ORIG_##f); \
-		else \
-		{ \
-			EngineDevWarning("[hw dll] Couldn't get the address of " #f "!\n"); \
-			ORIG_Cbuf_Execute = nullptr; \
-		}
-
-		FIND(Con_Printf)
-		FIND(Cvar_RegisterVariable)
-		FIND(Cvar_DirectSet)
-		FIND(Cbuf_InsertText)
-		FIND(Cmd_AddMallocCommand)
-		FIND(SeedRandomNumberGenerator)
-		FIND(RandomFloat)
-		FIND(RandomLong)
-
-#undef FIND
-	}
-	else
-	{
-		fCbuf_Execute = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCbuf_Execute, &pCbuf_Execute);
-		fCvar_RegisterVariable = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCvar_RegisterVariable, &pCvar_RegisterVariable);
-		fCvar_DirectSet = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCvar_DirectSet, &pCvar_DirectSet);
-		fCbuf_InsertText = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCbuf_InsertText, &pCbuf_InsertText);
-		fCmd_AddMallocCommand = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsCmd_AddMallocCommand, &pCmd_AddMallocCommand);
-		fSeedRandomNumberGenerator = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsSeedRandomNumberGenerator, &pSeedRandomNumberGenerator);
-		fRandomFloat = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsRandomFloat, &pRandomFloat);
-		fRandomLong = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsRandomLong, &pRandomLong);
-		fSCR_DrawFPS = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsSCR_DrawFPS, &pSCR_DrawFPS);
-		void *Host_Tell_f;
-		fHost_Tell_f = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsHost_Tell_f, &Host_Tell_f);
-		futures.push_back(fCbuf_Execute);
-		futures.push_back(fCvar_RegisterVariable);
-		futures.push_back(fCvar_DirectSet);
-		futures.push_back(fCbuf_InsertText);
-		futures.push_back(fCmd_AddMallocCommand);
-		futures.push_back(fSeedRandomNumberGenerator);
-		futures.push_back(fRandomFloat);
-		futures.push_back(fRandomLong);
-		futures.push_back(fSCR_DrawFPS);
-		futures.push_back(fHost_Tell_f);
-
-		void *Host_AutoSave_f;
-		ptnNumber = MemUtils::FindUniqueSequence(moduleHandle, moduleLength, Patterns::ptnsHost_AutoSave_f, &Host_AutoSave_f);
-		if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-		{
-			EngineDevMsg("[hw dll] Found Host_AutoSave_f at %p (using the %s pattern).\n", Host_AutoSave_f, Patterns::ptnsHost_AutoSave_f[ptnNumber].build.c_str());
-
-			auto f = reinterpret_cast<uintptr_t>(Host_AutoSave_f);
-			sv = *reinterpret_cast<void**>(f + 19);
-			ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
-				*reinterpret_cast<ptrdiff_t*>(f + 33)
-				+ (f + 37)
-				);
-			cls = *reinterpret_cast<void**>(f + 69);
-			EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
-			EngineDevMsg("[hw dll] Found Con_Printf at %p.\n", ORIG_Con_Printf);
-			EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
-
-			ptnNumber = fCbuf_Execute.get();
-			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-			{
-				ORIG_Cbuf_Execute = reinterpret_cast<_Cbuf_Execute>(pCbuf_Execute);
-				EngineDevMsg("[hw dll] Found Cbuf_Execute at %p (using the %s pattern).\n", pCbuf_Execute, Patterns::ptnsCbuf_Execute[ptnNumber].build.c_str());
-
-				switch (ptnNumber)
-				{
-				case 0:
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(pCbuf_Execute) + 11) - offsetof(cmdbuf_t, cursize));
-					break;
-
-				case 1:
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(pCbuf_Execute) + 2) - offsetof(cmdbuf_t, cursize));
-					break;
-				}
-				EngineDevMsg("[hw dll] Found cmd_text at %p.\n", cmd_text);
-			}
-			else
-			{
-				EngineDevWarning("[hw dll] Could not find Cbuf_Execute!\n");
-			}
-
-#define FIND(a) \
-	ptnNumber = f##a.get(); \
-	if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX) \
-	{ \
-		ORIG_##a = reinterpret_cast<_##a>(p##a); \
-		EngineDevMsg("[hw dll] Found " #a " at %p (using the %s pattern).\n", p##a, Patterns::ptns##a[ptnNumber].build.c_str()); \
-	} \
-	else \
-	{ \
-		EngineDevWarning("[hw dll] Could not find " #a "!\n"); \
-		ORIG_Cbuf_Execute = nullptr; \
-	}
-
-			FIND(Cvar_RegisterVariable)
-			FIND(Cvar_DirectSet)
-			FIND(Cbuf_InsertText)
-			FIND(Cmd_AddMallocCommand)
-
-			ptnNumber = fHost_Tell_f.get();
-			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-			{
-				EngineDevMsg("[hw dll] Found Host_Tell_f at %p (using the %s pattern).\n", Host_Tell_f, Patterns::ptnsHost_Tell_f[ptnNumber].build.c_str());
-
-				uintptr_t offCmd_Argc, offCmd_Args, offCmd_Argv;
-				switch (ptnNumber)
-				{
-				// SteamPipe.
-				case 0:
-					offCmd_Argc = 28;
-					offCmd_Args = 42;
-					offCmd_Argv = 145;
-					break;
-				// NGHL.
-				case 1:
-					offCmd_Argc = 24;
-					offCmd_Args = 38;
-					offCmd_Argv = 143;
-					break;
-				}
-
-				auto f = reinterpret_cast<uintptr_t>(Host_Tell_f);
-				ORIG_Cmd_Argc = reinterpret_cast<_Cmd_Argc>(
-					*reinterpret_cast<uintptr_t*>(f + offCmd_Argc)
-					+ (f + offCmd_Argc + 4)
-				);
-				ORIG_Cmd_Args = reinterpret_cast<_Cmd_Args>(
-					*reinterpret_cast<uintptr_t*>(f + offCmd_Args)
-					+ (f + offCmd_Args + 4)
-				);
-				ORIG_Cmd_Argv = reinterpret_cast<_Cmd_Argv>(
-					*reinterpret_cast<uintptr_t*>(f + offCmd_Argv)
-					+ (f + offCmd_Argv + 4)
-				);
-				EngineDevMsg("[hw dll] Found Cmd_Argc at %p.\n", ORIG_Cmd_Argc);
-				EngineDevMsg("[hw dll] Found Cmd_Args at %p.\n", ORIG_Cmd_Args);
-				EngineDevMsg("[hw dll] Found Cmd_Argv at %p.\n", ORIG_Cmd_Argv);
-			}
-			else
-			{
-				EngineDevWarning("[hw dll] Could not find Host_Tell_f!\n");
-				ORIG_Cmd_AddMallocCommand = nullptr;
-			}
-
-			ptnNumber = fSeedRandomNumberGenerator.get();
-			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-			{
-				ORIG_SeedRandomNumberGenerator = reinterpret_cast<_SeedRandomNumberGenerator>(pSeedRandomNumberGenerator);
-				EngineDevMsg("[hw dll] Found SeedRandomNumberGenerator at %p (using the %s pattern).\n", pSeedRandomNumberGenerator, Patterns::ptnsSeedRandomNumberGenerator[ptnNumber].build.c_str());
-
-				ORIG_time = reinterpret_cast<_time>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(pSeedRandomNumberGenerator) + 3)
-					+ reinterpret_cast<uintptr_t>(pSeedRandomNumberGenerator) + 7
-				);
-				EngineDevMsg("[hw dll] ORIG_time is %p.\n", ORIG_time);
-			}
-			else
-			{
-				EngineDevWarning("[hw dll] Could not find SeedRandomNumberGenerator!\n");
-				ORIG_Cbuf_Execute = nullptr;
-			}
-
-			//FIND(RandomFloat)
-			//FIND(RandomLong)
-
-			ptnNumber = fSCR_DrawFPS.get();
-			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-			{
-				EngineDevMsg("[hw dll] Found SCR_DrawFPS at %p (using the %s pattern).\n", pSCR_DrawFPS, Patterns::ptnsSCR_DrawFPS[ptnNumber].build.c_str());
-
-				host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(pSCR_DrawFPS) + 21);
-				EngineDevMsg("[hw dll] Found host_frametime at %p.\n", host_frametime);
-			}
-			else
-			{
-				EngineDevWarning("[hw dll] Could not find SCR_DrawFPS!\n");
-				ORIG_Cbuf_Execute = nullptr;
-			}
-
-#undef FIND
-		}
-		else
-		{
-			EngineDevMsg("[hw dll] Could not find Host_AutoSave_f!\n");
-		}
-	}
-
-	if (ORIG_Cbuf_Execute && !ORIG_time)
-		ORIG_time = time;
+	FindStuff();
 
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
@@ -275,10 +36,6 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			{ reinterpret_cast<void**>(&ORIG_RandomFloat), reinterpret_cast<void*>(HOOKED_RandomFloat) },
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) }
 		});
-
-	for (auto f : futures)
-		if (f.valid())
-			f.wait();
 }
 
 void HwDLL::Unhook()
@@ -321,6 +78,215 @@ void HwDLL::Clear()
 	finishingLoad = false;
 	dontPauseNextCycle = false;
 	insideSeedRNG = false;
+}
+
+void HwDLL::FindStuff()
+{
+	ORIG_Cbuf_Execute = reinterpret_cast<_Cbuf_Execute>(MemUtils::GetSymbolAddress(m_Handle, "Cbuf_Execute"));
+	if (ORIG_Cbuf_Execute)
+	{
+		EngineDevMsg("[hw dll] Found Cbuf_Execute at %p.\n", ORIG_Cbuf_Execute);
+
+		cls = MemUtils::GetSymbolAddress(m_Handle, "cls");
+		if (cls)
+			EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
+		else
+			EngineDevWarning("[hw dll] Could not find cls.\n");
+
+		sv = MemUtils::GetSymbolAddress(m_Handle, "sv");
+		if (sv)
+			EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
+		else
+			EngineDevWarning("[hw dll] Could not find sv.\n");
+
+		cmd_text = reinterpret_cast<cmdbuf_t*>(MemUtils::GetSymbolAddress(m_Handle, "cmd_text"));
+		if (cmd_text)
+			EngineDevMsg("[hw dll] Found cmd_text at %p.\n", cmd_text);
+		else
+			EngineDevWarning("[hw dll] Could not find cmd_text.\n");
+
+		host_frametime = reinterpret_cast<double*>(MemUtils::GetSymbolAddress(m_Handle, "host_frametime"));
+		if (host_frametime)
+			EngineDevMsg("[hw dll] Found host_frametime at %p.\n", sv);
+		else
+			EngineDevWarning("[hw dll] Could not find host_frametime.\n");
+
+		if (!cls || !sv || !cmd_text || !host_frametime)
+			ORIG_Cbuf_Execute = nullptr;
+
+		#define FIND(f) \
+			ORIG_##f = reinterpret_cast<_##f>(MemUtils::GetSymbolAddress(m_Handle, #f)); \
+			if (ORIG_##f) \
+				EngineDevMsg("[hw dll] Found " #f " at %p.\n", ORIG_##f); \
+			else \
+			{ \
+				EngineDevWarning("[hw dll] Could not find " #f ".\n"); \
+				ORIG_Cbuf_Execute = nullptr; \
+			}
+		FIND(Con_Printf)
+		FIND(Cvar_RegisterVariable)
+		FIND(Cvar_DirectSet)
+		FIND(Cbuf_InsertText)
+		FIND(Cmd_AddMallocCommand)
+		FIND(SeedRandomNumberGenerator)
+		//FIND(RandomFloat)
+		//FIND(RandomLong)
+		#undef FIND
+	}
+	else
+	{
+		#define DEF_FUTURE(name) auto f##name = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_##name), m_Base, m_Length, Patterns::ptns##name, [](MemUtils::ptnvec_size ptnNumber) { }, []() { });
+		DEF_FUTURE(Cvar_RegisterVariable)
+		DEF_FUTURE(Cvar_DirectSet)
+		DEF_FUTURE(Cbuf_InsertText)
+		DEF_FUTURE(Cmd_AddMallocCommand)
+		//DEF_FUTURE(RandomFloat)
+		//DEF_FUTURE(RandomLong)
+		#undef DEF_FUTURE
+
+		auto fCbuf_Execute = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_Cbuf_Execute), m_Base, m_Length, Patterns::ptnsCbuf_Execute,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				switch (ptnNumber)
+				{
+				case 0:
+					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 11) - offsetof(cmdbuf_t, cursize));
+					break;
+				case 1:
+					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 2) - offsetof(cmdbuf_t, cursize));
+					break;
+				}
+			}, []() {}
+		);
+
+		auto fSeedRandomNumberGenerator = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_SeedRandomNumberGenerator), m_Base, m_Length, Patterns::ptnsSeedRandomNumberGenerator,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				ORIG_time = reinterpret_cast<_time>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 3)
+					+ reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 7
+				);
+			}, []() {}
+		);
+
+		void *SCR_DrawFPS;
+		auto fSCR_DrawFPS = MemUtils::FindPatternOnly(&SCR_DrawFPS, m_Base, m_Length, Patterns::ptnsSCR_DrawFPS,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(SCR_DrawFPS) + 21);
+			}, []() {}
+		);
+
+		void *Host_Tell_f;
+		auto fHost_Tell_f = MemUtils::FindPatternOnly(&Host_Tell_f, m_Base, m_Length, Patterns::ptnsHost_Tell_f,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				uintptr_t offCmd_Argc, offCmd_Args, offCmd_Argv;
+				switch (ptnNumber)
+				{
+				case 0: // SteamPipe.
+					offCmd_Argc = 28;
+					offCmd_Args = 42;
+					offCmd_Argv = 145;
+					break;
+				case 1: // NGHL.
+					offCmd_Argc = 24;
+					offCmd_Args = 38;
+					offCmd_Argv = 143;
+					break;
+				}
+
+				auto f = reinterpret_cast<uintptr_t>(Host_Tell_f);
+				ORIG_Cmd_Argc = reinterpret_cast<_Cmd_Argc>(
+					*reinterpret_cast<uintptr_t*>(f + offCmd_Argc)
+					+ (f + offCmd_Argc + 4)
+				);
+				ORIG_Cmd_Args = reinterpret_cast<_Cmd_Args>(
+					*reinterpret_cast<uintptr_t*>(f + offCmd_Args)
+					+ (f + offCmd_Args + 4)
+				);
+				ORIG_Cmd_Argv = reinterpret_cast<_Cmd_Argv>(
+					*reinterpret_cast<uintptr_t*>(f + offCmd_Argv)
+					+ (f + offCmd_Argv + 4)
+				);
+			}, []() { }
+		);
+
+		void *Host_AutoSave_f;
+		auto fHost_AutoSave_f = MemUtils::FindPatternOnly(&Host_AutoSave_f, m_Base, m_Length, Patterns::ptnsHost_AutoSave_f,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				auto f = reinterpret_cast<uintptr_t>(Host_AutoSave_f);
+				sv = *reinterpret_cast<void**>(f + 19);
+				ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
+					*reinterpret_cast<ptrdiff_t*>(f + 33)
+					+ (f + 37)
+					);
+				cls = *reinterpret_cast<void**>(f + 69);
+			}, []() {}
+		);
+
+		auto n = fCbuf_Execute.get();
+		if (ORIG_Cbuf_Execute) {
+			EngineDevMsg("[hw dll] Found Cbuf_Execute at %p (using the %s pattern).\n", ORIG_Cbuf_Execute, Patterns::ptnsCbuf_Execute[n].build.c_str());
+			EngineDevMsg("[hw dll] Found cmd_text at %p.\n", cmd_text);
+		} else
+			EngineDevWarning("[hw dll] Could not find Cbuf_Execute.\n");
+
+		n = fHost_AutoSave_f.get();
+		if (Host_AutoSave_f) {
+			EngineDevMsg("[hw dll] Found Host_AutoSave_f at %p (using the %s pattern).\n", Host_AutoSave_f, Patterns::ptnsHost_AutoSave_f[n].build.c_str());
+			EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
+			EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
+			EngineDevMsg("[hw dll] Found Con_Printf at %p.\n", ORIG_Con_Printf);
+		} else {
+			EngineDevWarning("[hw dll] Could not find Host_AutoSave_f.\n");
+			ORIG_Cbuf_Execute = nullptr;
+		}
+
+		n = fSeedRandomNumberGenerator.get();
+		if (ORIG_SeedRandomNumberGenerator) {
+			EngineDevMsg("[hw dll] Found SeedRandomNumberGenerator at %p (using the %s pattern).\n", ORIG_SeedRandomNumberGenerator, Patterns::ptnsSeedRandomNumberGenerator[n].build.c_str());
+			EngineDevMsg("[hw dll] ORIG_time is %p.\n", ORIG_time);
+		} else {
+			EngineDevWarning("[hw dll] Could not find SeedRandomNumberGenerator.\n");
+			ORIG_Cbuf_Execute = nullptr;
+		}
+
+		n = fSCR_DrawFPS.get();
+		if (SCR_DrawFPS) {
+			EngineDevMsg("[hw dll] Found SCR_DrawFPS at %p (using the %s pattern).\n", SCR_DrawFPS, Patterns::ptnsSCR_DrawFPS[n].build.c_str());
+			EngineDevMsg("[hw dll] Found host_frametime at %p.\n", host_frametime);
+		} else {
+			EngineDevWarning("[hw dll] Could not find SCR_DrawFPS.\n");
+			ORIG_Cbuf_Execute = nullptr;
+		}
+
+		#define GET_FUTURE(name) \
+			n = f##name.get(); \
+			if (ORIG_##name) { \
+				EngineDevMsg("[hw dll] Found " #name " at %p (using the %s pattern).\n", ORIG_##name, Patterns::ptns##name[n].build.c_str()); \
+			} else { \
+				EngineDevWarning("[hw dll] Could not find " #name ".\n"); \
+				ORIG_Cbuf_Execute = nullptr; \
+			}
+		GET_FUTURE(Cvar_RegisterVariable)
+		GET_FUTURE(Cvar_DirectSet)
+		GET_FUTURE(Cbuf_InsertText)
+		GET_FUTURE(Cmd_AddMallocCommand)
+		//GET_FUTURE(RandomFloat)
+		//GET_FUTURE(RandomLong)
+		#undef GET_FUTURE
+
+		n = fHost_Tell_f.get();
+		if (Host_Tell_f) {
+			EngineDevMsg("[hw dll] Found Host_Tell_f at %p (using the %s pattern).\n", Host_Tell_f, Patterns::ptnsHost_Tell_f[n].build.c_str());
+			EngineDevMsg("[hw dll] Found Cmd_Argc at %p.\n", ORIG_Cmd_Argc);
+			EngineDevMsg("[hw dll] Found Cmd_Args at %p.\n", ORIG_Cmd_Args);
+			EngineDevMsg("[hw dll] Found Cmd_Argv at %p.\n", ORIG_Cmd_Argv);
+		} else {
+			EngineDevWarning("[hw dll] Could not find Host_Tell_f.\n");
+			ORIG_Cmd_AddMallocCommand = nullptr;
+		}
+	}
+
+	if (ORIG_Cbuf_Execute && !ORIG_time)
+		ORIG_time = time;
 }
 
 void HwDLL::Cmd_BXT_TAS_LoadScript()

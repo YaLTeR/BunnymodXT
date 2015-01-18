@@ -55,6 +55,8 @@ protected:
 	typedef char*(__cdecl *_Cmd_Argv) (unsigned n);
 	_Cmd_Argv ORIG_Cmd_Argv;
 
+	void FindStuff();
+
 	static void Cmd_BXT_TAS_LoadScript();
 	void Cmd_BXT_TAS_LoadScript_f();
 

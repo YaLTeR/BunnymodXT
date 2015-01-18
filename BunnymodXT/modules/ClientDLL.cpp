@@ -51,174 +51,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	m_Name = moduleName;
 	m_Intercepted = needToIntercept;
 
-	MemUtils::ptnvec_size ptnNumber;
-
-	void *pPMJump, *pPMPreventMegaBunnyJumping;
-	std::future<MemUtils::ptnvec_size> fPMPreventMegaBunnyJumping;
-
-	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(moduleHandle, "PM_PlayerMove"));
-
-	pPMPreventMegaBunnyJumping = MemUtils::GetSymbolAddress(moduleHandle, "PM_PreventMegaBunnyJumping");
-	if (pPMPreventMegaBunnyJumping)
-	{
-		ORIG_PM_PreventMegaBunnyJumping = reinterpret_cast<_PM_PreventMegaBunnyJumping>(pPMPreventMegaBunnyJumping);
-		EngineDevMsg("[client dll] Found PM_PreventMegaBunnyJumping at %p.\n", pPMPreventMegaBunnyJumping);
-	}
-	else
-		fPMPreventMegaBunnyJumping = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPreventMegaBunnyJumping, &pPMPreventMegaBunnyJumping);
-
-	pPMJump = MemUtils::GetSymbolAddress(moduleHandle, "PM_Jump");
-	if (pPMJump)
-	{
-		if (*reinterpret_cast<byte*>(pPMJump) == 0xA1)
-		{
-			ORIG_PM_Jump = reinterpret_cast<_PM_Jump>(pPMJump);
-			EngineDevMsg("[client dll] Found PM_Jump at %p.\n", pPMJump);
-			ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 1); // Linux
-			offOldbuttons = 200;
-			offOnground = 224;
-
-			void *bhopcapAddr;
-			ptnNumber = MemUtils::FindUniqueSequence(moduleBase, moduleLength, Patterns::ptnsBhopcap, &bhopcapAddr);
-			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-			{
-				EngineDevMsg("Found the bhopcap pattern at %p.\n", bhopcapAddr);
-				offBhopcap = reinterpret_cast<ptrdiff_t>(bhopcapAddr) - reinterpret_cast<ptrdiff_t>(pPMJump) + 27;
-				memcpy(originalBhopcapInsn, reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(bhopcapAddr) + 27), sizeof(originalBhopcapInsn));
-			}
-		}
-		else
-			pPMJump = nullptr; // Try pattern searching.
-	}
-	
-	if (!pPMJump)
-	{
-		ptnNumber = MemUtils::FindUniqueSequence(moduleBase, moduleLength, Patterns::ptnsPMJump, &pPMJump);
-		if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-		{
-			ORIG_PM_Jump = reinterpret_cast<_PM_Jump>(pPMJump);
-			EngineDevMsg("[client dll] Found PM_Jump at %p (using the %s pattern).\n", pPMJump, Patterns::ptnsPMJump[ptnNumber].build.c_str());
-			offOldbuttons = 200;
-			offOnground = 224;
-
-			switch (ptnNumber)
-			{
-			case 0:
-			case 1:
-				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 2);
-				break;
-
-			case 2: // AG-Server, shouldn't happen here but who knows.
-			case 3:
-				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 3);
-				break;
-			}
-		}
-		else
-		{
-			EngineDevWarning("[client dll] Could not find PM_Jump!\n");
-			EngineWarning("Autojump prediction is not available.\n");
-		}
-	}
-
-	if (!ORIG_PM_PreventMegaBunnyJumping)
-	{
-		ptnNumber = fPMPreventMegaBunnyJumping.get();
-		if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-		{
-			ORIG_PM_PreventMegaBunnyJumping = reinterpret_cast<_PM_PreventMegaBunnyJumping>(pPMPreventMegaBunnyJumping);
-			EngineDevMsg("[client dll] Found PM_PreventMegaBunnyJumping at %p (using the %s pattern).\n", pPMPreventMegaBunnyJumping, Patterns::ptnsPMPreventMegaBunnyJumping[ptnNumber].build.c_str());
-		}
-		else
-		{
-			EngineDevWarning("[client dll] Could not find PM_PreventMegaBunnyJumping!\n");
-			EngineWarning("Bhopcap disabling prediction is not available.\n");
-		}
-	}
-
-	pEngfuncs = reinterpret_cast<cl_enginefunc_t*>(MemUtils::GetSymbolAddress(moduleHandle, "gEngfuncs"));
-	if (pEngfuncs)
-	{
-		EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
-		if (!*reinterpret_cast<uintptr_t*>(pEngfuncs))
-		{
-			ORIG_Initialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(moduleHandle, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z"));
-			if (!ORIG_Initialize)
-				ORIG_Initialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(moduleHandle, "Initialize"));
-			if (!ORIG_Initialize)
-			{
-				EngineDevWarning("[client dll] Couldn't get the address of Initialize!\n");
-				EngineWarning("Clientside CVars and commands are not available.\n");
-				EngineWarning("Custom HUD is not available.\n");
-			}
-		}
-	}
-	else
-	{
-		// In AG, this thing is the main function, so check that first.
-		_Initialize pInitialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(moduleHandle, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z"));
-
-		if (!pInitialize)
-			pInitialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(moduleHandle, "Initialize"));
-
-		if (pInitialize)
-		{
-			// Find "mov edi, offset dword; rep movsd" inside Initialize. The pointer to gEngfuncs is that dword.
-			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
-			auto addr = MemUtils::FindPattern(reinterpret_cast<void*>(pInitialize), 40, pattern, "x????xx");
-			if (!addr)
-			{
-				const byte pattern_[] = { 0xB9, '?', '?', '?', '?', 0x8B, 0x54, 0x24, 0x10 };
-				addr = MemUtils::FindPattern(reinterpret_cast<void*>(pInitialize), 40, pattern_, "x????xxxx");
-			}
-
-			if (addr)
-			{
-				pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(addr) + 1);
-				EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
-
-				// If we have engfuncs, register cvars and whatnot right away (in the end of this function because other stuff need to be done first). Otherwise wait till the engine gives us engfuncs.
-				// This works because global variables are zero by default.
-				if (!*reinterpret_cast<uintptr_t*>(pEngfuncs))
-					ORIG_Initialize = pInitialize;
-			}
-			else
-			{
-				EngineDevWarning("[client dll] Couldn't find the pattern in Initialize!\n");
-				EngineWarning("Clientside CVars and commands are not available.\n");
-				EngineWarning("Custom HUD is not available.\n");
-			}
-		}
-		else
-		{
-			EngineDevWarning("[client dll] Couldn't get the address of Initialize!\n");
-			EngineWarning("Clientside CVars and commands are not available.\n");
-			EngineWarning("Custom HUD is not available.\n");
-		}
-	}
-
-	// We can draw stuff only if we know that we have already received / will receive engfuncs.
-	if (pEngfuncs)
-		if (!FindHUDFunctions()) {
-			ORIG_HUD_Init = nullptr;
-			ORIG_HUD_VidInit = nullptr;
-			ORIG_HUD_Reset = nullptr;
-			ORIG_HUD_Redraw = nullptr;
-			EngineDevWarning("Custom HUD is not available.\n");
-		}
-
-	ORIG_V_CalcRefdef = reinterpret_cast<_V_CalcRefdef>(MemUtils::GetSymbolAddress(moduleHandle, "V_CalcRefdef"));
-	if (!ORIG_V_CalcRefdef)
-	{
-		EngineDevWarning("[client dll] Could not find V_CalcRefdef!\n");
-		EngineWarning("Velocity display during demo playback is not available.\n");
-	}
-
-	ORIG_HUD_PostRunCmd = reinterpret_cast<_HUD_PostRunCmd>(MemUtils::GetSymbolAddress(moduleHandle, "HUD_PostRunCmd"));
-	if (!ORIG_HUD_PostRunCmd)
-	{
-		EngineDevMsg("[client dll] Could not find HUD_PostRunCmd!\n");
-	}
+	FindStuff();
 	
 	// Now we can register cvars and commands provided that we already have engfuncs.
 	if (pEngfuncs && *reinterpret_cast<uintptr_t*>(pEngfuncs))
@@ -291,33 +124,189 @@ void ClientDLL::Clear()
 	m_Intercepted = false;
 }
 
+void ClientDLL::FindStuff()
+{
+	auto fPM_PreventMegaBunnyJumping = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), m_Handle, "PM_PreventMegaBunnyJumping", m_Base, m_Length, Patterns::ptnsPMPreventMegaBunnyJumping,
+		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
+
+	auto fPM_Jump = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_Jump), m_Handle, "PM_Jump", m_Base, m_Length, Patterns::ptnsPMJump,
+		[&](MemUtils::ptnvec_size ptnNumber) {
+			offOldbuttons = 200;
+			offOnground = 224;
+			if (ptnNumber == MemUtils::INVALID_SEQUENCE_INDEX) // Linux.
+			{
+				void *bhopcapAddr;
+				auto n = MemUtils::FindUniqueSequence(m_Base, m_Length, Patterns::ptnsBhopcap, &bhopcapAddr);
+				if (n != MemUtils::INVALID_SEQUENCE_INDEX)
+				{
+					offBhopcap = reinterpret_cast<ptrdiff_t>(bhopcapAddr) - reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump) + 27;
+					memcpy(originalBhopcapInsn, reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(bhopcapAddr) + 27), sizeof(originalBhopcapInsn));
+				}
+			}
+			else
+			{
+				switch (ptnNumber)
+				{
+				case 0:
+				case 1:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 2);
+					break;
+
+				case 2: // AG-Server, shouldn't happen here but who knows.
+				case 3:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 3);
+					break;
+				}
+			}
+		}, []() { }
+	);
+
+	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
+
+	pEngfuncs = reinterpret_cast<cl_enginefunc_t*>(MemUtils::GetSymbolAddress(m_Handle, "gEngfuncs"));
+	if (pEngfuncs)
+	{
+		EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
+		if (!*reinterpret_cast<uintptr_t*>(pEngfuncs))
+		{
+			ORIG_Initialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(m_Handle, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z"));
+			if (!ORIG_Initialize)
+				ORIG_Initialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(m_Handle, "Initialize"));
+			if (!ORIG_Initialize)
+			{
+				EngineDevWarning("[client dll] Couldn't get the address of Initialize.\n");
+				EngineWarning("Clientside CVars and commands are not available.\n");
+				EngineWarning("Custom HUD is not available.\n");
+			}
+		}
+	}
+	else
+	{
+		// In AG, this thing is the main function, so check that first.
+		_Initialize pInitialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(m_Handle, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z"));
+
+		if (!pInitialize)
+			pInitialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(m_Handle, "Initialize"));
+
+		if (pInitialize)
+		{
+			// Find "mov edi, offset dword; rep movsd" inside Initialize. The pointer to gEngfuncs is that dword.
+			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
+			auto addr = MemUtils::FindPattern(reinterpret_cast<void*>(pInitialize), 40, pattern, "x????xx");
+			if (!addr)
+			{
+				const byte pattern_[] = { 0xB9, '?', '?', '?', '?', 0x8B, 0x54, 0x24, 0x10 };
+				addr = MemUtils::FindPattern(reinterpret_cast<void*>(pInitialize), 40, pattern_, "x????xxxx");
+			}
+
+			if (addr)
+			{
+				pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(addr)+1);
+				EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
+
+				// If we have engfuncs, register cvars and whatnot right away (in the end of this function because other stuff need to be done first). Otherwise wait till the engine gives us engfuncs.
+				// This works because global variables are zero by default.
+				if (!*reinterpret_cast<uintptr_t*>(pEngfuncs))
+					ORIG_Initialize = pInitialize;
+			}
+			else
+			{
+				EngineDevWarning("[client dll] Couldn't find the pattern in Initialize.\n");
+				EngineWarning("Clientside CVars and commands are not available.\n");
+				EngineWarning("Custom HUD is not available.\n");
+			}
+		}
+		else
+		{
+			EngineDevWarning("[client dll] Couldn't get the address of Initialize.\n");
+			EngineWarning("Clientside CVars and commands are not available.\n");
+			EngineWarning("Custom HUD is not available.\n");
+		}
+	}
+
+	// We can draw stuff only if we know that we have already received / will receive engfuncs.
+	if (pEngfuncs)
+		if (!FindHUDFunctions()) {
+			ORIG_HUD_Init = nullptr;
+			ORIG_HUD_VidInit = nullptr;
+			ORIG_HUD_Reset = nullptr;
+			ORIG_HUD_Redraw = nullptr;
+			EngineWarning("Custom HUD is not available.\n");
+		}
+
+	ORIG_V_CalcRefdef = reinterpret_cast<_V_CalcRefdef>(MemUtils::GetSymbolAddress(m_Handle, "V_CalcRefdef"));
+	if (ORIG_V_CalcRefdef)
+		EngineDevMsg("[client dll] Found V_CalcRefdef at %p.\n", ORIG_V_CalcRefdef);
+	else {
+		EngineDevWarning("[client dll] Could not find V_CalcRefdef.\n");
+		EngineWarning("Velocity display during demo playback is not available.\n");
+	}
+
+	ORIG_HUD_PostRunCmd = reinterpret_cast<_HUD_PostRunCmd>(MemUtils::GetSymbolAddress(m_Handle, "HUD_PostRunCmd"));
+	if (ORIG_HUD_PostRunCmd)
+		EngineDevMsg("[client dll] Found HUD_PostRunCmd at %p.\n", ORIG_HUD_PostRunCmd);
+	else
+		EngineDevMsg("[client dll] Could not find HUD_PostRunCmd.\n");
+
+	bool noBhopcap = false;
+	auto n = fPM_PreventMegaBunnyJumping.get();
+	if (ORIG_PM_PreventMegaBunnyJumping) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[client dll] Found PM_PreventMegaBunnyJumping at %p.\n", ORIG_PM_PreventMegaBunnyJumping);
+		else
+			EngineDevMsg("[client dll] Found PM_PreventMegaBunnyJumping at %p (using the %s pattern).\n", ORIG_PM_PreventMegaBunnyJumping, Patterns::ptnsPMPreventMegaBunnyJumping[n].build.c_str());
+	}
+	else {
+		EngineDevWarning("[client dll] Could not find PM_PreventMegaBunnyJumping.\n");
+		EngineWarning("Bhopcap prediction disabling is not available.\n");
+		noBhopcap = true;
+	}
+
+	n = fPM_Jump.get();
+	if (ORIG_PM_Jump) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[client dll] Found PM_Jump at %p.\n", ORIG_PM_Jump);
+		else
+			EngineDevMsg("[client dll] Found PM_Jump at %p (using the %s pattern).\n", ORIG_PM_Jump, Patterns::ptnsPMJump[n].build.c_str());
+		if (offBhopcap)
+			EngineDevMsg("[client dll] Found the bhopcap pattern at %p.\n", reinterpret_cast<void*>(offBhopcap + reinterpret_cast<uintptr_t>(ORIG_PM_Jump)-27));
+	}
+	else {
+		EngineDevWarning("[client dll] Could not find PM_Jump.\n");
+		EngineWarning("Autojump prediction is not available.\n");
+		if (!noBhopcap)
+			EngineWarning("Bhopcap prediction disabling is not available.\n");
+	}
+}
+
 bool ClientDLL::FindHUDFunctions()
 {
 	if ((ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Init"))))
 		EngineDevMsg("[client dll] Found HUD_Init at %p.\n", ORIG_HUD_Init);
 	else {
-		EngineDevMsg("[client dll] Could not HUD_Init!\n");
+		EngineDevMsg("[client dll] Could not HUD_Init.\n");
 		return false;
 	}
 
 	if ((ORIG_HUD_VidInit = reinterpret_cast<_HUD_VidInit>(MemUtils::GetSymbolAddress(m_Handle, "HUD_VidInit"))))
 		EngineDevMsg("[client dll] Found HUD_VidInit at %p.\n", ORIG_HUD_VidInit);
 	else {
-		EngineDevMsg("[client dll] Could not HUD_VidInit!\n");
+		EngineDevMsg("[client dll] Could not HUD_VidInit.\n");
 		return false;
 	}
 
 	if ((ORIG_HUD_Reset = reinterpret_cast<_HUD_Reset>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Reset"))))
 		EngineDevMsg("[client dll] Found HUD_Reset at %p.\n", ORIG_HUD_Reset);
 	else {
-		EngineDevMsg("[client dll] Could not HUD_Reset!\n");
+		EngineDevMsg("[client dll] Could not HUD_Reset.\n");
 		return false;
 	}
 
 	if ((ORIG_HUD_Redraw = reinterpret_cast<_HUD_Redraw>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Redraw"))))
 		EngineDevMsg("[client dll] Found HUD_Redraw at %p.\n", ORIG_HUD_Redraw);
 	else {
-		EngineDevMsg("[client dll] Could not HUD_Redraw!\n");
+		EngineDevMsg("[client dll] Could not HUD_Redraw.\n");
 		return false;
 	}
 

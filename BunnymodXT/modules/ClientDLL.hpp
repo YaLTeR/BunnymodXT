@@ -28,10 +28,6 @@ public:
 	virtual void Unhook();
 	virtual void Clear();
 
-	bool FindHUDFunctions();
-	void RegisterCVarsAndCommands();
-	void AddHudElem(void* pHudElem);
-
 	cl_enginefunc_t *pEngfuncs;
 
 private:
@@ -40,6 +36,11 @@ private:
 	void operator=(const ClientDLL&);
 
 protected:
+	void FindStuff();
+	bool FindHUDFunctions();
+	void RegisterCVarsAndCommands();
+	void AddHudElem(void* pHudElem);
+
 	void **ppmove;
 	ptrdiff_t offOldbuttons;
 	ptrdiff_t offOnground;

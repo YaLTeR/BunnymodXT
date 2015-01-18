@@ -118,9 +118,9 @@ void ServerDLL::FindStuff()
 			offPlayerIndex = 0;
 			offOldbuttons = 200;
 			offOnground = 224;
-			if (ptnNumber == MemUtils::INVALID_SEQUENCE_INDEX)
+			if (ptnNumber == MemUtils::INVALID_SEQUENCE_INDEX) // Linux.
 			{
-				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 1); // Linux
+				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 1);
 				void *bhopcapAddr;
 				auto n = MemUtils::FindUniqueSequence(m_Base, m_Length, Patterns::ptnsBhopcap, &bhopcapAddr);
 				if (n != MemUtils::INVALID_SEQUENCE_INDEX)
@@ -196,7 +196,7 @@ void ServerDLL::FindStuff()
 			ORIG_GiveFnptrsToDll = reinterpret_cast<_GiveFnptrsToDll>(MemUtils::GetSymbolAddress(m_Handle, "GiveFnptrsToDll"));
 			if (!ORIG_GiveFnptrsToDll)
 			{
-				EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll!\n");
+				EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll.\n");
 				EngineWarning("Serverside CVars and commands are not available.\n");
 			}
 		}
@@ -232,13 +232,13 @@ void ServerDLL::FindStuff()
 			}
 			else
 			{
-				EngineDevWarning("[server dll] Couldn't find the pattern in GiveFnptrsToDll!\n");
+				EngineDevWarning("[server dll] Couldn't find the pattern in GiveFnptrsToDll.\n");
 				EngineWarning("Serverside CVars and commands are not available.\n");
 			}
 		}
 		else
 		{
-			EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll!\n");
+			EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll.\n");
 			EngineWarning("Serverside CVars and commands are not available.\n");
 		}
 	}

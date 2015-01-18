@@ -18,181 +18,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	m_Name = moduleName;
 	m_Intercepted = needToIntercept;
 
-	MemUtils::ptnvec_size ptnNumber;
-
-	void *pPMJump, *pPMPreventMegaBunnyJumping, *pPMPlayerMove;
-	std::future<MemUtils::ptnvec_size> fPMPreventMegaBunnyJumping, fPMPlayerMove;
-
-	pPMPreventMegaBunnyJumping = MemUtils::GetSymbolAddress(moduleHandle, "PM_PreventMegaBunnyJumping");
-	if (pPMPreventMegaBunnyJumping)
-	{
-		ORIG_PM_PreventMegaBunnyJumping = reinterpret_cast<_PM_PreventMegaBunnyJumping>(pPMPreventMegaBunnyJumping);
-		EngineDevMsg("[server dll] Found PM_PreventMegaBunnyJumping at %p.\n", pPMPreventMegaBunnyJumping);
-	}
-	else
-		fPMPreventMegaBunnyJumping = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPreventMegaBunnyJumping, &pPMPreventMegaBunnyJumping);
-
-	pPMPlayerMove = MemUtils::GetSymbolAddress(moduleHandle, "PM_PlayerMove");
-	if (pPMPlayerMove)
-	{
-		ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(pPMPlayerMove);
-		EngineDevMsg("[server dll] Found PM_PlayerMove at %p.\n", pPMPlayerMove);
-		offPlayerIndex = 0;
-		offVelocity = 92;
-		offOrigin = 56;
-		offAngles = 68;
-	}
-	else
-		fPMPlayerMove = std::async(MemUtils::FindUniqueSequence, moduleBase, moduleLength, Patterns::ptnsPMPlayerMove, &pPMPlayerMove);
-
-	pPMJump = MemUtils::GetSymbolAddress(moduleHandle, "PM_Jump");
-	if (pPMJump)
-	{
-		if (*reinterpret_cast<byte*>(pPMJump) == 0xA1)
-		{
-			ORIG_PM_Jump = reinterpret_cast<_PM_Jump>(pPMJump);
-			EngineDevMsg("[server dll] Found PM_Jump at %p.\n", pPMJump);
-			ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 1); // Linux
-			offPlayerIndex = 0;
-			offOldbuttons = 200;
-			offOnground = 224;
-
-			void *bhopcapAddr;
-			ptnNumber = MemUtils::FindUniqueSequence(moduleBase, moduleLength, Patterns::ptnsBhopcap, &bhopcapAddr);
-			if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-			{
-				EngineDevMsg("Found the bhopcap pattern at %p.\n", bhopcapAddr);
-				offBhopcap = reinterpret_cast<ptrdiff_t>(bhopcapAddr) - reinterpret_cast<ptrdiff_t>(pPMJump) + 27;
-				memcpy(originalBhopcapInsn, reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(bhopcapAddr) + 27), sizeof(originalBhopcapInsn));
-			}
-		}
-		else
-			pPMJump = nullptr; // Try pattern searching.
-	}
-	
-	if (!pPMJump)
-	{
-		ptnNumber = MemUtils::FindUniqueSequence(moduleBase, moduleLength, Patterns::ptnsPMJump, &pPMJump);
-		if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-		{
-			ORIG_PM_Jump = reinterpret_cast<_PM_Jump>(pPMJump);
-			EngineDevMsg("[server dll] Found PM_Jump at %p (using the %s pattern).\n", pPMJump, Patterns::ptnsPMJump[ptnNumber].build.c_str());
-			offPlayerIndex = 0;
-			offOldbuttons = 200;
-			offOnground = 224;
-
-			switch (ptnNumber)
-			{
-			case 0:
-			case 1:
-				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 2);
-				break;
-
-			case 2:
-			case 3: // AG-Client, shouldn't happen here but who knows.
-				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(pPMJump) + 3);
-				break;
-			}
-		}
-		else
-		{
-			EngineDevWarning("[server dll] Could not find PM_Jump!\n");
-			EngineWarning("Autojump is not available.\n");
-		}
-	}
-
-	if (!ORIG_PM_PreventMegaBunnyJumping)
-	{
-		ptnNumber = fPMPreventMegaBunnyJumping.get();
-		if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-		{
-			ORIG_PM_PreventMegaBunnyJumping = reinterpret_cast<_PM_PreventMegaBunnyJumping>(pPMPreventMegaBunnyJumping);
-			EngineDevMsg("[server dll] Found PM_PreventMegaBunnyJumping at %p (using the %s pattern).\n", pPMPreventMegaBunnyJumping, Patterns::ptnsPMPreventMegaBunnyJumping[ptnNumber].build.c_str());
-		}
-		else
-		{
-			EngineDevWarning("[server dll] Could not find PM_PreventMegaBunnyJumping!\n");
-			EngineWarning("Bhopcap disabling is not available.\n");
-		}
-	}
-
-	if (!ORIG_PM_PlayerMove)
-	{
-		ptnNumber = fPMPlayerMove.get();
-		if (ptnNumber != MemUtils::INVALID_SEQUENCE_INDEX)
-		{
-			ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(pPMPlayerMove);
-			EngineDevMsg("[server dll] Found PM_PlayerMove at %p (using the %s pattern).\n", pPMPlayerMove, Patterns::ptnsPMPlayerMove[ptnNumber].build.c_str());
-			offPlayerIndex = 0;
-			offVelocity = 92;
-			offOrigin = 56;
-			offAngles = 68;
-			offCmd = 283736;
-		}
-		else
-		{
-			EngineDevWarning("[server dll] Could not find PM_PlayerMove!\n");
-		}
-	}
-
-	// This has to be the last thing to check and hook.
-	pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(moduleHandle, "g_engfuncs"));
-	if (pEngfuncs)
-	{
-		EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
-		if (*reinterpret_cast<uintptr_t*>(pEngfuncs))
-			RegisterCVarsAndCommands();
-		else
-		{
-			ORIG_GiveFnptrsToDll = reinterpret_cast<_GiveFnptrsToDll>(MemUtils::GetSymbolAddress(moduleHandle, "GiveFnptrsToDll"));
-			if (!ORIG_GiveFnptrsToDll)
-			{
-				EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll!\n");
-				EngineWarning("Serverside CVars and commands are not available.\n");
-			}
-		}
-	}
-	else
-	{
-		_GiveFnptrsToDll pGiveFnptrsToDll = reinterpret_cast<_GiveFnptrsToDll>(MemUtils::GetSymbolAddress(moduleHandle, "GiveFnptrsToDll"));
-		if (pGiveFnptrsToDll)
-		{
-			// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
-			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
-			auto addr = MemUtils::FindPattern(reinterpret_cast<void*>(pGiveFnptrsToDll), 40, pattern, "x????xx");
-
-			// Linux version: mov offset dword[eax], esi; mov [ecx+eax+4], ebx
-			if (!addr)
-			{
-				const byte pattern_[] = { 0x89, 0xB0, '?', '?', '?', '?', 0x89, 0x5C, 0x01, 0x04 };
-				addr = MemUtils::FindPattern(reinterpret_cast<void*>(pGiveFnptrsToDll), 40, pattern_, "xx????xxxx");
-				if (addr)
-					addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(addr) + 1); // So we're compatible with the previous pattern.
-			}
-
-			if (addr)
-			{
-				pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr) + 1);
-				EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
-
-				// If we have engfuncs, do stuff right away. Otherwise wait till the engine gives us engfuncs.
-				if (*reinterpret_cast<uintptr_t*>(pEngfuncs))
-					RegisterCVarsAndCommands();
-				else
-					ORIG_GiveFnptrsToDll = pGiveFnptrsToDll;
-			}
-			else
-			{
-				EngineDevWarning("[server dll] Couldn't find the pattern in GiveFnptrsToDll!\n");
-				EngineWarning("Serverside CVars and commands are not available.\n");
-			}
-		}
-		else
-		{
-			EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll!\n");
-			EngineWarning("Serverside CVars and commands are not available.\n");
-		}
-	}
+	FindStuff();
 
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll));
 
@@ -269,6 +95,150 @@ bool ServerDLL::CanHook(const std::wstring& moduleFullName)
 		return true;
 
 	return false;
+}
+
+void ServerDLL::FindStuff()
+{
+	auto fPM_PreventMegaBunnyJumping = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), m_Handle, "PM_PreventMegaBunnyJumping", m_Base, m_Length, Patterns::ptnsPMPreventMegaBunnyJumping,
+		[&](MemUtils::ptnvec_size ptnNumber) { }, [&]() { });
+
+	auto fPM_PlayerMove = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_PlayerMove), m_Handle, "PM_PlayerMove", m_Base, m_Length, Patterns::ptnsPMPlayerMove,
+		[&](MemUtils::ptnvec_size ptnNumber) {
+			offPlayerIndex = 0;
+			offVelocity = 92;
+			offOrigin = 56;
+			offAngles = 68;
+			offCmd = 283736;
+		}, [&]() { });
+
+	auto fPM_Jump = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_Jump), m_Handle, "PM_Jump", m_Base, m_Length, Patterns::ptnsPMJump,
+		[&](MemUtils::ptnvec_size ptnNumber) {
+			offPlayerIndex = 0;
+			offOldbuttons = 200;
+			offOnground = 224;
+			if (ptnNumber == MemUtils::INVALID_SEQUENCE_INDEX)
+			{
+				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 1); // Linux
+				void *bhopcapAddr;
+				auto n = MemUtils::FindUniqueSequence(m_Base, m_Length, Patterns::ptnsBhopcap, &bhopcapAddr);
+				if (n != MemUtils::INVALID_SEQUENCE_INDEX)
+				{
+					offBhopcap = reinterpret_cast<ptrdiff_t>(bhopcapAddr) - reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump) + 27;
+					memcpy(originalBhopcapInsn, reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(bhopcapAddr) + 27), sizeof(originalBhopcapInsn));
+				}
+			}
+			else
+			{
+				switch (ptnNumber)
+				{
+				case 0:
+				case 1:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 2);
+					break;
+
+				case 2:
+				case 3: // AG-Client, shouldn't happen here but who knows.
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 3);
+					break;
+				}
+			}
+		}, [&]() { });
+
+	bool noBhopcap = false;
+	auto n = fPM_PreventMegaBunnyJumping.get();
+	if (ORIG_PM_PreventMegaBunnyJumping) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[server dll] Found PM_PreventMegaBunnyJumping at %p.\n", ORIG_PM_PreventMegaBunnyJumping);
+		else
+			EngineDevMsg("[server dll] Found PM_PreventMegaBunnyJumping at %p (using the %s pattern).\n", ORIG_PM_PreventMegaBunnyJumping, Patterns::ptnsPMPreventMegaBunnyJumping[n].build.c_str());
+	} else {
+		EngineDevWarning("[server dll] Could not find PM_PreventMegaBunnyJumping.\n");
+		EngineWarning("Bhopcap disabling is not available.\n");
+		noBhopcap = true;
+	}
+
+	n = fPM_PlayerMove.get();
+	if (ORIG_PM_PlayerMove) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[server dll] Found PM_PlayerMove at %p.\n", ORIG_PM_PlayerMove);
+		else
+			EngineDevMsg("[server dll] Found PM_PlayerMove at %p (using the %s pattern).\n", ORIG_PM_PlayerMove, Patterns::ptnsPMPlayerMove[n].build.c_str());
+	} else
+		EngineDevWarning("[server dll] Could not find PM_PlayerMove.\n");
+
+	n = fPM_Jump.get();
+	if (ORIG_PM_Jump) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[server dll] Found PM_Jump at %p.\n", ORIG_PM_Jump);
+		else
+			EngineDevMsg("[server dll] Found PM_Jump at %p (using the %s pattern).\n", ORIG_PM_Jump, Patterns::ptnsPMJump[n].build.c_str());
+		if (offBhopcap)
+			EngineDevMsg("[server dll] Found the bhopcap pattern at %p.\n", reinterpret_cast<void*>(offBhopcap + reinterpret_cast<uintptr_t>(ORIG_PM_Jump) - 27));
+	} else {
+		EngineDevWarning("[server dll] Could not find PM_Jump.\n");
+		EngineWarning("Autojump is not available.\n");
+		if (!noBhopcap)
+			EngineWarning("Bhopcap disabling is not available.\n");
+	}
+	
+	// This has to be the last thing to check and hook.
+	pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
+	if (pEngfuncs)
+	{
+		EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
+		if (*reinterpret_cast<uintptr_t*>(pEngfuncs))
+			RegisterCVarsAndCommands();
+		else
+		{
+			ORIG_GiveFnptrsToDll = reinterpret_cast<_GiveFnptrsToDll>(MemUtils::GetSymbolAddress(m_Handle, "GiveFnptrsToDll"));
+			if (!ORIG_GiveFnptrsToDll)
+			{
+				EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll!\n");
+				EngineWarning("Serverside CVars and commands are not available.\n");
+			}
+		}
+	}
+	else
+	{
+		_GiveFnptrsToDll pGiveFnptrsToDll = reinterpret_cast<_GiveFnptrsToDll>(MemUtils::GetSymbolAddress(m_Handle, "GiveFnptrsToDll"));
+		if (pGiveFnptrsToDll)
+		{
+			// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
+			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
+			auto addr = MemUtils::FindPattern(reinterpret_cast<void*>(pGiveFnptrsToDll), 40, pattern, "x????xx");
+
+			// Linux version: mov offset dword[eax], esi; mov [ecx+eax+4], ebx
+			if (!addr)
+			{
+				const byte pattern_[] = { 0x89, 0xB0, '?', '?', '?', '?', 0x89, 0x5C, 0x01, 0x04 };
+				addr = MemUtils::FindPattern(reinterpret_cast<void*>(pGiveFnptrsToDll), 40, pattern_, "xx????xxxx");
+				if (addr)
+					addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(addr)+1); // So we're compatible with the previous pattern.
+			}
+
+			if (addr)
+			{
+				pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr)+1);
+				EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
+
+				// If we have engfuncs, do stuff right away. Otherwise wait till the engine gives us engfuncs.
+				if (*reinterpret_cast<uintptr_t*>(pEngfuncs))
+					RegisterCVarsAndCommands();
+				else
+					ORIG_GiveFnptrsToDll = pGiveFnptrsToDll;
+			}
+			else
+			{
+				EngineDevWarning("[server dll] Couldn't find the pattern in GiveFnptrsToDll!\n");
+				EngineWarning("Serverside CVars and commands are not available.\n");
+			}
+		}
+		else
+		{
+			EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll!\n");
+			EngineWarning("Serverside CVars and commands are not available.\n");
+		}
+	}
 }
 
 void ServerDLL::RegisterCVarsAndCommands()

@@ -28,6 +28,7 @@ private:
 	void operator=(const ServerDLL&);
 
 protected:
+	void FindStuff();
 	void RegisterCVarsAndCommands();
 
 	void **ppmove;

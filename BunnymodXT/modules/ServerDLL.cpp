@@ -100,7 +100,8 @@ bool ServerDLL::CanHook(const std::wstring& moduleFullName)
 void ServerDLL::FindStuff()
 {
 	auto fPM_PreventMegaBunnyJumping = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), m_Handle, "PM_PreventMegaBunnyJumping", m_Base, m_Length, Patterns::ptnsPMPreventMegaBunnyJumping,
-		[&](MemUtils::ptnvec_size ptnNumber) { }, [&]() { });
+		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
 
 	auto fPM_PlayerMove = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_PlayerMove), m_Handle, "PM_PlayerMove", m_Base, m_Length, Patterns::ptnsPMPlayerMove,
 		[&](MemUtils::ptnvec_size ptnNumber) {
@@ -109,7 +110,8 @@ void ServerDLL::FindStuff()
 			offOrigin = 56;
 			offAngles = 68;
 			offCmd = 283736;
-		}, [&]() { });
+		}, []() { }
+	);
 
 	auto fPM_Jump = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_Jump), m_Handle, "PM_Jump", m_Base, m_Length, Patterns::ptnsPMJump,
 		[&](MemUtils::ptnvec_size ptnNumber) {
@@ -142,7 +144,8 @@ void ServerDLL::FindStuff()
 					break;
 				}
 			}
-		}, [&]() { });
+		}, []() { }
+	);
 
 	bool noBhopcap = false;
 	auto n = fPM_PreventMegaBunnyJumping.get();

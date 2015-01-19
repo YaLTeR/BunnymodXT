@@ -323,7 +323,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 
 	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
 
-	//if (_bxt_taslog.GetBool())
+	if (_bxt_taslog.GetBool())
 	{
 		ALERT(at_console, "-- BXT TAS Log Start --\n");
 		ALERT(at_console, "Player index: %d; msec: %hhu (%Lf)\n", playerIndex, cmd->msec, static_cast<long double>(cmd->msec) * 0.001);
@@ -332,7 +332,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 
 	ORIG_PM_PlayerMove(server);
 
-	//if (_bxt_taslog.GetBool())
+	if (_bxt_taslog.GetBool())
 	{
 		ALERT(at_console, "Angles: %.8f; %.8f; %.8f\n", angles[0], angles[1], angles[2]);
 		ALERT(at_console, "New velocity: %.8f; %.8f; %.8f; new origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);

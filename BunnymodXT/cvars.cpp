@@ -45,6 +45,14 @@ std::string CVarWrapper::GetString() const
 // Engine CVars
 const CVarWrapper _bxt_taslog("_bxt_taslog", "0");
 const CVarWrapper bxt_tas("bxt_tas", "0");
+CVarWrapper sv_maxvelocity_;
+CVarWrapper sv_maxspeed_;
+CVarWrapper sv_stopspeed_;
+CVarWrapper sv_friction_;
+CVarWrapper sv_edgefriction_;
+CVarWrapper sv_accelerate_;
+CVarWrapper sv_airaccelerate_;
+CVarWrapper sv_gravity_;
 
 // Serverside CVars
 const CVarWrapper bxt_autojump("bxt_autojump", "0");

@@ -35,6 +35,9 @@ using std::uintptr_t;
 using std::size_t;
 using std::ptrdiff_t;
 
+#include <hltas.hpp>
+#include <hlstrafe.hpp>
+
 #include "HLSDK/dlls/extdll.h"
 #include "HLSDK/cl_dll/wrect.h"
 #include "HLSDK/cl_dll/hud.h"

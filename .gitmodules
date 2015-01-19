@@ -1,3 +1,9 @@
 [submodule "SPTLib"]
 	path = SPTLib
 	url = https://github.com/YaLTeR/SPTLib.git
+[submodule "hltas"]
+	path = hltas
+	url = https://github.com/HLTAS/hltas.git
+[submodule "hlstrafe"]
+	path = hlstrafe
+	url = https://github.com/HLTAS/hlstrafe.git

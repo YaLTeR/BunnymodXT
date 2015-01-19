@@ -12,6 +12,7 @@ public:
 	bool IsEmpty() const;
 	bool GetBool() const;
 	int GetInt() const;
+	float GetFloat() const;
 	std::string GetString() const;
 
 protected:
@@ -39,9 +40,23 @@ inline int CVarWrapper::GetInt() const
 	return m_CVar ? atoi(m_CVar->string) : 0;
 }
 
+inline float CVarWrapper::GetFloat() const
+{
+	return m_CVar ? m_CVar->value : 0.0f;
+}
+
 // Engine CVars
 extern const CVarWrapper _bxt_taslog;
 extern const CVarWrapper bxt_tas;
+
+extern CVarWrapper sv_maxvelocity_;
+extern CVarWrapper sv_maxspeed_;
+extern CVarWrapper sv_stopspeed_;
+extern CVarWrapper sv_friction_;
+extern CVarWrapper sv_edgefriction_;
+extern CVarWrapper sv_accelerate_;
+extern CVarWrapper sv_airaccelerate_;
+extern CVarWrapper sv_gravity_;
 
 // Serverside CVars
 extern const CVarWrapper bxt_autojump;

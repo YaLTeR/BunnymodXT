@@ -63,6 +63,7 @@ void HwDLL::Clear()
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
 	ORIG_Cvar_DirectSet = nullptr;
+	ORIG_Cvar_FindVar = nullptr;
 	ORIG_Cmd_AddMallocCommand = nullptr;
 	ORIG_Cmd_Argc = nullptr;
 	ORIG_Cmd_Args = nullptr;
@@ -78,6 +79,13 @@ void HwDLL::Clear()
 	finishingLoad = false;
 	dontPauseNextCycle = false;
 	insideSeedRNG = false;
+	player = {};
+	input.Clear();
+	runningFrames = false;
+	wasRunningFrames = false;
+	currentFramebulk = 0;
+	totalFramebulks = 0;
+	currentRepeat = 0;
 }
 
 void HwDLL::FindStuff()
@@ -126,6 +134,7 @@ void HwDLL::FindStuff()
 		FIND(Con_Printf)
 		FIND(Cvar_RegisterVariable)
 		FIND(Cvar_DirectSet)
+		FIND(Cvar_FindVar)
 		FIND(Cbuf_InsertText)
 		FIND(Cmd_AddMallocCommand)
 		FIND(SeedRandomNumberGenerator)
@@ -138,6 +147,7 @@ void HwDLL::FindStuff()
 		#define DEF_FUTURE(name) auto f##name = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_##name), m_Base, m_Length, Patterns::ptns##name, [](MemUtils::ptnvec_size ptnNumber) { }, []() { });
 		DEF_FUTURE(Cvar_RegisterVariable)
 		DEF_FUTURE(Cvar_DirectSet)
+		DEF_FUTURE(Cvar_FindVar)
 		DEF_FUTURE(Cbuf_InsertText)
 		DEF_FUTURE(Cmd_AddMallocCommand)
 		//DEF_FUTURE(RandomFloat)
@@ -267,6 +277,7 @@ void HwDLL::FindStuff()
 			}
 		GET_FUTURE(Cvar_RegisterVariable)
 		GET_FUTURE(Cvar_DirectSet)
+		GET_FUTURE(Cvar_FindVar)
 		GET_FUTURE(Cbuf_InsertText)
 		GET_FUTURE(Cmd_AddMallocCommand)
 		//GET_FUTURE(RandomFloat)
@@ -282,6 +293,7 @@ void HwDLL::FindStuff()
 		} else {
 			EngineDevWarning("[hw dll] Could not find Host_Tell_f.\n");
 			ORIG_Cmd_AddMallocCommand = nullptr;
+			ORIG_Cbuf_Execute = nullptr;
 		}
 	}
 
@@ -295,7 +307,31 @@ void HwDLL::Cmd_BXT_TAS_LoadScript()
 }
 void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 {
+	runningFrames = false;
+	currentFramebulk = 0;
+	currentRepeat = 0;
+
+	if (ORIG_Cmd_Argc() != 2) {
+		ORIG_Con_Printf("Usage: bxt_tas_loadscript <filename>\n");
+		return;
+	}
+
 	ORIG_Cvar_DirectSet(bxt_tas.GetPointer(), "1");
+
+	std::string filename(ORIG_Cmd_Argv(1));
+	auto err = input.Open(filename).get();
+	if (err.Code != HLTAS::ErrorCode::OK) {
+		ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err));
+		return;
+	}
+
+	if (!input.GetFrames().empty()) {
+		runningFrames = true;
+		totalFramebulks = input.GetFrames().size();
+		std::ostringstream ss;
+		ss << "host_framerate " << input.GetFrame(0).Frametime.c_str() << "\n";
+		ORIG_Cbuf_InsertText(ss.str().c_str());
+	}
 }
 
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
@@ -339,7 +375,130 @@ bool HwDLL::CheckUnpause()
 
 void HwDLL::InsertCommands()
 {
-	ORIG_Cbuf_InsertText("echo We are executing!\n");
+	if (currentFramebulk >= totalFramebulks)
+		runningFrames = false;
+
+	if (runningFrames) {
+		auto f = input.GetFrames()[currentFramebulk];
+		auto p = HLStrafe::MainFunc(player, GetMovementVars(), f);
+
+		// TODO viewangles.
+
+		#define INS(btn, cmd) \
+			if (p.btn && !previousButtons.btn) \
+				ORIG_Cbuf_InsertText("+" #cmd "\n"); \
+			else if (!p.btn && previousButtons.btn) \
+				ORIG_Cbuf_InsertText("-" #cmd "\n");
+		INS(Forward, forward)
+		INS(Left, moveleft)
+		INS(Right, moveright)
+		INS(Back, back)
+		INS(Up, moveup)
+		INS(Down, movedown)
+		INS(Jump, jump)
+		INS(Duck, duck)
+		INS(Use, use)
+		INS(Attack1, attack)
+		INS(Attack2, attack2)
+		INS(Reload, reload)
+		#undef INS
+
+		// TODO speeds.
+
+		// We need this to be in the beginning of the buffer.
+		if (!wasRunningFrames)
+			ResetButtons();
+
+		previousButtons = p;
+
+		if (++currentRepeat >= f.GetRepeats()) {
+			currentFramebulk++;
+			currentRepeat = 0;
+			if (currentFramebulk < totalFramebulks) {
+				auto next = input.GetFrame(currentFramebulk);
+				if (next.Frametime != f.Frametime) {
+					std::ostringstream ss;
+					ss << "host_framerate " << next.Frametime.c_str() << "\n";
+					ORIG_Cbuf_InsertText(ss.str().c_str());
+				}
+			}
+		}
+	} else {
+		if (wasRunningFrames)
+			ResetButtons();
+	}
+
+	wasRunningFrames = runningFrames;
+}
+
+void HwDLL::ResetButtons()
+{
+	ORIG_Cbuf_InsertText("-forward\n"
+	                     "-moveleft\n"
+	                     "-moveright\n"
+	                     "-back\n"
+	                     "-moveup\n"
+	                     "-movedown\n"
+	                     "-left\n"
+	                     "-right\n"
+	                     "-lookup\n"
+	                     "-lookdown\n"
+	                     "-jump\n"
+	                     "-duck\n"
+	                     "-use\n"
+	                     "-attack\n"
+	                     "-attack2\n"
+	                     "-reload\n");
+	previousButtons = {};
+}
+
+void HwDLL::FindCVarsIfNeeded()
+{
+	if (sv_maxvelocity_.GetPointer())
+		return;
+
+	sv_maxvelocity_.Assign(ORIG_Cvar_FindVar("sv_maxvelocity"));
+	sv_maxspeed_.Assign(ORIG_Cvar_FindVar("sv_maxspeed"));
+	sv_stopspeed_.Assign(ORIG_Cvar_FindVar("sv_stopspeed"));
+	sv_friction_.Assign(ORIG_Cvar_FindVar("sv_friction"));
+	sv_edgefriction_.Assign(ORIG_Cvar_FindVar("sv_edgefriction"));
+	sv_accelerate_.Assign(ORIG_Cvar_FindVar("sv_accelerate"));
+	sv_airaccelerate_.Assign(ORIG_Cvar_FindVar("sv_airaccelerate"));
+	sv_gravity_.Assign(ORIG_Cvar_FindVar("sv_gravity"));
+}
+
+HLStrafe::MovementVars HwDLL::GetMovementVars()
+{
+	HLStrafe::MovementVars vars = {};
+	
+	FindCVarsIfNeeded();
+	vars.Frametime = static_cast<float>(*host_frametime);
+	vars.Maxvelocity = sv_maxvelocity_.GetFloat();
+	vars.Maxspeed = sv_maxspeed_.GetFloat();
+	vars.Stopspeed = sv_stopspeed_.GetFloat();
+	vars.Friction = sv_friction_.GetFloat();
+	vars.Edgefriction = sv_edgefriction_.GetFloat();
+	vars.EntFriction = 1.0f; // TBD
+	vars.Accelerate = sv_accelerate_.GetFloat();
+	vars.Airaccelerate = sv_airaccelerate_.GetFloat();
+	vars.Gravity = sv_gravity_.GetFloat();
+	vars.EntGravity = 1.0f; // TBD
+
+	return vars;
+}
+
+void HwDLL::SetPlayerOrigin(float origin[3])
+{
+	player.Origin[0] = origin[0];
+	player.Origin[1] = origin[1];
+	player.Origin[2] = origin[2];
+}
+
+void HwDLL::SetPlayerVelocity(float velocity[3])
+{
+	player.Velocity[0] = velocity[0];
+	player.Velocity[1] = velocity[1];
+	player.Velocity[2] = velocity[2];
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
@@ -363,6 +522,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		loading = true;
 		executing = false;
 	}
+	if (state != 5)
+		executing = false;
 	if (!loading && state == 5)
 		executing = true;
 	if (loading && state == 3)

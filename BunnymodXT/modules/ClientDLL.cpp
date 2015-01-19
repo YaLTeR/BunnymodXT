@@ -450,16 +450,16 @@ HOOK_DEF_2(ClientDLL, void, __cdecl, HUD_Redraw, float, time, int, intermission)
 
 HOOK_DEF_6(ClientDLL, void, __cdecl, HUD_PostRunCmd, local_state_s*, from, local_state_s*, to, usercmd_s*, cmd, int, runfuncs, double, time, unsigned int, random_seed)
 {
-	//if (_bxt_taslog.GetBool())
-	if (pEngfuncs)
-	{
-		pEngfuncs->Con_Printf("-- HUD_PostRunCmd Start --\n");
-		pEngfuncs->Con_Printf("Msec %hhu (%Lf)\n", cmd->msec, static_cast<long double>(cmd->msec) * 0.001);
-		pEngfuncs->Con_Printf("Viewangles: %.8f %.8f %.8f; forwardmove: %f; sidemove: %f; upmove: %f\n", cmd->viewangles[0], cmd->viewangles[1], cmd->viewangles[2], cmd->forwardmove, cmd->sidemove, cmd->upmove);
-		pEngfuncs->Con_Printf("Buttons: %hu\n", cmd->buttons);
-		pEngfuncs->Con_Printf("Random seed: %d\n", random_seed);
-		pEngfuncs->Con_Printf("-- HUD_PostRunCmd End --\n");
-	}
+	if (_bxt_taslog.GetBool())
+		if (pEngfuncs)
+		{
+			pEngfuncs->Con_Printf("-- HUD_PostRunCmd Start --\n");
+			pEngfuncs->Con_Printf("Msec %hhu (%Lf)\n", cmd->msec, static_cast<long double>(cmd->msec) * 0.001);
+			pEngfuncs->Con_Printf("Viewangles: %.8f %.8f %.8f; forwardmove: %f; sidemove: %f; upmove: %f\n", cmd->viewangles[0], cmd->viewangles[1], cmd->viewangles[2], cmd->forwardmove, cmd->sidemove, cmd->upmove);
+			pEngfuncs->Con_Printf("Buttons: %hu\n", cmd->buttons);
+			pEngfuncs->Con_Printf("Random seed: %d\n", random_seed);
+			pEngfuncs->Con_Printf("-- HUD_PostRunCmd End --\n");
+		}
 
 	return ORIG_HUD_PostRunCmd(from, to, cmd, runfuncs, time, random_seed);
 }

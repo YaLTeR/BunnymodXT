@@ -413,6 +413,9 @@ namespace CustomHud
 		vecCopy(org, player.origin);
 
 		receivedAccurateInfo = true;
+
+		HwDLL::GetInstance().SetPlayerOrigin(org);
+		HwDLL::GetInstance().SetPlayerVelocity(vel);
 	}
 
 	void UpdatePlayerInfoInaccurate(float vel[3], float org[3])
@@ -421,6 +424,9 @@ namespace CustomHud
 		{
 			vecCopy(vel, player.velocity);
 			vecCopy(org, player.origin);
+
+			HwDLL::GetInstance().SetPlayerOrigin(org);
+			HwDLL::GetInstance().SetPlayerVelocity(vel);
 		}
 	}
 }

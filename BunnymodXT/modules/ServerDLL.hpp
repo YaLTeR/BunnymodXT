@@ -9,6 +9,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, PM_PreventMegaBunnyJumping)
 	HOOK_DECL(void, __cdecl, PM_PlayerMove, qboolean server)
 	HOOK_DECL(void, __stdcall, GiveFnptrsToDll, enginefuncs_t* pEngfuncsFromEngine, const void* pGlobals)
+	HOOK_DECL(void, __cdecl, CmdStart, const edict_t* player, const usercmd_t* cmd, unsigned int random_seed)
 
 public:
 	static ServerDLL& GetInstance()
@@ -28,6 +29,9 @@ private:
 	void operator=(const ServerDLL&);
 
 protected:
+	typedef int(__cdecl *_GetEntityAPI)(DLL_FUNCTIONS* pFunctionTable, int interfaceVersion);
+	_GetEntityAPI ORIG_GetEntityAPI;
+
 	void FindStuff();
 	void RegisterCVarsAndCommands();
 

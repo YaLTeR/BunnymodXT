@@ -4,7 +4,6 @@
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
 #include "HwDLL.hpp"
-#include "ClientDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
 
@@ -34,7 +33,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			{ reinterpret_cast<void**>(&ORIG_SeedRandomNumberGenerator), reinterpret_cast<void*>(HOOKED_SeedRandomNumberGenerator) },
 			{ reinterpret_cast<void**>(&ORIG_time), reinterpret_cast<void*>(HOOKED_time) },
 			{ reinterpret_cast<void**>(&ORIG_RandomFloat), reinterpret_cast<void*>(HOOKED_RandomFloat) },
-			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) }
+			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
+			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel_f) }
 		});
 }
 
@@ -46,7 +46,9 @@ void HwDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_SeedRandomNumberGenerator), reinterpret_cast<void*>(HOOKED_SeedRandomNumberGenerator) },
 			{ reinterpret_cast<void**>(&ORIG_time), reinterpret_cast<void*>(HOOKED_time) },
 			{ reinterpret_cast<void**>(&ORIG_RandomFloat), reinterpret_cast<void*>(HOOKED_RandomFloat) },
-			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) }
+			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
+			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
+			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel_f) }
 	});
 
 	Clear();
@@ -59,6 +61,7 @@ void HwDLL::Clear()
 	ORIG_time = nullptr;
 	ORIG_RandomFloat = nullptr;
 	ORIG_RandomLong = nullptr;
+	ORIG_Host_Changelevel_f = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
@@ -122,6 +125,15 @@ void HwDLL::FindStuff()
 		if (!cls || !sv || !cmd_text || !host_frametime)
 			ORIG_Cbuf_Execute = nullptr;
 
+		void* ran1 = MemUtils::GetSymbolAddress(m_Handle, "ran1");
+		if (ran1) {
+			EngineDevMsg("[hw dll] Found ran1 at %p.\n", ran1);
+			auto f = reinterpret_cast<uintptr_t>(ran1);
+			// TODO set rng globals.
+		}
+		else
+			EngineDevWarning("[hw dll] Could not find ran1.\n");
+
 		#define FIND(f) \
 			ORIG_##f = reinterpret_cast<_##f>(MemUtils::GetSymbolAddress(m_Handle, #f)); \
 			if (ORIG_##f) \
@@ -140,6 +152,7 @@ void HwDLL::FindStuff()
 		FIND(SeedRandomNumberGenerator)
 		//FIND(RandomFloat)
 		//FIND(RandomLong)
+		FIND(Host_Changelevel_f)
 		#undef FIND
 	}
 	else
@@ -152,6 +165,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cmd_AddMallocCommand)
 		//DEF_FUTURE(RandomFloat)
 		//DEF_FUTURE(RandomLong)
+		DEF_FUTURE(Host_Changelevel_f)
 		#undef DEF_FUTURE
 
 		auto fCbuf_Execute = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_Cbuf_Execute), m_Base, m_Length, Patterns::ptnsCbuf_Execute,
@@ -231,6 +245,15 @@ void HwDLL::FindStuff()
 			}, []() {}
 		);
 
+		void *ran1;
+		auto fran1 = MemUtils::FindPatternOnly(&ran1, m_Base, m_Length, Patterns::ptnsran1,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				auto f = reinterpret_cast<uintptr_t>(ran1);
+				rng_global_1 = *reinterpret_cast<int**>(f + 13);
+				rng_global_2 = *reinterpret_cast<int**>(f + 97);
+			}, []() {}
+		);
+
 		auto n = fCbuf_Execute.get();
 		if (ORIG_Cbuf_Execute) {
 			EngineDevMsg("[hw dll] Found Cbuf_Execute at %p (using the %s pattern).\n", ORIG_Cbuf_Execute, Patterns::ptnsCbuf_Execute[n].build.c_str());
@@ -282,6 +305,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Cmd_AddMallocCommand)
 		//GET_FUTURE(RandomFloat)
 		//GET_FUTURE(RandomLong)
+		GET_FUTURE(Host_Changelevel_f)
 		#undef GET_FUTURE
 
 		n = fHost_Tell_f.get();
@@ -293,6 +317,16 @@ void HwDLL::FindStuff()
 		} else {
 			EngineDevWarning("[hw dll] Could not find Host_Tell_f.\n");
 			ORIG_Cmd_AddMallocCommand = nullptr;
+			ORIG_Cbuf_Execute = nullptr;
+		}
+
+		n = fran1.get();
+		if (ran1) {
+			EngineDevMsg("[hw dll] Found ran1 at %p (using the %s pattern).\n", ran1, Patterns::ptnsran1[n].build.c_str());
+			EngineDevMsg("[hw dll] Found the first RNG global at %p.\n", rng_global_1);
+			EngineDevMsg("[hw dll] Found the second RNG global at %p.\n", rng_global_2);
+		} else {
+			EngineDevWarning("[hw dll] Could not find ran1.\n");
 			ORIG_Cbuf_Execute = nullptr;
 		}
 	}
@@ -325,12 +359,27 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 		return;
 	}
 
+	for (auto prop : input.GetProperties()) {
+		if (prop.first == "demo")
+			demoName = prop.second;
+		else if (prop.first == "save")
+			saveName = prop.second;
+		else if (prop.first == "seed") {
+			std::istringstream ss(prop.second);
+			ss >> NonSharedRNGSeed >> SharedRNGSeed;
+			SeedsPresent = true;
+		}
+	}
+
 	if (!input.GetFrames().empty()) {
 		runningFrames = true;
 		totalFramebulks = input.GetFrames().size();
-		std::ostringstream ss;
-		ss << "host_framerate " << input.GetFrame(0).Frametime.c_str() << "\n";
-		ORIG_Cbuf_InsertText(ss.str().c_str());
+		HLTAS::Frame f;
+		if (GetNextMovementFrame(f)) {
+			std::ostringstream ss;
+			ss << "host_framerate " << input.GetFrame(0).Frametime.c_str() << "\n";
+			ORIG_Cbuf_InsertText(ss.str().c_str());
+		}
 	}
 }
 
@@ -375,60 +424,113 @@ bool HwDLL::CheckUnpause()
 
 void HwDLL::InsertCommands()
 {
-	if (currentFramebulk >= totalFramebulks)
-		runningFrames = false;
+	bool runningFramesBackup = runningFrames;
 
 	if (runningFrames) {
-		auto f = input.GetFrames()[currentFramebulk];
-		auto p = HLStrafe::MainFunc(player, GetMovementVars(), f);
+		do {
+			auto f = input.GetFrame(currentFramebulk);
+			// Movement frame.
+			if (currentRepeat || (f.SaveName.empty() && !f.SeedsPresent && f.Buttons == HLTAS::ButtonState::NOTHING)) {
+				auto c = f.Commands;
+				if (!c.empty())
+					ORIG_Cbuf_InsertText(c.c_str());
 
-		// TODO viewangles.
+				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f);
 
-		#define INS(btn, cmd) \
-			if (p.btn && !previousButtons.btn) \
-				ORIG_Cbuf_InsertText("+" #cmd "\n"); \
-			else if (!p.btn && previousButtons.btn) \
-				ORIG_Cbuf_InsertText("-" #cmd "\n");
-		INS(Forward, forward)
-		INS(Left, moveleft)
-		INS(Right, moveright)
-		INS(Back, back)
-		INS(Up, moveup)
-		INS(Down, movedown)
-		INS(Jump, jump)
-		INS(Duck, duck)
-		INS(Use, use)
-		INS(Attack1, attack)
-		INS(Attack2, attack2)
-		INS(Reload, reload)
-		#undef INS
+				// TODO viewangles.
 
-		// TODO speeds.
+				#define INS(btn, cmd) \
+					if (p.btn && !previousButtons.btn) \
+						ORIG_Cbuf_InsertText("+" #cmd "\n"); \
+					else if (!p.btn && previousButtons.btn) \
+						ORIG_Cbuf_InsertText("-" #cmd "\n");
+				INS(Forward, forward)
+				INS(Left, moveleft)
+				INS(Right, moveright)
+				INS(Back, back)
+				INS(Up, moveup)
+				INS(Down, movedown)
+				INS(Jump, jump)
+				INS(Duck, duck)
+				INS(Use, use)
+				INS(Attack1, attack)
+				INS(Attack2, attack2)
+				INS(Reload, reload)
+				#undef INS
 
-		// We need this to be in the beginning of the buffer.
-		if (!wasRunningFrames)
-			ResetButtons();
+				// TODO speeds.
 
-		previousButtons = p;
+				// We need this to be in the before all our movement commands,
+				// so insert it last.
+				if (!wasRunningFrames)
+					ResetButtons();
 
-		if (++currentRepeat >= f.GetRepeats()) {
-			currentFramebulk++;
-			currentRepeat = 0;
-			if (currentFramebulk < totalFramebulks) {
-				auto next = input.GetFrame(currentFramebulk);
-				if (next.Frametime != f.Frametime) {
-					std::ostringstream ss;
-					ss << "host_framerate " << next.Frametime.c_str() << "\n";
-					ORIG_Cbuf_InsertText(ss.str().c_str());
+				previousButtons = p;
+
+				HLTAS::Frame next;
+				if (GetNextMovementFrame(next)) {
+					if (next.Frametime != f.Frametime) {
+						std::ostringstream ss;
+						ss << "host_framerate " << next.Frametime.c_str() << "\n";
+						ORIG_Cbuf_InsertText(ss.str().c_str());
+					}
 				}
+
+				if (++currentRepeat >= f.GetRepeats()) {
+					currentRepeat = 0;
+					currentFramebulk++;
+				}
+				break;
+			} else if (!f.SaveName.empty()) { // Saveload frame.
+				std::ostringstream ss;
+				ss << "save " << f.SaveName << ";load " << f.SaveName << "\n";
+				ORIG_Cbuf_InsertText(ss.str().c_str());
+				currentFramebulk++;
+				break;
+			} else if (f.SeedsPresent) { // Seeds frame.
+				SeedsPresent = true;
+				NonSharedRNGSeed = f.GetNonSharedRNGSeed();
+				SharedRNGSeed = f.GetSharedRNGSeed();
+			} else if (f.Buttons != HLTAS::ButtonState::NOTHING) { // Buttons frame.
+				if (f.Buttons == HLTAS::ButtonState::SET) {
+					ButtonsPresent = true;
+					AirLeftBtn = f.GetAirLeftBtn();
+					AirRightBtn = f.GetAirRightBtn();
+					GroundLeftBtn = f.GetGroundLeftBtn();
+					GroundRightBtn = f.GetGroundRightBtn();
+				} else
+					ButtonsPresent = false;
 			}
-		}
+
+			currentFramebulk++;
+		} while (currentFramebulk < totalFramebulks);
+
+		// Ran through all frames.
+		if (currentFramebulk >= totalFramebulks)
+			runningFrames = false;
 	} else {
-		if (wasRunningFrames)
+		if (wasRunningFrames) {
 			ResetButtons();
+			CountingSharedRNGSeed = false;
+		}
 	}
 
-	wasRunningFrames = runningFrames;
+	wasRunningFrames = runningFramesBackup;
+}
+
+bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
+{
+	auto curFramebulk = currentFramebulk;
+	do {
+		f = input.GetFrame(curFramebulk);
+		// Only movement frames can have repeats.
+		if (currentRepeat || (f.SaveName.empty() && !f.SeedsPresent && f.Buttons == HLTAS::ButtonState::NOTHING))
+			return true;
+
+		curFramebulk++;
+	} while (curFramebulk < totalFramebulks);
+
+	return false;
 }
 
 void HwDLL::ResetButtons()
@@ -487,18 +589,14 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	return vars;
 }
 
-void HwDLL::SetPlayerOrigin(float origin[3])
+void HwDLL::SetNonSharedRNG()
 {
-	player.Origin[0] = origin[0];
-	player.Origin[1] = origin[1];
-	player.Origin[2] = origin[2];
-}
-
-void HwDLL::SetPlayerVelocity(float velocity[3])
-{
-	player.Velocity[0] = velocity[0];
-	player.Velocity[1] = velocity[1];
-	player.Velocity[2] = velocity[2];
+	insideSeedRNG = true;
+	ORIG_SeedRandomNumberGenerator();
+	insideSeedRNG = false;
+	*rng_global_1 = 0;
+	for (size_t i = 0; i < 32; ++i)
+		rng_global_2[i] = 0;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
@@ -545,7 +643,28 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	// and call Cbuf_Execute again to execute them.
 	if (executing)
 	{
-		finishingLoad = false;
+		changelevel = false;
+		if (finishingLoad) { // First frame after load.
+			finishingLoad = false;
+			if (SeedsPresent) {
+				if (LoadingSeedCounter)
+					SharedRNGSeedCounter += SharedRNGSeed;
+				else
+					SharedRNGSeedCounter = SharedRNGSeed;
+				SetNonSharedRNG();
+				SeedsPresent = false; // This should come after the RNG setting as that checks SeedsPresent itself.
+				CountingSharedRNGSeed = true;
+			} else {
+				if (LoadingSeedCounter)
+					SharedRNGSeedCounter += LoadingSeedCounter;
+				else
+					CountingSharedRNGSeed = false;
+			}
+			LoadingSeedCounter = 0;
+		} else {
+			SharedRNGSeedCounter++;
+		}
+
 		// For stopping Cbuf_Execute. Goes first because InsertCommands() inserts into beginning.
 		if (cmd_text->cursize)
 			ORIG_Cbuf_InsertText("wait\n");
@@ -558,6 +677,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		// Setting to true once again because it might have been reset in Cbuf_Execute.
 		insideCbuf_Execute = true;
 		ORIG_Cbuf_Execute();
+	} else if (changelevel) {
+		LoadingSeedCounter++;
 	}
 	insideCbuf_Execute = false;
 
@@ -577,10 +698,23 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		dontPauseNextCycle = false;
 }
 
+void HwDLL::SetPlayerOrigin(float origin[3])
+{
+	player.Origin[0] = origin[0];
+	player.Origin[1] = origin[1];
+	player.Origin[2] = origin[2];
+}
+
+void HwDLL::SetPlayerVelocity(float velocity[3])
+{
+	player.Velocity[0] = velocity[0];
+	player.Velocity[1] = velocity[1];
+	player.Velocity[2] = velocity[2];
+}
+
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)
 {
 	insideSeedRNG = true;
-	EngineMsg("Calling SeedRandomNumberGenerator!\n");
 	ORIG_SeedRandomNumberGenerator();
 	insideSeedRNG = false;
 }
@@ -589,21 +723,35 @@ HOOK_DEF_1(HwDLL, time_t, __cdecl, time, time_t*, Time)
 {
 	if (insideSeedRNG)
 	{
-		EngineMsg("Called time from SeedRandomNumberGenerator!\n");
-		return 0;
+		time_t ret = (SeedsPresent) ? NonSharedRNGSeed : ORIG_time(Time);
+		std::ostringstream ss;
+		ss << "Called time from SeedRandomNumberGenerator -> " << ret << ".\n";
+		ORIG_Con_Printf(ss.str().c_str());
+		return ret;
 	}
-
-	return ORIG_time(Time);
+	else
+		return ORIG_time(Time);
 }
 
 HOOK_DEF_2(HwDLL, long double, __cdecl, RandomFloat, float, a1, float, a2)
 {
-	//ORIG_Con_Printf("Calling RandomFloat.\n");
-	return ORIG_RandomFloat(a1, a2);
+	auto ret = ORIG_RandomFloat(a1, a2);
+	ORIG_Con_Printf("RandomFloat(%f, %f) => %Lf.\n", a1, a2, ret);
+	return ret;
 }
 
 HOOK_DEF_2(HwDLL, long, __cdecl, RandomLong, long, a1, long, a2)
 {
-	//ORIG_Con_Printf("Calling RandomLong.\n");
-	return ORIG_RandomLong(a1, a2);
+	auto ret = ORIG_RandomLong(a1, a2);
+	ORIG_Con_Printf("RandomLong(%ld, %ld) => %ld.\n", a1, a2, ret);
+	return ret;
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel_f)
+{
+	changelevel = true;
+	if (!CountingSharedRNGSeed && SeedsPresent)
+		SharedRNGSeedCounter = LastRandomSeed;
+
+	return ORIG_Host_Changelevel_f();
 }

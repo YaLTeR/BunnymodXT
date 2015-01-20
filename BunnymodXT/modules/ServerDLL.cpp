@@ -4,6 +4,7 @@
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
 #include "ServerDLL.hpp"
+#include "HwDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
@@ -27,7 +28,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
-			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll) }
+			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll) },
+			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 		});
 }
 
@@ -38,7 +40,8 @@ void ServerDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
-			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll) }
+			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll) },
+			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 		});
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_GiveFnptrsToDll));
@@ -53,6 +56,8 @@ void ServerDLL::Clear()
 	ORIG_PM_PreventMegaBunnyJumping = nullptr;
 	ORIG_PM_PlayerMove = nullptr;
 	ORIG_GiveFnptrsToDll = nullptr;
+	ORIG_CmdStart = nullptr;
+	ORIG_GetEntityAPI = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -182,6 +187,13 @@ void ServerDLL::FindStuff()
 		EngineWarning("Autojump is not available.\n");
 		if (!noBhopcap)
 			EngineWarning("Bhopcap disabling is not available.\n");
+	}
+
+	ORIG_GetEntityAPI = reinterpret_cast<_GetEntityAPI>(MemUtils::GetSymbolAddress(m_Handle, "GetEntityAPI"));
+	if (ORIG_GetEntityAPI) {
+		DLL_FUNCTIONS funcs;
+		if (ORIG_GetEntityAPI(&funcs, 140))
+			ORIG_CmdStart = funcs.pfnCmdStart;
 	}
 	
 	// This has to be the last thing to check and hook.
@@ -322,7 +334,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	usercmd_t *cmd = reinterpret_cast<usercmd_t*>(pmove + offCmd);
 
 	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
-
 	if (_bxt_taslog.GetBool())
 	{
 		ALERT(at_console, "-- BXT TAS Log Start --\n");
@@ -338,7 +349,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		ALERT(at_console, "New velocity: %.8f; %.8f; %.8f; new origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
 		ALERT(at_console, "-- BXT TAS Log End --\n");
 	}
-
 	#undef ALERT
 
 	CustomHud::UpdatePlayerInfo(velocity, origin);
@@ -349,4 +359,29 @@ HOOK_DEF_2(ServerDLL, void, __stdcall, GiveFnptrsToDll, enginefuncs_t*, pEngfunc
 	ORIG_GiveFnptrsToDll(pEngfuncsFromEngine, pGlobals);
 
 	RegisterCVarsAndCommands();
+}
+
+HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const usercmd_t*, cmd, unsigned int, random_seed)
+{
+	HwDLL::GetInstance().SetLastRandomSeed(random_seed);
+	auto seed = random_seed;
+	bool changedSeed = false;
+	if (HwDLL::GetInstance().IsCountingSharedRNGSeed()) {
+		seed = HwDLL::GetInstance().GetSharedRNGSeedCounter();
+		changedSeed = true;
+	}
+
+	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
+	if (_bxt_taslog.GetBool())
+	{
+		ALERT(at_console, "-- CmdStart Start --\n");
+		ALERT(at_console, "Random_seed: %u", random_seed);
+		if (changedSeed)
+			ALERT(at_console, " (overriding with %u)", seed);
+		ALERT(at_console, "\n");
+		ALERT(at_console, "-- CmdStart End --\n");
+	}
+	#undef ALERT
+
+	return ORIG_CmdStart(player, cmd, seed);
 }

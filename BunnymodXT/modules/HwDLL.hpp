@@ -10,6 +10,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(time_t, __cdecl, time, time_t *Time)
 	HOOK_DECL(long double, __cdecl, RandomFloat, float a1, float a2)
 	HOOK_DECL(long, __cdecl, RandomLong, long a1, long a2)
+	HOOK_DECL(void, __cdecl, Host_Changelevel_f)
 
 	struct cmdbuf_t
 	{
@@ -34,6 +35,10 @@ public:
 	void SetPlayerOrigin(float origin[3]);
 	void SetPlayerVelocity(float velocity[3]);
 
+	inline void SetLastRandomSeed(unsigned seed) { LastRandomSeed = seed; }
+	inline bool IsCountingSharedRNGSeed() { return CountingSharedRNGSeed; }
+	inline unsigned GetSharedRNGSeedCounter() { return SharedRNGSeedCounter; }
+
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
 	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};
@@ -43,7 +48,7 @@ private:
 protected:
 	typedef void(__cdecl *_Cbuf_InsertText) (const char* text);
 	_Cbuf_InsertText ORIG_Cbuf_InsertText;
-	typedef void(__cdecl *_Con_Printf) (char* fmt, ...);
+	typedef void(__cdecl *_Con_Printf) (const char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
 	typedef void(__cdecl *_Cvar_RegisterVariable) (cvar_t* cvar);
 	_Cvar_RegisterVariable ORIG_Cvar_RegisterVariable;
@@ -68,6 +73,8 @@ protected:
 	void RegisterCVarsAndCommandsIfNeeded();
 	bool CheckUnpause();
 	void InsertCommands();
+	void SetNonSharedRNG();
+	bool GetNextMovementFrame(HLTAS::Frame& f);
 	void ResetButtons();
 	void FindCVarsIfNeeded();
 	HLStrafe::MovementVars GetMovementVars();
@@ -78,21 +85,38 @@ protected:
 	void *sv;
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
+	int *rng_global_1;
+	int *rng_global_2; // Array of 32 ints.
 
 	bool executing;
 	bool loading;
 	bool insideCbuf_Execute;
 	bool finishingLoad;
 	bool dontPauseNextCycle;
+	bool changelevel;
 
 	bool insideSeedRNG;
+	unsigned LastRandomSeed;
 
 	HLStrafe::PlayerData player;
 	HLTAS::Input input;
+	std::string demoName;
+	std::string saveName;
 	bool runningFrames;
 	bool wasRunningFrames;
 	size_t currentFramebulk;
 	size_t totalFramebulks;
 	size_t currentRepeat;
 	HLStrafe::ProcessedFrame previousButtons;
+	bool SeedsPresent;
+	unsigned SharedRNGSeed;
+	std::time_t NonSharedRNGSeed;
+	bool CountingSharedRNGSeed;
+	unsigned SharedRNGSeedCounter;
+	unsigned LoadingSeedCounter;
+	bool ButtonsPresent;
+	HLTAS::Button AirLeftBtn,
+		AirRightBtn,
+		GroundLeftBtn,
+		GroundRightBtn;
 };

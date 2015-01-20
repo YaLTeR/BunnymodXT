@@ -366,7 +366,7 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 			saveName = prop.second;
 		else if (prop.first == "seed") {
 			std::istringstream ss(prop.second);
-			ss >> NonSharedRNGSeed >> SharedRNGSeed;
+			ss >> SharedRNGSeed >> NonSharedRNGSeed;
 			SeedsPresent = true;
 		}
 	}

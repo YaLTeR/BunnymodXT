@@ -2,13 +2,7 @@
 
 #include "cvars.hpp"
 
-CVarWrapper::CVarWrapper()
-{
-	m_CVar = nullptr;
-	m_Serverside = false;
-}
-
-CVarWrapper::CVarWrapper(const char* name, const char* string)
+CVarWrapper::CVarWrapper(const char* name, const char* string, bool freeOnDestruct)
 {
 	m_CVar = new cvar_t;
 
@@ -18,19 +12,18 @@ CVarWrapper::CVarWrapper(const char* name, const char* string)
 	m_CVar->string = const_cast<char*>(string);
 
 	m_Serverside = true;
+	m_FreeOnDestruct = freeOnDestruct;
 }
 
 CVarWrapper::~CVarWrapper()
 {
-	if (m_Serverside)
+	if (m_FreeOnDestruct)
 		delete m_CVar;
 }
 
 void CVarWrapper::Assign(cvar_t* cvar)
 {
-	assert(!m_CVar);
 	assert(!m_Serverside);
-
 	m_CVar = cvar;
 }
 
@@ -38,7 +31,6 @@ std::string CVarWrapper::GetString() const
 {
 	if (!m_CVar)
 		return std::string();
-
 	return std::string(m_CVar->string);
 }
 

@@ -34,7 +34,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			{ reinterpret_cast<void**>(&ORIG_time), reinterpret_cast<void*>(HOOKED_time) },
 			{ reinterpret_cast<void**>(&ORIG_RandomFloat), reinterpret_cast<void*>(HOOKED_RandomFloat) },
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
-			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel_f) }
+			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) }
 		});
 }
 
@@ -48,7 +48,7 @@ void HwDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_RandomFloat), reinterpret_cast<void*>(HOOKED_RandomFloat) },
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
-			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel_f) }
+			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) }
 	});
 
 	Clear();
@@ -61,7 +61,7 @@ void HwDLL::Clear()
 	ORIG_time = nullptr;
 	ORIG_RandomFloat = nullptr;
 	ORIG_RandomLong = nullptr;
-	ORIG_Host_Changelevel_f = nullptr;
+	ORIG_Host_Changelevel2_f = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
@@ -76,19 +76,33 @@ void HwDLL::Clear()
 	sv = nullptr;
 	cmd_text = nullptr;
 	host_frametime = nullptr;
+	rng_global_1 = nullptr;
+	rng_global_2 = nullptr;
 	executing = false;
 	loading = false;
 	insideCbuf_Execute = false;
 	finishingLoad = false;
 	dontPauseNextCycle = false;
+	changelevel = false;
 	insideSeedRNG = false;
+	LastRandomSeed = 0;
 	player = {};
 	input.Clear();
+	demoName.clear();
+	saveName.clear();
 	runningFrames = false;
 	wasRunningFrames = false;
 	currentFramebulk = 0;
 	totalFramebulks = 0;
 	currentRepeat = 0;
+	previousButtons = {};
+	SeedsPresent = false;
+	SharedRNGSeed = 0;
+	NonSharedRNGSeed = 0;
+	CountingSharedRNGSeed = false;
+	SharedRNGSeedCounter = 0;
+	LoadingSeedCounter = 0;
+	ButtonsPresent = false;
 }
 
 void HwDLL::FindStuff()
@@ -152,7 +166,7 @@ void HwDLL::FindStuff()
 		FIND(SeedRandomNumberGenerator)
 		//FIND(RandomFloat)
 		//FIND(RandomLong)
-		FIND(Host_Changelevel_f)
+		FIND(Host_Changelevel2_f)
 		#undef FIND
 	}
 	else
@@ -165,7 +179,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cmd_AddMallocCommand)
 		//DEF_FUTURE(RandomFloat)
 		//DEF_FUTURE(RandomLong)
-		DEF_FUTURE(Host_Changelevel_f)
+		DEF_FUTURE(Host_Changelevel2_f)
 		#undef DEF_FUTURE
 
 		auto fCbuf_Execute = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_Cbuf_Execute), m_Base, m_Length, Patterns::ptnsCbuf_Execute,
@@ -305,7 +319,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Cmd_AddMallocCommand)
 		//GET_FUTURE(RandomFloat)
 		//GET_FUTURE(RandomLong)
-		GET_FUTURE(Host_Changelevel_f)
+		GET_FUTURE(Host_Changelevel2_f)
 		#undef GET_FUTURE
 
 		n = fHost_Tell_f.get();
@@ -746,11 +760,11 @@ HOOK_DEF_2(HwDLL, long, __cdecl, RandomLong, long, a1, long, a2)
 	return ret;
 }
 
-HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel_f)
+HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 {
 	changelevel = true;
 	if (!CountingSharedRNGSeed && SeedsPresent)
 		SharedRNGSeedCounter = LastRandomSeed;
 
-	return ORIG_Host_Changelevel_f();
+	return ORIG_Host_Changelevel2_f();
 }

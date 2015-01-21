@@ -3,8 +3,8 @@
 class CVarWrapper
 {
 public:
-	CVarWrapper();
-	CVarWrapper(const char* name, const char* string);
+	CVarWrapper(bool freeOnDestruct = false) : m_CVar(nullptr), m_Serverside(false), m_FreeOnDestruct(freeOnDestruct) {}
+	CVarWrapper(const char* name, const char* string, bool freeOnDestruct = false);
 	~CVarWrapper();
 	void Assign(cvar_t* cvar);
 	cvar_t* GetPointer() const;
@@ -18,6 +18,7 @@ public:
 protected:
 	cvar_t *m_CVar;
 	bool m_Serverside;
+	bool m_FreeOnDestruct;
 };
 
 inline cvar_t* CVarWrapper::GetPointer() const

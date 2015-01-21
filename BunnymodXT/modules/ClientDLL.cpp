@@ -317,32 +317,32 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (!pEngfuncs || !*reinterpret_cast<uintptr_t*>(pEngfuncs))
 		return;
 
-	#define REG(name, str) pEngfuncs->pfnRegisterVariable(const_cast<char*>(name), const_cast<char*>(str), 0)
+#define REG(cvar, str) cvar.Assign(pEngfuncs->pfnRegisterVariable(const_cast<char*>(#cvar), const_cast<char*>(str), 0))
 
 	if (ORIG_PM_Jump)
-		bxt_autojump_prediction.Assign(REG("bxt_autojump_prediction", "0"));
+		REG(bxt_autojump_prediction, "0");
 
 	if (ORIG_PM_PreventMegaBunnyJumping)
-		bxt_bhopcap_prediction.Assign(REG("bxt_bhopcap_prediction", "1"));
+		REG(bxt_bhopcap_prediction, "1");
 
 	if (ORIG_HUD_Init)
 	{
-		con_color_.Assign(pEngfuncs->pfnGetCvarPointer("con_color"));
-		bxt_hud.Assign(REG("bxt_hud", "1"));
-		bxt_hud_color.Assign(REG("bxt_hud_color", ""));
-		bxt_hud_precision.Assign(REG("bxt_hud_precision", "6"));
-		bxt_hud_velocity.Assign(REG("bxt_hud_velocity", "0"));
-		bxt_hud_velocity_offset.Assign(REG("bxt_hud_velocity_offset", ""));
-		bxt_hud_velocity_anchor.Assign(REG("bxt_hud_velocity_anchor", "1 0"));
-		bxt_hud_origin.Assign(REG("bxt_hud_origin", "0"));
-		bxt_hud_origin_offset.Assign(REG("bxt_hud_origin_offset", ""));
-		bxt_hud_origin_anchor.Assign(REG("bxt_hud_origin_anchor", "1 0"));
-		bxt_hud_speedometer.Assign(REG("bxt_hud_speedometer", "1"));
-		bxt_hud_speedometer_offset.Assign(REG("bxt_hud_speedometer_offset", ""));
-		bxt_hud_speedometer_anchor.Assign(REG("bxt_hud_speedometer_anchor", "0.5 1"));
-		bxt_hud_jumpspeed.Assign(REG("bxt_hud_jumpspeed", "0"));
-		bxt_hud_jumpspeed_offset.Assign(REG("bxt_hud_jumpspeed_offset", ""));
-		bxt_hud_jumpspeed_anchor.Assign(REG("bxt_hud_jumpspeed_anchor", "0.5 1"));
+		if (!con_color_.GetPointer()) con_color_.Assign(pEngfuncs->pfnGetCvarPointer("con_color"));
+		REG(bxt_hud, "1");
+		REG(bxt_hud_color, "");
+		REG(bxt_hud_precision, "6");
+		REG(bxt_hud_velocity, "0");
+		REG(bxt_hud_velocity_offset, "");
+		REG(bxt_hud_velocity_anchor, "1 0");
+		REG(bxt_hud_origin, "0");
+		REG(bxt_hud_origin_offset, "");
+		REG(bxt_hud_origin_anchor, "1 0");
+		REG(bxt_hud_speedometer, "1");
+		REG(bxt_hud_speedometer_offset, "");
+		REG(bxt_hud_speedometer_anchor, "0.5 1");
+		REG(bxt_hud_jumpspeed, "0");
+		REG(bxt_hud_jumpspeed_offset, "");
+		REG(bxt_hud_jumpspeed_anchor, "0.5 1");
 	}
 
 	#undef REG

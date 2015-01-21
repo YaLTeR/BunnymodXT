@@ -377,7 +377,7 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 		HLTAS::Frame f;
 		if (GetNextMovementFrame(f)) {
 			std::ostringstream ss;
-			ss << "host_framerate " << input.GetFrame(0).Frametime.c_str() << "\n";
+			ss << "host_framerate " << f.Frametime.c_str() << "\n";
 			ORIG_Cbuf_InsertText(ss.str().c_str());
 		}
 	}
@@ -427,7 +427,7 @@ void HwDLL::InsertCommands()
 	bool runningFramesBackup = runningFrames;
 
 	if (runningFrames) {
-		do {
+		while (currentFramebulk < totalFramebulks) {
 			auto f = input.GetFrame(currentFramebulk);
 			// Movement frame.
 			if (currentRepeat || (f.SaveName.empty() && !f.SeedsPresent && f.Buttons == HLTAS::ButtonState::NOTHING)) {
@@ -467,18 +467,17 @@ void HwDLL::InsertCommands()
 
 				previousButtons = p;
 
-				HLTAS::Frame next;
-				if (GetNextMovementFrame(next)) {
-					if (next.Frametime != f.Frametime) {
-						std::ostringstream ss;
-						ss << "host_framerate " << next.Frametime.c_str() << "\n";
-						ORIG_Cbuf_InsertText(ss.str().c_str());
-					}
-				}
-
 				if (++currentRepeat >= f.GetRepeats()) {
 					currentRepeat = 0;
 					currentFramebulk++;
+					HLTAS::Frame next;
+					if (GetNextMovementFrame(next)) {
+						if (next.Frametime != f.Frametime) {
+							std::ostringstream ss;
+							ss << "host_framerate " << next.Frametime.c_str() << "\n";
+							ORIG_Cbuf_InsertText(ss.str().c_str());
+						}
+					}
 				}
 				break;
 			} else if (!f.SaveName.empty()) { // Saveload frame.
@@ -503,7 +502,7 @@ void HwDLL::InsertCommands()
 			}
 
 			currentFramebulk++;
-		} while (currentFramebulk < totalFramebulks);
+		};
 
 		// Ran through all frames.
 		if (currentFramebulk >= totalFramebulks)
@@ -521,14 +520,14 @@ void HwDLL::InsertCommands()
 bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
 {
 	auto curFramebulk = currentFramebulk;
-	do {
+	while (curFramebulk < totalFramebulks) {
 		f = input.GetFrame(curFramebulk);
 		// Only movement frames can have repeats.
 		if (currentRepeat || (f.SaveName.empty() && !f.SeedsPresent && f.Buttons == HLTAS::ButtonState::NOTHING))
 			return true;
 
 		curFramebulk++;
-	} while (curFramebulk < totalFramebulks);
+	};
 
 	return false;
 }

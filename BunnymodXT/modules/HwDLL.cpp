@@ -443,7 +443,7 @@ void HwDLL::InsertCommands()
 		while (currentFramebulk < totalFramebulks) {
 			auto f = input.GetFrame(currentFramebulk);
 			// Movement frame.
-			if (currentRepeat || (f.SaveName.empty() && !f.SeedsPresent && f.Buttons == HLTAS::ButtonState::NOTHING)) {
+			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.Buttons == HLTAS::ButtonState::NOTHING)) {
 				auto c = f.Commands;
 				if (!c.empty())
 					ORIG_Cbuf_InsertText(c.c_str());
@@ -499,10 +499,9 @@ void HwDLL::InsertCommands()
 				ORIG_Cbuf_InsertText(ss.str().c_str());
 				currentFramebulk++;
 				break;
-			} else if (f.SeedsPresent) { // Seeds frame.
+			} else if (f.SeedPresent) { // Seeds frame.
 				SharedRNGSeedPresent = true;
-				NonSharedRNGSeed = f.GetNonSharedRNGSeed();
-				SharedRNGSeed = f.GetSharedRNGSeed();
+				SharedRNGSeed = f.GetSeed();
 			} else if (f.Buttons != HLTAS::ButtonState::NOTHING) { // Buttons frame.
 				if (f.Buttons == HLTAS::ButtonState::SET) {
 					ButtonsPresent = true;
@@ -536,7 +535,7 @@ bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
 	while (curFramebulk < totalFramebulks) {
 		f = input.GetFrame(curFramebulk);
 		// Only movement frames can have repeats.
-		if (currentRepeat || (f.SaveName.empty() && !f.SeedsPresent && f.Buttons == HLTAS::ButtonState::NOTHING))
+		if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.Buttons == HLTAS::ButtonState::NOTHING))
 			return true;
 
 		curFramebulk++;

@@ -20,15 +20,13 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	m_Intercepted = needToIntercept;
 
 	FindStuff();
-
-	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll));
+	RegisterCVarsAndCommands();
 
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
-			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 		});
 }
@@ -40,11 +38,8 @@ void ServerDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
-			{ reinterpret_cast<void**>(&ORIG_GiveFnptrsToDll), reinterpret_cast<void*>(HOOKED_GiveFnptrsToDll) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 		});
-
-	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_GiveFnptrsToDll));
 
 	Clear();
 }
@@ -55,7 +50,6 @@ void ServerDLL::Clear()
 	ORIG_PM_Jump = nullptr;
 	ORIG_PM_PreventMegaBunnyJumping = nullptr;
 	ORIG_PM_PlayerMove = nullptr;
-	ORIG_GiveFnptrsToDll = nullptr;
 	ORIG_CmdStart = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ppmove = nullptr;
@@ -199,34 +193,21 @@ void ServerDLL::FindStuff()
 	// This has to be the last thing to check and hook.
 	pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
 	if (pEngfuncs)
-	{
 		EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
-		if (*reinterpret_cast<uintptr_t*>(pEngfuncs))
-			RegisterCVarsAndCommands();
-		else
-		{
-			ORIG_GiveFnptrsToDll = reinterpret_cast<_GiveFnptrsToDll>(MemUtils::GetSymbolAddress(m_Handle, "GiveFnptrsToDll"));
-			if (!ORIG_GiveFnptrsToDll)
-			{
-				EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll.\n");
-				EngineWarning("Serverside CVars and commands are not available.\n");
-			}
-		}
-	}
 	else
 	{
-		_GiveFnptrsToDll pGiveFnptrsToDll = reinterpret_cast<_GiveFnptrsToDll>(MemUtils::GetSymbolAddress(m_Handle, "GiveFnptrsToDll"));
+		auto pGiveFnptrsToDll = MemUtils::GetSymbolAddress(m_Handle, "GiveFnptrsToDll");
 		if (pGiveFnptrsToDll)
 		{
 			// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
 			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
-			auto addr = MemUtils::FindPattern(reinterpret_cast<void*>(pGiveFnptrsToDll), 40, pattern, "x????xx");
+			auto addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern, "x????xx");
 
 			// Linux version: mov offset dword[eax], esi; mov [ecx+eax+4], ebx
 			if (!addr)
 			{
 				const byte pattern_[] = { 0x89, 0xB0, '?', '?', '?', '?', 0x89, 0x5C, 0x01, 0x04 };
-				addr = MemUtils::FindPattern(reinterpret_cast<void*>(pGiveFnptrsToDll), 40, pattern_, "xx????xxxx");
+				addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern_, "xx????xxxx");
 				if (addr)
 					addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(addr)+1); // So we're compatible with the previous pattern.
 			}
@@ -235,39 +216,31 @@ void ServerDLL::FindStuff()
 			{
 				pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr)+1);
 				EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
-
-				// If we have engfuncs, do stuff right away. Otherwise wait till the engine gives us engfuncs.
-				if (*reinterpret_cast<uintptr_t*>(pEngfuncs))
-					RegisterCVarsAndCommands();
-				else
-					ORIG_GiveFnptrsToDll = pGiveFnptrsToDll;
 			}
 			else
 			{
 				EngineDevWarning("[server dll] Couldn't find the pattern in GiveFnptrsToDll.\n");
-				EngineWarning("Serverside CVars and commands are not available.\n");
+				EngineWarning("Serverside logging is not available.\n");
 			}
 		}
 		else
 		{
 			EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll.\n");
-			EngineWarning("Serverside CVars and commands are not available.\n");
+			EngineWarning("Serverside logging is not avaliable.\n");
 		}
 	}
 }
 
 void ServerDLL::RegisterCVarsAndCommands()
 {
-	if (!pEngfuncs || !*reinterpret_cast<uintptr_t*>(pEngfuncs))
-		return;
+	EngineDevMsg("[server dll] Registering CVars.\n");
 
+	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 	if (ORIG_PM_Jump)
-		pEngfuncs->pfnCVarRegister(bxt_autojump.GetPointer());
-
+		REG(bxt_autojump);
 	if (ORIG_PM_PreventMegaBunnyJumping)
-		pEngfuncs->pfnCVarRegister(bxt_bhopcap.GetPointer());
-
-	EngineDevMsg("[server dll] Registered CVars.\n");
+		REG(bxt_bhopcap);
+	#undef REG
 }
 
 HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
@@ -281,7 +254,7 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
 	int *oldbuttons = reinterpret_cast<int*>(pmove + offOldbuttons);
 	int orig_oldbuttons = *oldbuttons;
 
-	if (bxt_autojump.GetBool())
+	if (CVars::bxt_autojump.GetBool())
 	{
 		if ((orig_onground != -1) && !cantJumpNextTime[playerIndex])
 			*oldbuttons &= ~IN_JUMP;
@@ -292,7 +265,7 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
 	if (offBhopcap)
 	{
 		auto pPMJump = reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump);
-		if (bxt_bhopcap.GetBool())
+		if (CVars::bxt_bhopcap.GetBool())
 		{
 			if (*reinterpret_cast<byte*>(pPMJump + offBhopcap) == 0x90
 				&& *reinterpret_cast<byte*>(pPMJump + offBhopcap + 1) == 0x90)
@@ -308,13 +281,13 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
 	if ((orig_onground != -1) && (*onground == -1))
 		cantJumpNextTime[playerIndex] = true;
 
-	if (bxt_autojump.GetBool())
+	if (CVars::bxt_autojump.GetBool())
 		*oldbuttons = orig_oldbuttons;
 }
 
 HOOK_DEF_0(ServerDLL, void, __cdecl, PM_PreventMegaBunnyJumping)
 {
-	if (bxt_bhopcap.GetBool())
+	if (CVars::bxt_bhopcap.GetBool())
 		return ORIG_PM_PreventMegaBunnyJumping();
 }
 
@@ -334,7 +307,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	usercmd_t *cmd = reinterpret_cast<usercmd_t*>(pmove + offCmd);
 
 	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
-	if (_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool())
 	{
 		ALERT(at_console, "-- BXT TAS Log Start --\n");
 		ALERT(at_console, "Player index: %d; msec: %hhu (%Lf)\n", playerIndex, cmd->msec, static_cast<long double>(cmd->msec) * 0.001);
@@ -343,7 +316,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 
 	ORIG_PM_PlayerMove(server);
 
-	if (_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool())
 	{
 		ALERT(at_console, "Angles: %.8f; %.8f; %.8f\n", angles[0], angles[1], angles[2]);
 		ALERT(at_console, "New velocity: %.8f; %.8f; %.8f; new origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
@@ -352,13 +325,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	#undef ALERT
 
 	CustomHud::UpdatePlayerInfo(velocity, origin);
-}
-
-HOOK_DEF_2(ServerDLL, void, __stdcall, GiveFnptrsToDll, enginefuncs_t*, pEngfuncsFromEngine, const void*, pGlobals)
-{
-	ORIG_GiveFnptrsToDll(pEngfuncsFromEngine, pGlobals);
-
-	RegisterCVarsAndCommands();
 }
 
 HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const usercmd_t*, cmd, unsigned int, random_seed)
@@ -372,7 +338,7 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 	}
 
 	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
-	if (_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool())
 	{
 		ALERT(at_console, "-- CmdStart Start --\n");
 		ALERT(at_console, "Random_seed: %u", random_seed);

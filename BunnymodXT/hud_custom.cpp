@@ -157,9 +157,9 @@ namespace CustomHud
 
 	static void UpdatePrecision()
 	{
-		if (!bxt_hud_precision.IsEmpty())
+		if (!CVars::bxt_hud_precision.IsEmpty())
 		{
-			precision = bxt_hud_precision.GetInt();
+			precision = CVars::bxt_hud_precision.GetInt();
 			if (precision > 16)
 				precision = 16;
 		}
@@ -174,10 +174,10 @@ namespace CustomHud
 		consoleColor[1] = 180 / 255.0f;
 		consoleColor[2] = 30 / 255.0f;
 
-		if (!con_color_.IsEmpty())
+		if (!CVars::con_color.IsEmpty())
 		{
 			unsigned r = 0, g = 0, b = 0;
-			std::istringstream ss(con_color_.GetString());
+			std::istringstream ss(CVars::con_color.GetString());
 			ss >> r >> g >> b;
 
 			consoleColor[0] = r / 255.0f;
@@ -190,9 +190,9 @@ namespace CustomHud
 		hudColor[1] = 160;
 		hudColor[2] = 0;
 
-		if (!bxt_hud_color.IsEmpty())
+		if (!CVars::bxt_hud_color.IsEmpty())
 		{
-			auto colorStr = bxt_hud_color.GetString();
+			auto colorStr = CVars::bxt_hud_color.GetString();
 			if (colorStr != "auto")
 			{
 				std::istringstream color_ss(colorStr);
@@ -203,10 +203,10 @@ namespace CustomHud
 
 	static void DrawVelocity(float flTime)
 	{
-		if (bxt_hud_velocity.GetBool())
+		if (CVars::bxt_hud_velocity.GetBool())
 		{
 			int x, y;
-			GetPosition(bxt_hud_velocity_offset, bxt_hud_velocity_anchor, &x, &y, -200, 0);
+			GetPosition(CVars::bxt_hud_velocity_offset, CVars::bxt_hud_velocity_anchor, &x, &y, -200, 0);
 			
 			if (receivedAccurateInfo)
 				DrawString(x, y, "Velocity:");
@@ -230,10 +230,10 @@ namespace CustomHud
 
 	static void DrawOrigin(float flTime)
 	{
-		if (bxt_hud_origin.GetBool())
+		if (CVars::bxt_hud_origin.GetBool())
 		{
 			int x, y;
-			GetPosition(bxt_hud_origin_offset, bxt_hud_origin_anchor, &x, &y, -200, (si.iCharHeight * 6) + 1);
+			GetPosition(CVars::bxt_hud_origin_offset, CVars::bxt_hud_origin_anchor, &x, &y, -200, (si.iCharHeight * 6) + 1);
 
 			if (receivedAccurateInfo)
 				DrawString(x, y, "Origin:");
@@ -255,10 +255,10 @@ namespace CustomHud
 
 	static void DrawSpeedometer(float flTime)
 	{
-		if (bxt_hud_speedometer.GetBool())
+		if (CVars::bxt_hud_speedometer.GetBool())
 		{
 			int x, y;
-			GetPosition(bxt_hud_speedometer_offset, bxt_hud_speedometer_anchor, &x, &y, 0, -2 * NumberHeight);
+			GetPosition(CVars::bxt_hud_speedometer_offset, CVars::bxt_hud_speedometer_anchor, &x, &y, 0, -2 * NumberHeight);
 			DrawNumber(static_cast<int>(trunc(length(player.velocity[0], player.velocity[1]))), x, y);
 		}
 	}
@@ -267,7 +267,7 @@ namespace CustomHud
 	{
 		static float prevVel[3] = { 0.0f, 0.0f, 0.0f };
 
-		if (bxt_hud_jumpspeed.GetBool())
+		if (CVars::bxt_hud_jumpspeed.GetBool())
 		{
 			static float fadeEndTime = 0.0f;
 			static int fadingFrom[3] = { hudColor[0], hudColor[1], hudColor[2] };
@@ -318,7 +318,7 @@ namespace CustomHud
 			}
 
 			int x, y;
-			GetPosition(bxt_hud_jumpspeed_offset, bxt_hud_jumpspeed_anchor, &x, &y, 0, -3 * NumberHeight);
+			GetPosition(CVars::bxt_hud_jumpspeed_offset, CVars::bxt_hud_jumpspeed_anchor, &x, &y, 0, -3 * NumberHeight);
 			DrawNumber(static_cast<int>(trunc(jumpSpeed)), x, y, r, g, b);
 		}
 
@@ -393,7 +393,7 @@ namespace CustomHud
 
 	void Draw(float flTime)
 	{
-		if (!bxt_hud.GetBool())
+		if (!CVars::bxt_hud.GetBool())
 			return;
 
 		UpdatePrecision();

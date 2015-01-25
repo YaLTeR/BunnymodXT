@@ -51,6 +51,9 @@ void HwDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) }
 	});
 
+	for (auto cvar : CVars::allCVars)
+		cvar->Refresh();
+
 	Clear();
 }
 
@@ -98,7 +101,6 @@ void HwDLL::Clear()
 	previousButtons = {};
 	SeedsPresent = false;
 	SharedRNGSeed = 0;
-	NonSharedRNGSeed = 0;
 	CountingSharedRNGSeed = false;
 	SharedRNGSeedCounter = 0;
 	LoadingSeedCounter = 0;
@@ -349,6 +351,26 @@ void HwDLL::FindStuff()
 		ORIG_time = time;
 }
 
+void HwDLL::RegisterCVar(CVarWrapper& cvar)
+{
+	if (!ORIG_Cvar_FindVar || !ORIG_Cvar_RegisterVariable)
+		return;
+
+	if (ORIG_Cvar_FindVar(cvar.GetPointer()->name))
+		return;
+
+	ORIG_Cvar_RegisterVariable(cvar.GetPointer());
+	cvar.MarkAsStale();
+}
+
+cvar_t* HwDLL::FindCVar(const char* name)
+{
+	if (!ORIG_Cvar_FindVar)
+		return nullptr;
+
+	return ORIG_Cvar_FindVar(name);
+}
+
 void HwDLL::Cmd_BXT_TAS_LoadScript()
 {
 	return HwDLL::GetInstance().Cmd_BXT_TAS_LoadScript_f();
@@ -364,7 +386,7 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 		return;
 	}
 
-	ORIG_Cvar_DirectSet(bxt_tas.GetPointer(), "1");
+	ORIG_Cvar_DirectSet(CVars::bxt_tas.GetPointer(), "1");
 
 	std::string filename(ORIG_Cmd_Argv(1));
 	auto err = input.Open(filename).get();
@@ -382,6 +404,7 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 			std::istringstream ss(prop.second);
 			ss >> SharedRNGSeed >> NonSharedRNGSeed;
 			SeedsPresent = true;
+			SetNonSharedRNGSeed = true;
 		}
 	}
 
@@ -402,11 +425,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	if (!registeredVarsAndCmds)
 	{
 		registeredVarsAndCmds = true;
-		if (ORIG_Cvar_RegisterVariable)
-		{
-			ORIG_Cvar_RegisterVariable(bxt_tas.GetPointer());
-			ORIG_Cvar_RegisterVariable(_bxt_taslog.GetPointer());
-		}
+		RegisterCVar(CVars::bxt_tas);
+		RegisterCVar(CVars::_bxt_taslog);
 		if (ORIG_Cmd_AddMallocCommand)
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
 	}
@@ -569,17 +589,16 @@ void HwDLL::ResetButtons()
 
 void HwDLL::FindCVarsIfNeeded()
 {
-	if (sv_maxvelocity_.GetPointer())
-		return;
-
-	sv_maxvelocity_.Assign(ORIG_Cvar_FindVar("sv_maxvelocity"));
-	sv_maxspeed_.Assign(ORIG_Cvar_FindVar("sv_maxspeed"));
-	sv_stopspeed_.Assign(ORIG_Cvar_FindVar("sv_stopspeed"));
-	sv_friction_.Assign(ORIG_Cvar_FindVar("sv_friction"));
-	sv_edgefriction_.Assign(ORIG_Cvar_FindVar("sv_edgefriction"));
-	sv_accelerate_.Assign(ORIG_Cvar_FindVar("sv_accelerate"));
-	sv_airaccelerate_.Assign(ORIG_Cvar_FindVar("sv_airaccelerate"));
-	sv_gravity_.Assign(ORIG_Cvar_FindVar("sv_gravity"));
+	#define FIND(cvar) if (!CVars::cvar.GetPointer()) CVars::cvar.Assign(FindCVar(#cvar))
+	FIND(sv_maxvelocity);
+	FIND(sv_maxspeed);
+	FIND(sv_stopspeed);
+	FIND(sv_friction);
+	FIND(sv_edgefriction);
+	FIND(sv_accelerate);
+	FIND(sv_airaccelerate);
+	FIND(sv_gravity);
+	#undef FIND
 }
 
 HLStrafe::MovementVars HwDLL::GetMovementVars()
@@ -588,15 +607,15 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	
 	FindCVarsIfNeeded();
 	vars.Frametime = static_cast<float>(*host_frametime);
-	vars.Maxvelocity = sv_maxvelocity_.GetFloat();
-	vars.Maxspeed = sv_maxspeed_.GetFloat();
-	vars.Stopspeed = sv_stopspeed_.GetFloat();
-	vars.Friction = sv_friction_.GetFloat();
-	vars.Edgefriction = sv_edgefriction_.GetFloat();
+	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
+	vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
+	vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
+	vars.Friction = CVars::sv_friction.GetFloat();
+	vars.Edgefriction = CVars::sv_edgefriction.GetFloat();
 	vars.EntFriction = 1.0f; // TBD
-	vars.Accelerate = sv_accelerate_.GetFloat();
-	vars.Airaccelerate = sv_airaccelerate_.GetFloat();
-	vars.Gravity = sv_gravity_.GetFloat();
+	vars.Accelerate = CVars::sv_accelerate.GetFloat();
+	vars.Airaccelerate = CVars::sv_airaccelerate.GetFloat();
+	vars.Gravity = CVars::sv_gravity.GetFloat();
 	vars.EntGravity = 1.0f; // TBD
 
 	return vars;
@@ -621,7 +640,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 	// If cls.state == 4 and the game isn't paused, execute "pause" right now.
 	// This case happens when loading a savegame.
-	if (state == 4 && !paused && bxt_tas.GetBool())
+	if (state == 4 && !paused && CVars::bxt_tas.GetBool())
 	{
 		ORIG_Cbuf_InsertText("pause\n");
 		finishingLoad = true;
@@ -646,7 +665,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	static unsigned counter = 1;
 	auto c = counter++;
 	std::string buf(cmd_text->data, cmd_text->cursize); // TODO: ifdef this so it doesn't waste performance.
-	if (_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool())
 		ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; loading: %s; executing: %s; host_frametime: %f; buffer: %s\n", c, state, paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (loading ? "true" : "false"), (executing ? "true" : "false"), *host_frametime, buf.c_str());
 
 	insideCbuf_Execute = true;
@@ -664,7 +683,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 					SharedRNGSeedCounter += SharedRNGSeed;
 				else
 					SharedRNGSeedCounter = SharedRNGSeed;
-				SetNonSharedRNG();
+				//SetNonSharedRNG();
 				SeedsPresent = false; // This should come after the RNG setting as that checks SeedsPresent itself.
 				CountingSharedRNGSeed = true;
 			} else {
@@ -684,7 +703,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		InsertCommands();
 
 		buf.assign(cmd_text->data, cmd_text->cursize);
-		if (_bxt_taslog.GetBool())
+		if (CVars::_bxt_taslog.GetBool())
 			ORIG_Con_Printf("Cbuf_Execute() #%u executing; buffer: %s\n", c, buf.c_str());
 
 		// Setting to true once again because it might have been reset in Cbuf_Execute.
@@ -696,12 +715,12 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	insideCbuf_Execute = false;
 
 	buf.assign(cmd_text->data, cmd_text->cursize);
-	if (_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool())
 		ORIG_Con_Printf("Cbuf_Execute() #%u end; host_frametime: %f; buffer: %s\n", c, *host_frametime, buf.c_str());
 
 	// If cls.state == 3 and the game isn't paused, execute "pause" on the next cycle.
 	// This case happens when starting a map.
-	if (!dontPauseNextCycle && state == 3 && !paused && bxt_tas.GetBool())
+	if (!dontPauseNextCycle && state == 3 && !paused && CVars::bxt_tas.GetBool())
 	{
 		ORIG_Cbuf_InsertText("pause\n");
 		finishingLoad = true;
@@ -736,10 +755,13 @@ HOOK_DEF_1(HwDLL, time_t, __cdecl, time, time_t*, Time)
 {
 	if (insideSeedRNG)
 	{
-		time_t ret = (SeedsPresent) ? NonSharedRNGSeed : ORIG_time(Time);
+		time_t ret = (SetNonSharedRNGSeed) ? NonSharedRNGSeed : ORIG_time(Time);
+		SetNonSharedRNGSeed = false;
+
 		std::ostringstream ss;
 		ss << "Called time from SeedRandomNumberGenerator -> " << ret << ".\n";
-		ORIG_Con_Printf(ss.str().c_str());
+		EngineMsg("%s", ss.str().c_str());
+
 		return ret;
 	}
 	else

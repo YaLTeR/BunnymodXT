@@ -53,10 +53,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	m_Intercepted = needToIntercept;
 
 	FindStuff();
-	
-	// Now we can register cvars and commands provided that we already have engfuncs.
-	if (pEngfuncs && *reinterpret_cast<uintptr_t*>(pEngfuncs))
-		RegisterCVarsAndCommands();
+	RegisterCVarsAndCommands();
 
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init));
@@ -314,40 +311,35 @@ bool ClientDLL::FindHUDFunctions()
 
 void ClientDLL::RegisterCVarsAndCommands()
 {
-	if (!pEngfuncs || !*reinterpret_cast<uintptr_t*>(pEngfuncs))
-		return;
+	EngineDevMsg("[client dll] Registering CVars.\n");
 
-#define REG(cvar, str) cvar.Assign(pEngfuncs->pfnRegisterVariable(const_cast<char*>(#cvar), const_cast<char*>(str), 0))
-
+	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 	if (ORIG_PM_Jump)
-		REG(bxt_autojump_prediction, "0");
+		REG(bxt_autojump_prediction);
 
 	if (ORIG_PM_PreventMegaBunnyJumping)
-		REG(bxt_bhopcap_prediction, "1");
+		REG(bxt_bhopcap_prediction);
 
 	if (ORIG_HUD_Init)
 	{
-		if (!con_color_.GetPointer()) con_color_.Assign(pEngfuncs->pfnGetCvarPointer("con_color"));
-		REG(bxt_hud, "1");
-		REG(bxt_hud_color, "");
-		REG(bxt_hud_precision, "6");
-		REG(bxt_hud_velocity, "0");
-		REG(bxt_hud_velocity_offset, "");
-		REG(bxt_hud_velocity_anchor, "1 0");
-		REG(bxt_hud_origin, "0");
-		REG(bxt_hud_origin_offset, "");
-		REG(bxt_hud_origin_anchor, "1 0");
-		REG(bxt_hud_speedometer, "1");
-		REG(bxt_hud_speedometer_offset, "");
-		REG(bxt_hud_speedometer_anchor, "0.5 1");
-		REG(bxt_hud_jumpspeed, "0");
-		REG(bxt_hud_jumpspeed_offset, "");
-		REG(bxt_hud_jumpspeed_anchor, "0.5 1");
+		CVars::con_color.Assign(HwDLL::GetInstance().FindCVar("con_color"));
+		REG(bxt_hud);
+		REG(bxt_hud_color);
+		REG(bxt_hud_precision);
+		REG(bxt_hud_velocity);
+		REG(bxt_hud_velocity_offset);
+		REG(bxt_hud_velocity_anchor);
+		REG(bxt_hud_origin);
+		REG(bxt_hud_origin_offset);
+		REG(bxt_hud_origin_anchor);
+		REG(bxt_hud_speedometer);
+		REG(bxt_hud_speedometer_offset);
+		REG(bxt_hud_speedometer_anchor);
+		REG(bxt_hud_jumpspeed);
+		REG(bxt_hud_jumpspeed_offset);
+		REG(bxt_hud_jumpspeed_anchor);
 	}
-
 	#undef REG
-
-	EngineDevMsg("[client dll] Registered CVars.\n");
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
@@ -359,7 +351,7 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
 	int *oldbuttons = reinterpret_cast<int*>(pmove + offOldbuttons);
 	int orig_oldbuttons = *oldbuttons;
 
-	if (bxt_autojump_prediction.GetBool())
+	if (CVars::bxt_autojump_prediction.GetBool())
 	{
 		if ((orig_onground != -1) && !cantJumpNextTime)
 			*oldbuttons &= ~IN_JUMP;
@@ -370,7 +362,7 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
 	if (offBhopcap)
 	{
 		auto pPMJump = reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump);
-		if (bxt_bhopcap_prediction.GetBool())
+		if (CVars::bxt_bhopcap_prediction.GetBool())
 		{
 			if (*reinterpret_cast<byte*>(pPMJump + offBhopcap) == 0x90
 				&& *reinterpret_cast<byte*>(pPMJump + offBhopcap + 1) == 0x90)
@@ -386,7 +378,7 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
 	if ((orig_onground != -1) && (*onground == -1))
 		cantJumpNextTime = true;
 
-	if (bxt_autojump_prediction.GetBool())
+	if (CVars::bxt_autojump_prediction.GetBool())
 		*oldbuttons = orig_oldbuttons;
 }
 
@@ -397,7 +389,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, PM_PreventMegaBunnyJumping)
 {
-	if (bxt_bhopcap_prediction.GetBool())
+	if (CVars::bxt_bhopcap_prediction.GetBool())
 		ORIG_PM_PreventMegaBunnyJumping();
 }
 
@@ -457,7 +449,7 @@ HOOK_DEF_6(ClientDLL, void, __cdecl, HUD_PostRunCmd, local_state_s*, from, local
 		changedSeed = true;
 	}
 
-	if (_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool())
 		if (pEngfuncs)
 		{
 			pEngfuncs->Con_Printf("-- HUD_PostRunCmd Start --\n");

@@ -2,6 +2,7 @@
 
 #include "./sptlib-wrapper.hpp"
 #include <SPTLib/IHookableNameFilterOrdered.hpp>
+#include "../cvars.hpp"
 
 class HwDLL : public IHookableNameFilterOrdered
 {
@@ -31,6 +32,9 @@ public:
 	virtual void Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept);
 	virtual void Unhook();
 	virtual void Clear();
+
+	void RegisterCVar(CVarWrapper& cvar);
+	cvar_t* FindCVar(const char* name);
 
 	void SetPlayerOrigin(float origin[3]);
 	void SetPlayerVelocity(float velocity[3]);
@@ -110,7 +114,6 @@ protected:
 	HLStrafe::ProcessedFrame previousButtons;
 	bool SeedsPresent;
 	unsigned SharedRNGSeed;
-	std::time_t NonSharedRNGSeed;
 	bool CountingSharedRNGSeed;
 	unsigned SharedRNGSeedCounter;
 	unsigned LoadingSeedCounter;
@@ -119,4 +122,8 @@ protected:
 		AirRightBtn,
 		GroundLeftBtn,
 		GroundRightBtn;
+
+	// Do not clear these inside Clear().
+	bool SetNonSharedRNGSeed = false;
+	std::time_t NonSharedRNGSeed;
 };

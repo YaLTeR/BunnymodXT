@@ -2,70 +2,76 @@
 
 #include "cvars.hpp"
 
-CVarWrapper::CVarWrapper(const char* name, const char* string, bool freeOnDestruct)
+namespace CVars
 {
-	m_CVar = new cvar_t;
+	// Engine CVars
+	CVarWrapper _bxt_taslog("_bxt_taslog", "0");
+	CVarWrapper bxt_tas("bxt_tas", "0");
 
-	// The engine should copy the strings as a part of the
-	// CVar registering procedure
-	m_CVar->name = const_cast<char*>(name);
-	m_CVar->string = const_cast<char*>(string);
+	CVarWrapper con_color;
+	CVarWrapper sv_maxvelocity;
+	CVarWrapper sv_maxspeed;
+	CVarWrapper sv_stopspeed;
+	CVarWrapper sv_friction;
+	CVarWrapper sv_edgefriction;
+	CVarWrapper sv_accelerate;
+	CVarWrapper sv_airaccelerate;
+	CVarWrapper sv_gravity;
 
-	m_Serverside = true;
-	m_FreeOnDestruct = freeOnDestruct;
+	// Serverside CVars
+	CVarWrapper bxt_autojump("bxt_autojump", "0");
+	CVarWrapper bxt_bhopcap("bxt_bhopcap", "1");
+
+	// Clientside CVars
+	CVarWrapper bxt_autojump_prediction("bxt_autojump_prediction", "0");
+	CVarWrapper bxt_bhopcap_prediction("bxt_bhopcap_prediction", "1");
+	CVarWrapper bxt_hud("bxt_hud", "1");
+	CVarWrapper bxt_hud_color("bxt_hud_color", "");
+	CVarWrapper bxt_hud_precision("bxt_hud_precision", "6");
+	CVarWrapper bxt_hud_velocity("bxt_hud_velocity", "0");
+	CVarWrapper bxt_hud_velocity_offset("bxt_hud_velocity_offset", "");
+	CVarWrapper bxt_hud_velocity_anchor("bxt_hud_velocity_anchor", "1 0");
+	CVarWrapper bxt_hud_origin("bxt_hud_origin", "0");
+	CVarWrapper bxt_hud_origin_offset("bxt_hud_origin_offset", "");
+	CVarWrapper bxt_hud_origin_anchor("bxt_hud_origin_anchor", "1 0");
+	CVarWrapper bxt_hud_speedometer("bxt_hud_speedometer", "1");
+	CVarWrapper bxt_hud_speedometer_offset("bxt_hud_speedometer_offset", "");
+	CVarWrapper bxt_hud_speedometer_anchor("bxt_hud_speedometer_anchor", "0.5 1");
+	CVarWrapper bxt_hud_jumpspeed("bxt_hud_jumpspeed", "0");
+	CVarWrapper bxt_hud_jumpspeed_offset("bxt_hud_jumpspeed_offset", "");
+	CVarWrapper bxt_hud_jumpspeed_anchor("bxt_hud_jumpspeed_anchor", "0.5 1");
+
+	const std::vector<CVarWrapper * const> allCVars =
+	{
+		&_bxt_taslog,
+		&bxt_tas,
+		&con_color,
+		&sv_maxvelocity,
+		&sv_maxspeed,
+		&sv_stopspeed,
+		&sv_friction,
+		&sv_edgefriction,
+		&sv_accelerate,
+		&sv_airaccelerate,
+		&sv_gravity,
+		&bxt_autojump,
+		&bxt_bhopcap,
+		&bxt_autojump_prediction,
+		&bxt_bhopcap_prediction,
+		&bxt_hud,
+		&bxt_hud_color,
+		&bxt_hud_precision,
+		&bxt_hud_velocity,
+		&bxt_hud_velocity_offset,
+		&bxt_hud_velocity_anchor,
+		&bxt_hud_origin,
+		&bxt_hud_origin_offset,
+		&bxt_hud_origin_anchor,
+		&bxt_hud_speedometer,
+		&bxt_hud_speedometer_offset,
+		&bxt_hud_speedometer_anchor,
+		&bxt_hud_jumpspeed,
+		&bxt_hud_jumpspeed_offset,
+		&bxt_hud_jumpspeed_anchor
+	};
 }
-
-CVarWrapper::~CVarWrapper()
-{
-	if (m_FreeOnDestruct)
-		delete m_CVar;
-}
-
-void CVarWrapper::Assign(cvar_t* cvar)
-{
-	assert(!m_Serverside);
-	m_CVar = cvar;
-}
-
-std::string CVarWrapper::GetString() const
-{
-	if (!m_CVar)
-		return std::string();
-	return std::string(m_CVar->string);
-}
-
-// Engine CVars
-const CVarWrapper _bxt_taslog("_bxt_taslog", "0");
-const CVarWrapper bxt_tas("bxt_tas", "0");
-CVarWrapper sv_maxvelocity_;
-CVarWrapper sv_maxspeed_;
-CVarWrapper sv_stopspeed_;
-CVarWrapper sv_friction_;
-CVarWrapper sv_edgefriction_;
-CVarWrapper sv_accelerate_;
-CVarWrapper sv_airaccelerate_;
-CVarWrapper sv_gravity_;
-
-// Serverside CVars
-const CVarWrapper bxt_autojump("bxt_autojump", "0");
-const CVarWrapper bxt_bhopcap("bxt_bhopcap", "1");
-
-// Clientside CVars
-CVarWrapper con_color_;
-CVarWrapper bxt_autojump_prediction;
-CVarWrapper bxt_bhopcap_prediction;
-CVarWrapper bxt_hud;
-CVarWrapper bxt_hud_color;
-CVarWrapper bxt_hud_precision;
-CVarWrapper bxt_hud_velocity;
-CVarWrapper bxt_hud_velocity_offset;
-CVarWrapper bxt_hud_velocity_anchor;
-CVarWrapper bxt_hud_origin;
-CVarWrapper bxt_hud_origin_offset;
-CVarWrapper bxt_hud_origin_anchor;
-CVarWrapper bxt_hud_speedometer;
-CVarWrapper bxt_hud_speedometer_offset;
-CVarWrapper bxt_hud_speedometer_anchor;
-CVarWrapper bxt_hud_jumpspeed;
-CVarWrapper bxt_hud_jumpspeed_offset;
-CVarWrapper bxt_hud_jumpspeed_anchor;

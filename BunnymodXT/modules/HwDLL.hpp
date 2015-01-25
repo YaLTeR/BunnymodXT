@@ -77,7 +77,6 @@ protected:
 	void RegisterCVarsAndCommandsIfNeeded();
 	bool CheckUnpause();
 	void InsertCommands();
-	void SetNonSharedRNG();
 	bool GetNextMovementFrame(HLTAS::Frame& f);
 	void ResetButtons();
 	void FindCVarsIfNeeded();
@@ -89,8 +88,6 @@ protected:
 	void *sv;
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
-	int *rng_global_1;
-	int *rng_global_2; // Array of 32 ints.
 
 	bool executing;
 	bool loading;
@@ -112,7 +109,7 @@ protected:
 	size_t totalFramebulks;
 	size_t currentRepeat;
 	HLStrafe::ProcessedFrame previousButtons;
-	bool SeedsPresent;
+	bool SharedRNGSeedPresent;
 	unsigned SharedRNGSeed;
 	bool CountingSharedRNGSeed;
 	unsigned SharedRNGSeedCounter;

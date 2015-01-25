@@ -79,8 +79,6 @@ void HwDLL::Clear()
 	sv = nullptr;
 	cmd_text = nullptr;
 	host_frametime = nullptr;
-	rng_global_1 = nullptr;
-	rng_global_2 = nullptr;
 	executing = false;
 	loading = false;
 	insideCbuf_Execute = false;
@@ -99,7 +97,7 @@ void HwDLL::Clear()
 	totalFramebulks = 0;
 	currentRepeat = 0;
 	previousButtons = {};
-	SeedsPresent = false;
+	SharedRNGSeedPresent = false;
 	SharedRNGSeed = 0;
 	CountingSharedRNGSeed = false;
 	SharedRNGSeedCounter = 0;
@@ -261,15 +259,6 @@ void HwDLL::FindStuff()
 			}, []() {}
 		);
 
-		void *ran1;
-		auto fran1 = MemUtils::FindPatternOnly(&ran1, m_Base, m_Length, Patterns::ptnsran1,
-			[&](MemUtils::ptnvec_size ptnNumber) {
-				auto f = reinterpret_cast<uintptr_t>(ran1);
-				rng_global_1 = *reinterpret_cast<int**>(f + 13);
-				rng_global_2 = *reinterpret_cast<int**>(f + 97);
-			}, []() {}
-		);
-
 		auto n = fCbuf_Execute.get();
 		if (ORIG_Cbuf_Execute) {
 			EngineDevMsg("[hw dll] Found Cbuf_Execute at %p (using the %s pattern).\n", ORIG_Cbuf_Execute, Patterns::ptnsCbuf_Execute[n].build.c_str());
@@ -335,16 +324,6 @@ void HwDLL::FindStuff()
 			ORIG_Cmd_AddMallocCommand = nullptr;
 			ORIG_Cbuf_Execute = nullptr;
 		}
-
-		n = fran1.get();
-		if (ran1) {
-			EngineDevMsg("[hw dll] Found ran1 at %p (using the %s pattern).\n", ran1, Patterns::ptnsran1[n].build.c_str());
-			EngineDevMsg("[hw dll] Found the first RNG global at %p.\n", rng_global_1);
-			EngineDevMsg("[hw dll] Found the second RNG global at %p.\n", rng_global_2);
-		} else {
-			EngineDevWarning("[hw dll] Could not find ran1.\n");
-			ORIG_Cbuf_Execute = nullptr;
-		}
 	}
 
 	if (ORIG_Cbuf_Execute && !ORIG_time)
@@ -403,7 +382,7 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 		else if (prop.first == "seed") {
 			std::istringstream ss(prop.second);
 			ss >> SharedRNGSeed >> NonSharedRNGSeed;
-			SeedsPresent = true;
+			SharedRNGSeedPresent = true;
 			SetNonSharedRNGSeed = true;
 		}
 	}
@@ -521,7 +500,7 @@ void HwDLL::InsertCommands()
 				currentFramebulk++;
 				break;
 			} else if (f.SeedsPresent) { // Seeds frame.
-				SeedsPresent = true;
+				SharedRNGSeedPresent = true;
 				NonSharedRNGSeed = f.GetNonSharedRNGSeed();
 				SharedRNGSeed = f.GetSharedRNGSeed();
 			} else if (f.Buttons != HLTAS::ButtonState::NOTHING) { // Buttons frame.
@@ -621,16 +600,6 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	return vars;
 }
 
-void HwDLL::SetNonSharedRNG()
-{
-	insideSeedRNG = true;
-	ORIG_SeedRandomNumberGenerator();
-	insideSeedRNG = false;
-	*rng_global_1 = 0;
-	for (size_t i = 0; i < 32; ++i)
-		rng_global_2[i] = 0;
-}
-
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 {
 	RegisterCVarsAndCommandsIfNeeded();
@@ -678,13 +647,12 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		changelevel = false;
 		if (finishingLoad) { // First frame after load.
 			finishingLoad = false;
-			if (SeedsPresent) {
+			if (SharedRNGSeedPresent) {
 				if (LoadingSeedCounter)
 					SharedRNGSeedCounter += SharedRNGSeed;
 				else
 					SharedRNGSeedCounter = SharedRNGSeed;
-				//SetNonSharedRNG();
-				SeedsPresent = false; // This should come after the RNG setting as that checks SeedsPresent itself.
+				SharedRNGSeedPresent = false; // This should come after the RNG setting as that checks SeedsPresent itself.
 				CountingSharedRNGSeed = true;
 			} else {
 				if (LoadingSeedCounter)
@@ -785,7 +753,7 @@ HOOK_DEF_2(HwDLL, long, __cdecl, RandomLong, long, a1, long, a2)
 HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 {
 	changelevel = true;
-	if (!CountingSharedRNGSeed && SeedsPresent)
+	if (!CountingSharedRNGSeed && SharedRNGSeedPresent)
 		SharedRNGSeedCounter = LastRandomSeed;
 
 	return ORIG_Host_Changelevel2_f();

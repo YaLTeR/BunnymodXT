@@ -9,7 +9,6 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(void, __cdecl, PM_Jump)
 	HOOK_DECL(void, __cdecl, PM_PlayerMove, qboolean server)
 	HOOK_DECL(void, __cdecl, PM_PreventMegaBunnyJumping)
-	HOOK_DECL(int, __cdecl, Initialize, cl_enginefunc_t* pEnginefuncs, int iVersion)
 	HOOK_DECL(void, __cdecl, V_CalcRefdef, ref_params_t* pparams)
 	HOOK_DECL(void, __cdecl, HUD_Init)
 	HOOK_DECL(void, __cdecl, HUD_VidInit)

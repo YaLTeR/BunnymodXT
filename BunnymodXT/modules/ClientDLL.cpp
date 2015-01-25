@@ -55,7 +55,6 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	FindStuff();
 	RegisterCVarsAndCommands();
 
-	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset));
@@ -65,7 +64,6 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 		MemUtils::Intercept(moduleName, {
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
-			{ reinterpret_cast<void**>(&ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize) },
 			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit) },
@@ -81,7 +79,6 @@ void ClientDLL::Unhook()
 		MemUtils::RemoveInterception(m_Name, {
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
-			{ reinterpret_cast<void**>(&ORIG_Initialize), reinterpret_cast<void*>(HOOKED_Initialize) },
 			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit) },
@@ -90,7 +87,6 @@ void ClientDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd) }
 		});
 
-	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_Initialize));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_VidInit));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Reset));
@@ -105,7 +101,6 @@ void ClientDLL::Clear()
 	ORIG_PM_Jump = nullptr;
 	ORIG_PM_PlayerMove = nullptr;
 	ORIG_PM_PreventMegaBunnyJumping = nullptr;
-	ORIG_Initialize = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
 	ORIG_HUD_Init = nullptr;
 	ORIG_HUD_VidInit = nullptr;
@@ -164,62 +159,41 @@ void ClientDLL::FindStuff()
 
 	pEngfuncs = reinterpret_cast<cl_enginefunc_t*>(MemUtils::GetSymbolAddress(m_Handle, "gEngfuncs"));
 	if (pEngfuncs)
-	{
 		EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
-		if (!*reinterpret_cast<uintptr_t*>(pEngfuncs))
-		{
-			ORIG_Initialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(m_Handle, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z"));
-			if (!ORIG_Initialize)
-				ORIG_Initialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(m_Handle, "Initialize"));
-			if (!ORIG_Initialize)
-			{
-				EngineDevWarning("[client dll] Couldn't get the address of Initialize.\n");
-				EngineWarning("Clientside CVars and commands are not available.\n");
-				EngineWarning("Custom HUD is not available.\n");
-			}
-		}
-	}
 	else
 	{
 		// In AG, this thing is the main function, so check that first.
-		_Initialize pInitialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(m_Handle, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z"));
-
+		auto pInitialize = MemUtils::GetSymbolAddress(m_Handle, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z");
 		if (!pInitialize)
-			pInitialize = reinterpret_cast<_Initialize>(MemUtils::GetSymbolAddress(m_Handle, "Initialize"));
-
+			pInitialize = MemUtils::GetSymbolAddress(m_Handle, "Initialize");
 		if (pInitialize)
 		{
 			// Find "mov edi, offset dword; rep movsd" inside Initialize. The pointer to gEngfuncs is that dword.
 			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
-			auto addr = MemUtils::FindPattern(reinterpret_cast<void*>(pInitialize), 40, pattern, "x????xx");
+			auto addr = MemUtils::FindPattern(pInitialize, 40, pattern, "x????xx");
 			if (!addr)
 			{
 				const byte pattern_[] = { 0xB9, '?', '?', '?', '?', 0x8B, 0x54, 0x24, 0x10 };
-				addr = MemUtils::FindPattern(reinterpret_cast<void*>(pInitialize), 40, pattern_, "x????xxxx");
+				addr = MemUtils::FindPattern(pInitialize, 40, pattern_, "x????xxxx");
 			}
 
 			if (addr)
 			{
 				pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(addr)+1);
 				EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
-
-				// If we have engfuncs, register cvars and whatnot right away (in the end of this function because other stuff need to be done first). Otherwise wait till the engine gives us engfuncs.
-				// This works because global variables are zero by default.
-				if (!*reinterpret_cast<uintptr_t*>(pEngfuncs))
-					ORIG_Initialize = pInitialize;
 			}
 			else
 			{
 				EngineDevWarning("[client dll] Couldn't find the pattern in Initialize.\n");
-				EngineWarning("Clientside CVars and commands are not available.\n");
 				EngineWarning("Custom HUD is not available.\n");
+				EngineWarning("Clientside logging is not available.\n");
 			}
 		}
 		else
 		{
 			EngineDevWarning("[client dll] Couldn't get the address of Initialize.\n");
-			EngineWarning("Clientside CVars and commands are not available.\n");
 			EngineWarning("Custom HUD is not available.\n");
+			EngineWarning("Clientside logging is not available.\n");
 		}
 	}
 
@@ -391,15 +365,6 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, PM_PreventMegaBunnyJumping)
 {
 	if (CVars::bxt_bhopcap_prediction.GetBool())
 		ORIG_PM_PreventMegaBunnyJumping();
-}
-
-HOOK_DEF_2(ClientDLL, int, __cdecl, Initialize, cl_enginefunc_t*, pEnginefuncs, int, iVersion)
-{
-	int rv = ORIG_Initialize(pEnginefuncs, iVersion);
-
-	RegisterCVarsAndCommands();
-
-	return rv;
 }
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)

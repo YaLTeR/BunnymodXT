@@ -492,8 +492,14 @@ void HwDLL::InsertCommands()
 
 				// We need this to be in the before all our movement commands,
 				// so insert it last.
-				if (!wasRunningFrames)
+				if (!wasRunningFrames) {
 					ResetButtons();
+					if (!demoName.empty()) {
+						std::ostringstream ss;
+						ss << "record " << demoName.c_str() << "\n";
+						ORIG_Cbuf_InsertText(ss.str().c_str());
+					}
+				}
 
 				previousButtons = p;
 
@@ -538,6 +544,13 @@ void HwDLL::InsertCommands()
 			runningFrames = false;
 	} else {
 		if (wasRunningFrames) {
+			if (!demoName.empty())
+				ORIG_Cbuf_InsertText("stop");
+			if (!saveName.empty()) {
+				std::ostringstream ss;
+				ss << "save " << saveName.c_str() << "\n";
+				ORIG_Cbuf_InsertText(ss.str().c_str());
+			}
 			ResetButtons();
 			CountingSharedRNGSeed = false;
 		}

@@ -41,7 +41,7 @@ namespace CVars
 	CVarWrapper bxt_hud_jumpspeed_offset("bxt_hud_jumpspeed_offset", "");
 	CVarWrapper bxt_hud_jumpspeed_anchor("bxt_hud_jumpspeed_anchor", "0.5 1");
 
-	const std::vector<CVarWrapper * const> allCVars =
+	const std::vector<CVarWrapper*> allCVars =
 	{
 		&_bxt_taslog,
 		&bxt_tas,

@@ -11,11 +11,6 @@
 
 // Linux hooks.
 #ifndef _WIN32
-extern "C" int __cdecl Initialize(cl_enginefunc_t* pEnginefuncs, int iVersion)
-{
-	return ClientDLL::HOOKED_Initialize(pEnginefuncs, iVersion);
-}
-
 extern "C" void __cdecl HUD_Init()
 {
 	return ClientDLL::HOOKED_HUD_Init();
@@ -34,6 +29,11 @@ extern "C" void __cdecl HUD_Reset()
 extern "C" void __cdecl HUD_Redraw(float time, int intermission)
 {
 	return ClientDLL::HOOKED_HUD_Redraw(time, intermission);
+}
+
+extern "C" void __cdecl HUD_PostRunCmd(local_state_s* from, local_state_s* to, usercmd_s* cmd, int runfuncs, double time, unsigned int random_seed)
+{
+	return ClientDLL::HOOKED_HUD_PostRunCmd(from, to, cmd, runfuncs, time, random_seed);
 }
 
 extern "C" void __cdecl V_CalcRefdef(ref_params_t* pparams)
@@ -59,6 +59,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd));
 
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
@@ -91,6 +92,7 @@ void ClientDLL::Unhook()
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_VidInit));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Reset));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Redraw));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_PostRunCmd));
 
 	Clear();
 }
@@ -129,6 +131,7 @@ void ClientDLL::FindStuff()
 			offOnground = 224;
 			if (ptnNumber == MemUtils::INVALID_SEQUENCE_INDEX) // Linux.
 			{
+				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 1);
 				void *bhopcapAddr;
 				auto n = MemUtils::FindUniqueSequence(m_Base, m_Length, Patterns::ptnsBhopcap, &bhopcapAddr);
 				if (n != MemUtils::INVALID_SEQUENCE_INDEX)
@@ -417,15 +420,17 @@ HOOK_DEF_6(ClientDLL, void, __cdecl, HUD_PostRunCmd, local_state_s*, from, local
 	if (CVars::_bxt_taslog.GetBool())
 		if (pEngfuncs)
 		{
-			pEngfuncs->Con_Printf("-- HUD_PostRunCmd Start --\n");
-			pEngfuncs->Con_Printf("Msec %hhu (%Lf)\n", cmd->msec, static_cast<long double>(cmd->msec) * 0.001);
-			pEngfuncs->Con_Printf("Viewangles: %.8f %.8f %.8f; forwardmove: %f; sidemove: %f; upmove: %f\n", cmd->viewangles[0], cmd->viewangles[1], cmd->viewangles[2], cmd->forwardmove, cmd->sidemove, cmd->upmove);
-			pEngfuncs->Con_Printf("Buttons: %hu\n", cmd->buttons);
-			pEngfuncs->Con_Printf("Random seed: %u", random_seed);
+			#define PRINTF(format, ...) pEngfuncs->Con_Printf(const_cast<char*>(format), ##__VA_ARGS__)
+			PRINTF("-- HUD_PostRunCmd Start --\n");
+			PRINTF("Msec %hhu (%Lf)\n", cmd->msec, static_cast<long double>(cmd->msec) * 0.001);
+			PRINTF("Viewangles: %.8f %.8f %.8f; forwardmove: %f; sidemove: %f; upmove: %f\n", cmd->viewangles[0], cmd->viewangles[1], cmd->viewangles[2], cmd->forwardmove, cmd->sidemove, cmd->upmove);
+			PRINTF("Buttons: %hu\n", cmd->buttons);
+			PRINTF("Random seed: %u", random_seed);
 			if (changedSeed)
-				pEngfuncs->Con_Printf(" (overriding with %u)", seed);
-			pEngfuncs->Con_Printf("\n");
-			pEngfuncs->Con_Printf("-- HUD_PostRunCmd End --\n");
+				PRINTF(" (overriding with %u)", seed);
+			PRINTF("\n");
+			PRINTF("-- HUD_PostRunCmd End --\n");
+			#undef P
 		}
 
 	return ORIG_HUD_PostRunCmd(from, to, cmd, runfuncs, time, seed);

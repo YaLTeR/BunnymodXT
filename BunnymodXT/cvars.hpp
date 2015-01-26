@@ -136,5 +136,5 @@ namespace CVars
 	extern CVarWrapper bxt_hud_jumpspeed_offset;
 	extern CVarWrapper bxt_hud_jumpspeed_anchor;
 
-	extern const std::vector<CVarWrapper * const> allCVars;
+	extern const std::vector<CVarWrapper*> allCVars;
 }

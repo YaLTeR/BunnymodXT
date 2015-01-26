@@ -9,6 +9,14 @@
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
 
+// Linux hooks.
+#ifndef _WIN32
+extern "C" void __cdecl _Z8CmdStartPK7edict_sPK9usercmd_sj(const edict_t* player, const usercmd_t* cmd, unsigned int random_seed)
+{
+	return ServerDLL::HOOKED_CmdStart(player, cmd, random_seed);
+}
+#endif
+
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
 {
 	Clear(); // Just in case.
@@ -183,11 +191,21 @@ void ServerDLL::FindStuff()
 			EngineWarning("Bhopcap disabling is not available.\n");
 	}
 
-	ORIG_GetEntityAPI = reinterpret_cast<_GetEntityAPI>(MemUtils::GetSymbolAddress(m_Handle, "GetEntityAPI"));
-	if (ORIG_GetEntityAPI) {
-		DLL_FUNCTIONS funcs;
-		if (ORIG_GetEntityAPI(&funcs, 140))
-			ORIG_CmdStart = funcs.pfnCmdStart;
+	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
+	if (ORIG_CmdStart)
+		EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
+	else {
+		ORIG_GetEntityAPI = reinterpret_cast<_GetEntityAPI>(MemUtils::GetSymbolAddress(m_Handle, "GetEntityAPI"));
+		if (ORIG_GetEntityAPI) {
+			DLL_FUNCTIONS funcs;
+			if (ORIG_GetEntityAPI(&funcs, 140)) {
+				ORIG_CmdStart = funcs.pfnCmdStart; // Gets our hooked CmdStart address on Linux.
+				EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
+			}
+			else
+				EngineDevWarning("[server dll] Could not get the server DLL function table.\n");
+		} else
+			EngineDevWarning("[server dll] Could not get the address of GetEntityAPI.\n");
 	}
 	
 	// This has to be the last thing to check and hook.

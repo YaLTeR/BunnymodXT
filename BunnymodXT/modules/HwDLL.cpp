@@ -9,9 +9,28 @@
 
 // Linux hooks.
 #ifndef _WIN32
+#include <dlfcn.h>
+
 extern "C" void __cdecl Cbuf_Execute()
 {
 	return HwDLL::HOOKED_Cbuf_Execute();
+}
+
+extern "C" void __cdecl SeedRandomNumberGenerator()
+{
+	return HwDLL::HOOKED_SeedRandomNumberGenerator();
+}
+
+extern "C" void __cdecl Host_Changelevel2_f()
+{
+	return HwDLL::HOOKED_Host_Changelevel2_f();
+}
+
+extern "C" std::time_t time(std::time_t* t)
+{
+	if (!HwDLL::GetInstance().GetTimeAddr())
+		HwDLL::GetInstance().SetTimeAddr(dlsym(RTLD_NEXT, "time"));
+	return HwDLL::HOOKED_time(t);
 }
 #endif
 
@@ -26,6 +45,22 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	m_Intercepted = needToIntercept;
 
 	FindStuff();
+
+	auto script = std::getenv("BXT_SCRIPT");
+	if (script) {
+		std::string filename(script);
+		auto err = input.Open(filename).get();
+		if (err.Code != HLTAS::ErrorCode::OK)
+			EngineWarning("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
+		else
+			for (auto prop : input.GetProperties())
+				if (prop.first == "seed") {
+					std::istringstream ss(prop.second);
+					ss >> SharedRNGSeed >> NonSharedRNGSeed;
+					SetNonSharedRNGSeed = true;
+					EngineMsg("Loaded the seed from %s.\n", script);
+				}
+	}
 
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
@@ -90,7 +125,7 @@ void HwDLL::Clear()
 	changelevel = false;
 	insideSeedRNG = false;
 	LastRandomSeed = 0;
-	player = {};
+	player = HLStrafe::PlayerData();
 	input.Clear();
 	demoName.clear();
 	saveName.clear();
@@ -99,7 +134,7 @@ void HwDLL::Clear()
 	currentFramebulk = 0;
 	totalFramebulks = 0;
 	currentRepeat = 0;
-	previousButtons = {};
+	previousButtons = HLStrafe::ProcessedFrame();
 	SharedRNGSeedPresent = false;
 	SharedRNGSeed = 0;
 	CountingSharedRNGSeed = false;
@@ -142,15 +177,6 @@ void HwDLL::FindStuff()
 		if (!cls || !sv || !cmd_text || !host_frametime)
 			ORIG_Cbuf_Execute = nullptr;
 
-		void* ran1 = MemUtils::GetSymbolAddress(m_Handle, "ran1");
-		if (ran1) {
-			EngineDevMsg("[hw dll] Found ran1 at %p.\n", ran1);
-			auto f = reinterpret_cast<uintptr_t>(ran1);
-			// TODO set rng globals.
-		}
-		else
-			EngineDevWarning("[hw dll] Could not find ran1.\n");
-
 		#define FIND(f) \
 			ORIG_##f = reinterpret_cast<_##f>(MemUtils::GetSymbolAddress(m_Handle, #f)); \
 			if (ORIG_##f) \
@@ -166,6 +192,9 @@ void HwDLL::FindStuff()
 		FIND(Cvar_FindVar)
 		FIND(Cbuf_InsertText)
 		FIND(Cmd_AddMallocCommand)
+		FIND(Cmd_Argc)
+		FIND(Cmd_Args)
+		FIND(Cmd_Argv)
 		FIND(SeedRandomNumberGenerator)
 		//FIND(RandomFloat)
 		//FIND(RandomLong)
@@ -227,6 +256,7 @@ void HwDLL::FindStuff()
 				uintptr_t offCmd_Argc, offCmd_Args, offCmd_Argv;
 				switch (ptnNumber)
 				{
+				default:
 				case 0: // SteamPipe.
 					offCmd_Argc = 28;
 					offCmd_Args = 42;
@@ -342,9 +372,16 @@ void HwDLL::FindStuff()
 				EngineDevWarning("[hw dll] Could not find LoadAndDecryptHwDLL.\n");
 		}
 	}
+}
 
-	if (ORIG_Cbuf_Execute && !ORIG_time)
-		ORIG_time = time;
+void* HwDLL::GetTimeAddr()
+{
+	return reinterpret_cast<void*>(ORIG_time);
+}
+
+void HwDLL::SetTimeAddr(void* addr)
+{
+	ORIG_time = reinterpret_cast<_time>(addr);
 }
 
 void HwDLL::RegisterCVar(CVarWrapper& cvar)
@@ -387,7 +424,7 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 	std::string filename(ORIG_Cmd_Argv(1));
 	auto err = input.Open(filename).get();
 	if (err.Code != HLTAS::ErrorCode::OK) {
-		ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err));
+		ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
 		return;
 	}
 
@@ -592,7 +629,7 @@ void HwDLL::ResetButtons()
 	                     "-attack\n"
 	                     "-attack2\n"
 	                     "-reload\n");
-	previousButtons = {};
+	previousButtons = HLStrafe::ProcessedFrame();
 }
 
 void HwDLL::FindCVarsIfNeeded()
@@ -611,7 +648,7 @@ void HwDLL::FindCVarsIfNeeded()
 
 HLStrafe::MovementVars HwDLL::GetMovementVars()
 {
-	HLStrafe::MovementVars vars = {};
+	auto vars = HLStrafe::MovementVars();
 	
 	FindCVarsIfNeeded();
 	vars.Frametime = static_cast<float>(*host_frametime);
@@ -757,7 +794,7 @@ HOOK_DEF_1(HwDLL, time_t, __cdecl, time, time_t*, Time)
 
 		std::ostringstream ss;
 		ss << "Called time from SeedRandomNumberGenerator -> " << ret << ".\n";
-		EngineMsg("%s", ss.str().c_str());
+		EngineDevMsg("%s", ss.str().c_str());
 
 		return ret;
 	}
@@ -781,6 +818,7 @@ HOOK_DEF_2(HwDLL, long, __cdecl, RandomLong, long, a1, long, a2)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 {
+	EngineMsg("Host_Changelevel2_f\n");
 	changelevel = true;
 	if (!CountingSharedRNGSeed && SharedRNGSeedPresent)
 		SharedRNGSeedCounter = LastRandomSeed;

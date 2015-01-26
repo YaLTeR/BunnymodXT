@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./sptlib-wrapper.hpp"
+#include "../sptlib-wrapper.hpp"
 #include <SPTLib/IHookableNameFilterOrdered.hpp>
 #include "../cvars.hpp"
 
@@ -33,6 +33,9 @@ public:
 	virtual void Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept);
 	virtual void Unhook();
 	virtual void Clear();
+
+	void* GetTimeAddr();
+	void SetTimeAddr(void* addr);
 
 	void RegisterCVar(CVarWrapper& cvar);
 	cvar_t* FindCVar(const char* name);

@@ -29,6 +29,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
+			{ reinterpret_cast<void**>(&ORIG_LoadAndDecryptHwDLL), reinterpret_cast<void*>(HOOKED_LoadAndDecryptHwDLL) },
 			{ reinterpret_cast<void**>(&ORIG_Cbuf_Execute), reinterpret_cast<void*>(HOOKED_Cbuf_Execute) },
 			{ reinterpret_cast<void**>(&ORIG_SeedRandomNumberGenerator), reinterpret_cast<void*>(HOOKED_SeedRandomNumberGenerator) },
 			{ reinterpret_cast<void**>(&ORIG_time), reinterpret_cast<void*>(HOOKED_time) },
@@ -42,6 +43,7 @@ void HwDLL::Unhook()
 {
 	if (m_Intercepted)
 		MemUtils::RemoveInterception(m_Name, {
+			{ reinterpret_cast<void**>(&ORIG_LoadAndDecryptHwDLL), reinterpret_cast<void*>(HOOKED_LoadAndDecryptHwDLL) },
 			{ reinterpret_cast<void**>(&ORIG_Cbuf_Execute), reinterpret_cast<void*>(HOOKED_Cbuf_Execute) },
 			{ reinterpret_cast<void**>(&ORIG_SeedRandomNumberGenerator), reinterpret_cast<void*>(HOOKED_SeedRandomNumberGenerator) },
 			{ reinterpret_cast<void**>(&ORIG_time), reinterpret_cast<void*>(HOOKED_time) },
@@ -59,6 +61,7 @@ void HwDLL::Unhook()
 
 void HwDLL::Clear()
 {
+	ORIG_LoadAndDecryptHwDLL = nullptr;
 	ORIG_Cbuf_Execute = nullptr;
 	ORIG_SeedRandomNumberGenerator = nullptr;
 	ORIG_time = nullptr;
@@ -180,6 +183,12 @@ void HwDLL::FindStuff()
 		//DEF_FUTURE(RandomFloat)
 		//DEF_FUTURE(RandomLong)
 		DEF_FUTURE(Host_Changelevel2_f)
+		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
+		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
+		if (oldEngine) {
+			// In WON after the engine DLL has been loaded once for some reason there are multiple identical LoadAndDecrypt functions in the memory, we need the first one always.
+			fLoadAndDecryptHwDLL = std::async(MemUtils::FindFirstSequence, m_Base, m_Length, Patterns::ptnsLoadAndDecryptHwDLL, reinterpret_cast<void**>(&ORIG_LoadAndDecryptHwDLL));
+		}
 		#undef DEF_FUTURE
 
 		auto fCbuf_Execute = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_Cbuf_Execute), m_Base, m_Length, Patterns::ptnsCbuf_Execute,
@@ -323,6 +332,14 @@ void HwDLL::FindStuff()
 			EngineDevWarning("[hw dll] Could not find Host_Tell_f.\n");
 			ORIG_Cmd_AddMallocCommand = nullptr;
 			ORIG_Cbuf_Execute = nullptr;
+		}
+
+		if (oldEngine) {
+			n = fLoadAndDecryptHwDLL.get();
+			if (ORIG_LoadAndDecryptHwDLL)
+				EngineDevMsg("[hw dll] Found LoadAndDecryptHwDLL at %p (using the %s pattern).\n", ORIG_LoadAndDecryptHwDLL, Patterns::ptnsLoadAndDecryptHwDLL[n].build.c_str());
+			else
+				EngineDevWarning("[hw dll] Could not find LoadAndDecryptHwDLL.\n");
 		}
 	}
 
@@ -756,4 +773,11 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 		SharedRNGSeedCounter = LastRandomSeed;
 
 	return ORIG_Host_Changelevel2_f();
+}
+
+HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c)
+{
+	ORIG_LoadAndDecryptHwDLL(a, b, c);
+	EngineDevMsg("[hw dll] LoadAndDecryptHwDLL has been called. Rehooking.\n");
+	Hooks::HookModule(L"hl.exe");
 }

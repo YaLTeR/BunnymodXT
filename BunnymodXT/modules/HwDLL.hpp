@@ -6,6 +6,7 @@
 
 class HwDLL : public IHookableNameFilterOrdered
 {
+	HOOK_DECL(void, __cdecl, LoadAndDecryptHwDLL, int a, void* b, void* c)
 	HOOK_DECL(void, __cdecl, Cbuf_Execute)
 	HOOK_DECL(void, __cdecl, SeedRandomNumberGenerator)
 	HOOK_DECL(time_t, __cdecl, time, time_t *Time)

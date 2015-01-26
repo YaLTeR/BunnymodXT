@@ -545,7 +545,7 @@ void HwDLL::InsertCommands()
 	} else {
 		if (wasRunningFrames) {
 			if (!demoName.empty())
-				ORIG_Cbuf_InsertText("stop");
+				ORIG_Cbuf_InsertText("stop\n");
 			if (!saveName.empty()) {
 				std::ostringstream ss;
 				ss << "save " << saveName.c_str() << "\n";

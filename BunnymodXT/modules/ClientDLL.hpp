@@ -15,6 +15,7 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(void, __cdecl, HUD_Reset)
 	HOOK_DECL(void, __cdecl, HUD_Redraw, float time, int intermission)
 	HOOK_DECL(void, __cdecl, HUD_PostRunCmd, local_state_s* from, local_state_s* to, usercmd_s* cmd, int runfuncs, double time, unsigned int random_seed)
+	HOOK_DECL(void, __cdecl, HUD_Frame, double time)
 
 public:
 	static ClientDLL& GetInstance()
@@ -26,6 +27,8 @@ public:
 	virtual void Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept);
 	virtual void Unhook();
 	virtual void Clear();
+
+	void ResetSeedsQueued() { SeedsQueued = 0; }
 
 	cl_enginefunc_t *pEngfuncs;
 
@@ -48,4 +51,6 @@ protected:
 	byte originalBhopcapInsn[6];
 
 	bool cantJumpNextTime;
+
+	unsigned SeedsQueued;
 };

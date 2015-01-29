@@ -36,6 +36,11 @@ extern "C" void __cdecl HUD_PostRunCmd(local_state_s* from, local_state_s* to, u
 	return ClientDLL::HOOKED_HUD_PostRunCmd(from, to, cmd, runfuncs, time, random_seed);
 }
 
+extern "C" void __cdecl HUD_Frame(double time)
+{
+	return ClientDLL::HOOKED_HUD_Frame(time);
+}
+
 extern "C" void __cdecl V_CalcRefdef(ref_params_t* pparams)
 {
 	return ClientDLL::HOOKED_V_CalcRefdef(pparams);
@@ -60,6 +65,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Frame), reinterpret_cast<void*>(HOOKED_HUD_Frame));
 
 	if (needToIntercept)
 		MemUtils::Intercept(moduleName, {
@@ -70,7 +76,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd) }
+			{ reinterpret_cast<void**>(&ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_Frame), reinterpret_cast<void*>(HOOKED_HUD_Frame) }
 		});
 }
 
@@ -85,7 +92,8 @@ void ClientDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset) },
 			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd) }
+			{ reinterpret_cast<void**>(&ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd) },
+			{ reinterpret_cast<void**>(&ORIG_HUD_Frame), reinterpret_cast<void*>(HOOKED_HUD_Frame) }
 		});
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -93,6 +101,7 @@ void ClientDLL::Unhook()
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Reset));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Redraw));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_PostRunCmd));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Frame));
 
 	Clear();
 }
@@ -109,6 +118,7 @@ void ClientDLL::Clear()
 	ORIG_HUD_Reset = nullptr;
 	ORIG_HUD_Redraw = nullptr;
 	ORIG_HUD_PostRunCmd = nullptr;
+	ORIG_HUD_Frame = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -116,6 +126,7 @@ void ClientDLL::Clear()
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	pEngfuncs = nullptr;
 	cantJumpNextTime = false;
+	SeedsQueued = 0;
 	m_Intercepted = false;
 }
 
@@ -222,7 +233,15 @@ void ClientDLL::FindStuff()
 	if (ORIG_HUD_PostRunCmd)
 		EngineDevMsg("[client dll] Found HUD_PostRunCmd at %p.\n", ORIG_HUD_PostRunCmd);
 	else
-		EngineDevMsg("[client dll] Could not find HUD_PostRunCmd.\n");
+		EngineDevWarning("[client dll] Could not find HUD_PostRunCmd.\n");
+
+	ORIG_HUD_Frame = reinterpret_cast<_HUD_Frame>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Frame"));
+	if (ORIG_HUD_Frame)
+		EngineDevMsg("[client dll] Found HUD_Frame at %p.\n", ORIG_HUD_Frame);
+	else {
+		EngineDevWarning("[client dll] Could not find HUD_Frame.\n");
+		EngineWarning("In-game timer is not available.\n");
+	}
 
 	bool noBhopcap = false;
 	auto n = fPM_PreventMegaBunnyJumping.get();
@@ -258,28 +277,28 @@ bool ClientDLL::FindHUDFunctions()
 	if ((ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Init"))))
 		EngineDevMsg("[client dll] Found HUD_Init at %p.\n", ORIG_HUD_Init);
 	else {
-		EngineDevMsg("[client dll] Could not HUD_Init.\n");
+		EngineDevWarning("[client dll] Could not HUD_Init.\n");
 		return false;
 	}
 
 	if ((ORIG_HUD_VidInit = reinterpret_cast<_HUD_VidInit>(MemUtils::GetSymbolAddress(m_Handle, "HUD_VidInit"))))
 		EngineDevMsg("[client dll] Found HUD_VidInit at %p.\n", ORIG_HUD_VidInit);
 	else {
-		EngineDevMsg("[client dll] Could not HUD_VidInit.\n");
+		EngineDevWarning("[client dll] Could not HUD_VidInit.\n");
 		return false;
 	}
 
 	if ((ORIG_HUD_Reset = reinterpret_cast<_HUD_Reset>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Reset"))))
 		EngineDevMsg("[client dll] Found HUD_Reset at %p.\n", ORIG_HUD_Reset);
 	else {
-		EngineDevMsg("[client dll] Could not HUD_Reset.\n");
+		EngineDevWarning("[client dll] Could not HUD_Reset.\n");
 		return false;
 	}
 
 	if ((ORIG_HUD_Redraw = reinterpret_cast<_HUD_Redraw>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Redraw"))))
 		EngineDevMsg("[client dll] Found HUD_Redraw at %p.\n", ORIG_HUD_Redraw);
 	else {
-		EngineDevMsg("[client dll] Could not HUD_Redraw.\n");
+		EngineDevWarning("[client dll] Could not HUD_Redraw.\n");
 		return false;
 	}
 
@@ -413,7 +432,9 @@ HOOK_DEF_6(ClientDLL, void, __cdecl, HUD_PostRunCmd, local_state_s*, from, local
 	auto seed = random_seed;
 	bool changedSeed = false;
 	if (HwDLL::GetInstance().IsCountingSharedRNGSeed()) {
-		seed = HwDLL::GetInstance().GetSharedRNGSeedCounter();
+		auto lastSeed = HwDLL::GetInstance().GetSharedRNGSeedCounter();
+		seed = lastSeed - HwDLL::GetInstance().QueuedSharedRNGSeeds + 1 + SeedsQueued;
+		SeedsQueued++;
 		changedSeed = true;
 	}
 
@@ -434,4 +455,14 @@ HOOK_DEF_6(ClientDLL, void, __cdecl, HUD_PostRunCmd, local_state_s*, from, local
 		}
 
 	return ORIG_HUD_PostRunCmd(from, to, cmd, runfuncs, time, seed);
+}
+
+HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
+{
+	ORIG_HUD_Frame(time);
+
+	if (CVars::_bxt_taslog.GetBool())
+		pEngfuncs->Con_Printf(const_cast<char*>("HUD_Frame time: %f\n"), time);
+
+	SeedsQueued = 0;
 }

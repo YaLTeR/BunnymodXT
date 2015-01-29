@@ -15,4 +15,8 @@ namespace CustomHud
 
 	void UpdatePlayerInfo(float vel[3], float org[3]);
 	void UpdatePlayerInfoInaccurate(float vel[3], float org[3]);
+
+	void TimePassed(double time);
+	void ResetTime();
+	void SetCountingTime(bool counting);
 };

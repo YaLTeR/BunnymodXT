@@ -47,6 +47,10 @@ public:
 	inline bool IsCountingSharedRNGSeed() { return CountingSharedRNGSeed; }
 	inline unsigned GetSharedRNGSeedCounter() { return SharedRNGSeedCounter; }
 
+	inline bool IsPaused() { return (sv && *(reinterpret_cast<int*>(sv)+1)); }
+
+	unsigned QueuedSharedRNGSeeds;
+
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
 	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};
@@ -77,6 +81,9 @@ protected:
 
 	static void Cmd_BXT_TAS_LoadScript();
 	void Cmd_BXT_TAS_LoadScript_f();
+	static void Cmd_BXT_Timer_Start();
+	static void Cmd_BXT_Timer_Stop();
+	static void Cmd_BXT_Timer_Reset();
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	bool CheckUnpause();
@@ -93,12 +100,14 @@ protected:
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
 
+	int framesTillExecuting;
 	bool executing;
 	bool loading;
 	bool insideCbuf_Execute;
 	bool finishingLoad;
 	bool dontPauseNextCycle;
 	bool changelevel;
+	bool recording;
 
 	bool insideSeedRNG;
 	unsigned LastRandomSeed;

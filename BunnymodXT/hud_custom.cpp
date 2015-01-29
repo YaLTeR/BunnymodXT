@@ -16,6 +16,10 @@ namespace CustomHud
 	static int hudColor[3];
 	static bool receivedAccurateInfo = false;
 	static playerinfo player;
+	bool countingTime;
+	int hours, minutes, seconds;
+	double timeRemainder;
+	int frames = 0;
 
 	static client_sprite_t *SpriteList;
 	static int SpriteCount;
@@ -325,8 +329,16 @@ namespace CustomHud
 		vecCopy(player.velocity, prevVel);
 	}
 
+	void DrawTimer(float flTime)
+	{
+		std::ostringstream ss;
+		ss << (hours * 3600 + minutes * 60 + seconds + timeRemainder) << " " << frames;
+		DrawString(500, 500, ss.str().c_str());
+	}
+
 	void Init()
 	{
+		ResetTime();
 		SpriteList = nullptr;
 		initialized = true;
 	}
@@ -403,6 +415,7 @@ namespace CustomHud
 		DrawOrigin(flTime);
 		DrawSpeedometer(flTime);
 		DrawJumpspeed(flTime);
+		DrawTimer(flTime);
 
 		receivedAccurateInfo = false;
 	}
@@ -428,5 +441,36 @@ namespace CustomHud
 			HwDLL::GetInstance().SetPlayerOrigin(org);
 			HwDLL::GetInstance().SetPlayerVelocity(vel);
 		}
+	}
+
+	void TimePassed(double time)
+	{
+		if (!countingTime)
+			return;
+		frames++;
+		timeRemainder += time;
+		seconds += static_cast<int>(timeRemainder);
+		timeRemainder -= static_cast<int>(timeRemainder);
+		if (seconds >= 60) {
+			minutes += (seconds / 60);
+			seconds %= 60;
+		}
+		if (minutes >= 60) {
+			hours += (minutes / 60);
+			minutes %= 60;
+		}
+	}
+
+	void ResetTime()
+	{
+		countingTime = false;
+		hours = minutes = seconds = 0;
+		timeRemainder = 0.0;
+		frames = 0;
+	}
+
+	void SetCountingTime(bool counting)
+	{
+		countingTime = counting;
 	}
 }

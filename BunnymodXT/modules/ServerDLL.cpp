@@ -4,6 +4,7 @@
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
 #include "ServerDLL.hpp"
+#include "ClientDLL.hpp"
 #include "HwDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
@@ -351,7 +352,8 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 	auto seed = random_seed;
 	bool changedSeed = false;
 	if (HwDLL::GetInstance().IsCountingSharedRNGSeed()) {
-		seed = HwDLL::GetInstance().GetSharedRNGSeedCounter();
+		auto lastSeed = HwDLL::GetInstance().GetSharedRNGSeedCounter();
+		seed = lastSeed - (--HwDLL::GetInstance().QueuedSharedRNGSeeds);
 		changedSeed = true;
 	}
 
@@ -359,10 +361,12 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 	if (CVars::_bxt_taslog.GetBool())
 	{
 		ALERT(at_console, "-- CmdStart Start --\n");
+		ALERT(at_console, "Buttons: %hu\n", cmd->buttons);
 		ALERT(at_console, "Random_seed: %u", random_seed);
 		if (changedSeed)
 			ALERT(at_console, " (overriding with %u)", seed);
 		ALERT(at_console, "\n");
+		ALERT(at_console, "Paused: %s\n", (HwDLL::GetInstance().IsPaused() ? "true" : "false"));
 		ALERT(at_console, "-- CmdStart End --\n");
 	}
 	#undef ALERT

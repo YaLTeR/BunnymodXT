@@ -4,8 +4,10 @@
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
 #include "HwDLL.hpp"
+#include "ClientDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
+#include "../hud_custom.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -117,12 +119,14 @@ void HwDLL::Clear()
 	sv = nullptr;
 	cmd_text = nullptr;
 	host_frametime = nullptr;
+	framesTillExecuting = 0;
 	executing = false;
 	loading = false;
 	insideCbuf_Execute = false;
 	finishingLoad = false;
 	dontPauseNextCycle = false;
 	changelevel = false;
+	recording = false;
 	insideSeedRNG = false;
 	LastRandomSeed = 0;
 	player = HLStrafe::PlayerData();
@@ -139,6 +143,7 @@ void HwDLL::Clear()
 	SharedRNGSeed = 0;
 	CountingSharedRNGSeed = false;
 	SharedRNGSeedCounter = 0;
+	QueuedSharedRNGSeeds = 0;
 	LoadingSeedCounter = 0;
 	ButtonsPresent = false;
 }
@@ -453,6 +458,21 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 	}
 }
 
+void HwDLL::Cmd_BXT_Timer_Start()
+{
+	return CustomHud::SetCountingTime(true);
+}
+
+void HwDLL::Cmd_BXT_Timer_Stop()
+{
+	return CustomHud::SetCountingTime(false);
+}
+
+void HwDLL::Cmd_BXT_Timer_Reset()
+{
+	return CustomHud::ResetTime();
+}
+
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
 	if (!registeredVarsAndCmds)
@@ -460,8 +480,12 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		registeredVarsAndCmds = true;
 		RegisterCVar(CVars::bxt_tas);
 		RegisterCVar(CVars::_bxt_taslog);
-		if (ORIG_Cmd_AddMallocCommand)
+		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
+			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_timer_stop", Cmd_BXT_Timer_Stop, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_timer_reset", Cmd_BXT_Timer_Reset, 2);
+		}
 	}
 }
 
@@ -529,13 +553,13 @@ void HwDLL::InsertCommands()
 
 				// We need this to be in the before all our movement commands,
 				// so insert it last.
-				if (!wasRunningFrames) {
+				if (!wasRunningFrames)
 					ResetButtons();
-					if (!demoName.empty()) {
-						std::ostringstream ss;
-						ss << "record " << demoName.c_str() << "\n";
-						ORIG_Cbuf_InsertText(ss.str().c_str());
-					}
+				if (*reinterpret_cast<int*>(cls) == 5 && !recording && !demoName.empty()) {
+					recording = true;
+					std::ostringstream ss;
+					ss << "record " << demoName.c_str() << "\n";
+					ORIG_Cbuf_InsertText(ss.str().c_str());
 				}
 
 				previousButtons = p;
@@ -581,8 +605,10 @@ void HwDLL::InsertCommands()
 			runningFrames = false;
 	} else {
 		if (wasRunningFrames) {
-			if (!demoName.empty())
+			if (!demoName.empty()) {
 				ORIG_Cbuf_InsertText("stop\n");
+				recording = false;
+			}
 			if (!saveName.empty()) {
 				std::ostringstream ss;
 				ss << "save " << saveName.c_str() << "\n";
@@ -670,16 +696,19 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 {
 	RegisterCVarsAndCommandsIfNeeded();
 
-	int state = *reinterpret_cast<int*>(cls);
-	int paused = *(reinterpret_cast<int*>(sv) + 1);
+	int *state = reinterpret_cast<int*>(cls);
+	int *paused = reinterpret_cast<int*>(sv) + 1;
 
-	// If cls.state == 4 and the game isn't paused, execute "pause" right now.
-	// This case happens when loading a savegame.
-	if (state == 4 && !paused && CVars::bxt_tas.GetBool())
+	if (!finishingLoad && *state == 4 && !executing)
 	{
-		ORIG_Cbuf_InsertText("pause\n");
+		if (!*paused)
+			framesTillExecuting = 2;
 		finishingLoad = true;
 	}
+	if (finishingLoad && !*paused && !(framesTillExecuting--))
+		executing = true;
+	if (framesTillExecuting < 0)
+		framesTillExecuting = 0;
 
 	// All map load / change commands call Cbuf_Execute inside them, while we already are inside one.
 	if (insideCbuf_Execute)
@@ -687,25 +716,20 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		loading = true;
 		executing = false;
 	}
-	if (state != 5)
+	if (*state != 5 && *state != 4)
 		executing = false;
-	if (!loading && state == 5)
-		executing = true;
-	if (loading && state == 3)
-		loading = false;
-	// Manually unpause in WON.
-	if (finishingLoad && state == 5 && paused && !CheckUnpause())
-		ORIG_Cbuf_InsertText("pause\n");
 
 	static unsigned counter = 1;
 	auto c = counter++;
 	std::string buf(cmd_text->data, cmd_text->cursize); // TODO: ifdef this so it doesn't waste performance.
 	if (CVars::_bxt_taslog.GetBool())
-		ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; loading: %s; executing: %s; host_frametime: %f; buffer: %s\n", c, state, paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (loading ? "true" : "false"), (executing ? "true" : "false"), *host_frametime, buf.c_str());
+		ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; loading: %s; executing: %s; host_frametime: %f; buffer: %s\n", c, *state, *paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (loading ? "true" : "false"), (executing ? "true" : "false"), *host_frametime, buf.c_str());
 
 	insideCbuf_Execute = true;
 	ORIG_Cbuf_Execute(); // executing might change inside if we had some kind of load command in the buffer.
 
+	if (!executing)
+		QueuedSharedRNGSeeds = 0;
 	// Insert our commands after any commands that might have been on this frame
 	// and call Cbuf_Execute again to execute them.
 	if (executing)
@@ -730,6 +754,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		} else {
 			SharedRNGSeedCounter++;
 		}
+		QueuedSharedRNGSeeds++;
+		ClientDLL::GetInstance().ResetSeedsQueued();
 
 		// For stopping Cbuf_Execute. Goes first because InsertCommands() inserts into beginning.
 		if (cmd_text->cursize)
@@ -738,11 +764,15 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 		buf.assign(cmd_text->data, cmd_text->cursize);
 		if (CVars::_bxt_taslog.GetBool())
-			ORIG_Con_Printf("Cbuf_Execute() #%u executing; buffer: %s\n", c, buf.c_str());
+			ORIG_Con_Printf("Cbuf_Execute() #%u executing; sv.paused: %d; buffer: %s\n", c, *paused, buf.c_str());
 
 		// Setting to true once again because it might have been reset in Cbuf_Execute.
 		insideCbuf_Execute = true;
 		ORIG_Cbuf_Execute();
+
+		// If still executing (didn't load a save).
+		if (executing)
+			CustomHud::TimePassed(*host_frametime);
 	} else if (changelevel) {
 		LoadingSeedCounter++;
 	}
@@ -750,18 +780,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 	buf.assign(cmd_text->data, cmd_text->cursize);
 	if (CVars::_bxt_taslog.GetBool())
-		ORIG_Con_Printf("Cbuf_Execute() #%u end; host_frametime: %f; buffer: %s\n", c, *host_frametime, buf.c_str());
-
-	// If cls.state == 3 and the game isn't paused, execute "pause" on the next cycle.
-	// This case happens when starting a map.
-	if (!dontPauseNextCycle && state == 3 && !paused && CVars::bxt_tas.GetBool())
-	{
-		ORIG_Cbuf_InsertText("pause\n");
-		finishingLoad = true;
-		dontPauseNextCycle = true;
-	}
-	else
-		dontPauseNextCycle = false;
+		ORIG_Con_Printf("Cbuf_Execute() #%u end; sv.paused: %d; host_frametime: %f; buffer: %s\n", c, *paused, *host_frametime, buf.c_str());
 }
 
 void HwDLL::SetPlayerOrigin(float origin[3])

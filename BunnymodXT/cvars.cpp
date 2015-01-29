@@ -6,7 +6,6 @@ namespace CVars
 {
 	// Engine CVars
 	CVarWrapper _bxt_taslog("_bxt_taslog", "0");
-	CVarWrapper bxt_tas("bxt_tas", "0");
 
 	CVarWrapper con_color;
 	CVarWrapper sv_maxvelocity;
@@ -40,11 +39,13 @@ namespace CVars
 	CVarWrapper bxt_hud_jumpspeed("bxt_hud_jumpspeed", "0");
 	CVarWrapper bxt_hud_jumpspeed_offset("bxt_hud_jumpspeed_offset", "");
 	CVarWrapper bxt_hud_jumpspeed_anchor("bxt_hud_jumpspeed_anchor", "0.5 1");
+	CVarWrapper bxt_hud_timer("bxt_hud_timer", "1");
+	CVarWrapper bxt_hud_timer_offset("bxt_hud_timer_offset", "");
+	CVarWrapper bxt_hud_timer_anchor("bxt_hud_timer_anchor", "0 0.5");
 
 	const std::vector<CVarWrapper*> allCVars =
 	{
 		&_bxt_taslog,
-		&bxt_tas,
 		&con_color,
 		&sv_maxvelocity,
 		&sv_maxspeed,
@@ -72,6 +73,9 @@ namespace CVars
 		&bxt_hud_speedometer_anchor,
 		&bxt_hud_jumpspeed,
 		&bxt_hud_jumpspeed_offset,
-		&bxt_hud_jumpspeed_anchor
+		&bxt_hud_jumpspeed_anchor,
+		&bxt_hud_timer,
+		&bxt_hud_timer_offset,
+		&bxt_hud_timer_anchor
 	};
 }

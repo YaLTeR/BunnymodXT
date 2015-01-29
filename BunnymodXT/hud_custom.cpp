@@ -100,7 +100,7 @@ namespace CustomHud
 		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x, y, &NumberSpriteRects[digit]);
 	}
 
-	static void DrawNumber(int number, int x, int y, int r, int g, int b)
+	static int DrawNumber(int number, int x, int y, int r, int g, int b, int leadingZeros = 0)
 	{
 		if (number < 0)
 		{
@@ -124,16 +124,54 @@ namespace CustomHud
 				DrawDigit(digit, x, y, r, g, b);
 				x += NumberWidth;
 				number %= p;
+				leadingZeros--;
 			}
 		}
 
+		// Draw the leading zeros.
+		if (leadingZeros > 0)
+			for (int i = 0; i < leadingZeros; ++i) {
+				DrawDigit(0, x, y, r, g, b);
+				x += NumberWidth;
+			}
+
 		// Draw the last digit (or zero).
 		DrawDigit(number, x, y, r, g, b);
+		x += NumberWidth;
+
+		return x;
 	}
 
-	static inline void DrawNumber(int number, int x, int y)
+	static inline int DrawNumber(int number, int x, int y, int leadingZeros = 0)
 	{
-		DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2]);
+		return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2], leadingZeros);
+	}
+
+	static void DrawDot(int x, int y, int r, int g, int b, int a = 255)
+	{
+		const int DOT_SIZE = 5;
+		x += (NumberWidth - DOT_SIZE) / 2;
+		y += NumberHeight - DOT_SIZE;
+		ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x, y, DOT_SIZE, DOT_SIZE, r, g, b, a);
+	}
+
+	static void DrawDot(int x, int y, int a = 255)
+	{
+		return DrawDot(x, y, hudColor[0], hudColor[1], hudColor[2], a);
+	}
+
+	static void DrawColon(int x, int y, int r, int g, int b, int a = 255)
+	{
+		const int DOT_SIZE = 4;
+		x += (NumberWidth - DOT_SIZE) / 2;
+		ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x, y + 3, DOT_SIZE, DOT_SIZE, r, g, b, a);
+		y += NumberHeight - DOT_SIZE;
+		ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x, y - 3, DOT_SIZE, DOT_SIZE, r, g, b, a);
+	}
+
+	static void DrawColon(int x, int y, int a = 255)
+	{
+		return DrawColon(x, y, hudColor[0], hudColor[1], hudColor[2], a);
 	}
 
 	static void GetPosition(const CVarWrapper& Offset, const CVarWrapper& Anchor, int* x, int* y, int rx = 0, int ry = 0)
@@ -331,9 +369,39 @@ namespace CustomHud
 
 	void DrawTimer(float flTime)
 	{
-		std::ostringstream ss;
-		ss << (hours * 3600 + minutes * 60 + seconds + timeRemainder) << " " << frames;
-		DrawString(500, 500, ss.str().c_str());
+		if (CVars::bxt_hud_timer.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_timer_offset, CVars::bxt_hud_timer_anchor, &x, &y, 0, 0);
+
+			if (hours)
+			{
+				x = DrawNumber(hours, x, y);
+				DrawColon(x, y);
+				x += NumberWidth;
+			}
+
+			if (hours || minutes)
+			{
+				auto leadingZeros = hours ? 1 : 0;
+				x = DrawNumber(minutes, x, y, leadingZeros);
+				DrawColon(x, y);
+				x += NumberWidth;
+			}
+
+			auto leadingZeros = (hours || minutes) ? 1 : 0;
+			x = DrawNumber(seconds, x, y, leadingZeros);
+
+			DrawDot(x, y);
+			x += NumberWidth;
+
+			auto ms = static_cast<int>(timeRemainder * 1000);
+			if (ms < 100)
+				x = DrawNumber(0, x, y);
+			if (ms < 10)
+				x = DrawNumber(0, x, y);
+			DrawNumber(ms, x, y);
+		}
 	}
 
 	void Init()

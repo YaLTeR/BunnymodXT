@@ -334,6 +334,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_jumpspeed);
 		REG(bxt_hud_jumpspeed_offset);
 		REG(bxt_hud_jumpspeed_anchor);
+		REG(bxt_hud_timer);
+		REG(bxt_hud_timer_offset);
+		REG(bxt_hud_timer_anchor);
 	}
 	#undef REG
 }

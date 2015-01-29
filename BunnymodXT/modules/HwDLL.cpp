@@ -424,8 +424,6 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 		return;
 	}
 
-	ORIG_Cvar_DirectSet(CVars::bxt_tas.GetPointer(), "1");
-
 	std::string filename(ORIG_Cmd_Argv(1));
 	auto err = input.Open(filename).get();
 	if (err.Code != HLTAS::ErrorCode::OK) {
@@ -478,7 +476,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	if (!registeredVarsAndCmds)
 	{
 		registeredVarsAndCmds = true;
-		RegisterCVar(CVars::bxt_tas);
 		RegisterCVar(CVars::_bxt_taslog);
 		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.

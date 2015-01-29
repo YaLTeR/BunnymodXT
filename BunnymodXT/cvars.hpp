@@ -101,7 +101,6 @@ namespace CVars
 {
 	// Engine CVars
 	extern CVarWrapper _bxt_taslog;
-	extern CVarWrapper bxt_tas;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_maxvelocity;
@@ -135,6 +134,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_jumpspeed;
 	extern CVarWrapper bxt_hud_jumpspeed_offset;
 	extern CVarWrapper bxt_hud_jumpspeed_anchor;
+	extern CVarWrapper bxt_hud_timer;
+	extern CVarWrapper bxt_hud_timer_offset;
+	extern CVarWrapper bxt_hud_timer_anchor;
 
 	extern const std::vector<CVarWrapper*> allCVars;
 }

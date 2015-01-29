@@ -28,6 +28,8 @@ namespace CustomHud
 	static std::array<client_sprite_t*, 10> NumberSpritePointers;
 	static int NumberWidth;
 	static int NumberHeight;
+	HSPRITE_HL DotSprite;
+	wrect_t DotRect;
 
 	template<typename T, size_t size = 3>
 	static inline void vecCopy(const T src[], T dest[])
@@ -149,10 +151,14 @@ namespace CustomHud
 
 	static void DrawDot(int x, int y, int r, int g, int b, int a = 255)
 	{
-		const int DOT_SIZE = 5;
+		/*const int DOT_SIZE = 5;
 		x += (NumberWidth - DOT_SIZE) / 2;
 		y += NumberHeight - DOT_SIZE;
-		ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x, y, DOT_SIZE, DOT_SIZE, r, g, b, a);
+		ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x, y, DOT_SIZE, DOT_SIZE, r, g, b, a);*/
+		x += (NumberWidth - DotRect.right) / 2;
+		y += NumberHeight - DotRect.bottom;
+		ClientDLL::GetInstance().pEngfuncs->pfnSPR_Set(DotSprite, hudColor[0], hudColor[1], hudColor[2]);
+		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x + 1, y, &DotRect);
 	}
 
 	static void DrawDot(int x, int y, int a = 255)
@@ -162,11 +168,17 @@ namespace CustomHud
 
 	static void DrawColon(int x, int y, int r, int g, int b, int a = 255)
 	{
-		const int DOT_SIZE = 4;
+		/*const int DOT_SIZE = 4;
 		x += (NumberWidth - DOT_SIZE) / 2;
 		ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x, y + 3, DOT_SIZE, DOT_SIZE, r, g, b, a);
 		y += NumberHeight - DOT_SIZE;
-		ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x, y - 3, DOT_SIZE, DOT_SIZE, r, g, b, a);
+		ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x, y - 3, DOT_SIZE, DOT_SIZE, r, g, b, a);*/
+		x += (NumberWidth - DotRect.right) / 2;
+		ClientDLL::GetInstance().pEngfuncs->pfnSPR_Set(DotSprite, hudColor[0], hudColor[1], hudColor[2]);
+		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x + 2, y + 2, &DotRect);
+		y += NumberHeight - DotRect.bottom;
+		ClientDLL::GetInstance().pEngfuncs->pfnSPR_Set(DotSprite, hudColor[0], hudColor[1], hudColor[2]);
+		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x + 2, y - 2, &DotRect);
 	}
 
 	static void DrawColon(int x, int y, int a = 255)
@@ -469,6 +481,12 @@ namespace CustomHud
 				EngineDevMsg("[client dll] Reloaded the digit %d sprite from \"%s\".\n", i, path.c_str());
 			}
 		}
+
+		DotSprite = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Load("dot.spr");
+		DotRect.left = 0;
+		DotRect.top = 0;
+		DotRect.right = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Width(DotSprite, 0);
+		DotRect.bottom = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Height(DotSprite, 0);
 	}
 
 	void Draw(float flTime)

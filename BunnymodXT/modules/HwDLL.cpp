@@ -121,7 +121,6 @@ void HwDLL::Clear()
 	host_frametime = nullptr;
 	framesTillExecuting = 0;
 	executing = false;
-	loading = false;
 	insideCbuf_Execute = false;
 	finishingLoad = false;
 	dontPauseNextCycle = false;
@@ -702,17 +701,14 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 			framesTillExecuting = 2;
 		finishingLoad = true;
 	}
-	if (finishingLoad && !*paused && !(framesTillExecuting--))
+	if (finishingLoad && !*paused && !framesTillExecuting)
 		executing = true;
-	if (framesTillExecuting < 0)
-		framesTillExecuting = 0;
+	if (framesTillExecuting > 0)
+		framesTillExecuting--;
 
 	// All map load / change commands call Cbuf_Execute inside them, while we already are inside one.
 	if (insideCbuf_Execute)
-	{
-		loading = true;
 		executing = false;
-	}
 	if (*state != 5 && *state != 4)
 		executing = false;
 
@@ -720,7 +716,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	auto c = counter++;
 	std::string buf(cmd_text->data, cmd_text->cursize); // TODO: ifdef this so it doesn't waste performance.
 	if (CVars::_bxt_taslog.GetBool())
-		ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; loading: %s; executing: %s; host_frametime: %f; buffer: %s\n", c, *state, *paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (loading ? "true" : "false"), (executing ? "true" : "false"), *host_frametime, buf.c_str());
+		ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; executing: %s; host_frametime: %f; buffer: %s\n", c, *state, *paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (executing ? "true" : "false"), *host_frametime, buf.c_str());
 
 	insideCbuf_Execute = true;
 	ORIG_Cbuf_Execute(); // executing might change inside if we had some kind of load command in the buffer.

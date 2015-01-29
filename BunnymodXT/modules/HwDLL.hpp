@@ -102,7 +102,6 @@ protected:
 
 	int framesTillExecuting;
 	bool executing;
-	bool loading;
 	bool insideCbuf_Execute;
 	bool finishingLoad;
 	bool dontPauseNextCycle;

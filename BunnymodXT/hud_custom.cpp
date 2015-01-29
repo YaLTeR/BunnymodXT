@@ -102,7 +102,7 @@ namespace CustomHud
 		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x, y, &NumberSpriteRects[digit]);
 	}
 
-	static int DrawNumber(int number, int x, int y, int r, int g, int b, int leadingZeros = 0)
+	static int DrawNumber(int number, int x, int y, int r, int g, int b)
 	{
 		if (number < 0)
 		{
@@ -126,16 +126,8 @@ namespace CustomHud
 				DrawDigit(digit, x, y, r, g, b);
 				x += NumberWidth;
 				number %= p;
-				leadingZeros--;
 			}
 		}
-
-		// Draw the leading zeros.
-		if (leadingZeros > 0)
-			for (int i = 0; i < leadingZeros; ++i) {
-				DrawDigit(0, x, y, r, g, b);
-				x += NumberWidth;
-			}
 
 		// Draw the last digit (or zero).
 		DrawDigit(number, x, y, r, g, b);
@@ -144,9 +136,9 @@ namespace CustomHud
 		return x;
 	}
 
-	static inline int DrawNumber(int number, int x, int y, int leadingZeros = 0)
+	static inline int DrawNumber(int number, int x, int y)
 	{
-		return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2], leadingZeros);
+		return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2]);
 	}
 
 	static void DrawDot(int x, int y, int r, int g, int b, int a = 255)
@@ -395,14 +387,16 @@ namespace CustomHud
 
 			if (hours || minutes)
 			{
-				auto leadingZeros = hours ? 1 : 0;
-				x = DrawNumber(minutes, x, y, leadingZeros);
+				if (hours && minutes < 10)
+					x = DrawNumber(0, x, y);
+				x = DrawNumber(minutes, x, y);
 				DrawColon(x, y);
 				x += NumberWidth;
 			}
 
-			auto leadingZeros = (hours || minutes) ? 1 : 0;
-			x = DrawNumber(seconds, x, y, leadingZeros);
+			if ((hours || minutes) && seconds < 10)
+				x = DrawNumber(0, x, y);
+			x = DrawNumber(seconds, x, y);
 
 			DrawDot(x, y);
 			x += NumberWidth;

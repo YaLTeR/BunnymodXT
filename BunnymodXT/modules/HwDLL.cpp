@@ -28,6 +28,11 @@ extern "C" void __cdecl Host_Changelevel2_f()
 	return HwDLL::HOOKED_Host_Changelevel2_f();
 }
 
+extern "C" void __cdecl Host_SCR_BeginLoadingPlague()
+{
+	return HwDLL::HOOKED_SCR_BeginLoadingPlague();
+}
+
 extern "C" std::time_t time(std::time_t* t)
 {
 	if (!HwDLL::GetInstance().GetTimeAddr())
@@ -72,7 +77,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			{ reinterpret_cast<void**>(&ORIG_time), reinterpret_cast<void*>(HOOKED_time) },
 			{ reinterpret_cast<void**>(&ORIG_RandomFloat), reinterpret_cast<void*>(HOOKED_RandomFloat) },
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
-			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) }
+			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
+			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlague), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlague) }
 		});
 }
 
@@ -87,7 +93,8 @@ void HwDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_RandomFloat), reinterpret_cast<void*>(HOOKED_RandomFloat) },
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
-			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) }
+			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
+			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlague), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlague) }
 	});
 
 	for (auto cvar : CVars::allCVars)
@@ -105,6 +112,7 @@ void HwDLL::Clear()
 	ORIG_RandomFloat = nullptr;
 	ORIG_RandomLong = nullptr;
 	ORIG_Host_Changelevel2_f = nullptr;
+	ORIG_SCR_BeginLoadingPlague = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
@@ -203,6 +211,7 @@ void HwDLL::FindStuff()
 		//FIND(RandomFloat)
 		//FIND(RandomLong)
 		FIND(Host_Changelevel2_f)
+		FIND(SCR_BeginLoadingPlague)
 		#undef FIND
 	}
 	else
@@ -216,6 +225,7 @@ void HwDLL::FindStuff()
 		//DEF_FUTURE(RandomFloat)
 		//DEF_FUTURE(RandomLong)
 		DEF_FUTURE(Host_Changelevel2_f)
+		DEF_FUTURE(SCR_BeginLoadingPlague)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
 		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
 		if (oldEngine) {
@@ -354,6 +364,7 @@ void HwDLL::FindStuff()
 		//GET_FUTURE(RandomFloat)
 		//GET_FUTURE(RandomLong)
 		GET_FUTURE(Host_Changelevel2_f)
+		GET_FUTURE(SCR_BeginLoadingPlague)
 		#undef GET_FUTURE
 
 		n = fHost_Tell_f.get();
@@ -693,7 +704,22 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	RegisterCVarsAndCommandsIfNeeded();
 
 	int *state = reinterpret_cast<int*>(cls);
-	int *paused = reinterpret_cast<int*>(sv) + 1;
+	int *paused = reinterpret_cast<int*>(sv)+1;
+	static unsigned counter = 1;
+	auto c = counter++;
+	std::string buf(cmd_text->data, cmd_text->cursize); // TODO: ifdef this so it doesn't waste performance.
+	if (CVars::_bxt_taslog.GetBool())
+		ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; executing: %s; host_frametime: %f; buffer: %s\n", c, *state, *paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (executing ? "true" : "false"), *host_frametime, buf.c_str());
+
+	if (insideCbuf_Execute) {
+		ORIG_Cbuf_Execute();
+
+		buf.assign(cmd_text->data, cmd_text->cursize);
+		if (CVars::_bxt_taslog.GetBool())
+			ORIG_Con_Printf("Cbuf_Execute() #%u end; sv.paused: %d; host_frametime: %f; buffer: %s\n", c, *paused, *host_frametime, buf.c_str());
+
+		return;
+	}
 
 	if (!finishingLoad && *state == 4 && !executing)
 	{
@@ -706,17 +732,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	if (framesTillExecuting > 0)
 		framesTillExecuting--;
 
-	// All map load / change commands call Cbuf_Execute inside them, while we already are inside one.
-	if (insideCbuf_Execute)
-		executing = false;
 	if (*state != 5 && *state != 4)
 		executing = false;
-
-	static unsigned counter = 1;
-	auto c = counter++;
-	std::string buf(cmd_text->data, cmd_text->cursize); // TODO: ifdef this so it doesn't waste performance.
-	if (CVars::_bxt_taslog.GetBool())
-		ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; executing: %s; host_frametime: %f; buffer: %s\n", c, *state, *paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (executing ? "true" : "false"), *host_frametime, buf.c_str());
 
 	insideCbuf_Execute = true;
 	ORIG_Cbuf_Execute(); // executing might change inside if we had some kind of load command in the buffer.
@@ -759,8 +776,6 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		if (CVars::_bxt_taslog.GetBool())
 			ORIG_Con_Printf("Cbuf_Execute() #%u executing; sv.paused: %d; buffer: %s\n", c, *paused, buf.c_str());
 
-		// Setting to true once again because it might have been reset in Cbuf_Execute.
-		insideCbuf_Execute = true;
 		ORIG_Cbuf_Execute();
 
 		// If still executing (didn't load a save).
@@ -830,12 +845,18 @@ HOOK_DEF_2(HwDLL, long, __cdecl, RandomLong, long, a1, long, a2)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 {
-	EngineMsg("Host_Changelevel2_f\n");
+	ORIG_Con_Printf("Host_Changelevel2_f\n");
 	changelevel = true;
 	if (!CountingSharedRNGSeed && SharedRNGSeedPresent)
 		SharedRNGSeedCounter = LastRandomSeed;
 
 	return ORIG_Host_Changelevel2_f();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, SCR_BeginLoadingPlague)
+{
+	executing = false;
+	return ORIG_SCR_BeginLoadingPlague();
 }
 
 HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c)

@@ -4,6 +4,8 @@
 #include "modules.hpp"
 #include "hud_custom.hpp"
 
+#include <chrono>
+
 namespace CustomHud
 {
 	static const float FADE_DURATION_JUMPSPEED = 0.7f;
@@ -28,8 +30,6 @@ namespace CustomHud
 	static std::array<client_sprite_t*, 10> NumberSpritePointers;
 	static int NumberWidth;
 	static int NumberHeight;
-	HSPRITE_HL DotSprite;
-	wrect_t DotRect;
 
 	template<typename T, size_t size = 3>
 	static inline void vecCopy(const T src[], T dest[])
@@ -141,41 +141,55 @@ namespace CustomHud
 		return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2]);
 	}
 
-	static void DrawDot(int x, int y, int r, int g, int b, int a = 255)
+	static void DrawDot(int x, int y, int r, int g, int b)
 	{
-		/*const int DOT_SIZE = 5;
-		x += (NumberWidth - DOT_SIZE) / 2;
-		y += NumberHeight - DOT_SIZE;
-		ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x, y, DOT_SIZE, DOT_SIZE, r, g, b, a);*/
-		x += (NumberWidth - DotRect.right) / 2;
-		y += NumberHeight - DotRect.bottom;
-		ClientDLL::GetInstance().pEngfuncs->pfnSPR_Set(DotSprite, hudColor[0], hudColor[1], hudColor[2]);
-		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x + 1, y, &DotRect);
+		const int Dot640[] = {
+			21,  114, 128, 83,  21,
+			150, 255, 255, 255, 104,
+			239, 255, 255, 255, 192,
+			226, 255, 255, 255, 165,
+			114, 255, 255, 255, 65,
+			29,  43,  89,  29,  29
+		};
+		const int Dot320[] = {
+			143, 199, 122,
+			255, 255, 218,
+			120, 169, 95
+		};
+
+		if (si.iWidth < 640)
+			for (int i = 0; i < 3; ++i)
+				for (int j = 0; j < 3; ++j)
+					ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x + j, y + i, 1, 1, r, g, b, Dot320[i*3 + j]);
+		else
+			for (int i = 0; i < 6; ++i)
+				for (int j = 0; j < 5; ++j)
+					ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x + j, y + i, 1, 1, r, g, b, Dot640[i*5 + j]);
 	}
 
-	static void DrawDot(int x, int y, int a = 255)
+	static void DrawDecimalSeparator(int x, int y, int r, int g, int b)
 	{
-		return DrawDot(x, y, hudColor[0], hudColor[1], hudColor[2], a);
+		x += (NumberWidth - 6) / 2;
+		y += NumberHeight - 5;
+		DrawDot(x + 1, y, r, g, b);
 	}
 
-	static void DrawColon(int x, int y, int r, int g, int b, int a = 255)
+	static void DrawDecimalSeparator(int x, int y)
 	{
-		/*const int DOT_SIZE = 4;
-		x += (NumberWidth - DOT_SIZE) / 2;
-		ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x, y + 3, DOT_SIZE, DOT_SIZE, r, g, b, a);
-		y += NumberHeight - DOT_SIZE;
-		ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x, y - 3, DOT_SIZE, DOT_SIZE, r, g, b, a);*/
-		x += (NumberWidth - DotRect.right) / 2;
-		ClientDLL::GetInstance().pEngfuncs->pfnSPR_Set(DotSprite, hudColor[0], hudColor[1], hudColor[2]);
-		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x + 2, y + 2, &DotRect);
-		y += NumberHeight - DotRect.bottom;
-		ClientDLL::GetInstance().pEngfuncs->pfnSPR_Set(DotSprite, hudColor[0], hudColor[1], hudColor[2]);
-		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x + 2, y - 2, &DotRect);
+		return DrawDecimalSeparator(x, y, hudColor[0], hudColor[1], hudColor[2]);
 	}
 
-	static void DrawColon(int x, int y, int a = 255)
+	static void DrawColon(int x, int y, int r, int g, int b)
 	{
-		return DrawColon(x, y, hudColor[0], hudColor[1], hudColor[2], a);
+		x += (NumberWidth - 6) / 2;
+		DrawDot(x + 1, y + 2, r, g, b);
+		y += NumberHeight - 5;
+		DrawDot(x + 1, y - 2, r, g, b);
+	}
+
+	static void DrawColon(int x, int y)
+	{
+		return DrawColon(x, y, hudColor[0], hudColor[1], hudColor[2]);
 	}
 
 	static void GetPosition(const CVarWrapper& Offset, const CVarWrapper& Anchor, int* x, int* y, int rx = 0, int ry = 0)
@@ -398,7 +412,7 @@ namespace CustomHud
 				x = DrawNumber(0, x, y);
 			x = DrawNumber(seconds, x, y);
 
-			DrawDot(x, y);
+			DrawDecimalSeparator(x, y);
 			x += NumberWidth;
 
 			auto ms = static_cast<int>(timeRemainder * 1000);
@@ -475,12 +489,6 @@ namespace CustomHud
 				EngineDevMsg("[client dll] Reloaded the digit %d sprite from \"%s\".\n", i, path.c_str());
 			}
 		}
-
-		DotSprite = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Load("dot.spr");
-		DotRect.left = 0;
-		DotRect.top = 0;
-		DotRect.right = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Width(DotSprite, 0);
-		DotRect.bottom = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Height(DotSprite, 0);
 	}
 
 	void Draw(float flTime)

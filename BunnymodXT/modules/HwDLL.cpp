@@ -28,9 +28,9 @@ extern "C" void __cdecl Host_Changelevel2_f()
 	return HwDLL::HOOKED_Host_Changelevel2_f();
 }
 
-extern "C" void __cdecl Host_SCR_BeginLoadingPlague()
+extern "C" void __cdecl Host_SCR_BeginLoadingPlaque()
 {
-	return HwDLL::HOOKED_SCR_BeginLoadingPlague();
+	return HwDLL::HOOKED_SCR_BeginLoadingPlaque();
 }
 
 extern "C" std::time_t time(std::time_t* t)
@@ -78,7 +78,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			{ reinterpret_cast<void**>(&ORIG_RandomFloat), reinterpret_cast<void*>(HOOKED_RandomFloat) },
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
-			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlague), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlague) }
+			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) }
 		});
 }
 
@@ -94,7 +94,7 @@ void HwDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
-			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlague), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlague) }
+			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) }
 	});
 
 	for (auto cvar : CVars::allCVars)
@@ -112,7 +112,7 @@ void HwDLL::Clear()
 	ORIG_RandomFloat = nullptr;
 	ORIG_RandomLong = nullptr;
 	ORIG_Host_Changelevel2_f = nullptr;
-	ORIG_SCR_BeginLoadingPlague = nullptr;
+	ORIG_SCR_BeginLoadingPlaque = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
@@ -211,7 +211,7 @@ void HwDLL::FindStuff()
 		//FIND(RandomFloat)
 		//FIND(RandomLong)
 		FIND(Host_Changelevel2_f)
-		FIND(SCR_BeginLoadingPlague)
+		FIND(SCR_BeginLoadingPlaque)
 		#undef FIND
 	}
 	else
@@ -225,7 +225,7 @@ void HwDLL::FindStuff()
 		//DEF_FUTURE(RandomFloat)
 		//DEF_FUTURE(RandomLong)
 		DEF_FUTURE(Host_Changelevel2_f)
-		DEF_FUTURE(SCR_BeginLoadingPlague)
+		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
 		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
 		if (oldEngine) {
@@ -364,7 +364,7 @@ void HwDLL::FindStuff()
 		//GET_FUTURE(RandomFloat)
 		//GET_FUTURE(RandomLong)
 		GET_FUTURE(Host_Changelevel2_f)
-		GET_FUTURE(SCR_BeginLoadingPlague)
+		GET_FUTURE(SCR_BeginLoadingPlaque)
 		#undef GET_FUTURE
 
 		n = fHost_Tell_f.get();
@@ -853,10 +853,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 	return ORIG_Host_Changelevel2_f();
 }
 
-HOOK_DEF_0(HwDLL, void, __cdecl, SCR_BeginLoadingPlague)
+HOOK_DEF_0(HwDLL, void, __cdecl, SCR_BeginLoadingPlaque)
 {
 	executing = false;
-	return ORIG_SCR_BeginLoadingPlague();
+	return ORIG_SCR_BeginLoadingPlaque();
 }
 
 HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c)

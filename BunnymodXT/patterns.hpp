@@ -187,7 +187,7 @@ namespace Patterns
 		}
 	};
 
-	const MemUtils::ptnvec ptnsSCR_BeginLoadingPlague =
+	const MemUtils::ptnvec ptnsSCR_BeginLoadingPlaque =
 	{
 		{
 			"HL-SteamPipe",

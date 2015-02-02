@@ -102,7 +102,7 @@ namespace CustomHud
 		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x, y, &NumberSpriteRects[digit]);
 	}
 
-	static int DrawNumber(int number, int x, int y, int r, int g, int b)
+	static int DrawNumber(int number, int x, int y, int r, int g, int b, int fieldMinWidth = 1)
 	{
 		if (number < 0)
 		{
@@ -127,8 +127,13 @@ namespace CustomHud
 			number /= 10;
 		}
 
-		if (i == 0)
-			i++;
+		for (; fieldMinWidth > 10; --fieldMinWidth)
+		{
+			DrawDigit(0, x, y, r, g, b);
+			x += NumberWidth;
+		}
+		if (fieldMinWidth > i)
+			i = fieldMinWidth;
 
 		for (int j = i; j > 0; --j)
 		{
@@ -139,9 +144,9 @@ namespace CustomHud
 		return x;
 	}
 
-	static inline int DrawNumber(int number, int x, int y)
+	static inline int DrawNumber(int number, int x, int y, int fieldMinWidth = 1)
 	{
-		return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2]);
+		return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2], fieldMinWidth);
 	}
 
 	static void DrawDot(int x, int y, int r, int g, int b)
@@ -404,26 +409,19 @@ namespace CustomHud
 
 			if (hours || minutes)
 			{
-				if (hours && minutes < 10)
-					x = DrawNumber(0, x, y);
-				x = DrawNumber(minutes, x, y);
+				int fieldMinWidth = (hours && minutes < 10) ? 2 : 1;
+				x = DrawNumber(minutes, x, y, fieldMinWidth);
 				DrawColon(x, y);
 				x += NumberWidth;
 			}
 
-			if ((hours || minutes) && seconds < 10)
-				x = DrawNumber(0, x, y);
-			x = DrawNumber(seconds, x, y);
+			int fieldMinWidth = ((hours || minutes) && seconds < 10) ? 2 : 1;
+			x = DrawNumber(seconds, x, y, fieldMinWidth);
 
 			DrawDecimalSeparator(x, y);
 			x += NumberWidth;
 
-			auto ms = static_cast<int>(timeRemainder * 1000);
-			if (ms < 100)
-				x = DrawNumber(0, x, y);
-			if (ms < 10)
-				x = DrawNumber(0, x, y);
-			DrawNumber(ms, x, y);
+			DrawNumber(static_cast<int>(timeRemainder * 1000), x, y, 3);
 		}
 	}
 

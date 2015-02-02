@@ -114,24 +114,27 @@ namespace CustomHud
 			// TODO: draw a minus sign.
 		}
 
-		bool startedDrawing = false;
-		// Assuming that we have a non-base 10 integer storage.
-		for (int i = std::numeric_limits<int>::digits10 + 1; i > 0; --i)
+		static_assert(sizeof(int) >= 4, "Int less than 4 bytes in size is not supported.");
+
+		int digits[10] = { 0 };
+		int i;
+		for (i = 0; i < 10; ++i)
 		{
-			auto p = pow(10, i);
-			auto digit = number / p;
-			if (startedDrawing || digit)
-			{
-				startedDrawing = true;
-				DrawDigit(digit, x, y, r, g, b);
-				x += NumberWidth;
-				number %= p;
-			}
+			if (number == 0)
+				break;
+
+			digits[i] = number % 10;
+			number /= 10;
 		}
 
-		// Draw the last digit (or zero).
-		DrawDigit(number, x, y, r, g, b);
-		x += NumberWidth;
+		if (i == 0)
+			i++;
+
+		for (int j = i; j > 0; --j)
+		{
+			DrawDigit(digits[j - 1], x, y, r, g, b);
+			x += NumberWidth;
+		}
 
 		return x;
 	}
@@ -143,6 +146,11 @@ namespace CustomHud
 
 	static void DrawDot(int x, int y, int r, int g, int b)
 	{
+		const int Dot320[] = {
+			143, 199, 122,
+			255, 255, 218,
+			120, 169, 95
+		};
 		const int Dot640[] = {
 			21,  114, 128, 83,  21,
 			150, 255, 255, 255, 104,
@@ -150,11 +158,6 @@ namespace CustomHud
 			226, 255, 255, 255, 165,
 			114, 255, 255, 255, 65,
 			29,  43,  89,  29,  29
-		};
-		const int Dot320[] = {
-			143, 199, 122,
-			255, 255, 218,
-			120, 169, 95
 		};
 
 		if (si.iWidth < 640)

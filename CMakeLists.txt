@@ -1,8 +1,12 @@
-cmake_minimum_required(VERSION 2.8.4)
-project(BunnymodXT)
+cmake_minimum_required (VERSION 3.1)
+project (BunnymodXT)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native -mtune=native -m32 -g -Wall -Wextra -Wno-unused-parameter")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=pentium-m -mfpmath=387 -m32 -g -Wall -Wextra -Wno-unused-parameter")
+set (CMAKE_CXX_STANDARD 11)
+
+if (NOT MSVC)
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native -mtune=native -m32 -g -Wall -Wextra -Wno-unused-parameter")
+	#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=pentium-m -mfpmath=387 -m32 -g -Wall -Wextra -Wno-unused-parameter")
+endif ()
 
 set (Boost_USE_STATIC_LIBS ON)
 find_package (Boost 1.57.0 REQUIRED COMPONENTS chrono date_time system thread)
@@ -11,29 +15,63 @@ include_directories (${Boost_INCLUDE_DIR})
 add_subdirectory (hltas)
 add_subdirectory (hlstrafe)
 
-include_directories("." hltas/src hlstrafe/src)
+include_directories ("." hltas/src hlstrafe/src)
 
-set(LIBRARY_OUTPUT_DIRECTORY ".")
-set(SOURCE_FILES
-    SPTLib/IHookableModule.cpp
-    SPTLib/IHookableDirFilter.cpp
-    SPTLib/IHookableNameFilter.cpp
-    SPTLib/IHookableNameFilterOrdered.cpp
-    SPTLib/Hooks.cpp
-    SPTLib/Linux/Hooks_linux.cpp
-    SPTLib/MemUtils.cpp
-    SPTLib/Linux/MemUtils_linux.cpp
-    SPTLib/sptlib.cpp
-    BunnymodXT/modules/HwDLL.cpp
-    BunnymodXT/modules/ClientDLL.cpp
-    BunnymodXT/modules/ServerDLL.cpp
-    BunnymodXT/modules/PMSharedHooks_linux.cpp
-    BunnymodXT/cvars.cpp
-    BunnymodXT/hud_custom.cpp
-    BunnymodXT/Linux/main_linux.cpp)
+set (LIBRARY_OUTPUT_DIRECTORY ".")
+set (WINDOWS_FILES
+	SPTLib/Windows/DetoursUtils.cpp
+	SPTLib/Windows/Hooks_win.cpp
+	SPTLib/Windows/MemUtils_win.cpp
+	BunnymodXT/Windows/conutils.cpp
+	BunnymodXT/Windows/dllmain.cpp)
+set (LINUX_FILES
+	SPTLib/Linux/Hooks_linux.cpp
+	SPTLib/Linux/MemUtils_linux.cpp
+	BunnymodXT/modules/PMSharedHooks_linux.cpp
+	BunnymodXT/Linux/main_linux.cpp)
+set (SOURCE_FILES
+	SPTLib/IHookableModule.cpp
+	SPTLib/IHookableDirFilter.cpp
+	SPTLib/IHookableNameFilter.cpp
+	SPTLib/IHookableNameFilterOrdered.cpp
+	SPTLib/Hooks.cpp
+	SPTLib/MemUtils.cpp
+	SPTLib/sptlib.cpp
+	BunnymodXT/modules/HwDLL.cpp
+	BunnymodXT/modules/ClientDLL.cpp
+	BunnymodXT/modules/ServerDLL.cpp
+	BunnymodXT/cvars.cpp
+	BunnymodXT/hud_custom.cpp)
 
-add_library(BunnymodXT SHARED ${SOURCE_FILES})
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	# Find Detours.
+	if (NOT DEFINED Detours_ROOT)
+		message (FATAL_ERROR "Could not find Detours, point Detours_ROOT to the Detours base dir.")
+	endif ()
+	find_path (Detours_INCLUDE_DIR detours.h HINTS ${Detours_ROOT}/include)
+	if (Detours_INCLUDE_DIR)
+		message (STATUS "Found the Detours include directory at " ${Detours_INCLUDE_DIR})
+	else ()
+		message (FATAL_ERROR "Could not find the Detours include directory, point Detours_ROOT to the Detours base dir.")
+	endif ()
+	find_file (Detours_LIBRARY detours.lib HINTS ${Detours_ROOT}/lib.X86)
+	if (Detours_LIBRARY)
+		message (STATUS "Found the detours.lib at " ${Detours_LIBRARY})
+	else ()
+		message (FATAL_ERROR "Could not find detours.lib, point Detours_ROOT to the Detours base dir.")
+	endif ()
+
+	include_directories (${Detours_INCLUDE_DIR})
+	set (SOURCE_FILES ${SOURCE_FILES} ${WINDOWS_FILES})
+else ()
+	set (SOURCE_FILES ${SOURCE_FILES} ${LINUX_FILES})
+endif ()
+
+add_library (BunnymodXT SHARED ${SOURCE_FILES})
 target_link_libraries (BunnymodXT hltas hlstrafe ${Boost_LIBRARIES})
 if (NOT MSVC)
 	target_link_libraries (BunnymodXT pthread)
+endif ()
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	target_link_libraries (BunnymodXT ${Detours_LIBRARY})
 endif ()

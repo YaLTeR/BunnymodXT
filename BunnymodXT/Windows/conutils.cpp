@@ -1,4 +1,4 @@
-#include "stdafx.hpp"
+#include "../stdafx.hpp"
 
 #include "conutils.hpp"
 
@@ -22,7 +22,7 @@ namespace ConUtils
         coninfo.dwSize.Y = 500;
         SetConsoleScreenBufferSize(hConsoleOutput, coninfo.dwSize);
 
-        SetConsoleTitle(L"Bunnymod XT Debug Console");
+        SetConsoleTitleA("Bunnymod XT Debug Console");
 
         ShowWindow(GetConsoleWindow(), SW_MAXIMIZE);
         ShowWindow(GetConsoleWindow(), SW_MINIMIZE);

@@ -24,6 +24,41 @@ class HwDLL : public IHookableNameFilterOrdered
 		unsigned cursize;
 	};
 
+	struct client_t;
+	struct svs_t
+	{
+		char unk[4];
+		client_t *clients;
+		int num_clients;
+	};
+
+	struct Key
+	{
+		Key(const char* name) : State(0), Name(name) {};
+		void Down() { State |= (1 + 2); }
+		void Up() { State = 4; }
+		void ClearImpulses() { State &= ~(2 + 4); }
+		bool IsDown() { return (State & 1); }
+		double StateMultiplier()
+		{
+			bool impulsedown = ((State & 2) != 0);
+			bool impulseup = ((State & 4) != 0);
+
+			if (impulsedown)
+			{
+				if (impulseup)
+					return 0.75;
+				else
+					return 0.5;
+			}
+
+			return 1;
+		}
+
+		int State;
+		const std::string Name;
+	};
+
 public:
 	static HwDLL& GetInstance()
 	{
@@ -77,6 +112,8 @@ protected:
 	_Cmd_Args ORIG_Cmd_Args;
 	typedef char*(__cdecl *_Cmd_Argv) (unsigned n);
 	_Cmd_Argv ORIG_Cmd_Argv;
+	typedef void(__cdecl *_hudGetViewAngles) (float* va);
+	_hudGetViewAngles ORIG_hudGetViewAngles;
 
 	void FindStuff();
 
@@ -93,11 +130,19 @@ protected:
 	void ResetButtons();
 	void FindCVarsIfNeeded();
 	HLStrafe::MovementVars GetMovementVars();
+	void GetViewangles(float* va);
+
+	void KeyDown(Key& btn);
+	void KeyUp(Key& btn);
+
+	double Normalize(double angle);
 
 	bool registeredVarsAndCmds;
 
 	void *cls;
+	void *clientstate;
 	void *sv;
+	svs_t *svs;
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
 
@@ -121,7 +166,6 @@ protected:
 	size_t currentFramebulk;
 	size_t totalFramebulks;
 	size_t currentRepeat;
-	HLStrafe::ProcessedFrame previousButtons;
 	bool SharedRNGSeedPresent;
 	unsigned SharedRNGSeed;
 	bool CountingSharedRNGSeed;
@@ -132,6 +176,68 @@ protected:
 		AirRightBtn,
 		GroundLeftBtn,
 		GroundRightBtn;
+
+	struct KeyStates
+	{
+		KeyStates() :
+			Forward("forward"),
+			Left("moveleft"),
+			Right("moveright"),
+			Back("back"),
+			Up("moveup"),
+			Down("movedown"),
+			CamLeft("left"),
+			CamRight("right"),
+			CamUp("lookup"),
+			CamDown("lookdown"),
+			Jump("jump"),
+			Duck("duck"),
+			Use("use"),
+			Attack1("attack"),
+			Attack2("attack2"),
+			Reload("reload") {}
+
+		void ResetStates()
+		{
+			Forward.State = 0;
+			Left.State = 0;
+			Right.State = 0;
+			Back.State = 0;
+			Up.State = 0;
+			Down.State = 0;
+
+			CamLeft.State = 0;
+			CamRight.State = 0;
+			CamUp.State = 0;
+			CamDown.State = 0;
+
+			Jump.State = 0;
+			Duck.State = 0;
+			Use.State = 0;
+			Attack1.State = 0;
+			Attack2.State = 0;
+			Reload.State = 0;
+		}
+
+		Key Forward;
+		Key Left;
+		Key Right;
+		Key Back;
+		Key Up;
+		Key Down;
+
+		Key CamLeft;
+		Key CamRight;
+		Key CamUp;
+		Key CamDown;
+
+		Key Jump;
+		Key Duck;
+		Key Use;
+		Key Attack1;
+		Key Attack2;
+		Key Reload;
+	} currentKeys;
 
 	// Do not clear these inside Clear().
 	bool SetNonSharedRNGSeed = false;

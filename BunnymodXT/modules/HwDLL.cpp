@@ -122,9 +122,12 @@ void HwDLL::Clear()
 	ORIG_Cmd_Argc = nullptr;
 	ORIG_Cmd_Args = nullptr;
 	ORIG_Cmd_Argv = nullptr;
+	ORIG_hudGetViewAngles = nullptr;
 	registeredVarsAndCmds = false;
 	cls = nullptr;
+	clientstate = nullptr;
 	sv = nullptr;
+	svs = nullptr;
 	cmd_text = nullptr;
 	host_frametime = nullptr;
 	framesTillExecuting = 0;
@@ -145,7 +148,7 @@ void HwDLL::Clear()
 	currentFramebulk = 0;
 	totalFramebulks = 0;
 	currentRepeat = 0;
-	previousButtons = HLStrafe::ProcessedFrame();
+	currentKeys.ResetStates();
 	SharedRNGSeedPresent = false;
 	SharedRNGSeed = 0;
 	CountingSharedRNGSeed = false;
@@ -174,6 +177,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find sv.\n");
 
+		svs = reinterpret_cast<svs_t*>(MemUtils::GetSymbolAddress(m_Handle, "svs"));
+		if (svs)
+			EngineDevMsg("[hw dll] Found svs at %p.\n", svs);
+		else
+			EngineDevWarning("[hw dll] Could not find svs.\n");
+
 		cmd_text = reinterpret_cast<cmdbuf_t*>(MemUtils::GetSymbolAddress(m_Handle, "cmd_text"));
 		if (cmd_text)
 			EngineDevMsg("[hw dll] Found cmd_text at %p.\n", cmd_text);
@@ -186,7 +195,13 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find host_frametime.\n");
 
-		if (!cls || !sv || !cmd_text || !host_frametime)
+		ORIG_hudGetViewAngles = reinterpret_cast<_hudGetViewAngles>(MemUtils::GetSymbolAddress(m_Handle, "hudGetViewAngles"));
+		if (ORIG_hudGetViewAngles)
+			EngineDevMsg("[hw dll] Found ORIG_hudGetViewAngles at %p.\n", ORIG_hudGetViewAngles);
+		else
+			EngineDevWarning("[hw dll] Could not find ORIG_hudGetViewAngles.\n");
+
+		if (!cls || !sv || !svs || !cmd_text || !host_frametime || !ORIG_hudGetViewAngles)
 			ORIG_Cbuf_Execute = nullptr;
 
 		#define FIND(f) \
@@ -309,6 +324,7 @@ void HwDLL::FindStuff()
 					+ (f + 37)
 					);
 				cls = *reinterpret_cast<void**>(f + 69);
+				// TODO: svs and clientstate.
 			}, []() {}
 		);
 
@@ -533,15 +549,48 @@ void HwDLL::InsertCommands()
 				if (!c.empty())
 					ORIG_Cbuf_InsertText(c.c_str());
 
+				if (svs->num_clients >= 1) {
+					edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + 0x4a84);
+					player.Origin[0] = pl->v.origin[0];
+					player.Origin[1] = pl->v.origin[1];
+					player.Origin[2] = pl->v.origin[2];
+					player.Velocity[0] = pl->v.velocity[0];
+					player.Velocity[1] = pl->v.velocity[1];
+					player.Velocity[2] = pl->v.velocity[2];
+
+					// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
+					GetViewangles(player.Viewangles);
+				}
+
 				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f);
 
-				// TODO viewangles.
+				if (!wasRunningFrames) {
+					// We will reset buttons, set up the impulses accordingly.
+					currentKeys.Forward.State = 4;
+					currentKeys.Left.State = 4;
+					currentKeys.Right.State = 4;
+					currentKeys.Back.State = 4;
+					currentKeys.Up.State = 4;
+					currentKeys.Down.State = 4;
+
+					currentKeys.CamLeft.State = 4;
+					currentKeys.CamRight.State = 4;
+					currentKeys.CamUp.State = 4;
+					currentKeys.CamDown.State = 4;
+
+					currentKeys.Jump.State = 4;
+					currentKeys.Duck.State = 4;
+					currentKeys.Use.State = 4;
+					currentKeys.Attack1.State = 4;
+					currentKeys.Attack2.State = 4;
+					currentKeys.Reload.State = 4;
+				}
 
 				#define INS(btn, cmd) \
-					if (p.btn && !previousButtons.btn) \
-						ORIG_Cbuf_InsertText("+" #cmd "\n"); \
-					else if (!p.btn && previousButtons.btn) \
-						ORIG_Cbuf_InsertText("-" #cmd "\n");
+					if (p.btn && !currentKeys.btn.IsDown()) \
+						KeyDown(currentKeys.btn); \
+					else if (!p.btn && currentKeys.btn.IsDown()) \
+						KeyUp(currentKeys.btn);
 				INS(Forward, forward)
 				INS(Left, moveleft)
 				INS(Right, moveright)
@@ -556,7 +605,120 @@ void HwDLL::InsertCommands()
 				INS(Reload, reload)
 				#undef INS
 
-				// TODO speeds.
+				if (p.Pitch == player.Viewangles[0]) {
+					// Only one of those is to be pressed at any given time.
+					if (currentKeys.CamUp.IsDown())
+						KeyUp(currentKeys.CamUp);
+					else if (currentKeys.CamDown.IsDown())
+						KeyUp(currentKeys.CamDown);
+				} else {
+					double pitchDifference = Normalize(static_cast<double>(p.Pitch) - player.Viewangles[0]);
+					double stateMultiplier = 1.0;
+					if (pitchDifference >= 0.0) {
+						if (currentKeys.CamUp.IsDown())
+							KeyUp(currentKeys.CamUp);
+						if (!currentKeys.CamDown.IsDown())
+							KeyDown(currentKeys.CamDown);
+
+						stateMultiplier = currentKeys.CamDown.StateMultiplier();
+					} else {
+						if (currentKeys.CamDown.IsDown())
+							KeyUp(currentKeys.CamDown);
+						if (!currentKeys.CamUp.IsDown())
+							KeyDown(currentKeys.CamUp);
+
+						pitchDifference = std::abs(pitchDifference);
+						stateMultiplier = currentKeys.CamUp.StateMultiplier();
+					}
+					double pitchspeed = (pitchDifference / (*host_frametime)) / stateMultiplier;
+					std::ostringstream ss;
+					ss.setf(std::ios::fixed, std::ios::floatfield);
+					ss.precision(std::numeric_limits<double>::digits10);
+					ss << "cl_pitchspeed " << pitchspeed << '\n';
+					ORIG_Cbuf_InsertText(ss.str().c_str());
+				}
+
+				if (p.Yaw == player.Viewangles[1]) {
+					// Only one of those is to be pressed at any given time.
+					if (currentKeys.CamLeft.IsDown())
+						KeyUp(currentKeys.CamLeft);
+					else if (currentKeys.CamRight.IsDown())
+						KeyUp(currentKeys.CamRight);
+				} else {
+					const double M_U_HALF = 180.0 / 65536; // Compensation.
+					double yawDifference = Normalize(static_cast<double>(p.Yaw) - player.Viewangles[1] + M_U_HALF);
+					double stateMultiplier = 1.0;
+					if (yawDifference >= 0.0) {
+						if (currentKeys.CamRight.IsDown())
+							KeyUp(currentKeys.CamRight);
+						if (!currentKeys.CamLeft.IsDown())
+							KeyDown(currentKeys.CamLeft);
+
+						stateMultiplier = currentKeys.CamLeft.StateMultiplier();
+					} else {
+						if (currentKeys.CamLeft.IsDown())
+							KeyUp(currentKeys.CamLeft);
+						if (!currentKeys.CamRight.IsDown())
+							KeyDown(currentKeys.CamRight);
+
+						yawDifference = std::abs(yawDifference);
+						stateMultiplier = currentKeys.CamRight.StateMultiplier();
+					}
+					double yawspeed = (yawDifference / (*host_frametime)) / stateMultiplier;
+
+					std::ostringstream ss;
+					ss.setf(std::ios::fixed, std::ios::floatfield);
+					ss.precision(std::numeric_limits<double>::digits10);
+					ss << "cl_yawspeed " << yawspeed << '\n';
+					ORIG_Cbuf_InsertText(ss.str().c_str());
+				}
+
+				if (currentKeys.Forward.IsDown()) {
+					double forwardspeed = p.Forwardspeed / currentKeys.Forward.StateMultiplier();
+					std::ostringstream ss;
+					ss.setf(std::ios::fixed, std::ios::floatfield);
+					ss.precision(std::numeric_limits<float>::digits10);
+					ss << "cl_forwardspeed " << forwardspeed << '\n';
+					ORIG_Cbuf_InsertText(ss.str().c_str());
+				}
+				if (currentKeys.Back.IsDown()) {
+					double backspeed = p.Backspeed / currentKeys.Back.StateMultiplier();
+					std::ostringstream ss;
+					ss.setf(std::ios::fixed, std::ios::floatfield);
+					ss.precision(std::numeric_limits<float>::digits10);
+					ss << "cl_backspeed " << backspeed << '\n';
+					ORIG_Cbuf_InsertText(ss.str().c_str());
+				}
+				if (currentKeys.Left.IsDown() || currentKeys.Right.IsDown()) {
+					// Kind of a collision here.
+					double sidespeed = p.Sidespeed / std::min(currentKeys.Left.StateMultiplier(), currentKeys.Right.StateMultiplier());
+					std::ostringstream ss;
+					ss.setf(std::ios::fixed, std::ios::floatfield);
+					ss.precision(std::numeric_limits<float>::digits10);
+					ss << "cl_sidespeed " << sidespeed << '\n';
+					ORIG_Cbuf_InsertText(ss.str().c_str());
+				}
+				if (currentKeys.Up.IsDown() || currentKeys.Down.IsDown()) {
+					// And here.
+					double upspeed = p.Upspeed / std::min(currentKeys.Up.StateMultiplier(), currentKeys.Down.StateMultiplier());
+					std::ostringstream ss;
+					ss.setf(std::ios::fixed, std::ios::floatfield);
+					ss.precision(std::numeric_limits<float>::digits10);
+					ss << "cl_upspeed " << upspeed << '\n';
+					ORIG_Cbuf_InsertText(ss.str().c_str());
+				}
+
+				// Clear impulses AFTER we handled viewangles and speeds.
+				currentKeys.Forward.ClearImpulses();
+				currentKeys.Left.ClearImpulses();
+				currentKeys.Right.ClearImpulses();
+				currentKeys.Back.ClearImpulses();
+				currentKeys.Up.ClearImpulses();
+				currentKeys.Down.ClearImpulses();
+				currentKeys.CamLeft.ClearImpulses();
+				currentKeys.CamRight.ClearImpulses();
+				currentKeys.CamUp.ClearImpulses();
+				currentKeys.CamDown.ClearImpulses();
 
 				// We need this to be in the before all our movement commands,
 				// so insert it last.
@@ -568,8 +730,6 @@ void HwDLL::InsertCommands()
 					ss << "record " << demoName.c_str() << "\n";
 					ORIG_Cbuf_InsertText(ss.str().c_str());
 				}
-
-				previousButtons = p;
 
 				if (++currentRepeat >= f.GetRepeats()) {
 					currentRepeat = 0;
@@ -622,6 +782,7 @@ void HwDLL::InsertCommands()
 				ORIG_Cbuf_InsertText(ss.str().c_str());
 			}
 			ResetButtons();
+			currentKeys.ResetStates();
 			CountingSharedRNGSeed = false;
 		}
 	}
@@ -662,7 +823,6 @@ void HwDLL::ResetButtons()
 	                     "-attack\n"
 	                     "-attack2\n"
 	                     "-reload\n");
-	previousButtons = HLStrafe::ProcessedFrame();
 }
 
 void HwDLL::FindCVarsIfNeeded()
@@ -690,13 +850,47 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
 	vars.Friction = CVars::sv_friction.GetFloat();
 	vars.Edgefriction = CVars::sv_edgefriction.GetFloat();
-	vars.EntFriction = 1.0f; // TBD
 	vars.Accelerate = CVars::sv_accelerate.GetFloat();
 	vars.Airaccelerate = CVars::sv_airaccelerate.GetFloat();
 	vars.Gravity = CVars::sv_gravity.GetFloat();
-	vars.EntGravity = 1.0f; // TBD
+
+	if (svs->num_clients >= 1) {
+		edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + 0x4a84);
+		vars.EntFriction = pl->v.friction;
+		vars.EntGravity = pl->v.gravity;
+	} else {
+		vars.EntFriction = 1.0f;
+		vars.EntGravity = 1.0f;
+	}
 
 	return vars;
+}
+
+void HwDLL::KeyDown(Key& key)
+{
+	key.Down();
+
+	std::ostringstream ss;
+	ss << '+' << key.Name << '\n';
+	ORIG_Cbuf_InsertText(ss.str().c_str());
+}
+
+void HwDLL::KeyUp(Key& key)
+{
+	key.Up();
+
+	std::ostringstream ss;
+	ss << '-' << key.Name << '\n';
+	ORIG_Cbuf_InsertText(ss.str().c_str());
+}
+
+double HwDLL::Normalize(double angle)
+{
+	angle = std::fmod(angle, 360.0);
+	if (angle > 180.0)
+		return (angle - 180.0);
+	else
+		return angle;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
@@ -803,6 +997,17 @@ void HwDLL::SetPlayerVelocity(float velocity[3])
 	player.Velocity[0] = velocity[0];
 	player.Velocity[1] = velocity[1];
 	player.Velocity[2] = velocity[2];
+}
+
+void HwDLL::GetViewangles(float* va)
+{
+	if (clientstate) {
+		float *viewangles = reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(clientstate) + 0x2ABE4);
+		va[0] = viewangles[0];
+		va[1] = viewangles[1];
+		va[2] = viewangles[2];
+	} else
+		ORIG_hudGetViewAngles(va);
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

@@ -172,10 +172,7 @@ protected:
 	unsigned SharedRNGSeedCounter;
 	unsigned LoadingSeedCounter;
 	bool ButtonsPresent;
-	HLTAS::Button AirLeftBtn,
-		AirRightBtn,
-		GroundLeftBtn,
-		GroundRightBtn;
+	HLTAS::StrafeButtons Buttons;
 
 	struct KeyStates
 	{

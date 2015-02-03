@@ -544,7 +544,7 @@ void HwDLL::InsertCommands()
 		while (currentFramebulk < totalFramebulks) {
 			auto f = input.GetFrame(currentFramebulk);
 			// Movement frame.
-			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.Buttons == HLTAS::ButtonState::NOTHING)) {
+			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING)) {
 				auto c = f.Commands;
 				if (!c.empty())
 					ORIG_Cbuf_InsertText(c.c_str());
@@ -562,7 +562,7 @@ void HwDLL::InsertCommands()
 					GetViewangles(player.Viewangles);
 				}
 
-				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f);
+				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, Buttons, ButtonsPresent);
 
 				if (!wasRunningFrames) {
 					// We will reset buttons, set up the impulses accordingly.
@@ -753,13 +753,10 @@ void HwDLL::InsertCommands()
 			} else if (f.SeedPresent) { // Seeds frame.
 				SharedRNGSeedPresent = true;
 				SharedRNGSeed = f.GetSeed();
-			} else if (f.Buttons != HLTAS::ButtonState::NOTHING) { // Buttons frame.
-				if (f.Buttons == HLTAS::ButtonState::SET) {
+			} else if (f.BtnState != HLTAS::ButtonState::NOTHING) { // Buttons frame.
+				if (f.BtnState == HLTAS::ButtonState::SET) {
 					ButtonsPresent = true;
-					AirLeftBtn = f.GetAirLeftBtn();
-					AirRightBtn = f.GetAirRightBtn();
-					GroundLeftBtn = f.GetGroundLeftBtn();
-					GroundRightBtn = f.GetGroundRightBtn();
+					Buttons = f.GetButtons();
 				} else
 					ButtonsPresent = false;
 			}
@@ -796,7 +793,7 @@ bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
 	while (curFramebulk < totalFramebulks) {
 		f = input.GetFrame(curFramebulk);
 		// Only movement frames can have repeats.
-		if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.Buttons == HLTAS::ButtonState::NOTHING))
+		if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING))
 			return true;
 
 		curFramebulk++;

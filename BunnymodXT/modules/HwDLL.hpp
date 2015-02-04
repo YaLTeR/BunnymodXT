@@ -143,6 +143,7 @@ protected:
 	void *clientstate;
 	void *sv;
 	svs_t *svs;
+	ptrdiff_t offEdict;
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
 

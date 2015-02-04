@@ -128,6 +128,7 @@ void HwDLL::Clear()
 	clientstate = nullptr;
 	sv = nullptr;
 	svs = nullptr;
+	offEdict = 0;
 	cmd_text = nullptr;
 	host_frametime = nullptr;
 	framesTillExecuting = 0;
@@ -178,9 +179,10 @@ void HwDLL::FindStuff()
 			EngineDevWarning("[hw dll] Could not find sv.\n");
 
 		svs = reinterpret_cast<svs_t*>(MemUtils::GetSymbolAddress(m_Handle, "svs"));
-		if (svs)
+		if (svs) {
 			EngineDevMsg("[hw dll] Found svs at %p.\n", svs);
-		else
+			offEdict = 0x4a84;
+		} else
 			EngineDevWarning("[hw dll] Could not find svs.\n");
 
 		cmd_text = reinterpret_cast<cmdbuf_t*>(MemUtils::GetSymbolAddress(m_Handle, "cmd_text"));
@@ -324,7 +326,9 @@ void HwDLL::FindStuff()
 					+ (f + 37)
 					);
 				cls = *reinterpret_cast<void**>(f + 69);
-				// TODO: svs and clientstate.
+				svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
+				offEdict = 19356;
+				clientstate = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 86) - 0x2AF80);
 			}, []() {}
 		);
 
@@ -339,7 +343,9 @@ void HwDLL::FindStuff()
 		if (Host_AutoSave_f) {
 			EngineDevMsg("[hw dll] Found Host_AutoSave_f at %p (using the %s pattern).\n", Host_AutoSave_f, Patterns::ptnsHost_AutoSave_f[n].build.c_str());
 			EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
+			EngineDevMsg("[hw dll] Found clientstate at %p.\n", clientstate);
 			EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
+			EngineDevMsg("[hw dll] Found svs at %p.\n", svs);
 			EngineDevMsg("[hw dll] Found Con_Printf at %p.\n", ORIG_Con_Printf);
 		} else {
 			EngineDevWarning("[hw dll] Could not find Host_AutoSave_f.\n");
@@ -550,7 +556,7 @@ void HwDLL::InsertCommands()
 					ORIG_Cbuf_InsertText(c.c_str());
 
 				if (svs->num_clients >= 1) {
-					edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + 0x4a84);
+					edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
 					player.Origin[0] = pl->v.origin[0];
 					player.Origin[1] = pl->v.origin[1];
 					player.Origin[2] = pl->v.origin[2];
@@ -852,7 +858,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Gravity = CVars::sv_gravity.GetFloat();
 
 	if (svs->num_clients >= 1) {
-		edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + 0x4a84);
+		edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
 		vars.EntFriction = pl->v.friction;
 		vars.EntGravity = pl->v.gravity;
 	} else {

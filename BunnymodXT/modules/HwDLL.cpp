@@ -566,6 +566,7 @@ void HwDLL::InsertCommands()
 
 					// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
 					GetViewangles(player.Viewangles);
+					//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
 				}
 
 				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, Buttons, ButtonsPresent);
@@ -610,6 +611,12 @@ void HwDLL::InsertCommands()
 				INS(Attack2, attack2)
 				INS(Reload, reload)
 				#undef INS
+
+				//if (f.PitchPresent)
+				//	ORIG_Con_Printf("Frame pitch: %f; ", f.GetPitch());
+				//if (f.GetYawPresent())
+				//	ORIG_Con_Printf("Frame yaw: %f; ", f.GetYaw());
+				//ORIG_Con_Printf("Wish viewangles: %f %f\n", p.Pitch, p.Yaw);
 
 				if (p.Pitch == player.Viewangles[0]) {
 					// Only one of those is to be pressed at any given time.
@@ -714,17 +721,19 @@ void HwDLL::InsertCommands()
 					ORIG_Cbuf_InsertText(ss.str().c_str());
 				}
 
-				// Clear impulses AFTER we handled viewangles and speeds.
-				currentKeys.Forward.ClearImpulses();
-				currentKeys.Left.ClearImpulses();
-				currentKeys.Right.ClearImpulses();
-				currentKeys.Back.ClearImpulses();
-				currentKeys.Up.ClearImpulses();
-				currentKeys.Down.ClearImpulses();
-				currentKeys.CamLeft.ClearImpulses();
-				currentKeys.CamRight.ClearImpulses();
-				currentKeys.CamUp.ClearImpulses();
-				currentKeys.CamDown.ClearImpulses();
+				// Clear impulses AFTER we handled viewangles and speeds, and only if we're active.
+				if (*reinterpret_cast<int*>(cls) == 5) {
+					currentKeys.Forward.ClearImpulses();
+					currentKeys.Left.ClearImpulses();
+					currentKeys.Right.ClearImpulses();
+					currentKeys.Back.ClearImpulses();
+					currentKeys.Up.ClearImpulses();
+					currentKeys.Down.ClearImpulses();
+					currentKeys.CamLeft.ClearImpulses();
+					currentKeys.CamRight.ClearImpulses();
+					currentKeys.CamUp.ClearImpulses();
+					currentKeys.CamDown.ClearImpulses();
+				}
 
 				// We need this to be in the before all our movement commands,
 				// so insert it last.
@@ -942,6 +951,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	if (executing)
 	{
 		changelevel = false;
+		bool firstActiveFrame = finishingLoad;
 		if (finishingLoad) { // First frame after load.
 			finishingLoad = false;
 			if (SharedRNGSeedPresent) {

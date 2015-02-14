@@ -9,6 +9,7 @@ if (NOT MSVC)
 endif ()
 
 set (Boost_USE_STATIC_LIBS ON)
+set (Boost_USE_STATIC_RUNTIME ON)
 find_package (Boost 1.57.0 REQUIRED COMPONENTS chrono date_time system thread)
 include_directories (${Boost_INCLUDE_DIR})
 

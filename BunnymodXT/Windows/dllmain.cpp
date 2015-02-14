@@ -6,6 +6,8 @@
 #include "../modules.hpp"
 #include "conutils.hpp"
 
+const wchar_t EVENT_NAME[] = L"BunnymodXT-Injector";
+
 void PrintMessage(const char* format, ...)
 {
 	va_list args;
@@ -72,6 +74,13 @@ unsigned int __stdcall MainThread(void* args)
 	Hooks::AddToHookedModules(&ClientDLL::GetInstance());
 	Hooks::AddToHookedModules(&ServerDLL::GetInstance());
 	Hooks::Init(true);
+
+	auto resume_event = OpenEventW(EVENT_MODIFY_STATE, FALSE, EVENT_NAME);
+	if (resume_event != NULL) {
+		SetEvent(resume_event);
+		CloseHandle(resume_event);
+		EngineDevMsg("Signaled the injector to resume the process.\n");
+	}
 
 	return 0;
 }

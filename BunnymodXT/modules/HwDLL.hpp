@@ -135,8 +135,6 @@ protected:
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
 
-	double Normalize(double angle);
-
 	bool registeredVarsAndCmds;
 
 	void *cls;

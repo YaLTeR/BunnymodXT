@@ -20,6 +20,7 @@ namespace CVars
 	// Serverside CVars
 	CVarWrapper bxt_autojump("bxt_autojump", "0");
 	CVarWrapper bxt_bhopcap("bxt_bhopcap", "1");
+	CVarWrapper bxt_timer_autostop("bxt_timer_autostop", "1");
 
 	// Clientside CVars
 	CVarWrapper bxt_autojump_prediction("bxt_autojump_prediction", "0");
@@ -57,6 +58,7 @@ namespace CVars
 		&sv_gravity,
 		&bxt_autojump,
 		&bxt_bhopcap,
+		&bxt_timer_autostop,
 		&bxt_autojump_prediction,
 		&bxt_bhopcap_prediction,
 		&bxt_hud,

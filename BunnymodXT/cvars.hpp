@@ -115,6 +115,7 @@ namespace CVars
 	// Serverside CVars
 	extern CVarWrapper bxt_autojump;
 	extern CVarWrapper bxt_bhopcap;
+	extern CVarWrapper bxt_timer_autostop;
 
 	// Clientside CVars
 	extern CVarWrapper bxt_autojump_prediction;

@@ -37,6 +37,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
+			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) }
 		});
 }
 
@@ -48,6 +49,7 @@ void ServerDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
+			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) }
 		});
 
 	Clear();
@@ -60,6 +62,7 @@ void ServerDLL::Clear()
 	ORIG_PM_PreventMegaBunnyJumping = nullptr;
 	ORIG_PM_PlayerMove = nullptr;
 	ORIG_CmdStart = nullptr;
+	ORIG_CNihilanth__DyingThink = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -208,6 +211,14 @@ void ServerDLL::FindStuff()
 		} else
 			EngineDevWarning("[server dll] Could not get the address of GetEntityAPI.\n");
 	}
+
+	ORIG_CNihilanth__DyingThink = reinterpret_cast<_CNihilanth__DyingThink>(MemUtils::GetSymbolAddress(m_Handle, "?DyingThink@CNihilanth@@QAEXXZ"));
+	if (ORIG_CNihilanth__DyingThink)
+		EngineDevMsg("[server dll] Found CNihilanth::DyingThink at %p.\n", ORIG_CNihilanth__DyingThink);
+	else {
+		EngineDevWarning("[server dll] Could not find CNihilanth::DyingThink.\n");
+		EngineWarning("Automatic timer stopping is not available.\n");
+	}
 	
 	// This has to be the last thing to check and hook.
 	pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
@@ -259,6 +270,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_autojump);
 	if (ORIG_PM_PreventMegaBunnyJumping)
 		REG(bxt_bhopcap);
+	if (ORIG_CNihilanth__DyingThink)
+		REG(bxt_timer_autostop);
 	#undef REG
 }
 
@@ -372,4 +385,12 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 	#undef ALERT
 
 	return ORIG_CmdStart(player, cmd, seed);
+}
+
+HOOK_DEF_2(ServerDLL, void, __fastcall, CNihilanth__DyingThink, void*, thisptr, int, edx)
+{
+	if (CVars::bxt_timer_autostop.GetBool())
+		CustomHud::SetCountingTime(false);
+
+	return ORIG_CNihilanth__DyingThink(thisptr, edx);
 }

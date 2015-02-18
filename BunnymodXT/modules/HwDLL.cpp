@@ -239,8 +239,8 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cvar_FindVar)
 		DEF_FUTURE(Cbuf_InsertText)
 		DEF_FUTURE(Cmd_AddMallocCommand)
-		//DEF_FUTURE(RandomFloat)
-		//DEF_FUTURE(RandomLong)
+		/*DEF_FUTURE(RandomFloat)
+		DEF_FUTURE(RandomLong)*/
 		DEF_FUTURE(Host_Changelevel2_f)
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -566,7 +566,7 @@ void HwDLL::InsertCommands()
 
 					// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
 					GetViewangles(player.Viewangles);
-					//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
+					ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
 				}
 
 				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, Buttons, ButtonsPresent);
@@ -616,8 +616,10 @@ void HwDLL::InsertCommands()
 				//	ORIG_Con_Printf("Frame pitch: %f; ", f.GetPitch());
 				//if (f.GetYawPresent())
 				//	ORIG_Con_Printf("Frame yaw: %f; ", f.GetYaw());
-				//ORIG_Con_Printf("Wish viewangles: %f %f\n", p.Pitch, p.Yaw);
+				ORIG_Con_Printf("Wish viewangles: %f %f\n", p.Pitch, p.Yaw);
 
+				auto pitchStateMultiplier = 1.0;
+				auto yawStateMultiplier = 1.0;
 				if (p.Pitch == player.Viewangles[0]) {
 					// Only one of those is to be pressed at any given time.
 					if (currentKeys.CamUp.IsDown())
@@ -625,30 +627,22 @@ void HwDLL::InsertCommands()
 					else if (currentKeys.CamDown.IsDown())
 						KeyUp(currentKeys.CamDown);
 				} else {
-					double pitchDifference = Normalize(static_cast<double>(p.Pitch) - player.Viewangles[0]);
-					double stateMultiplier = 1.0;
+					double pitchDifference = HLStrafe::GetPitchDifference(player.Viewangles[0], p.Pitch);
 					if (pitchDifference >= 0.0) {
 						if (currentKeys.CamUp.IsDown())
 							KeyUp(currentKeys.CamUp);
 						if (!currentKeys.CamDown.IsDown())
 							KeyDown(currentKeys.CamDown);
 
-						stateMultiplier = currentKeys.CamDown.StateMultiplier();
+						pitchStateMultiplier = currentKeys.CamDown.StateMultiplier();
 					} else {
 						if (currentKeys.CamDown.IsDown())
 							KeyUp(currentKeys.CamDown);
 						if (!currentKeys.CamUp.IsDown())
 							KeyDown(currentKeys.CamUp);
 
-						pitchDifference = std::abs(pitchDifference);
-						stateMultiplier = currentKeys.CamUp.StateMultiplier();
+						pitchStateMultiplier = currentKeys.CamUp.StateMultiplier();
 					}
-					double pitchspeed = (pitchDifference / (*host_frametime)) / stateMultiplier;
-					std::ostringstream ss;
-					ss.setf(std::ios::fixed, std::ios::floatfield);
-					ss.precision(std::numeric_limits<double>::digits10);
-					ss << "cl_pitchspeed " << pitchspeed << '\n';
-					ORIG_Cbuf_InsertText(ss.str().c_str());
 				}
 
 				if (p.Yaw == player.Viewangles[1]) {
@@ -658,68 +652,48 @@ void HwDLL::InsertCommands()
 					else if (currentKeys.CamRight.IsDown())
 						KeyUp(currentKeys.CamRight);
 				} else {
-					const double M_U_HALF = 180.0 / 65536; // Compensation.
-					double yawDifference = Normalize(static_cast<double>(p.Yaw) - player.Viewangles[1] + M_U_HALF);
-					double stateMultiplier = 1.0;
+					double yawDifference = HLStrafe::GetYawDifference(player.Viewangles[1], p.Yaw);
 					if (yawDifference >= 0.0) {
 						if (currentKeys.CamRight.IsDown())
 							KeyUp(currentKeys.CamRight);
 						if (!currentKeys.CamLeft.IsDown())
 							KeyDown(currentKeys.CamLeft);
 
-						stateMultiplier = currentKeys.CamLeft.StateMultiplier();
+						yawStateMultiplier = currentKeys.CamLeft.StateMultiplier();
 					} else {
 						if (currentKeys.CamLeft.IsDown())
 							KeyUp(currentKeys.CamLeft);
 						if (!currentKeys.CamRight.IsDown())
 							KeyDown(currentKeys.CamRight);
 
-						yawDifference = std::abs(yawDifference);
-						stateMultiplier = currentKeys.CamRight.StateMultiplier();
+						yawStateMultiplier = currentKeys.CamRight.StateMultiplier();
 					}
-					double yawspeed = (yawDifference / (*host_frametime)) / stateMultiplier;
-
-					std::ostringstream ss;
-					ss.setf(std::ios::fixed, std::ios::floatfield);
-					ss.precision(std::numeric_limits<double>::digits10);
-					ss << "cl_yawspeed " << yawspeed << '\n';
-					ORIG_Cbuf_InsertText(ss.str().c_str());
 				}
 
+				ORIG_Cbuf_InsertText(HLStrafe::GetAngleSpeedString(player.Viewangles[0], player.Viewangles[1], p.Pitch, p.Yaw, pitchStateMultiplier, yawStateMultiplier, *host_frametime).c_str());
+
+				std::ostringstream speeds_ss;
+				speeds_ss.setf(std::ios::fixed, std::ios::floatfield);
+				speeds_ss.precision(std::numeric_limits<float>::digits10);
 				if (currentKeys.Forward.IsDown()) {
 					double forwardspeed = p.Forwardspeed / currentKeys.Forward.StateMultiplier();
-					std::ostringstream ss;
-					ss.setf(std::ios::fixed, std::ios::floatfield);
-					ss.precision(std::numeric_limits<float>::digits10);
-					ss << "cl_forwardspeed " << forwardspeed << '\n';
-					ORIG_Cbuf_InsertText(ss.str().c_str());
+					speeds_ss << "cl_forwardspeed " << forwardspeed << '\n';
 				}
 				if (currentKeys.Back.IsDown()) {
 					double backspeed = p.Backspeed / currentKeys.Back.StateMultiplier();
-					std::ostringstream ss;
-					ss.setf(std::ios::fixed, std::ios::floatfield);
-					ss.precision(std::numeric_limits<float>::digits10);
-					ss << "cl_backspeed " << backspeed << '\n';
-					ORIG_Cbuf_InsertText(ss.str().c_str());
+					speeds_ss << "cl_backspeed " << backspeed << '\n';
 				}
 				if (currentKeys.Left.IsDown() || currentKeys.Right.IsDown()) {
 					// Kind of a collision here.
 					double sidespeed = p.Sidespeed / std::min(currentKeys.Left.StateMultiplier(), currentKeys.Right.StateMultiplier());
-					std::ostringstream ss;
-					ss.setf(std::ios::fixed, std::ios::floatfield);
-					ss.precision(std::numeric_limits<float>::digits10);
-					ss << "cl_sidespeed " << sidespeed << '\n';
-					ORIG_Cbuf_InsertText(ss.str().c_str());
+					speeds_ss << "cl_sidespeed " << sidespeed << '\n';
 				}
 				if (currentKeys.Up.IsDown() || currentKeys.Down.IsDown()) {
 					// And here.
 					double upspeed = p.Upspeed / std::min(currentKeys.Up.StateMultiplier(), currentKeys.Down.StateMultiplier());
-					std::ostringstream ss;
-					ss.setf(std::ios::fixed, std::ios::floatfield);
-					ss.precision(std::numeric_limits<float>::digits10);
-					ss << "cl_upspeed " << upspeed << '\n';
-					ORIG_Cbuf_InsertText(ss.str().c_str());
+					speeds_ss << "cl_upspeed " << upspeed << '\n';
 				}
+				ORIG_Cbuf_InsertText(speeds_ss.str().c_str());
 
 				// Clear impulses AFTER we handled viewangles and speeds, and only if we're active.
 				if (*reinterpret_cast<int*>(cls) == 5) {
@@ -896,15 +870,6 @@ void HwDLL::KeyUp(Key& key)
 	ORIG_Cbuf_InsertText(ss.str().c_str());
 }
 
-double HwDLL::Normalize(double angle)
-{
-	angle = std::fmod(angle, 360.0);
-	if (angle > 180.0)
-		return (angle - 180.0);
-	else
-		return angle;
-}
-
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 {
 	RegisterCVarsAndCommandsIfNeeded();
@@ -1039,7 +1004,7 @@ HOOK_DEF_1(HwDLL, time_t, __cdecl, time, time_t*, Time)
 
 		std::ostringstream ss;
 		ss << "Called time from SeedRandomNumberGenerator -> " << ret << ".\n";
-		EngineDevMsg("%s", ss.str().c_str());
+		EngineMsg("%s", ss.str().c_str());
 
 		return ret;
 	}

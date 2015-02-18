@@ -2,6 +2,7 @@
 
 #include "cvars.hpp"
 #include "modules.hpp"
+#include <SPTLib/Hooks.hpp>
 #include "hud_custom.hpp"
 
 #include <chrono>
@@ -473,7 +474,8 @@ namespace CustomHud
 							NumberHeight = p->rc.bottom - p->rc.top;
 						}
 
-						EngineDevMsg("[client dll] Loaded the digit %d sprite from \"%s\".\n", digit, path.c_str());
+						if (Hooks::DebugEnabled())
+							EngineDevMsg("[client dll] Loaded the digit %d sprite from \"%s\".\n", digit, path.c_str());
 					}
 				}
 			}
@@ -487,7 +489,9 @@ namespace CustomHud
 				path += (*it)->szSprite;
 				path += ".spr";
 				NumberSprites[i] = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Load(path.c_str());
-				EngineDevMsg("[client dll] Reloaded the digit %d sprite from \"%s\".\n", i, path.c_str());
+
+				if (Hooks::DebugEnabled())
+					EngineDevMsg("[client dll] Reloaded the digit %d sprite from \"%s\".\n", i, path.c_str());
 			}
 		}
 	}

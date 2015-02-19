@@ -239,8 +239,8 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cvar_FindVar)
 		DEF_FUTURE(Cbuf_InsertText)
 		DEF_FUTURE(Cmd_AddMallocCommand)
-		/*DEF_FUTURE(RandomFloat)
-		DEF_FUTURE(RandomLong)*/
+		//DEF_FUTURE(RandomFloat)
+		//DEF_FUTURE(RandomLong)
 		DEF_FUTURE(Host_Changelevel2_f)
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -566,7 +566,7 @@ void HwDLL::InsertCommands()
 
 					// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
 					GetViewangles(player.Viewangles);
-					ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
+					//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
 				}
 
 				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, Buttons, ButtonsPresent);
@@ -616,7 +616,7 @@ void HwDLL::InsertCommands()
 				//	ORIG_Con_Printf("Frame pitch: %f; ", f.GetPitch());
 				//if (f.GetYawPresent())
 				//	ORIG_Con_Printf("Frame yaw: %f; ", f.GetYaw());
-				ORIG_Con_Printf("Wish viewangles: %f %f\n", p.Pitch, p.Yaw);
+				//ORIG_Con_Printf("Wish viewangles: %f %f\n", p.Pitch, p.Yaw);
 
 				auto pitchStateMultiplier = 1.0;
 				auto yawStateMultiplier = 1.0;
@@ -670,7 +670,7 @@ void HwDLL::InsertCommands()
 					}
 				}
 
-				ORIG_Cbuf_InsertText(HLStrafe::GetAngleSpeedString(player.Viewangles[0], player.Viewangles[1], p.Pitch, p.Yaw, pitchStateMultiplier, yawStateMultiplier, *host_frametime).c_str());
+				ORIG_Cbuf_InsertText(HLStrafe::GetAngleSpeedString(player.Viewangles[0], player.Viewangles[1], p.Pitch, p.Yaw, pitchStateMultiplier, yawStateMultiplier, static_cast<float>(*host_frametime)).c_str());
 
 				std::ostringstream speeds_ss;
 				speeds_ss.setf(std::ios::fixed, std::ios::floatfield);

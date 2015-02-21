@@ -26,6 +26,7 @@
 #include <array>
 #include <chrono>
 #include <fstream>
+#include <functional>
 #include <future>
 #include <iomanip>
 #include <sstream>
@@ -43,6 +44,7 @@ using std::ptrdiff_t;
 #include "HLSDK/cl_dll/hud.h"
 #include "HLSDK/common/ref_params.h"
 #include "HLSDK/common/usercmd.h"
+#include "HLSDK/common/pmtrace.h"
 
 typedef int(*pfnUserMsgHook)(const char *pszName, int iSize, void *pbuf);
 #include "HLSDK/engine/cdll_int.h"

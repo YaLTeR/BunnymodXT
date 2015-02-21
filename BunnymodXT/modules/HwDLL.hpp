@@ -83,7 +83,9 @@ public:
 	inline bool IsCountingSharedRNGSeed() { return CountingSharedRNGSeed; }
 	inline unsigned GetSharedRNGSeedCounter() { return SharedRNGSeedCounter; }
 
-	inline bool IsPaused() { return (sv && *(reinterpret_cast<int*>(sv)+1)); }
+	inline bool IsPaused() { return (sv && *(reinterpret_cast<int*>(sv) + 1)); }
+
+	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
 
 	unsigned QueuedSharedRNGSeeds;
 
@@ -114,6 +116,10 @@ protected:
 	_Cmd_Argv ORIG_Cmd_Argv;
 	typedef void(__cdecl *_hudGetViewAngles) (float* va);
 	_hudGetViewAngles ORIG_hudGetViewAngles;
+	typedef pmtrace_t(__cdecl *_PM_PlayerTrace) (const float* start, const float* end, int traceFlags, int ignore_pe);
+	_PM_PlayerTrace ORIG_PM_PlayerTrace;
+	typedef void(__cdecl *_SV_AddLinksToPM) (char* node, float* origin);
+	_SV_AddLinksToPM ORIG_SV_AddLinksToPM;
 
 	void FindStuff();
 
@@ -131,7 +137,6 @@ protected:
 	void FindCVarsIfNeeded();
 	HLStrafe::MovementVars GetMovementVars();
 	void GetViewangles(float* va);
-
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
 
@@ -140,8 +145,14 @@ protected:
 	void *cls;
 	void *clientstate;
 	void *sv;
+	ptrdiff_t offWorldmodel;
 	svs_t *svs;
 	ptrdiff_t offEdict;
+	void *svmove;
+	void **ppmove;
+	client_t **host_client;
+	edict_t **sv_player;
+	char *sv_areanodes;
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
 
@@ -172,6 +183,7 @@ protected:
 	unsigned LoadingSeedCounter;
 	bool ButtonsPresent;
 	HLTAS::StrafeButtons Buttons;
+	HLStrafe::CurrentState StrafeState;
 
 	struct KeyStates
 	{

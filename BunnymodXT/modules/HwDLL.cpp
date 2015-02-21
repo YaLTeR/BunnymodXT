@@ -123,12 +123,20 @@ void HwDLL::Clear()
 	ORIG_Cmd_Args = nullptr;
 	ORIG_Cmd_Argv = nullptr;
 	ORIG_hudGetViewAngles = nullptr;
+	ORIG_PM_PlayerTrace = nullptr;
+	ORIG_SV_AddLinksToPM = nullptr;
 	registeredVarsAndCmds = false;
 	cls = nullptr;
 	clientstate = nullptr;
 	sv = nullptr;
+	offWorldmodel = 0;
 	svs = nullptr;
 	offEdict = 0;
+	svmove = nullptr;
+	ppmove = nullptr;
+	host_client = nullptr;
+	sv_player = nullptr;
+	sv_areanodes = nullptr;
 	cmd_text = nullptr;
 	host_frametime = nullptr;
 	framesTillExecuting = 0;
@@ -149,6 +157,7 @@ void HwDLL::Clear()
 	currentFramebulk = 0;
 	totalFramebulks = 0;
 	currentRepeat = 0;
+	StrafeState = HLStrafe::CurrentState{};
 	currentKeys.ResetStates();
 	SharedRNGSeedPresent = false;
 	SharedRNGSeed = 0;
@@ -173,9 +182,10 @@ void HwDLL::FindStuff()
 			EngineDevWarning("[hw dll] Could not find cls.\n");
 
 		sv = MemUtils::GetSymbolAddress(m_Handle, "sv");
-		if (sv)
+		if (sv) {
 			EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
-		else
+			offWorldmodel = 296;
+		} else
 			EngineDevWarning("[hw dll] Could not find sv.\n");
 
 		svs = reinterpret_cast<svs_t*>(MemUtils::GetSymbolAddress(m_Handle, "svs"));
@@ -184,6 +194,36 @@ void HwDLL::FindStuff()
 			offEdict = 0x4a84;
 		} else
 			EngineDevWarning("[hw dll] Could not find svs.\n");
+
+		svmove = MemUtils::GetSymbolAddress(m_Handle, "g_svmove");
+		if (svmove)
+			EngineDevMsg("[hw dll] Found g_svmove at %p.\n", svmove);
+		else
+			EngineDevWarning("[hw dll] Could not find g_svmove.\n");
+
+		ppmove = reinterpret_cast<void**>(MemUtils::GetSymbolAddress(m_Handle, "pmove"));
+		if (ppmove)
+			EngineDevMsg("[hw dll] Found pmove at %p.\n", ppmove);
+		else
+			EngineDevWarning("[hw dll] Could not find pmove.\n");
+
+		host_client = reinterpret_cast<client_t**>(MemUtils::GetSymbolAddress(m_Handle, "host_client"));
+		if (host_client)
+			EngineDevMsg("[hw dll] Found host_client at %p.\n", host_client);
+		else
+			EngineDevWarning("[hw dll] Could not find host_client.\n");
+
+		sv_player = reinterpret_cast<edict_t**>(MemUtils::GetSymbolAddress(m_Handle, "sv_player"));
+		if (sv_player)
+			EngineDevMsg("[hw dll] Found sv_player at %p.\n", sv_player);
+		else
+			EngineDevWarning("[hw dll] Could not find sv_player.\n");
+
+		sv_areanodes = reinterpret_cast<char*>(MemUtils::GetSymbolAddress(m_Handle, "sv_areanodes"));
+		if (sv_areanodes)
+			EngineDevMsg("[hw dll] Found sv_areanodes at %p.\n", sv_areanodes);
+		else
+			EngineDevWarning("[hw dll] Could not find sv_areanodes.\n");
 
 		cmd_text = reinterpret_cast<cmdbuf_t*>(MemUtils::GetSymbolAddress(m_Handle, "cmd_text"));
 		if (cmd_text)
@@ -202,6 +242,12 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found ORIG_hudGetViewAngles at %p.\n", ORIG_hudGetViewAngles);
 		else
 			EngineDevWarning("[hw dll] Could not find ORIG_hudGetViewAngles.\n");
+
+		ORIG_SV_AddLinksToPM = reinterpret_cast<_SV_AddLinksToPM>(MemUtils::GetSymbolAddress(m_Handle, "SV_AddLinksToPM"));
+		if (ORIG_SV_AddLinksToPM)
+			EngineDevMsg("[hw dll] Found ORIG_SV_AddLinksToPM at %p.\n", ORIG_SV_AddLinksToPM);
+		else
+			EngineDevWarning("[hw dll] Could not find ORIG_SV_AddLinksToPM.\n");
 
 		if (!cls || !sv || !svs || !cmd_text || !host_frametime || !ORIG_hudGetViewAngles)
 			ORIG_Cbuf_Execute = nullptr;
@@ -229,6 +275,7 @@ void HwDLL::FindStuff()
 		//FIND(RandomLong)
 		FIND(Host_Changelevel2_f)
 		FIND(SCR_BeginLoadingPlaque)
+		FIND(PM_PlayerTrace)
 		#undef FIND
 	}
 	else
@@ -243,6 +290,7 @@ void HwDLL::FindStuff()
 		//DEF_FUTURE(RandomLong)
 		DEF_FUTURE(Host_Changelevel2_f)
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
+		DEF_FUTURE(PM_PlayerTrace)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
 		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
 		if (oldEngine) {
@@ -321,6 +369,7 @@ void HwDLL::FindStuff()
 			[&](MemUtils::ptnvec_size ptnNumber) {
 				auto f = reinterpret_cast<uintptr_t>(Host_AutoSave_f);
 				sv = *reinterpret_cast<void**>(f + 19);
+				offWorldmodel = 304;
 				ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
 					*reinterpret_cast<ptrdiff_t*>(f + 33)
 					+ (f + 37)
@@ -329,6 +378,37 @@ void HwDLL::FindStuff()
 				svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
 				offEdict = 19356;
 				clientstate = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 86) - 0x2AF80);
+			}, []() {}
+		);
+
+		void *MiddleOfSV_ReadClientMessage;
+		auto fMiddleOfSV_ReadClientMessage = MemUtils::FindPatternOnly(&MiddleOfSV_ReadClientMessage, m_Base, m_Length, Patterns::ptnsMiddleOfSV_ReadClientMessage,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				host_client = *reinterpret_cast<client_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 14);
+
+				switch (ptnNumber)
+				{
+				default:
+				case 0: // SteamPipe & NGHL.
+					svmove = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 39);
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 35);
+					sv_player = *reinterpret_cast<edict_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 19);
+					break;
+				case 1: // WON.
+					svmove = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 40);
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 36);
+					sv_player = *reinterpret_cast<edict_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 20);
+				}
+			}, []() {}
+		);
+
+		void *MiddleOfSV_RunCmd;
+		auto fMiddleOfSV_RunCmd = MemUtils::FindPatternOnly(&MiddleOfSV_RunCmd, m_Base, m_Length, Patterns::ptnsMiddleOfSV_RunCmd,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				sv_areanodes = *reinterpret_cast<char**>(reinterpret_cast<uintptr_t>(MiddleOfSV_RunCmd) + 20);
+				ORIG_SV_AddLinksToPM = reinterpret_cast<_SV_AddLinksToPM>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(MiddleOfSV_RunCmd) + 25)
+					+ reinterpret_cast<uintptr_t>(MiddleOfSV_RunCmd) + 29);
 			}, []() {}
 		);
 
@@ -370,6 +450,28 @@ void HwDLL::FindStuff()
 			ORIG_Cbuf_Execute = nullptr;
 		}
 
+		n = fMiddleOfSV_ReadClientMessage.get();
+		if (MiddleOfSV_ReadClientMessage) {
+			EngineDevMsg("[hw dll] Found the g_svmove pattern at %p (using the %s pattern).\n", MiddleOfSV_ReadClientMessage, Patterns::ptnsMiddleOfSV_ReadClientMessage[n].build.c_str());
+			EngineDevMsg("[hw dll] Found g_svmove at %p.\n", svmove);
+			EngineDevMsg("[hw dll] Found pmove at %p.\n", ppmove);
+			EngineDevMsg("[hw dll] Found host_client at %p.\n", host_client);
+			EngineDevMsg("[hw dll] Found sv_player at %p.\n", sv_player);
+		} else {
+			EngineDevWarning("[hw dll] Could not find the g_svmove pattern.\n");
+			ORIG_Cbuf_Execute = nullptr;
+		}
+
+		n = fMiddleOfSV_RunCmd.get();
+		if (MiddleOfSV_RunCmd) {
+			EngineDevMsg("[hw dll] Found the sv_areanodes pattern at %p (using the %s pattern).\n", MiddleOfSV_RunCmd, Patterns::ptnsMiddleOfSV_RunCmd[n].build.c_str());
+			EngineDevMsg("[hw dll] Found sv_areanodes at %p.\n", sv_areanodes);
+			EngineDevMsg("[hw dll] Found SV_AddLinksToPM at %p.\n", ORIG_SV_AddLinksToPM);
+		} else {
+			EngineDevWarning("[hw dll] Could not find the sv_areanodes pattern.\n");
+			ORIG_Cbuf_Execute = nullptr;
+		}
+
 		#define GET_FUTURE(name) \
 			n = f##name.get(); \
 			if (ORIG_##name) { \
@@ -387,6 +489,7 @@ void HwDLL::FindStuff()
 		//GET_FUTURE(RandomLong)
 		GET_FUTURE(Host_Changelevel2_f)
 		GET_FUTURE(SCR_BeginLoadingPlaque)
+		GET_FUTURE(PM_PlayerTrace)
 		#undef GET_FUTURE
 
 		n = fHost_Tell_f.get();
@@ -450,6 +553,7 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 	runningFrames = false;
 	currentFramebulk = 0;
 	currentRepeat = 0;
+	StrafeState = HLStrafe::CurrentState{};
 
 	if (ORIG_Cmd_Argc() != 2) {
 		ORIG_Con_Printf("Usage: bxt_tas_loadscript <filename>\n");
@@ -563,13 +667,12 @@ void HwDLL::InsertCommands()
 					player.Velocity[0] = pl->v.velocity[0];
 					player.Velocity[1] = pl->v.velocity[1];
 					player.Velocity[2] = pl->v.velocity[2];
+					player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
 
 					// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
 					GetViewangles(player.Viewangles);
 					//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
 				}
-
-				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, Buttons, ButtonsPresent);
 
 				if (!wasRunningFrames) {
 					// We will reset buttons, set up the impulses accordingly.
@@ -592,6 +695,13 @@ void HwDLL::InsertCommands()
 					currentKeys.Attack2.State = 4;
 					currentKeys.Reload.State = 4;
 				}
+
+				StrafeState.Jump = currentKeys.Jump.IsDown();
+				StrafeState.Duck = currentKeys.Duck.IsDown();
+				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
+				if (p.Jump)
+					EngineMsg("Jumping!\n");
 
 				#define INS(btn, cmd) \
 					if (p.btn && !currentKeys.btn.IsDown()) \
@@ -986,6 +1096,52 @@ void HwDLL::GetViewangles(float* va)
 		va[2] = viewangles[2];
 	} else
 		ORIG_hudGetViewAngles(va);
+}
+
+HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull)
+{
+	auto tr = HLStrafe::TraceResult{};
+
+	if (!ORIG_PM_PlayerTrace || svs->num_clients < 1) {
+		tr.Fraction = 1.f;
+		tr.EndPos[0] = end[0];
+		tr.EndPos[1] = end[1];
+		tr.EndPos[2] = end[2];
+		tr.Entity = -1;
+		return tr;
+	}
+
+	auto oldclient = *host_client;
+	*host_client = svs->clients;
+	auto oldplayer = *sv_player;
+	*sv_player = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	auto oldmove = *ppmove;
+	*ppmove = svmove;
+	ORIG_SV_AddLinksToPM(sv_areanodes, (*sv_player)->v.origin);
+
+	auto usehull = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(svmove) + 0xBC);
+	auto oldhull = *usehull;
+	*usehull = static_cast<int>(hull);
+
+	const int PM_NORMAL = 0x00000000;
+	auto pmtr = ORIG_PM_PlayerTrace(start, end, PM_NORMAL, -1);
+
+	*usehull = oldhull;
+	*ppmove = oldmove;
+	*sv_player = oldplayer;
+	*host_client = oldclient;
+
+	tr.AllSolid = (pmtr.allsolid != 0);
+	tr.StartSolid = (pmtr.startsolid != 0);
+	tr.Fraction = pmtr.fraction;
+	tr.EndPos[0] = pmtr.endpos[0];
+	tr.EndPos[1] = pmtr.endpos[1];
+	tr.EndPos[2] = pmtr.endpos[2];
+	tr.PlaneNormal[0] = pmtr.plane.normal[0];
+	tr.PlaneNormal[1] = pmtr.plane.normal[1];
+	tr.PlaneNormal[2] = pmtr.plane.normal[2];
+	tr.Entity = pmtr.ent;
+	return tr;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

@@ -279,8 +279,9 @@ void ServerDLL::RegisterCVarsAndCommands()
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 	if (ORIG_PM_Jump)
 		REG(bxt_autojump);
-	if (ORIG_PM_PreventMegaBunnyJumping)
-		REG(bxt_bhopcap);
+	if (!ORIG_PM_PreventMegaBunnyJumping)
+		CVars::bxt_bhopcap.Set("0");
+	REG(bxt_bhopcap);
 	if (ORIG_CNihilanth__DyingThink || ORIG_CNihilanth__DyingThink_Linux)
 		REG(bxt_timer_autostop);
 	#undef REG

@@ -17,6 +17,9 @@ public:
 	float GetFloat() const;
 	std::string GetString() const;
 
+	// Only use before registering!
+	void Set(const char* string);
+
 protected:
 	cvar_t *m_CVar = nullptr;
 	const char* m_String = nullptr;
@@ -95,6 +98,15 @@ inline std::string CVarWrapper::GetString() const
 	if (!m_CVar)
 		return std::string();
 	return std::string(m_CVar->string);
+}
+
+inline void CVarWrapper::Set(const char* string)
+{
+	assert(!m_Reference);
+
+	m_String = string;
+	m_CVar->string = const_cast<char*>(m_String);
+	m_CVar->value = static_cast<float>(std::atof(m_String));
 }
 
 namespace CVars

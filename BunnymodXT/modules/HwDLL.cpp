@@ -668,6 +668,9 @@ void HwDLL::InsertCommands()
 					player.Velocity[1] = pl->v.velocity[1];
 					player.Velocity[2] = pl->v.velocity[2];
 					player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
+					player.InDuckAnimation = (pl->v.bInDuck != 0);
+					player.DuckTime = pl->v.flDuckTime;
+					player.HasLJModule = false; // TODO
 
 					// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
 					GetViewangles(player.Viewangles);
@@ -948,6 +951,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Accelerate = CVars::sv_accelerate.GetFloat();
 	vars.Airaccelerate = CVars::sv_airaccelerate.GetFloat();
 	vars.Gravity = CVars::sv_gravity.GetFloat();
+	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
 
 	if (svs->num_clients >= 1) {
 		edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);

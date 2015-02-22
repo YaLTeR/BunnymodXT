@@ -652,7 +652,7 @@ void HwDLL::InsertCommands()
 
 	if (runningFrames) {
 		while (currentFramebulk < totalFramebulks) {
-			auto f = input.GetFrame(currentFramebulk);
+			auto& f = input.GetFrame(currentFramebulk);
 			// Movement frame.
 			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING)) {
 				auto c = f.Commands;
@@ -700,8 +700,7 @@ void HwDLL::InsertCommands()
 				StrafeState.Duck = currentKeys.Duck.IsDown();
 				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
-				if (p.Jump)
-					EngineMsg("Jumping!\n");
+				f.ResetAutofuncs();
 
 				#define INS(btn, cmd) \
 					if (p.btn && !currentKeys.btn.IsDown()) \
@@ -1026,7 +1025,6 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	if (executing)
 	{
 		changelevel = false;
-		bool firstActiveFrame = finishingLoad;
 		if (finishingLoad) { // First frame after load.
 			finishingLoad = false;
 			if (SharedRNGSeedPresent) {

@@ -16,6 +16,11 @@ extern "C" void __cdecl _Z8CmdStartPK7edict_sPK9usercmd_sj(const edict_t* player
 {
 	return ServerDLL::HOOKED_CmdStart(player, cmd, random_seed);
 }
+
+extern "C" void __cdecl _ZN10CNihilanth10DyingThinkEv(void* thisptr)
+{
+	return ServerDLL::HOOKED_CNihilanth__DyingThink_Linux(thisptr);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -63,6 +68,7 @@ void ServerDLL::Clear()
 	ORIG_PM_PlayerMove = nullptr;
 	ORIG_CmdStart = nullptr;
 	ORIG_CNihilanth__DyingThink = nullptr;
+	ORIG_CNihilanth__DyingThink_Linux = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -216,8 +222,13 @@ void ServerDLL::FindStuff()
 	if (ORIG_CNihilanth__DyingThink)
 		EngineDevMsg("[server dll] Found CNihilanth::DyingThink at %p.\n", ORIG_CNihilanth__DyingThink);
 	else {
-		EngineDevWarning("[server dll] Could not find CNihilanth::DyingThink.\n");
-		EngineWarning("Automatic timer stopping is not available.\n");
+		ORIG_CNihilanth__DyingThink_Linux = reinterpret_cast<_CNihilanth__DyingThink_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN10CNihilanth10DyingThinkEv"));
+		if (ORIG_CNihilanth__DyingThink_Linux)
+			EngineDevMsg("[server dll] Found CNihilanth::DyingThink [Linux] at %p.\n", ORIG_CNihilanth__DyingThink_Linux);
+		else {
+			EngineDevWarning("[server dll] Could not find CNihilanth::DyingThink.\n");
+			EngineWarning("Automatic timer stopping is not available.\n");
+		}
 	}
 	
 	// This has to be the last thing to check and hook.
@@ -270,7 +281,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_autojump);
 	if (ORIG_PM_PreventMegaBunnyJumping)
 		REG(bxt_bhopcap);
-	if (ORIG_CNihilanth__DyingThink)
+	if (ORIG_CNihilanth__DyingThink || ORIG_CNihilanth__DyingThink_Linux)
 		REG(bxt_timer_autostop);
 	#undef REG
 }
@@ -393,4 +404,12 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CNihilanth__DyingThink, void*, thisptr, 
 		CustomHud::SetCountingTime(false);
 
 	return ORIG_CNihilanth__DyingThink(thisptr, edx);
+}
+
+HOOK_DEF_1(ServerDLL, void, __cdecl, CNihilanth__DyingThink_Linux, void*, thisptr)
+{
+	if (CVars::bxt_timer_autostop.GetBool())
+		CustomHud::SetCountingTime(false);
+
+	return ORIG_CNihilanth__DyingThink_Linux(thisptr);
 }

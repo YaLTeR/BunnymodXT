@@ -933,9 +933,10 @@ void HwDLL::InsertCommands()
 			auto f = HLTAS::Frame{};
 			if (ducktap)
 				f.Ducktap = true;
-			else
+			else {
 				f.Autojump = true;
-			f.Duck = player.Ducking || player.InDuckAnimation; // Just assume this for (now) simplicity.
+				f.Duck = player.Ducking || player.InDuckAnimation; // Just assume this for (now) simplicity.
+			}
 
 			auto state = HLStrafe::CurrentState{};
 			state.Jump = currentKeys.Jump.IsDown();
@@ -947,8 +948,11 @@ void HwDLL::InsertCommands()
 						KeyDown(currentKeys.btn); \
 					else if (!p.btn && currentKeys.btn.IsDown()) \
 						KeyUp(currentKeys.btn);
-			INS(Duck)
-			INS(Jump)
+			if (ducktap) {
+				INS(Duck)
+			} else {
+				INS(Jump)
+			}
 			#undef INS
 		} else {
 			if (currentKeys.Jump.IsDown())

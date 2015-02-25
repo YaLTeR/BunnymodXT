@@ -126,6 +126,8 @@ void HwDLL::Clear()
 	ORIG_PM_PlayerTrace = nullptr;
 	ORIG_SV_AddLinksToPM = nullptr;
 	registeredVarsAndCmds = false;
+	autojump = false;
+	ducktap = false;
 	cls = nullptr;
 	clientstate = nullptr;
 	sv = nullptr;
@@ -607,6 +609,26 @@ void HwDLL::Cmd_BXT_Timer_Reset()
 	return CustomHud::ResetTime();
 }
 
+void HwDLL::Cmd_BXT_TAS_Autojump_Down()
+{
+	HwDLL::GetInstance().autojump = true;
+}
+
+void HwDLL::Cmd_BXT_TAS_Autojump_Up()
+{
+	HwDLL::GetInstance().autojump = false;
+}
+
+void HwDLL::Cmd_BXT_TAS_Ducktap_Down()
+{
+	HwDLL::GetInstance().ducktap = true;
+}
+
+void HwDLL::Cmd_BXT_TAS_Ducktap_Up()
+{
+	HwDLL::GetInstance().ducktap = false;
+}
+
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
 	if (!registeredVarsAndCmds)
@@ -618,6 +640,10 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_stop", Cmd_BXT_Timer_Stop, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_reset", Cmd_BXT_Timer_Reset, 2);
+			ORIG_Cmd_AddMallocCommand("+bxt_tas_autojump", Cmd_BXT_TAS_Autojump_Down, 2);
+			ORIG_Cmd_AddMallocCommand("-bxt_tas_autojump", Cmd_BXT_TAS_Autojump_Up, 2);
+			ORIG_Cmd_AddMallocCommand("+bxt_tas_ducktap", Cmd_BXT_TAS_Ducktap_Down, 2);
+			ORIG_Cmd_AddMallocCommand("-bxt_tas_ducktap", Cmd_BXT_TAS_Ducktap_Up, 2);
 		}
 	}
 }
@@ -669,7 +695,7 @@ void HwDLL::InsertCommands()
 					player.Velocity[2] = pl->v.velocity[2];
 					player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
 					player.InDuckAnimation = (pl->v.bInDuck != 0);
-					player.DuckTime = pl->v.flDuckTime;
+					player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 					player.HasLJModule = false; // TODO
 
 					// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
@@ -705,23 +731,23 @@ void HwDLL::InsertCommands()
 
 				f.ResetAutofuncs();
 
-				#define INS(btn, cmd) \
+				#define INS(btn) \
 					if (p.btn && !currentKeys.btn.IsDown()) \
 						KeyDown(currentKeys.btn); \
 					else if (!p.btn && currentKeys.btn.IsDown()) \
 						KeyUp(currentKeys.btn);
-				INS(Forward, forward)
-				INS(Left, moveleft)
-				INS(Right, moveright)
-				INS(Back, back)
-				INS(Up, moveup)
-				INS(Down, movedown)
-				INS(Jump, jump)
-				INS(Duck, duck)
-				INS(Use, use)
-				INS(Attack1, attack)
-				INS(Attack2, attack2)
-				INS(Reload, reload)
+				INS(Forward)
+				INS(Left)
+				INS(Right)
+				INS(Back)
+				INS(Up)
+				INS(Down)
+				INS(Jump)
+				INS(Duck)
+				INS(Use)
+				INS(Attack1)
+				INS(Attack2)
+				INS(Reload)
 				#undef INS
 
 				//if (f.PitchPresent)
@@ -883,8 +909,54 @@ void HwDLL::InsertCommands()
 			currentKeys.ResetStates();
 			CountingSharedRNGSeed = false;
 		}
-	}
 
+		// Manual autofuncs.
+		if (autojump || ducktap) {
+			if (svs->num_clients >= 1) {
+				edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+				player.Origin[0] = pl->v.origin[0];
+				player.Origin[1] = pl->v.origin[1];
+				player.Origin[2] = pl->v.origin[2];
+				player.Velocity[0] = pl->v.velocity[0];
+				player.Velocity[1] = pl->v.velocity[1];
+				player.Velocity[2] = pl->v.velocity[2];
+				player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
+				player.InDuckAnimation = (pl->v.bInDuck != 0);
+				player.DuckTime = static_cast<float>(pl->v.flDuckTime);
+				player.HasLJModule = false; // TODO
+
+											// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
+				GetViewangles(player.Viewangles);
+				//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
+			}
+
+			auto f = HLTAS::Frame{};
+			if (ducktap)
+				f.Ducktap = true;
+			else
+				f.Autojump = true;
+			f.Duck = player.Ducking || player.InDuckAnimation; // Just assume this for (now) simplicity.
+
+			auto state = HLStrafe::CurrentState{};
+			state.Jump = currentKeys.Jump.IsDown();
+			state.Duck = currentKeys.Duck.IsDown();
+			auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, state, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
+			#define INS(btn) \
+					if (p.btn && !currentKeys.btn.IsDown()) \
+						KeyDown(currentKeys.btn); \
+					else if (!p.btn && currentKeys.btn.IsDown()) \
+						KeyUp(currentKeys.btn);
+			INS(Duck)
+			INS(Jump)
+			#undef INS
+		} else {
+			if (currentKeys.Jump.IsDown())
+				KeyUp(currentKeys.Jump);
+			if (currentKeys.Duck.IsDown())
+				KeyUp(currentKeys.Duck);
+		}
+	}
 	wasRunningFrames = runningFramesBackup;
 }
 

@@ -128,6 +128,10 @@ protected:
 	static void Cmd_BXT_Timer_Start();
 	static void Cmd_BXT_Timer_Stop();
 	static void Cmd_BXT_Timer_Reset();
+	static void Cmd_BXT_TAS_Autojump_Down();
+	static void Cmd_BXT_TAS_Autojump_Up();
+	static void Cmd_BXT_TAS_Ducktap_Down();
+	static void Cmd_BXT_TAS_Ducktap_Up();
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	bool CheckUnpause();
@@ -141,6 +145,9 @@ protected:
 	void KeyUp(Key& btn);
 
 	bool registeredVarsAndCmds;
+
+	bool autojump;
+	bool ducktap;
 
 	void *cls;
 	void *clientstate;

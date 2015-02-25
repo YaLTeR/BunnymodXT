@@ -942,7 +942,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	auto vars = HLStrafe::MovementVars();
 	
 	FindCVarsIfNeeded();
-	vars.Frametime = static_cast<float>(*host_frametime);
+	vars.Frametime = static_cast<float>(static_cast<float>(std::floor(*host_frametime * 1000)) * 0.001); // This is how it's done inside the game.
 	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
 	vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
 	vars.Stopspeed = CVars::sv_stopspeed.GetFloat();

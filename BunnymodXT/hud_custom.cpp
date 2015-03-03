@@ -236,6 +236,11 @@ namespace CustomHud
 			precision = 6;
 	}
 
+	void GetAccurateInfo()
+	{
+		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity);
+	}
+
 	static void UpdateColors()
 	{
 		// Default: taken from con_color of HL 6153.
@@ -503,6 +508,7 @@ namespace CustomHud
 
 		UpdatePrecision();
 		UpdateColors();
+		GetAccurateInfo();
 
 		DrawVelocity(flTime);
 		DrawOrigin(flTime);

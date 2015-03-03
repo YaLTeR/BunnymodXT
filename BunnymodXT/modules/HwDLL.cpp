@@ -1165,6 +1165,21 @@ void HwDLL::SetPlayerVelocity(float velocity[3])
 	player.Velocity[2] = velocity[2];
 }
 
+bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3])
+{
+	if (!svs || svs->num_clients < 1)
+		return false;
+
+	edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	origin[0] = pl->v.origin[0];
+	origin[1] = pl->v.origin[1];
+	origin[2] = pl->v.origin[2];
+	velocity[0] = pl->v.velocity[0];
+	velocity[1] = pl->v.velocity[1];
+	velocity[2] = pl->v.velocity[2];
+	return true;
+}
+
 void HwDLL::GetViewangles(float* va)
 {
 	if (clientstate) {
@@ -1262,7 +1277,7 @@ HOOK_DEF_2(HwDLL, long, __cdecl, RandomLong, long, a1, long, a2)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 {
-	ORIG_Con_Printf("Host_Changelevel2_f\n");
+	//ORIG_Con_Printf("Host_Changelevel2_f\n");
 	changelevel = true;
 	if (!CountingSharedRNGSeed && SharedRNGSeedPresent)
 		SharedRNGSeedCounter = LastRandomSeed;

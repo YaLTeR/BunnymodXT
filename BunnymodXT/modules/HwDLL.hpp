@@ -78,6 +78,7 @@ public:
 
 	void SetPlayerOrigin(float origin[3]);
 	void SetPlayerVelocity(float velocity[3]);
+	bool TryGettingAccurateInfo(float origin[3], float velocity[3]);
 
 	inline void SetLastRandomSeed(unsigned seed) { LastRandomSeed = seed; }
 	inline bool IsCountingSharedRNGSeed() { return CountingSharedRNGSeed; }

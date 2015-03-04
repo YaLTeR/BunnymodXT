@@ -687,8 +687,7 @@ void HwDLL::InsertCommands()
 
 				if (svs->num_clients >= 1) {
 					edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
-					if (pl)
-					{
+					if (pl) {
 						player.Origin[0] = pl->v.origin[0];
 						player.Origin[1] = pl->v.origin[1];
 						player.Origin[2] = pl->v.origin[2];
@@ -917,20 +916,22 @@ void HwDLL::InsertCommands()
 		if (autojump || ducktap) {
 			if (svs->num_clients >= 1) {
 				edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
-				player.Origin[0] = pl->v.origin[0];
-				player.Origin[1] = pl->v.origin[1];
-				player.Origin[2] = pl->v.origin[2];
-				player.Velocity[0] = pl->v.velocity[0];
-				player.Velocity[1] = pl->v.velocity[1];
-				player.Velocity[2] = pl->v.velocity[2];
-				player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
-				player.InDuckAnimation = (pl->v.bInDuck != 0);
-				player.DuckTime = static_cast<float>(pl->v.flDuckTime);
-				player.HasLJModule = false; // TODO
+				if (pl) {
+					player.Origin[0] = pl->v.origin[0];
+					player.Origin[1] = pl->v.origin[1];
+					player.Origin[2] = pl->v.origin[2];
+					player.Velocity[0] = pl->v.velocity[0];
+					player.Velocity[1] = pl->v.velocity[1];
+					player.Velocity[2] = pl->v.velocity[2];
+					player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
+					player.InDuckAnimation = (pl->v.bInDuck != 0);
+					player.DuckTime = static_cast<float>(pl->v.flDuckTime);
+					player.HasLJModule = false; // TODO
 
-											// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
-				GetViewangles(player.Viewangles);
-				//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
+												// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
+					GetViewangles(player.Viewangles);
+					//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
+				}
 			}
 
 			auto f = HLTAS::Frame{};
@@ -1034,8 +1035,13 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 
 	if (svs->num_clients >= 1) {
 		edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
-		vars.EntFriction = pl->v.friction;
-		vars.EntGravity = pl->v.gravity;
+		if (pl) {
+			vars.EntFriction = pl->v.friction;
+			vars.EntGravity = pl->v.gravity;
+		} else {
+			vars.EntFriction = 1.0f;
+			vars.EntGravity = 1.0f;
+		}
 	} else {
 		vars.EntFriction = 1.0f;
 		vars.EntGravity = 1.0f;

@@ -21,6 +21,11 @@ extern "C" void __cdecl _ZN10CNihilanth10DyingThinkEv(void* thisptr)
 {
 	return ServerDLL::HOOKED_CNihilanth__DyingThink_Linux(thisptr);
 }
+
+extern "C" void __cdecl _ZN11COFGeneWorm10DyingThinkEv(void* thisptr)
+{
+	return ServerDLL::HOOKED_COFGeneWorm__DyingThink_Linux(thisptr);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -42,7 +47,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
-			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) }
+			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
+			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) }
 		});
 }
 
@@ -54,7 +60,8 @@ void ServerDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
-			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) }
+			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
+			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) }
 		});
 
 	Clear();
@@ -69,6 +76,8 @@ void ServerDLL::Clear()
 	ORIG_CmdStart = nullptr;
 	ORIG_CNihilanth__DyingThink = nullptr;
 	ORIG_CNihilanth__DyingThink_Linux = nullptr;
+	ORIG_COFGeneWorm__DyingThink = nullptr;
+	ORIG_COFGeneWorm__DyingThink_Linux = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -227,7 +236,20 @@ void ServerDLL::FindStuff()
 			EngineDevMsg("[server dll] Found CNihilanth::DyingThink [Linux] at %p.\n", ORIG_CNihilanth__DyingThink_Linux);
 		else {
 			EngineDevWarning("[server dll] Could not find CNihilanth::DyingThink.\n");
-			EngineWarning("Automatic timer stopping is not available.\n");
+			EngineWarning("Nihilanth automatic timer stopping is not available.\n");
+		}
+	}
+
+	ORIG_COFGeneWorm__DyingThink = reinterpret_cast<_COFGeneWorm__DyingThink>(MemUtils::GetSymbolAddress(m_Handle, "?DyingThink@COFGeneWorm@@QAEXXZ"));
+	if (ORIG_COFGeneWorm__DyingThink)
+		EngineDevMsg("[server dll] Found COFGeneWorm::DyingThink at %p.\n", ORIG_COFGeneWorm__DyingThink);
+	else {
+		ORIG_COFGeneWorm__DyingThink_Linux = reinterpret_cast<_COFGeneWorm__DyingThink_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11COFGeneWorm10DyingThinkEv"));
+		if (ORIG_COFGeneWorm__DyingThink_Linux)
+			EngineDevMsg("[server dll] Found COFGeneWorm::DyingThink [Linux] at %p.\n", ORIG_COFGeneWorm__DyingThink_Linux);
+		else {
+			EngineDevWarning("[server dll] Could not find COFGeneWorm::DyingThink.\n");
+			EngineWarning("Gene Worm automatic timer stopping is not available.\n");
 		}
 	}
 	
@@ -282,7 +304,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (!ORIG_PM_PreventMegaBunnyJumping)
 		CVars::bxt_bhopcap.Set("0");
 	REG(bxt_bhopcap);
-	if (ORIG_CNihilanth__DyingThink || ORIG_CNihilanth__DyingThink_Linux)
+	if (ORIG_CNihilanth__DyingThink || ORIG_CNihilanth__DyingThink_Linux || ORIG_COFGeneWorm__DyingThink || ORIG_COFGeneWorm__DyingThink_Linux)
 		REG(bxt_timer_autostop);
 	#undef REG
 }
@@ -413,4 +435,20 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CNihilanth__DyingThink_Linux, void*, thispt
 		CustomHud::SetCountingTime(false);
 
 	return ORIG_CNihilanth__DyingThink_Linux(thisptr);
+}
+
+HOOK_DEF_2(ServerDLL, void, __fastcall, COFGeneWorm__DyingThink, void*, thisptr, int, edx)
+{
+	if (CVars::bxt_timer_autostop.GetBool())
+		CustomHud::SetCountingTime(false);
+
+	return ORIG_COFGeneWorm__DyingThink(thisptr, edx);
+}
+
+HOOK_DEF_1(ServerDLL, void, __cdecl, COFGeneWorm__DyingThink_Linux, void*, thisptr)
+{
+	if (CVars::bxt_timer_autostop.GetBool())
+		CustomHud::SetCountingTime(false);
+
+	return ORIG_COFGeneWorm__DyingThink_Linux(thisptr);
 }

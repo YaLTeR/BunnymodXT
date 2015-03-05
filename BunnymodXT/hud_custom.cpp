@@ -343,7 +343,8 @@ namespace CustomHud
 
 		if (CVars::bxt_hud_jumpspeed.GetBool())
 		{
-			static float fadeEndTime = 0.0f;
+			static float lastTime = flTime;
+			static double passedTime = FADE_DURATION_JUMPSPEED;
 			static int fadingFrom[3] = { hudColor[0], hudColor[1], hudColor[2] };
 			static double jumpSpeed = 0.0;
 
@@ -372,16 +373,19 @@ namespace CustomHud
 							fadingFrom[2] = 0;
 						}
 
-						fadeEndTime = flTime + FADE_DURATION_JUMPSPEED;
+						passedTime = 0.0;
 						jumpSpeed = length(player.velocity[0], player.velocity[1]);
 					}
 				}
 
-				double passedTime = flTime - fadeEndTime + FADE_DURATION_JUMPSPEED;
-				if (passedTime <= 0.0f)
-					passedTime = 0.0f;
-				else if (passedTime > FADE_DURATION_JUMPSPEED || !std::isnormal(passedTime)) // Check for Inf, NaN, etc.
+				// Can be negative if we went back in time (for example, loaded a save).
+				double timeDelta = std::max(flTime - lastTime, 0.0f);
+				passedTime += timeDelta;
+
+				// Check for Inf, NaN, etc.
+				if (passedTime > FADE_DURATION_JUMPSPEED || !std::isnormal(passedTime)) {
 					passedTime = FADE_DURATION_JUMPSPEED;
+				}
 
 				float colorVel[3] = { hudColor[0] - fadingFrom[0] / FADE_DURATION_JUMPSPEED,
 				                      hudColor[1] - fadingFrom[1] / FADE_DURATION_JUMPSPEED,
@@ -389,6 +393,8 @@ namespace CustomHud
 				r = static_cast<int>(hudColor[0] - colorVel[0] * (FADE_DURATION_JUMPSPEED - passedTime));
 				g = static_cast<int>(hudColor[1] - colorVel[1] * (FADE_DURATION_JUMPSPEED - passedTime));
 				b = static_cast<int>(hudColor[2] - colorVel[2] * (FADE_DURATION_JUMPSPEED - passedTime));
+
+				lastTime = flTime;
 			}
 
 			int x, y;

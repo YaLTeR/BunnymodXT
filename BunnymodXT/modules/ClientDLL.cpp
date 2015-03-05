@@ -182,6 +182,16 @@ void ClientDLL::FindStuff()
 			pInitialize = MemUtils::GetSymbolAddress(m_Handle, "Initialize");
 		if (pInitialize)
 		{
+			EngineDevMsg("Found Initialize at %p.\n", pInitialize);
+
+			// In some cases Initialize contains just a jump to the real function (Residual Life).
+			if (*reinterpret_cast<byte*>(pInitialize) == 0xE9) {
+				pInitialize = reinterpret_cast<void*>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(pInitialize) + 1)
+					+ reinterpret_cast<uintptr_t>(pInitialize) + 5);
+				EngineDevMsg("Jump detected, found the real Initialize at %p.\n", pInitialize);
+			}
+
 			// Find "mov edi, offset dword; rep movsd" inside Initialize. The pointer to gEngfuncs is that dword.
 			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
 			auto addr = MemUtils::FindPattern(pInitialize, 40, pattern, "x????xx");

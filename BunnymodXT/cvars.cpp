@@ -16,6 +16,8 @@ namespace CVars
 	CVarWrapper sv_accelerate;
 	CVarWrapper sv_airaccelerate;
 	CVarWrapper sv_gravity;
+	CVarWrapper sv_stepsize;
+	CVarWrapper sv_bounce;
 
 	// Serverside CVars
 	CVarWrapper bxt_autojump("bxt_autojump", "0");
@@ -56,6 +58,8 @@ namespace CVars
 		&sv_accelerate,
 		&sv_airaccelerate,
 		&sv_gravity,
+		&sv_stepsize,
+		&sv_bounce,
 		&bxt_autojump,
 		&bxt_bhopcap,
 		&bxt_timer_autostop,

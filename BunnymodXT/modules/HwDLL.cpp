@@ -1014,6 +1014,8 @@ void HwDLL::FindCVarsIfNeeded()
 	FIND(sv_accelerate);
 	FIND(sv_airaccelerate);
 	FIND(sv_gravity);
+	FIND(sv_stepsize);
+	FIND(sv_bounce);
 	#undef FIND
 }
 
@@ -1031,6 +1033,8 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Accelerate = CVars::sv_accelerate.GetFloat();
 	vars.Airaccelerate = CVars::sv_airaccelerate.GetFloat();
 	vars.Gravity = CVars::sv_gravity.GetFloat();
+	vars.Stepsize = CVars::sv_stepsize.GetFloat();
+	vars.Bounce = CVars::sv_bounce.GetFloat();
 	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
 
 	if (svs->num_clients >= 1) {

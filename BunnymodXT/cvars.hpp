@@ -123,6 +123,8 @@ namespace CVars
 	extern CVarWrapper sv_accelerate;
 	extern CVarWrapper sv_airaccelerate;
 	extern CVarWrapper sv_gravity;
+	extern CVarWrapper sv_stepsize;
+	extern CVarWrapper sv_bounce;
 
 	// Serverside CVars
 	extern CVarWrapper bxt_autojump;

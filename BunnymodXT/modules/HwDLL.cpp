@@ -159,7 +159,7 @@ void HwDLL::Clear()
 	currentFramebulk = 0;
 	totalFramebulks = 0;
 	currentRepeat = 0;
-	StrafeState = HLStrafe::CurrentState{};
+	StrafeState = HLStrafe::CurrentState();
 	currentKeys.ResetStates();
 	SharedRNGSeedPresent = false;
 	SharedRNGSeed = 0;
@@ -555,7 +555,8 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 	runningFrames = false;
 	currentFramebulk = 0;
 	currentRepeat = 0;
-	StrafeState = HLStrafe::CurrentState{};
+	StrafeState = HLStrafe::CurrentState();
+	ButtonsPresent = false;
 
 	if (ORIG_Cmd_Argc() != 2) {
 		ORIG_Con_Printf("Usage: bxt_tas_loadscript <filename>\n");
@@ -680,7 +681,7 @@ void HwDLL::InsertCommands()
 		while (currentFramebulk < totalFramebulks) {
 			auto& f = input.GetFrame(currentFramebulk);
 			// Movement frame.
-			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING)) {
+			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent)) {
 				auto c = f.Commands;
 				if (!c.empty())
 					ORIG_Cbuf_InsertText(c.c_str());
@@ -888,6 +889,8 @@ void HwDLL::InsertCommands()
 					Buttons = f.GetButtons();
 				} else
 					ButtonsPresent = false;
+			} else if (f.LgagstMinSpeedPresent) { // Lgagstminspeed frame.
+				StrafeState.LgagstMinSpeed = f.GetLgagstMinSpeed();
 			}
 
 			currentFramebulk++;
@@ -942,7 +945,7 @@ void HwDLL::InsertCommands()
 				f.Duck = player.Ducking || player.InDuckAnimation; // Just assume this for (now) simplicity.
 			}
 
-			auto state = HLStrafe::CurrentState{};
+			auto state = HLStrafe::CurrentState();
 			state.Jump = currentKeys.Jump.IsDown();
 			state.Duck = currentKeys.Duck.IsDown();
 			auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, state, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -974,7 +977,7 @@ bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
 	while (curFramebulk < totalFramebulks) {
 		f = input.GetFrame(curFramebulk);
 		// Only movement frames can have repeats.
-		if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING))
+		if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent))
 			return true;
 
 		curFramebulk++;
@@ -1193,6 +1196,7 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3])
 	velocity[0] = pl->v.velocity[0];
 	velocity[1] = pl->v.velocity[1];
 	velocity[2] = pl->v.velocity[2];
+
 	return true;
 }
 

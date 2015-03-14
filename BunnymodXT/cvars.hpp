@@ -143,6 +143,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_origin;
 	extern CVarWrapper bxt_hud_origin_offset;
 	extern CVarWrapper bxt_hud_origin_anchor;
+	extern CVarWrapper bxt_hud_viewangles;
+	extern CVarWrapper bxt_hud_viewangles_offset;
+	extern CVarWrapper bxt_hud_viewangles_anchor;
 	extern CVarWrapper bxt_hud_speedometer;
 	extern CVarWrapper bxt_hud_speedometer_offset;
 	extern CVarWrapper bxt_hud_speedometer_anchor;

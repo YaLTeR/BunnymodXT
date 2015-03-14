@@ -239,6 +239,7 @@ namespace CustomHud
 	void GetAccurateInfo()
 	{
 		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity);
+		HwDLL::GetInstance().GetViewangles(player.viewangles);
 	}
 
 	static void UpdateColors()
@@ -322,6 +323,23 @@ namespace CustomHud
 			out << "X: " << player.origin[0] << "\n"
 				<< "Y: " << player.origin[1] << "\n"
 				<< "Z: " << player.origin[2];
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
+	void DrawViewangles(float flTime)
+	{
+		if (CVars::bxt_hud_viewangles.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_viewangles_offset, CVars::bxt_hud_viewangles_anchor, &x, &y, -200, (si.iCharHeight * 10) + 1);
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "Pitch: " << player.viewangles[0] << "\n"
+				<< "Yaw: " << player.viewangles[1];
 
 			DrawMultilineString(x, y, out.str());
 		}
@@ -518,6 +536,7 @@ namespace CustomHud
 
 		DrawVelocity(flTime);
 		DrawOrigin(flTime);
+		DrawViewangles(flTime);
 		DrawSpeedometer(flTime);
 		DrawJumpspeed(flTime);
 		DrawTimer(flTime);

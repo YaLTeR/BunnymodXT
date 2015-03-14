@@ -79,6 +79,7 @@ public:
 	void SetPlayerOrigin(float origin[3]);
 	void SetPlayerVelocity(float velocity[3]);
 	bool TryGettingAccurateInfo(float origin[3], float velocity[3]);
+	void GetViewangles(float* va);
 
 	inline void SetLastRandomSeed(unsigned seed) { LastRandomSeed = seed; }
 	inline bool IsCountingSharedRNGSeed() { return CountingSharedRNGSeed; }
@@ -141,7 +142,6 @@ protected:
 	void ResetButtons();
 	void FindCVarsIfNeeded();
 	HLStrafe::MovementVars GetMovementVars();
-	void GetViewangles(float* va);
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
 

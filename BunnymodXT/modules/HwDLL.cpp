@@ -768,7 +768,7 @@ void HwDLL::InsertCommands()
 					else if (currentKeys.CamDown.IsDown())
 						KeyUp(currentKeys.CamDown);
 				} else {
-					double pitchDifference = HLStrafe::GetPitchDifference(player.Viewangles[0], p.Pitch);
+					double pitchDifference = HLStrafe::GetAngleDifference(player.Viewangles[0], p.Pitch);
 					if (pitchDifference >= 0.0) {
 						if (currentKeys.CamUp.IsDown())
 							KeyUp(currentKeys.CamUp);
@@ -793,7 +793,7 @@ void HwDLL::InsertCommands()
 					else if (currentKeys.CamRight.IsDown())
 						KeyUp(currentKeys.CamRight);
 				} else {
-					double yawDifference = HLStrafe::GetYawDifference(player.Viewangles[1], p.Yaw);
+					double yawDifference = HLStrafe::GetAngleDifference(player.Viewangles[1], p.Yaw);
 					if (yawDifference >= 0.0) {
 						if (currentKeys.CamRight.IsDown())
 							KeyUp(currentKeys.CamRight);

@@ -12,7 +12,7 @@ namespace CVars
 	CVarWrapper sv_maxspeed;
 	CVarWrapper sv_stopspeed;
 	CVarWrapper sv_friction;
-	CVarWrapper sv_edgefriction;
+	CVarWrapper edgefriction;
 	CVarWrapper sv_accelerate;
 	CVarWrapper sv_airaccelerate;
 	CVarWrapper sv_gravity;
@@ -57,7 +57,7 @@ namespace CVars
 		&sv_maxspeed,
 		&sv_stopspeed,
 		&sv_friction,
-		&sv_edgefriction,
+		&edgefriction,
 		&sv_accelerate,
 		&sv_airaccelerate,
 		&sv_gravity,

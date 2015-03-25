@@ -119,7 +119,7 @@ namespace CVars
 	extern CVarWrapper sv_maxspeed;
 	extern CVarWrapper sv_stopspeed;
 	extern CVarWrapper sv_friction;
-	extern CVarWrapper sv_edgefriction;
+	extern CVarWrapper edgefriction;
 	extern CVarWrapper sv_accelerate;
 	extern CVarWrapper sv_airaccelerate;
 	extern CVarWrapper sv_gravity;

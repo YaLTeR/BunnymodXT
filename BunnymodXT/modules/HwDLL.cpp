@@ -937,23 +937,33 @@ void HwDLL::InsertCommands()
 				}
 			}
 
-			auto f = HLTAS::Frame{};
-			if (ducktap)
-				f.Ducktap = true;
-			else {
-				f.Autojump = true;
-				f.Duck = player.Ducking || player.InDuckAnimation; // Just assume this for (now) simplicity.
+			bool Duck = false, Jump = false;
+
+			auto playerCopy = HLStrafe::PlayerData(player); // Our copy that we will mess with.
+			auto postype = GetPositionType(playerCopy, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+			if (postype == HLStrafe::PositionType::GROUND) {
+				if (ducktap) {
+					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {
+						// This should check against the next frame's origin but meh.
+						const float VEC_HULL_MIN[3] = { -16, -16, -36 };
+						const float VEC_DUCK_HULL_MIN[3] = { -16, -16, -18 };
+						float newOrigin[3];
+						for (std::size_t i = 0; i < 3; ++i)
+							newOrigin[i] = playerCopy.Origin[i] + (VEC_DUCK_HULL_MIN[i] - VEC_HULL_MIN[i]);
+
+						auto tr = PlayerTrace(newOrigin, newOrigin, HLStrafe::HullType::NORMAL);
+						if (!tr.StartSolid)
+							Duck = true;
+					}
+				} else if (!currentKeys.Jump.IsDown()) {
+					Jump = true;
+				}
 			}
 
-			auto state = HLStrafe::CurrentState();
-			state.Jump = currentKeys.Jump.IsDown();
-			state.Duck = currentKeys.Duck.IsDown();
-			auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, state, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-
 			#define INS(btn) \
-					if (p.btn && !currentKeys.btn.IsDown()) \
+					if (btn && !currentKeys.btn.IsDown()) \
 						KeyDown(currentKeys.btn); \
-					else if (!p.btn && currentKeys.btn.IsDown()) \
+					else if (!btn && currentKeys.btn.IsDown()) \
 						KeyUp(currentKeys.btn);
 			if (ducktap) {
 				INS(Duck)
@@ -1013,7 +1023,7 @@ void HwDLL::FindCVarsIfNeeded()
 	FIND(sv_maxspeed);
 	FIND(sv_stopspeed);
 	FIND(sv_friction);
-	FIND(sv_edgefriction);
+	FIND(edgefriction);
 	FIND(sv_accelerate);
 	FIND(sv_airaccelerate);
 	FIND(sv_gravity);
@@ -1032,7 +1042,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
 	vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
 	vars.Friction = CVars::sv_friction.GetFloat();
-	vars.Edgefriction = CVars::sv_edgefriction.GetFloat();
+	vars.Edgefriction = CVars::edgefriction.GetFloat();
 	vars.Accelerate = CVars::sv_accelerate.GetFloat();
 	vars.Airaccelerate = CVars::sv_airaccelerate.GetFloat();
 	vars.Gravity = CVars::sv_gravity.GetFloat();

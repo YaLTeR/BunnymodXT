@@ -4,7 +4,7 @@ project (BunnymodXT)
 set (CMAKE_CXX_STANDARD 11)
 
 if (NOT MSVC)
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native -mtune=native -m32 -g -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native -mtune=native -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
 	#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=pentium-m -mfpmath=387 -m32 -g -Wall -Wextra -Wno-unused-parameter")
 endif ()
 

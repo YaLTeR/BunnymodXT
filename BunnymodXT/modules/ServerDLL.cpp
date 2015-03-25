@@ -73,6 +73,7 @@ void ServerDLL::Clear()
 	ORIG_PM_Jump = nullptr;
 	ORIG_PM_PreventMegaBunnyJumping = nullptr;
 	ORIG_PM_PlayerMove = nullptr;
+	ORIG_PM_ClipVelocity = nullptr;
 	ORIG_CmdStart = nullptr;
 	ORIG_CNihilanth__DyingThink = nullptr;
 	ORIG_CNihilanth__DyingThink_Linux = nullptr;
@@ -172,6 +173,8 @@ void ServerDLL::FindStuff()
 			}
 		}, []() { }
 	);
+
+	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux. TODO: add Windows patterns.
 
 	bool noBhopcap = false;
 	auto n = fPM_PreventMegaBunnyJumping.get();
@@ -391,6 +394,19 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	#undef ALERT
 
 	CustomHud::UpdatePlayerInfo(velocity, origin);
+}
+
+HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal, float*, out, float, overbounce)
+{
+	auto ret = ORIG_PM_ClipVelocity(in, normal, out, overbounce);
+
+	if (CVars::_bxt_taslog.GetBool()) {
+		if (normal[2] != 1.0f && normal[2] != -1.0f)
+			pEngfuncs->pfnAlertMessage(at_console, const_cast<char*>("PM_ClipVelocity: %f (%f %f %f [%f] -> %f %f %f [%f])\n"),
+				std::acos(static_cast<double>(normal[2])) * 180 / M_PI, in[0], in[1], in[2], std::hypot(in[0], in[1]), out[0], out[1], out[2], std::hypot(out[0], out[1]));
+	}
+
+	return ret;
 }
 
 HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const usercmd_t*, cmd, unsigned int, random_seed)

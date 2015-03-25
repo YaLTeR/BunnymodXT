@@ -1095,7 +1095,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	auto c = counter++;
 	std::string buf(cmd_text->data, cmd_text->cursize); // TODO: ifdef this so it doesn't waste performance.
 	if (CVars::_bxt_taslog.GetBool())
-		ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; time: %f; executing: %s; host_frametime: %f; buffer: %s\n", c, *state, *paused, *reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(sv)+16), (executing ? "true" : "false"), *host_frametime, buf.c_str());
+		ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; executing: %s; host_frametime: %f; buffer: %s\n", c, *state, *paused, (executing ? "true" : "false"), *host_frametime, buf.c_str());
 
 	if (insideCbuf_Execute) {
 		ORIG_Cbuf_Execute();

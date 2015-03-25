@@ -28,3 +28,11 @@ extern "C" void __cdecl PM_Jump()
 	else
 		return ClientDLL::HOOKED_PM_Jump();
 }
+
+extern "C" int __cdecl PM_ClipVelocity(float in[3], float normal[3], float out[3], float overbounce)
+{
+	if (serverside)
+		return ServerDLL::HOOKED_PM_ClipVelocity(in, normal, out, overbounce);
+	else
+		return ClientDLL::HOOKED_PM_ClipVelocity(in, normal, out, overbounce);
+}

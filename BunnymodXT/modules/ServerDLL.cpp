@@ -503,7 +503,6 @@ HOOK_DEF_6(ServerDLL, void, __fastcall, CMultiManager__ManagerUse, void*, thispt
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
-			EngineMsg("%s\n", targetname);
 			if (!std::strcmp(targetname, "roll_the_credits") || !std::strcmp(targetname, "youwinmulti")) {
 				entvars_t *callerPev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
 				if (callerPev && callerPev->targetname) {

@@ -26,6 +26,11 @@ extern "C" void __cdecl _ZN11COFGeneWorm10DyingThinkEv(void* thisptr)
 {
 	return ServerDLL::HOOKED_COFGeneWorm__DyingThink_Linux(thisptr);
 }
+
+extern "C" void __cdecl _ZN13CMultiManager10ManagerUseEP11CBaseEntityS1_8USE_TYPEf(void* thisptr, void* pActivator, void* pCaller, int useType, float value)
+{
+	return ServerDLL::HOOKED_CMultiManager__ManagerUse_Linux(thisptr, pActivator, pCaller, useType, value);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -82,6 +87,7 @@ void ServerDLL::Clear()
 	ORIG_COFGeneWorm__DyingThink = nullptr;
 	ORIG_COFGeneWorm__DyingThink_Linux = nullptr;
 	ORIG_CMultiManager__ManagerUse = nullptr;
+	ORIG_CMultiManager__ManagerUse_Linux = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -264,13 +270,13 @@ void ServerDLL::FindStuff()
 	if (ORIG_CMultiManager__ManagerUse)
 		EngineDevMsg("[server dll] Found CMultiManager::ManagerUse at %p.\n", ORIG_CMultiManager__ManagerUse);
 	else {
-		// ORIG_CMultiManager__ManagerUse_Linux = reinterpret_cast<_CMultiManager__ManagerUse_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11COFGeneWorm10DyingThinkEv"));
-		// if (ORIG_CMultiManager__ManagerUse_Linux)
-		// 	EngineDevMsg("[server dll] Found COFGeneWorm::DyingThink [Linux] at %p.\n", ORIG_CMultiManager__ManagerUse_Linux);
-		// else {
+		ORIG_CMultiManager__ManagerUse_Linux = reinterpret_cast<_CMultiManager__ManagerUse_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN13CMultiManager10ManagerUseEP11CBaseEntityS1_8USE_TYPEf"));
+		if (ORIG_CMultiManager__ManagerUse_Linux)
+			EngineDevMsg("[server dll] Found CMultiManager::ManagerUse [Linux] at %p.\n", ORIG_CMultiManager__ManagerUse_Linux);
+		else {
 			EngineDevWarning("[server dll] Could not find CMultiManager::ManagerUse.\n");
 			EngineWarning("Blue Shift automatic timer stopping is not available.\n");
-		// }
+		}
 	}
 	
 	// This has to be the last thing to check and hook.
@@ -288,13 +294,13 @@ void ServerDLL::FindStuff()
 			auto addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern, "x????xx");
 
 			// Linux version: mov offset dword[eax], esi; mov [ecx+eax+4], ebx
-			if (!addr)
-			{
-				const byte pattern_[] = { 0x89, 0xB0, '?', '?', '?', '?', 0x89, 0x5C, 0x01, 0x04 };
-				addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern_, "xx????xxxx");
-				if (addr)
-					addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(addr)+1); // So we're compatible with the previous pattern.
-			}
+			// if (!addr)
+			// {
+			// 	const byte pattern_[] = { 0x89, 0xB0, '?', '?', '?', '?', 0x89, 0x5C, 0x01, 0x04 };
+			// 	addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern_, "xx????xxxx");
+			// 	if (addr)
+			// 		addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(addr)+1); // So we're compatible with the previous pattern.
+			// }
 
 			if (addr)
 			{
@@ -497,6 +503,7 @@ HOOK_DEF_6(ServerDLL, void, __fastcall, CMultiManager__ManagerUse, void*, thispt
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
+			EngineMsg("%s\n", targetname);
 			if (!std::strcmp(targetname, "roll_the_credits") || !std::strcmp(targetname, "youwinmulti")) {
 				entvars_t *callerPev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
 				if (callerPev && callerPev->targetname) {
@@ -509,4 +516,24 @@ HOOK_DEF_6(ServerDLL, void, __fastcall, CMultiManager__ManagerUse, void*, thispt
 	}
 
 	return ORIG_CMultiManager__ManagerUse(thisptr, edx, pActivator, pCaller, useType, value);
+}
+
+HOOK_DEF_5(ServerDLL, void, __cdecl, CMultiManager__ManagerUse_Linux, void*, thisptr, void*, pActivator, void*, pCaller, int, useType, float, value)
+{
+	if (CVars::bxt_timer_autostop.GetBool() && ppGlobals && pCaller) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->targetname) {
+			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
+			if (!std::strcmp(targetname, "roll_the_credits") || !std::strcmp(targetname, "youwinmulti")) {
+				entvars_t *callerPev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
+				if (callerPev && callerPev->targetname) {
+					const char *callerTargetname = (*ppGlobals)->pStringBase + callerPev->targetname;
+					if (!std::strcmp(callerTargetname, "mgr_take_over") || !std::strcmp(callerTargetname, "endbot"))
+						CustomHud::SetCountingTime(false);
+				}
+			}
+		}
+	}
+
+	return ORIG_CMultiManager__ManagerUse_Linux(thisptr, pActivator, pCaller, useType, value);
 }

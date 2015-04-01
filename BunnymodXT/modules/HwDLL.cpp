@@ -348,6 +348,11 @@ void HwDLL::FindStuff()
 					offCmd_Args = 38;
 					offCmd_Argv = 143;
 					break;
+				case 2: // 4554.
+					offCmd_Argc = 25;
+					offCmd_Args = 39;
+					offCmd_Argv = 144;
+					break;
 				}
 
 				auto f = reinterpret_cast<uintptr_t>(Host_Tell_f);
@@ -386,17 +391,23 @@ void HwDLL::FindStuff()
 		void *MiddleOfSV_ReadClientMessage;
 		auto fMiddleOfSV_ReadClientMessage = MemUtils::FindPatternOnly(&MiddleOfSV_ReadClientMessage, m_Base, m_Length, Patterns::ptnsMiddleOfSV_ReadClientMessage,
 			[&](MemUtils::ptnvec_size ptnNumber) {
-				host_client = *reinterpret_cast<client_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 14);
-
 				switch (ptnNumber)
 				{
 				default:
 				case 0: // SteamPipe & NGHL.
+					host_client = *reinterpret_cast<client_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 14);
 					svmove = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 39);
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 35);
 					sv_player = *reinterpret_cast<edict_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 19);
 					break;
-				case 1: // WON.
+				case 1: // 4554.
+					host_client = *reinterpret_cast<client_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 17);
+					svmove = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 42);
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 38);
+					sv_player = *reinterpret_cast<edict_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 22);
+					break;
+				case 2: // WON.
+					host_client = *reinterpret_cast<client_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 14);
 					svmove = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 40);
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 36);
 					sv_player = *reinterpret_cast<edict_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 20);

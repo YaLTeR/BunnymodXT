@@ -49,6 +49,10 @@ using std::ptrdiff_t;
 typedef int(*pfnUserMsgHook)(const char *pszName, int iSize, void *pbuf);
 #include "HLSDK/engine/cdll_int.h"
 
+#ifndef M_PI
+const double M_PI = 3.14159265358979323846;
+#endif
+
 /*
 	Declare a hook. Does the following:
 	- Declares a public static function;

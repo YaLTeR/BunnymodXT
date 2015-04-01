@@ -48,7 +48,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
-			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) }
+			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
+			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerUse), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerUse) }
 		});
 }
 
@@ -61,7 +62,8 @@ void ServerDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
-			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) }
+			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
+			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerUse), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerUse) }
 		});
 
 	Clear();
@@ -79,6 +81,7 @@ void ServerDLL::Clear()
 	ORIG_CNihilanth__DyingThink_Linux = nullptr;
 	ORIG_COFGeneWorm__DyingThink = nullptr;
 	ORIG_COFGeneWorm__DyingThink_Linux = nullptr;
+	ORIG_CMultiManager__ManagerUse = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -91,6 +94,7 @@ void ServerDLL::Clear()
 	offBhopcap = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	pEngfuncs = nullptr;
+	ppGlobals = nullptr;
 	cantJumpNextTime.clear();
 	m_Intercepted = false;
 }
@@ -255,13 +259,27 @@ void ServerDLL::FindStuff()
 			EngineWarning("Gene Worm automatic timer stopping is not available.\n");
 		}
 	}
+
+	ORIG_CMultiManager__ManagerUse = reinterpret_cast<_CMultiManager__ManagerUse>(MemUtils::GetSymbolAddress(m_Handle, "?ManagerUse@CMultiManager@@QAEXPAVCBaseEntity@@0W4USE_TYPE@@M@Z"));
+	if (ORIG_CMultiManager__ManagerUse)
+		EngineDevMsg("[server dll] Found CMultiManager::ManagerUse at %p.\n", ORIG_CMultiManager__ManagerUse);
+	else {
+		// ORIG_CMultiManager__ManagerUse_Linux = reinterpret_cast<_CMultiManager__ManagerUse_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11COFGeneWorm10DyingThinkEv"));
+		// if (ORIG_CMultiManager__ManagerUse_Linux)
+		// 	EngineDevMsg("[server dll] Found COFGeneWorm::DyingThink [Linux] at %p.\n", ORIG_CMultiManager__ManagerUse_Linux);
+		// else {
+			EngineDevWarning("[server dll] Could not find CMultiManager::ManagerUse.\n");
+			EngineWarning("Blue Shift automatic timer stopping is not available.\n");
+		// }
+	}
 	
 	// This has to be the last thing to check and hook.
 	pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
-	if (pEngfuncs)
+	ppGlobals = reinterpret_cast<globalvars_t**>(MemUtils::GetSymbolAddress(m_Handle, "gpGlobals"));
+	if (pEngfuncs && ppGlobals) {
 		EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
-	else
-	{
+		EngineDevMsg("[server dll] ppGlobals is %p.\n", ppGlobals);
+	} else {
 		auto pGiveFnptrsToDll = MemUtils::GetSymbolAddress(m_Handle, "GiveFnptrsToDll");
 		if (pGiveFnptrsToDll)
 		{
@@ -281,18 +299,22 @@ void ServerDLL::FindStuff()
 			if (addr)
 			{
 				pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr)+1);
+				ppGlobals = *reinterpret_cast<globalvars_t***>(reinterpret_cast<uintptr_t>(addr)+9);
 				EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
+				EngineDevMsg("[server dll] ppGlobals is %p.\n", ppGlobals);
 			}
 			else
 			{
 				EngineDevWarning("[server dll] Couldn't find the pattern in GiveFnptrsToDll.\n");
 				EngineWarning("Serverside logging is not available.\n");
+				EngineWarning("Blue Shift automatic timer stopping is not available.\n");
 			}
 		}
 		else
 		{
 			EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll.\n");
 			EngineWarning("Serverside logging is not avaliable.\n");
+			EngineWarning("Blue Shift automatic timer stopping is not available.\n");
 		}
 	}
 }
@@ -467,4 +489,24 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, COFGeneWorm__DyingThink_Linux, void*, thisp
 		CustomHud::SetCountingTime(false);
 
 	return ORIG_COFGeneWorm__DyingThink_Linux(thisptr);
+}
+
+HOOK_DEF_6(ServerDLL, void, __fastcall, CMultiManager__ManagerUse, void*, thisptr, int, edx, void*, pActivator, void*, pCaller, int, useType, float, value)
+{
+	if (CVars::bxt_timer_autostop.GetBool() && ppGlobals && pCaller) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->targetname) {
+			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
+			if (!std::strcmp(targetname, "roll_the_credits") || !std::strcmp(targetname, "youwinmulti")) {
+				entvars_t *callerPev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
+				if (callerPev && callerPev->targetname) {
+					const char *callerTargetname = (*ppGlobals)->pStringBase + callerPev->targetname;
+					if (!std::strcmp(callerTargetname, "mgr_take_over") || !std::strcmp(callerTargetname, "endbot"))
+						CustomHud::SetCountingTime(false);
+				}
+			}
+		}
+	}
+
+	return ORIG_CMultiManager__ManagerUse(thisptr, edx, pActivator, pCaller, useType, value);
 }

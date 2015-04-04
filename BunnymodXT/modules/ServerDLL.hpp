@@ -14,7 +14,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, CNihilanth__DyingThink_Linux, void* thisptr)
 	HOOK_DECL(void, __fastcall, COFGeneWorm__DyingThink, void* thisptr, int edx)
 	HOOK_DECL(void, __cdecl, COFGeneWorm__DyingThink_Linux, void* thisptr)
-	HOOK_DECL(void, __fastcall, CMultiManager__ManagerUse, void* thisptr, int edx, void* pActivator, void* pCaller, int useType, float value)
+	HOOK_DECL(void, __fastcall, CMultiManager__ManagerThink, void* thisptr, int edx)
 	HOOK_DECL(void, __cdecl, CMultiManager__ManagerUse_Linux, void* thisptr, void* pActivator, void* pCaller, int useType, float value)
 
 public:

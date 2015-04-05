@@ -134,6 +134,8 @@ protected:
 	static void Cmd_BXT_TAS_Autojump_Up();
 	static void Cmd_BXT_TAS_Ducktap_Down();
 	static void Cmd_BXT_TAS_Ducktap_Up();
+	static void Cmd_BXT_Record();
+	void Cmd_BXT_Record_f();
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	bool CheckUnpause();
@@ -149,6 +151,7 @@ protected:
 
 	bool autojump;
 	bool ducktap;
+	std::string recordDemoName;
 
 	void *cls;
 	void *clientstate;

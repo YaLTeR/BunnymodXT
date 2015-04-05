@@ -128,6 +128,7 @@ void HwDLL::Clear()
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
+	recordDemoName.clear();
 	cls = nullptr;
 	clientstate = nullptr;
 	sv = nullptr;
@@ -251,7 +252,7 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find ORIG_SV_AddLinksToPM.\n");
 
-		if (!cls || !sv || !svs || !cmd_text || !host_frametime || !ORIG_hudGetViewAngles)
+		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !host_frametime || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM)
 			ORIG_Cbuf_Execute = nullptr;
 
 		#define FIND(f) \
@@ -514,7 +515,6 @@ void HwDLL::FindStuff()
 		} else {
 			EngineDevWarning("[hw dll] Could not find Host_Tell_f.\n");
 			ORIG_Cmd_AddMallocCommand = nullptr;
-			ORIG_Cbuf_Execute = nullptr;
 		}
 
 		if (oldEngine) {
@@ -641,6 +641,23 @@ void HwDLL::Cmd_BXT_TAS_Ducktap_Up()
 	HwDLL::GetInstance().ducktap = false;
 }
 
+void HwDLL::Cmd_BXT_Record()
+{
+	return HwDLL::GetInstance().Cmd_BXT_Record_f();
+}
+
+void HwDLL::Cmd_BXT_Record_f()
+{
+	recordDemoName.clear();
+
+	if (ORIG_Cmd_Argc() != 2) {
+		ORIG_Con_Printf("Usage: bxt_record <demoname>\n");
+		return;
+	}
+
+	recordDemoName.assign(ORIG_Cmd_Argv(1));
+}
+
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
 	if (!registeredVarsAndCmds)
@@ -656,6 +673,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("-bxt_tas_autojump", Cmd_BXT_TAS_Autojump_Up, 2);
 			ORIG_Cmd_AddMallocCommand("+bxt_tas_ducktap", Cmd_BXT_TAS_Ducktap_Down, 2);
 			ORIG_Cmd_AddMallocCommand("-bxt_tas_ducktap", Cmd_BXT_TAS_Ducktap_Up, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_record", Cmd_BXT_Record, 2);
 		}
 	}
 }
@@ -990,6 +1008,13 @@ void HwDLL::InsertCommands()
 		}
 	}
 	wasRunningFrames = runningFramesBackup;
+
+	if (*reinterpret_cast<int*>(cls) == 5 && !recordDemoName.empty()) {
+		std::ostringstream ss;
+		ss << "record " << recordDemoName.c_str() << "\n";
+		ORIG_Cbuf_InsertText(ss.str().c_str());
+		recordDemoName.clear();
+	}
 }
 
 bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
@@ -1104,16 +1129,18 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	int *paused = reinterpret_cast<int*>(sv)+1;
 	static unsigned counter = 1;
 	auto c = counter++;
-	std::string buf(cmd_text->data, cmd_text->cursize); // TODO: ifdef this so it doesn't waste performance.
-	if (CVars::_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool()){
+		std::string buf(cmd_text->data, cmd_text->cursize);
 		ORIG_Con_Printf("Cbuf_Execute() #%u begin; cls.state: %d; sv.paused: %d; executing: %s; host_frametime: %f; buffer: %s\n", c, *state, *paused, (executing ? "true" : "false"), *host_frametime, buf.c_str());
+	}
 
 	if (insideCbuf_Execute) {
 		ORIG_Cbuf_Execute();
 
-		buf.assign(cmd_text->data, cmd_text->cursize);
-		if (CVars::_bxt_taslog.GetBool())
+		if (CVars::_bxt_taslog.GetBool()) {
+			std::string buf(cmd_text->data, cmd_text->cursize);
 			ORIG_Con_Printf("Cbuf_Execute() #%u end; sv.paused: %d; host_frametime: %f; buffer: %s\n", c, *paused, *host_frametime, buf.c_str());
+		}
 
 		return;
 	}
@@ -1169,9 +1196,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 			ORIG_Cbuf_InsertText("wait\n");
 		InsertCommands();
 
-		buf.assign(cmd_text->data, cmd_text->cursize);
-		if (CVars::_bxt_taslog.GetBool())
+		if (CVars::_bxt_taslog.GetBool()) {
+			std::string buf(cmd_text->data, cmd_text->cursize);
 			ORIG_Con_Printf("Cbuf_Execute() #%u executing; sv.paused: %d; buffer: %s\n", c, *paused, buf.c_str());
+		}
 
 		ORIG_Cbuf_Execute();
 
@@ -1183,9 +1211,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	}
 	insideCbuf_Execute = false;
 
-	buf.assign(cmd_text->data, cmd_text->cursize);
-	if (CVars::_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool()) {
+		std::string buf(cmd_text->data, cmd_text->cursize);
 		ORIG_Con_Printf("Cbuf_Execute() #%u end; sv.paused: %d; host_frametime: %f; buffer: %s\n", c, *paused, *host_frametime, buf.c_str());
+	}
 }
 
 void HwDLL::SetPlayerOrigin(float origin[3])

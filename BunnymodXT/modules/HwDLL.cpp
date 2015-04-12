@@ -149,6 +149,7 @@ void HwDLL::Clear()
 	dontPauseNextCycle = false;
 	changelevel = false;
 	recording = false;
+	pauseOnTheFirstFrame = false;
 	insideSeedRNG = false;
 	LastRandomSeed = 0;
 	player = HLStrafe::PlayerData();
@@ -664,6 +665,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	{
 		registeredVarsAndCmds = true;
 		RegisterCVar(CVars::_bxt_taslog);
+		RegisterCVar(CVars::bxt_autopause);
 		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
 			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
@@ -676,30 +678,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("bxt_record", Cmd_BXT_Record, 2);
 		}
 	}
-}
-
-bool HwDLL::CheckUnpause()
-{
-	size_t current_cmd;
-	for (size_t off = 0; off < cmd_text->cursize; ++off)
-	{
-		current_cmd = off;
-		unsigned quotes = 0;
-		for (; off < cmd_text->cursize; ++off)
-		{
-			char c = cmd_text->data[off];
-			quotes += (c == '"');
-			if (!(quotes & 1) && c == ';')
-				break;
-			if (c == '\n')
-				break;
-		}
-
-		if (off - current_cmd == 7 && !std::strncmp(cmd_text->data + current_cmd, "unpause", 7))
-			return true;
-	}
-
-	return false;
 }
 
 void HwDLL::InsertCommands()
@@ -1156,6 +1134,11 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	if (framesTillExecuting > 0)
 		framesTillExecuting--;
 
+	if (*state == 4 && !*paused && CVars::bxt_autopause.GetBool()) {
+		ORIG_Cbuf_InsertText("pause\n");
+		pauseOnTheFirstFrame = true;
+	}
+
 	if (*state != 5 && *state != 4)
 		executing = false;
 
@@ -1195,6 +1178,11 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		if (cmd_text->cursize)
 			ORIG_Cbuf_InsertText("wait\n");
 		InsertCommands();
+
+		if (*state == 5 && pauseOnTheFirstFrame) {
+			ORIG_Cbuf_InsertText("setpause\n");
+			pauseOnTheFirstFrame = false;
+		}
 
 		if (CVars::_bxt_taslog.GetBool()) {
 			std::string buf(cmd_text->data, cmd_text->cursize);

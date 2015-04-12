@@ -174,6 +174,7 @@ protected:
 	bool dontPauseNextCycle;
 	bool changelevel;
 	bool recording;
+	bool pauseOnTheFirstFrame;
 
 	bool insideSeedRNG;
 	unsigned LastRandomSeed;

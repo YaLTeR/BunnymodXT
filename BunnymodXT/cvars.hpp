@@ -113,6 +113,7 @@ namespace CVars
 {
 	// Engine CVars
 	extern CVarWrapper _bxt_taslog;
+	extern CVarWrapper bxt_autopause;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_maxvelocity;

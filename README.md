@@ -1,9 +1,7 @@
 BunnymodXT
 ==========
 
-The new Bunnymod XT!
-
-This is the Bunnymod for Half-Life mods. Its primary function is to remove the bhop cap, it also can do other stuff like legit autojump.
+Bunnymod XT (BXT for short) is a cross-platform tool that provides speedrunning and TAS-related features for GoldSource games such as Half-Life and its modifications.
 
 ##VAC BAN WARNING: Do NOT connect to servers with this injected, or you might get VAC banned!
 
@@ -14,7 +12,8 @@ This is the Bunnymod for Half-Life mods. Its primary function is to remove the b
 #Documentation
 [On the SourceRuns wiki.](http://wiki.sourceruns.org/wiki/Bunnymod_XT)
 
-###Environment variables (Linux)
+###Environment variables
+- **BXT_SCRIPT** - if set to a filename of a hltas script, loads the non-shared RNG from that script on load.
 - **BXT_LOGFILE** - if set, logs all Bunnymod XT messages into a file with that filename.
 - **SPTLIB_DEBUG** - if set to 1, logs all dlopen, dlclose and dlsym calls.
 

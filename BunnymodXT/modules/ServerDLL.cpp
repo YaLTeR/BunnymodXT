@@ -54,7 +54,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
-			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) }
+			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) },
+			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) }
 		});
 }
 
@@ -68,7 +69,8 @@ void ServerDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
-			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) }
+			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) },
+			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) }
 		});
 
 	Clear();
@@ -88,6 +90,7 @@ void ServerDLL::Clear()
 	ORIG_COFGeneWorm__DyingThink_Linux = nullptr;
 	ORIG_CMultiManager__ManagerThink = nullptr;
 	ORIG_CMultiManager__ManagerUse_Linux = nullptr;
+	ORIG_AddToFullPack = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -224,20 +227,30 @@ void ServerDLL::FindStuff()
 	}
 
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
-	if (ORIG_CmdStart)
+	ORIG_AddToFullPack = reinterpret_cast<_AddToFullPack>(MemUtils::GetSymbolAddress(m_Handle, "_Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh"));
+	if (ORIG_CmdStart && ORIG_AddToFullPack) {
 		EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
-	else {
+		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+	} else {
 		ORIG_GetEntityAPI = reinterpret_cast<_GetEntityAPI>(MemUtils::GetSymbolAddress(m_Handle, "GetEntityAPI"));
 		if (ORIG_GetEntityAPI) {
 			DLL_FUNCTIONS funcs;
 			if (ORIG_GetEntityAPI(&funcs, 140)) {
-				ORIG_CmdStart = funcs.pfnCmdStart; // Gets our hooked CmdStart address on Linux.
+				// Gets our hooked addresses on Linux.
+				ORIG_CmdStart = funcs.pfnCmdStart;
+				ORIG_AddToFullPack = funcs.pfnAddToFullPack;
 				EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
-			}
-			else
+				EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+			} else {
 				EngineDevWarning("[server dll] Could not get the server DLL function table.\n");
-		} else
+				EngineWarning("Serverside shared RNG manipulation and usercommand logging are not available.\n");
+				EngineWarning("Showing hidden entities is not available.\n");
+			}
+		} else {
 			EngineDevWarning("[server dll] Could not get the address of GetEntityAPI.\n");
+			EngineWarning("Serverside shared RNG manipulation and usercommand logging are not available.\n");
+			EngineWarning("Showing hidden entities is not available.\n");
+		}
 	}
 
 	ORIG_CNihilanth__DyingThink = reinterpret_cast<_CNihilanth__DyingThink>(MemUtils::GetSymbolAddress(m_Handle, "?DyingThink@CNihilanth@@QAEXXZ"));
@@ -337,6 +350,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 	REG(bxt_bhopcap);
 	if (ORIG_CNihilanth__DyingThink || ORIG_CNihilanth__DyingThink_Linux || ORIG_COFGeneWorm__DyingThink || ORIG_COFGeneWorm__DyingThink_Linux)
 		REG(bxt_timer_autostop);
+	if (ORIG_AddToFullPack)
+		REG(bxt_show_hidden_entities);
 	#undef REG
 }
 
@@ -396,6 +411,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
 
 	int playerIndex = *reinterpret_cast<int*>(pmove + offPlayerIndex);
+	int *groundEntity = reinterpret_cast<int*>(pmove + offOnground);
 
 	float *velocity, *origin, *angles;
 	velocity = reinterpret_cast<float*>(pmove + offVelocity);
@@ -417,6 +433,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	{
 		ALERT(at_console, "Angles: %.8f; %.8f; %.8f\n", angles[0], angles[1], angles[2]);
 		ALERT(at_console, "New velocity: %.8f; %.8f; %.8f; new origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
+		ALERT(at_console, "New onground: %d\n", *groundEntity);
 		ALERT(at_console, "-- BXT TAS Log End --\n");
 	}
 	#undef ALERT
@@ -529,4 +546,35 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, CMultiManager__ManagerUse_Linux, void*, thi
 	}
 
 	return ORIG_CMultiManager__ManagerUse_Linux(thisptr, pActivator, pCaller, useType, value);
+}
+
+HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state, int, e, edict_t*, ent, edict_t*, host, int, hostflags, int, player, unsigned char*, pSet)
+{
+	auto oldEffects = ent->v.effects;
+	auto oldRendermode = ent->v.rendermode;
+
+	if (CVars::bxt_show_hidden_entities.GetBool()) {
+		bool show = ent->v.rendermode != kRenderNormal && ent->v.rendermode != kRenderGlow;
+		switch (CVars::bxt_show_hidden_entities.GetInt()) {
+		case 1:
+			show = show && ent->v.renderamt == 0;
+			break;
+		case 2:
+			break;
+		default:
+			show = show || (ent->v.effects & EF_NODRAW) != 0;
+		}
+
+		if (show) {
+			ent->v.effects &= ~EF_NODRAW;
+			ent->v.rendermode = kRenderNormal;
+		}
+	}
+
+	auto ret = ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);
+
+	ent->v.effects = oldEffects;
+	ent->v.rendermode = oldRendermode;
+
+	return ret;
 }

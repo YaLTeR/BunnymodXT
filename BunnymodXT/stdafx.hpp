@@ -140,3 +140,9 @@ const double M_PI = 3.14159265358979323846;
 		return class::GetInstance().HOOKED_##name##_Func(n1, n2, n3, n4, n5, n6); \
 	} \
 	ret class::HOOKED_##name##_Func(t1 n1, t2 n2, t3 n3, t4 n4, t5 n5, t6 n6)
+
+#define HOOK_DEF_7(class, ret, call, name, t1, n1, t2, n2, t3, n3, t4, n4, t5, n5, t6, n6, t7, n7) \
+	ret call class::HOOKED_##name(t1 n1, t2 n2, t3 n3, t4 n4, t5 n5, t6 n6, t7 n7) { \
+		return class::GetInstance().HOOKED_##name##_Func(n1, n2, n3, n4, n5, n6, n7); \
+	} \
+	ret class::HOOKED_##name##_Func(t1 n1, t2 n2, t3 n3, t4 n4, t5 n5, t6 n6, t7 n7)

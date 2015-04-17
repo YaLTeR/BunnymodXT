@@ -14,6 +14,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(long, __cdecl, RandomLong, long a1, long a2)
 	HOOK_DECL(void, __cdecl, Host_Changelevel2_f)
 	HOOK_DECL(void, __cdecl, SCR_BeginLoadingPlaque)
+	HOOK_DECL(int, __cdecl, Host_FilterTime, float timePassed)
 
 	struct cmdbuf_t
 	{

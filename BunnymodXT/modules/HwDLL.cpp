@@ -33,6 +33,11 @@ extern "C" void __cdecl Host_SCR_BeginLoadingPlaque()
 	return HwDLL::HOOKED_SCR_BeginLoadingPlaque();
 }
 
+extern "C" int __cdecl Host_FilterTime(float passedTime)
+{
+	return HwDLL::HOOKED_Host_FilterTime(passedTime);
+}
+
 extern "C" std::time_t time(std::time_t* t)
 {
 	if (!HwDLL::GetInstance().GetTimeAddr())
@@ -78,7 +83,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			{ reinterpret_cast<void**>(&ORIG_RandomFloat), reinterpret_cast<void*>(HOOKED_RandomFloat) },
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
-			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) }
+			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
+			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) }
 		});
 }
 
@@ -94,7 +100,8 @@ void HwDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
-			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) }
+			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
+			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) }
 	});
 
 	for (auto cvar : CVars::allCVars)
@@ -113,6 +120,7 @@ void HwDLL::Clear()
 	ORIG_RandomLong = nullptr;
 	ORIG_Host_Changelevel2_f = nullptr;
 	ORIG_SCR_BeginLoadingPlaque = nullptr;
+	ORIG_Host_FilterTime = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
@@ -243,13 +251,13 @@ void HwDLL::FindStuff()
 
 		ORIG_hudGetViewAngles = reinterpret_cast<_hudGetViewAngles>(MemUtils::GetSymbolAddress(m_Handle, "hudGetViewAngles"));
 		if (ORIG_hudGetViewAngles)
-			EngineDevMsg("[hw dll] Found ORIG_hudGetViewAngles at %p.\n", ORIG_hudGetViewAngles);
+			EngineDevMsg("[hw dll] Found hudGetViewAngles at %p.\n", ORIG_hudGetViewAngles);
 		else
 			EngineDevWarning("[hw dll] Could not find ORIG_hudGetViewAngles.\n");
 
 		ORIG_SV_AddLinksToPM = reinterpret_cast<_SV_AddLinksToPM>(MemUtils::GetSymbolAddress(m_Handle, "SV_AddLinksToPM"));
 		if (ORIG_SV_AddLinksToPM)
-			EngineDevMsg("[hw dll] Found ORIG_SV_AddLinksToPM at %p.\n", ORIG_SV_AddLinksToPM);
+			EngineDevMsg("[hw dll] Found SV_AddLinksToPM at %p.\n", ORIG_SV_AddLinksToPM);
 		else
 			EngineDevWarning("[hw dll] Could not find ORIG_SV_AddLinksToPM.\n");
 
@@ -281,6 +289,12 @@ void HwDLL::FindStuff()
 		FIND(SCR_BeginLoadingPlaque)
 		FIND(PM_PlayerTrace)
 		#undef FIND
+
+		ORIG_Host_FilterTime = reinterpret_cast<_Host_FilterTime>(MemUtils::GetSymbolAddress(m_Handle, "Host_FilterTime"));
+		if (ORIG_Host_FilterTime)
+			EngineDevMsg("[hw dll] Found Host_FilterTime at %p.\n", ORIG_Host_FilterTime);
+		else
+			EngineDevWarning("[hw dll] Could not find ORIG_Host_FilterTime.\n");
 	}
 	else
 	{
@@ -295,6 +309,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Host_Changelevel2_f)
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		DEF_FUTURE(PM_PlayerTrace)
+		DEF_FUTURE(Host_FilterTime)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
 		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
 		if (oldEngine) {
@@ -518,6 +533,12 @@ void HwDLL::FindStuff()
 			ORIG_Cmd_AddMallocCommand = nullptr;
 		}
 
+		n = fHost_FilterTime.get();
+		if (ORIG_Host_FilterTime)
+			EngineDevMsg("[hw dll] Found Host_FilterTime at %p (using the %s pattern).\n", ORIG_Host_FilterTime, Patterns::ptnsHost_FilterTime[n].build.c_str());
+		else
+			EngineDevWarning("[hw dll] Could not find Host_FilterTime.\n");
+
 		if (oldEngine) {
 			n = fLoadAndDecryptHwDLL.get();
 			if (ORIG_LoadAndDecryptHwDLL)
@@ -665,6 +686,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	{
 		registeredVarsAndCmds = true;
 		RegisterCVar(CVars::_bxt_taslog);
+		RegisterCVar(CVars::_bxt_min_frametime);
 		RegisterCVar(CVars::bxt_autopause);
 		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
@@ -1347,6 +1369,32 @@ HOOK_DEF_0(HwDLL, void, __cdecl, SCR_BeginLoadingPlaque)
 {
 	executing = false;
 	return ORIG_SCR_BeginLoadingPlaque();
+}
+
+HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
+{
+	static double timeCounter = 0.0;
+	static bool usePassedTime = false;
+
+	auto minFrametime = CVars::_bxt_min_frametime.GetFloat();
+	if (minFrametime == 0.0f) {
+		timeCounter = 0.0;
+		usePassedTime = false;
+		return ORIG_Host_FilterTime(passedTime);
+	}
+
+	timeCounter += passedTime;
+	if (timeCounter < minFrametime)
+		return 0;
+
+	if (ORIG_Host_FilterTime(usePassedTime ? passedTime : static_cast<float>(timeCounter))) {
+		usePassedTime = false;
+		timeCounter = std::fmod(timeCounter, minFrametime);
+		return 1;
+	} else {
+		usePassedTime = true;
+		return 0;
+	}
 }
 
 HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c)

@@ -6,6 +6,7 @@ namespace CVars
 {
 	// Engine CVars
 	CVarWrapper _bxt_taslog("_bxt_taslog", "0");
+	CVarWrapper _bxt_min_frametime("_bxt_min_frametime", "0");
 	CVarWrapper bxt_autopause("bxt_autopause", "0");
 
 	CVarWrapper con_color;
@@ -54,6 +55,7 @@ namespace CVars
 	const std::vector<CVarWrapper*> allCVars =
 	{
 		&_bxt_taslog,
+		&_bxt_min_frametime,
 		&bxt_autopause,
 		&con_color,
 		&sv_maxvelocity,

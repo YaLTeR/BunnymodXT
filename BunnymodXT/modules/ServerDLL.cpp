@@ -51,6 +51,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
+			{ reinterpret_cast<void**>(&ORIG_PM_ClipVelocity), reinterpret_cast<void*>(HOOKED_PM_ClipVelocity) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
@@ -66,6 +67,7 @@ void ServerDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
+			{ reinterpret_cast<void**>(&ORIG_PM_ClipVelocity), reinterpret_cast<void*>(HOOKED_PM_ClipVelocity) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
@@ -187,7 +189,9 @@ void ServerDLL::FindStuff()
 		}, []() { }
 	);
 
-	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux. TODO: add Windows patterns.
+	auto fPM_ClipVelocity = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_ClipVelocity), m_Handle, "PM_ClipVelocity", m_Base, m_Length, Patterns::ptnsPM_ClipVelocity,
+		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
 
 	bool noBhopcap = false;
 	auto n = fPM_PreventMegaBunnyJumping.get();
@@ -290,6 +294,17 @@ void ServerDLL::FindStuff()
 			EngineDevWarning("[server dll] Could not find CMultiManager::ManagerThink or CMultiManager::ManagerUse.\n");
 			EngineWarning("Blue Shift and Gunman Chronicles automatic timer stopping is not available.\n");
 		}
+	}
+
+	n = fPM_ClipVelocity.get();
+	if (ORIG_PM_ClipVelocity) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[server dll] Found PM_ClipVelocity at %p.\n", ORIG_PM_ClipVelocity);
+		else
+			EngineDevMsg("[server dll] Found PM_ClipVelocity at %p (using the %s pattern).\n", ORIG_PM_ClipVelocity, Patterns::ptnsPM_ClipVelocity[n].build.c_str());
+	} else {
+		EngineDevWarning("[server dll] Could not find PM_ClipVelocity.\n");
+		EngineWarning("Velocity clip logging is not available.\n");
 	}
 	
 	// This has to be the last thing to check and hook.

@@ -31,6 +31,11 @@ extern "C" void __cdecl _ZN13CMultiManager10ManagerUseEP11CBaseEntityS1_8USE_TYP
 {
 	return ServerDLL::HOOKED_CMultiManager__ManagerUse_Linux(thisptr, pActivator, pCaller, useType, value);
 }
+
+extern "C" int __cdecl _Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh(struct entity_state_s* state, int e, edict_t* ent, edict_t* host, int hostflags, int player, unsigned char* pSet)
+{
+	return ServerDLL::HOOKED_AddToFullPack(state, e, ent, host, hostflags, player, pSet);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)

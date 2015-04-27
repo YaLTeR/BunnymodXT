@@ -86,7 +86,7 @@ cotire(BunnymodXT)
 
 target_link_libraries (BunnymodXT hltas hlstrafe ${Boost_LIBRARIES})
 if (NOT MSVC)
-	target_link_libraries (BunnymodXT pthread)
+	target_link_libraries (BunnymodXT pthread rt)
 endif ()
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	target_link_libraries (BunnymodXT ${Detours_LIBRARY})

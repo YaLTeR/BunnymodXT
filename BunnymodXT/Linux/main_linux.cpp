@@ -91,6 +91,21 @@ static __attribute__((constructor)) void Construct()
 	_EngineWarning = PrintWarning;
 	_EngineDevWarning = PrintDevWarning;
 
+	if (boost::interprocess::message_queue::remove("BunnymodXT-TASView")) {
+		EngineDevMsg("Cleaned up the old message queue.\n");
+	}
+	try {
+		boost::interprocess::message_queue mq(
+			boost::interprocess::create_only,
+			"BunnymodXT-TASView",
+			1000,
+			256);
+
+		EngineDevMsg("Created the message queue successfully.\n");
+	} catch (boost::interprocess::interprocess_exception &ex) {
+		EngineWarning("Failed to create the message queue, TASView integration is not available.\n");
+	}
+
 	Hooks::AddToHookedModules(&HwDLL::GetInstance());
 	Hooks::AddToHookedModules(&ClientDLL::GetInstance());
 	Hooks::AddToHookedModules(&ServerDLL::GetInstance());
@@ -103,4 +118,8 @@ static __attribute__((destructor)) void Destruct()
 
 	if (logfile)
 		fclose(logfile);
+
+	if (boost::interprocess::message_queue::remove("BunnymodXT-TASView")) {
+		EngineDevMsg("Closed the message queue.\n");
+	}
 }

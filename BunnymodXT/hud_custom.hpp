@@ -20,4 +20,5 @@ namespace CustomHud
 	void TimePassed(double time);
 	void ResetTime();
 	void SetCountingTime(bool counting);
+	void SendTimeUpdate();
 };

@@ -70,6 +70,21 @@ unsigned int __stdcall MainThread(void* args)
 	_EngineWarning = PrintWarning;
 	_EngineDevWarning = PrintDevWarning;
 
+	if (boost::interprocess::message_queue::remove("BunnymodXT-TASView")) {
+		EngineDevMsg("Cleaned up the old message queue.\n");
+	}
+	try {
+		boost::interprocess::message_queue mq(
+			boost::interprocess::create_only,
+			"BunnymodXT-TASView",
+			1000,
+			256);
+
+		EngineDevMsg("Created the message queue successfully.\n");
+	} catch (boost::interprocess::interprocess_exception &ex) {
+		EngineWarning("Failed to create the message queue, TASView integration is not available.\n");
+	}
+
 	Hooks::AddToHookedModules(&HwDLL::GetInstance());
 	Hooks::AddToHookedModules(&ClientDLL::GetInstance());
 	Hooks::AddToHookedModules(&ServerDLL::GetInstance());
@@ -94,6 +109,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 	case DLL_PROCESS_DETACH:
 		Hooks::Free();
+
+		if (boost::interprocess::message_queue::remove("BunnymodXT-TASView")) {
+			EngineDevMsg("Closed the message queue.\n");
+		}
+
 		ConUtils::Free();
 		break;
 	}

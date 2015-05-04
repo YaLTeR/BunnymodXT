@@ -343,6 +343,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_viewangles);
 		REG(bxt_hud_viewangles_offset);
 		REG(bxt_hud_viewangles_anchor);
+		REG(bxt_hud_distance);
+		REG(bxt_hud_distance_offset);
+		REG(bxt_hud_distance_anchor);
 		REG(bxt_hud_speedometer);
 		REG(bxt_hud_speedometer_offset);
 		REG(bxt_hud_speedometer_anchor);

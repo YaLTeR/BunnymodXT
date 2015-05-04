@@ -333,7 +333,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_viewangles.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_viewangles_offset, CVars::bxt_hud_viewangles_anchor, &x, &y, -200, (si.iCharHeight * 10) + 1);
+			GetPosition(CVars::bxt_hud_viewangles_offset, CVars::bxt_hud_viewangles_anchor, &x, &y, -200, (si.iCharHeight * 10) + 2);
 
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
@@ -455,6 +455,40 @@ namespace CustomHud
 		}
 	}
 
+	void DrawDistance(float flTime)
+	{
+		if (CVars::bxt_hud_distance.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_distance_offset, CVars::bxt_hud_distance_anchor, &x, &y, -200, (si.iCharHeight * 12) + 3);
+
+			float view[3] = { 0, 0, 28 };
+			ClientDLL::GetInstance().pEngfuncs->pEventAPI->EV_LocalPlayerViewheight(view);
+			view[0] += player.origin[0];
+			view[1] += player.origin[1];
+			view[2] += player.origin[2];
+
+			float forward[3], right[3], up[3];
+			ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player.viewangles, forward, right, up);
+			
+			float end[3];
+			vecCopy(view, end);
+			end[0] += forward[0] * 8192;
+			end[1] += forward[1] * 8192;
+			end[2] += forward[2] * 8192;
+
+			auto tr = HwDLL::GetInstance().PlayerTrace(view, end, HLStrafe::HullType::POINT);
+			double dist = std::sqrt((tr.EndPos[0] - view[0]) * (tr.EndPos[0] - view[0])
+				+ (tr.EndPos[1] - view[1]) * (tr.EndPos[1] - view[1])
+				+ (tr.EndPos[2] - view[2]) * (tr.EndPos[2] - view[2]));
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "Distance: " << dist;
+			DrawString(x, y, out.str().c_str());
+		}
+	}
+
 	void Init()
 	{
 		ResetTime();
@@ -540,6 +574,7 @@ namespace CustomHud
 		DrawSpeedometer(flTime);
 		DrawJumpspeed(flTime);
 		DrawTimer(flTime);
+		DrawDistance(flTime);
 
 		receivedAccurateInfo = false;
 	}

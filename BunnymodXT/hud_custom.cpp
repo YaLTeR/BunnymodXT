@@ -478,14 +478,20 @@ namespace CustomHud
 			end[2] += forward[2] * 8192;
 
 			auto tr = HwDLL::GetInstance().PlayerTrace(view, end, HLStrafe::HullType::POINT);
-			double dist = std::sqrt((tr.EndPos[0] - view[0]) * (tr.EndPos[0] - view[0])
+			double hdist = std::hypot(tr.EndPos[0] - view[0], tr.EndPos[1] - view[1]);
+			double vdist = tr.EndPos[2] - view[2];
+			double hvdist = std::sqrt((tr.EndPos[0] - view[0]) * (tr.EndPos[0] - view[0])
 				+ (tr.EndPos[1] - view[1]) * (tr.EndPos[1] - view[1])
 				+ (tr.EndPos[2] - view[2]) * (tr.EndPos[2] - view[2]));
+
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
 			out.precision(precision);
-			out << "Distance: " << dist;
-			DrawString(x, y, out.str().c_str());
+			out << "Distance:\n"
+				<< "H: " << hdist << "\n"
+				<< "V: " << vdist << "\n"
+				<< "HV: " << hvdist;
+			DrawMultilineString(x, y, out.str().c_str());
 		}
 	}
 

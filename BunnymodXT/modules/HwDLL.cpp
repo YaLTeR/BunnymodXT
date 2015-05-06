@@ -28,7 +28,7 @@ extern "C" void __cdecl Host_Changelevel2_f()
 	return HwDLL::HOOKED_Host_Changelevel2_f();
 }
 
-extern "C" void __cdecl Host_SCR_BeginLoadingPlaque()
+extern "C" void __cdecl SCR_BeginLoadingPlaque()
 {
 	return HwDLL::HOOKED_SCR_BeginLoadingPlaque();
 }

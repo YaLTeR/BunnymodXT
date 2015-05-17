@@ -712,8 +712,10 @@ void HwDLL::InsertCommands()
 			// Movement frame.
 			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent)) {
 				auto c = f.Commands;
-				if (!c.empty())
+				if (!c.empty()) {
+					c += '\n';
 					ORIG_Cbuf_InsertText(c.c_str());
+				}
 
 				if (svs->num_clients >= 1) {
 					edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);

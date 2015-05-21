@@ -415,6 +415,25 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
 
 	if (CVars::bxt_autojump.GetBool())
 		*oldbuttons = orig_oldbuttons;
+
+	if (CVars::_bxt_taslog.GetBool())
+	{
+		#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
+
+		auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
+		float forward[2] = { *reinterpret_cast<float*>(pmove + 20), *reinterpret_cast<float*>(pmove + 24) };
+		float right[2] = { *reinterpret_cast<float*>(pmove + 32), *reinterpret_cast<float*>(pmove + 36) };
+		float fmove = *reinterpret_cast<float*>(pmove + 283752);
+		float smove = *reinterpret_cast<float*>(pmove + 283756);
+		float wishvel[2];
+		for (int i = 0; i < 2; ++i)
+			wishvel[i] = forward[i] * fmove + right[i] * smove;
+
+		ALERT(at_console, "forward[0]: %f; forward[1]: %f; right[0]: %f; right[1]: %f; forwardspeed: %f; sidespeed: %f\n", *reinterpret_cast<float*>(pmove + 20), *reinterpret_cast<float*>(pmove + 24), *reinterpret_cast<float*>(pmove + 32), *reinterpret_cast<float*>(pmove + 36), *reinterpret_cast<float*>(pmove + 283752), *reinterpret_cast<float*>(pmove + 283756));
+		ALERT(at_console, "wishvel[0]: %f; wishvel[1]: %f; wishspeed: %f\n", wishvel[0], wishvel[1], std::sqrt(wishvel[0]*wishvel[0] + wishvel[1]*wishvel[1]));
+
+		#undef ALERT
+	}
 }
 
 HOOK_DEF_0(ServerDLL, void, __cdecl, PM_PreventMegaBunnyJumping)

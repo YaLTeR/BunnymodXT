@@ -28,7 +28,7 @@ extern "C" void __cdecl Host_Changelevel2_f()
 	return HwDLL::HOOKED_Host_Changelevel2_f();
 }
 
-extern "C" void __cdecl SCR_BeginLoadingPlaque()
+extern "C" void __cdecl Host_SCR_BeginLoadingPlaque()
 {
 	return HwDLL::HOOKED_SCR_BeginLoadingPlaque();
 }
@@ -712,10 +712,8 @@ void HwDLL::InsertCommands()
 			// Movement frame.
 			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent)) {
 				auto c = f.Commands;
-				if (!c.empty()) {
-					c += '\n';
+				if (!c.empty())
 					ORIG_Cbuf_InsertText(c.c_str());
-				}
 
 				if (svs->num_clients >= 1) {
 					edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
@@ -1093,6 +1091,9 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 		if (pl) {
 			vars.EntFriction = pl->v.friction;
 			vars.EntGravity = pl->v.gravity;
+
+			if (pl->v.maxspeed != 0.0f)
+				vars.Maxspeed = std::min(pl->v.maxspeed, vars.Maxspeed);
 		} else {
 			vars.EntFriction = 1.0f;
 			vars.EntGravity = 1.0f;
@@ -1101,6 +1102,8 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 		vars.EntFriction = 1.0f;
 		vars.EntGravity = 1.0f;
 	}
+
+	EngineMsg("Maxspeed: %f\n", vars.Maxspeed);
 
 	return vars;
 }
@@ -1222,6 +1225,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		LoadingSeedCounter++;
 	}
 	insideCbuf_Execute = false;
+
+	ClientDLL::GetInstance().SetAngleSpeedCap(CVars::bxt_anglespeed_cap.GetBool());
 
 	if (CVars::_bxt_taslog.GetBool()) {
 		std::string buf(cmd_text->data, cmd_text->cursize);

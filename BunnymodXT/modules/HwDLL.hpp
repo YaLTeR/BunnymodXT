@@ -137,7 +137,12 @@ protected:
 	static void Cmd_BXT_TAS_Ducktap_Up();
 	static void Cmd_BXT_Record();
 	void Cmd_BXT_Record_f();
+	static void Cmd_BXT_Setpos();
+	void Cmd_BXT_Setpos_f();
+	static void Cmd_BXT_ResetPlayer();
+	void Cmd_BXT_ResetPlayer_f();
 
+	void SetHFRMultiplayerCheck(bool enabled);
 	void RegisterCVarsAndCommandsIfNeeded();
 	bool CheckUnpause();
 	void InsertCommands();
@@ -167,6 +172,8 @@ protected:
 	char *sv_areanodes;
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
+
+	uintptr_t hfrMultiplayerCheck;
 
 	int framesTillExecuting;
 	bool executing;

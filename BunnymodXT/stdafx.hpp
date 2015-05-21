@@ -36,6 +36,8 @@ using std::uintptr_t;
 using std::size_t;
 using std::ptrdiff_t;
 
+#include <boost/lexical_cast.hpp>
+
 #include <hltas.hpp>
 #include <hlstrafe.hpp>
 

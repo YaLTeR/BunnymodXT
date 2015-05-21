@@ -150,6 +150,7 @@ void HwDLL::Clear()
 	sv_areanodes = nullptr;
 	cmd_text = nullptr;
 	host_frametime = nullptr;
+	hfrMultiplayerCheck = 0;
 	framesTillExecuting = 0;
 	executing = false;
 	insideCbuf_Execute = false;
@@ -442,6 +443,13 @@ void HwDLL::FindStuff()
 			}, []() {}
 		);
 
+		auto fHFRMultiplayerCheck = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&hfrMultiplayerCheck), m_Base, m_Length, Patterns::ptnsHFRMultiplayerCheck,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				if (*reinterpret_cast<byte*>(hfrMultiplayerCheck + 16) != 0x75)
+					hfrMultiplayerCheck = 0;
+			}, []() {}
+		);
+
 		auto n = fCbuf_Execute.get();
 		if (ORIG_Cbuf_Execute) {
 			EngineDevMsg("[hw dll] Found Cbuf_Execute at %p (using the %s pattern).\n", ORIG_Cbuf_Execute, Patterns::ptnsCbuf_Execute[n].build.c_str());
@@ -538,6 +546,14 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found Host_FilterTime at %p (using the %s pattern).\n", ORIG_Host_FilterTime, Patterns::ptnsHost_FilterTime[n].build.c_str());
 		else
 			EngineDevWarning("[hw dll] Could not find Host_FilterTime.\n");
+
+		n = fHFRMultiplayerCheck.get();
+		if (hfrMultiplayerCheck) {
+			EngineDevMsg("[client dll] Found the host_framerate multiplayer check pattern at %p (using the %s pattern).\n", reinterpret_cast<void*>(hfrMultiplayerCheck), Patterns::ptnsHFRMultiplayerCheck[n].build.c_str());
+		} else {
+			EngineDevWarning("[client dll] Could not find the host_framerate multiplayer check pattern.\n");
+			EngineWarning("Host_framerate multiplayer check removal is not available.\n");
+		}
 
 		if (oldEngine) {
 			n = fLoadAndDecryptHwDLL.get();
@@ -680,6 +696,76 @@ void HwDLL::Cmd_BXT_Record_f()
 	recordDemoName.assign(ORIG_Cmd_Argv(1));
 }
 
+void HwDLL::Cmd_BXT_Setpos()
+{
+	return HwDLL::GetInstance().Cmd_BXT_Setpos_f();
+}
+
+void HwDLL::Cmd_BXT_Setpos_f()
+{
+	if (ORIG_Cmd_Argc() != 4) {
+		ORIG_Con_Printf("Usage: bxt_setpos <x> <y> <z>\n");
+		return;
+	}
+
+	if (svs->num_clients >= 1) {
+		edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+		if (pl) {
+			pl->v.origin[0] = boost::lexical_cast<float>(ORIG_Cmd_Argv(1));
+			pl->v.origin[1] = boost::lexical_cast<float>(ORIG_Cmd_Argv(2));
+			pl->v.origin[2] = boost::lexical_cast<float>(ORIG_Cmd_Argv(3));
+		}
+	}
+}
+
+void HwDLL::Cmd_BXT_ResetPlayer()
+{
+	return HwDLL::GetInstance().Cmd_BXT_ResetPlayer_f();
+}
+
+void HwDLL::Cmd_BXT_ResetPlayer_f()
+{
+	if (ORIG_Cmd_Argc() != 1) {
+		ORIG_Con_Printf("Usage: bxt_resetplayer\n");
+		return;
+	}
+
+	if (svs->num_clients >= 1) {
+		edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+		if (pl) {
+			pl->v.velocity[0] = 0;
+			pl->v.velocity[1] = 0;
+			pl->v.velocity[2] = 0;
+			pl->v.basevelocity[0] = 0;
+			pl->v.basevelocity[1] = 0;
+			pl->v.basevelocity[2] = 0;
+			pl->v.health = 100;
+			pl->v.fuser2 = 0; // Stamina.
+			pl->v.bInDuck = false;
+			pl->v.flDuckTime = 0;
+			pl->v.flags &= ~FL_DUCKING;
+
+			if (clientstate) {
+				float *viewangles = reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(clientstate) + 0x2ABE4);
+				viewangles[0] = 0;
+				viewangles[1] = 0;
+				viewangles[2] = 0;
+			}
+		}
+	}
+}
+
+void HwDLL::SetHFRMultiplayerCheck(bool enabled)
+{
+	if (!hfrMultiplayerCheck)
+		return;
+
+	if (enabled)
+		MemUtils::ReplaceBytes(reinterpret_cast<void*>(hfrMultiplayerCheck + 16), 1, reinterpret_cast<byte*>("\x75"));
+	else
+		MemUtils::ReplaceBytes(reinterpret_cast<void*>(hfrMultiplayerCheck + 16), 1, reinterpret_cast<byte*>("\xEB"));
+}
+
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
 	if (!registeredVarsAndCmds)
@@ -688,6 +774,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		RegisterCVar(CVars::_bxt_taslog);
 		RegisterCVar(CVars::_bxt_min_frametime);
 		RegisterCVar(CVars::bxt_autopause);
+		RegisterCVar(CVars::bxt_hfr_multiplayer_check);
 		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
 			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
@@ -698,6 +785,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("+bxt_tas_ducktap", Cmd_BXT_TAS_Ducktap_Down, 2);
 			ORIG_Cmd_AddMallocCommand("-bxt_tas_ducktap", Cmd_BXT_TAS_Ducktap_Up, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_record", Cmd_BXT_Record, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_setpos", Cmd_BXT_Setpos, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_resetplayer", Cmd_BXT_ResetPlayer, 2);
 		}
 	}
 }
@@ -1230,6 +1319,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 	ClientDLL::GetInstance().SetAngleSpeedCap(CVars::bxt_anglespeed_cap.GetBool());
 	ClientDLL::GetInstance().SetSpeedScaling(CVars::bxt_speed_scaling.GetBool());
+	SetHFRMultiplayerCheck(CVars::bxt_hfr_multiplayer_check.GetBool());
 
 	if (CVars::_bxt_taslog.GetBool()) {
 		std::string buf(cmd_text->data, cmd_text->cursize);

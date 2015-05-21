@@ -8,6 +8,7 @@ namespace CVars
 	CVarWrapper _bxt_taslog("_bxt_taslog", "0");
 	CVarWrapper _bxt_min_frametime("_bxt_min_frametime", "0");
 	CVarWrapper bxt_autopause("bxt_autopause", "0");
+	CVarWrapper bxt_hfr_multiplayer_check("bxt_hfr_multiplayer_check", "1");
 
 	CVarWrapper con_color;
 	CVarWrapper sv_maxvelocity;
@@ -62,6 +63,7 @@ namespace CVars
 		&_bxt_taslog,
 		&_bxt_min_frametime,
 		&bxt_autopause,
+		&bxt_hfr_multiplayer_check,
 		&con_color,
 		&sv_maxvelocity,
 		&sv_maxspeed,

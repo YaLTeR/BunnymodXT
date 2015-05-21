@@ -115,6 +115,7 @@ namespace CVars
 	extern CVarWrapper _bxt_taslog;
 	extern CVarWrapper _bxt_min_frametime;
 	extern CVarWrapper bxt_autopause;
+	extern CVarWrapper bxt_hfr_multiplayer_check;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_maxvelocity;

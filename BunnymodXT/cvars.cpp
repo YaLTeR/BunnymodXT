@@ -31,6 +31,7 @@ namespace CVars
 	CVarWrapper bxt_autojump_prediction("bxt_autojump_prediction", "0");
 	CVarWrapper bxt_bhopcap_prediction("bxt_bhopcap_prediction", "1");
 	CVarWrapper bxt_anglespeed_cap("bxt_anglespeed_cap", "1");
+	CVarWrapper bxt_speed_scaling("bxt_speed_scaling", "1");
 	CVarWrapper bxt_hud("bxt_hud", "1");
 	CVarWrapper bxt_hud_color("bxt_hud_color", "");
 	CVarWrapper bxt_hud_precision("bxt_hud_precision", "6");
@@ -79,6 +80,7 @@ namespace CVars
 		&bxt_autojump_prediction,
 		&bxt_bhopcap_prediction,
 		&bxt_anglespeed_cap,
+		&bxt_speed_scaling,
 		&bxt_hud,
 		&bxt_hud_color,
 		&bxt_hud_precision,

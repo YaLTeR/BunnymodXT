@@ -126,6 +126,7 @@ void ClientDLL::Clear()
 	offBhopcap = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	angleSpeedCap = 0;
+	speedScaling = 0;
 	pEngfuncs = nullptr;
 	cantJumpNextTime = false;
 	SeedsQueued = 0;
@@ -178,6 +179,13 @@ void ClientDLL::FindStuff()
 				|| *reinterpret_cast<byte*>(angleSpeedCap + 328) != 0x7B
 				|| *reinterpret_cast<byte*>(angleSpeedCap + 360) != 0x7A)
 				angleSpeedCap = 0;
+		}, []() { }
+	);
+
+	auto fSpeedScaling = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&speedScaling), m_Base, m_Length, Patterns::ptnsSpeedScaling,
+		[&](MemUtils::ptnvec_size ptnNumber) {
+			if (*reinterpret_cast<byte*>(speedScaling + 19) != 0x75)
+				speedScaling = 0;
 		}, []() { }
 	);
 
@@ -301,6 +309,14 @@ void ClientDLL::FindStuff()
 		EngineDevWarning("[client dll] Could not find the angle speed cap pattern.\n");
 		EngineWarning("CS 1.6 cl_yawspeed and cl_pitchspeed cap removal is not available.\n");
 	}
+
+	n = fSpeedScaling.get();
+	if (speedScaling) {
+		EngineDevMsg("[client dll] Found the speed scaling pattern at %p (using the %s pattern).\n", reinterpret_cast<void*>(speedScaling), Patterns::ptnsSpeedScaling[n].build.c_str());
+	} else {
+		EngineDevWarning("[client dll] Could not find the speed scaling pattern.\n");
+		EngineWarning("CS 1.6 clientside speed scaling removal is not available.\n");
+	}
 }
 
 bool ClientDLL::FindHUDFunctions()
@@ -349,6 +365,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (angleSpeedCap)
 		REG(bxt_anglespeed_cap);
+
+	if (speedScaling)
+		REG(bxt_speed_scaling);
 
 	if (ORIG_HUD_Init)
 	{
@@ -400,6 +419,17 @@ void ClientDLL::SetAngleSpeedCap(bool capped)
 		MemUtils::ReplaceBytes(reinterpret_cast<void*>(angleSpeedCap + 328), 1, reinterpret_cast<byte*>("\xEB"));
 		MemUtils::ReplaceBytes(reinterpret_cast<void*>(angleSpeedCap + 360), 1, reinterpret_cast<byte*>("\xEB"));
 	}
+}
+
+void ClientDLL::SetSpeedScaling(bool scaled)
+{
+	if (!speedScaling)
+		return;
+
+	if (scaled)
+		MemUtils::ReplaceBytes(reinterpret_cast<void*>(speedScaling + 19), 1, reinterpret_cast<byte*>("\x75"));
+	else
+		MemUtils::ReplaceBytes(reinterpret_cast<void*>(speedScaling + 19), 1, reinterpret_cast<byte*>("\xEB"));
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)

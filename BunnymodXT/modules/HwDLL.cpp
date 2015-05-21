@@ -1227,6 +1227,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	insideCbuf_Execute = false;
 
 	ClientDLL::GetInstance().SetAngleSpeedCap(CVars::bxt_anglespeed_cap.GetBool());
+	ClientDLL::GetInstance().SetSpeedScaling(CVars::bxt_speed_scaling.GetBool());
 
 	if (CVars::_bxt_taslog.GetBool()) {
 		std::string buf(cmd_text->data, cmd_text->cursize);

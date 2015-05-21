@@ -32,6 +32,7 @@ public:
 	void ResetSeedsQueued() { SeedsQueued = 0; }
 
 	void SetAngleSpeedCap(bool capped);
+	void SetSpeedScaling(bool scaled);
 
 	cl_enginefunc_t *pEngfuncs;
 
@@ -54,6 +55,7 @@ protected:
 	byte originalBhopcapInsn[6];
 
 	uintptr_t angleSpeedCap;
+	uintptr_t speedScaling;
 
 	bool cantJumpNextTime;
 

@@ -138,6 +138,7 @@ namespace CVars
 	extern CVarWrapper bxt_autojump_prediction;
 	extern CVarWrapper bxt_bhopcap_prediction;
 	extern CVarWrapper bxt_anglespeed_cap;
+	extern CVarWrapper bxt_speed_scaling;
 	extern CVarWrapper bxt_hud;
 	extern CVarWrapper bxt_hud_color;
 	extern CVarWrapper bxt_hud_precision;

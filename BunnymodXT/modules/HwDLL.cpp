@@ -729,6 +729,8 @@ void HwDLL::InsertCommands()
 						player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 						player.HasLJModule = false; // TODO
 
+						player.StaminaTime = pl->v.fuser2;
+
 						// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
 						GetViewangles(player.Viewangles);
 						//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
@@ -960,6 +962,8 @@ void HwDLL::InsertCommands()
 					player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 					player.HasLJModule = false; // TODO
 
+					player.StaminaTime = pl->v.fuser2;
+
 												// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
 					GetViewangles(player.Viewangles);
 					//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
@@ -1102,8 +1106,6 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 		vars.EntFriction = 1.0f;
 		vars.EntGravity = 1.0f;
 	}
-
-	EngineMsg("Maxspeed: %f\n", vars.Maxspeed);
 
 	return vars;
 }

@@ -372,6 +372,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_timer_autostop);
 	if (ORIG_AddToFullPack)
 		REG(bxt_show_hidden_entities);
+
+	REG(bxt_interprocess_send);
 	#undef REG
 }
 
@@ -489,6 +491,24 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 		if (normal[2] != 1.0f && normal[2] != -1.0f)
 			pEngfuncs->pfnAlertMessage(at_console, const_cast<char*>("PM_ClipVelocity: %f (%f %f %f [%f] -> %f %f %f [%f])\n"),
 				std::acos(static_cast<double>(normal[2])) * 180 / M_PI, in[0], in[1], in[2], std::hypot(in[0], in[1]), out[0], out[1], out[2], std::hypot(out[0], out[1]));
+	}
+
+	if (normal[2] != 1.0f && normal[2] != -1.0f && CVars::bxt_interprocess_send.GetBool()) {
+		try {
+			boost::interprocess::message_queue mq(
+				boost::interprocess::open_only,
+				"BunnymodXT-TASView");
+
+			unsigned char buf[30];
+			buf[0] = 30;
+			buf[1] = 0x01;
+			std::memcpy(buf + 2, &normal[2], sizeof(normal[2]));
+			std::memcpy(buf + 6, in, sizeof(in) / sizeof(in[0]));
+			std::memcpy(buf + 18, out, sizeof(out) / sizeof(out[0]));
+			mq.send(buf, sizeof(buf), 0);
+		} catch (boost::interprocess::interprocess_exception &ex) {
+			// Do nothing.
+		}
 	}
 
 	return ret;

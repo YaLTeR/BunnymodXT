@@ -27,6 +27,7 @@ namespace CVars
 	CVarWrapper bxt_bhopcap("bxt_bhopcap", "1");
 	CVarWrapper bxt_timer_autostop("bxt_timer_autostop", "1");
 	CVarWrapper bxt_show_hidden_entities("bxt_show_hidden_entities", "0");
+	CVarWrapper bxt_interprocess_send("bxt_interprocess_send", "0");
 
 	// Clientside CVars
 	CVarWrapper bxt_autojump_prediction("bxt_autojump_prediction", "0");
@@ -79,6 +80,7 @@ namespace CVars
 		&bxt_bhopcap,
 		&bxt_timer_autostop,
 		&bxt_show_hidden_entities,
+		&bxt_interprocess_send,
 		&bxt_autojump_prediction,
 		&bxt_bhopcap_prediction,
 		&bxt_anglespeed_cap,

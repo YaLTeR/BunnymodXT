@@ -140,7 +140,6 @@ protected:
 	static void Cmd_BXT_Interprocess_Reset();
 
 	void RegisterCVarsAndCommandsIfNeeded();
-	bool CheckUnpause();
 	void InsertCommands();
 	bool GetNextMovementFrame(HLTAS::Frame& f);
 	void ResetButtons();

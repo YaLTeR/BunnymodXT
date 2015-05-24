@@ -373,8 +373,6 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_timer_autostop);
 	if (ORIG_AddToFullPack)
 		REG(bxt_show_hidden_entities);
-
-	REG(bxt_interprocess_send);
 	#undef REG
 }
 

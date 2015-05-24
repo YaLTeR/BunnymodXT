@@ -8,6 +8,7 @@
 #include "../patterns.hpp"
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
+#include "../interprocess.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -680,6 +681,11 @@ void HwDLL::Cmd_BXT_Record_f()
 	recordDemoName.assign(ORIG_Cmd_Argv(1));
 }
 
+void HwDLL::Cmd_BXT_Interprocess_Reset()
+{
+	Interprocess::Initialize();
+}
+
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
 	if (!registeredVarsAndCmds)
@@ -688,6 +694,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		RegisterCVar(CVars::_bxt_taslog);
 		RegisterCVar(CVars::_bxt_min_frametime);
 		RegisterCVar(CVars::bxt_autopause);
+		RegisterCVar(CVars::bxt_interprocess_enable);
 		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
 			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
@@ -698,6 +705,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("+bxt_tas_ducktap", Cmd_BXT_TAS_Ducktap_Down, 2);
 			ORIG_Cmd_AddMallocCommand("-bxt_tas_ducktap", Cmd_BXT_TAS_Ducktap_Up, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_record", Cmd_BXT_Record, 2);
+			ORIG_Cmd_AddMallocCommand("_bxt_interprocess_reset", Cmd_BXT_Interprocess_Reset, 2);
 		}
 	}
 }

@@ -137,6 +137,7 @@ protected:
 	static void Cmd_BXT_TAS_Ducktap_Up();
 	static void Cmd_BXT_Record();
 	void Cmd_BXT_Record_f();
+	static void Cmd_BXT_Interprocess_Reset();
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	bool CheckUnpause();

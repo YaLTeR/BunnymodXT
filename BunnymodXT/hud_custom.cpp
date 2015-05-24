@@ -645,7 +645,7 @@ namespace CustomHud
 	}
 
 	void SendTimeUpdate() {
-		if (!Interprocess::mq)
+		if (!CVars::bxt_interprocess_enable.GetBool() || !Interprocess::mq)
 			return;
 
 		try {

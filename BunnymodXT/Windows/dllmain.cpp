@@ -5,6 +5,7 @@
 #include "../bunnymodxt.hpp"
 #include "../modules.hpp"
 #include "conutils.hpp"
+#include "../interprocess.hpp"
 
 const wchar_t EVENT_NAME[] = L"BunnymodXT-Injector";
 
@@ -70,20 +71,7 @@ unsigned int __stdcall MainThread(void* args)
 	_EngineWarning = PrintWarning;
 	_EngineDevWarning = PrintDevWarning;
 
-	if (boost::interprocess::message_queue::remove("BunnymodXT-TASView")) {
-		EngineDevMsg("Cleaned up the old message queue.\n");
-	}
-	try {
-		boost::interprocess::message_queue mq(
-			boost::interprocess::create_only,
-			"BunnymodXT-TASView",
-			1000,
-			256);
-
-		EngineDevMsg("Created the message queue successfully.\n");
-	} catch (boost::interprocess::interprocess_exception &ex) {
-		EngineWarning("Failed to create the message queue, TASView integration is not available.\n");
-	}
+	Interprocess::Initialize();
 
 	Hooks::AddToHookedModules(&HwDLL::GetInstance());
 	Hooks::AddToHookedModules(&ClientDLL::GetInstance());
@@ -109,11 +97,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 	case DLL_PROCESS_DETACH:
 		Hooks::Free();
-
-		if (boost::interprocess::message_queue::remove("BunnymodXT-TASView")) {
-			EngineDevMsg("Closed the message queue.\n");
-		}
-
+		Interprocess::Shutdown();
 		ConUtils::Free();
 		break;
 	}

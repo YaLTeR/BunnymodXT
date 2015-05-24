@@ -4,6 +4,7 @@
 #include "modules.hpp"
 #include <SPTLib/Hooks.hpp>
 #include "hud_custom.hpp"
+#include "interprocess.hpp"
 
 #include <chrono>
 
@@ -644,11 +645,10 @@ namespace CustomHud
 	}
 
 	void SendTimeUpdate() {
-		try {
-			boost::interprocess::message_queue mq(
-				boost::interprocess::open_only,
-				"BunnymodXT-TASView");
+		if (!Interprocess::mq)
+			return;
 
+		try {
 			unsigned char buf[18];
 			buf[0] = 18;
 			buf[1] = 0x00;
@@ -657,8 +657,9 @@ namespace CustomHud
 			std::memcpy(buf + 6, &minutes, sizeof(minutes));
 			std::memcpy(buf + 10, &seconds, sizeof(seconds));
 			std::memcpy(buf + 14, &milliseconds, sizeof(milliseconds));
-			mq.send(buf, sizeof(buf), 0);
-		} catch (boost::interprocess::interprocess_exception &ex) {
+
+			Interprocess::mq->send(buf, sizeof(buf), 0);
+		} catch (boost::interprocess::interprocess_exception) {
 			// Do nothing.
 		}
 	}

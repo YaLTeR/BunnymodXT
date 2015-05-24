@@ -54,7 +54,8 @@ set (SOURCE_FILES
 	BunnymodXT/modules/ClientDLL.cpp
 	BunnymodXT/modules/ServerDLL.cpp
 	BunnymodXT/cvars.cpp
-	BunnymodXT/hud_custom.cpp)
+	BunnymodXT/hud_custom.cpp
+	BunnymodXT/interprocess.cpp)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	# Find Detours.

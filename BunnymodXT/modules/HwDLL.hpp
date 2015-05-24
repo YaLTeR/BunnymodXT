@@ -141,10 +141,10 @@ protected:
 	void Cmd_BXT_Setpos_f();
 	static void Cmd_BXT_ResetPlayer();
 	void Cmd_BXT_ResetPlayer_f();
+	static void Cmd_BXT_Interprocess_Reset();
 
 	void SetHFRMultiplayerCheck(bool enabled);
 	void RegisterCVarsAndCommandsIfNeeded();
-	bool CheckUnpause();
 	void InsertCommands();
 	bool GetNextMovementFrame(HLTAS::Frame& f);
 	void ResetButtons();

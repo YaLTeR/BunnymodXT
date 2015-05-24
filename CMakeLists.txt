@@ -54,7 +54,8 @@ set (SOURCE_FILES
 	BunnymodXT/modules/ClientDLL.cpp
 	BunnymodXT/modules/ServerDLL.cpp
 	BunnymodXT/cvars.cpp
-	BunnymodXT/hud_custom.cpp)
+	BunnymodXT/hud_custom.cpp
+	BunnymodXT/interprocess.cpp)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	# Find Detours.
@@ -86,7 +87,7 @@ cotire(BunnymodXT)
 
 target_link_libraries (BunnymodXT hltas hlstrafe ${Boost_LIBRARIES})
 if (NOT MSVC)
-	target_link_libraries (BunnymodXT pthread)
+	target_link_libraries (BunnymodXT pthread rt)
 endif ()
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	target_link_libraries (BunnymodXT ${Detours_LIBRARY})

@@ -4,6 +4,7 @@
 #include "modules.hpp"
 #include <SPTLib/Hooks.hpp>
 #include "hud_custom.hpp"
+#include "interprocess.hpp"
 
 #include <chrono>
 
@@ -612,6 +613,7 @@ namespace CustomHud
 	{
 		if (!countingTime)
 			return;
+
 		frames++;
 		timeRemainder += time;
 		seconds += static_cast<int>(timeRemainder);
@@ -624,6 +626,8 @@ namespace CustomHud
 			hours += (minutes / 60);
 			minutes %= 60;
 		}
+
+		SendTimeUpdate();
 	}
 
 	void ResetTime()
@@ -632,10 +636,31 @@ namespace CustomHud
 		hours = minutes = seconds = 0;
 		timeRemainder = 0.0;
 		frames = 0;
+		SendTimeUpdate();
 	}
 
 	void SetCountingTime(bool counting)
 	{
 		countingTime = counting;
+	}
+
+	void SendTimeUpdate() {
+		if (!CVars::bxt_interprocess_enable.GetBool() || !Interprocess::mq)
+			return;
+
+		try {
+			unsigned char buf[18];
+			buf[0] = 18;
+			buf[1] = 0x00;
+			int milliseconds = static_cast<int>(timeRemainder * 1000);
+			std::memcpy(buf + 2, &hours, sizeof(hours));
+			std::memcpy(buf + 6, &minutes, sizeof(minutes));
+			std::memcpy(buf + 10, &seconds, sizeof(seconds));
+			std::memcpy(buf + 14, &milliseconds, sizeof(milliseconds));
+
+			Interprocess::mq->send(buf, sizeof(buf), 0);
+		} catch (boost::interprocess::interprocess_exception) {
+			// Do nothing.
+		}
 	}
 }

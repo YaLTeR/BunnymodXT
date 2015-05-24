@@ -8,6 +8,7 @@
 #include "../patterns.hpp"
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
+#include "../interprocess.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -766,6 +767,11 @@ void HwDLL::SetHFRMultiplayerCheck(bool enabled)
 		MemUtils::ReplaceBytes(reinterpret_cast<void*>(hfrMultiplayerCheck + 16), 1, reinterpret_cast<byte*>("\xEB"));
 }
 
+void HwDLL::Cmd_BXT_Interprocess_Reset()
+{
+	Interprocess::Initialize();
+}
+
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
 	if (!registeredVarsAndCmds)
@@ -775,6 +781,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		RegisterCVar(CVars::_bxt_min_frametime);
 		RegisterCVar(CVars::bxt_autopause);
 		RegisterCVar(CVars::bxt_hfr_multiplayer_check);
+		RegisterCVar(CVars::bxt_interprocess_enable);
 		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
 			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
@@ -787,6 +794,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("bxt_record", Cmd_BXT_Record, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_setpos", Cmd_BXT_Setpos, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_resetplayer", Cmd_BXT_ResetPlayer, 2);
+			ORIG_Cmd_AddMallocCommand("_bxt_interprocess_reset", Cmd_BXT_Interprocess_Reset, 2);
 		}
 	}
 }

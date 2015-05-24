@@ -4,6 +4,7 @@
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/Hooks.hpp>
 #include "../modules.hpp"
+#include "../interprocess.hpp"
 
 static FILE *logfile = nullptr;
 
@@ -91,6 +92,8 @@ static __attribute__((constructor)) void Construct()
 	_EngineWarning = PrintWarning;
 	_EngineDevWarning = PrintDevWarning;
 
+	Interprocess::Initialize();
+
 	Hooks::AddToHookedModules(&HwDLL::GetInstance());
 	Hooks::AddToHookedModules(&ClientDLL::GetInstance());
 	Hooks::AddToHookedModules(&ServerDLL::GetInstance());
@@ -103,4 +106,6 @@ static __attribute__((destructor)) void Destruct()
 
 	if (logfile)
 		fclose(logfile);
+
+	Interprocess::Shutdown();
 }

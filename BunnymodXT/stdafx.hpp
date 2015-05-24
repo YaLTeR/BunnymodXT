@@ -32,6 +32,8 @@
 #include <sstream>
 #include <unordered_map>
 
+#include <boost/interprocess/ipc/message_queue.hpp>
+
 using std::uintptr_t;
 using std::size_t;
 using std::ptrdiff_t;

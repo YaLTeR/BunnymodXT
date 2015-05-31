@@ -607,6 +607,10 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 	currentRepeat = 0;
 	StrafeState = HLStrafe::CurrentState();
 	ButtonsPresent = false;
+	demoName.clear();
+	saveName.clear();
+	SharedRNGSeedPresent = false;
+	SetNonSharedRNGSeed = false;
 
 	if (ORIG_Cmd_Argc() != 2) {
 		ORIG_Con_Printf("Usage: bxt_tas_loadscript <filename>\n");

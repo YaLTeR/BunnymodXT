@@ -387,6 +387,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_distance);
 		REG(bxt_hud_distance_offset);
 		REG(bxt_hud_distance_anchor);
+		REG(bxt_hud_stamina);
+		REG(bxt_hud_stamina_offset);
+		REG(bxt_hud_stamina_anchor);
 		REG(bxt_hud_speedometer);
 		REG(bxt_hud_speedometer_offset);
 		REG(bxt_hud_speedometer_anchor);

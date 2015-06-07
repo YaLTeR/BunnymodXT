@@ -156,6 +156,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_distance;
 	extern CVarWrapper bxt_hud_distance_offset;
 	extern CVarWrapper bxt_hud_distance_anchor;
+	extern CVarWrapper bxt_hud_stamina;
+	extern CVarWrapper bxt_hud_stamina_offset;
+	extern CVarWrapper bxt_hud_stamina_anchor;
 	extern CVarWrapper bxt_hud_speedometer;
 	extern CVarWrapper bxt_hud_speedometer_offset;
 	extern CVarWrapper bxt_hud_speedometer_anchor;

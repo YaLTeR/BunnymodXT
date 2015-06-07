@@ -239,7 +239,7 @@ namespace CustomHud
 
 	void GetAccurateInfo()
 	{
-		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity);
+		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.stamina);
 		HwDLL::GetInstance().GetViewangles(player.viewangles);
 	}
 
@@ -496,6 +496,21 @@ namespace CustomHud
 		}
 	}
 
+	void DrawStamina(float flTime)
+	{
+		if (CVars::bxt_hud_stamina.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_stamina_offset, CVars::bxt_hud_stamina_anchor, &x, &y, -200, (si.iCharHeight * 16) + 4);
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "Stamina: " << player.stamina;
+			DrawString(x, y, out.str().c_str());
+		}
+	}
+
 	void Init()
 	{
 		ResetTime();
@@ -582,6 +597,7 @@ namespace CustomHud
 		DrawJumpspeed(flTime);
 		DrawTimer(flTime);
 		DrawDistance(flTime);
+		DrawStamina(flTime);
 
 		receivedAccurateInfo = false;
 	}

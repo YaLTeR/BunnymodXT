@@ -49,6 +49,9 @@ namespace CVars
 	CVarWrapper bxt_hud_distance("bxt_hud_distance", "0");
 	CVarWrapper bxt_hud_distance_offset("bxt_hud_distance_offset", "");
 	CVarWrapper bxt_hud_distance_anchor("bxt_hud_distance_anchor", "1 0");
+	CVarWrapper bxt_hud_stamina("bxt_hud_stamina", "0");
+	CVarWrapper bxt_hud_stamina_offset("bxt_hud_stamina_offset", "");
+	CVarWrapper bxt_hud_stamina_anchor("bxt_hud_stamina_anchor", "1 0");
 	CVarWrapper bxt_hud_speedometer("bxt_hud_speedometer", "1");
 	CVarWrapper bxt_hud_speedometer_offset("bxt_hud_speedometer_offset", "");
 	CVarWrapper bxt_hud_speedometer_anchor("bxt_hud_speedometer_anchor", "0.5 1");
@@ -100,6 +103,9 @@ namespace CVars
 		&bxt_hud_distance,
 		&bxt_hud_distance_offset,
 		&bxt_hud_distance_anchor,
+		&bxt_hud_stamina,
+		&bxt_hud_stamina_offset,
+		&bxt_hud_stamina_anchor,
 		&bxt_hud_speedometer,
 		&bxt_hud_speedometer_offset,
 		&bxt_hud_speedometer_anchor,

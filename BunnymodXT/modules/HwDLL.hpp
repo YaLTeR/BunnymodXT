@@ -79,7 +79,7 @@ public:
 
 	void SetPlayerOrigin(float origin[3]);
 	void SetPlayerVelocity(float velocity[3]);
-	bool TryGettingAccurateInfo(float origin[3], float velocity[3]);
+	bool TryGettingAccurateInfo(float origin[3], float velocity[3], float& stamina);
 	void GetViewangles(float* va);
 
 	inline void SetLastRandomSeed(unsigned seed) { LastRandomSeed = seed; }

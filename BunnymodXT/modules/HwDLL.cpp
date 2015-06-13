@@ -85,7 +85,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
 			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
-			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) }
+			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) },
+			{ reinterpret_cast<void**>(&ORIG_V_FadeAlpha), reinterpret_cast<void*>(HOOKED_V_FadeAlpha) }
 		});
 }
 
@@ -102,7 +103,8 @@ void HwDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
 			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
-			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) }
+			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) },
+			{ reinterpret_cast<void**>(&ORIG_V_FadeAlpha), reinterpret_cast<void*>(HOOKED_V_FadeAlpha) }
 	});
 
 	for (auto cvar : CVars::allCVars)
@@ -122,6 +124,7 @@ void HwDLL::Clear()
 	ORIG_Host_Changelevel2_f = nullptr;
 	ORIG_SCR_BeginLoadingPlaque = nullptr;
 	ORIG_Host_FilterTime = nullptr;
+	ORIG_V_FadeAlpha = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
@@ -311,6 +314,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		DEF_FUTURE(PM_PlayerTrace)
 		DEF_FUTURE(Host_FilterTime)
+		DEF_FUTURE(V_FadeAlpha)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
 		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
 		if (oldEngine) {
@@ -511,6 +515,7 @@ void HwDLL::FindStuff()
 				EngineDevWarning("[hw dll] Could not find " #name ".\n"); \
 				ORIG_Cbuf_Execute = nullptr; \
 			}
+		GET_FUTURE(V_FadeAlpha)
 		GET_FUTURE(Cvar_RegisterVariable)
 		GET_FUTURE(Cvar_DirectSet)
 		GET_FUTURE(Cvar_FindVar)
@@ -699,6 +704,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		RegisterCVar(CVars::_bxt_min_frametime);
 		RegisterCVar(CVars::bxt_autopause);
 		RegisterCVar(CVars::bxt_interprocess_enable);
+		RegisterCVar(CVars::bxt_fade_remove);
 		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
 			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
@@ -1409,6 +1415,14 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 		usePassedTime = true;
 		return 0;
 	}
+}
+
+HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
+{
+	if (CVars::bxt_fade_remove.GetBool())
+		return 0;
+	else
+		return ORIG_V_FadeAlpha();
 }
 
 HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c)

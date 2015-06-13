@@ -342,6 +342,17 @@ namespace Patterns
 		}
 	};
 
+	const MemUtils::ptnvec ptnsV_FadeAlpha =
+	{
+		{
+			"HL-SteamPipe",
+			{
+				0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x08, 0xD9, 0x05, '?', '?', '?', '?', 0xDC, 0x1D, '?', '?', '?', '?', 0x8A, 0x0D, '?', '?', '?', '?', 0xDF, 0xE0, 0xF6, 0xC4, 0x05, 0x7A, 0x1C, 0xD9, 0x05, '?', '?', '?', '?', 0xDC, 0x1D
+			},
+			"xxxxxxxx????xx????xx????xxxxxxxxx????xx"
+		}
+	};
+
 	// Shared patterns.
 	const MemUtils::ptnvec ptnsPMJump =
 	{

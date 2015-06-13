@@ -168,11 +168,13 @@ void HwDLL::Clear()
 	input.Clear();
 	demoName.clear();
 	saveName.clear();
+	frametime0ms.clear();
 	runningFrames = false;
 	wasRunningFrames = false;
 	currentFramebulk = 0;
 	totalFramebulks = 0;
 	currentRepeat = 0;
+	thisFrameIs0ms = false;
 	StrafeState = HLStrafe::CurrentState();
 	currentKeys.ResetStates();
 	SharedRNGSeedPresent = false;
@@ -598,8 +600,10 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 	ButtonsPresent = false;
 	demoName.clear();
 	saveName.clear();
+	frametime0ms.clear();
 	SharedRNGSeedPresent = false;
 	SetNonSharedRNGSeed = false;
+	thisFrameIs0ms = false;
 
 	if (ORIG_Cmd_Argc() != 2) {
 		ORIG_Con_Printf("Usage: bxt_tas_loadscript <filename>\n");
@@ -623,7 +627,8 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 			ss >> SharedRNGSeed >> NonSharedRNGSeed;
 			SharedRNGSeedPresent = true;
 			SetNonSharedRNGSeed = true;
-		}
+		} else if (prop.first == "frametime0ms")
+			frametime0ms = prop.second;
 	}
 
 	if (!input.GetFrames().empty()) {
@@ -918,15 +923,29 @@ void HwDLL::InsertCommands()
 				if (++currentRepeat >= f.GetRepeats()) {
 					currentRepeat = 0;
 					currentFramebulk++;
+				}
+
+				if (p.NextFrameIs0ms) {
+					if (!thisFrameIs0ms) {
+						std::ostringstream ss;
+						ss << "host_framerate " << frametime0ms << "\n";
+						ORIG_Cbuf_InsertText(ss.str().c_str());
+					}
+				} else if (currentRepeat == 0 || thisFrameIs0ms) {
+					// This will get the current framebulk and return the framerate back from 0ms
+					// if we didn't switch to the next framebulk yet.
 					HLTAS::Frame next;
 					if (GetNextMovementFrame(next)) {
-						if (next.Frametime != f.Frametime) {
+						if (next.Frametime != f.Frametime || thisFrameIs0ms) {
 							std::ostringstream ss;
 							ss << "host_framerate " << next.Frametime.c_str() << "\n";
 							ORIG_Cbuf_InsertText(ss.str().c_str());
 						}
 					}
 				}
+
+				thisFrameIs0ms = p.NextFrameIs0ms;
+
 				break;
 			} else if (!f.SaveName.empty()) { // Saveload frame.
 				std::ostringstream ss;

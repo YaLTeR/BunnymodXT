@@ -185,11 +185,13 @@ protected:
 	HLTAS::Input input;
 	std::string demoName;
 	std::string saveName;
+	std::string frametime0ms;
 	bool runningFrames;
 	bool wasRunningFrames;
 	size_t currentFramebulk;
 	size_t totalFramebulks;
 	size_t currentRepeat;
+	bool thisFrameIs0ms;
 	bool SharedRNGSeedPresent;
 	unsigned SharedRNGSeed;
 	bool CountingSharedRNGSeed;

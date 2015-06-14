@@ -58,6 +58,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
 			{ reinterpret_cast<void**>(&ORIG_PM_ClipVelocity), reinterpret_cast<void*>(HOOKED_PM_ClipVelocity) },
+			{ reinterpret_cast<void**>(&ORIG_PM_WaterMove), reinterpret_cast<void*>(HOOKED_PM_WaterMove) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
@@ -74,6 +75,7 @@ void ServerDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
 			{ reinterpret_cast<void**>(&ORIG_PM_ClipVelocity), reinterpret_cast<void*>(HOOKED_PM_ClipVelocity) },
+			{ reinterpret_cast<void**>(&ORIG_PM_WaterMove), reinterpret_cast<void*>(HOOKED_PM_WaterMove) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
@@ -91,6 +93,7 @@ void ServerDLL::Clear()
 	ORIG_PM_PreventMegaBunnyJumping = nullptr;
 	ORIG_PM_PlayerMove = nullptr;
 	ORIG_PM_ClipVelocity = nullptr;
+	ORIG_PM_WaterMove = nullptr;
 	ORIG_CmdStart = nullptr;
 	ORIG_CNihilanth__DyingThink = nullptr;
 	ORIG_CNihilanth__DyingThink_Linux = nullptr;
@@ -197,6 +200,10 @@ void ServerDLL::FindStuff()
 
 	auto fPM_ClipVelocity = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_ClipVelocity), m_Handle, "PM_ClipVelocity", m_Base, m_Length, Patterns::ptnsPM_ClipVelocity,
 		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
+
+	auto fPM_WaterMove = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_WaterMove), m_Handle, "PM_WaterMove", m_Base, m_Length, Patterns::ptnsPM_WaterMove,
+		[](MemUtils::ptnvec_size ptnNumber) {}, []() {}
 	);
 
 	bool noBhopcap = false;
@@ -311,6 +318,17 @@ void ServerDLL::FindStuff()
 	} else {
 		EngineDevWarning("[server dll] Could not find PM_ClipVelocity.\n");
 		EngineWarning("Velocity clip logging is not available.\n");
+	}
+
+	n = fPM_WaterMove.get();
+	if (ORIG_PM_WaterMove) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[server dll] Found PM_WaterMove at %p.\n", ORIG_PM_WaterMove);
+		else
+			EngineDevMsg("[server dll] Found PM_WaterMove at %p (using the %s pattern).\n", ORIG_PM_WaterMove, Patterns::ptnsPM_WaterMove[n].build.c_str());
+	} else {
+		EngineDevWarning("[server dll] Could not find PM_WaterMove.\n");
+		EngineWarning("Water frame logging is not available.\n");
 	}
 	
 	// This has to be the last thing to check and hook.
@@ -479,8 +497,8 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 			buf[0] = 30;
 			buf[1] = 0x01;
 			std::memcpy(buf + 2, &normal[2], sizeof(normal[2]));
-			std::memcpy(buf + 6, in, sizeof(in)/sizeof(in[0]));
-			std::memcpy(buf + 18, out, sizeof(out)/sizeof(out[0]));
+			std::memcpy(buf + 6, in, 12);
+			std::memcpy(buf + 18, out, 12);
 
 			Interprocess::mq->send(buf, sizeof(buf), 0);
 		} catch (boost::interprocess::interprocess_exception) {
@@ -489,6 +507,23 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 	}
 
 	return ret;
+}
+
+HOOK_DEF_0(ServerDLL, void, __cdecl, PM_WaterMove)
+{
+	if (CVars::bxt_interprocess_enable.GetBool() && Interprocess::mq) {
+		try {
+			unsigned char buf[2];
+			buf[0] = 2;
+			buf[1] = 0x02;
+
+			Interprocess::mq->send(buf, sizeof(buf), 0);
+		} catch (boost::interprocess::interprocess_exception) {
+			// Do nothing.
+		}
+	}
+
+	return ORIG_PM_WaterMove();
 }
 
 HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const usercmd_t*, cmd, unsigned int, random_seed)

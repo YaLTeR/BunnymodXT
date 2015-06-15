@@ -165,6 +165,10 @@ void ClientDLL::FindStuff()
 				case 3:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 3);
 					break;
+
+				case 4:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 21);
+					break;
 				}
 			}
 		}, []() { }
@@ -487,7 +491,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 {
 	ORIG_HUD_Frame(time);
 
-	if (CVars::_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 		pEngfuncs->Con_Printf(const_cast<char*>("HUD_Frame time: %f\n"), time);
 
 	SeedsQueued = 0;

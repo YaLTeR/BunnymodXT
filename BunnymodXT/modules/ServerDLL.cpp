@@ -193,6 +193,10 @@ void ServerDLL::FindStuff()
 				case 3: // AG-Client, shouldn't happen here but who knows.
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 3);
 					break;
+
+				case 4:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 21);
+					break;
 				}
 			}
 		}, []() { }
@@ -345,6 +349,16 @@ void ServerDLL::FindStuff()
 			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
 			auto addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern, "x????xx");
 
+			// Big Lolly version: push eax; push offset dword; call memcpy
+			auto blolly = false;
+			if (!addr)
+			{
+				const byte pattern_[] = { 0x50, 0x68, '?', '?', '?', '?', 0xE8 };
+				addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern_, "xx????x");
+				if (addr)
+					blolly = true;
+			}
+
 			// Linux version: mov offset dword[eax], esi; mov [ecx+eax+4], ebx
 			// if (!addr)
 			// {
@@ -356,8 +370,17 @@ void ServerDLL::FindStuff()
 
 			if (addr)
 			{
-				pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr)+1);
-				ppGlobals = *reinterpret_cast<globalvars_t***>(reinterpret_cast<uintptr_t>(addr)+9);
+				if (blolly)
+				{
+					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr) + 2);
+					ppGlobals = *reinterpret_cast<globalvars_t***>(reinterpret_cast<uintptr_t>(addr) + 19);
+				}
+				else
+				{
+					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr) + 1);
+					ppGlobals = *reinterpret_cast<globalvars_t***>(reinterpret_cast<uintptr_t>(addr) + 9);
+				}
+
 				EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
 				EngineDevMsg("[server dll] ppGlobals is %p.\n", ppGlobals);
 			}
@@ -459,7 +482,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	usercmd_t *cmd = reinterpret_cast<usercmd_t*>(pmove + offCmd);
 
 	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
-	if (CVars::_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 	{
 		ALERT(at_console, "-- BXT TAS Log Start --\n");
 		ALERT(at_console, "Player index: %d; msec: %hhu (%Lf)\n", playerIndex, cmd->msec, static_cast<long double>(cmd->msec) * 0.001);
@@ -470,7 +493,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 
 	ORIG_PM_PlayerMove(server);
 
-	if (CVars::_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 	{
 		ALERT(at_console, "New velocity: %.8f; %.8f; %.8f; new origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
 		ALERT(at_console, "New onground: %d; new usehull: %d\n", *groundEntity, *reinterpret_cast<int*>(pmove + 0xBC));
@@ -485,7 +508,7 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 {
 	auto ret = ORIG_PM_ClipVelocity(in, normal, out, overbounce);
 
-	if (CVars::_bxt_taslog.GetBool()) {
+	if (CVars::_bxt_taslog.GetBool() && pEngfuncs) {
 		if (normal[2] != 1.0f && normal[2] != -1.0f)
 			pEngfuncs->pfnAlertMessage(at_console, const_cast<char*>("PM_ClipVelocity: %f (%f %f %f [%f] -> %f %f %f [%f])\n"),
 				std::acos(static_cast<double>(normal[2])) * 180 / M_PI, in[0], in[1], in[2], std::hypot(in[0], in[1]), out[0], out[1], out[2], std::hypot(out[0], out[1]));
@@ -538,7 +561,7 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 	}
 
 	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
-	if (CVars::_bxt_taslog.GetBool())
+	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 	{
 		ALERT(at_console, "-- CmdStart Start --\n");
 		ALERT(at_console, "Buttons: %hu\n", cmd->buttons);

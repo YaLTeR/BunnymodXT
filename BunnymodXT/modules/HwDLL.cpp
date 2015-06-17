@@ -808,59 +808,64 @@ void HwDLL::InsertCommands()
 				//	ORIG_Con_Printf("Frame yaw: %f; ", f.GetYaw());
 				//ORIG_Con_Printf("Wish viewangles: %f %f\n", p.Pitch, p.Yaw);
 
-				auto pitchStateMultiplier = 1.0;
-				auto yawStateMultiplier = 1.0;
-				if (p.Pitch == player.Viewangles[0]) {
-					// Only one of those is to be pressed at any given time.
-					if (currentKeys.CamUp.IsDown())
-						KeyUp(currentKeys.CamUp);
-					else if (currentKeys.CamDown.IsDown())
-						KeyUp(currentKeys.CamDown);
-				} else {
-					double pitchDifference = HLStrafe::GetAngleDifference(player.Viewangles[0], p.Pitch);
-					if (pitchDifference >= 0.0) {
+				// If we're at state = 4, do not do anything with angles, otherwise there's
+				// an edge case where the first frame of state = 5 has in_left and in_right inactive
+				// even though we want them to be active.
+				if (*reinterpret_cast<int*>(cls) == 5) {
+					auto pitchStateMultiplier = 1.0;
+					auto yawStateMultiplier = 1.0;
+					if (p.Pitch == player.Viewangles[0]) {
+						// Only one of those is to be pressed at any given time.
 						if (currentKeys.CamUp.IsDown())
 							KeyUp(currentKeys.CamUp);
-						if (!currentKeys.CamDown.IsDown())
-							KeyDown(currentKeys.CamDown);
-
-						pitchStateMultiplier = currentKeys.CamDown.StateMultiplier();
-					} else {
-						if (currentKeys.CamDown.IsDown())
+						else if (currentKeys.CamDown.IsDown())
 							KeyUp(currentKeys.CamDown);
-						if (!currentKeys.CamUp.IsDown())
-							KeyDown(currentKeys.CamUp);
-
-						pitchStateMultiplier = currentKeys.CamUp.StateMultiplier();
-					}
-				}
-
-				if (p.Yaw == player.Viewangles[1]) {
-					// Only one of those is to be pressed at any given time.
-					if (currentKeys.CamLeft.IsDown())
-						KeyUp(currentKeys.CamLeft);
-					else if (currentKeys.CamRight.IsDown())
-						KeyUp(currentKeys.CamRight);
-				} else {
-					double yawDifference = HLStrafe::GetAngleDifference(player.Viewangles[1], p.Yaw);
-					if (yawDifference >= 0.0) {
-						if (currentKeys.CamRight.IsDown())
-							KeyUp(currentKeys.CamRight);
-						if (!currentKeys.CamLeft.IsDown())
-							KeyDown(currentKeys.CamLeft);
-
-						yawStateMultiplier = currentKeys.CamLeft.StateMultiplier();
 					} else {
+						double pitchDifference = HLStrafe::GetAngleDifference(player.Viewangles[0], p.Pitch);
+						if (pitchDifference >= 0.0) {
+							if (currentKeys.CamUp.IsDown())
+								KeyUp(currentKeys.CamUp);
+							if (!currentKeys.CamDown.IsDown())
+								KeyDown(currentKeys.CamDown);
+
+							pitchStateMultiplier = currentKeys.CamDown.StateMultiplier();
+						} else {
+							if (currentKeys.CamDown.IsDown())
+								KeyUp(currentKeys.CamDown);
+							if (!currentKeys.CamUp.IsDown())
+								KeyDown(currentKeys.CamUp);
+
+							pitchStateMultiplier = currentKeys.CamUp.StateMultiplier();
+						}
+					}
+
+					if (p.Yaw == player.Viewangles[1]) {
+						// Only one of those is to be pressed at any given time.
 						if (currentKeys.CamLeft.IsDown())
 							KeyUp(currentKeys.CamLeft);
-						if (!currentKeys.CamRight.IsDown())
-							KeyDown(currentKeys.CamRight);
+						else if (currentKeys.CamRight.IsDown())
+							KeyUp(currentKeys.CamRight);
+					} else {
+						double yawDifference = HLStrafe::GetAngleDifference(player.Viewangles[1], p.Yaw);
+						if (yawDifference >= 0.0) {
+							if (currentKeys.CamRight.IsDown())
+								KeyUp(currentKeys.CamRight);
+							if (!currentKeys.CamLeft.IsDown())
+								KeyDown(currentKeys.CamLeft);
 
-						yawStateMultiplier = currentKeys.CamRight.StateMultiplier();
+							yawStateMultiplier = currentKeys.CamLeft.StateMultiplier();
+						} else {
+							if (currentKeys.CamLeft.IsDown())
+								KeyUp(currentKeys.CamLeft);
+							if (!currentKeys.CamRight.IsDown())
+								KeyDown(currentKeys.CamRight);
+
+							yawStateMultiplier = currentKeys.CamRight.StateMultiplier();
+						}
 					}
-				}
 
-				ORIG_Cbuf_InsertText(HLStrafe::GetAngleSpeedString(player.Viewangles[0], player.Viewangles[1], p.Pitch, p.Yaw, pitchStateMultiplier, yawStateMultiplier, static_cast<float>(*host_frametime)).c_str());
+					ORIG_Cbuf_InsertText(HLStrafe::GetAngleSpeedString(player.Viewangles[0], player.Viewangles[1], p.Pitch, p.Yaw, pitchStateMultiplier, yawStateMultiplier, static_cast<float>(*host_frametime)).c_str());
+				}
 
 				std::ostringstream speeds_ss;
 				speeds_ss.setf(std::ios::fixed, std::ios::floatfield);

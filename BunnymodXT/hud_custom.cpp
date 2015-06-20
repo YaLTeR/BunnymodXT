@@ -20,9 +20,9 @@ namespace CustomHud
 	static int hudColor[3];
 	static bool receivedAccurateInfo = false;
 	static playerinfo player;
-	bool countingTime;
-	int hours, minutes, seconds;
-	double timeRemainder;
+	bool countingTime = false;
+	int hours = 0, minutes = 0, seconds = 0;
+	double timeRemainder = 0.0;
 	int frames = 0;
 
 	static client_sprite_t *SpriteList;
@@ -498,7 +498,6 @@ namespace CustomHud
 
 	void Init()
 	{
-		ResetTime();
 		SpriteList = nullptr;
 		initialized = true;
 	}

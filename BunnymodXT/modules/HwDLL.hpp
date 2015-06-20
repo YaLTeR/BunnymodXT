@@ -139,6 +139,10 @@ protected:
 	static void Cmd_BXT_Record();
 	void Cmd_BXT_Record_f();
 	static void Cmd_BXT_Interprocess_Reset();
+	static void Cmd_BXT_Map();
+	void Cmd_BXT_Map_f();
+	static void Cmd_BXT_Load();
+	void Cmd_BXT_Load_f();
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();
@@ -266,4 +270,10 @@ protected:
 	// Do not clear these inside Clear().
 	bool SetNonSharedRNGSeed = false;
 	std::time_t NonSharedRNGSeed;
+
+	enum class ResetState {
+		NORMAL = 0,
+		PRERESET,
+		POSTRESET
+	} resetState = ResetState::NORMAL;
 };

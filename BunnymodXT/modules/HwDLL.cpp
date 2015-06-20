@@ -59,20 +59,26 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 
 	FindStuff();
 
-	auto script = std::getenv("BXT_SCRIPT");
-	if (script) {
-		std::string filename(script);
-		auto err = input.Open(filename).get();
-		if (err.Code != HLTAS::ErrorCode::OK)
-			EngineWarning("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
-		else
-			for (auto prop : input.GetProperties())
-				if (prop.first == "seed") {
-					std::istringstream ss(prop.second);
-					ss >> SharedRNGSeed >> NonSharedRNGSeed;
-					SetNonSharedRNGSeed = true;
-					EngineMsg("Loaded the seed from %s.\n", script);
-				}
+	EngineDevMsg("resetState: %d\n", resetState);
+	// Get the seed (if we're not resetting, in that case we have the seed already).
+	if (resetState == ResetState::NORMAL) {
+		auto script = std::getenv("BXT_SCRIPT");
+		if (script) {
+			std::string filename(script);
+			auto err = input.Open(filename).get();
+			if (err.Code != HLTAS::ErrorCode::OK)
+				EngineWarning("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
+			else
+				for (auto prop : input.GetProperties())
+					if (prop.first == "seed") {
+						std::istringstream ss(prop.second);
+						ss >> SharedRNGSeed >> NonSharedRNGSeed;
+						SetNonSharedRNGSeed = true;
+						EngineMsg("Loaded the seed from %s.\n", script);
+					}
+		}
+	} else {
+		resetState = ResetState::POSTRESET;
 	}
 
 	if (needToIntercept)
@@ -165,25 +171,28 @@ void HwDLL::Clear()
 	insideSeedRNG = false;
 	LastRandomSeed = 0;
 	player = HLStrafe::PlayerData();
-	input.Clear();
-	demoName.clear();
-	saveName.clear();
-	frametime0ms.clear();
-	runningFrames = false;
-	wasRunningFrames = false;
-	currentFramebulk = 0;
-	totalFramebulks = 0;
 	currentRepeat = 0;
 	thisFrameIs0ms = false;
-	StrafeState = HLStrafe::CurrentState();
 	currentKeys.ResetStates();
-	SharedRNGSeedPresent = false;
-	SharedRNGSeed = 0;
 	CountingSharedRNGSeed = false;
 	SharedRNGSeedCounter = 0;
 	QueuedSharedRNGSeeds = 0;
 	LoadingSeedCounter = 0;
-	ButtonsPresent = false;
+
+	if (resetState == ResetState::NORMAL) {
+		input.Clear();
+		demoName.clear();
+		saveName.clear();
+		frametime0ms.clear();
+		runningFrames = false;
+		wasRunningFrames = false;
+		currentFramebulk = 0;
+		totalFramebulks = 0;
+		StrafeState = HLStrafe::CurrentState();
+		SharedRNGSeedPresent = false;
+		SharedRNGSeed = 0;
+		ButtonsPresent = false;
+	}
 }
 
 void HwDLL::FindStuff()
@@ -591,8 +600,12 @@ void HwDLL::Cmd_BXT_TAS_LoadScript()
 {
 	return HwDLL::GetInstance().Cmd_BXT_TAS_LoadScript_f();
 }
+
 void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 {
+	if (resetState != ResetState::NORMAL)
+		return;
+
 	runningFrames = false;
 	currentFramebulk = 0;
 	currentRepeat = 0;
@@ -700,6 +713,44 @@ void HwDLL::Cmd_BXT_Interprocess_Reset()
 	Interprocess::Initialize();
 }
 
+void HwDLL::Cmd_BXT_Map()
+{
+	return HwDLL::GetInstance().Cmd_BXT_Map_f();
+}
+
+void HwDLL::Cmd_BXT_Map_f()
+{
+	// This version of map doesn't trigger after reset frames
+	// when put in the command line args.
+	if (resetState != ResetState::NORMAL)
+		return;
+
+	std::ostringstream ss;
+	ss << "map";
+	if (ORIG_Cmd_Args())
+		ss << " " << ORIG_Cmd_Args() << "\n";
+	ORIG_Cbuf_InsertText(ss.str().c_str());
+}
+
+void HwDLL::Cmd_BXT_Load()
+{
+	return HwDLL::GetInstance().Cmd_BXT_Load_f();
+}
+
+void HwDLL::Cmd_BXT_Load_f()
+{
+	// This version of load doesn't trigger after reset frames
+	// when put in the command line args.
+	if (resetState != ResetState::NORMAL)
+		return;
+
+	std::ostringstream ss;
+	ss << "load";
+	if (ORIG_Cmd_Args())
+		ss << " " << ORIG_Cmd_Args() << "\n";
+	ORIG_Cbuf_InsertText(ss.str().c_str());
+}
+
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
 	if (!registeredVarsAndCmds)
@@ -721,6 +772,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("-bxt_tas_ducktap", Cmd_BXT_TAS_Ducktap_Up, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_record", Cmd_BXT_Record, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_interprocess_reset", Cmd_BXT_Interprocess_Reset, 2);
+			ORIG_Cmd_AddMallocCommand("_bxt_map", Cmd_BXT_Map, 2);
+			ORIG_Cmd_AddMallocCommand("_bxt_load", Cmd_BXT_Load, 2);
 		}
 	}
 }
@@ -729,11 +782,11 @@ void HwDLL::InsertCommands()
 {
 	bool runningFramesBackup = runningFrames;
 
-	if (runningFrames) {
+	if (runningFrames && resetState == ResetState::NORMAL) {
 		while (currentFramebulk < totalFramebulks) {
 			auto& f = input.GetFrame(currentFramebulk);
 			// Movement frame.
-			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent)) {
+			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent && !f.ResetFrame)) {
 				auto c = f.Commands;
 				if (!c.empty()) {
 					c += '\n';
@@ -964,6 +1017,13 @@ void HwDLL::InsertCommands()
 					ButtonsPresent = false;
 			} else if (f.LgagstMinSpeedPresent) { // Lgagstminspeed frame.
 				StrafeState.LgagstMinSpeed = f.GetLgagstMinSpeed();
+			} else if (f.ResetFrame) { // Reset frame.
+				resetState = ResetState::PRERESET;
+				NonSharedRNGSeed = f.GetResetNonSharedRNGSeed();
+				SetNonSharedRNGSeed = true;
+				ORIG_Cbuf_InsertText("_restart\n");
+				currentFramebulk++;
+				break;
 			}
 
 			currentFramebulk++;
@@ -1067,7 +1127,7 @@ bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
 	while (curFramebulk < totalFramebulks) {
 		f = input.GetFrame(curFramebulk);
 		// Only movement frames can have repeats.
-		if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent))
+		if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent && !f.ResetFrame))
 			return true;
 
 		curFramebulk++;
@@ -1211,6 +1271,22 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	insideCbuf_Execute = true;
 	ORIG_Cbuf_Execute(); // executing might change inside if we had some kind of load command in the buffer.
 
+	// Stuffcmds is inside valve.rc, which is executed by the very first Cbuf_Execute().
+	// So everything that we wanted to not happen if we're resetting already did its checks now.
+	// The original host_framerate was also already set from stuffcmds if it was there,
+	// so we can set the correct one now.
+	if (resetState == ResetState::POSTRESET) {
+		resetState = ResetState::NORMAL;
+
+		HLTAS::Frame next;
+		if (GetNextMovementFrame(next)) {
+			std::ostringstream ss;
+			ss << "host_framerate " << next.Frametime << "\n";
+			ORIG_Cbuf_InsertText(ss.str().c_str());
+			ORIG_Cbuf_Execute();
+		}
+	}
+
 	if (!executing)
 		QueuedSharedRNGSeeds = 0;
 	// Insert our commands after any commands that might have been on this frame
@@ -1258,7 +1334,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		ORIG_Cbuf_Execute();
 
 		// If still executing (didn't load a save).
-		if (executing)
+		if (executing && resetState != ResetState::PRERESET)
 			CustomHud::TimePassed(*host_frametime);
 	} else if (changelevel) {
 		LoadingSeedCounter++;

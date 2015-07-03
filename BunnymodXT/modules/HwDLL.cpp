@@ -59,7 +59,6 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 
 	FindStuff();
 
-	EngineDevMsg("resetState: %d\n", resetState);
 	// Get the seed (if we're not resetting, in that case we have the seed already).
 	if (resetState == ResetState::NORMAL) {
 		auto script = std::getenv("BXT_SCRIPT");
@@ -1022,6 +1021,10 @@ void HwDLL::InsertCommands()
 				NonSharedRNGSeed = f.GetResetNonSharedRNGSeed();
 				SetNonSharedRNGSeed = true;
 				ORIG_Cbuf_InsertText("_restart\n");
+
+				// Stop a demo manually if one was going on, otherwise it ends up corrupt.
+				ORIG_Cbuf_InsertText("stop\n");
+
 				currentFramebulk++;
 				break;
 			}

@@ -55,14 +55,6 @@ namespace CustomHud
 		return std::sqrt(sqr(x) + sqr(y) + sqr(z));
 	}
 
-	static int pow(int a, int p)
-	{
-		int res = 1;
-		for (int i = 0; i < p; ++i)
-			res *= a;
-		return res;
-	}
-
 	static void UpdateScreenInfo()
 	{
 		si.iSize = sizeof(si);

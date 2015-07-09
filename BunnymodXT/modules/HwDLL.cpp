@@ -39,6 +39,11 @@ extern "C" int __cdecl Host_FilterTime(float passedTime)
 	return HwDLL::HOOKED_Host_FilterTime(passedTime);
 }
 
+extern "C" int __cdecl V_FadeAlpha()
+{
+	return HwDLL::HOOKED_V_FadeAlpha();
+}
+
 extern "C" std::time_t time(std::time_t* t)
 {
 	if (!HwDLL::GetInstance().GetTimeAddr())
@@ -308,7 +313,13 @@ void HwDLL::FindStuff()
 		if (ORIG_Host_FilterTime)
 			EngineDevMsg("[hw dll] Found Host_FilterTime at %p.\n", ORIG_Host_FilterTime);
 		else
-			EngineDevWarning("[hw dll] Could not find ORIG_Host_FilterTime.\n");
+			EngineDevWarning("[hw dll] Could not find Host_FilterTime.\n");
+
+		ORIG_V_FadeAlpha = reinterpret_cast<_V_FadeAlpha>(MemUtils::GetSymbolAddress(m_Handle, "V_FadeAlpha"));
+		if (ORIG_V_FadeAlpha)
+			EngineDevMsg("[hw dll] Found V_FadeAlpha at %p.\n", ORIG_V_FadeAlpha);
+		else
+			EngineDevWarning("[hw dll] Could not find ORIG_V_FadeAlpha.\n");
 	}
 	else
 	{

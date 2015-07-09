@@ -36,3 +36,11 @@ extern "C" int __cdecl PM_ClipVelocity(float in[3], float normal[3], float out[3
 	else
 		return ClientDLL::HOOKED_PM_ClipVelocity(in, normal, out, overbounce);
 }
+
+extern "C" void __cdecl PM_WaterMove()
+{
+	if (serverside)
+		return ServerDLL::HOOKED_PM_WaterMove();
+	else
+		return ClientDLL::HOOKED_PM_WaterMove();
+}

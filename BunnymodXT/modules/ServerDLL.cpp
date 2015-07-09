@@ -498,8 +498,8 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 			buf[0] = 30;
 			buf[1] = 0x01;
 			std::memcpy(buf + 2, &normal[2], sizeof(normal[2]));
-			std::memcpy(buf + 6, in, sizeof(in) / sizeof(in[0]));
-			std::memcpy(buf + 18, out, sizeof(out) / sizeof(out[0]));
+			std::memcpy(buf + 6, in, 12);
+			std::memcpy(buf + 18, out, 12);
 
 			Interprocess::mq->send(buf, sizeof(buf), 0);
 		} catch (boost::interprocess::interprocess_exception) {

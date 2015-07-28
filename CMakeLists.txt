@@ -7,21 +7,21 @@ set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 include(cotire)
 
 if (MSVC)
-	# Until there's a VS2015 redistributable, link the runtime statically.
-	foreach (flag_var
-    	CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
-    	CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-		if (${flag_var} MATCHES "/MD")
-			string (REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-		endif (${flag_var} MATCHES "/MD")
-	endforeach (flag_var)
+	## Until there's a VS2015 redistributable, link the runtime statically.
+	#foreach (flag_var
+    #	CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+    #	CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+	#	if (${flag_var} MATCHES "/MD")
+	#		string (REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+	#	endif (${flag_var} MATCHES "/MD")
+	#endforeach (flag_var)
 else ()
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=native -mtune=native -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
 	#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=pentium-m -mfpmath=387 -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
 endif ()
 
 set (Boost_USE_STATIC_LIBS ON)
-set (Boost_USE_STATIC_RUNTIME ON)
+#set (Boost_USE_STATIC_RUNTIME ON)
 find_package (Boost 1.57.0 REQUIRED COMPONENTS chrono date_time system thread)
 include_directories (${Boost_INCLUDE_DIR})
 

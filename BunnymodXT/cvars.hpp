@@ -114,6 +114,7 @@ namespace CVars
 	// Engine CVars
 	extern CVarWrapper _bxt_taslog;
 	extern CVarWrapper _bxt_min_frametime;
+	extern CVarWrapper _bxt_norefresh;
 	extern CVarWrapper bxt_autopause;
 	extern CVarWrapper bxt_interprocess_enable;
 	extern CVarWrapper bxt_fade_remove;

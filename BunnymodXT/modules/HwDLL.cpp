@@ -44,6 +44,11 @@ extern "C" int __cdecl V_FadeAlpha()
 	return HwDLL::HOOKED_V_FadeAlpha();
 }
 
+extern "C" void __cdecl SCR_UpdateScreen()
+{
+	return HwDLL::HOOKED_SCR_UpdateScreen();
+}
+
 extern "C" std::time_t time(std::time_t* t)
 {
 	if (!HwDLL::GetInstance().GetTimeAddr())
@@ -96,7 +101,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
 			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
 			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) },
-			{ reinterpret_cast<void**>(&ORIG_V_FadeAlpha), reinterpret_cast<void*>(HOOKED_V_FadeAlpha) }
+			{ reinterpret_cast<void**>(&ORIG_V_FadeAlpha), reinterpret_cast<void*>(HOOKED_V_FadeAlpha) },
+			{ reinterpret_cast<void**>(&ORIG_SCR_UpdateScreen), reinterpret_cast<void*>(HOOKED_SCR_UpdateScreen) }
 		});
 }
 
@@ -114,7 +120,8 @@ void HwDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
 			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
 			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) },
-			{ reinterpret_cast<void**>(&ORIG_V_FadeAlpha), reinterpret_cast<void*>(HOOKED_V_FadeAlpha) }
+			{ reinterpret_cast<void**>(&ORIG_V_FadeAlpha), reinterpret_cast<void*>(HOOKED_V_FadeAlpha) },
+			{ reinterpret_cast<void**>(&ORIG_SCR_UpdateScreen), reinterpret_cast<void*>(HOOKED_SCR_UpdateScreen) }
 	});
 
 	for (auto cvar : CVars::allCVars)
@@ -135,6 +142,7 @@ void HwDLL::Clear()
 	ORIG_SCR_BeginLoadingPlaque = nullptr;
 	ORIG_Host_FilterTime = nullptr;
 	ORIG_V_FadeAlpha = nullptr;
+	ORIG_SCR_UpdateScreen = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
@@ -164,6 +172,7 @@ void HwDLL::Clear()
 	sv_areanodes = nullptr;
 	cmd_text = nullptr;
 	host_frametime = nullptr;
+	frametime_remainder = nullptr;
 	framesTillExecuting = 0;
 	executing = false;
 	insideCbuf_Execute = false;
@@ -319,7 +328,13 @@ void HwDLL::FindStuff()
 		if (ORIG_V_FadeAlpha)
 			EngineDevMsg("[hw dll] Found V_FadeAlpha at %p.\n", ORIG_V_FadeAlpha);
 		else
-			EngineDevWarning("[hw dll] Could not find ORIG_V_FadeAlpha.\n");
+			EngineDevWarning("[hw dll] Could not find V_FadeAlpha.\n");
+
+		ORIG_SCR_UpdateScreen = reinterpret_cast<_SCR_UpdateScreen>(MemUtils::GetSymbolAddress(m_Handle, "SCR_UpdateScreen"));
+		if (ORIG_SCR_UpdateScreen)
+			EngineDevMsg("[hw dll] Found SCR_UpdateScreen at %p.\n", ORIG_SCR_UpdateScreen);
+		else
+			EngineDevWarning("[hw dll] Could not find SCR_UpdateScreen.\n");
 	}
 	else
 	{
@@ -336,6 +351,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(PM_PlayerTrace)
 		DEF_FUTURE(Host_FilterTime)
 		DEF_FUTURE(V_FadeAlpha)
+		DEF_FUTURE(SCR_UpdateScreen)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
 		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
 		if (oldEngine) {
@@ -371,6 +387,13 @@ void HwDLL::FindStuff()
 		auto fSCR_DrawFPS = MemUtils::FindPatternOnly(&SCR_DrawFPS, m_Base, m_Length, Patterns::ptnsSCR_DrawFPS,
 			[&](MemUtils::ptnvec_size ptnNumber) {
 				host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(SCR_DrawFPS) + 21);
+			}, []() {}
+		);
+
+		void *CL_Move;
+		auto fCL_Move = MemUtils::FindPatternOnly(&CL_Move, m_Base, m_Length, Patterns::ptnsCL_Move,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				frametime_remainder = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(CL_Move) + 451);
 			}, []() {}
 		);
 
@@ -506,6 +529,14 @@ void HwDLL::FindStuff()
 			ORIG_Cbuf_Execute = nullptr;
 		}
 
+		n = fCL_Move.get();
+		if (CL_Move) {
+			EngineDevMsg("[hw dll] Found CL_Move at %p (using the %s pattern).\n", CL_Move, Patterns::ptnsCL_Move[n].build.c_str());
+			EngineDevMsg("[hw dll] Found frametime_remainder at %p.\n", frametime_remainder);
+		} else {
+			EngineDevWarning("[hw dll] Could not find CL_Move.\n");
+		}
+
 		n = fMiddleOfSV_ReadClientMessage.get();
 		if (MiddleOfSV_ReadClientMessage) {
 			EngineDevMsg("[hw dll] Found the g_svmove pattern at %p (using the %s pattern).\n", MiddleOfSV_ReadClientMessage, Patterns::ptnsMiddleOfSV_ReadClientMessage[n].build.c_str());
@@ -536,7 +567,6 @@ void HwDLL::FindStuff()
 				EngineDevWarning("[hw dll] Could not find " #name ".\n"); \
 				ORIG_Cbuf_Execute = nullptr; \
 			}
-		GET_FUTURE(V_FadeAlpha)
 		GET_FUTURE(Cvar_RegisterVariable)
 		GET_FUTURE(Cvar_DirectSet)
 		GET_FUTURE(Cvar_FindVar)
@@ -565,6 +595,18 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found Host_FilterTime at %p (using the %s pattern).\n", ORIG_Host_FilterTime, Patterns::ptnsHost_FilterTime[n].build.c_str());
 		else
 			EngineDevWarning("[hw dll] Could not find Host_FilterTime.\n");
+
+		n = fV_FadeAlpha.get();
+		if (ORIG_V_FadeAlpha)
+			EngineDevMsg("[hw dll] Found V_FadeAlpha at %p (using the %s pattern).\n", ORIG_V_FadeAlpha, Patterns::ptnsV_FadeAlpha[n].build.c_str());
+		else
+			EngineDevWarning("[hw dll] Could not find V_FadeAlpha.\n");
+
+		n = fSCR_UpdateScreen.get();
+		if (ORIG_SCR_UpdateScreen)
+			EngineDevMsg("[hw dll] Found SCR_UpdateScreen at %p (using the %s pattern).\n", ORIG_SCR_UpdateScreen, Patterns::ptnsSCR_UpdateScreen[n].build.c_str());
+		else
+			EngineDevWarning("[hw dll] Could not find SCR_UpdateScreen.\n");
 
 		if (oldEngine) {
 			n = fLoadAndDecryptHwDLL.get();
@@ -761,6 +803,12 @@ void HwDLL::Cmd_BXT_Load_f()
 	ORIG_Cbuf_InsertText(ss.str().c_str());
 }
 
+void HwDLL::Cmd_BXT_Reset_Frametime_Remainder()
+{
+	if (HwDLL::GetInstance().frametime_remainder)
+		*HwDLL::GetInstance().frametime_remainder = 0;
+}
+
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
 	if (!registeredVarsAndCmds)
@@ -771,6 +819,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		RegisterCVar(CVars::bxt_autopause);
 		RegisterCVar(CVars::bxt_interprocess_enable);
 		RegisterCVar(CVars::bxt_fade_remove);
+		RegisterCVar(CVars::_bxt_norefresh);
 		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
 			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
@@ -784,6 +833,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("_bxt_interprocess_reset", Cmd_BXT_Interprocess_Reset, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_map", Cmd_BXT_Map, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_load", Cmd_BXT_Load, 2);
+			ORIG_Cmd_AddMallocCommand("_bxt_reset_frametime_remainder", Cmd_BXT_Reset_Frametime_Remainder, 2);
 		}
 	}
 }
@@ -1537,6 +1587,14 @@ HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 		return 0;
 	else
 		return ORIG_V_FadeAlpha();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, SCR_UpdateScreen)
+{
+	if (CVars::_bxt_norefresh.GetBool())
+		return;
+	else
+		return ORIG_SCR_UpdateScreen();
 }
 
 HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c)

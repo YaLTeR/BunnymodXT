@@ -123,6 +123,8 @@ protected:
 	_PM_PlayerTrace ORIG_PM_PlayerTrace;
 	typedef void(__cdecl *_SV_AddLinksToPM) (char* node, float* origin);
 	_SV_AddLinksToPM ORIG_SV_AddLinksToPM;
+	typedef int(__cdecl *_Key_Event) (int key, int down);
+	_Key_Event ORIG_Key_Event;
 
 	void FindStuff();
 
@@ -141,6 +143,12 @@ protected:
 	void Cmd_BXT_Setpos_f();
 	static void Cmd_BXT_ResetPlayer();
 	void Cmd_BXT_ResetPlayer_f();
+	static void Cmd_BXT_Key_Event();
+	void Cmd_BXT_Key_Event_f();
+	static void Cmd_BXT_Input();
+	void Cmd_BXT_Input_f();
+	static void Cmd_BXT_Input_Edit();
+	void Cmd_BXT_Input_Edit_f();
 	static void Cmd_BXT_Interprocess_Reset();
 
 	void SetHFRMultiplayerCheck(bool enabled);
@@ -173,6 +181,7 @@ protected:
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
 
+	void **pInputInternal;
 	uintptr_t hfrMultiplayerCheck;
 
 	int framesTillExecuting;

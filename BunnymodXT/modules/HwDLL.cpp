@@ -134,6 +134,7 @@ void HwDLL::Clear()
 	ORIG_hudGetViewAngles = nullptr;
 	ORIG_PM_PlayerTrace = nullptr;
 	ORIG_SV_AddLinksToPM = nullptr;
+	ORIG_Key_Event = nullptr;
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
@@ -151,6 +152,7 @@ void HwDLL::Clear()
 	sv_areanodes = nullptr;
 	cmd_text = nullptr;
 	host_frametime = nullptr;
+	pInputInternal = nullptr;
 	hfrMultiplayerCheck = 0;
 	framesTillExecuting = 0;
 	executing = false;
@@ -312,6 +314,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		DEF_FUTURE(PM_PlayerTrace)
 		DEF_FUTURE(Host_FilterTime)
+		DEF_FUTURE(Key_Event)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
 		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
 		if (oldEngine) {
@@ -444,6 +447,13 @@ void HwDLL::FindStuff()
 			}, []() {}
 		);
 
+		void *CBaseUI__Initialize;
+		auto fCBaseUI__Initialize = MemUtils::FindPatternOnly(&CBaseUI__Initialize, m_Base, m_Length, Patterns::ptnsCBaseUI__Initialize,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				pInputInternal = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(CBaseUI__Initialize) + 274);
+			}, []() {}
+		);
+
 		auto fHFRMultiplayerCheck = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&hfrMultiplayerCheck), m_Base, m_Length, Patterns::ptnsHFRMultiplayerCheck,
 			[&](MemUtils::ptnvec_size ptnNumber) {
 				if (*reinterpret_cast<byte*>(hfrMultiplayerCheck + 16) != 0x75)
@@ -511,6 +521,15 @@ void HwDLL::FindStuff()
 			ORIG_Cbuf_Execute = nullptr;
 		}
 
+		n = fCBaseUI__Initialize.get();
+		if (CBaseUI__Initialize) {
+			EngineDevMsg("[hw dll] Found the gInputInternal pattern at %p (using the %s pattern).\n", CBaseUI__Initialize, Patterns::ptnsCBaseUI__Initialize[n].build.c_str());
+			EngineDevMsg("[hw dll] Found gInputInternal at %p.\n", pInputInternal);
+		} else {
+			EngineDevWarning("[hw dll] Could not find the gInputInternal pattern.\n");
+			EngineWarning("_bxt_key_event is not available.\n");
+		}
+
 		#define GET_FUTURE(name) \
 			n = f##name.get(); \
 			if (ORIG_##name) { \
@@ -550,10 +569,18 @@ void HwDLL::FindStuff()
 
 		n = fHFRMultiplayerCheck.get();
 		if (hfrMultiplayerCheck) {
-			EngineDevMsg("[client dll] Found the host_framerate multiplayer check pattern at %p (using the %s pattern).\n", reinterpret_cast<void*>(hfrMultiplayerCheck), Patterns::ptnsHFRMultiplayerCheck[n].build.c_str());
+			EngineDevMsg("[hw dll] Found the host_framerate multiplayer check pattern at %p (using the %s pattern).\n", reinterpret_cast<void*>(hfrMultiplayerCheck), Patterns::ptnsHFRMultiplayerCheck[n].build.c_str());
 		} else {
-			EngineDevWarning("[client dll] Could not find the host_framerate multiplayer check pattern.\n");
+			EngineDevWarning("[hw dll] Could not find the host_framerate multiplayer check pattern.\n");
 			EngineWarning("Host_framerate multiplayer check removal is not available.\n");
+		}
+
+		n = fKey_Event.get();
+		if (ORIG_Key_Event) {
+			EngineDevMsg("[hw dll] Found Key_Event at %p (using the %s pattern).\n", reinterpret_cast<void*>(ORIG_Key_Event), Patterns::ptnsKey_Event[n].build.c_str());
+		} else {
+			EngineDevWarning("[hw dll] Could not find Key_Event.\n");
+			EngineWarning("_bxt_key_event is not available.\n");
 		}
 
 		if (oldEngine) {
@@ -760,6 +787,76 @@ void HwDLL::Cmd_BXT_ResetPlayer_f()
 	}
 }
 
+void HwDLL::Cmd_BXT_Key_Event()
+{
+	return HwDLL::GetInstance().Cmd_BXT_Key_Event_f();
+}
+
+void HwDLL::Cmd_BXT_Key_Event_f()
+{
+	if (ORIG_Cmd_Argc() != 2) {
+		ORIG_Con_Printf("Usage: _bxt_key_event <keynum>\n");
+		return;
+	}
+
+	if (!ORIG_Key_Event)
+		return;
+
+	auto keynum = boost::lexical_cast<int>(ORIG_Cmd_Argv(1));
+	ORIG_Key_Event(keynum, 1);
+	ORIG_Key_Event(keynum, 0);
+}
+
+void HwDLL::Cmd_BXT_Input()
+{
+	return HwDLL::GetInstance().Cmd_BXT_Input_f();
+}
+
+void HwDLL::Cmd_BXT_Input_f()
+{
+	if (ORIG_Cmd_Argc() != 2) {
+		ORIG_Con_Printf("Usage: _bxt_input <keynum>\n");
+		return;
+	}
+
+	if (!pInputInternal)
+		return;
+
+	auto keynum = boost::lexical_cast<int>(ORIG_Cmd_Argv(1));
+	auto gInputInternal = *pInputInternal;
+	auto vtable = *reinterpret_cast<uintptr_t*>(gInputInternal);
+	using f = void (__fastcall *) (void* thisptr, int edx, int arg);
+	auto firstFunc = *reinterpret_cast<f*>(vtable + 120);
+	auto secondFunc = *reinterpret_cast<f*>(vtable + 124);
+	auto thirdFunc = *reinterpret_cast<f*>(vtable + 132);
+	firstFunc(gInputInternal, 0, keynum);
+	secondFunc(gInputInternal, 0, keynum);
+	thirdFunc(gInputInternal, 0, keynum);
+}
+
+void HwDLL::Cmd_BXT_Input_Edit()
+{
+	return HwDLL::GetInstance().Cmd_BXT_Input_Edit_f();
+}
+
+void HwDLL::Cmd_BXT_Input_Edit_f()
+{
+	if (ORIG_Cmd_Argc() != 2) {
+		ORIG_Con_Printf("Usage: _bxt_input_edit <keynum>\n");
+		return;
+	}
+
+	if (!pInputInternal)
+		return;
+
+	auto keynum = boost::lexical_cast<int>(ORIG_Cmd_Argv(1));
+	auto gInputInternal = *pInputInternal;
+	auto vtable = *reinterpret_cast<uintptr_t*>(gInputInternal);
+	using f = void (__fastcall *) (void* thisptr, int edx, int arg);
+	auto firstFunc = *reinterpret_cast<f*>(vtable + 128);
+	firstFunc(gInputInternal, 0, keynum);
+}
+
 void HwDLL::SetHFRMultiplayerCheck(bool enabled)
 {
 	if (!hfrMultiplayerCheck)
@@ -799,6 +896,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("bxt_setpos", Cmd_BXT_Setpos, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_resetplayer", Cmd_BXT_ResetPlayer, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_interprocess_reset", Cmd_BXT_Interprocess_Reset, 2);
+			ORIG_Cmd_AddMallocCommand("_bxt_key_event", Cmd_BXT_Key_Event, 2);
+			ORIG_Cmd_AddMallocCommand("_bxt_input", Cmd_BXT_Input, 2);
+			ORIG_Cmd_AddMallocCommand("_bxt_input_edit", Cmd_BXT_Input_Edit, 2);
 		}
 	}
 }

@@ -85,7 +85,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
 			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
-			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) }
+			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) },
+			{ reinterpret_cast<void**>(&ORIG_SCR_UpdateScreen), reinterpret_cast<void*>(HOOKED_SCR_UpdateScreen) }
 		});
 }
 
@@ -102,7 +103,8 @@ void HwDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
 			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
 			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
-			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) }
+			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) },
+			{ reinterpret_cast<void**>(&ORIG_SCR_UpdateScreen), reinterpret_cast<void*>(HOOKED_SCR_UpdateScreen) }
 	});
 
 	for (auto cvar : CVars::allCVars)
@@ -122,6 +124,7 @@ void HwDLL::Clear()
 	ORIG_Host_Changelevel2_f = nullptr;
 	ORIG_SCR_BeginLoadingPlaque = nullptr;
 	ORIG_Host_FilterTime = nullptr;
+	ORIG_SCR_UpdateScreen = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
@@ -135,6 +138,7 @@ void HwDLL::Clear()
 	ORIG_PM_PlayerTrace = nullptr;
 	ORIG_SV_AddLinksToPM = nullptr;
 	ORIG_Key_Event = nullptr;
+	frametime_remainder = nullptr;
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
@@ -314,6 +318,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		DEF_FUTURE(PM_PlayerTrace)
 		DEF_FUTURE(Host_FilterTime)
+		DEF_FUTURE(SCR_UpdateScreen)
 		DEF_FUTURE(Key_Event)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
 		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
@@ -447,6 +452,13 @@ void HwDLL::FindStuff()
 			}, []() {}
 		);
 
+		void *CL_Move;
+		auto fCL_Move = MemUtils::FindPatternOnly(&CL_Move, m_Base, m_Length, Patterns::ptnsCL_Move,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+				frametime_remainder = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(CL_Move) + 451);
+			}, []() {}
+		);
+
 		void *CBaseUI__Initialize;
 		auto fCBaseUI__Initialize = MemUtils::FindPatternOnly(&CBaseUI__Initialize, m_Base, m_Length, Patterns::ptnsCBaseUI__Initialize,
 			[&](MemUtils::ptnvec_size ptnNumber) {
@@ -559,6 +571,23 @@ void HwDLL::FindStuff()
 		} else {
 			EngineDevWarning("[hw dll] Could not find Host_Tell_f.\n");
 			ORIG_Cmd_AddMallocCommand = nullptr;
+		}
+
+		n = fSCR_UpdateScreen.get();
+		if (ORIG_SCR_UpdateScreen) {
+			EngineDevMsg("[hw dll] Found SCR_UpdateScreen at %p (using the %s pattern).\n", ORIG_SCR_UpdateScreen, Patterns::ptnsSCR_UpdateScreen[n].build.c_str());
+		} else {
+			EngineDevWarning("[hw dll] Could not find SCR_UpdateScreen.\n");
+			EngineWarning("_bxt_norefresh is not available.\n");
+		}
+
+		n = fCL_Move.get();
+		if (CL_Move) {
+			EngineDevMsg("[hw dll] Found CL_Move at %p (using the %s pattern).\n", CL_Move, Patterns::ptnsCL_Move[n].build.c_str());
+			EngineDevMsg("[hw dll] Found frametime_remainder at %p.\n", frametime_remainder);
+		} else {
+			EngineDevWarning("[hw dll] Could not find CL_Move.\n");
+			EngineWarning("[hw dll] _bxt_reset_frametime_remainder is not available.\n");
 		}
 
 		n = fHost_FilterTime.get();
@@ -728,6 +757,17 @@ void HwDLL::Cmd_BXT_Record_f()
 	recordDemoName.assign(ORIG_Cmd_Argv(1));
 }
 
+void HwDLL::Cmd_BXT_Reset_Frametime_Remainder()
+{
+	return HwDLL::GetInstance().Cmd_BXT_Reset_Frametime_Remainder_f();
+}
+
+void HwDLL::Cmd_BXT_Reset_Frametime_Remainder_f()
+{
+	if (frametime_remainder)
+		*frametime_remainder = 0;
+}
+
 void HwDLL::Cmd_BXT_Setpos()
 {
 	return HwDLL::GetInstance().Cmd_BXT_Setpos_f();
@@ -880,6 +920,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		registeredVarsAndCmds = true;
 		RegisterCVar(CVars::_bxt_taslog);
 		RegisterCVar(CVars::_bxt_min_frametime);
+		RegisterCVar(CVars::_bxt_norefresh);
 		RegisterCVar(CVars::bxt_autopause);
 		RegisterCVar(CVars::bxt_hfr_multiplayer_check);
 		RegisterCVar(CVars::bxt_interprocess_enable);
@@ -896,6 +937,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("bxt_setpos", Cmd_BXT_Setpos, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_resetplayer", Cmd_BXT_ResetPlayer, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_interprocess_reset", Cmd_BXT_Interprocess_Reset, 2);
+			ORIG_Cmd_AddMallocCommand("_bxt_reset_frametime_remainder", Cmd_BXT_Reset_Frametime_Remainder, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_key_event", Cmd_BXT_Key_Event, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_input", Cmd_BXT_Input, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_input_edit", Cmd_BXT_Input_Edit, 2);
@@ -1608,6 +1650,12 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 		usePassedTime = true;
 		return 0;
 	}
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, SCR_UpdateScreen)
+{
+	if (!CVars::_bxt_norefresh.GetBool())
+		ORIG_SCR_UpdateScreen();
 }
 
 HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c)

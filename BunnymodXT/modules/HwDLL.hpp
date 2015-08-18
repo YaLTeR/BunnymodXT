@@ -15,6 +15,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, Host_Changelevel2_f)
 	HOOK_DECL(void, __cdecl, SCR_BeginLoadingPlaque)
 	HOOK_DECL(int, __cdecl, Host_FilterTime, float timePassed)
+	HOOK_DECL(void, __cdecl, SCR_UpdateScreen)
 
 	struct cmdbuf_t
 	{
@@ -92,6 +93,8 @@ public:
 
 	unsigned QueuedSharedRNGSeeds;
 
+	double *frametime_remainder;
+
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
 	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};
@@ -139,6 +142,8 @@ protected:
 	static void Cmd_BXT_TAS_Ducktap_Up();
 	static void Cmd_BXT_Record();
 	void Cmd_BXT_Record_f();
+	static void Cmd_BXT_Reset_Frametime_Remainder();
+	void Cmd_BXT_Reset_Frametime_Remainder_f();
 	static void Cmd_BXT_Setpos();
 	void Cmd_BXT_Setpos_f();
 	static void Cmd_BXT_ResetPlayer();

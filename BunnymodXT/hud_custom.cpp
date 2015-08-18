@@ -675,6 +675,15 @@ namespace CustomHud
 			std::memcpy(buf + 14, &milliseconds, sizeof(milliseconds));
 
 			Interprocess::mq->send(buf, sizeof(buf), 0);
+
+			if (HwDLL::GetInstance().frametime_remainder) {
+				unsigned char buf2[10];
+				buf2[0] = 10;
+				buf2[1] = 0x03;
+				std::memcpy(buf2 + 2, HwDLL::GetInstance().frametime_remainder, 8);
+
+				Interprocess::mq->send(buf2, sizeof(buf2), 0);
+			}
 		} catch (boost::interprocess::interprocess_exception) {
 			// Do nothing.
 		}

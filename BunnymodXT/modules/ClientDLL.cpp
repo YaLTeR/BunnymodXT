@@ -361,6 +361,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_timer);
 		REG(bxt_hud_timer_offset);
 		REG(bxt_hud_timer_anchor);
+		REG(bxt_hud_clipdetector);
+		REG(bxt_hud_clipdetector_offset);
+		REG(bxt_hud_clipdetector_anchor);
 	}
 	#undef REG
 }

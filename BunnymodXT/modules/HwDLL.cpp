@@ -5,6 +5,7 @@
 #include <SPTLib/Hooks.hpp>
 #include "HwDLL.hpp"
 #include "ClientDLL.hpp"
+#include "ServerDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
@@ -809,6 +810,11 @@ void HwDLL::Cmd_BXT_Reset_Frametime_Remainder()
 		*HwDLL::GetInstance().frametime_remainder = 0;
 }
 
+void HwDLL::Cmd_BXT_Simulate_Clip()
+{
+	ServerDLL::GetInstance().simulateClip = true;
+}
+
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
 	if (!registeredVarsAndCmds)
@@ -834,6 +840,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("_bxt_map", Cmd_BXT_Map, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_load", Cmd_BXT_Load, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_reset_frametime_remainder", Cmd_BXT_Reset_Frametime_Remainder, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_simulate_clip", Cmd_BXT_Simulate_Clip, 2);
 		}
 	}
 }

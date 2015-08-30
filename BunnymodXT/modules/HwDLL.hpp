@@ -147,6 +147,7 @@ protected:
 	static void Cmd_BXT_Load();
 	void Cmd_BXT_Load_f();
 	static void Cmd_BXT_Reset_Frametime_Remainder();
+	static void Cmd_BXT_Simulate_Clip();
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

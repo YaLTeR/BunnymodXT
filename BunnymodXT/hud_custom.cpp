@@ -24,6 +24,7 @@ namespace CustomHud
 	int hours = 0, minutes = 0, seconds = 0;
 	double timeRemainder = 0.0;
 	int frames = 0;
+	bool canClip = false;
 
 	static client_sprite_t *SpriteList;
 	static int SpriteCount;
@@ -488,6 +489,23 @@ namespace CustomHud
 		}
 	}
 
+	void DrawClipDetector(float flTime)
+	{
+		if (CVars::bxt_hud_clipdetector.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_clipdetector_offset, CVars::bxt_hud_clipdetector_anchor, &x, &y, 0, NumberHeight + 2);
+
+			DrawString(x, y, "Can clip: ");
+
+			int l, h;
+			ClientDLL::GetInstance().pEngfuncs->pfnDrawConsoleStringLen("Can clip: ", &l, &h);
+
+			x += l;
+			DrawString(x, y, canClip ? "Yes" : "No", canClip ? 0.f : 1.f, canClip ? 1.f : 0.f, 0.f);
+		}
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -573,6 +591,7 @@ namespace CustomHud
 		DrawJumpspeed(flTime);
 		DrawTimer(flTime);
 		DrawDistance(flTime);
+		DrawClipDetector(flTime);
 
 		receivedAccurateInfo = false;
 	}
@@ -661,5 +680,10 @@ namespace CustomHud
 		} catch (boost::interprocess::interprocess_exception) {
 			// Do nothing.
 		}
+	}
+
+	void SetCanClip(bool value)
+	{
+		canClip = value;
 	}
 }

@@ -164,6 +164,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_timer;
 	extern CVarWrapper bxt_hud_timer_offset;
 	extern CVarWrapper bxt_hud_timer_anchor;
+	extern CVarWrapper bxt_hud_clipdetector;
+	extern CVarWrapper bxt_hud_clipdetector_offset;
+	extern CVarWrapper bxt_hud_clipdetector_anchor;
 
 	extern const std::vector<CVarWrapper*> allCVars;
 }

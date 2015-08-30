@@ -57,6 +57,9 @@ namespace CVars
 	CVarWrapper bxt_hud_timer("bxt_hud_timer", "0");
 	CVarWrapper bxt_hud_timer_offset("bxt_hud_timer_offset", "");
 	CVarWrapper bxt_hud_timer_anchor("bxt_hud_timer_anchor", "0 0.5");
+	CVarWrapper bxt_hud_clipdetector("bxt_hud_clipdetector", "0");
+	CVarWrapper bxt_hud_clipdetector_offset("bxt_hud_clipdetector_offset", "");
+	CVarWrapper bxt_hud_clipdetector_anchor("bxt_hud_clipdetector_anchor", "0 0.5");
 
 	const std::vector<CVarWrapper*> allCVars =
 	{
@@ -106,6 +109,9 @@ namespace CVars
 		&bxt_hud_jumpspeed_anchor,
 		&bxt_hud_timer,
 		&bxt_hud_timer_offset,
-		&bxt_hud_timer_anchor
+		&bxt_hud_timer_anchor,
+		&bxt_hud_clipdetector,
+		&bxt_hud_clipdetector_offset,
+		&bxt_hud_clipdetector_anchor
 	};
 }

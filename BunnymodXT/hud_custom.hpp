@@ -21,4 +21,6 @@ namespace CustomHud
 	void ResetTime();
 	void SetCountingTime(bool counting);
 	void SendTimeUpdate();
+
+	void SetCanClip(bool value);
 };

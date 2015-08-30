@@ -31,6 +31,8 @@ public:
 	virtual void Clear();
 	virtual bool CanHook(const std::wstring& moduleFullName);
 
+	bool simulateClip;
+
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
 	ServerDLL(const ServerDLL&);

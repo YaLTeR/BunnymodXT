@@ -116,6 +116,7 @@ void ServerDLL::Clear()
 	pEngfuncs = nullptr;
 	ppGlobals = nullptr;
 	cantJumpNextTime.clear();
+	simulateClip = false;
 	m_Intercepted = false;
 }
 
@@ -501,7 +502,41 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	}
 	#undef ALERT
 
+	// Past this point we only care about player #0 (host for listen servers).
+	if (playerIndex)
+		return;
+
 	CustomHud::UpdatePlayerInfo(velocity, origin);
+
+	// Check if we can clip here.
+	auto testPlayerPosition = *reinterpret_cast<int(**)(float* pos, pmtrace_t* ptrace)>(pmove + 0x4F55C);
+	auto found = false;
+	for (auto z = 18.f; z <= 72.f; z += 18.f)
+	{
+		for (auto x = -8.f; x <= 8.f; x += 8.f)
+		{
+			for (auto y = -8.f; y <= 8.f; y += 8.f)
+			{
+				float test[] = { origin[0] + x, origin[1] + y, origin[2] + z };
+				if (testPlayerPosition(test, nullptr) == -1)
+				{
+					found = true;
+
+					if (simulateClip)
+					{
+						origin[0] = test[0];
+						origin[1] = test[1];
+						origin[2] = test[2];
+					}
+
+					goto done;
+				}
+			}
+		}
+	}
+done:
+	CustomHud::SetCanClip(found);
+	simulateClip = false;
 }
 
 HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal, float*, out, float, overbounce)

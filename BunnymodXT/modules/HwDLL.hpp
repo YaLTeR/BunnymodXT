@@ -90,6 +90,8 @@ public:
 
 	inline bool IsPaused() { return (sv && *(reinterpret_cast<int*>(sv) + 1)); }
 
+	inline edict_t* GetPlayerEdict() const { return *sv_player; }
+
 	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
 
 	unsigned QueuedSharedRNGSeeds;

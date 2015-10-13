@@ -355,6 +355,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_entity_hp);
 		REG(bxt_hud_entity_hp_offset);
 		REG(bxt_hud_entity_hp_anchor);
+		REG(bxt_hud_selfgauss);
+		REG(bxt_hud_selfgauss_offset);
+		REG(bxt_hud_selfgauss_anchor);
 		REG(bxt_hud_speedometer);
 		REG(bxt_hud_speedometer_offset);
 		REG(bxt_hud_speedometer_anchor);

@@ -521,6 +521,81 @@ namespace CustomHud
 		}
 	}
 
+	static void GetSelfgaussInfo(bool &selfgaussable, float &length, int &hitGroup)
+	{
+		selfgaussable = false;
+
+		float start[3], end[3];
+		SetupTraceVectors(start, end);
+
+		TraceResult tr;
+		ServerDLL::GetInstance().pEngfuncs->pfnTraceLine(start, end, 0, HwDLL::GetInstance().GetPlayerEdict(), &tr);
+
+		if (!tr.pHit || !tr.pHit->pvPrivateData || tr.pHit->v.solid != SOLID_BSP || tr.pHit->v.takedamage)
+			return;
+
+		Vector forward, right, up;
+		ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player.viewangles, forward, right, up);
+		float n = -DotProduct(forward, tr.vecPlaneNormal);
+
+		if (n < 0.5)
+			return;
+
+		TraceResult beamTr;
+		ServerDLL::GetInstance().pEngfuncs->pfnTraceLine(tr.vecEndPos + 8 * forward, end, 0, nullptr, &beamTr);
+
+		if (beamTr.fAllSolid)
+			return;
+
+		selfgaussable = true;
+
+		ServerDLL::GetInstance().pEngfuncs->pfnTraceLine(beamTr.vecEndPos, tr.vecEndPos, 0, nullptr, &beamTr);
+		length = (beamTr.vecEndPos - tr.vecEndPos).Length();
+
+		ServerDLL::GetInstance().pEngfuncs->pfnTraceLine(start, end, 0, nullptr, &tr);
+		hitGroup = tr.iHitgroup;
+	}
+
+	void DrawSelfgaussInfo(float flTime)
+	{
+		static const char *HITGROUP_STRING[] = {
+			"Generic",
+			"Head",
+			"Chest",
+			"Stomach",
+			"Left Arm",
+			"Right Arm",
+			"Left Leg",
+			"Right Leg"
+		};
+
+		if (CVars::bxt_hud_selfgauss.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 17) + 3);
+
+			bool selfgaussable;
+			int hitGroup;
+			float threshold;
+			GetSelfgaussInfo(selfgaussable, threshold, hitGroup);
+
+			std::ostringstream out;
+			out << "Selfgauss:\n";
+			if (selfgaussable)
+			{
+				out.setf(std::ios::fixed);
+				out.precision(precision);
+				out << "Threshold: " << threshold << '\n'
+					<< "Hit Group: " << HITGROUP_STRING[hitGroup];
+			}
+			else
+			{
+				out << "Cannot selfgauss";
+			}
+			DrawMultilineString(x, y, out.str().c_str());
+		}
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -607,6 +682,7 @@ namespace CustomHud
 		DrawTimer(flTime);
 		DrawDistance(flTime);
 		DrawEntityHP(flTime);
+		DrawSelfgaussInfo(flTime);
 
 		receivedAccurateInfo = false;
 	}

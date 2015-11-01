@@ -2,18 +2,17 @@ cmake_minimum_required (VERSION 3.1)
 project (BunnymodXT)
 
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
-#set (CMAKE_CXX_STANDARD 11)
 
 include(cotire)
 
 if (NOT MSVC)
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=native -mtune=native -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
-	#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=pentium-m -mfpmath=387 -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=native -mtune=native -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable")
+	#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=pentium-m -mfpmath=387 -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable")
 endif ()
 
 set (Boost_USE_STATIC_LIBS ON)
 find_package (Boost 1.57.0 REQUIRED COMPONENTS chrono date_time system thread)
-include_directories (${Boost_INCLUDE_DIR})
+include_directories (SYSTEM ${Boost_INCLUDE_DIR})
 
 add_subdirectory (hltas)
 add_subdirectory (hlstrafe)

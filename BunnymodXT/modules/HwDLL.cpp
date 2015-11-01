@@ -155,6 +155,7 @@ void HwDLL::Clear()
 	ORIG_hudGetViewAngles = nullptr;
 	ORIG_PM_PlayerTrace = nullptr;
 	ORIG_SV_AddLinksToPM = nullptr;
+	ORIG_PF_GetPhysicsKeyValue = nullptr;
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
@@ -335,6 +336,12 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found SCR_UpdateScreen at %p.\n", ORIG_SCR_UpdateScreen);
 		else
 			EngineDevWarning("[hw dll] Could not find SCR_UpdateScreen.\n");
+
+		ORIG_PF_GetPhysicsKeyValue = reinterpret_cast<_PF_GetPhysicsKeyValue>(MemUtils::GetSymbolAddress(m_Handle, "PF_GetPhysicsKeyValue"));
+		if (ORIG_PF_GetPhysicsKeyValue)
+			EngineDevMsg("[hw dll] Found PF_GetPhysicsKeyValue at %p.\n", ORIG_PF_GetPhysicsKeyValue);
+		else
+			EngineDevWarning("[hw dll] Could not find PF_GetPhysicsKeyValue.\n");
 	}
 	else
 	{
@@ -352,6 +359,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Host_FilterTime)
 		DEF_FUTURE(V_FadeAlpha)
 		DEF_FUTURE(SCR_UpdateScreen)
+		DEF_FUTURE(PF_GetPhysicsKeyValue)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
 		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
 		if (oldEngine) {
@@ -607,6 +615,12 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found SCR_UpdateScreen at %p (using the %s pattern).\n", ORIG_SCR_UpdateScreen, Patterns::ptnsSCR_UpdateScreen[n].build.c_str());
 		else
 			EngineDevWarning("[hw dll] Could not find SCR_UpdateScreen.\n");
+
+		n = fPF_GetPhysicsKeyValue.get();
+		if (ORIG_PF_GetPhysicsKeyValue)
+			EngineDevMsg("[hw dll] Found PF_GetPhysicsKeyValue at %p (using the %s pattern).\n", ORIG_PF_GetPhysicsKeyValue, Patterns::ptnsPF_GetPhysicsKeyValue[n].build.c_str());
+		else
+			EngineDevWarning("[hw dll] Could not find PF_GetPhysicsKeyValue.\n");
 
 		if (oldEngine) {
 			n = fLoadAndDecryptHwDLL.get();
@@ -865,7 +879,13 @@ void HwDLL::InsertCommands()
 						player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
 						player.InDuckAnimation = (pl->v.bInDuck != 0);
 						player.DuckTime = static_cast<float>(pl->v.flDuckTime);
-						player.HasLJModule = false; // TODO
+
+						if (ORIG_PF_GetPhysicsKeyValue) {
+							auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));
+							player.HasLJModule = (slj == 1);
+						} else {
+							player.HasLJModule = false;
+						}
 
 						// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
 						GetViewangles(player.Viewangles);

@@ -129,6 +129,8 @@ protected:
 	_PM_PlayerTrace ORIG_PM_PlayerTrace;
 	typedef void(__cdecl *_SV_AddLinksToPM) (char* node, float* origin);
 	_SV_AddLinksToPM ORIG_SV_AddLinksToPM;
+	typedef char*(__cdecl *_PF_GetPhysicsKeyValue) (const edict_t* pClient, const char* key);
+	_PF_GetPhysicsKeyValue ORIG_PF_GetPhysicsKeyValue;
 
 	void FindStuff();
 

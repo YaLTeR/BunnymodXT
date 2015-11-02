@@ -67,6 +67,17 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	m_Name = moduleName;
 	m_Intercepted = needToIntercept;
 
+	size_t number = 0;
+	auto filename = GetFileName(m_Name);
+	for (auto name : m_Names)
+	{
+		if (name == filename)
+			break;
+
+		number++;
+	}
+	m_HookedNumber = number;
+
 	FindStuff();
 
 	// Get the seed (if we're not resetting, in that case we have the seed already).
@@ -126,6 +137,8 @@ void HwDLL::Unhook()
 
 	for (auto cvar : CVars::allCVars)
 		cvar->Refresh();
+
+	m_HookedNumber = m_Names.size();
 
 	Clear();
 }

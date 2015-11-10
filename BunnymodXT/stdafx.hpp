@@ -32,7 +32,18 @@
 #include <sstream>
 #include <unordered_map>
 
+// Suppress warnings (from boost).
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <boost/interprocess/ipc/message_queue.hpp>
+
+// Stop suppressing warnings.
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 using std::uintptr_t;
 using std::size_t;

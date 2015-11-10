@@ -25,7 +25,7 @@ namespace ConUtils
         SetConsoleTitleA("Bunnymod XT Debug Console");
 
         ShowWindow(GetConsoleWindow(), SW_MAXIMIZE);
-        ShowWindow(GetConsoleWindow(), SW_MINIMIZE);
+        ShowWindow(GetConsoleWindow(), SW_SHOWMINNOACTIVE);
     }
 
     void Free()

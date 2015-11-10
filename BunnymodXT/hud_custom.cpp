@@ -55,14 +55,6 @@ namespace CustomHud
 		return std::sqrt(sqr(x) + sqr(y) + sqr(z));
 	}
 
-	static int pow(int a, int p)
-	{
-		int res = 1;
-		for (int i = 0; i < p; ++i)
-			res *= a;
-		return res;
-	}
-
 	static void UpdateScreenInfo()
 	{
 		si.iSize = sizeof(si);
@@ -471,19 +463,20 @@ namespace CustomHud
 
 			float forward[3], right[3], up[3];
 			ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player.viewangles, forward, right, up);
-			
+
 			float end[3];
 			vecCopy(view, end);
 			end[0] += forward[0] * 8192;
 			end[1] += forward[1] * 8192;
 			end[2] += forward[2] * 8192;
 
-			auto tr = HwDLL::GetInstance().PlayerTrace(view, end, HLStrafe::HullType::POINT);
-			double hdist = std::hypot(tr.EndPos[0] - view[0], tr.EndPos[1] - view[1]);
-			double vdist = tr.EndPos[2] - view[2];
-			double hvdist = std::sqrt((tr.EndPos[0] - view[0]) * (tr.EndPos[0] - view[0])
-				+ (tr.EndPos[1] - view[1]) * (tr.EndPos[1] - view[1])
-				+ (tr.EndPos[2] - view[2]) * (tr.EndPos[2] - view[2]));
+			TraceResult tr;
+			ServerDLL::GetInstance().pEngfuncs->pfnTraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict(), &tr);
+			double hdist = std::hypot(tr.vecEndPos[0] - view[0], tr.vecEndPos[1] - view[1]);
+			double vdist = tr.vecEndPos[2] - view[2];
+			double hvdist = std::sqrt((tr.vecEndPos[0] - view[0]) * (tr.vecEndPos[0] - view[0])
+				+ (tr.vecEndPos[1] - view[1]) * (tr.vecEndPos[1] - view[1])
+				+ (tr.vecEndPos[2] - view[2]) * (tr.vecEndPos[2] - view[2]));
 
 			std::ostringstream out;
 			out.setf(std::ios::fixed);

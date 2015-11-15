@@ -643,10 +643,59 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, CMultiManager__ManagerUse_Linux, void*, thi
 	return ORIG_CMultiManager__ManagerUse_Linux(thisptr, pActivator, pCaller, useType, value);
 }
 
+void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float &b, float &a) const
+{
+	if (strcmp(classname, "trigger_changelevel") == 0) {
+		// Bright green
+		r = 79;
+		g = 255;
+		b = 10;
+		a = 120;
+	} else if (strcmp(classname, "trigger_hurt") == 0) {
+		// Red
+		r = 255;
+		g = 0;
+		b = 0;
+		a = 120;
+	} else if (strcmp(classname, "trigger_multiple") == 0) {
+		// Blue
+		r = 0;
+		g = 0;
+		b = 255;
+		a = 120;
+	} else if (strcmp(classname, "trigger_once") == 0) {
+		// Cyan
+		r = 0;
+		g = 255;
+		b = 255;
+		a = 120;
+	} else if (strcmp(classname, "trigger_push") == 0) {
+		// Bright yellow
+		r = 255;
+		g = 255;
+		b = 0;
+		a = 120;
+	} else if (strcmp(classname, "trigger_teleport") == 0) {
+		// Dull green
+		r = 81;
+		g = 147;
+		b = 49;
+		a = 120;
+	} else {
+		// White
+		r = 255;
+		g = 255;
+		b = 255;
+		a = 100;
+	}
+}
+
 HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state, int, e, edict_t*, ent, edict_t*, host, int, hostflags, int, player, unsigned char*, pSet)
 {
 	auto oldEffects = ent->v.effects;
 	auto oldRendermode = ent->v.rendermode;
+	auto oldRenderColor = ent->v.rendercolor;
+	auto oldRenderAmount = ent->v.renderamt;
 
 	if (CVars::bxt_show_hidden_entities.GetBool()) {
 		bool show = ent->v.rendermode != kRenderNormal && ent->v.rendermode != kRenderGlow;
@@ -662,7 +711,14 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 
 		if (show) {
 			ent->v.effects &= ~EF_NODRAW;
-			ent->v.rendermode = kRenderNormal;
+
+			const char *classname = (*ppGlobals)->pStringBase + ent->v.classname;
+			if (strncmp(classname, "trigger_", 8) == 0) {
+				ent->v.rendermode = kRenderTransColor;
+				GetTriggerColor(classname, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z, ent->v.renderamt);
+			} else {
+				ent->v.rendermode = kRenderNormal;
+			}
 		}
 	}
 
@@ -670,6 +726,8 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 
 	ent->v.effects = oldEffects;
 	ent->v.rendermode = oldRendermode;
+	ent->v.rendercolor = oldRenderColor;
+	ent->v.renderamt = oldRenderAmount;
 
 	return ret;
 }

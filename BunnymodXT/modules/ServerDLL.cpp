@@ -694,6 +694,10 @@ void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float
 
 HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state, int, e, edict_t*, ent, edict_t*, host, int, hostflags, int, player, unsigned char*, pSet)
 {
+	if (!ppGlobals) {
+		return ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);
+	}
+
 	auto oldEffects = ent->v.effects;
 	auto oldRendermode = ent->v.rendermode;
 	auto oldRenderColor = ent->v.rendercolor;

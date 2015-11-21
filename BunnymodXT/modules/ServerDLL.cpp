@@ -647,37 +647,37 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, CMultiManager__ManagerUse_Linux, void*, thi
 
 void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float &b, float &a) const
 {
-	if (strcmp(classname, "trigger_changelevel") == 0) {
+	if (std::strcmp(classname, "trigger_changelevel") == 0) {
 		// Bright green
 		r = 79;
 		g = 255;
 		b = 10;
 		a = 120;
-	} else if (strcmp(classname, "trigger_hurt") == 0) {
+	} else if (std::strcmp(classname, "trigger_hurt") == 0) {
 		// Red
 		r = 255;
 		g = 0;
 		b = 0;
 		a = 120;
-	} else if (strcmp(classname, "trigger_multiple") == 0) {
+	} else if (std::strcmp(classname, "trigger_multiple") == 0) {
 		// Blue
 		r = 0;
 		g = 0;
 		b = 255;
 		a = 120;
-	} else if (strcmp(classname, "trigger_once") == 0) {
+	} else if (std::strcmp(classname, "trigger_once") == 0) {
 		// Cyan
 		r = 0;
 		g = 255;
 		b = 255;
 		a = 120;
-	} else if (strcmp(classname, "trigger_push") == 0) {
+	} else if (std::strcmp(classname, "trigger_push") == 0) {
 		// Bright yellow
 		r = 255;
 		g = 255;
 		b = 0;
 		a = 120;
-	} else if (strcmp(classname, "trigger_teleport") == 0) {
+	} else if (std::strcmp(classname, "trigger_teleport") == 0) {
 		// Dull green
 		r = 81;
 		g = 147;

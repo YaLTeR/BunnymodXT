@@ -412,8 +412,10 @@ void ServerDLL::RegisterCVarsAndCommands()
 	REG(bxt_bhopcap);
 	if (ORIG_CNihilanth__DyingThink || ORIG_CNihilanth__DyingThink_Linux || ORIG_COFGeneWorm__DyingThink || ORIG_COFGeneWorm__DyingThink_Linux)
 		REG(bxt_timer_autostop);
-	if (ORIG_AddToFullPack)
+	if (ORIG_AddToFullPack) {
 		REG(bxt_show_hidden_entities);
+		REG(bxt_show_triggers);
+	}
 	#undef REG
 }
 
@@ -697,7 +699,10 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldRenderColor = ent->v.rendercolor;
 	auto oldRenderAmount = ent->v.renderamt;
 
-	if (CVars::bxt_show_hidden_entities.GetBool()) {
+	const char *classname = (*ppGlobals)->pStringBase + ent->v.classname;
+	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+
+	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool()) {
 		bool show = ent->v.rendermode != kRenderNormal && ent->v.rendermode != kRenderGlow;
 		switch (CVars::bxt_show_hidden_entities.GetInt()) {
 		case 1:
@@ -711,15 +716,12 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 
 		if (show) {
 			ent->v.effects &= ~EF_NODRAW;
-
-			const char *classname = (*ppGlobals)->pStringBase + ent->v.classname;
-			if (strncmp(classname, "trigger_", 8) == 0) {
-				ent->v.rendermode = kRenderTransColor;
-				GetTriggerColor(classname, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z, ent->v.renderamt);
-			} else {
-				ent->v.rendermode = kRenderNormal;
-			}
+			ent->v.rendermode = kRenderNormal;
 		}
+	} else if (is_trigger && CVars::bxt_show_triggers.GetBool()) {
+		ent->v.effects &= ~EF_NODRAW;
+		ent->v.rendermode = kRenderTransColor;
+		GetTriggerColor(classname, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z, ent->v.renderamt);
 	}
 
 	auto ret = ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);

@@ -698,6 +698,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldRendermode = ent->v.rendermode;
 	auto oldRenderColor = ent->v.rendercolor;
 	auto oldRenderAmount = ent->v.renderamt;
+	auto oldRenderFx = ent->v.renderfx;
 
 	const char *classname = (*ppGlobals)->pStringBase + ent->v.classname;
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
@@ -721,6 +722,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	} else if (is_trigger && CVars::bxt_show_triggers.GetBool()) {
 		ent->v.effects &= ~EF_NODRAW;
 		ent->v.rendermode = kRenderTransColor;
+		ent->v.renderfx = kRenderFxPulseFast;
 		GetTriggerColor(classname, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z, ent->v.renderamt);
 	}
 
@@ -730,6 +732,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	ent->v.rendermode = oldRendermode;
 	ent->v.rendercolor = oldRenderColor;
 	ent->v.renderamt = oldRenderAmount;
+	ent->v.renderfx = oldRenderFx;
 
 	return ret;
 }

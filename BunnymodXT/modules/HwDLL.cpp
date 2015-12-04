@@ -1594,7 +1594,7 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 	static bool usePassedTime = false;
 
 	auto minFrametime = CVars::_bxt_min_frametime.GetFloat();
-	if (minFrametime == 0.0f) {
+	if (minFrametime == 0.0f || CVars::_bxt_norefresh.GetBool()) {
 		timeCounter = 0.0;
 		usePassedTime = false;
 		return ORIG_Host_FilterTime(passedTime);

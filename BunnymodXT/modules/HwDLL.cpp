@@ -735,6 +735,30 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 	}
 }
 
+void HwDLL::Cmd_Multiwait()
+{
+	HwDLL::GetInstance().Cmd_Multiwait_f();
+}
+
+void HwDLL::Cmd_Multiwait_f()
+{
+	if (ORIG_Cmd_Argc() == 1) {
+		ORIG_Cbuf_InsertText("wait\n");
+		return;
+	}
+
+	std::ostringstream ss;
+	int num = std::atoi(ORIG_Cmd_Argv(1));
+	if (num > 1)
+		ss << "wait\nw " << num - 1 << '\n';
+	else if (num == 1)
+		ss << "wait\n";
+	else
+		return;
+
+	ORIG_Cbuf_InsertText(ss.str().c_str());
+}
+
 void HwDLL::Cmd_BXT_Timer_Start()
 {
 	return CustomHud::SetCountingTime(true);
@@ -849,6 +873,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		RegisterCVar(CVars::_bxt_norefresh);
 		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
+			ORIG_Cmd_AddMallocCommand("w", Cmd_Multiwait, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_stop", Cmd_BXT_Timer_Stop, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_reset", Cmd_BXT_Timer_Reset, 2);

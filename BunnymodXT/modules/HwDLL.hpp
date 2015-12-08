@@ -136,6 +136,8 @@ protected:
 
 	static void Cmd_BXT_TAS_LoadScript();
 	void Cmd_BXT_TAS_LoadScript_f();
+	static void Cmd_Multiwait();
+	void Cmd_Multiwait_f();
 	static void Cmd_BXT_Timer_Start();
 	static void Cmd_BXT_Timer_Stop();
 	static void Cmd_BXT_Timer_Reset();

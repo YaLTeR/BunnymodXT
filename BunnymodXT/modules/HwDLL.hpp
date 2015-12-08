@@ -136,6 +136,10 @@ protected:
 
 	static void Cmd_BXT_TAS_LoadScript();
 	void Cmd_BXT_TAS_LoadScript_f();
+	static void Cmd_BXT_CH_Set_Health();
+	void Cmd_BXT_CH_Set_Health_f();
+	static void Cmd_BXT_CH_Set_Armor();
+	void Cmd_BXT_CH_Set_Armor_f();
 	static void Cmd_Multiwait();
 	void Cmd_Multiwait_f();
 	static void Cmd_BXT_Timer_Start();

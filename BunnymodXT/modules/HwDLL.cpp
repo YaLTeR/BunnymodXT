@@ -735,6 +735,42 @@ void HwDLL::Cmd_BXT_TAS_LoadScript_f()
 	}
 }
 
+void HwDLL::Cmd_BXT_CH_Set_Health()
+{
+	HwDLL::GetInstance().Cmd_BXT_CH_Set_Health_f();
+}
+
+void HwDLL::Cmd_BXT_CH_Set_Health_f()
+{
+	if (!FindCVar("sv_cheats")->value)
+		return;
+
+	if (ORIG_Cmd_Argc() != 2) {
+		ORIG_Con_Printf("USage: bxt_ch_set_health <health>\n");
+		return;
+	}
+
+	GetPlayerEdict()->v.health = static_cast<float>(std::atof(ORIG_Cmd_Argv(1)));
+}
+
+void HwDLL::Cmd_BXT_CH_Set_Armor()
+{
+	HwDLL::GetInstance().Cmd_BXT_CH_Set_Armor_f();
+}
+
+void HwDLL::Cmd_BXT_CH_Set_Armor_f()
+{
+	if (!FindCVar("sv_cheats")->value)
+		return;
+
+	if (ORIG_Cmd_Argc() != 2) {
+		ORIG_Con_Printf("Usage: bxt_ch_set_armor <armor>\n");
+		return;
+	}
+
+	GetPlayerEdict()->v.armorvalue = static_cast<float>(std::atof(ORIG_Cmd_Argv(1)));
+}
+
 void HwDLL::Cmd_Multiwait()
 {
 	HwDLL::GetInstance().Cmd_Multiwait_f();
@@ -873,6 +909,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		RegisterCVar(CVars::_bxt_norefresh);
 		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
+			ORIG_Cmd_AddMallocCommand("bxt_ch_set_health", Cmd_BXT_CH_Set_Health, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_ch_set_armor", Cmd_BXT_CH_Set_Armor, 2);
 			ORIG_Cmd_AddMallocCommand("w", Cmd_Multiwait, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_stop", Cmd_BXT_Timer_Stop, 2);

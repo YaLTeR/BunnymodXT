@@ -18,6 +18,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CMultiManager__ManagerThink, void* thisptr, int edx)
 	HOOK_DECL(void, __cdecl, CMultiManager__ManagerUse_Linux, void* thisptr, void* pActivator, void* pCaller, int useType, float value)
 	HOOK_DECL(int, __cdecl, AddToFullPack, struct entity_state_s* state, int e, edict_t* ent, edict_t* host, int hostflags, int player, unsigned char* pSet)
+	HOOK_DECL(void, __fastcall, CTriggerVolume__Spawn, void* thisptr)
 
 public:
 	static ServerDLL& GetInstance()

@@ -63,7 +63,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) },
-			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) }
+			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) },
+			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) }
 		});
 }
 
@@ -80,7 +81,8 @@ void ServerDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) },
-			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) }
+			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) },
+			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) }
 		});
 
 	Clear();
@@ -102,6 +104,7 @@ void ServerDLL::Clear()
 	ORIG_CMultiManager__ManagerThink = nullptr;
 	ORIG_CMultiManager__ManagerUse_Linux = nullptr;
 	ORIG_AddToFullPack = nullptr;
+	ORIG_CTriggerVolume__Spawn = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -210,6 +213,10 @@ void ServerDLL::FindStuff()
 		[](MemUtils::ptnvec_size ptnNumber) {}, []() {}
 	);
 
+	auto fCTriggerVolume__Spawn = MemUtils::Find(reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), m_Handle, "_ZN14CTriggerVolume5SpawnEv", m_Base, m_Length,
+		Patterns::ptnsCTriggerVolume__Spawn, [](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
+
 	bool noBhopcap = false;
 	auto n = fPM_PreventMegaBunnyJumping.get();
 	if (ORIG_PM_PreventMegaBunnyJumping) {
@@ -245,6 +252,18 @@ void ServerDLL::FindStuff()
 		EngineWarning("Autojump is not available.\n");
 		if (!noBhopcap)
 			EngineWarning("Bhopcap disabling is not available.\n");
+	}
+
+	n = fCTriggerVolume__Spawn.get();
+	if (ORIG_CTriggerVolume__Spawn) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[server dll] Found CTriggerVolume::Spawn at %p.\n", ORIG_CTriggerVolume__Spawn);
+		else {
+			EngineDevMsg("[server dll] Found CTriggerVolume::Spawn at %p (using the %s pattern).\n", ORIG_CTriggerVolume__Spawn, Patterns::ptnsCTriggerVolume__Spawn[n].build.c_str());
+		}
+	} else {
+		EngineDevMsg("[server dll] Could not find CTriggerVolume::Spawn.\n");
+		EngineWarning("trigger_transition entities will not be displayed.\n");
 	}
 
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
@@ -683,6 +702,12 @@ void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float
 		g = 147;
 		b = 49;
 		a = 120;
+	} else if (std::strcmp(classname, "trigger_transition") == 0) {
+		// Magenta
+		r = 203;
+		g = 103;
+		b = 212;
+		a = 120;
 	} else {
 		// White
 		r = 255;
@@ -739,4 +764,19 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	ent->v.renderfx = oldRenderFx;
 
 	return ret;
+}
+
+HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerVolume__Spawn, void*, thisptr)
+{
+	if (!ppGlobals || !pEngfuncs) {
+		ORIG_CTriggerVolume__Spawn(thisptr);
+		return;
+	}
+
+	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	string_t old_model = pev->model;
+	ORIG_CTriggerVolume__Spawn(thisptr);
+	pev->model = old_model;
+	pev->modelindex = pEngfuncs->pfnModelIndex((*ppGlobals)->pStringBase + old_model);
+	pev->effects |= EF_NODRAW;
 }

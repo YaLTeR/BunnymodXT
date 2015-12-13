@@ -746,7 +746,7 @@ void HwDLL::Cmd_BXT_CH_Set_Health_f()
 		return;
 
 	if (ORIG_Cmd_Argc() != 2) {
-		ORIG_Con_Printf("USage: bxt_ch_set_health <health>\n");
+		ORIG_Con_Printf("Usage: bxt_ch_set_health <health>\n");
 		return;
 	}
 

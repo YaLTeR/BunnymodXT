@@ -666,43 +666,46 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, CMultiManager__ManagerUse_Linux, void*, thi
 
 void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float &b, float &a) const
 {
-	if (std::strcmp(classname, "trigger_changelevel") == 0) {
+	assert(std::strncmp(classname, "trigger_", 8) == 0);
+
+	classname += 8;
+	if (std::strcmp(classname, "changelevel") == 0) {
 		// Bright green
 		r = 79;
 		g = 255;
 		b = 10;
 		a = 120;
-	} else if (std::strcmp(classname, "trigger_hurt") == 0) {
+	} else if (std::strcmp(classname, "hurt") == 0) {
 		// Red
 		r = 255;
 		g = 0;
 		b = 0;
 		a = 120;
-	} else if (std::strcmp(classname, "trigger_multiple") == 0) {
+	} else if (std::strcmp(classname, "multiple") == 0) {
 		// Blue
 		r = 0;
 		g = 0;
 		b = 255;
 		a = 120;
-	} else if (std::strcmp(classname, "trigger_once") == 0) {
+	} else if (std::strcmp(classname, "once") == 0) {
 		// Cyan
 		r = 0;
 		g = 255;
 		b = 255;
 		a = 120;
-	} else if (std::strcmp(classname, "trigger_push") == 0) {
+	} else if (std::strcmp(classname, "push") == 0) {
 		// Bright yellow
 		r = 255;
 		g = 255;
 		b = 0;
 		a = 120;
-	} else if (std::strcmp(classname, "trigger_teleport") == 0) {
+	} else if (std::strcmp(classname, "teleport") == 0) {
 		// Dull green
 		r = 81;
 		g = 147;
 		b = 49;
 		a = 120;
-	} else if (std::strcmp(classname, "trigger_transition") == 0) {
+	} else if (std::strcmp(classname, "transition") == 0) {
 		// Magenta
 		r = 203;
 		g = 103;

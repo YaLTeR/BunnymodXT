@@ -37,6 +37,11 @@ extern "C" int __cdecl _Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh(struc
 {
 	return ServerDLL::HOOKED_AddToFullPack(state, e, ent, host, hostflags, player, pSet);
 }
+
+extern "C" void __cdecl _ZN14CTriggerVolume5SpawnEv(void* thisptr)
+{
+	return ServerDLL::HOOKED_CTriggerVolume__Spawn_Linux(thisptr);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -213,7 +218,7 @@ void ServerDLL::FindStuff()
 		[](MemUtils::ptnvec_size ptnNumber) {}, []() {}
 	);
 
-	auto fCTriggerVolume__Spawn = MemUtils::Find(reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), m_Handle, "_ZN14CTriggerVolume5SpawnEv", m_Base, m_Length,
+	auto fCTriggerVolume__Spawn = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), m_Base, m_Length,
 		Patterns::ptnsCTriggerVolume__Spawn, [](MemUtils::ptnvec_size ptnNumber) { }, []() { }
 	);
 
@@ -256,14 +261,15 @@ void ServerDLL::FindStuff()
 
 	n = fCTriggerVolume__Spawn.get();
 	if (ORIG_CTriggerVolume__Spawn) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found CTriggerVolume::Spawn at %p.\n", ORIG_CTriggerVolume__Spawn);
-		else {
-			EngineDevMsg("[server dll] Found CTriggerVolume::Spawn at %p (using the %s pattern).\n", ORIG_CTriggerVolume__Spawn, Patterns::ptnsCTriggerVolume__Spawn[n].build.c_str());
-		}
+		EngineDevMsg("[server dll] Found CTriggerVolume::Spawn at %p (using the %s pattern).\n", ORIG_CTriggerVolume__Spawn, Patterns::ptnsCTriggerVolume__Spawn[n].build.c_str());
 	} else {
-		EngineDevWarning("[server dll] Could not find CTriggerVolume::Spawn.\n");
-		EngineWarning("trigger_transition entities will not be displayed.\n");
+		ORIG_CTriggerVolume__Spawn_Linux = reinterpret_cast<_CTriggerVolume__Spawn_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN14CTriggerVolume5SpawnEv"));
+		if (ORIG_CTriggerVolume__Spawn_Linux) {
+			EngineDevMsg("[server dll] Found CTriggerVolume::Spawn [Linux] at %p.\n", ORIG_CTriggerVolume__Spawn_Linux);
+		} else {
+			EngineDevWarning("[server dll] Could not find CTriggerVolume::Spawn.\n");
+			EngineWarning("trigger_transition entities will not be displayed.\n");
+		}
 	}
 
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
@@ -779,6 +785,21 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerVolume__Spawn, void*, thisptr)
 	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 	string_t old_model = pev->model;
 	ORIG_CTriggerVolume__Spawn(thisptr);
+	pev->model = old_model;
+	pev->modelindex = pEngfuncs->pfnModelIndex((*ppGlobals)->pStringBase + old_model);
+	pev->effects |= EF_NODRAW;
+}
+
+HOOK_DEF_1(ServerDLL, void, __cdecl, CTriggerVolume__Spawn_Linux, void*, thisptr)
+{
+	if (!ppGlobals || !pEngfuncs) {
+		ORIG_CTriggerVolume__Spawn_Linux(thisptr);
+		return;
+	}
+
+	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	string_t old_model = pev->model;
+	ORIG_CTriggerVolume__Spawn_Linux(thisptr);
 	pev->model = old_model;
 	pev->modelindex = pEngfuncs->pfnModelIndex((*ppGlobals)->pStringBase + old_model);
 	pev->effects |= EF_NODRAW;

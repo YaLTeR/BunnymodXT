@@ -262,7 +262,7 @@ void ServerDLL::FindStuff()
 			EngineDevMsg("[server dll] Found CTriggerVolume::Spawn at %p (using the %s pattern).\n", ORIG_CTriggerVolume__Spawn, Patterns::ptnsCTriggerVolume__Spawn[n].build.c_str());
 		}
 	} else {
-		EngineDevMsg("[server dll] Could not find CTriggerVolume::Spawn.\n");
+		EngineDevWarning("[server dll] Could not find CTriggerVolume::Spawn.\n");
 		EngineWarning("trigger_transition entities will not be displayed.\n");
 	}
 

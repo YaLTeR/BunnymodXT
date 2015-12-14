@@ -16,8 +16,9 @@ include_directories (SYSTEM ${Boost_INCLUDE_DIR})
 
 add_subdirectory (hltas)
 add_subdirectory (hlstrafe)
+add_subdirectory (taslogger)
 
-include_directories ("." hltas/src hlstrafe/src)
+include_directories ("." hltas/src hlstrafe/src taslogger/src)
 
 set (LIBRARY_OUTPUT_DIRECTORY ".")
 set (WINDOWS_FILES
@@ -64,7 +65,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 		message (FATAL_ERROR "Could not find detours.lib, point Detours_ROOT to the Detours base dir.")
 	endif ()
 
-	include_directories (${Detours_INCLUDE_DIR})
+	include_directories (${Detours_INCLUDE_DIR} ${RapidJSON_INCLUDE_DIR})
 	set (SOURCE_FILES ${SOURCE_FILES} ${WINDOWS_FILES})
 else ()
 	set (SOURCE_FILES ${SOURCE_FILES} ${LINUX_FILES})
@@ -74,7 +75,7 @@ add_library (BunnymodXT SHARED ${SOURCE_FILES})
 set_target_properties(BunnymodXT PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "BunnymodXT/stdafx.hpp")
 cotire(BunnymodXT)
 
-target_link_libraries (BunnymodXT hltas hlstrafe ${Boost_LIBRARIES})
+target_link_libraries (BunnymodXT hltas hlstrafe taslogger ${Boost_LIBRARIES})
 if (NOT MSVC)
 	target_link_libraries (BunnymodXT pthread rt)
 endif ()

@@ -59,12 +59,17 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
 			{ reinterpret_cast<void**>(&ORIG_PM_ClipVelocity), reinterpret_cast<void*>(HOOKED_PM_ClipVelocity) },
 			{ reinterpret_cast<void**>(&ORIG_PM_WaterMove), reinterpret_cast<void*>(HOOKED_PM_WaterMove) },
+			{ reinterpret_cast<void**>(&ORIG_PM_WalkMove), reinterpret_cast<void*>(HOOKED_PM_WalkMove) },
+			{ reinterpret_cast<void**>(&ORIG_PM_FlyMove), reinterpret_cast<void*>(HOOKED_PM_FlyMove) },
+			{ reinterpret_cast<void**>(&ORIG_PM_AddToTouched), reinterpret_cast<void*>(HOOKED_PM_AddToTouched) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) },
 			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) },
-			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) }
+			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) },
+			{ reinterpret_cast<void**>(&ORIG_CPushable__Move), reinterpret_cast<void*>(HOOKED_CPushable__Move) },
+			{ reinterpret_cast<void**>(&ORIG_CBasePlayer__TakeDamage), reinterpret_cast<void*>(HOOKED_CBasePlayer__TakeDamage) }
 		});
 }
 
@@ -77,12 +82,17 @@ void ServerDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
 			{ reinterpret_cast<void**>(&ORIG_PM_ClipVelocity), reinterpret_cast<void*>(HOOKED_PM_ClipVelocity) },
 			{ reinterpret_cast<void**>(&ORIG_PM_WaterMove), reinterpret_cast<void*>(HOOKED_PM_WaterMove) },
+			{ reinterpret_cast<void**>(&ORIG_PM_WalkMove), reinterpret_cast<void*>(HOOKED_PM_WalkMove) },
+			{ reinterpret_cast<void**>(&ORIG_PM_FlyMove), reinterpret_cast<void*>(HOOKED_PM_FlyMove) },
+			{ reinterpret_cast<void**>(&ORIG_PM_AddToTouched), reinterpret_cast<void*>(HOOKED_PM_AddToTouched) },
 			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
 			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) },
 			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) },
-			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) }
+			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) },
+			{ reinterpret_cast<void**>(&ORIG_CPushable__Move), reinterpret_cast<void*>(HOOKED_CPushable__Move) },
+			{ reinterpret_cast<void**>(&ORIG_CBasePlayer__TakeDamage), reinterpret_cast<void*>(HOOKED_CBasePlayer__TakeDamage) }
 		});
 
 	Clear();
@@ -96,6 +106,10 @@ void ServerDLL::Clear()
 	ORIG_PM_PlayerMove = nullptr;
 	ORIG_PM_ClipVelocity = nullptr;
 	ORIG_PM_WaterMove = nullptr;
+	ORIG_PM_WalkMove = nullptr;
+	ORIG_PM_FlyMove = nullptr;
+	ORIG_PM_AddToTouched = nullptr;
+	ORIG_PM_Ladder = nullptr;
 	ORIG_CmdStart = nullptr;
 	ORIG_CNihilanth__DyingThink = nullptr;
 	ORIG_CNihilanth__DyingThink_Linux = nullptr;
@@ -105,6 +119,8 @@ void ServerDLL::Clear()
 	ORIG_CMultiManager__ManagerUse_Linux = nullptr;
 	ORIG_AddToFullPack = nullptr;
 	ORIG_CTriggerVolume__Spawn = nullptr;
+	ORIG_CPushable__Move = nullptr;
+	ORIG_CBasePlayer__TakeDamage = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -115,6 +131,13 @@ void ServerDLL::Clear()
 	offAngles = 0;
 	offCmd = 0;
 	offBhopcap = 0;
+	offEntFriction = 0;
+	offEntGravity = 0;
+	offPunchangles = 0;
+	offWaterlevel = 0;
+	offInDuck = 0;
+	offFlags = 0;
+	offBasevelocity = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	pEngfuncs = nullptr;
 	ppGlobals = nullptr;
@@ -164,6 +187,13 @@ void ServerDLL::FindStuff()
 			offOrigin = 56;
 			offAngles = 68;
 			offCmd = 283736;
+			offEntFriction = 0xC4;
+			offEntGravity = 0xC0;
+			offPunchangles = 0xA0;
+			offWaterlevel = 0xE4;
+			offInDuck = 0x90;
+			offFlags = 0xB8;
+			offBasevelocity = 0x74;
 		}, []() { }
 	);
 
@@ -213,8 +243,32 @@ void ServerDLL::FindStuff()
 		[](MemUtils::ptnvec_size ptnNumber) {}, []() {}
 	);
 
+	auto fPM_WalkMove = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_WalkMove), m_Handle, "PM_WalkMove", m_Base, m_Length, Patterns::ptnsPM_WalkMove,
+		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
+
+	auto fPM_FlyMove = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_FlyMove), m_Handle, "PM_FlyMove", m_Base, m_Length, Patterns::ptnsPM_FlyMove,
+		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
+
+	auto fPM_AddToTouched = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_AddToTouched), m_Handle, "PM_AddToTouched", m_Base, m_Length, Patterns::ptnsPM_AddToTouched,
+		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
+
+	auto fPM_Ladder = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_Ladder), m_Handle, "PM_Ladder", m_Base, m_Length, Patterns::ptnsPM_Ladder,
+		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
+
 	auto fCTriggerVolume__Spawn = MemUtils::Find(reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), m_Handle, "_ZN14CTriggerVolume5SpawnEv", m_Base, m_Length,
 		Patterns::ptnsCTriggerVolume__Spawn, [](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
+
+	auto fCPushable__Move = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_CPushable__Move), m_Base, m_Length, Patterns::ptnsCPushable__Move,
+		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
+
+	auto fCBasePlayer__TakeDamage = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_CBasePlayer__TakeDamage), m_Base, m_Length, Patterns::ptnsCBasePlayer__TakeDamage,
+		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
 	);
 
 	bool noBhopcap = false;
@@ -255,15 +309,30 @@ void ServerDLL::FindStuff()
 	}
 
 	n = fCTriggerVolume__Spawn.get();
-	if (ORIG_CTriggerVolume__Spawn) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found CTriggerVolume::Spawn at %p.\n", ORIG_CTriggerVolume__Spawn);
-		else {
-			EngineDevMsg("[server dll] Found CTriggerVolume::Spawn at %p (using the %s pattern).\n", ORIG_CTriggerVolume__Spawn, Patterns::ptnsCTriggerVolume__Spawn[n].build.c_str());
-		}
-	} else {
+	if (ORIG_CTriggerVolume__Spawn)
+		EngineDevMsg("[server dll] Found CTriggerVolume::Spawn at %p (using the %s pattern).\n", ORIG_CTriggerVolume__Spawn, Patterns::ptnsCTriggerVolume__Spawn[n].build.c_str());
+	else {
 		EngineDevMsg("[server dll] Could not find CTriggerVolume::Spawn.\n");
 		EngineWarning("trigger_transition entities will not be displayed.\n");
+	}
+
+	n = fCPushable__Move.get();
+	if (ORIG_CPushable__Move) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[server dll] Found CPushable::Move at %p.\n", ORIG_CPushable__Move);
+		else
+			EngineDevMsg("[server dll] Found CPushable::Move at %p (using the %s pattern).\n", ORIG_CPushable__Move, Patterns::ptnsCPushable__Move[n].build.c_str());
+	} else {
+		EngineDevMsg("[server dll] Could not find CPushable::Move.\n");
+		EngineWarning("Object boost logging is not available.\n");
+	}
+
+	n = fCBasePlayer__TakeDamage.get();
+	if (ORIG_CBasePlayer__TakeDamage)
+		EngineDevMsg("[server dll] Found CBasePlayer::TakeDamage at %p (using the %s pattern).\n", ORIG_CBasePlayer__TakeDamage, Patterns::ptnsCBasePlayer__TakeDamage[n].build.c_str());
+	else {
+		EngineDevMsg("[server dll] Could not find CBasePlayer::TakeDamage.\n");
+		EngineWarning("Damage logging is not available.\n");
 	}
 
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
@@ -353,7 +422,45 @@ void ServerDLL::FindStuff()
 		EngineDevWarning("[server dll] Could not find PM_WaterMove.\n");
 		EngineWarning("Water frame logging is not available.\n");
 	}
-	
+
+	n = fPM_WalkMove.get();
+	if (ORIG_PM_WalkMove) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[server dll] Found PM_WalkMove at %p.\n", ORIG_PM_WalkMove);
+		else
+			EngineDevMsg("[server dll] Found PM_WalkMove at %p (using the %s pattern).\n", ORIG_PM_WalkMove, Patterns::ptnsPM_WalkMove[n].build.c_str());
+	} else
+		EngineDevWarning("[server dll] Could not find PM_WalkMove.\n");
+
+	n = fPM_FlyMove.get();
+	if (ORIG_PM_FlyMove) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[server dll] Found PM_FlyMove at %p.\n", ORIG_PM_FlyMove);
+		else
+			EngineDevMsg("[server dll] Found PM_FlyMove at %p (using the %s pattern).\n", ORIG_PM_FlyMove, Patterns::ptnsPM_FlyMove[n].build.c_str());
+	} else
+		EngineDevWarning("[server dll] Could not find PM_FlyMove.\n");
+
+	n = fPM_AddToTouched.get();
+	if (ORIG_PM_AddToTouched) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[server dll] Found PM_AddToTouched at %p.\n", ORIG_PM_AddToTouched);
+		else
+			EngineDevMsg("[server dll] Found PM_AddToTouched at %p (using the %s pattern).\n", ORIG_PM_AddToTouched, Patterns::ptnsPM_AddToTouched[n].build.c_str());
+	} else
+		EngineDevWarning("[server dll] Could not find PM_AddToTouched.\n");
+
+	n = fPM_Ladder.get();
+	if (ORIG_PM_Ladder) {
+		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
+			EngineDevMsg("[server dll] Found PM_Ladder at %p.\n", ORIG_PM_Ladder);
+		else
+			EngineDevMsg("[server dll] Found PM_Ladder at %p (using the %s pattern).\n", ORIG_PM_Ladder, Patterns::ptnsPM_Ladder[n].build.c_str());
+	} else {
+		EngineDevWarning("[server dll] Could not find PM_Ladder.\n");
+		EngineWarning("TAS logging for onladder status is unavailable.\n");
+	}
+
 	// This has to be the last thing to check and hook.
 	pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
 	ppGlobals = reinterpret_cast<globalvars_t**>(MemUtils::GetSymbolAddress(m_Handle, "gpGlobals"));
@@ -486,6 +593,46 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_PreventMegaBunnyJumping)
 		return ORIG_PM_PreventMegaBunnyJumping();
 }
 
+void ServerDLL::LogPlayerMove(bool pre, uintptr_t pmove) const
+{
+	HwDLL &hwDLL = HwDLL::GetInstance();
+
+	const float *velocity = reinterpret_cast<const float *>(pmove + offVelocity);
+	const float *baseVelocity = reinterpret_cast<const float *>(pmove + offBasevelocity);
+	const float *origin = reinterpret_cast<const float *>(pmove + offOrigin);
+	const int *flags = reinterpret_cast<const int *>(pmove + offFlags);
+	const bool *inDuck = reinterpret_cast<const bool *>(pmove + offInDuck);
+	const int *groundEntity = reinterpret_cast<const int *>(pmove + offOnground);
+	const int *waterLevel = reinterpret_cast<const int *>(pmove + offWaterlevel);
+
+	if (pre)
+		hwDLL.logWriter.StartPrePlayer();
+	else
+		hwDLL.logWriter.StartPostPlayer();
+
+	hwDLL.logWriter.SetPosition(origin);
+	hwDLL.logWriter.SetVelocity(velocity);
+	hwDLL.logWriter.SetBaseVelocity(baseVelocity);
+	hwDLL.logWriter.SetWaterLevel(*waterLevel);
+
+	if (ORIG_PM_Ladder)
+		hwDLL.logWriter.SetOnLadder(ORIG_PM_Ladder() != nullptr);
+
+	hwDLL.logWriter.SetOnGround(*groundEntity != -1);
+
+	if (*flags & FL_DUCKING)
+		hwDLL.logWriter.SetDuckState(TASLogger::DUCKED);
+	else if (*inDuck)
+		hwDLL.logWriter.SetDuckState(TASLogger::INDUCK);
+	else
+		hwDLL.logWriter.SetDuckState(TASLogger::UNDUCKED);
+
+	if (pre)
+		hwDLL.logWriter.EndPrePlayer();
+	else
+		hwDLL.logWriter.EndPostPlayer();
+}
+
 HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 {
 	if (!ppmove)
@@ -509,7 +656,16 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		ALERT(at_console, "Player index: %d; msec: %hhu (%Lf)\n", playerIndex, cmd->msec, static_cast<long double>(cmd->msec) * 0.001);
 		ALERT(at_console, "Angles: %.8f; %.8f; %.8f\n", angles[0], angles[1], angles[2]);
 		ALERT(at_console, "Velocity: %.8f; %.8f; %.8f; origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
-		ALERT(at_console, "Onground: %d; usehull: %d\n", *groundEntity, *reinterpret_cast<int*>(pmove + 0xBC));
+		ALERT(at_console, "Onground: %d; usehull: %d\n", *groundEntity, *reinterpret_cast<int*>(pmove + offOnground));
+	}
+
+	HwDLL &hwDLL = HwDLL::GetInstance();
+	if (hwDLL.IsTASLogging()) {
+		hwDLL.logWriter.SetEntFriction(*reinterpret_cast<float *>(pmove + offEntFriction));
+		hwDLL.logWriter.SetEntGravity(*reinterpret_cast<float *>(pmove + offEntGravity));
+		const float *punchangles = reinterpret_cast<const float *>(pmove + offPunchangles);
+		hwDLL.logWriter.SetPunchangles(punchangles[1], punchangles[0], punchangles[2]);
+		LogPlayerMove(true, pmove);
 	}
 
 	ORIG_PM_PlayerMove(server);
@@ -517,10 +673,15 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 	{
 		ALERT(at_console, "New velocity: %.8f; %.8f; %.8f; new origin: %.8f; %.8f; %.8f\n", velocity[0], velocity[1], velocity[2], origin[0], origin[1], origin[2]);
-		ALERT(at_console, "New onground: %d; new usehull: %d\n", *groundEntity, *reinterpret_cast<int*>(pmove + 0xBC));
+		ALERT(at_console, "New onground: %d; new usehull: %d\n", *groundEntity, *reinterpret_cast<int*>(pmove + offOnground));
 		ALERT(at_console, "-- BXT TAS Log End --\n");
 	}
 	#undef ALERT
+
+	if (hwDLL.IsTASLogging()) {
+		LogPlayerMove(false, pmove);
+		hwDLL.logWriter.EndCmdFrame();
+	}
 
 	CustomHud::UpdatePlayerInfo(velocity, origin);
 }
@@ -570,6 +731,95 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_WaterMove)
 	return ORIG_PM_WaterMove();
 }
 
+HOOK_DEF_2(ServerDLL, bool, __cdecl, PM_AddToTouched, pmtrace_t, tr, float*, impactvelocity)
+{
+	const bool ret = ORIG_PM_AddToTouched(tr, impactvelocity);
+
+	if (!HwDLL::GetInstance().IsTASLogging())
+		return ret;
+
+	TASLogger::Collision collision;
+	collision.entity = tr.ent;
+	collision.normal[0] = tr.plane.normal[0];
+	collision.normal[1] = tr.plane.normal[1];
+	collision.normal[2] = tr.plane.normal[2];
+	collision.distance = tr.plane.dist;
+	collision.impactVelocity[0] = impactvelocity[0];
+	collision.impactVelocity[1] = impactvelocity[1];
+	collision.impactVelocity[2] = impactvelocity[2];
+
+	if (firstFlyMoveEnded)
+		secondFlyMoveTouchQueue.push_back(collision);
+	else
+		firstFlyMoveTouchQueue.push_back(collision);
+
+	return ret;
+}
+
+HOOK_DEF_0(ServerDLL, void, __cdecl, PM_WalkMove)
+{
+	if (!HwDLL::GetInstance().IsTASLogging()) {
+		ORIG_PM_WalkMove();
+		return;
+	}
+
+	firstFlyMoveEnded = false;
+
+	callerIsWalkMove = true;
+	ORIG_PM_WalkMove();
+	callerIsWalkMove = false;
+
+	// If PM_FlyMove wasn't called, then no clipping occurs.
+	if (!firstFlyMoveEnded)
+		return;
+
+	const uintptr_t pmove = reinterpret_cast<const uintptr_t>(*ppmove);
+	const float *velocity = reinterpret_cast<const float *>(pmove + offVelocity);
+	const float *origin = reinterpret_cast<const float *>(pmove + offOrigin);
+
+	// Otherwise, PM_FlyMove must have been called twice, but the game obviously used only
+	// one of the results. So, we need to determine which one of them was ultimately
+	// used in order to get the correct collision results for logging.
+	if (velocity[0] == firstFlyMoveEndVelocity[0] && velocity[1] == firstFlyMoveEndVelocity[1] && velocity[2] == firstFlyMoveEndVelocity[2]
+		&& origin[0] == firstFlyMoveEndOrigin[0] && origin[1] == firstFlyMoveEndOrigin[1] && origin[2] == firstFlyMoveEndOrigin[2])
+		HwDLL::GetInstance().logWriter.SetCollisions(firstFlyMoveTouchQueue);
+	else
+		HwDLL::GetInstance().logWriter.SetCollisions(secondFlyMoveTouchQueue);
+
+	firstFlyMoveEnded = false;
+	firstFlyMoveTouchQueue.clear();
+	secondFlyMoveTouchQueue.clear();
+}
+
+HOOK_DEF_0(ServerDLL, void, __cdecl, PM_FlyMove)
+{
+	ORIG_PM_FlyMove();
+
+	if (!HwDLL::GetInstance().IsTASLogging())
+		return;
+
+	if (!callerIsWalkMove) {
+		HwDLL::GetInstance().logWriter.SetCollisions(firstFlyMoveTouchQueue);
+		firstFlyMoveTouchQueue.clear();
+		return;
+	}
+
+	if (!firstFlyMoveEnded) {
+		firstFlyMoveEnded = true;
+
+		const uintptr_t pmove = reinterpret_cast<const uintptr_t>(*ppmove);
+		const float *velocity = reinterpret_cast<const float *>(pmove + offVelocity);
+		const float *origin = reinterpret_cast<const float *>(pmove + offOrigin);
+
+		firstFlyMoveEndVelocity[0] = velocity[0];
+		firstFlyMoveEndVelocity[1] = velocity[1];
+		firstFlyMoveEndVelocity[2] = velocity[2];
+		firstFlyMoveEndOrigin[0] = origin[0];
+		firstFlyMoveEndOrigin[1] = origin[1];
+		firstFlyMoveEndOrigin[2] = origin[2];
+	}
+}
+
 HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const usercmd_t*, cmd, unsigned int, random_seed)
 {
 	HwDLL::GetInstance().SetLastRandomSeed(random_seed);
@@ -581,6 +831,18 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 		changedSeed = true;
 	}
 
+	HwDLL &hwDLL = HwDLL::GetInstance();
+	if (hwDLL.IsTASLogging()) {
+		hwDLL.logWriter.StartCmdFrame(hwDLL.GetCurrentFramebulk(), cmd->msec, *hwDLL.frametime_remainder);
+		hwDLL.logWriter.SetSharedSeed(seed);
+		hwDLL.logWriter.SetButtons(cmd->buttons);
+		hwDLL.logWriter.SetImpulse(cmd->impulse);
+		hwDLL.logWriter.SetFSU(cmd->forwardmove, cmd->sidemove, cmd->upmove);
+		hwDLL.logWriter.SetViewangles(cmd->viewangles[1], cmd->viewangles[0], cmd->viewangles[2]);
+		hwDLL.logWriter.SetHealth(hwDLL.GetPlayerEdict()->v.health);
+		hwDLL.logWriter.SetArmor(hwDLL.GetPlayerEdict()->v.armorvalue);
+	}
+
 	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 	{
@@ -590,7 +852,7 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 		if (changedSeed)
 			ALERT(at_console, " (overriding with %u)", seed);
 		ALERT(at_console, "\n");
-		ALERT(at_console, "Paused: %s\n", (HwDLL::GetInstance().IsPaused() ? "true" : "false"));
+		ALERT(at_console, "Paused: %s\n", (hwDLL.IsPaused() ? "true" : "false"));
 		ALERT(at_console, "-- CmdStart End --\n");
 	}
 	#undef ALERT
@@ -779,4 +1041,79 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerVolume__Spawn, void*, thisptr)
 	pev->model = old_model;
 	pev->modelindex = pEngfuncs->pfnModelIndex((*ppGlobals)->pStringBase + old_model);
 	pev->effects |= EF_NODRAW;
+}
+
+bool ServerDLL::IsPlayerMovingPushable(const entvars_t *pevPushable, const entvars_t *pevToucher, int push) const
+{
+	if (!ppGlobals)
+		return false;
+
+	if (pevToucher->flags & FL_ONGROUND && pevToucher->groundentity && &pevToucher->groundentity->v == pevPushable)
+		return false;
+
+	void *pToucher = pevToucher->pContainingEntity->pvPrivateData;
+	_IsPlayer IsPlayerFunc = *reinterpret_cast<_IsPlayer *>(*reinterpret_cast<uintptr_t *>(pToucher) + offFuncIsPlayer);
+	if (!IsPlayerFunc(pToucher))
+		return false;
+
+	if (push && !(pevToucher->button & (IN_FORWARD | IN_USE)))
+		return false;
+
+	if (!(pevToucher->flags & FL_ONGROUND) && pevPushable->waterlevel < 1)
+		return false;
+
+	return true;
+}
+
+HOOK_DEF_4(ServerDLL, void, __fastcall, CPushable__Move, void*, thisptr, int, edx, void*, pOther, int, push)
+{
+	const entvars_t *pevToucher = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(pOther) + 4);
+	const entvars_t *pevPushable = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+
+	if (HwDLL::GetInstance().IsTASLogging() && IsPlayerMovingPushable(pevPushable, pevToucher, push)) {
+		TASLogger::ObjectMove objectMove;
+		objectMove.pull = !push;
+		objectMove.velocity[0] = pevPushable->velocity[0];
+		objectMove.velocity[1] = pevPushable->velocity[1];
+		objectMove.velocity[2] = pevPushable->velocity[2];
+		objectMove.position[0] = pevPushable->origin[0];
+		objectMove.position[1] = pevPushable->origin[1];
+		objectMove.position[2] = pevPushable->origin[2];
+		HwDLL::GetInstance().logWriter.PushObjectMove(objectMove);
+	}
+
+	ORIG_CPushable__Move(thisptr, edx, pOther, push);
+}
+
+HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, int, edx, entvars_t*, pevInflictor, entvars_t*, pevAttacker, float, flDamage, int, bitsDamageType)
+{
+	if (HwDLL::GetInstance().IsTASLogging()) {
+		TASLogger::Damage damage;
+		damage.damage = flDamage;
+		damage.damageBits = bitsDamageType;
+
+		if (!pevInflictor || !pEngfuncs->pfnEntOffsetOfPEntity(pevInflictor->pContainingEntity) || !pevInflictor->pContainingEntity->pvPrivateData) {
+			damage.direction[0] = 0.0;
+			damage.direction[1] = 0.0;
+			damage.direction[2] = 0.0;
+		} else {
+			void *pInflictor = pevInflictor->pContainingEntity->pvPrivateData;
+			_Center playerCenterFunc = *reinterpret_cast<_Center *>(*reinterpret_cast<uintptr_t *>(thisptr) + offFuncCenter);
+			_Center inflictorCenterFunc = *reinterpret_cast<_Center *>(*reinterpret_cast<uintptr_t *>(pInflictor) + offFuncCenter);
+
+			Vector playerCenter;
+			Vector inflictorCenter;
+			playerCenterFunc(thisptr, edx, &playerCenter);
+			inflictorCenterFunc(pInflictor, edx, &inflictorCenter);
+			Vector vecDir = inflictorCenter - playerCenter - Vector(0, 0, 10);
+
+			damage.direction[0] = vecDir.x;
+			damage.direction[1] = vecDir.y;
+			damage.direction[2] = vecDir.z;
+		}
+
+		HwDLL::GetInstance().logWriter.PushDamage(damage);
+	}
+
+	return ORIG_CBasePlayer__TakeDamage(thisptr, edx, pevInflictor, pevAttacker, flDamage, bitsDamageType);
 }

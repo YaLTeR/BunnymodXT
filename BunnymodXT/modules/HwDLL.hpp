@@ -3,7 +3,7 @@
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/IHookableNameFilterOrdered.hpp>
 #include "../cvars.hpp"
-#include "taslogger.hpp"
+#include "taslogger/writer.hpp"
 
 class HwDLL : public IHookableNameFilterOrdered
 {

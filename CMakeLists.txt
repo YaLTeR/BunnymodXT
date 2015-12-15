@@ -18,7 +18,7 @@ add_subdirectory (hltas)
 add_subdirectory (hlstrafe)
 add_subdirectory (taslogger)
 
-include_directories ("." hltas/src hlstrafe/src taslogger/src)
+include_directories ("." hltas/src hlstrafe/src taslogger)
 
 set (LIBRARY_OUTPUT_DIRECTORY ".")
 set (WINDOWS_FILES

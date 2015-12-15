@@ -3,7 +3,7 @@
 #include <deque>
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/IHookableDirFilter.hpp>
-#include "taslogger.hpp"
+#include "taslogger/writer.hpp"
 
 class ServerDLL : public IHookableDirFilter
 {

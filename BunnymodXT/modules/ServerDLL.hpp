@@ -34,6 +34,7 @@ public:
 	virtual bool CanHook(const std::wstring& moduleFullName);
 
 	enginefuncs_t *pEngfuncs;
+	globalvars_t **ppGlobals;
 
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
@@ -60,8 +61,6 @@ protected:
 
 	ptrdiff_t offBhopcap;
 	byte originalBhopcapInsn[6];
-
-	globalvars_t **ppGlobals;
 
 	std::unordered_map<int, bool> cantJumpNextTime;
 };

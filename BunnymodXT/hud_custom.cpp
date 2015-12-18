@@ -596,6 +596,36 @@ namespace CustomHud
 		}
 	}
 
+	void DrawVisibleLandmarks(float flTime)
+	{
+		globalvars_t **ppGlobals = ServerDLL::GetInstance().ppGlobals;
+		if (CVars::bxt_hud_visible_landmarks.GetBool() && ppGlobals)
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_visible_landmarks_offset, CVars::bxt_hud_visible_landmarks_anchor, &x, &y, -20, 0);
+
+			std::ostringstream out;
+			out << "Visible Landmarks:\n";
+
+			const enginefuncs_t *efun = ServerDLL::GetInstance().pEngfuncs;
+			edict_t *pent = nullptr;
+			for (;;)
+			{
+				pent = efun->pfnFindEntityByString(pent, "classname", "info_landmark");
+				if (!pent || !efun->pfnEntOffsetOfPEntity(pent))
+					break;
+
+				const edict_t *pentPlayer = efun->pfnFindClientInPVS(pent);
+				if (!pentPlayer || !efun->pfnEntOffsetOfPEntity(pentPlayer))
+					continue;
+
+				out << (*ppGlobals)->pStringBase + pent->v.targetname << '\n';
+			}
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -683,6 +713,7 @@ namespace CustomHud
 		DrawDistance(flTime);
 		DrawEntityHP(flTime);
 		DrawSelfgaussInfo(flTime);
+		DrawVisibleLandmarks(flTime);
 
 		receivedAccurateInfo = false;
 	}

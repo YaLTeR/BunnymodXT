@@ -1105,7 +1105,7 @@ HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, 
 			Vector inflictorCenter;
 			playerCenterFunc(thisptr, edx, &playerCenter);
 			inflictorCenterFunc(pInflictor, edx, &inflictorCenter);
-			Vector vecDir = inflictorCenter - playerCenter - Vector(0, 0, 10);
+			Vector vecDir = playerCenter + Vector(0, 0, 10) - inflictorCenter;
 
 			damage.direction[0] = vecDir.x;
 			damage.direction[1] = vecDir.y;

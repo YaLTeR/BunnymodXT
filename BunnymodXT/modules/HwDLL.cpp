@@ -1222,9 +1222,15 @@ void HwDLL::InsertCommands()
 					player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
 					player.InDuckAnimation = (pl->v.bInDuck != 0);
 					player.DuckTime = static_cast<float>(pl->v.flDuckTime);
-					player.HasLJModule = false; // TODO
 
-												// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
+					if (ORIG_PF_GetPhysicsKeyValue) {
+						auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));
+						player.HasLJModule = (slj == 1);
+					} else {
+						player.HasLJModule = false;
+					}
+
+					// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
 					GetViewangles(player.Viewangles);
 					//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
 				}

@@ -96,7 +96,7 @@ public:
 
 	inline edict_t* GetPlayerEdict() const { return *sv_player; }
 	inline bool IsTASLogging() const { return tasLogging; }
-	inline size_t GetCurrentFramebulk() const { return currentFramebulk; }
+	inline size_t GetPreExecFramebulk() const { return preExecFramebulk; }
 
 	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
 
@@ -220,6 +220,7 @@ protected:
 	bool runningFrames;
 	bool wasRunningFrames;
 	size_t currentFramebulk;
+	size_t preExecFramebulk = 0;
 	size_t totalFramebulks;
 	size_t currentRepeat;
 	bool thisFrameIs0ms;

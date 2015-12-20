@@ -1043,6 +1043,7 @@ void HwDLL::InsertCommands()
 
 	if (runningFrames && resetState == ResetState::NORMAL) {
 		while (currentFramebulk < totalFramebulks) {
+			preExecFramebulk = currentFramebulk;
 			auto& f = input.GetFrame(currentFramebulk);
 			// Movement frame.
 			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent && !f.ResetFrame)) {

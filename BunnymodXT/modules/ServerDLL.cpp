@@ -833,7 +833,7 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 
 	HwDLL &hwDLL = HwDLL::GetInstance();
 	if (hwDLL.IsTASLogging()) {
-		hwDLL.logWriter.StartCmdFrame(hwDLL.GetCurrentFramebulk(), cmd->msec, *hwDLL.frametime_remainder);
+		hwDLL.logWriter.StartCmdFrame(hwDLL.GetPreExecFramebulk(), cmd->msec, *hwDLL.frametime_remainder);
 		hwDLL.logWriter.SetSharedSeed(seed);
 		hwDLL.logWriter.SetButtons(cmd->buttons);
 		hwDLL.logWriter.SetImpulse(cmd->impulse);

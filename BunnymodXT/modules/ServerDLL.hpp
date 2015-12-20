@@ -85,6 +85,7 @@ protected:
 	byte originalBhopcapInsn[6];
 
 	bool callerIsWalkMove;
+	bool callerIsFlyMove;
 	bool firstFlyMoveEnded;
 	float firstFlyMoveEndVelocity[3];
 	float firstFlyMoveEndOrigin[3];

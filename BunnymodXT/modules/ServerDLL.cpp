@@ -735,7 +735,7 @@ HOOK_DEF_2(ServerDLL, bool, __cdecl, PM_AddToTouched, pmtrace_t, tr, float*, imp
 {
 	const bool ret = ORIG_PM_AddToTouched(tr, impactvelocity);
 
-	if (!HwDLL::GetInstance().IsTASLogging())
+	if (!HwDLL::GetInstance().IsTASLogging() || !callerIsFlyMove)
 		return ret;
 
 	TASLogger::Collision collision;
@@ -763,8 +763,10 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_WalkMove)
 		return;
 	}
 
-	firstFlyMoveEnded = false;
+	firstFlyMoveTouchQueue.clear();
+	secondFlyMoveTouchQueue.clear();
 
+	firstFlyMoveEnded = false;
 	callerIsWalkMove = true;
 	ORIG_PM_WalkMove();
 	callerIsWalkMove = false;
@@ -787,13 +789,13 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_WalkMove)
 		HwDLL::GetInstance().logWriter.SetCollisions(secondFlyMoveTouchQueue);
 
 	firstFlyMoveEnded = false;
-	firstFlyMoveTouchQueue.clear();
-	secondFlyMoveTouchQueue.clear();
 }
 
 HOOK_DEF_0(ServerDLL, void, __cdecl, PM_FlyMove)
 {
+	callerIsFlyMove = true;
 	ORIG_PM_FlyMove();
+	callerIsFlyMove = false;
 
 	if (!HwDLL::GetInstance().IsTASLogging())
 		return;

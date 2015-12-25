@@ -20,6 +20,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(int, __cdecl, AddToFullPack, struct entity_state_s* state, int e, edict_t* ent, edict_t* host, int hostflags, int player, unsigned char* pSet)
 	HOOK_DECL(void, __fastcall, CTriggerVolume__Spawn, void* thisptr)
 	HOOK_DECL(void, __cdecl, CTriggerVolume__Spawn_Linux, void* thisptr)
+	HOOK_DECL(void, __cdecl, ClientCommand, edict_t* pEntity)
 
 public:
 	static ServerDLL& GetInstance()
@@ -46,6 +47,10 @@ private:
 protected:
 	typedef int(__cdecl *_GetEntityAPI)(DLL_FUNCTIONS* pFunctionTable, int interfaceVersion);
 	_GetEntityAPI ORIG_GetEntityAPI;
+	typedef void(__fastcall *_CBasePlayer__ForceClientDllUpdate)(void *thisptr);
+	_CBasePlayer__ForceClientDllUpdate ORIG_CBasePlayer__ForceClientDllUpdate;
+	typedef void(__cdecl *_CBasePlayer__ForceClientDllUpdate_Linux)(void *thisptr);
+	_CBasePlayer__ForceClientDllUpdate_Linux ORIG_CBasePlayer__ForceClientDllUpdate_Linux;
 
 	void FindStuff();
 	void RegisterCVarsAndCommands();
@@ -58,6 +63,10 @@ protected:
 	ptrdiff_t offOrigin;
 	ptrdiff_t offAngles;
 	ptrdiff_t offCmd;
+
+	ptrdiff_t offm_iClientFOV;
+	ptrdiff_t offm_rgAmmoLast;
+	int maxAmmoSlots;
 
 	ptrdiff_t offBhopcap;
 	byte originalBhopcapInsn[6];

@@ -42,6 +42,11 @@ extern "C" void __cdecl _ZN14CTriggerVolume5SpawnEv(void* thisptr)
 {
 	return ServerDLL::HOOKED_CTriggerVolume__Spawn_Linux(thisptr);
 }
+
+extern "C" void __cdecl _Z13ClientCommandP7edict_s(edict_t* pEntity)
+{
+	return ServerDLL::HOOKED_ClientCommand(pEntity);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -69,7 +74,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) },
 			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) },
-			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) }
+			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) },
+			{ reinterpret_cast<void**>(&ORIG_ClientCommand), reinterpret_cast<void*>(HOOKED_ClientCommand) }
 		});
 }
 
@@ -87,7 +93,8 @@ void ServerDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
 			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) },
 			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) },
-			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) }
+			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) },
+			{ reinterpret_cast<void**>(&ORIG_ClientCommand), reinterpret_cast<void*>(HOOKED_ClientCommand) }
 		});
 
 	Clear();
@@ -110,6 +117,10 @@ void ServerDLL::Clear()
 	ORIG_CMultiManager__ManagerUse_Linux = nullptr;
 	ORIG_AddToFullPack = nullptr;
 	ORIG_CTriggerVolume__Spawn = nullptr;
+	ORIG_CTriggerVolume__Spawn_Linux = nullptr;
+	ORIG_CBasePlayer__ForceClientDllUpdate = nullptr;
+	ORIG_CBasePlayer__ForceClientDllUpdate_Linux = nullptr;
+	ORIG_ClientCommand = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -120,6 +131,9 @@ void ServerDLL::Clear()
 	offAngles = 0;
 	offCmd = 0;
 	offBhopcap = 0;
+	offm_iClientFOV = 0;
+	offm_rgAmmoLast = 0;
+	maxAmmoSlots = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	pEngfuncs = nullptr;
 	ppGlobals = nullptr;
@@ -222,6 +236,35 @@ void ServerDLL::FindStuff()
 		Patterns::ptnsCTriggerVolume__Spawn, [](MemUtils::ptnvec_size ptnNumber) { }, []() { }
 	);
 
+	auto fCBasePlayer__ForceClientDllUpdate = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_CBasePlayer__ForceClientDllUpdate), m_Base, m_Length, Patterns::ptnsCBasePlayer__ForceClientDllUpdate,
+		[&](MemUtils::ptnvec_size ptnNumber) {
+			switch (ptnNumber) {
+			case 0:  // HL-SteamPipe
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x554;
+				offm_iClientFOV = 0x4AC;
+				break;
+			case 1:  // OpposingForce
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x604;
+				offm_iClientFOV = 0x4E0;
+				break;
+			case 2:  // HazardousCourse2
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x540;
+				offm_iClientFOV = 0x498;
+				break;
+			case 3:  // Gunman
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x53C;
+				offm_iClientFOV = 0x47C;
+				break;
+			default:
+				assert(false);
+			}
+		}, []() { }
+	);
+
 	bool noBhopcap = false;
 	auto n = fPM_PreventMegaBunnyJumping.get();
 	if (ORIG_PM_PreventMegaBunnyJumping) {
@@ -272,11 +315,29 @@ void ServerDLL::FindStuff()
 		}
 	}
 
+	n = fCBasePlayer__ForceClientDllUpdate.get();
+	if (ORIG_CBasePlayer__ForceClientDllUpdate) {
+		EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate at %p (using the %s pattern).\n", ORIG_CBasePlayer__ForceClientDllUpdate, Patterns::ptnsCBasePlayer__ForceClientDllUpdate[n].build.c_str());
+	} else {
+		ORIG_CBasePlayer__ForceClientDllUpdate_Linux = reinterpret_cast<_CBasePlayer__ForceClientDllUpdate_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer20ForceClientDllUpdateEv"));
+		if (ORIG_CBasePlayer__ForceClientDllUpdate_Linux) {
+			maxAmmoSlots = MAX_AMMO_SLOTS;
+			offm_rgAmmoLast = 0x568;
+			offm_iClientFOV = 0x4C0;
+			EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate [Linux] at %p.\n", ORIG_CBasePlayer__ForceClientDllUpdate_Linux);
+		} else {
+			EngineDevWarning("[server dll] Could not find CBasePlayer::ForceClientDllUpdate.\n");
+			EngineWarning("Ammo HUD reset prevention is not available.\n");
+		}
+	}
+
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
 	ORIG_AddToFullPack = reinterpret_cast<_AddToFullPack>(MemUtils::GetSymbolAddress(m_Handle, "_Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh"));
-	if (ORIG_CmdStart && ORIG_AddToFullPack) {
+	ORIG_ClientCommand = reinterpret_cast<_ClientCommand>(MemUtils::GetSymbolAddress(m_Handle, "_Z13ClientCommandP7edict_s"));
+	if (ORIG_CmdStart && ORIG_AddToFullPack && ORIG_ClientCommand) {
 		EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
 		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+		EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 	} else {
 		ORIG_GetEntityAPI = reinterpret_cast<_GetEntityAPI>(MemUtils::GetSymbolAddress(m_Handle, "GetEntityAPI"));
 		if (ORIG_GetEntityAPI) {
@@ -285,8 +346,10 @@ void ServerDLL::FindStuff()
 				// Gets our hooked addresses on Linux.
 				ORIG_CmdStart = funcs.pfnCmdStart;
 				ORIG_AddToFullPack = funcs.pfnAddToFullPack;
+				ORIG_ClientCommand = funcs.pfnClientCommand;
 				EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
 				EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+				EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 			} else {
 				EngineDevWarning("[server dll] Could not get the server DLL function table.\n");
 				EngineWarning("Serverside shared RNG manipulation and usercommand logging are not available.\n");
@@ -803,4 +866,39 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CTriggerVolume__Spawn_Linux, void*, thisptr
 	pev->model = old_model;
 	pev->modelindex = pEngfuncs->pfnModelIndex((*ppGlobals)->pStringBase + old_model);
 	pev->effects |= EF_NODRAW;
+}
+
+HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
+{
+#ifdef _WIN32
+	if (!ORIG_CBasePlayer__ForceClientDllUpdate) {
+		ORIG_ClientCommand(pEntity);
+		return;
+	}
+#else
+	if (!ORIG_CBasePlayer__ForceClientDllUpdate_Linux) {
+		ORIG_ClientCommand(pEntity);
+		return;
+	}
+#endif
+
+	const char *cmd = pEngfuncs->pfnCmd_Argv(0);
+	if (std::strcmp(cmd, "fullupdate") != 0) {
+		ORIG_ClientCommand(pEntity);
+		return;
+	}
+
+	void *classPtr = pEntity->v.pContainingEntity->pvPrivateData;
+	uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+	int *m_iClientFOV = reinterpret_cast<int *>(thisAddr + offm_iClientFOV);
+	int *m_rgAmmoLast = reinterpret_cast<int *>(thisAddr + offm_rgAmmoLast);
+	*m_iClientFOV = -1;
+	for (int i = 0; i < maxAmmoSlots; i++)
+		m_rgAmmoLast[i] = -1;
+
+#ifdef _WIN32
+	ORIG_CBasePlayer__ForceClientDllUpdate(classPtr);
+#else
+	ORIG_CBasePlayer__ForceClientDllUpdate_Linux(classPtr);
+#endif
 }

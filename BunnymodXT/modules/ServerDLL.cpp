@@ -769,19 +769,15 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 				std::acos(static_cast<double>(normal[2])) * 180 / M_PI, in[0], in[1], in[2], std::hypot(in[0], in[1]), out[0], out[1], out[2], std::hypot(out[0], out[1]));
 	}
 
-	if (normal[2] != 1.0f && normal[2] != -1.0f && CVars::bxt_interprocess_enable.GetBool() && Interprocess::mq) {
-		try {
-			unsigned char buf[30];
-			buf[0] = 30;
-			buf[1] = 0x01;
-			std::memcpy(buf + 2, &normal[2], sizeof(normal[2]));
-			std::memcpy(buf + 6, in, 12);
-			std::memcpy(buf + 18, out, 12);
+	if (normal[2] != 1.0f && normal[2] != -1.0f && CVars::bxt_interprocess_enable.GetBool()) {
+		std::vector<unsigned char> buf(30);
+		buf[0] = 30;
+		buf[1] = 0x01;
+		std::memcpy(buf.data() + 2, &normal[2], sizeof(normal[2]));
+		std::memcpy(buf.data() + 6, in, 12);
+		std::memcpy(buf.data() + 18, out, 12);
 
-			Interprocess::mq->send(buf, sizeof(buf), 0);
-		} catch (boost::interprocess::interprocess_exception) {
-			// Do nothing.
-		}
+		Interprocess::Write(buf);
 	}
 
 	return ret;
@@ -789,16 +785,9 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 
 HOOK_DEF_0(ServerDLL, void, __cdecl, PM_WaterMove)
 {
-	if (CVars::bxt_interprocess_enable.GetBool() && Interprocess::mq) {
-		try {
-			unsigned char buf[2];
-			buf[0] = 2;
-			buf[1] = 0x02;
-
-			Interprocess::mq->send(buf, sizeof(buf), 0);
-		} catch (boost::interprocess::interprocess_exception) {
-			// Do nothing.
-		}
+	if (CVars::bxt_interprocess_enable.GetBool()) {
+		std::vector<unsigned char> buf = { 2, 0x02 };
+		Interprocess::Write(buf);
 	}
 
 	return ORIG_PM_WaterMove();

@@ -777,30 +777,26 @@ namespace CustomHud
 	}
 
 	void SendTimeUpdate() {
-		if (!CVars::bxt_interprocess_enable.GetBool() || !Interprocess::mq)
+		if (!CVars::bxt_interprocess_enable.GetBool())
 			return;
 
-		try {
-			unsigned char buf[18];
-			buf[0] = 18;
-			buf[1] = 0x00;
-			int milliseconds = static_cast<int>(timeRemainder * 1000);
-			std::memcpy(buf + 2, &hours, sizeof(hours));
-			std::memcpy(buf + 6, &minutes, sizeof(minutes));
-			std::memcpy(buf + 10, &seconds, sizeof(seconds));
-			std::memcpy(buf + 14, &milliseconds, sizeof(milliseconds));
+		std::vector<unsigned char> buf(18);
+		buf[0] = 18;
+		buf[1] = 0x00;
+		int milliseconds = static_cast<int>(timeRemainder * 1000);
+		std::memcpy(buf.data() + 2, &hours, sizeof(hours));
+		std::memcpy(buf.data() + 6, &minutes, sizeof(minutes));
+		std::memcpy(buf.data() + 10, &seconds, sizeof(seconds));
+		std::memcpy(buf.data() + 14, &milliseconds, sizeof(milliseconds));
 
-			Interprocess::mq->send(buf, sizeof(buf), 0);
+		Interprocess::Write(buf);
 
-			if (HwDLL::GetInstance().frametime_remainder) {
-				unsigned char buf2[10];
-				buf2[0] = 10;
-				buf2[1] = 0x03;
-				std::memcpy(buf2 + 2, HwDLL::GetInstance().frametime_remainder, 8);
-				Interprocess::mq->send(buf2, sizeof(buf2), 0);
-			}
-		} catch (boost::interprocess::interprocess_exception) {
-			// Do nothing.
+		if (HwDLL::GetInstance().frametime_remainder) {
+			std::vector<unsigned char> buf2(10);
+			buf2[0] = 10;
+			buf2[1] = 0x03;
+			std::memcpy(buf2.data() + 2, HwDLL::GetInstance().frametime_remainder, 8);
+			Interprocess::Write(buf2);
 		}
 	}
 }

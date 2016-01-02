@@ -1,7 +1,8 @@
+#pragma once
+
 namespace Interprocess
 {
-	extern std::unique_ptr<boost::interprocess::message_queue> mq;
-
 	void Initialize();
 	void Shutdown();
+	void Write(const std::vector<unsigned char>& data);
 }

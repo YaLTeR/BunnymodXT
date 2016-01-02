@@ -5,32 +5,64 @@
 
 namespace Interprocess
 {
-	std::unique_ptr<boost::interprocess::message_queue> mq;
+	HANDLE pipe = INVALID_HANDLE_VALUE;
 
 	void Initialize()
 	{
-		if (boost::interprocess::message_queue::remove("BunnymodXT-TASView")) {
-			EngineDevMsg("Cleaned up the old message queue.\n");
+		pipe = CreateNamedPipe(
+			"\\\\.\\pipe\\BunnymodXT-TASView",
+			PIPE_ACCESS_OUTBOUND,
+			PIPE_TYPE_MESSAGE | PIPE_REJECT_REMOTE_CLIENTS,
+			1,
+			256 * 1000,
+			0,
+			0,
+			NULL);
+		if (pipe == INVALID_HANDLE_VALUE) {
+			EngineDevWarning("Error opening the pipe: %d\n", GetLastError());
+			EngineWarning("TASView integration is not available.\n");
+			return;
 		}
-		try {
-			mq = std::make_unique<boost::interprocess::message_queue>(
-				boost::interprocess::create_only,
-				"BunnymodXT-TASView",
-				1000,
-				256);
 
-			EngineDevMsg("Created the message queue successfully.\n");
-		} catch (boost::interprocess::interprocess_exception &ex) {
-			EngineWarning("Failed to create the message queue, TASView integration is not available: %s\n", ex.what());
-			mq.reset();
-		}
+		EngineDevMsg("Opened the pipe.\n");
 	}
 
 	void Shutdown()
 	{
-		mq.reset();
-		if (boost::interprocess::message_queue::remove("BunnymodXT-TASView")) {
-			EngineDevMsg("Closed the message queue.\n");
+		if (pipe != INVALID_HANDLE_VALUE) {
+			EngineDevMsg("Closed the pipe.\n");
+			CloseHandle(pipe);
+		}
+		pipe = INVALID_HANDLE_VALUE;
+	}
+
+	void Write(const std::vector<unsigned char>& data) {
+		if (pipe == INVALID_HANDLE_VALUE)
+			return;
+
+		if (!ConnectNamedPipe(pipe, NULL)) {
+			auto err = GetLastError();
+			if (err == ERROR_NO_DATA) {
+				// Client has disconnected.
+				DisconnectNamedPipe(pipe);
+				return Write(data);
+			} else if (err != ERROR_PIPE_CONNECTED) {
+				// Some weird error with pipe?
+				// Try remaking it.
+				EngineDevWarning("ConnectNamedPipe failed with %d.\n", err);
+				Shutdown();
+				Initialize();
+				return Write(data);
+			}
+		}
+
+		// Write data.
+		DWORD bytesWritten;
+		if (!WriteFile(pipe, data.data(), data.size(), &bytesWritten, NULL) || bytesWritten != data.size()) {
+			// Once again, some weird error with pipe?
+			EngineDevWarning("WriteFile failed with %d.\n", GetLastError());
+			Shutdown();
+			Initialize();
 		}
 	}
 }

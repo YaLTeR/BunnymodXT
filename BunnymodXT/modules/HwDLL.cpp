@@ -1,5 +1,6 @@
 #include "../stdafx.hpp"
 
+#include <cerrno>
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
@@ -9,6 +10,7 @@
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
 #include "../interprocess.hpp"
+#include "../bunnymodxt.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -54,6 +56,21 @@ extern "C" std::time_t time(std::time_t* t)
 	if (!HwDLL::GetInstance().GetTimeAddr())
 		HwDLL::GetInstance().SetTimeAddr(dlsym(RTLD_NEXT, "time"));
 	return HwDLL::HOOKED_time(t);
+}
+
+extern "C" void __cdecl SV_Frame()
+{
+	HwDLL::HOOKED_SV_Frame();
+}
+
+extern "C" void __cdecl VGuiWrap2_ConDPrintf(const char* msg)
+{
+	HwDLL::HOOKED_VGuiWrap2_ConDPrintf(msg);
+}
+
+extern "C" void __cdecl VGuiWrap2_ConPrintf(const char* msg)
+{
+	HwDLL::HOOKED_VGuiWrap2_ConPrintf(msg);
 }
 #endif
 
@@ -113,7 +130,10 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
 			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) },
 			{ reinterpret_cast<void**>(&ORIG_V_FadeAlpha), reinterpret_cast<void*>(HOOKED_V_FadeAlpha) },
-			{ reinterpret_cast<void**>(&ORIG_SCR_UpdateScreen), reinterpret_cast<void*>(HOOKED_SCR_UpdateScreen) }
+			{ reinterpret_cast<void**>(&ORIG_SCR_UpdateScreen), reinterpret_cast<void*>(HOOKED_SCR_UpdateScreen) },
+			{ reinterpret_cast<void**>(&ORIG_SV_Frame), reinterpret_cast<void*>(HOOKED_SV_Frame) },
+			{ reinterpret_cast<void**>(&ORIG_VGuiWrap2_ConDPrintf), reinterpret_cast<void*>(HOOKED_VGuiWrap2_ConDPrintf) },
+			{ reinterpret_cast<void**>(&ORIG_VGuiWrap2_ConPrintf), reinterpret_cast<void*>(HOOKED_VGuiWrap2_ConPrintf) }
 		});
 }
 
@@ -132,7 +152,10 @@ void HwDLL::Unhook()
 			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
 			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) },
 			{ reinterpret_cast<void**>(&ORIG_V_FadeAlpha), reinterpret_cast<void*>(HOOKED_V_FadeAlpha) },
-			{ reinterpret_cast<void**>(&ORIG_SCR_UpdateScreen), reinterpret_cast<void*>(HOOKED_SCR_UpdateScreen) }
+			{ reinterpret_cast<void**>(&ORIG_SCR_UpdateScreen), reinterpret_cast<void*>(HOOKED_SCR_UpdateScreen) },
+			{ reinterpret_cast<void**>(&ORIG_SV_Frame), reinterpret_cast<void*>(HOOKED_SV_Frame) },
+			{ reinterpret_cast<void**>(&ORIG_VGuiWrap2_ConDPrintf), reinterpret_cast<void*>(HOOKED_VGuiWrap2_ConDPrintf) },
+			{ reinterpret_cast<void**>(&ORIG_VGuiWrap2_ConPrintf), reinterpret_cast<void*>(HOOKED_VGuiWrap2_ConPrintf) }
 	});
 
 	for (auto cvar : CVars::allCVars)
@@ -156,6 +179,9 @@ void HwDLL::Clear()
 	ORIG_Host_FilterTime = nullptr;
 	ORIG_V_FadeAlpha = nullptr;
 	ORIG_SCR_UpdateScreen = nullptr;
+	ORIG_SV_Frame = nullptr;
+	ORIG_VGuiWrap2_ConDPrintf = nullptr;
+	ORIG_VGuiWrap2_ConPrintf = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
@@ -169,6 +195,7 @@ void HwDLL::Clear()
 	ORIG_PM_PlayerTrace = nullptr;
 	ORIG_SV_AddLinksToPM = nullptr;
 	ORIG_PF_GetPhysicsKeyValue = nullptr;
+	ORIG_build_number = nullptr;
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
@@ -355,6 +382,30 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found PF_GetPhysicsKeyValue at %p.\n", ORIG_PF_GetPhysicsKeyValue);
 		else
 			EngineDevWarning("[hw dll] Could not find PF_GetPhysicsKeyValue.\n");
+
+		ORIG_build_number = reinterpret_cast<_build_number>(MemUtils::GetSymbolAddress(m_Handle, "build_number"));
+		if (ORIG_build_number)
+			EngineDevMsg("[hw dll] Found build_number at %p.\n", ORIG_build_number);
+		else
+			EngineDevWarning("[hw dll] Could not find build_number.\n");
+
+		ORIG_SV_Frame = reinterpret_cast<_SV_Frame>(MemUtils::GetSymbolAddress(m_Handle, "SV_Frame"));
+		if (ORIG_SV_Frame)
+			EngineDevMsg("[hw dll] Found SV_Frame at %p.\n", ORIG_SV_Frame);
+		else
+			EngineDevWarning("[hw dll] Could not find SV_Frame.\n");
+
+		ORIG_VGuiWrap2_ConDPrintf = reinterpret_cast<_VGuiWrap2_ConDPrintf>(MemUtils::GetSymbolAddress(m_Handle, "VGuiWrap2_ConDPrintf"));
+		if (ORIG_VGuiWrap2_ConDPrintf)
+			EngineDevMsg("[hw dll] Found VGuiWrap2_ConDPrintf at %p.\n", ORIG_VGuiWrap2_ConDPrintf);
+		else
+			EngineDevWarning("[hw dll] Could not find VGuiWrap2_ConDPrintf.\n");
+
+		ORIG_VGuiWrap2_ConPrintf = reinterpret_cast<_VGuiWrap2_ConPrintf>(MemUtils::GetSymbolAddress(m_Handle, "VGuiWrap2_ConPrintf"));
+		if (ORIG_VGuiWrap2_ConPrintf)
+			EngineDevMsg("[hw dll] Found VGuiWrap2_ConPrintf at %p.\n", ORIG_VGuiWrap2_ConDPrintf);
+		else
+			EngineDevWarning("[hw dll] Could not find VGuiWrap2_ConPrintf.\n");
 	}
 	else
 	{
@@ -373,6 +424,10 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(V_FadeAlpha)
 		DEF_FUTURE(SCR_UpdateScreen)
 		DEF_FUTURE(PF_GetPhysicsKeyValue)
+		DEF_FUTURE(build_number)
+		DEF_FUTURE(SV_Frame)
+		DEF_FUTURE(VGuiWrap2_ConDPrintf)
+		DEF_FUTURE(VGuiWrap2_ConPrintf)
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
 		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
 		if (oldEngine) {
@@ -623,6 +678,24 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find V_FadeAlpha.\n");
 
+		n = fSV_Frame.get();
+		if (ORIG_SV_Frame)
+			EngineDevMsg("[hw dll] Found SV_Frame at %p (using the %s pattern).\n", ORIG_SV_Frame, Patterns::ptnsSV_Frame[n].build.c_str());
+		else
+			EngineDevWarning("[hw dll] Could not find SV_Frame.\n");
+
+		n = fVGuiWrap2_ConDPrintf.get();
+		if (ORIG_VGuiWrap2_ConDPrintf)
+			EngineDevMsg("[hw dll] Found VGuiWrap2_ConDPrintf at %p (using the %s pattern).\n", ORIG_VGuiWrap2_ConDPrintf, Patterns::ptnsVGuiWrap2_ConDPrintf[n].build.c_str());
+		else
+			EngineDevWarning("[hw dll] Could not find VGuiWrap2_ConDPrintf.\n");
+
+		n = fVGuiWrap2_ConPrintf.get();
+		if (ORIG_VGuiWrap2_ConPrintf)
+			EngineDevMsg("[hw dll] Found VGuiWrap2_ConPrintf at %p (using the %s pattern).\n", ORIG_VGuiWrap2_ConPrintf, Patterns::ptnsVGuiWrap2_ConPrintf[n].build.c_str());
+		else
+			EngineDevWarning("[hw dll] Could not find VGuiWrap2_ConPrintf.\n");
+
 		n = fSCR_UpdateScreen.get();
 		if (ORIG_SCR_UpdateScreen)
 			EngineDevMsg("[hw dll] Found SCR_UpdateScreen at %p (using the %s pattern).\n", ORIG_SCR_UpdateScreen, Patterns::ptnsSCR_UpdateScreen[n].build.c_str());
@@ -634,6 +707,12 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found PF_GetPhysicsKeyValue at %p (using the %s pattern).\n", ORIG_PF_GetPhysicsKeyValue, Patterns::ptnsPF_GetPhysicsKeyValue[n].build.c_str());
 		else
 			EngineDevWarning("[hw dll] Could not find PF_GetPhysicsKeyValue.\n");
+
+		n = fbuild_number.get();
+		if (ORIG_build_number)
+			EngineDevMsg("[hw dll] Found build_number at %p (using the %s pattern).\n", ORIG_build_number, Patterns::ptnsbuild_number[n].build.c_str());
+		else
+			EngineDevWarning("[hw dll] Could not find build_number.\n");
 
 		if (oldEngine) {
 			n = fLoadAndDecryptHwDLL.get();
@@ -890,6 +969,36 @@ void HwDLL::Cmd_BXT_Load_f()
 	ORIG_Cbuf_InsertText(ss.str().c_str());
 }
 
+void HwDLL::Cmd_BXT_TASLog()
+{
+	HwDLL::GetInstance().Cmd_BXT_TASLog_f();
+}
+
+void HwDLL::Cmd_BXT_TASLog_f()
+{
+	if (!ORIG_SV_Frame) {
+		ORIG_Con_Printf("TAS logging is unavailable.\n");
+		return;
+	}
+
+	if (tasLogging) {
+		logWriter.EndLog();
+		std::fclose(tasLogFile);
+		logWriter.Clear();
+		tasLogging = false;
+	} else {
+		tasLogFile = std::fopen(CVars::bxt_taslog_filename.GetString().c_str(), "wb");
+		if (!tasLogFile) {
+			ORIG_Con_Printf("Unable to create log file: %s\n", std::strerror(errno));
+			return;
+		}
+		const int buildNumber = ORIG_build_number ? ORIG_build_number() : -1;
+		const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+		logWriter.StartLog(tasLogFile, BUNNYMODXT_VERSION, buildNumber, gameDir);
+		tasLogging = true;
+	}
+}
+
 void HwDLL::Cmd_BXT_Reset_Frametime_Remainder()
 {
 	if (HwDLL::GetInstance().frametime_remainder)
@@ -903,6 +1012,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		registeredVarsAndCmds = true;
 		RegisterCVar(CVars::_bxt_taslog);
 		RegisterCVar(CVars::_bxt_min_frametime);
+		RegisterCVar(CVars::bxt_taslog_filename);
 		RegisterCVar(CVars::bxt_autopause);
 		RegisterCVar(CVars::bxt_interprocess_enable);
 		RegisterCVar(CVars::bxt_fade_remove);
@@ -924,6 +1034,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("_bxt_map", Cmd_BXT_Map, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_load", Cmd_BXT_Load, 2);
 			ORIG_Cmd_AddMallocCommand("_bxt_reset_frametime_remainder", Cmd_BXT_Reset_Frametime_Remainder, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_taslog", Cmd_BXT_TASLog, 2);
 		}
 	}
 }
@@ -934,6 +1045,7 @@ void HwDLL::InsertCommands()
 
 	if (runningFrames && resetState == ResetState::NORMAL) {
 		while (currentFramebulk < totalFramebulks) {
+			preExecFramebulk = currentFramebulk;
 			auto& f = input.GetFrame(currentFramebulk);
 			// Movement frame.
 			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent && !f.ResetFrame)) {
@@ -1497,6 +1609,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 			ORIG_Con_Printf("Cbuf_Execute() #%u executing; sv.paused: %d; buffer: %s\n", c, *paused, buf.c_str());
 		}
 
+		loggedCbuf.assign(cmd_text->data, cmd_text->cursize);
+
 		ORIG_Cbuf_Execute();
 
 		// If still executing (didn't load a save).
@@ -1689,6 +1803,34 @@ HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 		return 0;
 	else
 		return ORIG_V_FadeAlpha();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, SV_Frame)
+{
+	if (tasLogging) {
+		const bool paused = *(reinterpret_cast<const int *>(sv) + 1) != 0;
+		const int *clstate = reinterpret_cast<const int *>(cls);
+		logWriter.StartPhysicsFrame(*host_frametime, *clstate, paused, loggedCbuf.c_str());
+	}
+
+	ORIG_SV_Frame();
+
+	if (tasLogging)
+		logWriter.EndPhysicsFrame();
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap2_ConDPrintf, const char*, msg)
+{
+	if (tasLogging)
+		logWriter.PushConsolePrint(msg);
+	ORIG_VGuiWrap2_ConDPrintf(msg);
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap2_ConPrintf, const char*, msg)
+{
+	if (tasLogging)
+		logWriter.PushConsolePrint(msg);
+	ORIG_VGuiWrap2_ConPrintf(msg);
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SCR_UpdateScreen)

@@ -8,6 +8,7 @@ namespace CVars
 	CVarWrapper _bxt_taslog("_bxt_taslog", "0");
 	CVarWrapper _bxt_min_frametime("_bxt_min_frametime", "0");
 	CVarWrapper _bxt_norefresh("_bxt_norefresh", "0");
+	CVarWrapper bxt_taslog_filename("bxt_taslog_filename", "taslogger.log");
 	CVarWrapper bxt_autopause("bxt_autopause", "0");
 	CVarWrapper bxt_interprocess_enable("bxt_interprocess_enable", "0");
 	CVarWrapper bxt_fade_remove("bxt_fade_remove", "0");
@@ -73,6 +74,7 @@ namespace CVars
 		&_bxt_taslog,
 		&_bxt_min_frametime,
 		&_bxt_norefresh,
+		&bxt_taslog_filename,
 		&bxt_autopause,
 		&bxt_interprocess_enable,
 		&bxt_fade_remove,

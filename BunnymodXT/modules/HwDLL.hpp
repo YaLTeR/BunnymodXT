@@ -3,6 +3,7 @@
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/IHookableNameFilterOrdered.hpp>
 #include "../cvars.hpp"
+#include "taslogger/writer.hpp"
 
 class HwDLL : public IHookableNameFilterOrdered
 {
@@ -17,6 +18,9 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(int, __cdecl, Host_FilterTime, float timePassed)
 	HOOK_DECL(int, __cdecl, V_FadeAlpha)
 	HOOK_DECL(void, __cdecl, SCR_UpdateScreen)
+	HOOK_DECL(void, __cdecl, SV_Frame)
+	HOOK_DECL(void, __cdecl, VGuiWrap2_ConDPrintf, const char* msg)
+	HOOK_DECL(void, __cdecl, VGuiWrap2_ConPrintf, const char* msg)
 
 	struct cmdbuf_t
 	{
@@ -91,12 +95,15 @@ public:
 	inline bool IsPaused() { return (sv && *(reinterpret_cast<int*>(sv) + 1)); }
 
 	inline edict_t* GetPlayerEdict() const { return *sv_player; }
+	inline bool IsTASLogging() const { return tasLogging; }
+	inline size_t GetPreExecFramebulk() const { return preExecFramebulk; }
 
 	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
 
 	unsigned QueuedSharedRNGSeeds;
 
 	double *frametime_remainder;
+	TASLogger::LogWriter logWriter;
 
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
@@ -131,6 +138,8 @@ protected:
 	_SV_AddLinksToPM ORIG_SV_AddLinksToPM;
 	typedef char*(__cdecl *_PF_GetPhysicsKeyValue) (const edict_t* pClient, const char* key);
 	_PF_GetPhysicsKeyValue ORIG_PF_GetPhysicsKeyValue;
+	typedef int(__cdecl *_build_number)();
+	_build_number ORIG_build_number;
 
 	void FindStuff();
 
@@ -157,6 +166,8 @@ protected:
 	static void Cmd_BXT_Load();
 	void Cmd_BXT_Load_f();
 	static void Cmd_BXT_Reset_Frametime_Remainder();
+	static void Cmd_BXT_TASLog();
+	void Cmd_BXT_TASLog_f();
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();
@@ -196,6 +207,10 @@ protected:
 	bool recording;
 	bool pauseOnTheFirstFrame;
 
+	bool tasLogging;
+	std::string loggedCbuf;
+	FILE *tasLogFile = nullptr;
+
 	bool insideSeedRNG;
 	unsigned LastRandomSeed;
 
@@ -207,6 +222,7 @@ protected:
 	bool runningFrames;
 	bool wasRunningFrames;
 	size_t currentFramebulk;
+	size_t preExecFramebulk = 0;
 	size_t totalFramebulks;
 	size_t currentRepeat;
 	bool thisFrameIs0ms;

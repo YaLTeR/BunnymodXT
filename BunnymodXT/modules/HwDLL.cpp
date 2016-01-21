@@ -1,5 +1,6 @@
 #include "../stdafx.hpp"
 
+#include <cerrno>
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
@@ -981,19 +982,20 @@ void HwDLL::Cmd_BXT_TASLog_f()
 	}
 
 	if (tasLogging) {
-		tasLogging = false;
 		logWriter.EndLog();
-
-		FILE *file = std::fopen(CVars::bxt_taslog_filename.GetString().c_str(), "wb");
-		std::fputs(logWriter.GetString(), file);
-		std::fclose(file);
-
+		std::fclose(tasLogFile);
 		logWriter.Clear();
+		tasLogging = false;
 	} else {
-		tasLogging = true;
+		tasLogFile = std::fopen(CVars::bxt_taslog_filename.GetString().c_str(), "wb");
+		if (!tasLogFile) {
+			ORIG_Con_Printf("Unable to create log file: %s\n", std::strerror(errno));
+			return;
+		}
 		const int buildNumber = ORIG_build_number ? ORIG_build_number() : -1;
 		const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
-		logWriter.StartLog(BUNNYMODXT_VERSION, buildNumber, gameDir);
+		logWriter.StartLog(tasLogFile, BUNNYMODXT_VERSION, buildNumber, gameDir);
+		tasLogging = true;
 	}
 }
 

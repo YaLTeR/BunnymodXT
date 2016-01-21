@@ -208,6 +208,7 @@ protected:
 	bool pauseOnTheFirstFrame;
 
 	bool tasLogging;
+	FILE *tasLogFile = nullptr;
 
 	bool insideSeedRNG;
 	unsigned LastRandomSeed;

@@ -1603,6 +1603,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 			ORIG_Con_Printf("Cbuf_Execute() #%u executing; sv.paused: %d; buffer: %s\n", c, *paused, buf.c_str());
 		}
 
+		loggedCbuf.assign(cmd_text->data, cmd_text->cursize);
+
 		ORIG_Cbuf_Execute();
 
 		// If still executing (didn't load a save).
@@ -1800,10 +1802,9 @@ HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 HOOK_DEF_0(HwDLL, void, __cdecl, SV_Frame)
 {
 	if (tasLogging) {
-		const std::string buf(cmd_text->data, cmd_text->cursize);
 		const bool paused = *(reinterpret_cast<const int *>(sv) + 1) != 0;
 		const int *clstate = reinterpret_cast<const int *>(cls);
-		logWriter.StartPhysicsFrame(*host_frametime, *clstate, paused, buf.c_str());
+		logWriter.StartPhysicsFrame(*host_frametime, *clstate, paused, loggedCbuf.c_str());
 	}
 
 	ORIG_SV_Frame();

@@ -208,6 +208,7 @@ protected:
 	bool pauseOnTheFirstFrame;
 
 	bool tasLogging;
+	std::string loggedCbuf;
 	FILE *tasLogFile = nullptr;
 
 	bool insideSeedRNG;

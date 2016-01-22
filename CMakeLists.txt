@@ -26,12 +26,14 @@ set (WINDOWS_FILES
 	SPTLib/Windows/Hooks_win.cpp
 	SPTLib/Windows/MemUtils_win.cpp
 	BunnymodXT/Windows/conutils.cpp
-	BunnymodXT/Windows/dllmain.cpp)
+	BunnymodXT/Windows/dllmain.cpp
+	BunnymodXT/Windows/interprocess.cpp)
 set (LINUX_FILES
 	SPTLib/Linux/Hooks_linux.cpp
 	SPTLib/Linux/MemUtils_linux.cpp
 	BunnymodXT/modules/PMSharedHooks_linux.cpp
-	BunnymodXT/Linux/main_linux.cpp)
+	BunnymodXT/Linux/main_linux.cpp
+	BunnymodXT/Linux/interprocess.cpp)
 set (SOURCE_FILES
 	SPTLib/IHookableModule.cpp
 	SPTLib/IHookableDirFilter.cpp
@@ -44,8 +46,7 @@ set (SOURCE_FILES
 	BunnymodXT/modules/ClientDLL.cpp
 	BunnymodXT/modules/ServerDLL.cpp
 	BunnymodXT/cvars.cpp
-	BunnymodXT/hud_custom.cpp
-	BunnymodXT/interprocess.cpp)
+	BunnymodXT/hud_custom.cpp)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	# Find Detours.

@@ -6,7 +6,12 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <process.h>
+#else
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <mqueue.h>
 #endif
+
 #if defined(__GNUC__)
 #define __cdecl __attribute__((cdecl))
 #define __fastcall __attribute__((fastcall))
@@ -15,6 +20,7 @@
 
 #include <cassert>
 #include <cctype>
+#include <cerrno>
 #include <cmath>
 #include <cstdarg>
 #include <cstddef>

@@ -10,6 +10,7 @@
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
 #include "../interprocess.hpp"
+#include "../shared.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -770,9 +771,9 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 	}
 
 	if (normal[2] != 1.0f && normal[2] != -1.0f && CVars::bxt_interprocess_enable.GetBool()) {
-		std::vector<unsigned char> buf(30);
+		std::vector<char> buf(30);
 		buf[0] = 30;
-		buf[1] = 0x01;
+		buf[1] = static_cast<char>(MessageType::CLIP);
 		std::memcpy(buf.data() + 2, &normal[2], sizeof(normal[2]));
 		std::memcpy(buf.data() + 6, in, 12);
 		std::memcpy(buf.data() + 18, out, 12);
@@ -786,7 +787,7 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 HOOK_DEF_0(ServerDLL, void, __cdecl, PM_WaterMove)
 {
 	if (CVars::bxt_interprocess_enable.GetBool()) {
-		std::vector<unsigned char> buf = { 2, 0x02 };
+		std::vector<char> buf = { 2, static_cast<char>(MessageType::WATER) };
 		Interprocess::Write(buf);
 	}
 

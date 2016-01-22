@@ -928,6 +928,7 @@ void HwDLL::Cmd_BXT_Record_f()
 
 void HwDLL::Cmd_BXT_Interprocess_Reset()
 {
+	Interprocess::Shutdown();
 	Interprocess::Initialize();
 }
 

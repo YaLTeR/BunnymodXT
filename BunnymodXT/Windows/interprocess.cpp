@@ -1,7 +1,8 @@
-#include "stdafx.hpp"
+#include "../stdafx.hpp"
 
-#include "sptlib-wrapper.hpp"
-#include "interprocess.hpp"
+#include "../sptlib-wrapper.hpp"
+#include "../shared.hpp"
+#include "../interprocess.hpp"
 
 namespace Interprocess
 {
@@ -10,7 +11,7 @@ namespace Interprocess
 	void Initialize()
 	{
 		pipe = CreateNamedPipe(
-			"\\\\.\\pipe\\BunnymodXT-TASView",
+			"\\\\.\\pipe\\" MQ_NAME,
 			PIPE_ACCESS_OUTBOUND,
 			PIPE_TYPE_MESSAGE | PIPE_REJECT_REMOTE_CLIENTS,
 			1,
@@ -30,13 +31,13 @@ namespace Interprocess
 	void Shutdown()
 	{
 		if (pipe != INVALID_HANDLE_VALUE) {
-			EngineDevMsg("Closed the pipe.\n");
 			CloseHandle(pipe);
+			EngineDevMsg("Closed the pipe.\n");
 		}
 		pipe = INVALID_HANDLE_VALUE;
 	}
 
-	void Write(const std::vector<unsigned char>& data) {
+	void Write(const std::vector<char>& data) {
 		if (pipe == INVALID_HANDLE_VALUE)
 			return;
 

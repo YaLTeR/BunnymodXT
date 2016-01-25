@@ -49,7 +49,7 @@ private:
 	ServerDLL(const ServerDLL&);
 	void operator=(const ServerDLL&);
 
-	void GetTriggerColor(const char *classname, float &r, float &g, float &b, float &a) const;
+	void GetTriggerColor(const char *classname, int solidType, float &r, float &g, float &b, float &a) const;
 
 protected:
 	typedef int(__cdecl *_GetEntityAPI)(DLL_FUNCTIONS* pFunctionTable, int interfaceVersion);

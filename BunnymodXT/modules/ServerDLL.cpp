@@ -1001,7 +1001,7 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, CMultiManager__ManagerUse_Linux, void*, thi
 	return ORIG_CMultiManager__ManagerUse_Linux(thisptr, pActivator, pCaller, useType, value);
 }
 
-void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float &b, float &a) const
+void ServerDLL::GetTriggerColor(const char *classname, int solidType, float &r, float &g, float &b, float &a) const
 {
 	assert(std::strncmp(classname, "trigger_", 8) == 0);
 
@@ -1011,37 +1011,37 @@ void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float
 		r = 79;
 		g = 255;
 		b = 10;
-		a = 120;
+		a = solidType == SOLID_NOT ? 50 : 120;
 	} else if (std::strcmp(classname, "hurt") == 0) {
 		// Red
 		r = 255;
 		g = 0;
 		b = 0;
-		a = 120;
+		a = solidType == SOLID_NOT ? 50 : 120;
 	} else if (std::strcmp(classname, "multiple") == 0) {
 		// Blue
 		r = 0;
 		g = 0;
 		b = 255;
-		a = 120;
+		a = solidType == SOLID_NOT ? 50 : 120;
 	} else if (std::strcmp(classname, "once") == 0) {
 		// Cyan
 		r = 0;
 		g = 255;
 		b = 255;
-		a = 120;
+		a = solidType == SOLID_NOT ? 50 : 120;
 	} else if (std::strcmp(classname, "push") == 0) {
 		// Bright yellow
 		r = 255;
 		g = 255;
 		b = 0;
-		a = 120;
+		a = solidType == SOLID_NOT ? 50 : 120;
 	} else if (std::strcmp(classname, "teleport") == 0) {
 		// Dull green
 		r = 81;
 		g = 147;
 		b = 49;
-		a = 120;
+		a = solidType == SOLID_NOT ? 50 : 120;
 	} else if (std::strcmp(classname, "transition") == 0) {
 		// Magenta
 		r = 203;
@@ -1053,7 +1053,7 @@ void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float
 		r = 255;
 		g = 255;
 		b = 255;
-		a = 100;
+		a = solidType == SOLID_NOT ? 50 : 100;
 	}
 }
 
@@ -1091,8 +1091,11 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	} else if (is_trigger && CVars::bxt_show_triggers.GetBool()) {
 		ent->v.effects &= ~EF_NODRAW;
 		ent->v.rendermode = kRenderTransColor;
-		ent->v.renderfx = kRenderFxPulseFast;
-		GetTriggerColor(classname, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z, ent->v.renderamt);
+		if (ent->v.solid == SOLID_NOT && std::strcmp(classname + 8, "transition") != 0)
+			ent->v.renderfx = kRenderNormal;
+		else
+			ent->v.renderfx = kRenderFxPulseFast;
+		GetTriggerColor(classname, ent->v.solid, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z, ent->v.renderamt);
 	}
 
 	auto ret = ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);

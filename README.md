@@ -10,7 +10,7 @@ Bunnymod XT (BXT for short) is a cross-platform tool that provides speedrunning 
 - Linux: Download / build **libBunnymodXT.so** and launch Half-Life with it via **LD_PRELOAD**. [Here's a helper script](http://tastools.readthedocs.org/en/latest/tastools.html#half-life-execution-script) for launching Half-Life from your terminal.
 
 #Documentation
-[On the SourceRuns wiki.](http://wiki.sourceruns.org/wiki/Bunnymod_XT)
+[(outdated) On the SourceRuns wiki.](http://wiki.sourceruns.org/wiki/Bunnymod_XT)
 
 ###Environment variables
 - **BXT_SCRIPT** - if set to a filename of a hltas script, loads the non-shared RNG from that script on load.
@@ -20,13 +20,14 @@ Bunnymod XT (BXT for short) is a cross-platform tool that provides speedrunning 
 #Building
 ####Windows
 - Get [Boost](http://www.boost.org/) and build **chrono**, **date_time**, **system** and **thread**.
-- Get and build [Detours](http://research.microsoft.com/en-us/downloads/d36340fb-4d3c-4ddd-bf5b-1db25d03713d/default.aspx).
+- Get [RapidJSON](https://github.com/miloyip/rapidjson/).
 - Create a build directory along the *src* directory.
-- Run `cmake -DBOOST_ROOT=path\to\boost\base\dir -DDetours_ROOT=path\to\detours\base\dir ..` from the build directory.
+- Run `cmake -DBOOST_ROOT=path\to\boost\base\dir -DRapidJSON_ROOT=path\to\rapidjson\base\dir ..` from the build directory.
 - Compile the **ALL_BUILD** project from the generated VS solution.
 
 ####Linux
 - You will need **32-bit** Boost libraries **chrono**, **date_time**, **system** and **thread**.
+- Get [RapidJSON](https://github.com/miloyip/rapidjson/).
 - Create a build directory along the *src* directory.
-- Run `cmake ..` from the build directory. You might need to specify `-DBOOST_ROOT=path/to/boost/base/dir` if you're running a 64-bit linux and have built the 32-bit Boost libraries separately.
+- Run `cmake ..` from the build directory. You might need to specify `-DBOOST_ROOT=path/to/boost/base/dir` if you're running a 64-bit linux and have built the 32-bit Boost libraries separately. You might have to specify `-DRapidJSON_ROOT=path/to/rapidjson/base/dir`.
 - Run `make` from the build directory.

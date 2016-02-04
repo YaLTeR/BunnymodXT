@@ -64,49 +64,51 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	RegisterCVarsAndCommands();
 
 	if (needToIntercept)
-		MemUtils::Intercept(moduleName, {
-			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
-			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
-			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
-			{ reinterpret_cast<void**>(&ORIG_PM_ClipVelocity), reinterpret_cast<void*>(HOOKED_PM_ClipVelocity) },
-			{ reinterpret_cast<void**>(&ORIG_PM_WaterMove), reinterpret_cast<void*>(HOOKED_PM_WaterMove) },
-			{ reinterpret_cast<void**>(&ORIG_PM_WalkMove), reinterpret_cast<void*>(HOOKED_PM_WalkMove) },
-			{ reinterpret_cast<void**>(&ORIG_PM_FlyMove), reinterpret_cast<void*>(HOOKED_PM_FlyMove) },
-			{ reinterpret_cast<void**>(&ORIG_PM_AddToTouched), reinterpret_cast<void*>(HOOKED_PM_AddToTouched) },
-			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
-			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
-			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
-			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) },
-			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) },
-			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) },
-			{ reinterpret_cast<void**>(&ORIG_ClientCommand), reinterpret_cast<void*>(HOOKED_ClientCommand) },
-			{ reinterpret_cast<void**>(&ORIG_CPushable__Move), reinterpret_cast<void*>(HOOKED_CPushable__Move) },
-			{ reinterpret_cast<void**>(&ORIG_CBasePlayer__TakeDamage), reinterpret_cast<void*>(HOOKED_CBasePlayer__TakeDamage) }
-		});
+	{
+		MemUtils::Intercept(moduleName,
+			ORIG_PM_Jump, HOOKED_PM_Jump,
+			ORIG_PM_PreventMegaBunnyJumping, HOOKED_PM_PreventMegaBunnyJumping,
+			ORIG_PM_PlayerMove, HOOKED_PM_PlayerMove,
+			ORIG_PM_ClipVelocity, HOOKED_PM_ClipVelocity,
+			ORIG_PM_WaterMove, HOOKED_PM_WaterMove,
+			ORIG_PM_WalkMove, HOOKED_PM_WalkMove,
+			ORIG_PM_FlyMove, HOOKED_PM_FlyMove,
+			ORIG_PM_AddToTouched, HOOKED_PM_AddToTouched,
+			ORIG_CmdStart, HOOKED_CmdStart,
+			ORIG_CNihilanth__DyingThink, HOOKED_CNihilanth__DyingThink,
+			ORIG_COFGeneWorm__DyingThink, HOOKED_COFGeneWorm__DyingThink,
+			ORIG_CMultiManager__ManagerThink, HOOKED_CMultiManager__ManagerThink,
+			ORIG_AddToFullPack, HOOKED_AddToFullPack,
+			ORIG_CTriggerVolume__Spawn, HOOKED_CTriggerVolume__Spawn,
+			ORIG_ClientCommand, HOOKED_ClientCommand,
+			ORIG_CPushable__Move, HOOKED_CPushable__Move,
+			ORIG_CBasePlayer__TakeDamage, HOOKED_CBasePlayer__TakeDamage);
+	}
 }
 
 void ServerDLL::Unhook()
 {
 	if (m_Intercepted)
-		MemUtils::RemoveInterception(m_Name, {
-			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
-			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
-			{ reinterpret_cast<void**>(&ORIG_PM_PlayerMove), reinterpret_cast<void*>(HOOKED_PM_PlayerMove) },
-			{ reinterpret_cast<void**>(&ORIG_PM_ClipVelocity), reinterpret_cast<void*>(HOOKED_PM_ClipVelocity) },
-			{ reinterpret_cast<void**>(&ORIG_PM_WaterMove), reinterpret_cast<void*>(HOOKED_PM_WaterMove) },
-			{ reinterpret_cast<void**>(&ORIG_PM_WalkMove), reinterpret_cast<void*>(HOOKED_PM_WalkMove) },
-			{ reinterpret_cast<void**>(&ORIG_PM_FlyMove), reinterpret_cast<void*>(HOOKED_PM_FlyMove) },
-			{ reinterpret_cast<void**>(&ORIG_PM_AddToTouched), reinterpret_cast<void*>(HOOKED_PM_AddToTouched) },
-			{ reinterpret_cast<void**>(&ORIG_CmdStart), reinterpret_cast<void*>(HOOKED_CmdStart) },
-			{ reinterpret_cast<void**>(&ORIG_CNihilanth__DyingThink), reinterpret_cast<void*>(HOOKED_CNihilanth__DyingThink) },
-			{ reinterpret_cast<void**>(&ORIG_COFGeneWorm__DyingThink), reinterpret_cast<void*>(HOOKED_COFGeneWorm__DyingThink) },
-			{ reinterpret_cast<void**>(&ORIG_CMultiManager__ManagerThink), reinterpret_cast<void*>(HOOKED_CMultiManager__ManagerThink) },
-			{ reinterpret_cast<void**>(&ORIG_AddToFullPack), reinterpret_cast<void*>(HOOKED_AddToFullPack) },
-			{ reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), reinterpret_cast<void*>(HOOKED_CTriggerVolume__Spawn) },
-			{ reinterpret_cast<void**>(&ORIG_ClientCommand), reinterpret_cast<void*>(HOOKED_ClientCommand) },
-			{ reinterpret_cast<void**>(&ORIG_CPushable__Move), reinterpret_cast<void*>(HOOKED_CPushable__Move) },
-			{ reinterpret_cast<void**>(&ORIG_CBasePlayer__TakeDamage), reinterpret_cast<void*>(HOOKED_CBasePlayer__TakeDamage) }
-		});
+	{
+		MemUtils::RemoveInterception(m_Name,
+			ORIG_PM_Jump,
+			ORIG_PM_PreventMegaBunnyJumping,
+			ORIG_PM_PlayerMove,
+			ORIG_PM_ClipVelocity,
+			ORIG_PM_WaterMove,
+			ORIG_PM_WalkMove,
+			ORIG_PM_FlyMove,
+			ORIG_PM_AddToTouched,
+			ORIG_CmdStart,
+			ORIG_CNihilanth__DyingThink,
+			ORIG_COFGeneWorm__DyingThink,
+			ORIG_CMultiManager__ManagerThink,
+			ORIG_AddToFullPack,
+			ORIG_CTriggerVolume__Spawn,
+			ORIG_ClientCommand,
+			ORIG_CPushable__Move,
+			ORIG_CBasePlayer__TakeDamage);
+	}
 
 	Clear();
 }
@@ -1001,37 +1003,37 @@ void ServerDLL::GetTriggerColor(const char *classname, int solidType, float &r, 
 		r = 79;
 		g = 255;
 		b = 10;
-		a = solidType == SOLID_NOT ? 50 : 120;
+		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
 	} else if (std::strcmp(classname, "hurt") == 0) {
 		// Red
 		r = 255;
 		g = 0;
 		b = 0;
-		a = solidType == SOLID_NOT ? 50 : 120;
+		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
 	} else if (std::strcmp(classname, "multiple") == 0) {
 		// Blue
 		r = 0;
 		g = 0;
 		b = 255;
-		a = solidType == SOLID_NOT ? 50 : 120;
+		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
 	} else if (std::strcmp(classname, "once") == 0) {
 		// Cyan
 		r = 0;
 		g = 255;
 		b = 255;
-		a = solidType == SOLID_NOT ? 50 : 120;
+		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
 	} else if (std::strcmp(classname, "push") == 0) {
 		// Bright yellow
 		r = 255;
 		g = 255;
 		b = 0;
-		a = solidType == SOLID_NOT ? 50 : 120;
+		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
 	} else if (std::strcmp(classname, "teleport") == 0) {
 		// Dull green
 		r = 81;
 		g = 147;
 		b = 49;
-		a = solidType == SOLID_NOT ? 50 : 120;
+		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
 	} else if (std::strcmp(classname, "transition") == 0) {
 		// Magenta
 		r = 203;
@@ -1043,7 +1045,7 @@ void ServerDLL::GetTriggerColor(const char *classname, int solidType, float &r, 
 		r = 255;
 		g = 255;
 		b = 255;
-		a = solidType == SOLID_NOT ? 50 : 100;
+		a = (solidType == SOLID_NOT) ? 50.f : 100.f;
 	}
 }
 

@@ -490,7 +490,7 @@ namespace CustomHud
 				<< "H: " << hdist << "\n"
 				<< "V: " << vdist << "\n"
 				<< "HV: " << hvdist;
-			DrawMultilineString(x, y, out.str().c_str());
+			DrawMultilineString(x, y, out.str());
 		}
 	}
 
@@ -593,7 +593,7 @@ namespace CustomHud
 			{
 				out << "Cannot selfgauss";
 			}
-			DrawMultilineString(x, y, out.str().c_str());
+			DrawMultilineString(x, y, out.str());
 		}
 	}
 

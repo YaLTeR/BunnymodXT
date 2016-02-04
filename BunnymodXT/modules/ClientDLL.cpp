@@ -68,33 +68,35 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Frame), reinterpret_cast<void*>(HOOKED_HUD_Frame));
 
 	if (needToIntercept)
-		MemUtils::Intercept(moduleName, {
-			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
-			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
-			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Frame), reinterpret_cast<void*>(HOOKED_HUD_Frame) }
-		});
+	{
+		MemUtils::Intercept(moduleName,
+			ORIG_PM_Jump, HOOKED_PM_Jump,
+			ORIG_PM_PreventMegaBunnyJumping, HOOKED_PM_PreventMegaBunnyJumping,
+			ORIG_V_CalcRefdef, HOOKED_V_CalcRefdef,
+			ORIG_HUD_Init, HOOKED_HUD_Init,
+			ORIG_HUD_VidInit, HOOKED_HUD_VidInit,
+			ORIG_HUD_Reset, HOOKED_HUD_Reset,
+			ORIG_HUD_Redraw, HOOKED_HUD_Redraw,
+			ORIG_HUD_PostRunCmd, HOOKED_HUD_PostRunCmd,
+			ORIG_HUD_Frame, HOOKED_HUD_Frame);
+	}
 }
 
 void ClientDLL::Unhook()
 {
 	if (m_Intercepted)
-		MemUtils::RemoveInterception(m_Name, {
-			{ reinterpret_cast<void**>(&ORIG_PM_Jump), reinterpret_cast<void*>(HOOKED_PM_Jump) },
-			{ reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), reinterpret_cast<void*>(HOOKED_PM_PreventMegaBunnyJumping) },
-			{ reinterpret_cast<void**>(&ORIG_V_CalcRefdef), reinterpret_cast<void*>(HOOKED_V_CalcRefdef) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd) },
-			{ reinterpret_cast<void**>(&ORIG_HUD_Frame), reinterpret_cast<void*>(HOOKED_HUD_Frame) }
-		});
+	{
+		MemUtils::RemoveInterception(m_Name,
+			ORIG_PM_Jump,
+			ORIG_PM_PreventMegaBunnyJumping,
+			ORIG_V_CalcRefdef,
+			ORIG_HUD_Init,
+			ORIG_HUD_VidInit,
+			ORIG_HUD_Reset,
+			ORIG_HUD_Redraw,
+			ORIG_HUD_PostRunCmd,
+			ORIG_HUD_Frame);
+	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_VidInit));

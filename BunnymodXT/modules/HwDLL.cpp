@@ -118,45 +118,46 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 		resetState = ResetState::POSTRESET;
 	}
 
-	if (needToIntercept)
-		MemUtils::Intercept(moduleName, {
-			{ reinterpret_cast<void**>(&ORIG_LoadAndDecryptHwDLL), reinterpret_cast<void*>(HOOKED_LoadAndDecryptHwDLL) },
-			{ reinterpret_cast<void**>(&ORIG_Cbuf_Execute), reinterpret_cast<void*>(HOOKED_Cbuf_Execute) },
-			{ reinterpret_cast<void**>(&ORIG_SeedRandomNumberGenerator), reinterpret_cast<void*>(HOOKED_SeedRandomNumberGenerator) },
-			{ reinterpret_cast<void**>(&ORIG_time), reinterpret_cast<void*>(HOOKED_time) },
-			{ reinterpret_cast<void**>(&ORIG_RandomFloat), reinterpret_cast<void*>(HOOKED_RandomFloat) },
-			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
-			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
-			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
-			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) },
-			{ reinterpret_cast<void**>(&ORIG_V_FadeAlpha), reinterpret_cast<void*>(HOOKED_V_FadeAlpha) },
-			{ reinterpret_cast<void**>(&ORIG_SCR_UpdateScreen), reinterpret_cast<void*>(HOOKED_SCR_UpdateScreen) },
-			{ reinterpret_cast<void**>(&ORIG_SV_Frame), reinterpret_cast<void*>(HOOKED_SV_Frame) },
-			{ reinterpret_cast<void**>(&ORIG_VGuiWrap2_ConDPrintf), reinterpret_cast<void*>(HOOKED_VGuiWrap2_ConDPrintf) },
-			{ reinterpret_cast<void**>(&ORIG_VGuiWrap2_ConPrintf), reinterpret_cast<void*>(HOOKED_VGuiWrap2_ConPrintf) }
-		});
+	if (needToIntercept) {
+		MemUtils::Intercept(moduleName,
+			ORIG_LoadAndDecryptHwDLL, HOOKED_LoadAndDecryptHwDLL,
+			ORIG_Cbuf_Execute, HOOKED_Cbuf_Execute,
+			ORIG_SeedRandomNumberGenerator, HOOKED_SeedRandomNumberGenerator,
+			ORIG_time, HOOKED_time,
+			ORIG_RandomFloat, HOOKED_RandomFloat,
+			ORIG_RandomLong, HOOKED_RandomLong,
+			ORIG_Host_Changelevel2_f, HOOKED_Host_Changelevel2_f,
+			ORIG_SCR_BeginLoadingPlaque, HOOKED_SCR_BeginLoadingPlaque,
+			ORIG_Host_FilterTime, HOOKED_Host_FilterTime,
+			ORIG_V_FadeAlpha, HOOKED_V_FadeAlpha,
+			ORIG_SCR_UpdateScreen, HOOKED_SCR_UpdateScreen,
+			ORIG_SV_Frame, HOOKED_SV_Frame,
+			ORIG_VGuiWrap2_ConDPrintf, HOOKED_VGuiWrap2_ConDPrintf,
+			ORIG_VGuiWrap2_ConPrintf, HOOKED_VGuiWrap2_ConPrintf);
+	}
 }
 
 void HwDLL::Unhook()
 {
 	if (m_Intercepted)
-		MemUtils::RemoveInterception(m_Name, {
-			{ reinterpret_cast<void**>(&ORIG_LoadAndDecryptHwDLL), reinterpret_cast<void*>(HOOKED_LoadAndDecryptHwDLL) },
-			{ reinterpret_cast<void**>(&ORIG_Cbuf_Execute), reinterpret_cast<void*>(HOOKED_Cbuf_Execute) },
-			{ reinterpret_cast<void**>(&ORIG_SeedRandomNumberGenerator), reinterpret_cast<void*>(HOOKED_SeedRandomNumberGenerator) },
-			{ reinterpret_cast<void**>(&ORIG_time), reinterpret_cast<void*>(HOOKED_time) },
-			{ reinterpret_cast<void**>(&ORIG_RandomFloat), reinterpret_cast<void*>(HOOKED_RandomFloat) },
-			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
-			{ reinterpret_cast<void**>(&ORIG_RandomLong), reinterpret_cast<void*>(HOOKED_RandomLong) },
-			{ reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), reinterpret_cast<void*>(HOOKED_Host_Changelevel2_f) },
-			{ reinterpret_cast<void**>(&ORIG_SCR_BeginLoadingPlaque), reinterpret_cast<void*>(HOOKED_SCR_BeginLoadingPlaque) },
-			{ reinterpret_cast<void**>(&ORIG_Host_FilterTime), reinterpret_cast<void*>(HOOKED_Host_FilterTime) },
-			{ reinterpret_cast<void**>(&ORIG_V_FadeAlpha), reinterpret_cast<void*>(HOOKED_V_FadeAlpha) },
-			{ reinterpret_cast<void**>(&ORIG_SCR_UpdateScreen), reinterpret_cast<void*>(HOOKED_SCR_UpdateScreen) },
-			{ reinterpret_cast<void**>(&ORIG_SV_Frame), reinterpret_cast<void*>(HOOKED_SV_Frame) },
-			{ reinterpret_cast<void**>(&ORIG_VGuiWrap2_ConDPrintf), reinterpret_cast<void*>(HOOKED_VGuiWrap2_ConDPrintf) },
-			{ reinterpret_cast<void**>(&ORIG_VGuiWrap2_ConPrintf), reinterpret_cast<void*>(HOOKED_VGuiWrap2_ConPrintf) }
-	});
+	{
+		MemUtils::RemoveInterception(m_Name,
+			ORIG_LoadAndDecryptHwDLL,
+			ORIG_Cbuf_Execute,
+			ORIG_SeedRandomNumberGenerator,
+			ORIG_time,
+			ORIG_RandomFloat,
+			ORIG_RandomLong,
+			ORIG_RandomLong,
+			ORIG_Host_Changelevel2_f,
+			ORIG_SCR_BeginLoadingPlaque,
+			ORIG_Host_FilterTime,
+			ORIG_V_FadeAlpha,
+			ORIG_SCR_UpdateScreen,
+			ORIG_SV_Frame,
+			ORIG_VGuiWrap2_ConDPrintf,
+			ORIG_VGuiWrap2_ConPrintf);
+	}
 
 	for (auto cvar : CVars::allCVars)
 		cvar->Refresh();

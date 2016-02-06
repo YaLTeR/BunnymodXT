@@ -9,6 +9,19 @@
 
 const wchar_t EVENT_NAME[] = L"BunnymodXT-Injector";
 
+static FILE* logfile = nullptr;
+
+static void Log(const char* prefix, const char* msg)
+{
+	if (logfile)
+	{
+		auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+		auto ltime = std::localtime(&time);
+		fprintf(logfile, "[%02d:%02d:%02d] [%s] %s", ltime->tm_hour, ltime->tm_min, ltime->tm_sec, prefix, msg);
+		fflush(logfile);
+	}
+}
+
 void PrintMessage(const char* format, ...)
 {
 	va_list args;
@@ -20,6 +33,7 @@ void PrintMessage(const char* format, ...)
 	va_end(args);
 
 	ConUtils::Log(temp);
+	Log("Msg", temp);
 }
 
 void PrintDevMessage(const char* format, ...)
@@ -33,6 +47,7 @@ void PrintDevMessage(const char* format, ...)
 	va_end(args);
 
 	ConUtils::Log(temp, FOREGROUND_RED | FOREGROUND_GREEN);
+	Log("DevMsg", temp);
 }
 
 void PrintWarning(const char* format, ...)
@@ -46,6 +61,7 @@ void PrintWarning(const char* format, ...)
 	va_end(args);
 
 	ConUtils::Log(temp, FOREGROUND_RED | FOREGROUND_INTENSITY);
+	Log("Warning", temp);
 }
 
 void PrintDevWarning(const char* format, ...)
@@ -59,12 +75,21 @@ void PrintDevWarning(const char* format, ...)
 	va_end(args);
 
 	ConUtils::Log(temp, FOREGROUND_RED);
+	Log("DevWarning", temp);
 }
 
 unsigned int __stdcall MainThread(void* args)
 {
 	ConUtils::Init();
 	ConUtils::Log("Bunnymod XT version " BUNNYMODXT_VERSION ".\n", FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+
+	auto bxtLogfile = getenv("BXT_LOGFILE");
+	if (bxtLogfile)
+	{
+		logfile = fopen(bxtLogfile, "a");
+		if (!logfile)
+			PrintWarning("Could not open the log file (%s): %s.\n", bxtLogfile, strerror(errno));
+	}
 
 	_EngineMsg = PrintMessage;
 	_EngineDevMsg = PrintDevMessage;
@@ -99,6 +124,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		Hooks::Free();
 		Interprocess::Shutdown();
 		ConUtils::Free();
+		if (logfile)
+			fclose(logfile);
+
 		break;
 	}
 

@@ -5,7 +5,6 @@
 #include <SPTLib/Hooks.hpp>
 #include "hud_custom.hpp"
 #include "interprocess.hpp"
-#include "shared.hpp"
 
 #include <chrono>
 
@@ -781,23 +780,10 @@ namespace CustomHud
 		if (!CVars::bxt_interprocess_enable.GetBool())
 			return;
 
-		std::vector<char> buf(18);
-		buf[0] = 18;
-		buf[1] = static_cast<char>(MessageType::TIME);
 		int milliseconds = static_cast<int>(timeRemainder * 1000);
-		std::memcpy(buf.data() + 2, &hours, sizeof(hours));
-		std::memcpy(buf.data() + 6, &minutes, sizeof(minutes));
-		std::memcpy(buf.data() + 10, &seconds, sizeof(seconds));
-		std::memcpy(buf.data() + 14, &milliseconds, sizeof(milliseconds));
+		Interprocess::WriteTime(hours, minutes, seconds, milliseconds);
 
-		Interprocess::Write(buf);
-
-		if (HwDLL::GetInstance().frametime_remainder) {
-			std::vector<char> buf2(10);
-			buf2[0] = 10;
-			buf2[1] = static_cast<char>(MessageType::FRAMETIME_REMAINDER);
-			std::memcpy(buf2.data() + 2, HwDLL::GetInstance().frametime_remainder, 8);
-			Interprocess::Write(buf2);
-		}
+		if (HwDLL::GetInstance().frametime_remainder)
+			Interprocess::WriteFrametimeRemainder(*HwDLL::GetInstance().frametime_remainder);
 	}
 }

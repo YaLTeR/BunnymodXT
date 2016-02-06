@@ -10,7 +10,6 @@
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
 #include "../interprocess.hpp"
-#include "../shared.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -772,26 +771,16 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 				std::acos(static_cast<double>(normal[2])) * 180 / M_PI, in[0], in[1], in[2], std::hypot(in[0], in[1]), out[0], out[1], out[2], std::hypot(out[0], out[1]));
 	}
 
-	if (normal[2] != 1.0f && normal[2] != -1.0f && CVars::bxt_interprocess_enable.GetBool()) {
-		std::vector<char> buf(30);
-		buf[0] = 30;
-		buf[1] = static_cast<char>(MessageType::CLIP);
-		std::memcpy(buf.data() + 2, &normal[2], sizeof(normal[2]));
-		std::memcpy(buf.data() + 6, in, 12);
-		std::memcpy(buf.data() + 18, out, 12);
-
-		Interprocess::Write(buf);
-	}
+	if (normal[2] != 1.0f && normal[2] != -1.0f && CVars::bxt_interprocess_enable.GetBool())
+		Interprocess::WriteClip(normal[2], in, out);
 
 	return ret;
 }
 
 HOOK_DEF_0(ServerDLL, void, __cdecl, PM_WaterMove)
 {
-	if (CVars::bxt_interprocess_enable.GetBool()) {
-		std::vector<char> buf = { 2, static_cast<char>(MessageType::WATER) };
-		Interprocess::Write(buf);
-	}
+	if (CVars::bxt_interprocess_enable.GetBool())
+		Interprocess::WriteWater();
 
 	return ORIG_PM_WaterMove();
 }

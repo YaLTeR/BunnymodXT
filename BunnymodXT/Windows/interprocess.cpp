@@ -66,4 +66,42 @@ namespace Interprocess
 			Initialize();
 		}
 	}
+
+	void WriteTime(int hours, int minutes, int seconds, int milliseconds)
+	{
+		std::vector<char> buf(18);
+		buf[0] = 18;
+		buf[1] = static_cast<char>(MessageType::TIME);
+		std::memcpy(buf.data() + 2, &hours, sizeof(hours));
+		std::memcpy(buf.data() + 6, &minutes, sizeof(minutes));
+		std::memcpy(buf.data() + 10, &seconds, sizeof(seconds));
+		std::memcpy(buf.data() + 14, &milliseconds, sizeof(milliseconds));
+		Write(buf);
+	}
+
+	void WriteClip(float normal_z, float vel_in[3], float vel_out[3])
+	{
+		std::vector<char> buf(30);
+		buf[0] = 30;
+		buf[1] = static_cast<char>(MessageType::CLIP);
+		std::memcpy(buf.data() + 2, &normal_z, sizeof(normal_z));
+		std::memcpy(buf.data() + 6, vel_in, sizeof(*vel_in) * 3);
+		std::memcpy(buf.data() + 18, vel_out, sizeof(*vel_out) * 3);
+		Write(buf);
+	}
+
+	void WriteWater()
+	{
+		std::vector<char> buf = { 2, static_cast<char>(MessageType::WATER) };
+		Write(buf);
+	}
+
+	void WriteFrametimeRemainder(double frametime_remainder)
+	{
+		std::vector<char> buf(10);
+		buf[0] = 10;
+		buf[1] = static_cast<char>(MessageType::FRAMETIME_REMAINDER);
+		std::memcpy(buf.data() + 2, &frametime_remainder, sizeof(frametime_remainder));
+		Write(buf);
+	}
 }

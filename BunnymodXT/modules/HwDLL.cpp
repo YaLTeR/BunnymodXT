@@ -1044,6 +1044,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		RegisterCVar(CVars::bxt_interprocess_enable);
 		RegisterCVar(CVars::bxt_fade_remove);
 		RegisterCVar(CVars::_bxt_norefresh);
+		RegisterCVar(CVars::_bxt_bunnysplit_time_update_frequency);
 		if (ORIG_Cmd_AddMallocCommand) {
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
 			ORIG_Cmd_AddMallocCommand("bxt_ch_set_health", Cmd_BXT_CH_Set_Health, 2);

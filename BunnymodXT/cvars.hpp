@@ -115,6 +115,7 @@ namespace CVars
 	extern CVarWrapper _bxt_taslog;
 	extern CVarWrapper _bxt_min_frametime;
 	extern CVarWrapper _bxt_norefresh;
+	extern CVarWrapper _bxt_bunnysplit_time_update_frequency;
 	extern CVarWrapper bxt_taslog_filename;
 	extern CVarWrapper bxt_autopause;
 	extern CVarWrapper bxt_interprocess_enable;

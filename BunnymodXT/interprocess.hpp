@@ -4,10 +4,10 @@ namespace Interprocess
 {
 	struct Time
 	{
-		int hours;
-		int minutes;
-		int seconds;
-		int milliseconds;
+		uint32_t hours;
+		uint8_t minutes;
+		uint8_t seconds;
+		uint16_t milliseconds;
 	};
 
 	void Initialize();

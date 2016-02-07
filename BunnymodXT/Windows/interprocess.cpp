@@ -171,17 +171,32 @@ namespace Interprocess
 		}
 	}
 
+	static size_t AddTimeToBuffer(char* buf, const Time& time)
+	{
+		std::memcpy(buf, &time.hours, sizeof(time.hours));
+		std::memcpy(buf + sizeof(time.hours), &time.minutes, sizeof(time.minutes));
+		std::memcpy(buf + sizeof(time.hours) + sizeof(time.minutes), &time.seconds, sizeof(time.seconds));
+		std::memcpy(buf + sizeof(time.hours) + sizeof(time.minutes) + sizeof(time.seconds), &time.milliseconds, sizeof(time.milliseconds));
+		return sizeof(time.hours) + sizeof(time.minutes) + sizeof(time.seconds) + sizeof(time.milliseconds);
+	}
+
 	void WriteTime(const Time& time)
 	{
-		std::vector<char> buf(18);
-		buf[0] = buf.size();
+		std::vector<char> buf(10);
+		buf[0] = static_cast<char>(buf.size());
 		buf[1] = static_cast<char>(MessageType::TIME);
-		std::memcpy(buf.data() + 2, &time.hours, sizeof(time.hours));
-		std::memcpy(buf.data() + 6, &time.minutes, sizeof(time.minutes));
-		std::memcpy(buf.data() + 10, &time.seconds, sizeof(time.seconds));
-		std::memcpy(buf.data() + 14, &time.milliseconds, sizeof(time.milliseconds));
+		AddTimeToBuffer(buf.data() + 2, time);
 
-		WriteBunnySplit(buf);
+		if (CVars::_bxt_bunnysplit_time_update_frequency.GetFloat() > 0.0f) {
+			static auto last_time = std::chrono::steady_clock::now() - std::chrono::milliseconds(static_cast<long long>(1000 / CVars::_bxt_bunnysplit_time_update_frequency.GetFloat()) + 1);
+			auto now = std::chrono::steady_clock::now();
+			if (now >= last_time + std::chrono::milliseconds(static_cast<long long>(1000 / CVars::_bxt_bunnysplit_time_update_frequency.GetFloat()))) {
+				WriteBunnySplit(buf);
+				last_time = now;
+			}
+		} else {
+			WriteBunnySplit(buf);
+		}
 
 		if (!CVars::bxt_interprocess_enable.GetBool())
 			return;
@@ -195,7 +210,7 @@ namespace Interprocess
 			return;
 
 		std::vector<char> buf(30);
-		buf[0] = buf.size();
+		buf[0] = static_cast<char>(buf.size());
 		buf[1] = static_cast<char>(MessageType::CLIP);
 		std::memcpy(buf.data() + 2, &normal_z, sizeof(normal_z));
 		std::memcpy(buf.data() + 6, vel_in, sizeof(*vel_in) * 3);
@@ -218,7 +233,7 @@ namespace Interprocess
 			return;
 
 		std::vector<char> buf(10);
-		buf[0] = buf.size();
+		buf[0] = static_cast<char>(buf.size());
 		buf[1] = static_cast<char>(MessageType::FRAMETIME_REMAINDER);
 		std::memcpy(buf.data() + 2, &frametime_remainder, sizeof(frametime_remainder));
 		Write(buf);
@@ -226,14 +241,11 @@ namespace Interprocess
 
 	void WriteGameEnd(const Time& time)
 	{
-		std::vector<char> buf(19);
-		buf[0] = buf.size();
+		std::vector<char> buf(11);
+		buf[0] = static_cast<char>(buf.size());
 		buf[1] = static_cast<char>(MessageType::EVENT);
 		buf[2] = static_cast<char>(EventType::GAMEEND);
-		std::memcpy(buf.data() + 3, &time.hours, sizeof(time.hours));
-		std::memcpy(buf.data() + 7, &time.minutes, sizeof(time.minutes));
-		std::memcpy(buf.data() + 11, &time.seconds, sizeof(time.seconds));
-		std::memcpy(buf.data() + 15, &time.milliseconds, sizeof(time.milliseconds));
+		AddTimeToBuffer(buf.data() + 3, time);
 
 		WriteBunnySplit(buf);
 	}
@@ -242,45 +254,36 @@ namespace Interprocess
 	{
 		int size = static_cast<int>(map.size());
 
-		std::vector<char> buf(23 + size);
-		buf[0] = buf.size();
+		std::vector<char> buf(15 + size);
+		buf[0] = static_cast<char>(buf.size());
 		buf[1] = static_cast<char>(MessageType::EVENT);
 		buf[2] = static_cast<char>(EventType::MAPCHANGE);
-		std::memcpy(buf.data() + 3, &time.hours, sizeof(time.hours));
-		std::memcpy(buf.data() + 7, &time.minutes, sizeof(time.minutes));
-		std::memcpy(buf.data() + 11, &time.seconds, sizeof(time.seconds));
-		std::memcpy(buf.data() + 15, &time.milliseconds, sizeof(time.milliseconds));
+		auto time_size = AddTimeToBuffer(buf.data() + 3, time);
 
-		std::memcpy(buf.data() + 19, &size, sizeof(size));
-		std::memcpy(buf.data() + 23, map.data(), size);
+		std::memcpy(buf.data() + 3 + time_size, &size, sizeof(size));
+		std::memcpy(buf.data() + 3 + time_size + 4, map.data(), size);
 
 		WriteBunnySplit(buf);
 	}
 
 	void WriteTimerReset(const Time& time)
 	{
-		std::vector<char> buf(19);
-		buf[0] = buf.size();
+		std::vector<char> buf(11);
+		buf[0] = static_cast<char>(buf.size());
 		buf[1] = static_cast<char>(MessageType::EVENT);
 		buf[2] = static_cast<char>(EventType::TIMER_RESET);
-		std::memcpy(buf.data() + 3, &time.hours, sizeof(time.hours));
-		std::memcpy(buf.data() + 7, &time.minutes, sizeof(time.minutes));
-		std::memcpy(buf.data() + 11, &time.seconds, sizeof(time.seconds));
-		std::memcpy(buf.data() + 15, &time.milliseconds, sizeof(time.milliseconds));
+		AddTimeToBuffer(buf.data() + 3, time);
 
 		WriteBunnySplit(buf);
 	}
 
 	void WriteTimerStart(const Time& time)
 	{
-		std::vector<char> buf(19);
-		buf[0] = buf.size();
+		std::vector<char> buf(11);
+		buf[0] = static_cast<char>(buf.size());
 		buf[1] = static_cast<char>(MessageType::EVENT);
 		buf[2] = static_cast<char>(EventType::TIMER_START);
-		std::memcpy(buf.data() + 3, &time.hours, sizeof(time.hours));
-		std::memcpy(buf.data() + 7, &time.minutes, sizeof(time.minutes));
-		std::memcpy(buf.data() + 11, &time.seconds, sizeof(time.seconds));
-		std::memcpy(buf.data() + 15, &time.milliseconds, sizeof(time.milliseconds));
+		AddTimeToBuffer(buf.data() + 3, time);
 
 		WriteBunnySplit(buf);
 	}

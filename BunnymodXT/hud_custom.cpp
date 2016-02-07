@@ -789,7 +789,11 @@ namespace CustomHud
 
 	Interprocess::Time GetTime()
 	{
-		int milliseconds = static_cast<int>(timeRemainder * 1000);
-		return Interprocess::Time{ hours, minutes, seconds, milliseconds };
+		uint16_t milliseconds = static_cast<uint16_t>(timeRemainder * 1000);
+		return Interprocess::Time{
+			static_cast<uint32_t>(hours),
+			static_cast<uint8_t>(minutes),
+			static_cast<uint8_t>(seconds),
+			milliseconds };
 	}
 }

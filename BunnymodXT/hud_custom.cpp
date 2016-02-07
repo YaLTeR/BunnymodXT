@@ -764,6 +764,7 @@ namespace CustomHud
 
 	void ResetTime()
 	{
+		Interprocess::WriteTimerReset(GetTime());
 		countingTime = false;
 		hours = minutes = seconds = 0;
 		timeRemainder = 0.0;
@@ -773,17 +774,22 @@ namespace CustomHud
 
 	void SetCountingTime(bool counting)
 	{
+		if (counting && !countingTime)
+			Interprocess::WriteTimerStart(GetTime());
+
 		countingTime = counting;
 	}
 
 	void SendTimeUpdate() {
-		if (!CVars::bxt_interprocess_enable.GetBool())
-			return;
-
-		int milliseconds = static_cast<int>(timeRemainder * 1000);
-		Interprocess::WriteTime(hours, minutes, seconds, milliseconds);
+		Interprocess::WriteTime(GetTime());
 
 		if (HwDLL::GetInstance().frametime_remainder)
 			Interprocess::WriteFrametimeRemainder(*HwDLL::GetInstance().frametime_remainder);
+	}
+
+	Interprocess::Time GetTime()
+	{
+		int milliseconds = static_cast<int>(timeRemainder * 1000);
+		return Interprocess::Time{ hours, minutes, seconds, milliseconds };
 	}
 }

@@ -131,6 +131,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Host_FilterTime, HOOKED_Host_FilterTime,
 			ORIG_V_FadeAlpha, HOOKED_V_FadeAlpha,
 			ORIG_SCR_UpdateScreen, HOOKED_SCR_UpdateScreen,
+			ORIG_SV_SpawnServer, HOOKED_SV_SpawnServer,
 			ORIG_SV_Frame, HOOKED_SV_Frame,
 			ORIG_VGuiWrap2_ConDPrintf, HOOKED_VGuiWrap2_ConDPrintf,
 			ORIG_VGuiWrap2_ConPrintf, HOOKED_VGuiWrap2_ConPrintf);
@@ -154,6 +155,7 @@ void HwDLL::Unhook()
 			ORIG_Host_FilterTime,
 			ORIG_V_FadeAlpha,
 			ORIG_SCR_UpdateScreen,
+			ORIG_SV_SpawnServer,
 			ORIG_SV_Frame,
 			ORIG_VGuiWrap2_ConDPrintf,
 			ORIG_VGuiWrap2_ConPrintf);
@@ -181,6 +183,7 @@ void HwDLL::Clear()
 	ORIG_V_FadeAlpha = nullptr;
 	ORIG_SCR_UpdateScreen = nullptr;
 	ORIG_SV_Frame = nullptr;
+	ORIG_SV_SpawnServer = nullptr;
 	ORIG_VGuiWrap2_ConDPrintf = nullptr;
 	ORIG_VGuiWrap2_ConPrintf = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
@@ -418,7 +421,6 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cmd_AddMallocCommand)
 		//DEF_FUTURE(RandomFloat)
 		//DEF_FUTURE(RandomLong)
-		DEF_FUTURE(Host_Changelevel2_f)
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		DEF_FUTURE(PM_PlayerTrace)
 		DEF_FUTURE(Host_FilterTime)
@@ -568,6 +570,16 @@ void HwDLL::FindStuff()
 			}, []() {}
 		);
 
+		auto fHost_Changelevel2_f = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), m_Base, m_Length, Patterns::ptnsHost_Changelevel2_f,
+			[&](MemUtils::ptnvec_size ptnNumber) {
+			if (ptnNumber == 0) {
+				ORIG_SV_SpawnServer = reinterpret_cast<_SV_SpawnServer>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 285)
+					+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 289);
+			}
+		}, []() {}
+		);
+
 		auto n = fCbuf_Execute.get();
 		if (ORIG_Cbuf_Execute) {
 			EngineDevMsg("[hw dll] Found Cbuf_Execute at %p (using the %s pattern).\n", ORIG_Cbuf_Execute, Patterns::ptnsCbuf_Execute[n].build.c_str());
@@ -636,6 +648,20 @@ void HwDLL::FindStuff()
 			ORIG_Cbuf_Execute = nullptr;
 		}
 
+		n = fHost_Changelevel2_f.get();
+		if (ORIG_Host_Changelevel2_f) {
+			EngineDevMsg("[hw dll] Found Host_Changelevel2_f at %p (using the %s pattern).\n", ORIG_Host_Changelevel2_f, Patterns::ptnsHost_Changelevel2_f[n].build.c_str());
+			if (ORIG_SV_SpawnServer) {
+				EngineDevMsg("[hw dll] Found SV_SpawnServer at %p.\n", ORIG_SV_SpawnServer);
+			} else {
+				EngineDevWarning("[hw dll] Could not find SV_SpawnServer.\n");
+				EngineWarning("BunnySplit autosplitting is not available.\n");
+			}
+		} else {
+			EngineDevWarning("[hw dll] Could not find Host_Changelevel2_f.\n");
+			ORIG_Cbuf_Execute = nullptr;
+		}
+
 		#define GET_FUTURE(name) \
 			n = f##name.get(); \
 			if (ORIG_##name) { \
@@ -651,7 +677,6 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Cmd_AddMallocCommand)
 		//GET_FUTURE(RandomFloat)
 		//GET_FUTURE(RandomLong)
-		GET_FUTURE(Host_Changelevel2_f)
 		GET_FUTURE(SCR_BeginLoadingPlaque)
 		GET_FUTURE(PM_PlayerTrace)
 		#undef GET_FUTURE
@@ -1805,6 +1830,15 @@ HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 		return 0;
 	else
 		return ORIG_V_FadeAlpha();
+}
+
+HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, char*, startspot)
+{
+	auto ret = ORIG_SV_SpawnServer(bIsDemo, server, startspot);
+	if (ret)
+		Interprocess::WriteMapChange(CustomHud::GetTime(), server);
+
+	return ret;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SV_Frame)

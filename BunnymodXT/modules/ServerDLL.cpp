@@ -771,7 +771,7 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 				std::acos(static_cast<double>(normal[2])) * 180 / M_PI, in[0], in[1], in[2], std::hypot(in[0], in[1]), out[0], out[1], out[2], std::hypot(out[0], out[1]));
 	}
 
-	if (normal[2] != 1.0f && normal[2] != -1.0f && CVars::bxt_interprocess_enable.GetBool())
+	if (normal[2] != 1.0f && normal[2] != -1.0f)
 		Interprocess::WriteClip(normal[2], in, out);
 
 	return ret;
@@ -779,8 +779,7 @@ HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 
 HOOK_DEF_0(ServerDLL, void, __cdecl, PM_WaterMove)
 {
-	if (CVars::bxt_interprocess_enable.GetBool())
-		Interprocess::WriteWater();
+	Interprocess::WriteWater();
 
 	return ORIG_PM_WaterMove();
 }
@@ -920,6 +919,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CNihilanth__DyingThink, void*, thisptr, 
 {
 	if (CVars::bxt_timer_autostop.GetBool())
 		CustomHud::SetCountingTime(false);
+	Interprocess::WriteGameEnd(CustomHud::GetTime());
 
 	return ORIG_CNihilanth__DyingThink(thisptr, edx);
 }
@@ -928,6 +928,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CNihilanth__DyingThink_Linux, void*, thispt
 {
 	if (CVars::bxt_timer_autostop.GetBool())
 		CustomHud::SetCountingTime(false);
+	Interprocess::WriteGameEnd(CustomHud::GetTime());
 
 	return ORIG_CNihilanth__DyingThink_Linux(thisptr);
 }
@@ -936,6 +937,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, COFGeneWorm__DyingThink, void*, thisptr,
 {
 	if (CVars::bxt_timer_autostop.GetBool())
 		CustomHud::SetCountingTime(false);
+	Interprocess::WriteGameEnd(CustomHud::GetTime());
 
 	return ORIG_COFGeneWorm__DyingThink(thisptr, edx);
 }
@@ -944,18 +946,22 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, COFGeneWorm__DyingThink_Linux, void*, thisp
 {
 	if (CVars::bxt_timer_autostop.GetBool())
 		CustomHud::SetCountingTime(false);
+	Interprocess::WriteGameEnd(CustomHud::GetTime());
 
 	return ORIG_COFGeneWorm__DyingThink_Linux(thisptr);
 }
 
 HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, thisptr, int, edx)
 {
-	if (CVars::bxt_timer_autostop.GetBool() && ppGlobals) {
+	if (ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
-			if (!std::strcmp(targetname, "roll_the_credits") || !std::strcmp(targetname, "youwinmulti"))
-				CustomHud::SetCountingTime(false);
+			if (!std::strcmp(targetname, "roll_the_credits") || !std::strcmp(targetname, "youwinmulti")) {
+				if (CVars::bxt_timer_autostop.GetBool())
+					CustomHud::SetCountingTime(false);
+				Interprocess::WriteGameEnd(CustomHud::GetTime());
+			}
 		}
 	}
 
@@ -964,7 +970,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 
 HOOK_DEF_5(ServerDLL, void, __cdecl, CMultiManager__ManagerUse_Linux, void*, thisptr, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
-	if (CVars::bxt_timer_autostop.GetBool() && ppGlobals && pCaller) {
+	if (ppGlobals && pCaller) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
@@ -972,8 +978,11 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, CMultiManager__ManagerUse_Linux, void*, thi
 				entvars_t *callerPev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
 				if (callerPev && callerPev->targetname) {
 					const char *callerTargetname = (*ppGlobals)->pStringBase + callerPev->targetname;
-					if (!std::strcmp(callerTargetname, "mgr_take_over") || !std::strcmp(callerTargetname, "endbot"))
-						CustomHud::SetCountingTime(false);
+					if (!std::strcmp(callerTargetname, "mgr_take_over") || !std::strcmp(callerTargetname, "endbot")) {
+						if (CVars::bxt_timer_autostop.GetBool())
+							CustomHud::SetCountingTime(false);
+						Interprocess::WriteGameEnd(CustomHud::GetTime());
+					}
 				}
 			}
 		}

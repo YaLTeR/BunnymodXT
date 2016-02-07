@@ -19,6 +19,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(int, __cdecl, V_FadeAlpha)
 	HOOK_DECL(void, __cdecl, SCR_UpdateScreen)
 	HOOK_DECL(void, __cdecl, SV_Frame)
+	HOOK_DECL(int, __cdecl, SV_SpawnServer, int bIsDemo, char* server, char* startspot)
 	HOOK_DECL(void, __cdecl, VGuiWrap2_ConDPrintf, const char* msg)
 	HOOK_DECL(void, __cdecl, VGuiWrap2_ConPrintf, const char* msg)
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "interprocess.hpp"
+
 namespace CustomHud
 {
 	typedef struct
@@ -21,4 +23,5 @@ namespace CustomHud
 	void ResetTime();
 	void SetCountingTime(bool counting);
 	void SendTimeUpdate();
+	Interprocess::Time GetTime();
 };

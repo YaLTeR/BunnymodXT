@@ -252,7 +252,7 @@ namespace Interprocess
 
 	void WriteMapChange(const Time& time, const std::string& map)
 	{
-		uint32_t size = static_cast<uint32_t>(map.size());
+		int32_t size = static_cast<int32_t>(map.size());
 
 		std::vector<char> buf(15 + size);
 		buf[0] = static_cast<char>(buf.size());

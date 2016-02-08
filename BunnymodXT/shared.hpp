@@ -12,7 +12,8 @@ enum class EventType : unsigned char {
 	GAMEEND = 0x00,
 	MAPCHANGE = 0x01,
 	TIMER_RESET = 0x02,
-	TIMER_START = 0x03
+	TIMER_START = 0x03,
+	BS_ALEAPOFFAITH = 0x04
 };
 
 #define MQ_NAME "BunnymodXT-TASView"

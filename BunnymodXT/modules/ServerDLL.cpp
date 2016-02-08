@@ -159,6 +159,7 @@ void ServerDLL::Clear()
 	offInDuck = 0;
 	offFlags = 0;
 	offBasevelocity = 0;
+	pGlobalState = nullptr;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	pEngfuncs = nullptr;
 	ppGlobals = nullptr;
@@ -319,6 +320,13 @@ void ServerDLL::FindStuff()
 
 	auto fCBasePlayer__TakeDamage = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_CBasePlayer__TakeDamage), m_Base, m_Length, Patterns::ptnsCBasePlayer__TakeDamage,
 		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
+	);
+
+	uintptr_t pDispatchRestore;
+	auto fDispatchRestore = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&pDispatchRestore), m_Base, m_Length, Patterns::ptnsDispatchRestore,
+		[&](MemUtils::ptnvec_size ptnNumber) {
+			pGlobalState = *reinterpret_cast<void**>(pDispatchRestore + 153);
+		}, []() { }
 	);
 
 	bool noBhopcap = false;
@@ -534,6 +542,15 @@ void ServerDLL::FindStuff()
 	} else {
 		EngineDevWarning("[server dll] Could not find PM_Ladder.\n");
 		EngineWarning("TAS logging for onladder status is unavailable.\n");
+	}
+
+	n = fDispatchRestore.get();
+	if (pDispatchRestore) {
+		EngineDevMsg("[server dll] Found DispatchRestore at %p (using the %s pattern).\n", pDispatchRestore, Patterns::ptnsDispatchRestore[n].build.c_str());
+		EngineDevMsg("[server dll] Found gGlobalState at %p.\n", pGlobalState);
+	} else {
+		EngineDevWarning("[server dll] Could not find DispatchRestore.\n");
+		EngineWarning("Blue Shift \"A Leap of Faith\" chapter autosplit is unavailable.\n");
 	}
 
 	// This has to be the last thing to check and hook.
@@ -1237,4 +1254,21 @@ HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, 
 	}
 
 	return ORIG_CBasePlayer__TakeDamage(thisptr, edx, pevInflictor, pevAttacker, flDamage, bitsDamageType);
+}
+
+bool ServerDLL::GetGlobalState(const std::string& name, int& state)
+{
+	if (!pGlobalState)
+		return false;
+
+	for (uintptr_t entry = *reinterpret_cast<uintptr_t*>(pGlobalState);
+		entry != 0;
+		entry = *reinterpret_cast<uintptr_t*>(entry + 100)) {
+		if (name == reinterpret_cast<char*>(entry)) {
+			state = *reinterpret_cast<int*>(entry + 96);
+			return true;
+		}
+	}
+
+	return false;
 }

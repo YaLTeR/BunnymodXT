@@ -307,4 +307,6 @@ protected:
 		PRERESET,
 		POSTRESET
 	} resetState = ResetState::NORMAL;
+
+	std::string lastLoadedMap;
 };

@@ -250,9 +250,9 @@ namespace Interprocess
 		WriteBunnySplit(buf);
 	}
 
-	void WriteMapChange(const Time& time, std::string map)
+	void WriteMapChange(const Time& time, const std::string& map)
 	{
-		int size = static_cast<int>(map.size());
+		uint32_t size = static_cast<uint32_t>(map.size());
 
 		std::vector<char> buf(15 + size);
 		buf[0] = static_cast<char>(buf.size());
@@ -283,6 +283,17 @@ namespace Interprocess
 		buf[0] = static_cast<char>(buf.size());
 		buf[1] = static_cast<char>(MessageType::EVENT);
 		buf[2] = static_cast<char>(EventType::TIMER_START);
+		AddTimeToBuffer(buf.data() + 3, time);
+
+		WriteBunnySplit(buf);
+	}
+
+	void WriteBSALeapOfFaith(const Time& time)
+	{
+		std::vector<char> buf(11);
+		buf[0] = static_cast<char>(buf.size());
+		buf[1] = static_cast<char>(MessageType::EVENT);
+		buf[2] = static_cast<char>(EventType::BS_ALEAPOFFAITH);
 		AddTimeToBuffer(buf.data() + 3, time);
 
 		WriteBunnySplit(buf);

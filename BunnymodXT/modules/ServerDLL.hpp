@@ -41,6 +41,8 @@ public:
 	virtual void Clear();
 	virtual bool CanHook(const std::wstring& moduleFullName);
 
+	bool GetGlobalState(const std::string& name, int& state);
+
 	enginefuncs_t *pEngfuncs;
 	globalvars_t **ppGlobals;
 
@@ -85,6 +87,8 @@ protected:
 	ptrdiff_t offInDuck;
 	ptrdiff_t offFlags;
 	ptrdiff_t offBasevelocity;
+
+	void *pGlobalState;
 
 	static const ptrdiff_t offFuncIsPlayer = 0x9C;
 	static const ptrdiff_t offFuncCenter = 0xC8;

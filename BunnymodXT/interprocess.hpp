@@ -20,7 +20,8 @@ namespace Interprocess
 	void WriteFrametimeRemainder(double frametime_remainder);
 
 	void WriteGameEnd(const Time& time);
-	void WriteMapChange(const Time& time, std::string map);
+	void WriteMapChange(const Time& time, const std::string& map);
 	void WriteTimerReset(const Time& time);
 	void WriteTimerStart(const Time& time);
+	void WriteBSALeapOfFaith(const Time& time);
 }

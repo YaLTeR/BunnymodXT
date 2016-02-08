@@ -6,11 +6,14 @@
 #include <SPTLib/Hooks.hpp>
 #include "HwDLL.hpp"
 #include "ClientDLL.hpp"
+#include "ServerDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
 #include "../interprocess.hpp"
 #include "../bunnymodxt.hpp"
+
+using namespace std::literals;
 
 // Linux hooks.
 #ifndef _WIN32
@@ -236,6 +239,7 @@ void HwDLL::Clear()
 	SharedRNGSeedCounter = 0;
 	QueuedSharedRNGSeeds = 0;
 	LoadingSeedCounter = 0;
+	lastLoadedMap.clear();
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -1790,6 +1794,15 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 	if (!CountingSharedRNGSeed && SharedRNGSeedPresent)
 		SharedRNGSeedCounter = LastRandomSeed;
 
+	if (ORIG_Cmd_Argc && ORIG_Cmd_Argc() > 1 && ORIG_Cmd_Argv) {
+		if (lastLoadedMap == "ba_power1"s && !std::strcmp(ORIG_Cmd_Argv(1), "ba_teleport2")) {
+			int state;
+			if (ServerDLL::GetInstance().GetGlobalState("powercomplete"s, state) && state == 1) {
+				Interprocess::WriteBSALeapOfFaith(CustomHud::GetTime());
+			}
+		}
+	}
+
 	return ORIG_Host_Changelevel2_f();
 }
 
@@ -1836,8 +1849,10 @@ HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, char*, startspot)
 {
 	auto ret = ORIG_SV_SpawnServer(bIsDemo, server, startspot);
-	if (ret)
+	if (ret) {
 		Interprocess::WriteMapChange(CustomHud::GetTime(), server);
+		lastLoadedMap = server;
+	}
 
 	return ret;
 }

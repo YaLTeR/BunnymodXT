@@ -2,6 +2,7 @@
 
 #include "../sptlib-wrapper.hpp"
 #include "../shared.hpp"
+#include "../cvars.hpp"
 #include "../interprocess.hpp"
 
 namespace Interprocess
@@ -48,5 +49,82 @@ namespace Interprocess
 			Shutdown();
 			Initialize();
 		}
+	}
+
+	static size_t AddTimeToBuffer(char* buf, const Time& time)
+	{
+		std::memcpy(buf, &time.hours, sizeof(time.hours));
+		std::memcpy(buf + sizeof(time.hours), &time.minutes, sizeof(time.minutes));
+		std::memcpy(buf + sizeof(time.hours) + sizeof(time.minutes), &time.seconds, sizeof(time.seconds));
+		std::memcpy(buf + sizeof(time.hours) + sizeof(time.minutes) + sizeof(time.seconds), &time.milliseconds, sizeof(time.milliseconds));
+		return sizeof(time.hours) + sizeof(time.minutes) + sizeof(time.seconds) + sizeof(time.milliseconds);
+	}
+
+	void WriteTime(const Time& time)
+	{
+		if (!CVars::bxt_interprocess_enable.GetBool())
+			return;
+
+		std::vector<char> buf(10);
+		buf[0] = static_cast<char>(buf.size());
+		buf[1] = static_cast<char>(MessageType::TIME);
+		AddTimeToBuffer(buf.data() + 2, time);
+
+		Write(buf);
+	}
+
+	void WriteClip(float normal_z, float vel_in[3], float vel_out[3])
+	{
+		if (!CVars::bxt_interprocess_enable.GetBool())
+			return;
+
+		std::vector<char> buf(30);
+		buf[0] = static_cast<char>(buf.size());
+		buf[1] = static_cast<char>(MessageType::CLIP);
+		std::memcpy(buf.data() + 2, &normal_z, sizeof(normal_z));
+		std::memcpy(buf.data() + 6, vel_in, sizeof(*vel_in) * 3);
+		std::memcpy(buf.data() + 18, vel_out, sizeof(*vel_out) * 3);
+		Write(buf);
+	}
+
+	void WriteWater()
+	{
+		if (!CVars::bxt_interprocess_enable.GetBool())
+			return;
+
+		std::vector<char> buf = { 2, static_cast<char>(MessageType::WATER) };
+		Write(buf);
+	}
+
+	void WriteFrametimeRemainder(double frametime_remainder)
+	{
+		if (!CVars::bxt_interprocess_enable.GetBool())
+			return;
+
+		std::vector<char> buf(10);
+		buf[0] = static_cast<char>(buf.size());
+		buf[1] = static_cast<char>(MessageType::FRAMETIME_REMAINDER);
+		std::memcpy(buf.data() + 2, &frametime_remainder, sizeof(frametime_remainder));
+		Write(buf);
+	}
+
+	void WriteGameEnd(const Time& time)
+	{
+	}
+
+	void WriteMapChange(const Time& time, const std::string& map)
+	{
+	}
+
+	void WriteTimerReset(const Time& time)
+	{
+	}
+
+	void WriteTimerStart(const Time& time)
+	{
+	}
+
+	void WriteBSALeapOfFaith(const Time& time)
+	{
 	}
 }

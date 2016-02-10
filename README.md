@@ -6,11 +6,11 @@ Bunnymod XT (BXT for short) is a cross-platform tool that provides speedrunning 
 ##VAC BAN WARNING: Do NOT connect to servers with this injected, or you might get VAC banned!
 
 #Installation
-- Windows: [Is described here.](https://github.com/YaLTeR/BunnymodXT-Injector)
+- Windows: [Is described here](https://github.com/YaLTeR/BunnymodXT/wiki).
 - Linux: Download / build **libBunnymodXT.so** and launch Half-Life with it via **LD_PRELOAD**. [Here's a helper script](http://tastools.readthedocs.org/en/latest/tastools.html#half-life-execution-script) for launching Half-Life from your terminal.
 
 #Documentation
-[(outdated) On the SourceRuns wiki.](http://wiki.sourceruns.org/wiki/Bunnymod_XT)
+[On the Wiki pages](https://github.com/YaLTeR/BunnymodXT/wiki).
 
 ###Environment variables
 - **BXT_SCRIPT** - if set to a filename of a hltas script, loads the non-shared RNG from that script on load.

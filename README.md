@@ -19,6 +19,7 @@ Bunnymod XT (BXT for short) is a cross-platform tool that provides speedrunning 
 
 #Building
 ####Windows
+- You will need at least Visual Studio 2015 Update 1.
 - Get [Boost](http://www.boost.org/) and build **chrono**, **date_time**, **system** and **thread**.
 - Get [RapidJSON](https://github.com/miloyip/rapidjson/).
 - Create a build directory along the *src* directory.

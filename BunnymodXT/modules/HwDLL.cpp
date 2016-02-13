@@ -122,6 +122,25 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	}
 
 	if (needToIntercept) {
+		if (ORIG_LoadAndDecryptHwDLL) {
+			// When the old engine loads hw.dll, it marks it as PAGE_READWRITE, without EXECUTE.
+			// So we need to mark stuff as executable manually, otherwise MinHook complains.
+			MemUtils::MarkAsExecutable(ORIG_Cbuf_Execute);
+			MemUtils::MarkAsExecutable(ORIG_SeedRandomNumberGenerator);
+			MemUtils::MarkAsExecutable(ORIG_time);
+			MemUtils::MarkAsExecutable(ORIG_RandomFloat);
+			MemUtils::MarkAsExecutable(ORIG_RandomLong);
+			MemUtils::MarkAsExecutable(ORIG_Host_Changelevel2_f);
+			MemUtils::MarkAsExecutable(ORIG_SCR_BeginLoadingPlaque);
+			MemUtils::MarkAsExecutable(ORIG_Host_FilterTime);
+			MemUtils::MarkAsExecutable(ORIG_V_FadeAlpha);
+			MemUtils::MarkAsExecutable(ORIG_SCR_UpdateScreen);
+			MemUtils::MarkAsExecutable(ORIG_SV_SpawnServer);
+			MemUtils::MarkAsExecutable(ORIG_SV_Frame);
+			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConDPrintf);
+			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConPrintf);
+		}
+
 		MemUtils::Intercept(moduleName,
 			ORIG_LoadAndDecryptHwDLL, HOOKED_LoadAndDecryptHwDLL,
 			ORIG_Cbuf_Execute, HOOKED_Cbuf_Execute,

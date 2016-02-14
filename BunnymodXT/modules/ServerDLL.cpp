@@ -402,7 +402,7 @@ void ServerDLL::FindStuff()
 		else
 			EngineDevMsg("[server dll] Found CPushable::Move at %p (using the %s pattern).\n", ORIG_CPushable__Move, Patterns::ptnsCPushable__Move[n].build.c_str());
 	} else {
-		EngineDevMsg("[server dll] Could not find CPushable::Move.\n");
+		EngineDevWarning("[server dll] Could not find CPushable::Move.\n");
 		EngineWarning("Object boost logging is not available.\n");
 	}
 
@@ -410,7 +410,7 @@ void ServerDLL::FindStuff()
 	if (ORIG_CBasePlayer__TakeDamage)
 		EngineDevMsg("[server dll] Found CBasePlayer::TakeDamage at %p (using the %s pattern).\n", ORIG_CBasePlayer__TakeDamage, Patterns::ptnsCBasePlayer__TakeDamage[n].build.c_str());
 	else {
-		EngineDevMsg("[server dll] Could not find CBasePlayer::TakeDamage.\n");
+		EngineDevWarning("[server dll] Could not find CBasePlayer::TakeDamage.\n");
 		EngineWarning("Damage logging is not available.\n");
 	}
 
@@ -564,17 +564,25 @@ void ServerDLL::FindStuff()
 		if (pGiveFnptrsToDll)
 		{
 			// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
-			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
-			auto addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern, "x????xx");
+			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5, 0x5F, 0xA3 };
+			auto addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern, "x????xxxx");
 
-			// Big Lolly version: push eax; push offset dword; call memcpy
 			auto blolly = false;
+			auto svencoop = false;
 			if (!addr)
 			{
+				// Big Lolly version: push eax; push offset dword; call memcpy
 				const byte pattern_[] = { 0x50, 0x68, '?', '?', '?', '?', 0xE8 };
 				addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern_, "xx????x");
-				if (addr)
+				if (addr) {
 					blolly = true;
+				} else {
+					// Sven Co-op version: has a push in between.
+					const byte pattern__[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5, 0x68, '?', '?', '?', '?', 0xA3 };
+					addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern__, "x????xxx????x");
+					if (addr)
+						svencoop = true;
+				}
 			}
 
 			// Linux version: mov offset dword[eax], esi; mov [ecx+eax+4], ebx
@@ -592,6 +600,11 @@ void ServerDLL::FindStuff()
 				{
 					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr) + 2);
 					ppGlobals = *reinterpret_cast<globalvars_t***>(reinterpret_cast<uintptr_t>(addr) + 19);
+				}
+				else if (svencoop)
+				{
+					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr) + 1);
+					ppGlobals = *reinterpret_cast<globalvars_t***>(reinterpret_cast<uintptr_t>(addr) + 13);
 				}
 				else
 				{

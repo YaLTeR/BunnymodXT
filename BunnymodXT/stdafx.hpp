@@ -38,6 +38,7 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#include <utility>
 
 using std::uintptr_t;
 using std::size_t;

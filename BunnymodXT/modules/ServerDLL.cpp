@@ -198,12 +198,16 @@ bool ServerDLL::CanHook(const std::wstring& moduleFullName)
 
 void ServerDLL::FindStuff()
 {
-	auto fPM_PreventMegaBunnyJumping = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), m_Handle, "PM_PreventMegaBunnyJumping", m_Base, m_Length, Patterns::ptnsPMPreventMegaBunnyJumping,
-		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
-	);
+	auto fPM_PreventMegaBunnyJumping = FindFunctionAsync(
+		ORIG_PM_PreventMegaBunnyJumping,
+		"PM_PreventMegaBunnyJumping",
+		patterns::shared::PM_PreventMegaBunnyJumping);
 
-	auto fPM_PlayerMove = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_PlayerMove), m_Handle, "PM_PlayerMove", m_Base, m_Length, Patterns::ptnsPMPlayerMove,
-		[&](MemUtils::ptnvec_size ptnNumber) {
+	auto fPM_PlayerMove = FindFunctionAsync(
+		ORIG_PM_PlayerMove,
+		"PM_PlayerMove",
+		patterns::shared::PM_PlayerMove,
+		[&](auto pattern) {
 			offPlayerIndex = 0;
 			offVelocity = 92;
 			offOrigin = 56;
@@ -216,28 +220,30 @@ void ServerDLL::FindStuff()
 			offInDuck = 0x90;
 			offFlags = 0xB8;
 			offBasevelocity = 0x74;
-		}, []() { }
-	);
+		});
 
-	auto fPM_Jump = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_Jump), m_Handle, "PM_Jump", m_Base, m_Length, Patterns::ptnsPMJump,
-		[&](MemUtils::ptnvec_size ptnNumber) {
+	auto fPM_Jump = FindFunctionAsync(
+		ORIG_PM_Jump,
+		"PM_Jump",
+		patterns::shared::PM_Jump,
+		[&](auto pattern) {
 			offPlayerIndex = 0;
 			offOldbuttons = 200;
 			offOnground = 224;
-			if (ptnNumber == MemUtils::INVALID_SEQUENCE_INDEX) // Linux.
+			if (pattern == patterns::shared::PM_Jump.cend()) // Linux.
 			{
 				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 1);
-				void *bhopcapAddr;
-				auto n = MemUtils::FindUniqueSequence(m_Base, m_Length, Patterns::ptnsBhopcap, &bhopcapAddr);
-				if (n != MemUtils::INVALID_SEQUENCE_INDEX)
+				ptrdiff_t bhopcapAddr;
+				auto n = MemUtils::find_unique_sequence(m_Base, m_Length, patterns::shared::Bhopcap, bhopcapAddr);
+				if (n != patterns::shared::Bhopcap.cend())
 				{
-					offBhopcap = reinterpret_cast<ptrdiff_t>(bhopcapAddr) - reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump) + 27;
-					memcpy(originalBhopcapInsn, reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(bhopcapAddr) + 27), sizeof(originalBhopcapInsn));
+					offBhopcap = bhopcapAddr - reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump) + 27;
+					memcpy(originalBhopcapInsn, reinterpret_cast<void*>(static_cast<uintptr_t>(bhopcapAddr) + 27), sizeof(originalBhopcapInsn));
 				}
 			}
 			else
 			{
-				switch (ptnNumber)
+				switch (pattern - patterns::shared::PM_Jump.cbegin())
 				{
 				case 0:
 				case 1:
@@ -254,24 +260,17 @@ void ServerDLL::FindStuff()
 					break;
 				}
 			}
-		}, []() { }
-	);
+		});
 
-	auto fPM_ClipVelocity = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_ClipVelocity), m_Handle, "PM_ClipVelocity", m_Base, m_Length, Patterns::ptnsPM_ClipVelocity,
-		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
-	);
+	auto fPM_ClipVelocity = FindFunctionAsync(ORIG_PM_ClipVelocity, "PM_ClipVelocity", patterns::shared::PM_ClipVelocity);
+	auto fPM_WaterMove = FindFunctionAsync(ORIG_PM_WaterMove, "PM_WaterMove", patterns::shared::PM_WaterMove);
+	auto fCTriggerVolume__Spawn = FindAsync(ORIG_CTriggerVolume__Spawn,	patterns::server::CTriggerVolume__Spawn);
 
-	auto fPM_WaterMove = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_WaterMove), m_Handle, "PM_WaterMove", m_Base, m_Length, Patterns::ptnsPM_WaterMove,
-		[](MemUtils::ptnvec_size ptnNumber) {}, []() {}
-	);
-
-	auto fCTriggerVolume__Spawn = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_CTriggerVolume__Spawn), m_Base, m_Length,
-		Patterns::ptnsCTriggerVolume__Spawn, [](MemUtils::ptnvec_size ptnNumber) { }, []() { }
-	);
-
-	auto fCBasePlayer__ForceClientDllUpdate = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_CBasePlayer__ForceClientDllUpdate), m_Base, m_Length, Patterns::ptnsCBasePlayer__ForceClientDllUpdate,
-		[&](MemUtils::ptnvec_size ptnNumber) {
-			switch (ptnNumber) {
+	auto fCBasePlayer__ForceClientDllUpdate = FindAsync(
+		ORIG_CBasePlayer__ForceClientDllUpdate,
+		patterns::server::CBasePlayer__ForceClientDllUpdate,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CBasePlayer__ForceClientDllUpdate.cbegin()) {
 			case 0:  // HL-SteamPipe
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x554;
@@ -295,123 +294,121 @@ void ServerDLL::FindStuff()
 			default:
 				assert(false);
 			}
-		}, []() { }
-	);
+		});
 
-	auto fPM_WalkMove = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_WalkMove), m_Handle, "PM_WalkMove", m_Base, m_Length, Patterns::ptnsPM_WalkMove,
-		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
-	);
-
-	auto fPM_FlyMove = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_FlyMove), m_Handle, "PM_FlyMove", m_Base, m_Length, Patterns::ptnsPM_FlyMove,
-		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
-	);
-
-	auto fPM_AddToTouched = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_AddToTouched), m_Handle, "PM_AddToTouched", m_Base, m_Length, Patterns::ptnsPM_AddToTouched,
-		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
-	);
-
-	auto fPM_Ladder = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_Ladder), m_Handle, "PM_Ladder", m_Base, m_Length, Patterns::ptnsPM_Ladder,
-		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
-	);
-
-	auto fCPushable__Move = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_CPushable__Move), m_Base, m_Length, Patterns::ptnsCPushable__Move,
-		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
-	);
-
-	auto fCBasePlayer__TakeDamage = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_CBasePlayer__TakeDamage), m_Base, m_Length, Patterns::ptnsCBasePlayer__TakeDamage,
-		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
-	);
+	auto fPM_WalkMove = FindFunctionAsync(ORIG_PM_WalkMove, "PM_WalkMove", patterns::shared::PM_WalkMove);
+	auto fPM_FlyMove = FindFunctionAsync(ORIG_PM_FlyMove, "PM_FlyMove", patterns::shared::PM_FlyMove);
+	auto fPM_AddToTouched = FindFunctionAsync(ORIG_PM_AddToTouched, "PM_AddToTouched", patterns::shared::PM_AddToTouched);
+	auto fPM_Ladder = FindFunctionAsync(ORIG_PM_Ladder, "PM_Ladder", patterns::shared::PM_Ladder);
+	auto fCPushable__Move = FindAsync(ORIG_CPushable__Move, patterns::server::CPushable__Move);
+	auto fCBasePlayer__TakeDamage = FindAsync(ORIG_CBasePlayer__TakeDamage, patterns::server::CBasePlayer__TakeDamage);
 
 	uintptr_t pDispatchRestore;
-	auto fDispatchRestore = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&pDispatchRestore), m_Base, m_Length, Patterns::ptnsDispatchRestore,
-		[&](MemUtils::ptnvec_size ptnNumber) {
+	auto fDispatchRestore = FindAsync(
+		pDispatchRestore,
+		patterns::server::DispatchRestore,
+		[&](auto pattern) {
 			pGlobalState = *reinterpret_cast<void**>(pDispatchRestore + 153);
-		}, []() { }
-	);
+		});
 
 	bool noBhopcap = false;
-	auto n = fPM_PreventMegaBunnyJumping.get();
-	if (ORIG_PM_PreventMegaBunnyJumping) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found PM_PreventMegaBunnyJumping at %p.\n", ORIG_PM_PreventMegaBunnyJumping);
-		else
-			EngineDevMsg("[server dll] Found PM_PreventMegaBunnyJumping at %p (using the %s pattern).\n", ORIG_PM_PreventMegaBunnyJumping, Patterns::ptnsPMPreventMegaBunnyJumping[n].build.c_str());
-	} else {
-		EngineDevWarning("[server dll] Could not find PM_PreventMegaBunnyJumping.\n");
-		EngineWarning("Bhopcap disabling is not available.\n");
-		noBhopcap = true;
-	}
-
-	n = fPM_PlayerMove.get();
-	if (ORIG_PM_PlayerMove) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found PM_PlayerMove at %p.\n", ORIG_PM_PlayerMove);
-		else
-			EngineDevMsg("[server dll] Found PM_PlayerMove at %p (using the %s pattern).\n", ORIG_PM_PlayerMove, Patterns::ptnsPMPlayerMove[n].build.c_str());
-	} else
-		EngineDevWarning("[server dll] Could not find PM_PlayerMove.\n");
-
-	n = fPM_Jump.get();
-	if (ORIG_PM_Jump) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found PM_Jump at %p.\n", ORIG_PM_Jump);
-		else
-			EngineDevMsg("[server dll] Found PM_Jump at %p (using the %s pattern).\n", ORIG_PM_Jump, Patterns::ptnsPMJump[n].build.c_str());
-		if (offBhopcap)
-			EngineDevMsg("[server dll] Found the bhopcap pattern at %p.\n", reinterpret_cast<void*>(offBhopcap + reinterpret_cast<uintptr_t>(ORIG_PM_Jump) - 27));
-	} else {
-		EngineDevWarning("[server dll] Could not find PM_Jump.\n");
-		EngineWarning("Autojump is not available.\n");
-		if (!noBhopcap)
+	{
+		auto pattern = fPM_PreventMegaBunnyJumping.get();
+		if (ORIG_PM_PreventMegaBunnyJumping) {
+			if (pattern == patterns::shared::PM_PreventMegaBunnyJumping.cend())
+				EngineDevMsg("[server dll] Found PM_PreventMegaBunnyJumping at %p.\n", ORIG_PM_PreventMegaBunnyJumping);
+			else
+				EngineDevMsg("[server dll] Found PM_PreventMegaBunnyJumping at %p (using the %s pattern).\n", ORIG_PM_PreventMegaBunnyJumping, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_PreventMegaBunnyJumping.\n");
 			EngineWarning("Bhopcap disabling is not available.\n");
-	}
-
-	n = fCTriggerVolume__Spawn.get();
-	if (ORIG_CTriggerVolume__Spawn) {
-		EngineDevMsg("[server dll] Found CTriggerVolume::Spawn at %p (using the %s pattern).\n", ORIG_CTriggerVolume__Spawn, Patterns::ptnsCTriggerVolume__Spawn[n].build.c_str());
-	} else {
-		ORIG_CTriggerVolume__Spawn_Linux = reinterpret_cast<_CTriggerVolume__Spawn_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN14CTriggerVolume5SpawnEv"));
-		if (ORIG_CTriggerVolume__Spawn_Linux) {
-			EngineDevMsg("[server dll] Found CTriggerVolume::Spawn [Linux] at %p.\n", ORIG_CTriggerVolume__Spawn_Linux);
-		} else {
-			EngineDevWarning("[server dll] Could not find CTriggerVolume::Spawn.\n");
-			EngineWarning("trigger_transition entities will not be displayed.\n");
+			noBhopcap = true;
 		}
 	}
 
-	n = fCBasePlayer__ForceClientDllUpdate.get();
-	if (ORIG_CBasePlayer__ForceClientDllUpdate) {
-		EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate at %p (using the %s pattern).\n", ORIG_CBasePlayer__ForceClientDllUpdate, Patterns::ptnsCBasePlayer__ForceClientDllUpdate[n].build.c_str());
-	} else {
-		ORIG_CBasePlayer__ForceClientDllUpdate_Linux = reinterpret_cast<_CBasePlayer__ForceClientDllUpdate_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer20ForceClientDllUpdateEv"));
-		if (ORIG_CBasePlayer__ForceClientDllUpdate_Linux) {
-			maxAmmoSlots = MAX_AMMO_SLOTS;
-			offm_rgAmmoLast = 0x568;
-			offm_iClientFOV = 0x4C0;
-			EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate [Linux] at %p.\n", ORIG_CBasePlayer__ForceClientDllUpdate_Linux);
+	{
+		auto pattern = fPM_PlayerMove.get();
+		if (ORIG_PM_PlayerMove) {
+			if (pattern == patterns::shared::PM_PlayerMove.cend())
+				EngineDevMsg("[server dll] Found PM_PlayerMove at %p.\n", ORIG_PM_PlayerMove);
+			else
+				EngineDevMsg("[server dll] Found PM_PlayerMove at %p (using the %s pattern).\n", ORIG_PM_PlayerMove, pattern->name());
 		} else {
-			EngineDevWarning("[server dll] Could not find CBasePlayer::ForceClientDllUpdate.\n");
-			EngineWarning("Ammo HUD reset prevention is not available.\n");
+			EngineDevWarning("[server dll] Could not find PM_PlayerMove.\n");
 		}
 	}
 
-	n = fCPushable__Move.get();
-	if (ORIG_CPushable__Move) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found CPushable::Move at %p.\n", ORIG_CPushable__Move);
-		else
-			EngineDevMsg("[server dll] Found CPushable::Move at %p (using the %s pattern).\n", ORIG_CPushable__Move, Patterns::ptnsCPushable__Move[n].build.c_str());
-	} else {
-		EngineDevWarning("[server dll] Could not find CPushable::Move.\n");
-		EngineWarning("Object boost logging is not available.\n");
+	{
+		auto pattern = fPM_Jump.get();
+		if (ORIG_PM_Jump) {
+			if (pattern == patterns::shared::PM_Jump.cend())
+				EngineDevMsg("[server dll] Found PM_Jump at %p.\n", ORIG_PM_Jump);
+			else
+				EngineDevMsg("[server dll] Found PM_Jump at %p (using the %s pattern).\n", ORIG_PM_Jump, pattern->name());
+			if (offBhopcap)
+				EngineDevMsg("[server dll] Found the bhopcap pattern at %p.\n", reinterpret_cast<void*>(offBhopcap + reinterpret_cast<uintptr_t>(ORIG_PM_Jump) - 27));
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_Jump.\n");
+			EngineWarning("Autojump is not available.\n");
+			if (!noBhopcap)
+				EngineWarning("Bhopcap disabling is not available.\n");
+		}
 	}
 
-	n = fCBasePlayer__TakeDamage.get();
-	if (ORIG_CBasePlayer__TakeDamage)
-		EngineDevMsg("[server dll] Found CBasePlayer::TakeDamage at %p (using the %s pattern).\n", ORIG_CBasePlayer__TakeDamage, Patterns::ptnsCBasePlayer__TakeDamage[n].build.c_str());
-	else {
-		EngineDevWarning("[server dll] Could not find CBasePlayer::TakeDamage.\n");
-		EngineWarning("Damage logging is not available.\n");
+	{
+		auto pattern = fCTriggerVolume__Spawn.get();
+		if (ORIG_CTriggerVolume__Spawn) {
+			EngineDevMsg("[server dll] Found CTriggerVolume::Spawn at %p (using the %s pattern).\n", ORIG_CTriggerVolume__Spawn, pattern->name());
+		} else {
+			ORIG_CTriggerVolume__Spawn_Linux = reinterpret_cast<_CTriggerVolume__Spawn_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN14CTriggerVolume5SpawnEv"));
+			if (ORIG_CTriggerVolume__Spawn_Linux) {
+				EngineDevMsg("[server dll] Found CTriggerVolume::Spawn [Linux] at %p.\n", ORIG_CTriggerVolume__Spawn_Linux);
+			} else {
+				EngineDevWarning("[server dll] Could not find CTriggerVolume::Spawn.\n");
+				EngineWarning("trigger_transition entities will not be displayed.\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fCBasePlayer__ForceClientDllUpdate.get();
+		if (ORIG_CBasePlayer__ForceClientDllUpdate) {
+			EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate at %p (using the %s pattern).\n", ORIG_CBasePlayer__ForceClientDllUpdate, pattern->name());
+		} else {
+			ORIG_CBasePlayer__ForceClientDllUpdate_Linux = reinterpret_cast<_CBasePlayer__ForceClientDllUpdate_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer20ForceClientDllUpdateEv"));
+			if (ORIG_CBasePlayer__ForceClientDllUpdate_Linux) {
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x568;
+				offm_iClientFOV = 0x4C0;
+				EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate [Linux] at %p.\n", ORIG_CBasePlayer__ForceClientDllUpdate_Linux);
+			} else {
+				EngineDevWarning("[server dll] Could not find CBasePlayer::ForceClientDllUpdate.\n");
+				EngineWarning("Ammo HUD reset prevention is not available.\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fCPushable__Move.get();
+		if (ORIG_CPushable__Move) {
+			if (pattern == patterns::server::CPushable__Move.cend())
+				EngineDevMsg("[server dll] Found CPushable::Move at %p.\n", ORIG_CPushable__Move);
+			else
+				EngineDevMsg("[server dll] Found CPushable::Move at %p (using the %s pattern).\n", ORIG_CPushable__Move, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find CPushable::Move.\n");
+			EngineWarning("Object boost logging is not available.\n");
+		}
+	}
+
+	{
+		auto pattern = fCBasePlayer__TakeDamage.get();
+		if (ORIG_CBasePlayer__TakeDamage) {
+			EngineDevMsg("[server dll] Found CBasePlayer::TakeDamage at %p (using the %s pattern).\n", ORIG_CBasePlayer__TakeDamage, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find CBasePlayer::TakeDamage.\n");
+			EngineWarning("Damage logging is not available.\n");
+		}
 	}
 
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
@@ -446,9 +443,9 @@ void ServerDLL::FindStuff()
 	}
 
 	ORIG_CNihilanth__DyingThink = reinterpret_cast<_CNihilanth__DyingThink>(MemUtils::GetSymbolAddress(m_Handle, "?DyingThink@CNihilanth@@QAEXXZ"));
-	if (ORIG_CNihilanth__DyingThink)
+	if (ORIG_CNihilanth__DyingThink) {
 		EngineDevMsg("[server dll] Found CNihilanth::DyingThink at %p.\n", ORIG_CNihilanth__DyingThink);
-	else {
+	} else {
 		ORIG_CNihilanth__DyingThink_Linux = reinterpret_cast<_CNihilanth__DyingThink_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN10CNihilanth10DyingThinkEv"));
 		if (ORIG_CNihilanth__DyingThink_Linux)
 			EngineDevMsg("[server dll] Found CNihilanth::DyingThink [Linux] at %p.\n", ORIG_CNihilanth__DyingThink_Linux);
@@ -459,9 +456,9 @@ void ServerDLL::FindStuff()
 	}
 
 	ORIG_COFGeneWorm__DyingThink = reinterpret_cast<_COFGeneWorm__DyingThink>(MemUtils::GetSymbolAddress(m_Handle, "?DyingThink@COFGeneWorm@@QAEXXZ"));
-	if (ORIG_COFGeneWorm__DyingThink)
+	if (ORIG_COFGeneWorm__DyingThink) {
 		EngineDevMsg("[server dll] Found COFGeneWorm::DyingThink at %p.\n", ORIG_COFGeneWorm__DyingThink);
-	else {
+	} else {
 		ORIG_COFGeneWorm__DyingThink_Linux = reinterpret_cast<_COFGeneWorm__DyingThink_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11COFGeneWorm10DyingThinkEv"));
 		if (ORIG_COFGeneWorm__DyingThink_Linux)
 			EngineDevMsg("[server dll] Found COFGeneWorm::DyingThink [Linux] at %p.\n", ORIG_COFGeneWorm__DyingThink_Linux);
@@ -472,9 +469,9 @@ void ServerDLL::FindStuff()
 	}
 
 	ORIG_CMultiManager__ManagerThink = reinterpret_cast<_CMultiManager__ManagerThink>(MemUtils::GetSymbolAddress(m_Handle, "?ManagerThink@CMultiManager@@QAEXXZ"));
-	if (ORIG_CMultiManager__ManagerThink)
+	if (ORIG_CMultiManager__ManagerThink) {
 		EngineDevMsg("[server dll] Found CMultiManager::ManagerThink at %p.\n", ORIG_CMultiManager__ManagerThink);
-	else {
+	} else {
 		ORIG_CMultiManager__ManagerUse_Linux = reinterpret_cast<_CMultiManager__ManagerUse_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN13CMultiManager10ManagerUseEP11CBaseEntityS1_8USE_TYPEf"));
 		if (ORIG_CMultiManager__ManagerUse_Linux)
 			EngineDevMsg("[server dll] Found CMultiManager::ManagerUse [Linux] at %p.\n", ORIG_CMultiManager__ManagerUse_Linux);
@@ -484,73 +481,90 @@ void ServerDLL::FindStuff()
 		}
 	}
 
-	n = fPM_ClipVelocity.get();
-	if (ORIG_PM_ClipVelocity) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found PM_ClipVelocity at %p.\n", ORIG_PM_ClipVelocity);
-		else
-			EngineDevMsg("[server dll] Found PM_ClipVelocity at %p (using the %s pattern).\n", ORIG_PM_ClipVelocity, Patterns::ptnsPM_ClipVelocity[n].build.c_str());
-	} else {
-		EngineDevWarning("[server dll] Could not find PM_ClipVelocity.\n");
-		EngineWarning("Velocity clip logging is not available.\n");
+	{
+		auto pattern = fPM_ClipVelocity.get();
+		if (ORIG_PM_ClipVelocity) {
+			if (pattern == patterns::shared::PM_ClipVelocity.cend())
+				EngineDevMsg("[server dll] Found PM_ClipVelocity at %p.\n", ORIG_PM_ClipVelocity);
+			else
+				EngineDevMsg("[server dll] Found PM_ClipVelocity at %p (using the %s pattern).\n", ORIG_PM_ClipVelocity, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_ClipVelocity.\n");
+			EngineWarning("Velocity clip logging is not available.\n");
+		}
 	}
 
-	n = fPM_WaterMove.get();
-	if (ORIG_PM_WaterMove) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found PM_WaterMove at %p.\n", ORIG_PM_WaterMove);
-		else
-			EngineDevMsg("[server dll] Found PM_WaterMove at %p (using the %s pattern).\n", ORIG_PM_WaterMove, Patterns::ptnsPM_WaterMove[n].build.c_str());
-	} else {
-		EngineDevWarning("[server dll] Could not find PM_WaterMove.\n");
-		EngineWarning("Water frame logging is not available.\n");
+	{
+		auto pattern = fPM_WaterMove.get();
+		if (ORIG_PM_WaterMove) {
+			if (pattern == patterns::shared::PM_WaterMove.cend())
+				EngineDevMsg("[server dll] Found PM_WaterMove at %p.\n", ORIG_PM_WaterMove);
+			else
+				EngineDevMsg("[server dll] Found PM_WaterMove at %p (using the %s pattern).\n", ORIG_PM_WaterMove, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_WaterMove.\n");
+			EngineWarning("Water frame logging is not available.\n");
+		}
 	}
 
-	n = fPM_WalkMove.get();
-	if (ORIG_PM_WalkMove) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found PM_WalkMove at %p.\n", ORIG_PM_WalkMove);
-		else
-			EngineDevMsg("[server dll] Found PM_WalkMove at %p (using the %s pattern).\n", ORIG_PM_WalkMove, Patterns::ptnsPM_WalkMove[n].build.c_str());
-	} else
-		EngineDevWarning("[server dll] Could not find PM_WalkMove.\n");
-
-	n = fPM_FlyMove.get();
-	if (ORIG_PM_FlyMove) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found PM_FlyMove at %p.\n", ORIG_PM_FlyMove);
-		else
-			EngineDevMsg("[server dll] Found PM_FlyMove at %p (using the %s pattern).\n", ORIG_PM_FlyMove, Patterns::ptnsPM_FlyMove[n].build.c_str());
-	} else
-		EngineDevWarning("[server dll] Could not find PM_FlyMove.\n");
-
-	n = fPM_AddToTouched.get();
-	if (ORIG_PM_AddToTouched) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found PM_AddToTouched at %p.\n", ORIG_PM_AddToTouched);
-		else
-			EngineDevMsg("[server dll] Found PM_AddToTouched at %p (using the %s pattern).\n", ORIG_PM_AddToTouched, Patterns::ptnsPM_AddToTouched[n].build.c_str());
-	} else
-		EngineDevWarning("[server dll] Could not find PM_AddToTouched.\n");
-
-	n = fPM_Ladder.get();
-	if (ORIG_PM_Ladder) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[server dll] Found PM_Ladder at %p.\n", ORIG_PM_Ladder);
-		else
-			EngineDevMsg("[server dll] Found PM_Ladder at %p (using the %s pattern).\n", ORIG_PM_Ladder, Patterns::ptnsPM_Ladder[n].build.c_str());
-	} else {
-		EngineDevWarning("[server dll] Could not find PM_Ladder.\n");
-		EngineWarning("TAS logging for onladder status is unavailable.\n");
+	{
+		auto pattern = fPM_WalkMove.get();
+		if (ORIG_PM_WalkMove) {
+			if (pattern == patterns::shared::PM_WalkMove.cend())
+				EngineDevMsg("[server dll] Found PM_WalkMove at %p.\n", ORIG_PM_WalkMove);
+			else
+				EngineDevMsg("[server dll] Found PM_WalkMove at %p (using the %s pattern).\n", ORIG_PM_WalkMove, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_WalkMove.\n");
+		}
 	}
 
-	n = fDispatchRestore.get();
-	if (pDispatchRestore) {
-		EngineDevMsg("[server dll] Found DispatchRestore at %p (using the %s pattern).\n", pDispatchRestore, Patterns::ptnsDispatchRestore[n].build.c_str());
-		EngineDevMsg("[server dll] Found gGlobalState at %p.\n", pGlobalState);
-	} else {
-		EngineDevWarning("[server dll] Could not find DispatchRestore.\n");
-		EngineWarning("Blue Shift \"A Leap of Faith\" chapter autosplit is unavailable.\n");
+	{
+		auto pattern = fPM_FlyMove.get();
+		if (ORIG_PM_FlyMove) {
+			if (pattern == patterns::shared::PM_FlyMove.cend())
+				EngineDevMsg("[server dll] Found PM_FlyMove at %p.\n", ORIG_PM_FlyMove);
+			else
+				EngineDevMsg("[server dll] Found PM_FlyMove at %p (using the %s pattern).\n", ORIG_PM_FlyMove, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_FlyMove.\n");
+		}
+	}
+
+	{
+		auto pattern = fPM_AddToTouched.get();
+		if (ORIG_PM_AddToTouched) {
+			if (pattern == patterns::shared::PM_AddToTouched.cend())
+				EngineDevMsg("[server dll] Found PM_AddToTouched at %p.\n", ORIG_PM_AddToTouched);
+			else
+				EngineDevMsg("[server dll] Found PM_AddToTouched at %p (using the %s pattern).\n", ORIG_PM_AddToTouched, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_AddToTouched.\n");
+		}
+	}
+
+	{
+		auto pattern = fPM_Ladder.get();
+		if (ORIG_PM_Ladder) {
+			if (pattern == patterns::shared::PM_Ladder.cend())
+				EngineDevMsg("[server dll] Found PM_Ladder at %p.\n", ORIG_PM_Ladder);
+			else
+				EngineDevMsg("[server dll] Found PM_Ladder at %p (using the %s pattern).\n", ORIG_PM_Ladder, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_Ladder.\n");
+			EngineWarning("TAS logging for onladder status is unavailable.\n");
+		}
+	}
+
+	{
+		auto pattern = fDispatchRestore.get();
+		if (pDispatchRestore) {
+			EngineDevMsg("[server dll] Found DispatchRestore at %p (using the %s pattern).\n", pDispatchRestore, pattern->name());
+			EngineDevMsg("[server dll] Found gGlobalState at %p.\n", pGlobalState);
+		} else {
+			EngineDevWarning("[server dll] Could not find DispatchRestore.\n");
+			EngineWarning("Blue Shift \"A Leap of Faith\" chapter autosplit is unavailable.\n");
+		}
 	}
 
 	// This has to be the last thing to check and hook.
@@ -564,52 +578,40 @@ void ServerDLL::FindStuff()
 		if (pGiveFnptrsToDll)
 		{
 			// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
-			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5, 0x5F, 0xA3 };
-			auto addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern, "x????xxxx");
+			auto addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, PATTERN("", "BF ?? ?? ?? ?? F3 A5 5F A3"));
 
 			auto blolly = false;
 			auto svencoop = false;
 			if (!addr)
 			{
 				// Big Lolly version: push eax; push offset dword; call memcpy
-				const byte pattern_[] = { 0x50, 0x68, '?', '?', '?', '?', 0xE8 };
-				addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern_, "xx????x");
+				addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, PATTERN("", "50 68 ?? ?? ?? ?? E8"));
 				if (addr) {
 					blolly = true;
 				} else {
 					// Sven Co-op version: has a push in between.
-					const byte pattern__[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5, 0x68, '?', '?', '?', '?', 0xA3 };
-					addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern__, "x????xxx????x");
+					addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, PATTERN("", "BF ?? ?? ?? ?? F3 A5 68 ?? ?? ?? ?? A3"));
 					if (addr)
 						svencoop = true;
 				}
 			}
 
-			// Linux version: mov offset dword[eax], esi; mov [ecx+eax+4], ebx
-			// if (!addr)
-			// {
-			// 	const byte pattern_[] = { 0x89, 0xB0, '?', '?', '?', '?', 0x89, 0x5C, 0x01, 0x04 };
-			// 	addr = MemUtils::FindPattern(pGiveFnptrsToDll, 40, pattern_, "xx????xxxx");
-			// 	if (addr)
-			// 		addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(addr)+1); // So we're compatible with the previous pattern.
-			// }
-
 			if (addr)
 			{
 				if (blolly)
 				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr) + 2);
-					ppGlobals = *reinterpret_cast<globalvars_t***>(reinterpret_cast<uintptr_t>(addr) + 19);
+					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 2);
+					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 19);
 				}
 				else if (svencoop)
 				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr) + 1);
-					ppGlobals = *reinterpret_cast<globalvars_t***>(reinterpret_cast<uintptr_t>(addr) + 13);
+					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
+					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 13);
 				}
 				else
 				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(addr) + 1);
-					ppGlobals = *reinterpret_cast<globalvars_t***>(reinterpret_cast<uintptr_t>(addr) + 9);
+					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
+					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 9);
 				}
 
 				EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);

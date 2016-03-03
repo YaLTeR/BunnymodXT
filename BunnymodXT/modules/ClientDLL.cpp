@@ -136,20 +136,24 @@ void ClientDLL::Clear()
 
 void ClientDLL::FindStuff()
 {
-	auto fPM_PreventMegaBunnyJumping = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_PreventMegaBunnyJumping), m_Handle, "PM_PreventMegaBunnyJumping", m_Base, m_Length, Patterns::ptnsPMPreventMegaBunnyJumping,
-		[](MemUtils::ptnvec_size ptnNumber) { }, []() { }
-	);
+	auto fPM_PreventMegaBunnyJumping = FindFunctionAsync(
+		ORIG_PM_PreventMegaBunnyJumping,
+		"PM_PreventMegaBunnyJumping",
+		patterns::shared::PM_PreventMegaBunnyJumping);
 
-	auto fPM_Jump = MemUtils::Find(reinterpret_cast<void**>(&ORIG_PM_Jump), m_Handle, "PM_Jump", m_Base, m_Length, Patterns::ptnsPMJump,
-		[&](MemUtils::ptnvec_size ptnNumber) {
+	auto fPM_Jump = FindFunctionAsync(
+		ORIG_PM_Jump,
+		"PM_Jump",
+		patterns::shared::PM_Jump,
+		[&](auto pattern) {
 			offOldbuttons = 200;
 			offOnground = 224;
-			if (ptnNumber == MemUtils::INVALID_SEQUENCE_INDEX) // Linux.
+			if (pattern == patterns::shared::PM_Jump.cend()) // Linux.
 			{
 				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 1);
 				void *bhopcapAddr;
-				auto n = MemUtils::FindUniqueSequence(m_Base, m_Length, Patterns::ptnsBhopcap, &bhopcapAddr);
-				if (n != MemUtils::INVALID_SEQUENCE_INDEX)
+				auto n = MemUtils::find_unique_sequence(m_Base, m_Length, patterns::shared::Bhopcap, bhopcapAddr);
+				if (n != patterns::shared::Bhopcap.cend())
 				{
 					offBhopcap = reinterpret_cast<ptrdiff_t>(bhopcapAddr) - reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump) + 27;
 					memcpy(originalBhopcapInsn, reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(bhopcapAddr) + 27), sizeof(originalBhopcapInsn));
@@ -157,7 +161,7 @@ void ClientDLL::FindStuff()
 			}
 			else
 			{
-				switch (ptnNumber)
+				switch (pattern - patterns::shared::PM_Jump.cbegin())
 				{
 				case 0:
 				case 1:
@@ -174,18 +178,16 @@ void ClientDLL::FindStuff()
 					break;
 				}
 			}
-		}, []() { }
-	);
+		});
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
 	ORIG_PM_WaterMove = reinterpret_cast<_PM_WaterMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_WaterMove")); // For Linux.
 
 	pEngfuncs = reinterpret_cast<cl_enginefunc_t*>(MemUtils::GetSymbolAddress(m_Handle, "gEngfuncs"));
-	if (pEngfuncs)
+	if (pEngfuncs) {
 		EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
-	else
-	{
+	} else {
 		// In AG, this thing is the main function, so check that first.
 		auto pInitialize = MemUtils::GetSymbolAddress(m_Handle, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z");
 		if (!pInitialize)
@@ -203,17 +205,13 @@ void ClientDLL::FindStuff()
 			}
 
 			// Find "mov edi, offset dword; rep movsd" inside Initialize. The pointer to gEngfuncs is that dword.
-			const byte pattern[] = { 0xBF, '?', '?', '?', '?', 0xF3, 0xA5 };
-			auto addr = MemUtils::FindPattern(pInitialize, 40, pattern, "x????xx");
+			auto addr = MemUtils::find_pattern(pInitialize, 40, PATTERN("", "BF ?? ?? ?? ?? F3 A5"));
 			if (!addr)
-			{
-				const byte pattern_[] = { 0xB9, '?', '?', '?', '?', 0x8B, 0x54, 0x24, 0x10 };
-				addr = MemUtils::FindPattern(pInitialize, 40, pattern_, "x????xxxx");
-			}
+				addr = MemUtils::find_pattern(pInitialize, 40, PATTERN("", "B9 ?? ?? ?? ?? 8B 54 24 10"));
 
 			if (addr)
 			{
-				pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(addr)+1);
+				pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(addr+1);
 				EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
 			}
 			else
@@ -232,7 +230,7 @@ void ClientDLL::FindStuff()
 	}
 
 	// We can draw stuff only if we know that we have already received / will receive engfuncs.
-	if (pEngfuncs)
+	if (pEngfuncs) {
 		if (!FindHUDFunctions()) {
 			ORIG_HUD_Init = nullptr;
 			ORIG_HUD_VidInit = nullptr;
@@ -240,11 +238,12 @@ void ClientDLL::FindStuff()
 			ORIG_HUD_Redraw = nullptr;
 			EngineWarning("Custom HUD is not available.\n");
 		}
+	}
 
 	ORIG_V_CalcRefdef = reinterpret_cast<_V_CalcRefdef>(MemUtils::GetSymbolAddress(m_Handle, "V_CalcRefdef"));
-	if (ORIG_V_CalcRefdef)
+	if (ORIG_V_CalcRefdef) {
 		EngineDevMsg("[client dll] Found V_CalcRefdef at %p.\n", ORIG_V_CalcRefdef);
-	else {
+	} else {
 		EngineDevWarning("[client dll] Could not find V_CalcRefdef.\n");
 		EngineWarning("Velocity display during demo playback is not available.\n");
 	}
@@ -256,68 +255,72 @@ void ClientDLL::FindStuff()
 		EngineDevWarning("[client dll] Could not find HUD_PostRunCmd.\n");
 
 	ORIG_HUD_Frame = reinterpret_cast<_HUD_Frame>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Frame"));
-	if (ORIG_HUD_Frame)
+	if (ORIG_HUD_Frame) {
 		EngineDevMsg("[client dll] Found HUD_Frame at %p.\n", ORIG_HUD_Frame);
-	else {
+	} else {
 		EngineDevWarning("[client dll] Could not find HUD_Frame.\n");
 		EngineWarning("In-game timer is not available.\n");
 	}
 
 	bool noBhopcap = false;
-	auto n = fPM_PreventMegaBunnyJumping.get();
-	if (ORIG_PM_PreventMegaBunnyJumping) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[client dll] Found PM_PreventMegaBunnyJumping at %p.\n", ORIG_PM_PreventMegaBunnyJumping);
-		else
-			EngineDevMsg("[client dll] Found PM_PreventMegaBunnyJumping at %p (using the %s pattern).\n", ORIG_PM_PreventMegaBunnyJumping, Patterns::ptnsPMPreventMegaBunnyJumping[n].build.c_str());
-	} else {
-		EngineDevWarning("[client dll] Could not find PM_PreventMegaBunnyJumping.\n");
-		EngineWarning("Bhopcap prediction disabling is not available.\n");
-		noBhopcap = true;
+	{
+		auto pattern = fPM_PreventMegaBunnyJumping.get();
+		if (ORIG_PM_PreventMegaBunnyJumping) {
+			if (pattern == patterns::shared::PM_PreventMegaBunnyJumping.cend())
+				EngineDevMsg("[client dll] Found PM_PreventMegaBunnyJumping at %p.\n", ORIG_PM_PreventMegaBunnyJumping);
+			else
+				EngineDevMsg("[client dll] Found PM_PreventMegaBunnyJumping at %p (using the %s pattern).\n", ORIG_PM_PreventMegaBunnyJumping, pattern->name());
+		} else {
+			EngineDevWarning("[client dll] Could not find PM_PreventMegaBunnyJumping.\n");
+			EngineWarning("Bhopcap prediction disabling is not available.\n");
+			noBhopcap = true;
+		}
 	}
 
-	n = fPM_Jump.get();
-	if (ORIG_PM_Jump) {
-		if (n == MemUtils::INVALID_SEQUENCE_INDEX)
-			EngineDevMsg("[client dll] Found PM_Jump at %p.\n", ORIG_PM_Jump);
-		else
-			EngineDevMsg("[client dll] Found PM_Jump at %p (using the %s pattern).\n", ORIG_PM_Jump, Patterns::ptnsPMJump[n].build.c_str());
-		if (offBhopcap)
-			EngineDevMsg("[client dll] Found the bhopcap pattern at %p.\n", reinterpret_cast<void*>(offBhopcap + reinterpret_cast<uintptr_t>(ORIG_PM_Jump)-27));
-	} else {
-		EngineDevWarning("[client dll] Could not find PM_Jump.\n");
-		EngineWarning("Autojump prediction is not available.\n");
-		if (!noBhopcap)
-			EngineWarning("Bhopcap prediction disabling is not available.\n");
+	{
+		auto pattern = fPM_Jump.get();
+		if (ORIG_PM_Jump) {
+			if (pattern == patterns::shared::PM_Jump.cend())
+				EngineDevMsg("[client dll] Found PM_Jump at %p.\n", ORIG_PM_Jump);
+			else
+				EngineDevMsg("[client dll] Found PM_Jump at %p (using the %s pattern).\n", ORIG_PM_Jump, pattern->name());
+			if (offBhopcap)
+				EngineDevMsg("[client dll] Found the bhopcap pattern at %p.\n", reinterpret_cast<void*>(offBhopcap + reinterpret_cast<uintptr_t>(ORIG_PM_Jump)-27));
+		} else {
+			EngineDevWarning("[client dll] Could not find PM_Jump.\n");
+			EngineWarning("Autojump prediction is not available.\n");
+			if (!noBhopcap)
+				EngineWarning("Bhopcap prediction disabling is not available.\n");
+		}
 	}
 }
 
 bool ClientDLL::FindHUDFunctions()
 {
-	if ((ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Init"))))
+	if ((ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Init")))) {
 		EngineDevMsg("[client dll] Found HUD_Init at %p.\n", ORIG_HUD_Init);
-	else {
+	} else {
 		EngineDevWarning("[client dll] Could not HUD_Init.\n");
 		return false;
 	}
 
-	if ((ORIG_HUD_VidInit = reinterpret_cast<_HUD_VidInit>(MemUtils::GetSymbolAddress(m_Handle, "HUD_VidInit"))))
+	if ((ORIG_HUD_VidInit = reinterpret_cast<_HUD_VidInit>(MemUtils::GetSymbolAddress(m_Handle, "HUD_VidInit")))) {
 		EngineDevMsg("[client dll] Found HUD_VidInit at %p.\n", ORIG_HUD_VidInit);
-	else {
+	} else {
 		EngineDevWarning("[client dll] Could not HUD_VidInit.\n");
 		return false;
 	}
 
-	if ((ORIG_HUD_Reset = reinterpret_cast<_HUD_Reset>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Reset"))))
+	if ((ORIG_HUD_Reset = reinterpret_cast<_HUD_Reset>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Reset")))) {
 		EngineDevMsg("[client dll] Found HUD_Reset at %p.\n", ORIG_HUD_Reset);
-	else {
+	} else {
 		EngineDevWarning("[client dll] Could not HUD_Reset.\n");
 		return false;
 	}
 
-	if ((ORIG_HUD_Redraw = reinterpret_cast<_HUD_Redraw>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Redraw"))))
+	if ((ORIG_HUD_Redraw = reinterpret_cast<_HUD_Redraw>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Redraw")))) {
 		EngineDevMsg("[client dll] Found HUD_Redraw at %p.\n", ORIG_HUD_Redraw);
-	else {
+	} else {
 		EngineDevWarning("[client dll] Could not HUD_Redraw.\n");
 		return false;
 	}

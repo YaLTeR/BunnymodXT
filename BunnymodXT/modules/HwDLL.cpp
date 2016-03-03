@@ -436,7 +436,7 @@ void HwDLL::FindStuff()
 	}
 	else
 	{
-		#define DEF_FUTURE(name) auto f##name = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_##name), m_Base, m_Length, Patterns::ptns##name, [](MemUtils::ptnvec_size ptnNumber) { }, []() { });
+		#define DEF_FUTURE(name) auto f##name = FindAsync(ORIG_##name, patterns::engine::name);
 		DEF_FUTURE(Cvar_RegisterVariable)
 		DEF_FUTURE(Cvar_DirectSet)
 		DEF_FUTURE(Cvar_FindVar)
@@ -454,17 +454,22 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SV_Frame)
 		DEF_FUTURE(VGuiWrap2_ConDPrintf)
 		DEF_FUTURE(VGuiWrap2_ConPrintf)
-		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
-		std::future<MemUtils::ptnvec_size> fLoadAndDecryptHwDLL;
-		if (oldEngine) {
-			// In WON after the engine DLL has been loaded once for some reason there are multiple identical LoadAndDecrypt functions in the memory, we need the first one always.
-			fLoadAndDecryptHwDLL = std::async(MemUtils::FindFirstSequence, m_Base, m_Length, Patterns::ptnsLoadAndDecryptHwDLL, reinterpret_cast<void**>(&ORIG_LoadAndDecryptHwDLL));
-		}
 		#undef DEF_FUTURE
 
-		auto fCbuf_Execute = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_Cbuf_Execute), m_Base, m_Length, Patterns::ptnsCbuf_Execute,
-			[&](MemUtils::ptnvec_size ptnNumber) {
-				switch (ptnNumber)
+		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
+		std::future<typename decltype(patterns::engine::LoadAndDecryptHwDLL)::const_iterator> fLoadAndDecryptHwDLL;
+		if (oldEngine) {
+			// In WON after the engine DLL has been loaded once for some reason there are multiple identical LoadAndDecrypt functions in the memory, we need the first one always.
+			fLoadAndDecryptHwDLL = std::async([&]() {
+					return MemUtils::find_first_sequence(m_Base, m_Length, patterns::engine::LoadAndDecryptHwDLL, ORIG_LoadAndDecryptHwDLL);
+				});
+		}
+
+		auto fCbuf_Execute = FindAsync(
+			ORIG_Cbuf_Execute,
+			patterns::engine::Cbuf_Execute,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::Cbuf_Execute.cbegin())
 				{
 				case 0:
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 11) - offsetof(cmdbuf_t, cursize));
@@ -473,37 +478,41 @@ void HwDLL::FindStuff()
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 2) - offsetof(cmdbuf_t, cursize));
 					break;
 				}
-			}, []() {}
-		);
+			});
 
-		auto fSeedRandomNumberGenerator = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_SeedRandomNumberGenerator), m_Base, m_Length, Patterns::ptnsSeedRandomNumberGenerator,
-			[&](MemUtils::ptnvec_size ptnNumber) {
+		auto fSeedRandomNumberGenerator = FindAsync(
+			ORIG_SeedRandomNumberGenerator,
+			patterns::engine::SeedRandomNumberGenerator,
+			[&](auto pattern) {
 				ORIG_time = reinterpret_cast<_time>(
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 3)
 					+ reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 7
 				);
-			}, []() {}
-		);
+			});
 
 		void *SCR_DrawFPS;
-		auto fSCR_DrawFPS = MemUtils::FindPatternOnly(&SCR_DrawFPS, m_Base, m_Length, Patterns::ptnsSCR_DrawFPS,
-			[&](MemUtils::ptnvec_size ptnNumber) {
+		auto fSCR_DrawFPS = FindAsync(
+			SCR_DrawFPS,
+			patterns::engine::SCR_DrawFPS,
+			[&](auto pattern) {
 				host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(SCR_DrawFPS) + 21);
-			}, []() {}
-		);
+			});
 
 		void *CL_Move;
-		auto fCL_Move = MemUtils::FindPatternOnly(&CL_Move, m_Base, m_Length, Patterns::ptnsCL_Move,
-			[&](MemUtils::ptnvec_size ptnNumber) {
+		auto fCL_Move = FindAsync(
+			CL_Move,
+			patterns::engine::CL_Move,
+			[&](auto pattern) {
 				frametime_remainder = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(CL_Move) + 451);
-			}, []() {}
-		);
+			});
 
 		void *Host_Tell_f;
-		auto fHost_Tell_f = MemUtils::FindPatternOnly(&Host_Tell_f, m_Base, m_Length, Patterns::ptnsHost_Tell_f,
-			[&](MemUtils::ptnvec_size ptnNumber) {
+		auto fHost_Tell_f = FindAsync(
+			Host_Tell_f,
+			patterns::engine::Host_Tell_f,
+			[&](auto pattern) {
 				uintptr_t offCmd_Argc, offCmd_Args, offCmd_Argv;
-				switch (ptnNumber)
+				switch (pattern - patterns::engine::Host_Tell_f.cbegin())
 				{
 				default:
 				case 0: // SteamPipe.
@@ -536,12 +545,13 @@ void HwDLL::FindStuff()
 					*reinterpret_cast<uintptr_t*>(f + offCmd_Argv)
 					+ (f + offCmd_Argv + 4)
 				);
-			}, []() { }
-		);
+			});
 
 		void *Host_AutoSave_f;
-		auto fHost_AutoSave_f = MemUtils::FindPatternOnly(&Host_AutoSave_f, m_Base, m_Length, Patterns::ptnsHost_AutoSave_f,
-			[&](MemUtils::ptnvec_size ptnNumber) {
+		auto fHost_AutoSave_f = FindAsync(
+			Host_AutoSave_f,
+			patterns::engine::Host_AutoSave_f,
+			[&](auto pattern) {
 				auto f = reinterpret_cast<uintptr_t>(Host_AutoSave_f);
 				sv = *reinterpret_cast<void**>(f + 19);
 				offWorldmodel = 304;
@@ -553,13 +563,14 @@ void HwDLL::FindStuff()
 				svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
 				offEdict = 19356;
 				clientstate = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 86) - 0x2AF80);
-			}, []() {}
-		);
+			});
 
 		void *MiddleOfSV_ReadClientMessage;
-		auto fMiddleOfSV_ReadClientMessage = MemUtils::FindPatternOnly(&MiddleOfSV_ReadClientMessage, m_Base, m_Length, Patterns::ptnsMiddleOfSV_ReadClientMessage,
-			[&](MemUtils::ptnvec_size ptnNumber) {
-				switch (ptnNumber)
+		auto fMiddleOfSV_ReadClientMessage = FindAsync(
+			MiddleOfSV_ReadClientMessage,
+			patterns::engine::MiddleOfSV_ReadClientMessage,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::MiddleOfSV_ReadClientMessage.cbegin())
 				{
 				default:
 				case 0: // SteamPipe & NGHL.
@@ -580,118 +591,138 @@ void HwDLL::FindStuff()
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 36);
 					sv_player = *reinterpret_cast<edict_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 20);
 				}
-			}, []() {}
-		);
+			});
 
 		void *MiddleOfSV_RunCmd;
-		auto fMiddleOfSV_RunCmd = MemUtils::FindPatternOnly(&MiddleOfSV_RunCmd, m_Base, m_Length, Patterns::ptnsMiddleOfSV_RunCmd,
-			[&](MemUtils::ptnvec_size ptnNumber) {
+		auto fMiddleOfSV_RunCmd = FindAsync(
+			MiddleOfSV_RunCmd,
+			patterns::engine::MiddleOfSV_RunCmd,
+			[&](auto pattern) {
 				sv_areanodes = *reinterpret_cast<char**>(reinterpret_cast<uintptr_t>(MiddleOfSV_RunCmd) + 20);
 				ORIG_SV_AddLinksToPM = reinterpret_cast<_SV_AddLinksToPM>(
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(MiddleOfSV_RunCmd) + 25)
 					+ reinterpret_cast<uintptr_t>(MiddleOfSV_RunCmd) + 29);
-			}, []() {}
-		);
+			});
 
-		auto fHost_Changelevel2_f = MemUtils::FindPatternOnly(reinterpret_cast<void**>(&ORIG_Host_Changelevel2_f), m_Base, m_Length, Patterns::ptnsHost_Changelevel2_f,
-			[&](MemUtils::ptnvec_size ptnNumber) {
-			if (ptnNumber == 0) {
-				ORIG_SV_SpawnServer = reinterpret_cast<_SV_SpawnServer>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 285)
-					+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 289);
-			}
-		}, []() {}
-		);
+		auto fHost_Changelevel2_f = FindAsync(
+			ORIG_Host_Changelevel2_f,
+			patterns::engine::Host_Changelevel2_f,
+			[&](auto pattern) {
+				if (pattern == patterns::engine::Host_Changelevel2_f.cbegin()) {
+					ORIG_SV_SpawnServer = reinterpret_cast<_SV_SpawnServer>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 285)
+						+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 289);
+				}
+			});
 
-		auto n = fCbuf_Execute.get();
-		if (ORIG_Cbuf_Execute) {
-			EngineDevMsg("[hw dll] Found Cbuf_Execute at %p (using the %s pattern).\n", ORIG_Cbuf_Execute, Patterns::ptnsCbuf_Execute[n].build.c_str());
-			EngineDevMsg("[hw dll] Found cmd_text at %p.\n", cmd_text);
-		} else
-			EngineDevWarning("[hw dll] Could not find Cbuf_Execute.\n");
-
-		n = fHost_AutoSave_f.get();
-		if (Host_AutoSave_f) {
-			EngineDevMsg("[hw dll] Found Host_AutoSave_f at %p (using the %s pattern).\n", Host_AutoSave_f, Patterns::ptnsHost_AutoSave_f[n].build.c_str());
-			EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
-			EngineDevMsg("[hw dll] Found clientstate at %p.\n", clientstate);
-			EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
-			EngineDevMsg("[hw dll] Found svs at %p.\n", svs);
-			EngineDevMsg("[hw dll] Found Con_Printf at %p.\n", ORIG_Con_Printf);
-		} else {
-			EngineDevWarning("[hw dll] Could not find Host_AutoSave_f.\n");
-			ORIG_Cbuf_Execute = nullptr;
-		}
-
-		n = fSeedRandomNumberGenerator.get();
-		if (ORIG_SeedRandomNumberGenerator) {
-			EngineDevMsg("[hw dll] Found SeedRandomNumberGenerator at %p (using the %s pattern).\n", ORIG_SeedRandomNumberGenerator, Patterns::ptnsSeedRandomNumberGenerator[n].build.c_str());
-			EngineDevMsg("[hw dll] ORIG_time is %p.\n", ORIG_time);
-		} else {
-			EngineDevWarning("[hw dll] Could not find SeedRandomNumberGenerator.\n");
-			ORIG_Cbuf_Execute = nullptr;
-		}
-
-		n = fSCR_DrawFPS.get();
-		if (SCR_DrawFPS) {
-			EngineDevMsg("[hw dll] Found SCR_DrawFPS at %p (using the %s pattern).\n", SCR_DrawFPS, Patterns::ptnsSCR_DrawFPS[n].build.c_str());
-			EngineDevMsg("[hw dll] Found host_frametime at %p.\n", host_frametime);
-		} else {
-			EngineDevWarning("[hw dll] Could not find SCR_DrawFPS.\n");
-			ORIG_Cbuf_Execute = nullptr;
-		}
-
-		n = fCL_Move.get();
-		if (CL_Move) {
-			EngineDevMsg("[hw dll] Found CL_Move at %p (using the %s pattern).\n", CL_Move, Patterns::ptnsCL_Move[n].build.c_str());
-			EngineDevMsg("[hw dll] Found frametime_remainder at %p.\n", frametime_remainder);
-		} else {
-			EngineDevWarning("[hw dll] Could not find CL_Move.\n");
-		}
-
-		n = fMiddleOfSV_ReadClientMessage.get();
-		if (MiddleOfSV_ReadClientMessage) {
-			EngineDevMsg("[hw dll] Found the g_svmove pattern at %p (using the %s pattern).\n", MiddleOfSV_ReadClientMessage, Patterns::ptnsMiddleOfSV_ReadClientMessage[n].build.c_str());
-			EngineDevMsg("[hw dll] Found g_svmove at %p.\n", svmove);
-			EngineDevMsg("[hw dll] Found pmove at %p.\n", ppmove);
-			EngineDevMsg("[hw dll] Found host_client at %p.\n", host_client);
-			EngineDevMsg("[hw dll] Found sv_player at %p.\n", sv_player);
-		} else {
-			EngineDevWarning("[hw dll] Could not find the g_svmove pattern.\n");
-			ORIG_Cbuf_Execute = nullptr;
-		}
-
-		n = fMiddleOfSV_RunCmd.get();
-		if (MiddleOfSV_RunCmd) {
-			EngineDevMsg("[hw dll] Found the sv_areanodes pattern at %p (using the %s pattern).\n", MiddleOfSV_RunCmd, Patterns::ptnsMiddleOfSV_RunCmd[n].build.c_str());
-			EngineDevMsg("[hw dll] Found sv_areanodes at %p.\n", sv_areanodes);
-			EngineDevMsg("[hw dll] Found SV_AddLinksToPM at %p.\n", ORIG_SV_AddLinksToPM);
-		} else {
-			EngineDevWarning("[hw dll] Could not find the sv_areanodes pattern.\n");
-			ORIG_Cbuf_Execute = nullptr;
-		}
-
-		n = fHost_Changelevel2_f.get();
-		if (ORIG_Host_Changelevel2_f) {
-			EngineDevMsg("[hw dll] Found Host_Changelevel2_f at %p (using the %s pattern).\n", ORIG_Host_Changelevel2_f, Patterns::ptnsHost_Changelevel2_f[n].build.c_str());
-			if (ORIG_SV_SpawnServer) {
-				EngineDevMsg("[hw dll] Found SV_SpawnServer at %p.\n", ORIG_SV_SpawnServer);
+		{
+			auto pattern = fCbuf_Execute.get();
+			if (ORIG_Cbuf_Execute) {
+				EngineDevMsg("[hw dll] Found Cbuf_Execute at %p (using the %s pattern).\n", ORIG_Cbuf_Execute, pattern->name());
+				EngineDevMsg("[hw dll] Found cmd_text at %p.\n", cmd_text);
 			} else {
-				EngineDevWarning("[hw dll] Could not find SV_SpawnServer.\n");
-				EngineWarning("BunnySplit autosplitting is not available.\n");
+				EngineDevWarning("[hw dll] Could not find Cbuf_Execute.\n");
 			}
-		} else {
-			EngineDevWarning("[hw dll] Could not find Host_Changelevel2_f.\n");
-			ORIG_Cbuf_Execute = nullptr;
 		}
 
-		#define GET_FUTURE(name) \
-			n = f##name.get(); \
-			if (ORIG_##name) { \
-				EngineDevMsg("[hw dll] Found " #name " at %p (using the %s pattern).\n", ORIG_##name, Patterns::ptns##name[n].build.c_str()); \
-			} else { \
-				EngineDevWarning("[hw dll] Could not find " #name ".\n"); \
-				ORIG_Cbuf_Execute = nullptr; \
+		{
+			auto pattern = fHost_AutoSave_f.get();
+			if (Host_AutoSave_f) {
+				EngineDevMsg("[hw dll] Found Host_AutoSave_f at %p (using the %s pattern).\n", Host_AutoSave_f, pattern->name());
+				EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
+				EngineDevMsg("[hw dll] Found clientstate at %p.\n", clientstate);
+				EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
+				EngineDevMsg("[hw dll] Found svs at %p.\n", svs);
+				EngineDevMsg("[hw dll] Found Con_Printf at %p.\n", ORIG_Con_Printf);
+			} else {
+				EngineDevWarning("[hw dll] Could not find Host_AutoSave_f.\n");
+				ORIG_Cbuf_Execute = nullptr;
+			}
+		}
+
+		{
+			auto pattern = fSeedRandomNumberGenerator.get();
+			if (ORIG_SeedRandomNumberGenerator) {
+				EngineDevMsg("[hw dll] Found SeedRandomNumberGenerator at %p (using the %s pattern).\n", ORIG_SeedRandomNumberGenerator, pattern->name());
+				EngineDevMsg("[hw dll] ORIG_time is %p.\n", ORIG_time);
+			} else {
+				EngineDevWarning("[hw dll] Could not find SeedRandomNumberGenerator.\n");
+				ORIG_Cbuf_Execute = nullptr;
+			}
+		}
+
+		{
+			auto pattern = fSCR_DrawFPS.get();
+			if (SCR_DrawFPS) {
+				EngineDevMsg("[hw dll] Found SCR_DrawFPS at %p (using the %s pattern).\n", SCR_DrawFPS, pattern->name());
+				EngineDevMsg("[hw dll] Found host_frametime at %p.\n", host_frametime);
+			} else {
+				EngineDevWarning("[hw dll] Could not find SCR_DrawFPS.\n");
+				ORIG_Cbuf_Execute = nullptr;
+			}
+		}
+
+		{
+			auto pattern = fCL_Move.get();
+			if (CL_Move) {
+				EngineDevMsg("[hw dll] Found CL_Move at %p (using the %s pattern).\n", CL_Move, pattern->name());
+				EngineDevMsg("[hw dll] Found frametime_remainder at %p.\n", frametime_remainder);
+			} else {
+				EngineDevWarning("[hw dll] Could not find CL_Move.\n");
+			}
+		}
+
+		{
+			auto pattern = fMiddleOfSV_ReadClientMessage.get();
+			if (MiddleOfSV_ReadClientMessage) {
+				EngineDevMsg("[hw dll] Found the g_svmove pattern at %p (using the %s pattern).\n", MiddleOfSV_ReadClientMessage, pattern->name());
+				EngineDevMsg("[hw dll] Found g_svmove at %p.\n", svmove);
+				EngineDevMsg("[hw dll] Found pmove at %p.\n", ppmove);
+				EngineDevMsg("[hw dll] Found host_client at %p.\n", host_client);
+				EngineDevMsg("[hw dll] Found sv_player at %p.\n", sv_player);
+			} else {
+				EngineDevWarning("[hw dll] Could not find the g_svmove pattern.\n");
+				ORIG_Cbuf_Execute = nullptr;
+			}
+		}
+
+		{
+			auto pattern = fMiddleOfSV_RunCmd.get();
+			if (MiddleOfSV_RunCmd) {
+				EngineDevMsg("[hw dll] Found the sv_areanodes pattern at %p (using the %s pattern).\n", MiddleOfSV_RunCmd, pattern->name());
+				EngineDevMsg("[hw dll] Found sv_areanodes at %p.\n", sv_areanodes);
+				EngineDevMsg("[hw dll] Found SV_AddLinksToPM at %p.\n", ORIG_SV_AddLinksToPM);
+			} else {
+				EngineDevWarning("[hw dll] Could not find the sv_areanodes pattern.\n");
+				ORIG_Cbuf_Execute = nullptr;
+			}
+		}
+
+		{
+			auto pattern = fHost_Changelevel2_f.get();
+			if (ORIG_Host_Changelevel2_f) {
+				EngineDevMsg("[hw dll] Found Host_Changelevel2_f at %p (using the %s pattern).\n", ORIG_Host_Changelevel2_f, pattern->name());
+				if (ORIG_SV_SpawnServer) {
+					EngineDevMsg("[hw dll] Found SV_SpawnServer at %p.\n", ORIG_SV_SpawnServer);
+				} else {
+					EngineDevWarning("[hw dll] Could not find SV_SpawnServer.\n");
+					EngineWarning("BunnySplit autosplitting is not available.\n");
+				}
+			} else {
+				EngineDevWarning("[hw dll] Could not find Host_Changelevel2_f.\n");
+				ORIG_Cbuf_Execute = nullptr;
+			}
+		}
+
+		#define GET_FUTURE(future_name) \
+			{ \
+				auto pattern = f##future_name.get(); \
+				if (ORIG_##future_name) { \
+					EngineDevMsg("[hw dll] Found " #future_name " at %p (using the %s pattern).\n", ORIG_##future_name, pattern->name()); \
+				} else { \
+					EngineDevWarning("[hw dll] Could not find " #future_name ".\n"); \
+					ORIG_Cbuf_Execute = nullptr; \
+				} \
 			}
 		GET_FUTURE(Cvar_RegisterVariable)
 		GET_FUTURE(Cvar_DirectSet)
@@ -704,72 +735,42 @@ void HwDLL::FindStuff()
 		GET_FUTURE(PM_PlayerTrace)
 		#undef GET_FUTURE
 
-		n = fHost_Tell_f.get();
-		if (Host_Tell_f) {
-			EngineDevMsg("[hw dll] Found Host_Tell_f at %p (using the %s pattern).\n", Host_Tell_f, Patterns::ptnsHost_Tell_f[n].build.c_str());
-			EngineDevMsg("[hw dll] Found Cmd_Argc at %p.\n", ORIG_Cmd_Argc);
-			EngineDevMsg("[hw dll] Found Cmd_Args at %p.\n", ORIG_Cmd_Args);
-			EngineDevMsg("[hw dll] Found Cmd_Argv at %p.\n", ORIG_Cmd_Argv);
-		} else {
-			EngineDevWarning("[hw dll] Could not find Host_Tell_f.\n");
-			ORIG_Cmd_AddMallocCommand = nullptr;
+		{
+			auto pattern = fHost_Tell_f.get();
+			if (Host_Tell_f) {
+				EngineDevMsg("[hw dll] Found Host_Tell_f at %p (using the %s pattern).\n", Host_Tell_f, pattern->name());
+				EngineDevMsg("[hw dll] Found Cmd_Argc at %p.\n", ORIG_Cmd_Argc);
+				EngineDevMsg("[hw dll] Found Cmd_Args at %p.\n", ORIG_Cmd_Args);
+				EngineDevMsg("[hw dll] Found Cmd_Argv at %p.\n", ORIG_Cmd_Argv);
+			} else {
+				EngineDevWarning("[hw dll] Could not find Host_Tell_f.\n");
+				ORIG_Cmd_AddMallocCommand = nullptr;
+			}
 		}
 
-		n = fHost_FilterTime.get();
-		if (ORIG_Host_FilterTime)
-			EngineDevMsg("[hw dll] Found Host_FilterTime at %p (using the %s pattern).\n", ORIG_Host_FilterTime, Patterns::ptnsHost_FilterTime[n].build.c_str());
-		else
-			EngineDevWarning("[hw dll] Could not find Host_FilterTime.\n");
-
-		n = fV_FadeAlpha.get();
-		if (ORIG_V_FadeAlpha)
-			EngineDevMsg("[hw dll] Found V_FadeAlpha at %p (using the %s pattern).\n", ORIG_V_FadeAlpha, Patterns::ptnsV_FadeAlpha[n].build.c_str());
-		else
-			EngineDevWarning("[hw dll] Could not find V_FadeAlpha.\n");
-
-		n = fSV_Frame.get();
-		if (ORIG_SV_Frame)
-			EngineDevMsg("[hw dll] Found SV_Frame at %p (using the %s pattern).\n", ORIG_SV_Frame, Patterns::ptnsSV_Frame[n].build.c_str());
-		else
-			EngineDevWarning("[hw dll] Could not find SV_Frame.\n");
-
-		n = fVGuiWrap2_ConDPrintf.get();
-		if (ORIG_VGuiWrap2_ConDPrintf)
-			EngineDevMsg("[hw dll] Found VGuiWrap2_ConDPrintf at %p (using the %s pattern).\n", ORIG_VGuiWrap2_ConDPrintf, Patterns::ptnsVGuiWrap2_ConDPrintf[n].build.c_str());
-		else
-			EngineDevWarning("[hw dll] Could not find VGuiWrap2_ConDPrintf.\n");
-
-		n = fVGuiWrap2_ConPrintf.get();
-		if (ORIG_VGuiWrap2_ConPrintf)
-			EngineDevMsg("[hw dll] Found VGuiWrap2_ConPrintf at %p (using the %s pattern).\n", ORIG_VGuiWrap2_ConPrintf, Patterns::ptnsVGuiWrap2_ConPrintf[n].build.c_str());
-		else
-			EngineDevWarning("[hw dll] Could not find VGuiWrap2_ConPrintf.\n");
-
-		n = fSCR_UpdateScreen.get();
-		if (ORIG_SCR_UpdateScreen)
-			EngineDevMsg("[hw dll] Found SCR_UpdateScreen at %p (using the %s pattern).\n", ORIG_SCR_UpdateScreen, Patterns::ptnsSCR_UpdateScreen[n].build.c_str());
-		else
-			EngineDevWarning("[hw dll] Could not find SCR_UpdateScreen.\n");
-
-		n = fPF_GetPhysicsKeyValue.get();
-		if (ORIG_PF_GetPhysicsKeyValue)
-			EngineDevMsg("[hw dll] Found PF_GetPhysicsKeyValue at %p (using the %s pattern).\n", ORIG_PF_GetPhysicsKeyValue, Patterns::ptnsPF_GetPhysicsKeyValue[n].build.c_str());
-		else
-			EngineDevWarning("[hw dll] Could not find PF_GetPhysicsKeyValue.\n");
-
-		n = fbuild_number.get();
-		if (ORIG_build_number)
-			EngineDevMsg("[hw dll] Found build_number at %p (using the %s pattern).\n", ORIG_build_number, Patterns::ptnsbuild_number[n].build.c_str());
-		else
-			EngineDevWarning("[hw dll] Could not find build_number.\n");
+		#define GET_FUTURE(future_name) \
+			{ \
+				auto pattern = f##future_name.get(); \
+				if (ORIG_##future_name) { \
+					EngineDevMsg("[hw dll] Found " #future_name " at %p (using the %s pattern).\n", ORIG_##future_name, pattern->name()); \
+				} else { \
+					EngineDevWarning("[hw dll] Could not find " #future_name ".\n"); \
+				} \
+			}
+		GET_FUTURE(Host_FilterTime);
+		GET_FUTURE(V_FadeAlpha);
+		GET_FUTURE(SV_Frame);
+		GET_FUTURE(VGuiWrap2_ConDPrintf);
+		GET_FUTURE(VGuiWrap2_ConPrintf);
+		GET_FUTURE(SCR_UpdateScreen);
+		GET_FUTURE(PF_GetPhysicsKeyValue);
+		GET_FUTURE(build_number);
 
 		if (oldEngine) {
-			n = fLoadAndDecryptHwDLL.get();
-			if (ORIG_LoadAndDecryptHwDLL)
-				EngineDevMsg("[hw dll] Found LoadAndDecryptHwDLL at %p (using the %s pattern).\n", ORIG_LoadAndDecryptHwDLL, Patterns::ptnsLoadAndDecryptHwDLL[n].build.c_str());
-			else
-				EngineDevWarning("[hw dll] Could not find LoadAndDecryptHwDLL.\n");
+			GET_FUTURE(LoadAndDecryptHwDLL);
 		}
+
+		#undef GET_FUTURE
 	}
 }
 

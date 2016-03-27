@@ -28,13 +28,39 @@ set (WINDOWS_FILES
 	SPTLib/Windows/MemUtils_win.cpp
 	BunnymodXT/Windows/conutils.cpp
 	BunnymodXT/Windows/dllmain.cpp
-	BunnymodXT/Windows/interprocess.cpp)
+	BunnymodXT/Windows/interprocess.cpp
+
+	# Add headers to the Windows files so they show up in VS.
+	SPTLib/IHookableModule.hpp
+	SPTLib/IHookableDirFilter.hpp
+	SPTLib/IHookableNameFilter.hpp
+	SPTLib/IHookableNameFilterOrdered.hpp
+	SPTLib/Hooks.hpp
+	SPTLib/MemUtils.hpp
+	SPTLib/patterns.hpp
+	SPTLib/sptlib.hpp
+	SPTLib/Windows/DetoursUtils.hpp
+	BunnymodXT/modules/HwDLL.hpp
+	BunnymodXT/modules/ClientDLL.hpp
+	BunnymodXT/modules/ServerDLL.hpp
+	BunnymodXT/bunnymodxt.hpp
+	BunnymodXT/cvars.hpp
+	BunnymodXT/hud_custom.hpp
+	BunnymodXT/interprocess.hpp
+	BunnymodXT/modules.hpp
+	BunnymodXT/patterns.hpp
+	BunnymodXT/shared.hpp
+	BunnymodXT/sptlib-wrapper.hpp
+	BunnymodXT/stdafx.hpp
+	BunnymodXT/Windows/conutils.hpp)
+
 set (LINUX_FILES
 	SPTLib/Linux/Hooks_linux.cpp
 	SPTLib/Linux/MemUtils_linux.cpp
 	BunnymodXT/modules/PMSharedHooks_linux.cpp
 	BunnymodXT/Linux/main_linux.cpp
 	BunnymodXT/Linux/interprocess.cpp)
+
 set (SOURCE_FILES
 	SPTLib/IHookableModule.cpp
 	SPTLib/IHookableDirFilter.cpp

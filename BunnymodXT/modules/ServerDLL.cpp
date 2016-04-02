@@ -234,7 +234,12 @@ void ServerDLL::FindStuff()
 			{
 				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 1);
 				ptrdiff_t bhopcapAddr;
-				auto n = MemUtils::find_unique_sequence(m_Base, m_Length, patterns::shared::Bhopcap, bhopcapAddr);
+				auto n = MemUtils::find_unique_sequence(
+					m_Base,
+					m_Length,
+					patterns::shared::Bhopcap.cbegin(),
+					patterns::shared::Bhopcap.cend(),
+					bhopcapAddr);
 				if (n != patterns::shared::Bhopcap.cend())
 				{
 					offBhopcap = bhopcapAddr - reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump) + 27;
@@ -578,19 +583,22 @@ void ServerDLL::FindStuff()
 		if (pGiveFnptrsToDll)
 		{
 			// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
-			auto addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, PATTERN("", "BF ?? ?? ?? ?? F3 A5 5F A3"));
+			static constexpr auto p = PATTERN("", "BF ?? ?? ?? ?? F3 A5 5F A3");
+			auto addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
 
 			auto blolly = false;
 			auto svencoop = false;
 			if (!addr)
 			{
 				// Big Lolly version: push eax; push offset dword; call memcpy
-				addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, PATTERN("", "50 68 ?? ?? ?? ?? E8"));
+				static constexpr auto p = PATTERN("", "50 68 ?? ?? ?? ?? E8");
+				addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
 				if (addr) {
 					blolly = true;
 				} else {
 					// Sven Co-op version: has a push in between.
-					addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, PATTERN("", "BF ?? ?? ?? ?? F3 A5 68 ?? ?? ?? ?? A3"));
+					static constexpr auto p = PATTERN("", "BF ?? ?? ?? ?? F3 A5 68 ?? ?? ?? ?? A3");
+					addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
 					if (addr)
 						svencoop = true;
 				}

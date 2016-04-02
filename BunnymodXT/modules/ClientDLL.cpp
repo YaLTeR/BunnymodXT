@@ -152,7 +152,12 @@ void ClientDLL::FindStuff()
 			{
 				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 1);
 				void *bhopcapAddr;
-				auto n = MemUtils::find_unique_sequence(m_Base, m_Length, patterns::shared::Bhopcap, bhopcapAddr);
+				auto n = MemUtils::find_unique_sequence(
+					m_Base,
+					m_Length,
+					patterns::shared::Bhopcap.cbegin(),
+					patterns::shared::Bhopcap.cend(),
+					bhopcapAddr);
 				if (n != patterns::shared::Bhopcap.cend())
 				{
 					offBhopcap = reinterpret_cast<ptrdiff_t>(bhopcapAddr) - reinterpret_cast<ptrdiff_t>(ORIG_PM_Jump) + 27;
@@ -205,9 +210,12 @@ void ClientDLL::FindStuff()
 			}
 
 			// Find "mov edi, offset dword; rep movsd" inside Initialize. The pointer to gEngfuncs is that dword.
-			auto addr = MemUtils::find_pattern(pInitialize, 40, PATTERN("", "BF ?? ?? ?? ?? F3 A5"));
-			if (!addr)
-				addr = MemUtils::find_pattern(pInitialize, 40, PATTERN("", "B9 ?? ?? ?? ?? 8B 54 24 10"));
+			static constexpr auto p = PATTERN("", "BF ?? ?? ?? ?? F3 A5");
+			auto addr = MemUtils::find_pattern(pInitialize, 40, p);
+			if (!addr) {
+				static constexpr auto p = PATTERN("", "B9 ?? ?? ?? ?? 8B 54 24 10");
+				addr = MemUtils::find_pattern(pInitialize, 40, p);
+			}
 
 			if (addr)
 			{

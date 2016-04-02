@@ -461,7 +461,12 @@ void HwDLL::FindStuff()
 		if (oldEngine) {
 			// In WON after the engine DLL has been loaded once for some reason there are multiple identical LoadAndDecrypt functions in the memory, we need the first one always.
 			fLoadAndDecryptHwDLL = std::async([&]() {
-					return MemUtils::find_first_sequence(m_Base, m_Length, patterns::engine::LoadAndDecryptHwDLL, ORIG_LoadAndDecryptHwDLL);
+					return MemUtils::find_first_sequence(
+						m_Base,
+						m_Length,
+						patterns::engine::LoadAndDecryptHwDLL.cbegin(),
+						patterns::engine::LoadAndDecryptHwDLL.cend(),
+						ORIG_LoadAndDecryptHwDLL);
 				});
 		}
 

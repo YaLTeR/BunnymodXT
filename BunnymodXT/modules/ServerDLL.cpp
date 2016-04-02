@@ -583,7 +583,7 @@ void ServerDLL::FindStuff()
 		if (pGiveFnptrsToDll)
 		{
 			// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
-			static constexpr auto p = PATTERN("", "BF ?? ?? ?? ?? F3 A5 5F A3");
+			static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 5F A3");
 			auto addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
 
 			auto blolly = false;
@@ -591,13 +591,13 @@ void ServerDLL::FindStuff()
 			if (!addr)
 			{
 				// Big Lolly version: push eax; push offset dword; call memcpy
-				static constexpr auto p = PATTERN("", "50 68 ?? ?? ?? ?? E8");
+				static constexpr auto p = PATTERN("50 68 ?? ?? ?? ?? E8");
 				addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
 				if (addr) {
 					blolly = true;
 				} else {
 					// Sven Co-op version: has a push in between.
-					static constexpr auto p = PATTERN("", "BF ?? ?? ?? ?? F3 A5 68 ?? ?? ?? ?? A3");
+					static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 68 ?? ?? ?? ?? A3");
 					addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
 					if (addr)
 						svencoop = true;

@@ -210,10 +210,10 @@ void ClientDLL::FindStuff()
 			}
 
 			// Find "mov edi, offset dword; rep movsd" inside Initialize. The pointer to gEngfuncs is that dword.
-			static constexpr auto p = PATTERN("", "BF ?? ?? ?? ?? F3 A5");
+			static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5");
 			auto addr = MemUtils::find_pattern(pInitialize, 40, p);
 			if (!addr) {
-				static constexpr auto p = PATTERN("", "B9 ?? ?? ?? ?? 8B 54 24 10");
+				static constexpr auto p = PATTERN("B9 ?? ?? ?? ?? 8B 54 24 10");
 				addr = MemUtils::find_pattern(pInitialize, 40, p);
 			}
 

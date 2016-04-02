@@ -613,10 +613,18 @@ void HwDLL::FindStuff()
 			ORIG_Host_Changelevel2_f,
 			patterns::engine::Host_Changelevel2_f,
 			[&](auto pattern) {
-				if (pattern == patterns::engine::Host_Changelevel2_f.cbegin()) {
+				switch (pattern - patterns::engine::Host_Changelevel2_f.cbegin())
+				{
+				case 0: // SteamPipe.
 					ORIG_SV_SpawnServer = reinterpret_cast<_SV_SpawnServer>(
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 285)
 						+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 289);
+					break;
+				case 1: // WON.
+					ORIG_SV_SpawnServer = reinterpret_cast<_SV_SpawnServer>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 274)
+						+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 278);
+					break;
 				}
 			});
 

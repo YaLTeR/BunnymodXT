@@ -19,6 +19,7 @@ add_subdirectory (hlstrafe)
 add_subdirectory (taslogger)
 
 include_directories ("." hltas/src hlstrafe/src taslogger)
+include_directories (SYSTEM ${RapidJSON_INCLUDE_DIR})
 
 set (LIBRARY_OUTPUT_DIRECTORY ".")
 set (WINDOWS_FILES
@@ -50,9 +51,7 @@ set (SOURCE_FILES
 
 if (MSVC)
 	include_external_msproject (MinHook "${CMAKE_SOURCE_DIR}/SPTLib/Windows/minhook/build/VC14/libMinHook.vcxproj")
-	include_directories (
-		"SPTLib/Windows/minhook/include"
-		${RapidJSON_INCLUDE_DIR})
+	include_directories ("SPTLib/Windows/minhook/include")
 	set (SOURCE_FILES ${SOURCE_FILES} ${WINDOWS_FILES})
 else ()
 	set (SOURCE_FILES ${SOURCE_FILES} ${LINUX_FILES})

@@ -5,12 +5,36 @@ set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
 include(cotire)
 
-if (NOT MSVC)
+if (MSVC)
+	# Enable link-time code generation.
+	set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE} /GL")
+	set (CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS} ${CMAKE_STATIC_LINKER_FLAGS_RELEASE} /LTCG")
+	set (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG:incremental")
+
+	# Switch to the static runtime.
+	set (flag_variables
+		CMAKE_C_FLAGS_DEBUG
+		CMAKE_C_FLAGS_MINSIZEREL
+		CMAKE_C_FLAGS_RELEASE
+		CMAKE_C_FLAGS_RELWITHDEBINFO
+		CMAKE_CXX_FLAGS_DEBUG
+		CMAKE_CXX_FLAGS_MINSIZEREL
+		CMAKE_CXX_FLAGS_RELEASE
+		CMAKE_CXX_FLAGS_RELWITHDEBINFO
+	)
+
+	foreach (variable ${flag_variables})
+		if (${variable} MATCHES "/MD")
+			string(REPLACE "/MD" "/MT" ${variable} "${${variable}}")
+		endif ()
+	endforeach ()
+else ()
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=native -mtune=native -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
 	#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=pentium-m -mfpmath=387 -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
 endif ()
 
 set (Boost_USE_STATIC_LIBS ON)
+set (Boost_USE_STATIC_RUNTIME ON)
 find_package (Boost 1.57.0 REQUIRED COMPONENTS chrono date_time system thread)
 include_directories (SYSTEM ${Boost_INCLUDE_DIR})
 

@@ -625,6 +625,11 @@ void HwDLL::FindStuff()
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 274)
 						+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 278);
 					break;
+				case 2: // NGHL.
+					ORIG_SV_SpawnServer = reinterpret_cast<_SV_SpawnServer>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 296)
+						+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 300);
+					break;
 				}
 			});
 

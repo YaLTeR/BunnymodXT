@@ -23,12 +23,14 @@ Bunnymod XT (BXT for short) is a cross-platform tool that provides speedrunning 
 - Get [Boost](http://www.boost.org/).
 - Get [RapidJSON](https://github.com/miloyip/rapidjson/releases/tag/v1.0.2).
 - Create a build directory along the *src* directory.
-- Run `cmake -DBOOST_ROOT=path\to\boost\base\dir -DRapidJSON_ROOT=path\to\rapidjson\base\dir ..` from the build directory.
+- Run `cmake -DBOOST_ROOT=path\to\boost\base\dir -DRapidJSON_ROOT=path\to\rapidjson\base\dir -Wno-dev ..` from the build directory.
 - Compile the **ALL_BUILD** project from the generated VS solution.
+
+If you want to make a Windows XP-compatible build, additionally specify `-T v140_xp` (or the equivalent for your Visual Studio version) in the `cmake` command line arguments.
 
 ####Linux
 - Get Boost.
 - Get [RapidJSON](https://github.com/miloyip/rapidjson/releases/tag/v1.0.2).
 - Create a build directory along the *src* directory.
-- Run `cmake ..` from the build directory. You might need to specify `-DBOOST_ROOT=path/to/boost/base/dir` if you're running a 64-bit linux and have built the 32-bit Boost libraries separately. You might have to specify `-DRapidJSON_ROOT=path/to/rapidjson/base/dir`.
+- Run `cmake -Wno-dev ..` from the build directory. You might have to specify `-DRapidJSON_ROOT=path/to/rapidjson/base/dir`.
 - Run `make` from the build directory.

@@ -25,9 +25,15 @@ if (MSVC)
 
 	foreach (variable ${flag_variables})
 		if (${variable} MATCHES "/MD")
-			string(REPLACE "/MD" "/MT" ${variable} "${${variable}}")
+			string (REPLACE "/MD" "/MT" ${variable} "${${variable}}")
 		endif ()
 	endforeach ()
+
+	# If we're building for Windows XP, add a special compiler flag to fix a crash on Windows XP.
+	# http://stackoverflow.com/a/32953859/4214632
+	if (CMAKE_GENERATOR_TOOLSET MATCHES "_xp")
+		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:threadSafeInit-")
+	endif ()
 else ()
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=native -mtune=native -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
 	#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=pentium-m -mfpmath=387 -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")

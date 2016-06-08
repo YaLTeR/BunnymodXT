@@ -35,7 +35,7 @@ endif ()
 
 set (Boost_USE_STATIC_LIBS ON)
 set (Boost_USE_STATIC_RUNTIME ON)
-find_package (Boost 1.57.0 REQUIRED COMPONENTS chrono date_time system thread)
+find_package (Boost 1.57.0 REQUIRED)
 include_directories (SYSTEM ${Boost_INCLUDE_DIR})
 
 add_subdirectory (hltas)

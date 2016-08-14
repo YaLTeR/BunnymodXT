@@ -453,6 +453,11 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 	CustomHud::UpdatePlayerInfoInaccurate(pparams->simvel, pparams->simorg);
 
 	ORIG_V_CalcRefdef(pparams);
+
+	if (HwDLL::GetInstance().GetIsOverridingCamera()) {
+		HwDLL::GetInstance().GetCameraOverrideAngles(pparams->viewangles);
+		HwDLL::GetInstance().GetCameraOverrideOrigin(pparams->vieworg);
+	}
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Init)

@@ -89,6 +89,18 @@ public:
 	bool TryGettingAccurateInfo(float origin[3], float velocity[3]);
 	void GetViewangles(float* va);
 
+	inline bool GetIsOverridingCamera() const { return isOverridingCamera; }
+	inline void GetCameraOverrideOrigin(float origin[3]) const
+	{
+		for (int i = 0; i < 3; ++i)
+			origin[i] = cameraOverrideOrigin[i];
+	}
+	inline void GetCameraOverrideAngles(float angles[3]) const
+	{
+		for (int i = 0; i < 3; ++i)
+			angles[i] = cameraOverrideAngles[i];
+	}
+
 	inline void SetLastRandomSeed(unsigned seed) { LastRandomSeed = seed; }
 	inline bool IsCountingSharedRNGSeed() { return CountingSharedRNGSeed; }
 	inline unsigned GetSharedRNGSeedCounter() { return SharedRNGSeedCounter; }
@@ -152,6 +164,10 @@ protected:
 	void Cmd_BXT_CH_Set_Armor_f();
 	static void Cmd_Multiwait();
 	void Cmd_Multiwait_f();
+	static void Cmd_BXT_Camera_Fixed();
+	void Cmd_BXT_Camera_Fixed_f();
+	static void Cmd_BXT_Camera_Fixed_Clear();
+	void Cmd_BXT_Camera_Fixed_Clear_f();
 	static void Cmd_BXT_Timer_Start();
 	static void Cmd_BXT_Timer_Stop();
 	static void Cmd_BXT_Timer_Reset();
@@ -211,6 +227,10 @@ protected:
 	bool tasLogging;
 	std::string loggedCbuf;
 	FILE *tasLogFile = nullptr;
+
+	bool isOverridingCamera = false;
+	float cameraOverrideOrigin[3];
+	float cameraOverrideAngles[3];
 
 	bool insideSeedRNG;
 	unsigned LastRandomSeed;

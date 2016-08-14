@@ -259,6 +259,7 @@ void HwDLL::Clear()
 	QueuedSharedRNGSeeds = 0;
 	LoadingSeedCounter = 0;
 	lastLoadedMap.clear();
+	isOverridingCamera = false;
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -942,6 +943,37 @@ void HwDLL::Cmd_Multiwait_f()
 	ORIG_Cbuf_InsertText(ss.str().c_str());
 }
 
+void HwDLL::Cmd_BXT_Camera_Fixed()
+{
+	HwDLL::GetInstance().Cmd_BXT_Camera_Fixed_f();
+}
+
+void HwDLL::Cmd_BXT_Camera_Fixed_f()
+{
+	if (ORIG_Cmd_Argc() != 7) {
+		ORIG_Con_Printf("Usage: bxt_cam_fixed <x> <y> <z> <yaw> <pitch> <roll>\n");
+		return;
+	}
+
+	isOverridingCamera = true;
+	cameraOverrideOrigin[0] = std::atof(ORIG_Cmd_Argv(1));
+	cameraOverrideOrigin[1] = std::atof(ORIG_Cmd_Argv(2));
+	cameraOverrideOrigin[2] = std::atof(ORIG_Cmd_Argv(3));
+	cameraOverrideAngles[0] = std::atof(ORIG_Cmd_Argv(5));
+	cameraOverrideAngles[1] = std::atof(ORIG_Cmd_Argv(4));
+	cameraOverrideAngles[2] = std::atof(ORIG_Cmd_Argv(6));
+}
+
+void HwDLL::Cmd_BXT_Camera_Fixed_Clear()
+{
+	HwDLL::GetInstance().Cmd_BXT_Camera_Fixed_Clear_f();
+}
+
+void HwDLL::Cmd_BXT_Camera_Fixed_Clear_f()
+{
+	isOverridingCamera = false;
+}
+
 void HwDLL::Cmd_BXT_Timer_Start()
 {
 	return CustomHud::SetCountingTime(true);
@@ -1092,6 +1124,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("bxt_ch_set_health", Cmd_BXT_CH_Set_Health, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_ch_set_armor", Cmd_BXT_CH_Set_Armor, 2);
 			ORIG_Cmd_AddMallocCommand("w", Cmd_Multiwait, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_cam_fixed", Cmd_BXT_Camera_Fixed, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_cam_fixed_clear", Cmd_BXT_Camera_Fixed_Clear, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_stop", Cmd_BXT_Timer_Stop, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_reset", Cmd_BXT_Timer_Reset, 2);

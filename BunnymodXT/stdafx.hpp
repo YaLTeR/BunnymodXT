@@ -52,6 +52,7 @@ using std::ptrdiff_t;
 #include "HLSDK/cl_dll/hud.h"
 #include "HLSDK/common/ref_params.h"
 #include "HLSDK/common/usercmd.h"
+#include "HLSDK/common/triangleapi.h"
 #include "HLSDK/common/pmtrace.h"
 #include "HLSDK/common/event_api.h"
 

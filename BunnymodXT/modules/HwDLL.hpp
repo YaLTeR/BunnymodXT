@@ -101,6 +101,18 @@ public:
 			angles[i] = cameraOverrideAngles[i];
 	}
 
+	inline bool GetIsOffsettingCamera() const { return isOffsettingCamera; }
+	inline void GetCameraOffsetOrigin(float origin[3]) const
+	{
+		for (int i = 0; i < 3; ++i)
+			origin[i] = cameraOffsetOrigin[i];
+	}
+	inline void GetCameraOffsetAngles(float angles[3]) const
+	{
+		for (int i = 0; i < 3; ++i)
+			angles[i] = cameraOffsetAngles[i];
+	}
+
 	inline void SetLastRandomSeed(unsigned seed) { LastRandomSeed = seed; }
 	inline bool IsCountingSharedRNGSeed() { return CountingSharedRNGSeed; }
 	inline unsigned GetSharedRNGSeedCounter() { return SharedRNGSeedCounter; }
@@ -166,8 +178,10 @@ protected:
 	void Cmd_Multiwait_f();
 	static void Cmd_BXT_Camera_Fixed();
 	void Cmd_BXT_Camera_Fixed_f();
-	static void Cmd_BXT_Camera_Fixed_Clear();
-	void Cmd_BXT_Camera_Fixed_Clear_f();
+	static void Cmd_BXT_Camera_Clear();
+	void Cmd_BXT_Camera_Clear_f();
+	static void Cmd_BXT_Camera_Offset();
+	void Cmd_BXT_Camera_Offset_f();
 	static void Cmd_BXT_Timer_Start();
 	static void Cmd_BXT_Timer_Stop();
 	static void Cmd_BXT_Timer_Reset();
@@ -231,6 +245,9 @@ protected:
 	bool isOverridingCamera = false;
 	float cameraOverrideOrigin[3];
 	float cameraOverrideAngles[3];
+	bool isOffsettingCamera = false;
+	float cameraOffsetOrigin[3];
+	float cameraOffsetAngles[3];
 
 	bool insideSeedRNG;
 	unsigned LastRandomSeed;

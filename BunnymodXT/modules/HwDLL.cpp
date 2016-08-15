@@ -260,6 +260,7 @@ void HwDLL::Clear()
 	LoadingSeedCounter = 0;
 	lastLoadedMap.clear();
 	isOverridingCamera = false;
+	isOffsettingCamera = false;
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -956,6 +957,7 @@ void HwDLL::Cmd_BXT_Camera_Fixed_f()
 	}
 
 	isOverridingCamera = true;
+	isOffsettingCamera = false;
 	cameraOverrideOrigin[0] = std::atof(ORIG_Cmd_Argv(1));
 	cameraOverrideOrigin[1] = std::atof(ORIG_Cmd_Argv(2));
 	cameraOverrideOrigin[2] = std::atof(ORIG_Cmd_Argv(3));
@@ -964,14 +966,37 @@ void HwDLL::Cmd_BXT_Camera_Fixed_f()
 	cameraOverrideAngles[2] = std::atof(ORIG_Cmd_Argv(6));
 }
 
-void HwDLL::Cmd_BXT_Camera_Fixed_Clear()
+void HwDLL::Cmd_BXT_Camera_Clear()
 {
-	HwDLL::GetInstance().Cmd_BXT_Camera_Fixed_Clear_f();
+	HwDLL::GetInstance().Cmd_BXT_Camera_Clear_f();
 }
 
-void HwDLL::Cmd_BXT_Camera_Fixed_Clear_f()
+void HwDLL::Cmd_BXT_Camera_Clear_f()
 {
 	isOverridingCamera = false;
+	isOffsettingCamera = false;
+}
+
+void HwDLL::Cmd_BXT_Camera_Offset()
+{
+	HwDLL::GetInstance().Cmd_BXT_Camera_Offset_f();
+}
+
+void HwDLL::Cmd_BXT_Camera_Offset_f()
+{
+	if (ORIG_Cmd_Argc() != 7) {
+		ORIG_Con_Printf("Usage: bxt_cam_offset <x> <y> <z> <yaw> <pitch> <roll>\n");
+		return;
+	}
+
+	isOverridingCamera = false;
+	isOffsettingCamera = true;
+	cameraOffsetOrigin[0] = std::atof(ORIG_Cmd_Argv(1));
+	cameraOffsetOrigin[1] = std::atof(ORIG_Cmd_Argv(2));
+	cameraOffsetOrigin[2] = std::atof(ORIG_Cmd_Argv(3));
+	cameraOffsetAngles[0] = std::atof(ORIG_Cmd_Argv(5));
+	cameraOffsetAngles[1] = std::atof(ORIG_Cmd_Argv(4));
+	cameraOffsetAngles[2] = std::atof(ORIG_Cmd_Argv(6));
 }
 
 void HwDLL::Cmd_BXT_Timer_Start()
@@ -1125,7 +1150,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("bxt_ch_set_armor", Cmd_BXT_CH_Set_Armor, 2);
 			ORIG_Cmd_AddMallocCommand("w", Cmd_Multiwait, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_cam_fixed", Cmd_BXT_Camera_Fixed, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_cam_fixed_clear", Cmd_BXT_Camera_Fixed_Clear, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_cam_offset", Cmd_BXT_Camera_Offset, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_cam_clear", Cmd_BXT_Camera_Clear, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_stop", Cmd_BXT_Timer_Stop, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_timer_reset", Cmd_BXT_Timer_Reset, 2);

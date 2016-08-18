@@ -28,6 +28,8 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, ClientCommand, edict_t* pEntity)
 	HOOK_DECL(void, __fastcall, CPushable__Move, void* thisptr, int edx, void* pOther, int push)
 	HOOK_DECL(int, __fastcall, CBasePlayer__TakeDamage, void* thisptr, int edx, entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType)
+	HOOK_DECL(void, __fastcall, CGraph__InitGraph, void* thisptr)
+	HOOK_DECL(void, __cdecl, CGraph__InitGraph_Linux, void* thisptr)
 
 public:
 	static ServerDLL& GetInstance()
@@ -42,6 +44,8 @@ public:
 	virtual bool CanHook(const std::wstring& moduleFullName);
 
 	bool GetGlobalState(const std::string& name, int& state);
+
+	std::vector<const Vector *> GetNodePositions() const;
 
 	enginefuncs_t *pEngfuncs;
 	globalvars_t **ppGlobals;
@@ -96,6 +100,12 @@ protected:
 	ptrdiff_t offm_iClientFOV;
 	ptrdiff_t offm_rgAmmoLast;
 	int maxAmmoSlots;
+
+	void *WorldGraph = nullptr;
+	size_t size_CNode;
+	ptrdiff_t offm_pNodes;
+	ptrdiff_t offm_cNodes;
+	ptrdiff_t offm_vecOrigin;
 
 	ptrdiff_t offBhopcap;
 	byte originalBhopcapInsn[6];

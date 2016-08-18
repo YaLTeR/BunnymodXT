@@ -4,10 +4,15 @@
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
 #include "ClientDLL.hpp"
+#include "ServerDLL.hpp"
 #include "HwDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
+#include "../triangle_utils.hpp"
+#include <GL/gl.h>
+
+#pragma comment(lib, "opengl32.lib")
 
 // Linux hooks.
 #ifndef _WIN32
@@ -347,6 +352,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (ORIG_PM_PreventMegaBunnyJumping)
 		REG(bxt_bhopcap_prediction);
 
+	if (ORIG_HUD_DrawTransparentTriangles)
+		REG(bxt_show_nodes);
+
 	if (ORIG_HUD_Init)
 	{
 		CVars::con_color.Assign(HwDLL::GetInstance().FindCVar("con_color"));
@@ -538,4 +546,22 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 		pEngfuncs->Con_Printf(const_cast<char*>("HUD_Frame time: %f\n"), time);
 
 	SeedsQueued = 0;
+}
+
+HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_DrawTransparentTriangles)
+{
+	ORIG_HUD_DrawTransparentTriangles();
+
+	glDisable(GL_TEXTURE_2D);
+
+	if (CVars::bxt_show_nodes.GetBool()) {
+		pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
+		pEngfuncs->pTriAPI->CullFace(TRI_NONE);
+		pEngfuncs->pTriAPI->Color4f(0.722f, 0.0f, 0.341f, 1.0f);
+		for (const Vector *position : ServerDLL::GetInstance().GetNodePositions()) {
+			TriangleUtils::CreatePyramid(pEngfuncs->pTriAPI, *position, 10, 30);
+		}
+	}
+
+	glEnable(GL_TEXTURE_2D);
 }

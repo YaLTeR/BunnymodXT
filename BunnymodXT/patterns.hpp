@@ -211,6 +211,11 @@ namespace patterns
 			"HL-SteamPipe",
 			"81 EC E0 02 00 00 53 55 8B AC 24 EC 02 00 00 33 DB 56 3B EB 57 0F 84 EE 02 00 00 8B 75 7C 3B F3"
 		);
+
+		PATTERNS(CGraph__InitGraph,
+			"HL-SteamPipe",
+			"56 8B F1 57 33 FF 8B 46 10 89 3E 3B C7 89 7E 04 89 7E 08 74 0C 50 E8 ?? ?? ?? ?? 83 C4 04 89 7E 10 8B 46 0C"
+		);
 	}
 
 	namespace shared

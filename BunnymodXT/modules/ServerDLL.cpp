@@ -47,6 +47,11 @@ extern "C" void __cdecl _Z13ClientCommandP7edict_s(edict_t* pEntity)
 {
 	return ServerDLL::HOOKED_ClientCommand(pEntity);
 }
+
+extern "C" void __cdecl _ZN6CGraph9InitGraphEv(void* thisptr)
+{
+	return ServerDLL::HOOKED_CGraph__InitGraph_Linux(thisptr);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -81,7 +86,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CTriggerVolume__Spawn, HOOKED_CTriggerVolume__Spawn,
 			ORIG_ClientCommand, HOOKED_ClientCommand,
 			ORIG_CPushable__Move, HOOKED_CPushable__Move,
-			ORIG_CBasePlayer__TakeDamage, HOOKED_CBasePlayer__TakeDamage);
+			ORIG_CBasePlayer__TakeDamage, HOOKED_CBasePlayer__TakeDamage,
+			ORIG_CGraph__InitGraph, HOOKED_CGraph__InitGraph);
 	}
 }
 
@@ -106,7 +112,8 @@ void ServerDLL::Unhook()
 			ORIG_CTriggerVolume__Spawn,
 			ORIG_ClientCommand,
 			ORIG_CPushable__Move,
-			ORIG_CBasePlayer__TakeDamage);
+			ORIG_CBasePlayer__TakeDamage,
+			ORIG_CGraph__InitGraph);
 	}
 
 	Clear();
@@ -140,6 +147,7 @@ void ServerDLL::Clear()
 	ORIG_CPushable__Move = nullptr;
 	ORIG_CBasePlayer__TakeDamage = nullptr;
 	ORIG_GetEntityAPI = nullptr;
+	ORIG_CGraph__InitGraph = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -159,12 +167,17 @@ void ServerDLL::Clear()
 	offInDuck = 0;
 	offFlags = 0;
 	offBasevelocity = 0;
+	offm_pNodes = 0;
+	offm_vecOrigin = 0;
+	offm_cNodes = 0;
+	size_CNode = 0;
 	pGlobalState = nullptr;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	pEngfuncs = nullptr;
 	ppGlobals = nullptr;
 	cantJumpNextTime.clear();
 	m_Intercepted = false;
+	WorldGraph = nullptr;
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -308,6 +321,22 @@ void ServerDLL::FindStuff()
 	auto fCPushable__Move = FindAsync(ORIG_CPushable__Move, patterns::server::CPushable__Move);
 	auto fCBasePlayer__TakeDamage = FindAsync(ORIG_CBasePlayer__TakeDamage, patterns::server::CBasePlayer__TakeDamage);
 
+	auto fCGraph__InitGraph = FindAsync(
+		ORIG_CGraph__InitGraph,
+		patterns::server::CGraph__InitGraph,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CGraph__InitGraph.cbegin()) {
+			case 0:  // HL-SteamPipe
+				offm_pNodes = 0x0C;
+				offm_vecOrigin = 0x00;
+				offm_cNodes = 0x18;
+				size_CNode = 0x58;
+				break;
+			default:
+				assert(false);
+			}
+		});
+
 	uintptr_t pDispatchRestore;
 	auto fDispatchRestore = FindAsync(
 		pDispatchRestore,
@@ -413,6 +442,16 @@ void ServerDLL::FindStuff()
 		} else {
 			EngineDevWarning("[server dll] Could not find CBasePlayer::TakeDamage.\n");
 			EngineWarning("Damage logging is not available.\n");
+		}
+	}
+
+	{
+		auto pattern = fCGraph__InitGraph.get();
+		if (ORIG_CGraph__InitGraph) {
+			EngineDevMsg("[server dll] Found CGraph::InitGraph at %p (using the %s pattern).\n", ORIG_CGraph__InitGraph, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find CGraph::InitGraph.\n");
+			EngineWarning("AI node display is not available.\n");
 		}
 	}
 
@@ -1292,6 +1331,12 @@ HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, 
 	return ORIG_CBasePlayer__TakeDamage(thisptr, edx, pevInflictor, pevAttacker, flDamage, bitsDamageType);
 }
 
+HOOK_DEF_1(ServerDLL, void, __fastcall, CGraph__InitGraph, void*, thisptr)
+{
+	WorldGraph = thisptr;
+	return ORIG_CGraph__InitGraph(thisptr);
+}
+
 bool ServerDLL::GetGlobalState(const std::string& name, int& state)
 {
 	if (!pGlobalState)
@@ -1307,4 +1352,21 @@ bool ServerDLL::GetGlobalState(const std::string& name, int& state)
 	}
 
 	return false;
+}
+
+std::vector<const Vector *> ServerDLL::GetNodePositions() const
+{
+	std::vector<const Vector *> positions;
+	if (!WorldGraph) {
+		return positions;
+	}
+
+	const int count = *reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(WorldGraph) + offm_cNodes);
+	uintptr_t nodes = *reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(WorldGraph) + offm_pNodes);
+	for (int i = 0; i < count; ++i) {
+		positions.push_back(reinterpret_cast<Vector *>(nodes + offm_vecOrigin));
+		nodes += size_CNode;
+	}
+
+	return positions;
 }

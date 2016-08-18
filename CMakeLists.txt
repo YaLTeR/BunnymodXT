@@ -82,6 +82,7 @@ set (WINDOWS_FILES
 	BunnymodXT/shared.hpp
 	BunnymodXT/sptlib-wrapper.hpp
 	BunnymodXT/stdafx.hpp
+	BunnymodXT/triangle_utils.hpp
 	BunnymodXT/Windows/conutils.hpp)
 
 set (LINUX_FILES
@@ -103,7 +104,8 @@ set (SOURCE_FILES
 	BunnymodXT/modules/ClientDLL.cpp
 	BunnymodXT/modules/ServerDLL.cpp
 	BunnymodXT/cvars.cpp
-	BunnymodXT/hud_custom.cpp)
+	BunnymodXT/hud_custom.cpp
+	BunnymodXT/triangle_utils.cpp)
 
 if (MSVC)
 	include_external_msproject (MinHook "${CMAKE_SOURCE_DIR}/SPTLib/Windows/minhook/build/VC14/libMinHook.vcxproj")

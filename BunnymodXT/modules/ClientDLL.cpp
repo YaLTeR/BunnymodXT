@@ -50,6 +50,11 @@ extern "C" void __cdecl V_CalcRefdef(ref_params_t* pparams)
 {
 	return ClientDLL::HOOKED_V_CalcRefdef(pparams);
 }
+
+extern "C" void __cdecl HUD_DrawTransparentTriangles()
+{
+	return ClientDLL::HOOKED_HUD_DrawTransparentTriangles();
+}
 #endif
 
 void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -71,6 +76,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Redraw), reinterpret_cast<void*>(HOOKED_HUD_Redraw));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_PostRunCmd), reinterpret_cast<void*>(HOOKED_HUD_PostRunCmd));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Frame), reinterpret_cast<void*>(HOOKED_HUD_Frame));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_DrawTransparentTriangles), reinterpret_cast<void*>(HOOKED_HUD_DrawTransparentTriangles));
 
 	if (needToIntercept)
 	{
@@ -83,7 +89,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_HUD_Reset, HOOKED_HUD_Reset,
 			ORIG_HUD_Redraw, HOOKED_HUD_Redraw,
 			ORIG_HUD_PostRunCmd, HOOKED_HUD_PostRunCmd,
-			ORIG_HUD_Frame, HOOKED_HUD_Frame);
+			ORIG_HUD_Frame, HOOKED_HUD_Frame,
+			ORIG_HUD_DrawTransparentTriangles, HOOKED_HUD_DrawTransparentTriangles);
 	}
 }
 
@@ -100,7 +107,8 @@ void ClientDLL::Unhook()
 			ORIG_HUD_Reset,
 			ORIG_HUD_Redraw,
 			ORIG_HUD_PostRunCmd,
-			ORIG_HUD_Frame);
+			ORIG_HUD_Frame,
+			ORIG_HUD_DrawTransparentTriangles);
 	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -109,6 +117,7 @@ void ClientDLL::Unhook()
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Redraw));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_PostRunCmd));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Frame));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_DrawTransparentTriangles));
 
 	Clear();
 }
@@ -128,6 +137,7 @@ void ClientDLL::Clear()
 	ORIG_HUD_Redraw = nullptr;
 	ORIG_HUD_PostRunCmd = nullptr;
 	ORIG_HUD_Frame = nullptr;
+	ORIG_HUD_DrawTransparentTriangles = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -273,6 +283,14 @@ void ClientDLL::FindStuff()
 	} else {
 		EngineDevWarning("[client dll] Could not find HUD_Frame.\n");
 		EngineWarning("In-game timer is not available.\n");
+	}
+
+	ORIG_HUD_DrawTransparentTriangles = reinterpret_cast<_HUD_DrawTransparentTriangles>(MemUtils::GetSymbolAddress(m_Handle, "HUD_DrawTransparentTriangles"));
+	if (ORIG_HUD_DrawTransparentTriangles) {
+		EngineDevMsg("[client dll] Found HUD_DrawTransparentTriangles.\n");
+	} else {
+		EngineDevWarning("[client dll] Could not find HUD_DrawTransparentTriangles.\n");
+		EngineWarning("Features utilizing TriAPI are unavailable.\n");
 	}
 
 	bool noBhopcap = false;

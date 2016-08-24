@@ -1049,7 +1049,7 @@ void HwDLL::Cmd_BXT_Camera_Fixed()
 void HwDLL::Cmd_BXT_Camera_Fixed_f()
 {
 	if (ORIG_Cmd_Argc() != 7) {
-		ORIG_Con_Printf("Usage: bxt_cam_fixed <x> <y> <z> <yaw> <pitch> <roll>\n");
+		ORIG_Con_Printf("Usage: bxt_cam_fixed <x> <y> <z> <pitch> <yaw> <roll>\n");
 		return;
 	}
 
@@ -1058,8 +1058,8 @@ void HwDLL::Cmd_BXT_Camera_Fixed_f()
 	cameraOverrideOrigin[0] = std::atof(ORIG_Cmd_Argv(1));
 	cameraOverrideOrigin[1] = std::atof(ORIG_Cmd_Argv(2));
 	cameraOverrideOrigin[2] = std::atof(ORIG_Cmd_Argv(3));
-	cameraOverrideAngles[0] = std::atof(ORIG_Cmd_Argv(5));
-	cameraOverrideAngles[1] = std::atof(ORIG_Cmd_Argv(4));
+	cameraOverrideAngles[0] = std::atof(ORIG_Cmd_Argv(4));
+	cameraOverrideAngles[1] = std::atof(ORIG_Cmd_Argv(5));
 	cameraOverrideAngles[2] = std::atof(ORIG_Cmd_Argv(6));
 }
 
@@ -1082,7 +1082,7 @@ void HwDLL::Cmd_BXT_Camera_Offset()
 void HwDLL::Cmd_BXT_Camera_Offset_f()
 {
 	if (ORIG_Cmd_Argc() != 7) {
-		ORIG_Con_Printf("Usage: bxt_cam_offset <x> <y> <z> <yaw> <pitch> <roll>\n");
+		ORIG_Con_Printf("Usage: bxt_cam_offset <x> <y> <z> <pitch> <yaw> <roll>\n");
 		return;
 	}
 
@@ -1091,8 +1091,8 @@ void HwDLL::Cmd_BXT_Camera_Offset_f()
 	cameraOffsetOrigin[0] = std::atof(ORIG_Cmd_Argv(1));
 	cameraOffsetOrigin[1] = std::atof(ORIG_Cmd_Argv(2));
 	cameraOffsetOrigin[2] = std::atof(ORIG_Cmd_Argv(3));
-	cameraOffsetAngles[0] = std::atof(ORIG_Cmd_Argv(5));
-	cameraOffsetAngles[1] = std::atof(ORIG_Cmd_Argv(4));
+	cameraOffsetAngles[0] = std::atof(ORIG_Cmd_Argv(4));
+	cameraOffsetAngles[1] = std::atof(ORIG_Cmd_Argv(5));
 	cameraOffsetAngles[2] = std::atof(ORIG_Cmd_Argv(6));
 }
 

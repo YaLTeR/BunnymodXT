@@ -176,6 +176,8 @@ protected:
 	void Cmd_BXT_CH_Set_Armor_f();
 	static void Cmd_BXT_CH_Set_Origin();
 	void Cmd_BXT_CH_Set_Origin_f();
+	static void Cmd_BXT_CH_Set_Origin_Offset();
+	void Cmd_BXT_CH_Set_Origin_Offset_f();
 	static void Cmd_BXT_CH_Set_Velocity();
 	void Cmd_BXT_CH_Set_Velocity_f();
 	static void Cmd_BXT_CH_Set_Velocity_Angles();

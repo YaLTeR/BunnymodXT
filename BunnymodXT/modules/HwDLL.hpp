@@ -178,6 +178,8 @@ protected:
 	void Cmd_BXT_CH_Set_Origin_f();
 	static void Cmd_BXT_CH_Set_Velocity();
 	void Cmd_BXT_CH_Set_Velocity_f();
+	static void Cmd_BXT_CH_Set_Velocity_Angles();
+	void Cmd_BXT_CH_Set_Velocity_Angles_f();
 	static void Cmd_Multiwait();
 	void Cmd_Multiwait_f();
 	static void Cmd_BXT_Camera_Fixed();

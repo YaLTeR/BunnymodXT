@@ -920,6 +920,26 @@ void HwDLL::Cmd_BXT_CH_Set_Armor_f()
 	GetPlayerEdict()->v.armorvalue = static_cast<float>(std::atof(ORIG_Cmd_Argv(1)));
 }
 
+void HwDLL::Cmd_BXT_CH_Set_Origin()
+{
+	HwDLL::GetInstance().Cmd_BXT_CH_Set_Origin_f();
+}
+
+void HwDLL::Cmd_BXT_CH_Set_Origin_f()
+{
+	if (!FindCVar("sv_cheats")->value)
+		return;
+
+	if (ORIG_Cmd_Argc() != 4) {
+		ORIG_Con_Printf("Usage: bxt_ch_set_pos <x> <y> <z>\n");
+		return;
+	}
+
+	GetPlayerEdict()->v.origin[0] = std::atof(ORIG_Cmd_Argv(1));
+	GetPlayerEdict()->v.origin[1] = std::atof(ORIG_Cmd_Argv(2));
+	GetPlayerEdict()->v.origin[2] = std::atof(ORIG_Cmd_Argv(3));
+}
+
 void HwDLL::Cmd_Multiwait()
 {
 	HwDLL::GetInstance().Cmd_Multiwait_f();
@@ -1148,6 +1168,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2); // 2 - Cmd_AddGameCommand.
 			ORIG_Cmd_AddMallocCommand("bxt_ch_set_health", Cmd_BXT_CH_Set_Health, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_ch_set_armor", Cmd_BXT_CH_Set_Armor, 2);
+			ORIG_Cmd_AddMallocCommand("bxt_ch_set_pos", Cmd_BXT_CH_Set_Origin, 2);
 			ORIG_Cmd_AddMallocCommand("w", Cmd_Multiwait, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_cam_fixed", Cmd_BXT_Camera_Fixed, 2);
 			ORIG_Cmd_AddMallocCommand("bxt_cam_offset", Cmd_BXT_Camera_Offset, 2);

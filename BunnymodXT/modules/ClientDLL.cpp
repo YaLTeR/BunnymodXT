@@ -9,7 +9,7 @@
 #include "../patterns.hpp"
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
-#include "../triangle_utils.hpp"
+#include "../triangle_drawing.hpp"
 #include <GL/gl.h>
 
 #pragma comment(lib, "opengl32.lib")
@@ -508,6 +508,8 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_VidInit)
 
 	CustomHud::InitIfNecessary();
 	CustomHud::VidInit();
+
+	TriangleDrawing::VidInit();
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Reset)
@@ -572,14 +574,10 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_DrawTransparentTriangles)
 
 	glDisable(GL_TEXTURE_2D);
 
-	if (CVars::bxt_show_nodes.GetBool()) {
-		pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
-		pEngfuncs->pTriAPI->CullFace(TRI_NONE);
-		pEngfuncs->pTriAPI->Color4f(0.722f, 0.0f, 0.341f, 1.0f);
-		for (const Vector *position : ServerDLL::GetInstance().GetNodePositions()) {
-			TriangleUtils::CreatePyramid(pEngfuncs->pTriAPI, *position, 10, 30);
-		}
-	}
+	TriangleDrawing::Draw();
 
 	glEnable(GL_TEXTURE_2D);
+
+	// This is required for the WON DLLs.
+	pEngfuncs->pTriAPI->RenderMode(kRenderNormal);
 }

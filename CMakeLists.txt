@@ -82,6 +82,7 @@ set (WINDOWS_FILES
 	BunnymodXT/shared.hpp
 	BunnymodXT/sptlib-wrapper.hpp
 	BunnymodXT/stdafx.hpp
+	BunnymodXT/triangle_drawing.hpp
 	BunnymodXT/triangle_utils.hpp
 	BunnymodXT/Windows/conutils.hpp)
 
@@ -105,6 +106,7 @@ set (SOURCE_FILES
 	BunnymodXT/modules/ServerDLL.cpp
 	BunnymodXT/cvars.cpp
 	BunnymodXT/hud_custom.cpp
+	BunnymodXT/triangle_drawing.cpp
 	BunnymodXT/triangle_utils.cpp)
 
 if (MSVC)

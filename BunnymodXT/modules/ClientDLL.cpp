@@ -287,7 +287,7 @@ void ClientDLL::FindStuff()
 
 	ORIG_HUD_DrawTransparentTriangles = reinterpret_cast<_HUD_DrawTransparentTriangles>(MemUtils::GetSymbolAddress(m_Handle, "HUD_DrawTransparentTriangles"));
 	if (ORIG_HUD_DrawTransparentTriangles) {
-		EngineDevMsg("[client dll] Found HUD_DrawTransparentTriangles.\n");
+		EngineDevMsg("[client dll] Found HUD_DrawTransparentTriangles at %p.\n", ORIG_HUD_DrawTransparentTriangles);
 	} else {
 		EngineDevWarning("[client dll] Could not find HUD_DrawTransparentTriangles.\n");
 		EngineWarning("Features utilizing TriAPI are unavailable.\n");

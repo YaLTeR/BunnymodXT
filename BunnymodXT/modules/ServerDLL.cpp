@@ -148,6 +148,7 @@ void ServerDLL::Clear()
 	ORIG_CBasePlayer__TakeDamage = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ORIG_CGraph__InitGraph = nullptr;
+	ORIG_CGraph__InitGraph_Linux = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -450,8 +451,18 @@ void ServerDLL::FindStuff()
 		if (ORIG_CGraph__InitGraph) {
 			EngineDevMsg("[server dll] Found CGraph::InitGraph at %p (using the %s pattern).\n", ORIG_CGraph__InitGraph, pattern->name());
 		} else {
-			EngineDevWarning("[server dll] Could not find CGraph::InitGraph.\n");
-			EngineWarning("AI node display is not available.\n");
+			ORIG_CGraph__InitGraph_Linux = reinterpret_cast<_CGraph__InitGraph_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN6CGraph9InitGraphEv"));
+			if (ORIG_CGraph__InitGraph_Linux) {
+				offm_pNodes = 0x0C;
+				offm_vecOrigin = 0x00;
+				offm_cNodes = 0x18;
+				size_CNode = 0x58;
+
+				EngineDevMsg("[server dll] Found CGraph::InitGraph [Linux] at %p.\n", ORIG_CGraph__InitGraph);
+			} else {
+				EngineDevWarning("[server dll] Could not find CGraph::InitGraph.\n");
+				EngineWarning("AI node display is not available.\n");
+			}
 		}
 	}
 
@@ -1335,6 +1346,12 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CGraph__InitGraph, void*, thisptr)
 {
 	WorldGraph = thisptr;
 	return ORIG_CGraph__InitGraph(thisptr);
+}
+
+HOOK_DEF_1(ServerDLL, void, __cdecl, CGraph__InitGraph_Linux, void*, thisptr)
+{
+	WorldGraph = thisptr;
+	return ORIG_CGraph__InitGraph_Linux(thisptr);
 }
 
 bool ServerDLL::GetGlobalState(const std::string& name, int& state)

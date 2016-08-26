@@ -12,8 +12,6 @@
 #include "../triangle_drawing.hpp"
 #include <GL/gl.h>
 
-#pragma comment(lib, "opengl32.lib")
-
 // Linux hooks.
 #ifndef _WIN32
 extern "C" void __cdecl HUD_Init()

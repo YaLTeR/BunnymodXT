@@ -37,6 +37,7 @@ namespace CVars
 	CVarWrapper bxt_autojump_prediction("bxt_autojump_prediction", "0");
 	CVarWrapper bxt_bhopcap_prediction("bxt_bhopcap_prediction", "1");
 	CVarWrapper bxt_show_nodes("bxt_show_nodes", "0");
+	CVarWrapper bxt_show_custom_triggers("bxt_show_custom_triggers", "1");
 	CVarWrapper bxt_hud("bxt_hud", "1");
 	CVarWrapper bxt_hud_color("bxt_hud_color", "");
 	CVarWrapper bxt_hud_precision("bxt_hud_precision", "6");
@@ -102,6 +103,7 @@ namespace CVars
 		&bxt_autojump_prediction,
 		&bxt_bhopcap_prediction,
 		&bxt_show_nodes,
+		&bxt_show_custom_triggers,
 		&bxt_hud,
 		&bxt_hud_color,
 		&bxt_hud_precision,

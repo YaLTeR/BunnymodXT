@@ -13,6 +13,7 @@
 #include "../interprocess.hpp"
 #include "../bunnymodxt.hpp"
 #include "../cmd_wrapper.hpp"
+#include "../custom_triggers.hpp"
 
 using namespace std::literals;
 
@@ -1175,6 +1176,50 @@ struct HwDLL::Cmd_BXT_TAS_Ducktap_Up
 	}
 };
 
+struct HwDLL::Cmd_BXT_Triggers_Add
+{
+	USAGE("Usage: bxt_triggers_add <x1> <y1> <z1> <x2> <y2> <z2>\n Adds a custom trigger in a form of axis-aligned cuboid with opposite corners at coordinates (x1, y1, z1) and (x2, y2, z2).\n");
+
+	static void handler(float x1, float y1, float z1, float x2, float y2, float z2)
+	{
+		CustomTriggers::triggers.emplace_back(Vector(x1, y1, z1), Vector(x2, y2, z2));
+	}
+};
+
+struct HwDLL::Cmd_BXT_Triggers_SetCommand
+{
+	// TODO: set command by trigger ID.
+
+	USAGE("Usage: bxt_triggers_setcommand <command>\n Sets the last placed trigger's command.\n");
+
+	static void handler(const char* command)
+	{
+		if (CustomTriggers::triggers.size() == 0) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any triggers.\n");
+			return;
+		}
+
+		CustomTriggers::triggers.back().set_command(command);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Triggers_Delete
+{
+	// TODO: delete by trigger ID.
+
+	USAGE("Usage: bxt_triggers_delete\n Deletes the last placed trigger.\n");
+
+	static void handler()
+	{
+		if (CustomTriggers::triggers.size() == 0) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any triggers.\n");
+			return;
+		}
+
+		CustomTriggers::triggers.erase(--CustomTriggers::triggers.end());
+	}
+};
+
 struct HwDLL::Cmd_BXT_Record
 {
 	USAGE("Usage: bxt_record <demoname>\n");
@@ -1336,6 +1381,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Autojump_Up, Handler<>, Handler<const char*>>("-bxt_tas_autojump");
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Down, Handler<>, Handler<const char*>>("+bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Up, Handler<>, Handler<const char*>>("-bxt_tas_ducktap");
+	wrapper::Add<Cmd_BXT_Triggers_Add, Handler<float, float, float, float, float, float>>("bxt_triggers_add");
+	wrapper::Add<Cmd_BXT_Triggers_SetCommand, Handler<const char*>>("bxt_triggers_setcommand");
+	wrapper::Add<Cmd_BXT_Triggers_Delete, Handler<>>("bxt_triggers_delete");
 	wrapper::Add<Cmd_BXT_Record, Handler<const char *>>("bxt_record");
 	wrapper::Add<Cmd_BXT_AutoRecord, Handler<const char *>>("bxt_autorecord");
 	wrapper::Add<Cmd_BXT_Map, Handler<const char *>>("_bxt_map");
@@ -1822,6 +1870,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 {
 	RegisterCVarsAndCommandsIfNeeded();
 
+	UpdateCustomTriggers();
+
 	int *state = reinterpret_cast<int*>(cls);
 	int *paused = reinterpret_cast<int*>(sv)+1;
 	static unsigned counter = 1;
@@ -2030,6 +2080,18 @@ HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3
 	tr.PlaneNormal[2] = pmtr.plane.normal[2];
 	tr.Entity = pmtr.ent;
 	return tr;
+}
+
+void HwDLL::UpdateCustomTriggers()
+{
+	if (!svs || svs->num_clients < 1)
+		return;
+
+	edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	if (!pl)
+		return;
+
+	CustomTriggers::Update(pl->v.origin, (pl->v.flags & FL_DUCKING) != 0);
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

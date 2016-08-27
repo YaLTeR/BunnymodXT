@@ -369,6 +369,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_bhopcap_prediction);
 
 	if (ORIG_HUD_DrawTransparentTriangles) {
+		REG(bxt_show_custom_triggers);
 		REG(bxt_show_nodes);
 		REG(bxt_hud_useables);
 		REG(bxt_hud_useables_radius);

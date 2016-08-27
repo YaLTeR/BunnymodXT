@@ -75,6 +75,7 @@ set (WINDOWS_FILES
 	BunnymodXT/modules/ServerDLL.hpp
 	BunnymodXT/bunnymodxt.hpp
 	BunnymodXT/cmd_wrapper.hpp
+	BunnymodXT/custom_triggers.hpp
 	BunnymodXT/cvars.hpp
 	BunnymodXT/hud_custom.hpp
 	BunnymodXT/interprocess.hpp
@@ -105,6 +106,7 @@ set (SOURCE_FILES
 	BunnymodXT/modules/HwDLL.cpp
 	BunnymodXT/modules/ClientDLL.cpp
 	BunnymodXT/modules/ServerDLL.cpp
+	BunnymodXT/custom_triggers.cpp
 	BunnymodXT/cvars.cpp
 	BunnymodXT/hud_custom.cpp
 	BunnymodXT/triangle_drawing.cpp

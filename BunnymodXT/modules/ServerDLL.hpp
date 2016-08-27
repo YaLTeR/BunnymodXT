@@ -15,6 +15,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, PM_WalkMove)
 	HOOK_DECL(void, __cdecl, PM_FlyMove)
 	HOOK_DECL(bool, __cdecl, PM_AddToTouched, pmtrace_t tr, float* impactvelocity)
+	HOOK_DECL(void, __cdecl, PM_Move, struct playermove_s* ppmove, int server)
 	HOOK_DECL(void, __cdecl, CmdStart, const edict_t* player, const usercmd_t* cmd, unsigned int random_seed)
 	HOOK_DECL(void, __fastcall, CNihilanth__DyingThink, void* thisptr, int edx)
 	HOOK_DECL(void, __cdecl, CNihilanth__DyingThink_Linux, void* thisptr)

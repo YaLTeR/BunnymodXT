@@ -17,7 +17,7 @@ namespace TriangleDrawing
 		pTriAPI->CullFace(TRI_NONE);
 		pTriAPI->Color4f(0.722f, 0.0f, 0.341f, 1.0f);
 		for (const Vector *position : ServerDLL::GetInstance().GetNodePositions()) {
-			TriangleUtils::CreatePyramid(pTriAPI, *position, 10, 30);
+			TriangleUtils::DrawPyramid(pTriAPI, *position, 10, 30);
 		}
 	}
 

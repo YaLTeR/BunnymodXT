@@ -15,7 +15,7 @@ namespace TriangleUtils
 		return pixels / CustomHud::GetScreenInfo().iHeight;
 	}
 
-	void CreatePyramid(triangleapi_s *pTriAPI, Vector origin, float width, float height)
+	void DrawPyramid(triangleapi_s *pTriAPI, Vector origin, float width, float height)
 	{
 		const float halfWidth = width * 0.5f;
 		Vector bottom[5] = {
@@ -38,7 +38,7 @@ namespace TriangleUtils
 		pTriAPI->End();
 	}
 
-	void CreateScreenTriangle(triangleapi_s *pTriAPI, Vector origin, float sideLength)
+	void DrawScreenTriangle(triangleapi_s *pTriAPI, Vector origin, float sideLength)
 	{
 		// The magic number is sqrt(3) / 6
 		const auto baseToCenter = 0.288675135f * sideLength;

@@ -368,8 +368,11 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (ORIG_PM_PreventMegaBunnyJumping)
 		REG(bxt_bhopcap_prediction);
 
-	if (ORIG_HUD_DrawTransparentTriangles)
+	if (ORIG_HUD_DrawTransparentTriangles) {
 		REG(bxt_show_nodes);
+		REG(bxt_hud_useables);
+		REG(bxt_hud_useables_radius);
+	}
 
 	if (ORIG_HUD_Init)
 	{
@@ -407,8 +410,6 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_visible_landmarks);
 		REG(bxt_hud_visible_landmarks_offset);
 		REG(bxt_hud_visible_landmarks_anchor);
-		REG(bxt_hud_useables);
-		REG(bxt_hud_useables_radius);
 	}
 	#undef REG
 }

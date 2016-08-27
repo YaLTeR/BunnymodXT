@@ -177,6 +177,8 @@ namespace CVars
 	extern CVarWrapper bxt_hud_visible_landmarks;
 	extern CVarWrapper bxt_hud_visible_landmarks_offset;
 	extern CVarWrapper bxt_hud_visible_landmarks_anchor;
+	extern CVarWrapper bxt_hud_useables;
+	extern CVarWrapper bxt_hud_useables_radius;
 
 	extern const std::vector<CVarWrapper*> allCVars;
 }

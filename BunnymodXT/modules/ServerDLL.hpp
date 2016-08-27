@@ -45,6 +45,7 @@ public:
 
 	bool GetGlobalState(const std::string& name, int& state);
 
+	std::vector<const edict_t *> GetUseableEntities(const Vector &origin, float radius) const;
 	std::vector<const Vector *> GetNodePositions() const;
 
 	enginefuncs_t *pEngfuncs;
@@ -70,6 +71,7 @@ protected:
 
 	typedef bool (__fastcall *_IsPlayer)(void *thisptr);
 	typedef void (__fastcall *_Center)(void *thisptr, int edx, Vector *center);
+	typedef int (__fastcall *_ObjectCaps)(void *thisptr);
 
 	void FindStuff();
 	void RegisterCVarsAndCommands();
@@ -96,6 +98,7 @@ protected:
 
 	static const ptrdiff_t offFuncIsPlayer = 0x9C;
 	static const ptrdiff_t offFuncCenter = 0xC8;
+	static const ptrdiff_t offFuncObjectCaps = 0x14;
 
 	ptrdiff_t offm_iClientFOV;
 	ptrdiff_t offm_rgAmmoLast;

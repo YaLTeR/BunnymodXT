@@ -723,6 +723,27 @@ void ServerDLL::RegisterCVarsAndCommands()
 	#undef REG
 }
 
+std::vector<const edict_t *> ServerDLL::GetUseableEntities(const Vector &origin, float radius) const
+{
+	std::vector<const edict_t *> entities;
+	edict_t *pent = nullptr;
+
+	for (;;) {
+		pent = pEngfuncs->pfnFindEntityInSphere(pent, origin, radius);
+		if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent))
+			break;
+
+		void *base = pent->pvPrivateData;
+		auto ObjectCapsFunc = *reinterpret_cast<_ObjectCaps *>(*reinterpret_cast<uintptr_t *>(base) + offFuncObjectCaps);
+		if (!(ObjectCapsFunc(base) & (FCAP_IMPULSE_USE | FCAP_CONTINUOUS_USE | FCAP_ONOFF_USE)))
+			continue;
+
+		entities.push_back(pent);
+	}
+
+	return entities;
+}
+
 HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
 {
 	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);

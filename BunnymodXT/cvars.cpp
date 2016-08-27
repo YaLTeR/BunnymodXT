@@ -71,6 +71,9 @@ namespace CVars
 	CVarWrapper bxt_hud_visible_landmarks_offset("bxt_hud_visible_landmarks_offset", "");
 	CVarWrapper bxt_hud_visible_landmarks_anchor("bxt_hud_visible_landmarks_anchor", "0.5 0");
 
+	CVarWrapper bxt_hud_useables("bxt_hud_useables", "0");
+	CVarWrapper bxt_hud_useables_radius("bxt_hud_useables_radius", "64");
+
 	const std::vector<CVarWrapper*> allCVars =
 	{
 		&_bxt_taslog,
@@ -131,6 +134,8 @@ namespace CVars
 		&bxt_hud_timer_anchor,
 		&bxt_hud_visible_landmarks,
 		&bxt_hud_visible_landmarks_offset,
-		&bxt_hud_visible_landmarks_anchor
+		&bxt_hud_visible_landmarks_anchor,
+		&bxt_hud_useables,
+		&bxt_hud_useables_radius
 	};
 }

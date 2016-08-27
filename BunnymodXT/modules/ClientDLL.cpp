@@ -407,6 +407,8 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_visible_landmarks);
 		REG(bxt_hud_visible_landmarks_offset);
 		REG(bxt_hud_visible_landmarks_anchor);
+		REG(bxt_hud_useables);
+		REG(bxt_hud_useables_radius);
 	}
 	#undef REG
 }

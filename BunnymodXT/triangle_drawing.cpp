@@ -21,6 +21,35 @@ namespace TriangleDrawing
 		}
 	}
 
+	// From util.cpp of HLSDK.
+	static Vector UTIL_ClampVectorToBox(const Vector &input, const Vector &clampSize)
+	{
+		Vector sourceVector = input;
+
+		if (sourceVector.x > clampSize.x)
+			sourceVector.x -= clampSize.x;
+		else if (sourceVector.x < -clampSize.x)
+			sourceVector.x += clampSize.x;
+		else
+			sourceVector.x = 0;
+
+		if (sourceVector.y > clampSize.y)
+			sourceVector.y -= clampSize.y;
+		else if (sourceVector.y < -clampSize.y)
+			sourceVector.y += clampSize.y;
+		else
+			sourceVector.y = 0;
+
+		if (sourceVector.z > clampSize.z)
+			sourceVector.z -= clampSize.z;
+		else if (sourceVector.z < -clampSize.z)
+			sourceVector.z += clampSize.z;
+		else
+			sourceVector.z = 0;
+
+		return sourceVector.Normalize();
+	}
+
 	static void DrawUseableEntities(triangleapi_s *pTriAPI)
 	{
 		if (!CVars::bxt_hud_useables.GetBool())
@@ -29,18 +58,74 @@ namespace TriangleDrawing
 		const auto searchRadius = CVars::bxt_hud_useables_radius.GetFloat();
 		const auto player = HwDLL::GetInstance().GetPlayerEdict();
 		const auto playerOrigin = player->v.origin;
+		Vector forward, right, up;
+		ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player->v.v_angle, forward, right, up);
+
+		const auto si = CustomHud::GetScreenInfo();
+		const auto min_resolution = std::min(si.iHeight, si.iWidth);
+		const auto half_size_pixels = min_resolution / 30.0f;
+		const Vector2D half_size(TriangleUtils::PixelWidthToProportion(half_size_pixels), TriangleUtils::PixelHeightToProportion(half_size_pixels));
+
+		constexpr float VIEW_FIELD_NARROW = 0.7f;
+		float max_dot = VIEW_FIELD_NARROW;
+		const edict_t* target_object = nullptr;
 
 		pTriAPI->RenderMode(kRenderTransColor);
 		pTriAPI->CullFace(TRI_NONE);
-		pTriAPI->Color4f(1.0f, 0.0f, 0.0f, 1.0f);
-		for (const auto pent : ServerDLL::GetInstance().GetUseableEntities(playerOrigin, searchRadius)) {
-			const auto bmodelOrigin = pent->v.absmin + 0.5 * pent->v.size;
+
+		const auto useable_entities = ServerDLL::GetInstance().GetUseableEntities(playerOrigin, searchRadius);
+		for (const auto pent : useable_entities) {
+			auto bmodelOrigin = pent->v.absmin + 0.5 * pent->v.size;
 			const auto disp = bmodelOrigin - playerOrigin - player->v.view_ofs;
-			Vector forward, right, up;
-			ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player->v.v_angle, forward, right, up);
+
+			float dot = DotProduct(UTIL_ClampVectorToBox(disp, pent->v.size * 0.5), forward);
+			if (dot > max_dot) {
+				target_object = pent;
+				max_dot = dot;
+			}
+		}
+
+		pTriAPI->Color4f(1.0f, 0.0f, 0.0f, 1.0f);
+
+		for (const auto pent : useable_entities) {
+			if (pent == target_object)
+				continue;
+
+			auto bmodelOrigin = pent->v.absmin + 0.5 * pent->v.size;
+			const auto disp = bmodelOrigin - playerOrigin - player->v.view_ofs;
+
 			// Prevent drawing entities that are behind us. WorldToScreen doesn't prevent this automatically.
-			if (DotProduct(forward, disp) > 0.0f)
-				TriangleUtils::CreateScreenTriangle(pTriAPI, bmodelOrigin, 0.2f);
+			if (DotProduct(forward, disp) > 0.0f) {
+				Vector screen_point;
+				pTriAPI->WorldToScreen(bmodelOrigin, screen_point);
+
+				TriangleUtils::DrawScreenRectangle(
+					pTriAPI,
+					screen_point.Make2D() - half_size,
+					screen_point.Make2D() + half_size
+				);
+			}
+		}
+
+		// Make sure the target object is drawn on top.
+		if (target_object)
+		{
+			pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 1.0f);
+
+			auto bmodelOrigin = target_object->v.absmin + 0.5 * target_object->v.size;
+			const auto disp = bmodelOrigin - playerOrigin - player->v.view_ofs;
+
+			// Prevent drawing entities that are behind us. WorldToScreen doesn't prevent this automatically.
+			if (DotProduct(forward, disp) > 0.0f) {
+				Vector screen_point;
+				pTriAPI->WorldToScreen(bmodelOrigin, screen_point);
+
+				TriangleUtils::DrawScreenRectangle(
+					pTriAPI,
+					screen_point.Make2D() - half_size,
+					screen_point.Make2D() + half_size
+				);
+			}
 		}
 	}
 

@@ -1,9 +1,20 @@
 #include "stdafx.hpp"
 
+#include "hud_custom.hpp"
 #include "triangle_utils.hpp"
 
 namespace TriangleUtils
 {
+	float PixelWidthToProportion(float pixels)
+	{
+		return pixels / CustomHud::GetScreenInfo().iWidth;
+	}
+
+	float PixelHeightToProportion(float pixels)
+	{
+		return pixels / CustomHud::GetScreenInfo().iHeight;
+	}
+
 	void CreatePyramid(triangleapi_s *pTriAPI, Vector origin, float width, float height)
 	{
 		const float halfWidth = width * 0.5f;
@@ -54,4 +65,123 @@ namespace TriangleUtils
 		}
 		pTriAPI->End();
 	}
-}
+
+	void DrawScreenRectangle(triangleapi_s *pTriAPI, Vector2D corner1, Vector2D corner2)
+	{
+		Vector screen_points[4], world_points[4];
+		screen_points[0] = Vector(corner1.x, corner1.y, 0.0f);
+		screen_points[1] = Vector(corner1.x, corner2.y, 0.0f);
+		screen_points[2] = Vector(corner2.x, corner2.y, 0.0f);
+		screen_points[3] = Vector(corner2.x, corner1.y, 0.0f);
+
+		for (int i = 0; i < 4; ++i)
+			pTriAPI->ScreenToWorld(screen_points[i], world_points[i]);
+
+		pTriAPI->Begin(TRI_QUADS);
+
+		pTriAPI->Vertex3fv(world_points[0]);
+		pTriAPI->Vertex3fv(world_points[1]);
+		pTriAPI->Vertex3fv(world_points[2]);
+		pTriAPI->Vertex3fv(world_points[3]);
+
+		pTriAPI->End();
+	}
+
+	void DrawAACuboid(triangleapi_s *pTriAPI, Vector corner1, Vector corner2)
+	{
+		pTriAPI->Begin(TRI_QUADS);
+
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
+
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
+
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
+
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
+
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
+
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
+
+		pTriAPI->End();
+	}
+
+	void DrawAACuboidWireframe(triangleapi_s *pTriAPI, Vector corner1, Vector corner2)
+	{
+		pTriAPI->Begin(TRI_LINES);
+
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
+		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+
+		pTriAPI->End();
+	}
+};

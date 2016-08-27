@@ -796,4 +796,9 @@ namespace CustomHud
 			static_cast<uint8_t>(seconds),
 			milliseconds };
 	}
+
+	const SCREENINFO& GetScreenInfo()
+	{
+		return si;
+	}
 }

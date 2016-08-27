@@ -24,4 +24,6 @@ namespace CustomHud
 	void SetCountingTime(bool counting);
 	void SendTimeUpdate();
 	Interprocess::Time GetTime();
+
+	const SCREENINFO& GetScreenInfo();
 };

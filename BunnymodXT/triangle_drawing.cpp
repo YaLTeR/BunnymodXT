@@ -35,7 +35,7 @@ namespace TriangleDrawing
 		pTriAPI->Color4f(1.0f, 0.0f, 0.0f, 1.0f);
 		for (const auto pent : ServerDLL::GetInstance().GetUseableEntities(playerOrigin, searchRadius)) {
 			const auto bmodelOrigin = pent->v.absmin + 0.5 * pent->v.size;
-			const auto disp = bmodelOrigin - playerOrigin;
+			const auto disp = bmodelOrigin - playerOrigin - player->v.view_ofs;
 			Vector forward, right, up;
 			ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player->v.v_angle, forward, right, up);
 			// Prevent drawing entities that are behind us. WorldToScreen doesn't prevent this automatically.

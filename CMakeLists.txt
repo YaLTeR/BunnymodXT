@@ -74,6 +74,7 @@ set (WINDOWS_FILES
 	BunnymodXT/modules/ClientDLL.hpp
 	BunnymodXT/modules/ServerDLL.hpp
 	BunnymodXT/bunnymodxt.hpp
+	BunnymodXT/cmd_wrapper.hpp
 	BunnymodXT/cvars.hpp
 	BunnymodXT/hud_custom.hpp
 	BunnymodXT/interprocess.hpp

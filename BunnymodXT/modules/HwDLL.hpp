@@ -67,6 +67,29 @@ class HwDLL : public IHookableNameFilterOrdered
 		const std::string Name;
 	};
 
+	struct CmdFuncs
+	{
+		inline static void AddCommand(const char *name, void (*handler)())
+		{
+			HwDLL::GetInstance().ORIG_Cmd_AddMallocCommand(name, handler, 2);  // 2 - Cmd_AddGameCommand.
+		}
+
+		inline static const char *Argv(int i)
+		{
+			return HwDLL::GetInstance().ORIG_Cmd_Argv(i);
+		}
+
+		inline static int Argc()
+		{
+			return HwDLL::GetInstance().ORIG_Cmd_Argc();
+		}
+
+		inline static void UsagePrint(const char *s)
+		{
+			return HwDLL::GetInstance().ORIG_Con_Printf("%s\n", s);
+		}
+	};
+
 public:
 	static HwDLL& GetInstance()
 	{

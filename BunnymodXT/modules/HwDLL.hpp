@@ -86,7 +86,12 @@ class HwDLL : public IHookableNameFilterOrdered
 
 		inline static void UsagePrint(const char *s)
 		{
-			return HwDLL::GetInstance().ORIG_Con_Printf("%s\n", s);
+			return HwDLL::GetInstance().ORIG_Con_Printf("%s", s);
+		}
+
+		inline static bool IsCheating()
+		{
+			return HwDLL::GetInstance().FindCVar("sv_cheats")->value != 0.0f;
 		}
 	};
 
@@ -191,45 +196,30 @@ protected:
 
 	void FindStuff();
 
-	static void Cmd_BXT_TAS_LoadScript();
-	void Cmd_BXT_TAS_LoadScript_f();
-	static void Cmd_BXT_CH_Set_Health();
-	void Cmd_BXT_CH_Set_Health_f();
-	static void Cmd_BXT_CH_Set_Armor();
-	void Cmd_BXT_CH_Set_Armor_f();
-	static void Cmd_BXT_CH_Set_Origin();
-	void Cmd_BXT_CH_Set_Origin_f();
-	static void Cmd_BXT_CH_Set_Origin_Offset();
-	void Cmd_BXT_CH_Set_Origin_Offset_f();
-	static void Cmd_BXT_CH_Set_Velocity();
-	void Cmd_BXT_CH_Set_Velocity_f();
-	static void Cmd_BXT_CH_Set_Velocity_Angles();
-	void Cmd_BXT_CH_Set_Velocity_Angles_f();
-	static void Cmd_Multiwait();
-	void Cmd_Multiwait_f();
-	static void Cmd_BXT_Camera_Fixed();
-	void Cmd_BXT_Camera_Fixed_f();
-	static void Cmd_BXT_Camera_Clear();
-	void Cmd_BXT_Camera_Clear_f();
-	static void Cmd_BXT_Camera_Offset();
-	void Cmd_BXT_Camera_Offset_f();
-	static void Cmd_BXT_Timer_Start();
-	static void Cmd_BXT_Timer_Stop();
-	static void Cmd_BXT_Timer_Reset();
-	static void Cmd_BXT_TAS_Autojump_Down();
-	static void Cmd_BXT_TAS_Autojump_Up();
-	static void Cmd_BXT_TAS_Ducktap_Down();
-	static void Cmd_BXT_TAS_Ducktap_Up();
-	static void Cmd_BXT_Record();
-	void Cmd_BXT_Record_f();
-	static void Cmd_BXT_Interprocess_Reset();
-	static void Cmd_BXT_Map();
-	void Cmd_BXT_Map_f();
-	static void Cmd_BXT_Load();
-	void Cmd_BXT_Load_f();
-	static void Cmd_BXT_Reset_Frametime_Remainder();
-	static void Cmd_BXT_TASLog();
-	void Cmd_BXT_TASLog_f();
+	struct Cmd_BXT_TAS_LoadScript;
+	struct Cmd_BXT_CH_Set_Health;
+	struct Cmd_BXT_CH_Set_Armor;
+	struct Cmd_BXT_CH_Set_Origin;
+	struct Cmd_BXT_CH_Set_Origin_Offset;
+	struct Cmd_BXT_CH_Set_Velocity;
+	struct Cmd_BXT_CH_Set_Velocity_Angles;
+	struct Cmd_Multiwait;
+	struct Cmd_BXT_Camera_Fixed;
+	struct Cmd_BXT_Camera_Clear;
+	struct Cmd_BXT_Camera_Offset;
+	struct Cmd_BXT_Timer_Start;
+	struct Cmd_BXT_Timer_Stop;
+	struct Cmd_BXT_Timer_Reset;
+	struct Cmd_BXT_TAS_Autojump_Down;
+	struct Cmd_BXT_TAS_Autojump_Up;
+	struct Cmd_BXT_TAS_Ducktap_Down;
+	struct Cmd_BXT_TAS_Ducktap_Up;
+	struct Cmd_BXT_Record;
+	struct Cmd_BXT_Interprocess_Reset;
+	struct Cmd_BXT_Map;
+	struct Cmd_BXT_Load;
+	struct Cmd_BXT_Reset_Frametime_Remainder;
+	struct Cmd_BXT_TASLog;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

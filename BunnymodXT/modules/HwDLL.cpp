@@ -825,450 +825,404 @@ cvar_t* HwDLL::FindCVar(const char* name)
 	return ORIG_Cvar_FindVar(name);
 }
 
-void HwDLL::Cmd_BXT_TAS_LoadScript()
+struct HwDLL::Cmd_BXT_TAS_LoadScript
 {
-	return HwDLL::GetInstance().Cmd_BXT_TAS_LoadScript_f();
-}
-
-void HwDLL::Cmd_BXT_TAS_LoadScript_f()
-{
-	if (resetState != ResetState::NORMAL)
-		return;
-
-	runningFrames = false;
-	currentFramebulk = 0;
-	currentRepeat = 0;
-	StrafeState = HLStrafe::CurrentState();
-	ButtonsPresent = false;
-	demoName.clear();
-	saveName.clear();
-	frametime0ms.clear();
-	SharedRNGSeedPresent = false;
-	SetNonSharedRNGSeed = false;
-	thisFrameIs0ms = false;
-
-	if (ORIG_Cmd_Argc() != 2) {
-		ORIG_Con_Printf("Usage: bxt_tas_loadscript <filename>\n");
-		return;
-	}
-
-	std::string filename(ORIG_Cmd_Argv(1));
-	auto err = input.Open(filename).get();
-	if (err.Code != HLTAS::ErrorCode::OK) {
-		ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
-		return;
-	}
-
-	for (auto prop : input.GetProperties()) {
-		if (prop.first == "demo")
-			demoName = prop.second;
-		else if (prop.first == "save")
-			saveName = prop.second;
-		else if (prop.first == "seed") {
-			std::istringstream ss(prop.second);
-			ss >> SharedRNGSeed >> NonSharedRNGSeed;
-			SharedRNGSeedPresent = true;
-			SetNonSharedRNGSeed = true;
-		} else if (prop.first == "frametime0ms")
-			frametime0ms = prop.second;
-	}
-
-	if (!input.GetFrames().empty()) {
-		runningFrames = true;
-		totalFramebulks = input.GetFrames().size();
-		HLTAS::Frame f;
-		if (GetNextMovementFrame(f)) {
-			std::ostringstream ss;
-			ss << "host_framerate " << f.Frametime.c_str() << "\n";
-			ORIG_Cbuf_InsertText(ss.str().c_str());
-		}
-	}
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Health()
-{
-	HwDLL::GetInstance().Cmd_BXT_CH_Set_Health_f();
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Health_f()
-{
-	if (!FindCVar("sv_cheats")->value)
-		return;
-
-	if (ORIG_Cmd_Argc() != 2) {
-		ORIG_Con_Printf("Usage: bxt_ch_set_health <health>\n");
-		return;
-	}
-
-	GetPlayerEdict()->v.health = static_cast<float>(std::atof(ORIG_Cmd_Argv(1)));
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Armor()
-{
-	HwDLL::GetInstance().Cmd_BXT_CH_Set_Armor_f();
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Armor_f()
-{
-	if (!FindCVar("sv_cheats")->value)
-		return;
-
-	if (ORIG_Cmd_Argc() != 2) {
-		ORIG_Con_Printf("Usage: bxt_ch_set_armor <armor>\n");
-		return;
-	}
-
-	GetPlayerEdict()->v.armorvalue = static_cast<float>(std::atof(ORIG_Cmd_Argv(1)));
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Origin()
-{
-	HwDLL::GetInstance().Cmd_BXT_CH_Set_Origin_f();
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Origin_f()
-{
-	if (!FindCVar("sv_cheats")->value)
-		return;
-
-	if (ORIG_Cmd_Argc() != 4) {
-		ORIG_Con_Printf("Usage: bxt_ch_set_pos <x> <y> <z>\n");
-		return;
-	}
-
-	GetPlayerEdict()->v.origin[0] = std::atof(ORIG_Cmd_Argv(1));
-	GetPlayerEdict()->v.origin[1] = std::atof(ORIG_Cmd_Argv(2));
-	GetPlayerEdict()->v.origin[2] = std::atof(ORIG_Cmd_Argv(3));
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Velocity()
-{
-	HwDLL::GetInstance().Cmd_BXT_CH_Set_Velocity_f();
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Velocity_f()
-{
-	if (!FindCVar("sv_cheats")->value)
-		return;
-
-	if (ORIG_Cmd_Argc() != 4) {
-		ORIG_Con_Printf("Usage: bxt_ch_set_vel <x> <y> <z>\n");
-		return;
-	}
-
-	GetPlayerEdict()->v.velocity[0] = std::atof(ORIG_Cmd_Argv(1));
-	GetPlayerEdict()->v.velocity[1] = std::atof(ORIG_Cmd_Argv(2));
-	GetPlayerEdict()->v.velocity[2] = std::atof(ORIG_Cmd_Argv(3));
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Velocity_Angles()
-{
-	HwDLL::GetInstance().Cmd_BXT_CH_Set_Velocity_Angles_f();
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Velocity_Angles_f()
-{
-	if (!FindCVar("sv_cheats")->value)
-		return;
-
-	if (ORIG_Cmd_Argc() != 2 && ORIG_Cmd_Argc() != 4) {
-		ORIG_Con_Printf("Usage:\nbxt_ch_set_vel_angles <pitch> <yaw> <magnitude>\nbxt_ch_set_vel_angles <magnitude>\n");
-		return;
-	}
-
-	float pitch;
-	float yaw;
-	float magnitude;
-
-	if (ORIG_Cmd_Argc() == 2) {
-		pitch = GetPlayerEdict()->v.v_angle[0];
-		yaw = GetPlayerEdict()->v.v_angle[1];
-		magnitude = std::atof(ORIG_Cmd_Argv(1));
-	} else {
-		pitch = std::atof(ORIG_Cmd_Argv(1));
-		yaw = std::atof(ORIG_Cmd_Argv(2));
-		magnitude = std::atof(ORIG_Cmd_Argv(3));
-	}
-
-	pitch *= static_cast<float>(M_PI / 180.0);
-	yaw *= static_cast<float>(M_PI / 180.0);
-
-	GetPlayerEdict()->v.velocity[0] = magnitude * std::cos(pitch) * std::cos(yaw);
-	GetPlayerEdict()->v.velocity[1] = magnitude * std::cos(pitch) * std::sin(yaw);
-	GetPlayerEdict()->v.velocity[2] = -magnitude * std::sin(pitch);
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Origin_Offset()
-{
-	HwDLL::GetInstance().Cmd_BXT_CH_Set_Origin_Offset_f();
-}
-
-void HwDLL::Cmd_BXT_CH_Set_Origin_Offset_f()
-{
-	if (!FindCVar("sv_cheats")->value)
-		return;
-
-	if (ORIG_Cmd_Argc() != 4) {
-		ORIG_Con_Printf("Usage:\nbxt_ch_set_pos_offset <dx> <dy> <dz>\n");
-		return;
-	}
-
-	GetPlayerEdict()->v.origin[0] += std::atof(ORIG_Cmd_Argv(1));
-	GetPlayerEdict()->v.origin[1] += std::atof(ORIG_Cmd_Argv(2));
-	GetPlayerEdict()->v.origin[2] += std::atof(ORIG_Cmd_Argv(3));
-}
-
-void HwDLL::Cmd_Multiwait()
-{
-	HwDLL::GetInstance().Cmd_Multiwait_f();
-}
-
-void HwDLL::Cmd_Multiwait_f()
-{
-	if (ORIG_Cmd_Argc() == 1) {
-		ORIG_Cbuf_InsertText("wait\n");
-		return;
-	}
-
-	std::ostringstream ss;
-	int num = std::atoi(ORIG_Cmd_Argv(1));
-	if (num > 1)
-		ss << "wait\nw " << num - 1 << '\n';
-	else if (num == 1)
-		ss << "wait\n";
-	else
-		return;
-
-	ORIG_Cbuf_InsertText(ss.str().c_str());
-}
-
-void HwDLL::Cmd_BXT_Camera_Fixed()
-{
-	HwDLL::GetInstance().Cmd_BXT_Camera_Fixed_f();
-}
-
-void HwDLL::Cmd_BXT_Camera_Fixed_f()
-{
-	if (ORIG_Cmd_Argc() != 7) {
-		ORIG_Con_Printf("Usage: bxt_cam_fixed <x> <y> <z> <pitch> <yaw> <roll>\n");
-		return;
-	}
-
-	isOverridingCamera = true;
-	isOffsettingCamera = false;
-	cameraOverrideOrigin[0] = std::atof(ORIG_Cmd_Argv(1));
-	cameraOverrideOrigin[1] = std::atof(ORIG_Cmd_Argv(2));
-	cameraOverrideOrigin[2] = std::atof(ORIG_Cmd_Argv(3));
-	cameraOverrideAngles[0] = std::atof(ORIG_Cmd_Argv(4));
-	cameraOverrideAngles[1] = std::atof(ORIG_Cmd_Argv(5));
-	cameraOverrideAngles[2] = std::atof(ORIG_Cmd_Argv(6));
-}
-
-void HwDLL::Cmd_BXT_Camera_Clear()
-{
-	HwDLL::GetInstance().Cmd_BXT_Camera_Clear_f();
-}
-
-void HwDLL::Cmd_BXT_Camera_Clear_f()
-{
-	isOverridingCamera = false;
-	isOffsettingCamera = false;
-}
-
-void HwDLL::Cmd_BXT_Camera_Offset()
-{
-	HwDLL::GetInstance().Cmd_BXT_Camera_Offset_f();
-}
-
-void HwDLL::Cmd_BXT_Camera_Offset_f()
-{
-	if (ORIG_Cmd_Argc() != 7) {
-		ORIG_Con_Printf("Usage: bxt_cam_offset <x> <y> <z> <pitch> <yaw> <roll>\n");
-		return;
-	}
-
-	isOverridingCamera = false;
-	isOffsettingCamera = true;
-	cameraOffsetOrigin[0] = std::atof(ORIG_Cmd_Argv(1));
-	cameraOffsetOrigin[1] = std::atof(ORIG_Cmd_Argv(2));
-	cameraOffsetOrigin[2] = std::atof(ORIG_Cmd_Argv(3));
-	cameraOffsetAngles[0] = std::atof(ORIG_Cmd_Argv(4));
-	cameraOffsetAngles[1] = std::atof(ORIG_Cmd_Argv(5));
-	cameraOffsetAngles[2] = std::atof(ORIG_Cmd_Argv(6));
-}
-
-void HwDLL::Cmd_BXT_Timer_Start()
-{
-	return CustomHud::SetCountingTime(true);
-}
-
-void HwDLL::Cmd_BXT_Timer_Stop()
-{
-	return CustomHud::SetCountingTime(false);
-}
-
-void HwDLL::Cmd_BXT_Timer_Reset()
-{
-	return CustomHud::ResetTime();
-}
-
-void HwDLL::Cmd_BXT_TAS_Autojump_Down()
-{
-	HwDLL::GetInstance().autojump = true;
-}
-
-void HwDLL::Cmd_BXT_TAS_Autojump_Up()
-{
-	HwDLL::GetInstance().autojump = false;
-}
-
-void HwDLL::Cmd_BXT_TAS_Ducktap_Down()
-{
-	HwDLL::GetInstance().ducktap = true;
-}
-
-void HwDLL::Cmd_BXT_TAS_Ducktap_Up()
-{
-	HwDLL::GetInstance().ducktap = false;
-}
-
-void HwDLL::Cmd_BXT_Record()
-{
-	return HwDLL::GetInstance().Cmd_BXT_Record_f();
-}
-
-void HwDLL::Cmd_BXT_Record_f()
-{
-	recordDemoName.clear();
-
-	if (ORIG_Cmd_Argc() != 2) {
-		ORIG_Con_Printf("Usage: bxt_record <demoname>\n");
-		return;
-	}
-
-	recordDemoName.assign(ORIG_Cmd_Argv(1));
-}
-
-void HwDLL::Cmd_BXT_Interprocess_Reset()
-{
-	Interprocess::Shutdown();
-	Interprocess::Initialize();
-}
-
-void HwDLL::Cmd_BXT_Map()
-{
-	return HwDLL::GetInstance().Cmd_BXT_Map_f();
-}
-
-void HwDLL::Cmd_BXT_Map_f()
-{
-	// This version of map doesn't trigger after reset frames
-	// when put in the command line args.
-	if (resetState != ResetState::NORMAL)
-		return;
-
-	std::ostringstream ss;
-	ss << "map";
-	if (ORIG_Cmd_Args())
-		ss << " " << ORIG_Cmd_Args() << "\n";
-	ORIG_Cbuf_InsertText(ss.str().c_str());
-}
-
-void HwDLL::Cmd_BXT_Load()
-{
-	return HwDLL::GetInstance().Cmd_BXT_Load_f();
-}
-
-void HwDLL::Cmd_BXT_Load_f()
-{
-	// This version of load doesn't trigger after reset frames
-	// when put in the command line args.
-	if (resetState != ResetState::NORMAL)
-		return;
-
-	std::ostringstream ss;
-	ss << "load";
-	if (ORIG_Cmd_Args())
-		ss << " " << ORIG_Cmd_Args() << "\n";
-	ORIG_Cbuf_InsertText(ss.str().c_str());
-}
-
-void HwDLL::Cmd_BXT_TASLog()
-{
-	HwDLL::GetInstance().Cmd_BXT_TASLog_f();
-}
-
-void HwDLL::Cmd_BXT_TASLog_f()
-{
-	if (!ORIG_SV_Frame) {
-		ORIG_Con_Printf("TAS logging is unavailable.\n");
-		return;
-	}
-
-	if (tasLogging) {
-		logWriter.EndLog();
-		std::fclose(tasLogFile);
-		logWriter.Clear();
-		tasLogging = false;
-	} else {
-		tasLogFile = std::fopen(CVars::bxt_taslog_filename.GetString().c_str(), "wb");
-		if (!tasLogFile) {
-			ORIG_Con_Printf("Unable to create log file: %s\n", std::strerror(errno));
+	static void handler(const char *fileName)
+	{
+		auto &hw = HwDLL::GetInstance();
+		if (hw.resetState != ResetState::NORMAL)
+			return;
+
+		hw.runningFrames = false;
+		hw.currentFramebulk = 0;
+		hw.currentRepeat = 0;
+		hw.StrafeState = HLStrafe::CurrentState();
+		hw.ButtonsPresent = false;
+		hw.demoName.clear();
+		hw.saveName.clear();
+		hw.frametime0ms.clear();
+		hw.SharedRNGSeedPresent = false;
+		hw.SetNonSharedRNGSeed = false;
+		hw.thisFrameIs0ms = false;
+
+		auto err = hw.input.Open(fileName).get();
+		if (err.Code != HLTAS::ErrorCode::OK) {
+			hw.ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
 			return;
 		}
-		const int buildNumber = ORIG_build_number ? ORIG_build_number() : -1;
-		const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
-		logWriter.StartLog(tasLogFile, BUNNYMODXT_VERSION, buildNumber, gameDir);
-		tasLogging = true;
-	}
-}
 
-void HwDLL::Cmd_BXT_Reset_Frametime_Remainder()
+		for (auto prop : hw.input.GetProperties()) {
+			if (prop.first == "demo")
+				hw.demoName = prop.second;
+			else if (prop.first == "save")
+				hw.saveName = prop.second;
+			else if (prop.first == "seed") {
+				std::istringstream ss(prop.second);
+				ss >> hw.SharedRNGSeed >> hw.NonSharedRNGSeed;
+				hw.SharedRNGSeedPresent = true;
+				hw.SetNonSharedRNGSeed = true;
+			} else if (prop.first == "frametime0ms")
+				hw.frametime0ms = prop.second;
+		}
+
+		if (!hw.input.GetFrames().empty()) {
+			hw.runningFrames = true;
+			hw.totalFramebulks = hw.input.GetFrames().size();
+			HLTAS::Frame f;
+			if (hw.GetNextMovementFrame(f)) {
+				std::ostringstream ss;
+				ss << "host_framerate " << f.Frametime.c_str() << "\n";
+				hw.ORIG_Cbuf_InsertText(ss.str().c_str());
+			}
+		}
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Set_Health
 {
-	if (HwDLL::GetInstance().frametime_remainder)
-		*HwDLL::GetInstance().frametime_remainder = 0;
-}
+	static void handler(float health)
+	{
+		auto &hw = HwDLL::GetInstance();
+		(*hw.sv_player)->v.health = health;
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Set_Armor
+{
+	static void handler(float armor)
+	{
+		auto &hw = HwDLL::GetInstance();
+		(*hw.sv_player)->v.armorvalue = armor;
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Set_Origin
+{
+	static void handler(float x, float y, float z)
+	{
+		auto &hw = HwDLL::GetInstance();
+		(*hw.sv_player)->v.origin[0] = x;
+		(*hw.sv_player)->v.origin[1] = y;
+		(*hw.sv_player)->v.origin[2] = z;
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Set_Velocity
+{
+	static void handler(float vx, float vy, float vz)
+	{
+		auto &hw = HwDLL::GetInstance();
+		(*hw.sv_player)->v.velocity[0] = vx;
+		(*hw.sv_player)->v.velocity[1] = vy;
+		(*hw.sv_player)->v.velocity[2] = vz;
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Set_Velocity_Angles
+{
+	static void handler(float magnitude)
+	{
+		auto &hw = HwDLL::GetInstance();
+		handler((*hw.sv_player)->v.v_angle[0], (*hw.sv_player)->v.v_angle[1], magnitude);
+	}
+
+	static void handler(float pitch, float yaw, float magnitude)
+	{
+		auto &hw = HwDLL::GetInstance();
+		pitch *= static_cast<float>(M_PI / 180.0);
+		yaw *= static_cast<float>(M_PI / 180.0);
+		(*hw.sv_player)->v.velocity[0] = magnitude * std::cos(pitch) * std::cos(yaw);
+		(*hw.sv_player)->v.velocity[1] = magnitude * std::cos(pitch) * std::sin(yaw);
+		(*hw.sv_player)->v.velocity[2] = -magnitude * std::sin(pitch);
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Set_Origin_Offset
+{
+	static void handler(float dx, float dy, float dz)
+	{
+		auto &hw = HwDLL::GetInstance();
+		(*hw.sv_player)->v.origin[0] += dx;
+		(*hw.sv_player)->v.origin[1] += dy;
+		(*hw.sv_player)->v.origin[2] += dz;
+	}
+};
+
+struct HwDLL::Cmd_Multiwait
+{
+	static void handler()
+	{
+		HwDLL::GetInstance().ORIG_Cbuf_InsertText("wait\n");
+	}
+
+	static void handler(int num)
+	{
+		std::ostringstream ss;
+		if (num > 1)
+			ss << "wait\nw " << num - 1 << '\n';
+		else if (num == 1)
+			ss << "wait\n";
+		else
+			return;
+
+		HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+	}
+};
+
+struct HwDLL::Cmd_BXT_Camera_Fixed
+{
+	static void handler(float x, float y, float z, float pitch, float yaw, float roll)
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.isOverridingCamera = true;
+		hw.isOffsettingCamera = false;
+		hw.cameraOverrideOrigin[0] = x;
+		hw.cameraOverrideOrigin[1] = y;
+		hw.cameraOverrideOrigin[2] = z;
+		hw.cameraOverrideAngles[0] = pitch;
+		hw.cameraOverrideAngles[1] = yaw;
+		hw.cameraOverrideAngles[2] = roll;
+	}
+};
+
+struct HwDLL::Cmd_BXT_Camera_Clear
+{
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.isOverridingCamera = false;
+		hw.isOffsettingCamera = false;
+	}
+};
+
+struct HwDLL::Cmd_BXT_Camera_Offset
+{
+	static void handler(float x, float y, float z, float pitch, float yaw, float roll)
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.isOverridingCamera = false;
+		hw.isOffsettingCamera = true;
+		hw.cameraOffsetOrigin[0] = x;
+		hw.cameraOffsetOrigin[1] = y;
+		hw.cameraOffsetOrigin[2] = z;
+		hw.cameraOffsetAngles[0] = pitch;
+		hw.cameraOffsetAngles[1] = yaw;
+		hw.cameraOffsetAngles[2] = roll;
+	}
+};
+
+struct HwDLL::Cmd_BXT_Timer_Start
+{
+	static void handler()
+	{
+		return CustomHud::SetCountingTime(true);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Timer_Stop
+{
+	static void handler()
+	{
+		return CustomHud::SetCountingTime(false);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Timer_Reset
+{
+	static void handler()
+	{
+		return CustomHud::ResetTime();
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_Autojump_Down
+{
+	static void handler()
+	{
+		HwDLL::GetInstance().autojump = true;
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_Autojump_Up
+{
+	static void handler()
+	{
+		HwDLL::GetInstance().autojump = false;
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_Ducktap_Down
+{
+	static void handler()
+	{
+		HwDLL::GetInstance().ducktap = true;
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_Ducktap_Up
+{
+	static void handler()
+	{
+		HwDLL::GetInstance().ducktap = false;
+	}
+};
+
+struct HwDLL::Cmd_BXT_Record
+{
+	static void handler(const char *demoName)
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.recordDemoName.clear();
+		hw.recordDemoName.assign(demoName);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Interprocess_Reset
+{
+	static void handler()
+	{
+		Interprocess::Shutdown();
+		Interprocess::Initialize();
+	}
+};
+
+struct HwDLL::Cmd_BXT_Map
+{
+	static void handler(const char *mapName)
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		// This version of map doesn't trigger after reset frames
+		// when put in the command line args.
+		if (hw.resetState != ResetState::NORMAL)
+			return;
+
+		std::ostringstream ss;
+		ss << "map" << " " << mapName << "\n";
+		hw.ORIG_Cbuf_InsertText(ss.str().c_str());
+	}
+};
+
+struct HwDLL::Cmd_BXT_Load
+{
+	static void handler(const char *saveName)
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		// This version of load doesn't trigger after reset frames
+		// when put in the command line args.
+		if (hw.resetState != ResetState::NORMAL)
+			return;
+
+		std::ostringstream ss;
+		ss << "load" << " " << saveName << "\n";
+		hw.ORIG_Cbuf_InsertText(ss.str().c_str());
+	}
+};
+
+struct HwDLL::Cmd_BXT_TASLog
+{
+	static void HwDLL::Cmd_BXT_TASLog::handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		if (!hw.ORIG_SV_Frame) {
+			hw.ORIG_Con_Printf("TAS logging is unavailable.\n");
+			return;
+		}
+
+		if (hw.tasLogging) {
+			hw.logWriter.EndLog();
+			std::fclose(hw.tasLogFile);
+			hw.logWriter.Clear();
+			hw.tasLogging = false;
+		} else {
+			hw.tasLogFile = std::fopen(CVars::bxt_taslog_filename.GetString().c_str(), "wb");
+			if (!hw.tasLogFile) {
+				hw.ORIG_Con_Printf("Unable to create log file: %s\n", std::strerror(errno));
+				return;
+			}
+			const int buildNumber = hw.ORIG_build_number ? hw.ORIG_build_number() : -1;
+			const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+			hw.logWriter.StartLog(hw.tasLogFile, BUNNYMODXT_VERSION, buildNumber, gameDir);
+			hw.tasLogging = true;
+		}
+	}
+};
+
+struct HwDLL::Cmd_BXT_Reset_Frametime_Remainder
+{
+	static void handler()
+	{
+		if (HwDLL::GetInstance().frametime_remainder)
+			*HwDLL::GetInstance().frametime_remainder = 0;
+	}
+};
 
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
-	if (!registeredVarsAndCmds)
-	{
-		registeredVarsAndCmds = true;
-		RegisterCVar(CVars::_bxt_taslog);
-		RegisterCVar(CVars::_bxt_min_frametime);
-		RegisterCVar(CVars::bxt_taslog_filename);
-		RegisterCVar(CVars::bxt_autopause);
-		RegisterCVar(CVars::bxt_interprocess_enable);
-		RegisterCVar(CVars::bxt_fade_remove);
-		RegisterCVar(CVars::_bxt_norefresh);
-		RegisterCVar(CVars::_bxt_bunnysplit_time_update_frequency);
-		if (ORIG_Cmd_AddMallocCommand) {
-			ORIG_Cmd_AddMallocCommand("bxt_tas_loadscript", Cmd_BXT_TAS_LoadScript, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_ch_set_health", Cmd_BXT_CH_Set_Health, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_ch_set_armor", Cmd_BXT_CH_Set_Armor, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_ch_set_pos", Cmd_BXT_CH_Set_Origin, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_ch_set_pos_offset", Cmd_BXT_CH_Set_Origin_Offset, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_ch_set_vel", Cmd_BXT_CH_Set_Velocity, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_ch_set_vel_angles", Cmd_BXT_CH_Set_Velocity_Angles, 2);
-			ORIG_Cmd_AddMallocCommand("w", Cmd_Multiwait, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_cam_fixed", Cmd_BXT_Camera_Fixed, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_cam_offset", Cmd_BXT_Camera_Offset, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_cam_clear", Cmd_BXT_Camera_Clear, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_timer_start", Cmd_BXT_Timer_Start, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_timer_stop", Cmd_BXT_Timer_Stop, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_timer_reset", Cmd_BXT_Timer_Reset, 2);
-			ORIG_Cmd_AddMallocCommand("+bxt_tas_autojump", Cmd_BXT_TAS_Autojump_Down, 2);
-			ORIG_Cmd_AddMallocCommand("-bxt_tas_autojump", Cmd_BXT_TAS_Autojump_Up, 2);
-			ORIG_Cmd_AddMallocCommand("+bxt_tas_ducktap", Cmd_BXT_TAS_Ducktap_Down, 2);
-			ORIG_Cmd_AddMallocCommand("-bxt_tas_ducktap", Cmd_BXT_TAS_Ducktap_Up, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_record", Cmd_BXT_Record, 2);
-			ORIG_Cmd_AddMallocCommand("_bxt_interprocess_reset", Cmd_BXT_Interprocess_Reset, 2);
-			ORIG_Cmd_AddMallocCommand("_bxt_map", Cmd_BXT_Map, 2);
-			ORIG_Cmd_AddMallocCommand("_bxt_load", Cmd_BXT_Load, 2);
-			ORIG_Cmd_AddMallocCommand("_bxt_reset_frametime_remainder", Cmd_BXT_Reset_Frametime_Remainder, 2);
-			ORIG_Cmd_AddMallocCommand("bxt_taslog", Cmd_BXT_TASLog, 2);
-		}
-	}
+	if (registeredVarsAndCmds)
+		return;
+
+	registeredVarsAndCmds = true;
+	RegisterCVar(CVars::_bxt_taslog);
+	RegisterCVar(CVars::_bxt_min_frametime);
+	RegisterCVar(CVars::bxt_taslog_filename);
+	RegisterCVar(CVars::bxt_autopause);
+	RegisterCVar(CVars::bxt_interprocess_enable);
+	RegisterCVar(CVars::bxt_fade_remove);
+	RegisterCVar(CVars::_bxt_norefresh);
+	RegisterCVar(CVars::_bxt_bunnysplit_time_update_frequency);
+
+	if (!ORIG_Cmd_AddMallocCommand)
+		return;
+
+	CMDWRAPPER_USAGE(Usage_TAS_LoadScript, "Usage: bxt_tas_loadscript <filename>\n");
+	CMDWRAPPER_USAGE(Usage_CH_Set_Health, "Usage: bxt_ch_set_health <health>\n");
+	CMDWRAPPER_USAGE(Usage_CH_Set_Armor, "Usage: bxt_ch_set_armor <armor>\n");
+	CMDWRAPPER_USAGE(Usage_CH_Set_Origin, "Usage: bxt_ch_set_pos <x> <y> <z>\n");
+	CMDWRAPPER_USAGE(Usage_CH_Set_Origin_Offset, "Usage: bxt_ch_set_pos_offset <dx> <dy> <dz>\n");
+	CMDWRAPPER_USAGE(Usage_CH_Set_Velocity, "Usage: bxt_ch_set_vel <x> <y> <z>\n");
+	CMDWRAPPER_USAGE(Usage_CH_Set_Velocity_Angles, "Usage:\n bxt_ch_set_vel_angles <magnitude>\n bxt_ch_set_vel_angles <pitch> <yaw> <magnitude>\n");
+	CMDWRAPPER_USAGE(Usage_Camera_Fixed, "Usage: bxt_cam_fixed <x> <y> <z> <pitch> <yaw> <magnitude>\n");
+	CMDWRAPPER_USAGE(Usage_Camera_Offset, "Usage: bxt_cam_offset <x> <y> <z> <pitch> <yaw> <magnitude>\n");
+	CMDWRAPPER_USAGE(Usage_Record, "Usage: bxt_record <demoname>\n");
+	CMDWRAPPER_USAGE(Usage_Map, "Usage: _bxt_map <mapname>\n");
+	CMDWRAPPER_USAGE(Usage_Load, "Usage: _bxt_load <savename>\n");
+
+	using CmdWrapper::NoUsage;
+	using CmdWrapper::Handler;
+	typedef CmdWrapper::CmdWrapper<CmdFuncs> wrapper;
+
+	wrapper::Add<Usage_TAS_LoadScript, Handler<Cmd_BXT_TAS_LoadScript, const char *>>("bxt_tas_loadscript");
+	wrapper::AddCheat<Usage_CH_Set_Health, Handler<Cmd_BXT_CH_Set_Health, float>>("bxt_ch_set_health");
+	wrapper::AddCheat<Usage_CH_Set_Armor, Handler<Cmd_BXT_CH_Set_Armor, float>>("bxt_ch_set_armor");
+	wrapper::AddCheat<Usage_CH_Set_Origin, Handler<Cmd_BXT_CH_Set_Origin, float, float, float>>("bxt_ch_set_pos");
+	wrapper::AddCheat<Usage_CH_Set_Origin_Offset, Handler<Cmd_BXT_CH_Set_Origin_Offset, float, float, float>>("bxt_ch_set_pos_offset");
+	wrapper::AddCheat<Usage_CH_Set_Velocity, Handler<Cmd_BXT_CH_Set_Velocity, float, float, float>>("bxt_ch_set_vel");
+	wrapper::AddCheat<
+		Usage_CH_Set_Velocity_Angles,
+		Handler<Cmd_BXT_CH_Set_Velocity_Angles, float>,
+		Handler<Cmd_BXT_CH_Set_Velocity_Angles, float, float, float>>("bxt_ch_set_vel_angles");
+	wrapper::Add<
+		NoUsage,
+		Handler<Cmd_Multiwait>,
+		Handler<Cmd_Multiwait, int>>("w");
+	wrapper::Add<Usage_Camera_Fixed, Handler<Cmd_BXT_Camera_Fixed, float, float, float, float, float, float>>("bxt_cam_fixed");
+	wrapper::Add<Usage_Camera_Offset, Handler<Cmd_BXT_Camera_Offset, float, float, float, float, float, float>>("bxt_cam_offset");
+	wrapper::Add<NoUsage, Handler<Cmd_BXT_Camera_Clear>>("bxt_cam_clear");
+	wrapper::Add<NoUsage, Handler<Cmd_BXT_Timer_Start>>("bxt_timer_start");
+	wrapper::Add<NoUsage, Handler<Cmd_BXT_Timer_Stop>>("bxt_timer_stop");
+	wrapper::Add<NoUsage, Handler<Cmd_BXT_Timer_Reset>>("bxt_timer_reset");
+	wrapper::Add<NoUsage, Handler<Cmd_BXT_TAS_Autojump_Down>>("+bxt_tas_autojump");
+	wrapper::Add<NoUsage, Handler<Cmd_BXT_TAS_Autojump_Up>>("-bxt_tas_autojump");
+	wrapper::Add<NoUsage, Handler<Cmd_BXT_TAS_Ducktap_Down>>("+bxt_tas_ducktap");
+	wrapper::Add<NoUsage, Handler<Cmd_BXT_TAS_Ducktap_Up>>("-bxt_tas_ducktap");
+	wrapper::Add<Usage_Record, Handler<Cmd_BXT_Record, const char *>>("bxt_record");
+	wrapper::Add<Usage_Map, Handler<Cmd_BXT_Map, const char *>>("_bxt_map");
+	wrapper::Add<Usage_Load, Handler<Cmd_BXT_Load, const char *>>("_bxt_load");
+	wrapper::Add<NoUsage, Handler<Cmd_BXT_Interprocess_Reset>>("_bxt_interprocess_reset");
+	wrapper::Add<NoUsage, Handler<Cmd_BXT_Reset_Frametime_Remainder>>("_bxt_reset_frametime_remainder");
+	wrapper::Add<NoUsage, Handler<Cmd_BXT_TASLog>>("bxt_taslog");
 }
 
 void HwDLL::InsertCommands()

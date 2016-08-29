@@ -7,6 +7,8 @@
 
 namespace CmdWrapper
 {
+	CMDWRAPPER_USAGE(NoUsage, "");
+
 	template<typename T>
 	struct Parser;
 
@@ -60,15 +62,36 @@ namespace CmdWrapper
 		}
 	};
 
-	template<typename CmdFuncs, typename Usage, typename... Handlers>
-	void Add(const char *name)
+	template<typename CmdFuncs>
+	class CmdWrapper
 	{
-		CmdFuncs::AddCommand(name, [] {
+	public:
+		template<typename Usage, typename... Handlers>
+		static void Add(const char *name)
+		{
+			CmdFuncs::AddCommand(name, [] {
+				CallHandlers<Usage, Handlers...>();
+			});
+		}
+
+		template<typename Usage, typename... Handlers>
+		static void AddCheat(const char *name)
+		{
+			CmdFuncs::AddCommand(name, [] {
+				if (CmdFuncs::IsCheating())
+					CallHandlers<Usage, Handlers...>();
+			});
+		}
+
+	private:
+		template<typename Usage, typename... Handlers>
+		static void CallHandlers()
+		{
 			const int argc = CmdFuncs::Argc();
 			std::array<bool, sizeof...(Handlers)> results{ Handlers::call<CmdFuncs>(argc)... };
 			if (std::none_of(results.cbegin(), results.cend(), [](const bool &b) { return b; })) {
 				CmdFuncs::UsagePrint(Usage::text());
 			}
-		});
-	}
+		}
+	};
 }

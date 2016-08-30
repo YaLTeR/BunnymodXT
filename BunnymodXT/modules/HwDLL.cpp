@@ -1122,7 +1122,7 @@ struct HwDLL::Cmd_BXT_Load
 
 struct HwDLL::Cmd_BXT_TASLog
 {
-	static void HwDLL::Cmd_BXT_TASLog::handler()
+	static void handler()
 	{
 		auto &hw = HwDLL::GetInstance();
 		if (!hw.ORIG_SV_Frame) {

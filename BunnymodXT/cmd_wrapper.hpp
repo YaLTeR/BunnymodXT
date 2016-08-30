@@ -88,7 +88,7 @@ namespace CmdWrapper
 		static void CallHandlers()
 		{
 			const int argc = CmdFuncs::Argc();
-			std::array<bool, sizeof...(Handlers)> results{ Handlers::call<CmdFuncs>(argc)... };
+			std::array<bool, sizeof...(Handlers)> results{ Handlers::template call<CmdFuncs>(argc)... };
 			if (std::none_of(results.cbegin(), results.cend(), [](const bool &b) { return b; })) {
 				CmdFuncs::UsagePrint(Usage::text());
 			}

@@ -71,7 +71,12 @@ protected:
 
 	typedef bool (__fastcall *_IsPlayer)(void *thisptr);
 	typedef void (__fastcall *_Center)(void *thisptr, int edx, Vector *center);
+
+#ifdef _WIN32
 	typedef int (__fastcall *_ObjectCaps)(void *thisptr);
+#else
+	typedef int (__cdecl *_ObjectCaps)(void *thisptr);
+#endif
 
 	void FindStuff();
 	void RegisterCVarsAndCommands();

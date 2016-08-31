@@ -1,13 +1,20 @@
 #pragma once
 
-#include <utility>
 #include <algorithm>
+#include <type_traits>
+#include <utility>
 
-#define USAGE(text) inline static const char *usage() { return text; }
-#define NO_USAGE() inline static const char *usage() { return ""; }
+#define USAGE(text) \
+	inline static const char *usage() { return text; } \
+	using usage_t = CmdWrapper::has_usage_t
+
+#define NO_USAGE() using usage_t = CmdWrapper::has_no_usage_t
 
 namespace CmdWrapper
 {
+	struct has_usage_t {};
+	struct has_no_usage_t {};
+
 	template<typename T>
 	struct Parser;
 
@@ -84,9 +91,24 @@ namespace CmdWrapper
 
 	private:
 		template<typename H>
-		inline static void CallHandlers(int argc)
+		inline static typename std::enable_if<std::is_same<typename H::usage_t, has_no_usage_t>::value, void>::type PrintUsage()
+		{
+			// No usage, do nothing.
+		}
+
+		template<
+			typename H,
+			typename = std::enable_if_t<std::is_same<typename H::usage_t, has_usage_t>::value>
+		>
+		inline static void PrintUsage()
 		{
 			CmdFuncs::UsagePrint(H::usage());
+		}
+
+		template<typename H>
+		inline static void CallHandlers(int argc)
+		{
+			PrintUsage<H>();
 		}
 
 		template<typename H, typename Handler, typename... Handlers>

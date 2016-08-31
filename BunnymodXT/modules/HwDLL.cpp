@@ -827,7 +827,7 @@ cvar_t* HwDLL::FindCVar(const char* name)
 
 struct HwDLL::Cmd_BXT_TAS_LoadScript
 {
-	USAGE("Usage: bxt_tas_loadscript <filename>\n")
+	USAGE("Usage: bxt_tas_loadscript <filename>\n");
 
 	static void handler(const char *fileName)
 	{

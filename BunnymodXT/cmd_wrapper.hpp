@@ -91,16 +91,13 @@ namespace CmdWrapper
 
 	private:
 		template<typename H>
-		inline static typename std::enable_if<std::is_same<typename H::usage_t, has_no_usage_t>::value, void>::type PrintUsage()
+		inline static void PrintUsage(has_no_usage_t)
 		{
 			// No usage, do nothing.
 		}
 
-		template<
-			typename H,
-			typename = std::enable_if_t<std::is_same<typename H::usage_t, has_usage_t>::value>
-		>
-		inline static void PrintUsage()
+		template<typename H>
+		inline static void PrintUsage(has_usage_t)
 		{
 			CmdFuncs::UsagePrint(H::usage());
 		}
@@ -108,7 +105,8 @@ namespace CmdWrapper
 		template<typename H>
 		inline static void CallHandlers(int argc)
 		{
-			PrintUsage<H>();
+			typename H::usage_t usage;
+			PrintUsage<H>(usage);
 		}
 
 		template<typename H, typename Handler, typename... Handlers>

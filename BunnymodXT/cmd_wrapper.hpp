@@ -3,12 +3,11 @@
 #include <utility>
 #include <algorithm>
 
-#define CMDWRAPPER_USAGE(name, usage) struct name { inline static const char *text() { return usage; } };
+#define USAGE(text) inline static const char *usage() { return text; }
+#define NO_USAGE() inline static const char *usage() { return ""; }
 
 namespace CmdWrapper
 {
-	CMDWRAPPER_USAGE(NoUsage, "");
-
 	template<typename T>
 	struct Parser;
 
@@ -39,15 +38,15 @@ namespace CmdWrapper
 		}
 	};
 
-	template<typename H, typename... Args>
+	template<typename... Args>
 	class Handler
 	{
 	public:
-		template<typename CmdFuncs, typename Indices = std::make_integer_sequence<int, sizeof...(Args)>>
+		template<typename CmdFuncs, typename H, typename Indices = std::make_integer_sequence<int, sizeof...(Args)>>
 		inline static bool call(int argc)
 		{
 			if (argc == sizeof...(Args) + 1) {
-				callImpl<CmdFuncs>(Indices());
+				callImpl<CmdFuncs, H>(Indices());
 				return true;
 			} else {
 				return false;
@@ -55,7 +54,7 @@ namespace CmdWrapper
 		}
 
 	private:
-		template<typename CmdFuncs, int... Is>
+		template<typename CmdFuncs, typename H, int... Is>
 		inline static void callImpl(std::integer_sequence<int, Is...>)
 		{
 			H::handler(Parser<Args>::parse(CmdFuncs::Argv(Is + 1))...);
@@ -66,31 +65,31 @@ namespace CmdWrapper
 	class CmdWrapper
 	{
 	public:
-		template<typename Usage, typename... Handlers>
+		template<typename H, typename... Handlers>
 		static void Add(const char *name)
 		{
 			CmdFuncs::AddCommand(name, [] {
-				CallHandlers<Usage, Handlers...>();
+				CallHandlers<H, Handlers...>();
 			});
 		}
 
-		template<typename Usage, typename... Handlers>
+		template<typename H, typename... Handlers>
 		static void AddCheat(const char *name)
 		{
 			CmdFuncs::AddCommand(name, [] {
 				if (CmdFuncs::IsCheating())
-					CallHandlers<Usage, Handlers...>();
+					CallHandlers<H, Handlers...>();
 			});
 		}
 
 	private:
-		template<typename Usage, typename... Handlers>
+		template<typename H, typename... Handlers>
 		static void CallHandlers()
 		{
 			const int argc = CmdFuncs::Argc();
-			std::array<bool, sizeof...(Handlers)> results{ Handlers::template call<CmdFuncs>(argc)... };
+			std::array<bool, sizeof...(Handlers)> results{ Handlers::template call<CmdFuncs, H>(argc)... };
 			if (std::none_of(results.cbegin(), results.cend(), [](const bool &b) { return b; })) {
-				CmdFuncs::UsagePrint(Usage::text());
+				CmdFuncs::UsagePrint(H::usage());
 			}
 		}
 	};

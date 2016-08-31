@@ -827,6 +827,8 @@ cvar_t* HwDLL::FindCVar(const char* name)
 
 struct HwDLL::Cmd_BXT_TAS_LoadScript
 {
+	USAGE("Usage: bxt_tas_loadscript <filename>\n")
+
 	static void handler(const char *fileName)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -880,6 +882,8 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 
 struct HwDLL::Cmd_BXT_CH_Set_Health
 {
+	USAGE("Usage: bxt_ch_set_health <health>\n");
+
 	static void handler(float health)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -889,6 +893,8 @@ struct HwDLL::Cmd_BXT_CH_Set_Health
 
 struct HwDLL::Cmd_BXT_CH_Set_Armor
 {
+	USAGE("Usage: bxt_ch_set_armor <armor>\n");
+
 	static void handler(float armor)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -898,6 +904,8 @@ struct HwDLL::Cmd_BXT_CH_Set_Armor
 
 struct HwDLL::Cmd_BXT_CH_Set_Origin
 {
+	USAGE("Usage: bxt_ch_set_pos <x> <y> <z>\n");
+
 	static void handler(float x, float y, float z)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -909,6 +917,8 @@ struct HwDLL::Cmd_BXT_CH_Set_Origin
 
 struct HwDLL::Cmd_BXT_CH_Set_Velocity
 {
+	USAGE("Usage: bxt_ch_set_vel <x> <y> <z>\n");
+
 	static void handler(float vx, float vy, float vz)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -920,6 +930,8 @@ struct HwDLL::Cmd_BXT_CH_Set_Velocity
 
 struct HwDLL::Cmd_BXT_CH_Set_Velocity_Angles
 {
+	USAGE("Usage:\n bxt_ch_set_vel_angles <magnitude>\n bxt_ch_set_vel_angles <pitch> <yaw> <magnitude>\n");
+
 	static void handler(float magnitude)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -939,6 +951,8 @@ struct HwDLL::Cmd_BXT_CH_Set_Velocity_Angles
 
 struct HwDLL::Cmd_BXT_CH_Set_Origin_Offset
 {
+	USAGE("Usage: bxt_ch_set_pos_offset <dx> <dy> <dz>\n");
+
 	static void handler(float dx, float dy, float dz)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -950,6 +964,8 @@ struct HwDLL::Cmd_BXT_CH_Set_Origin_Offset
 
 struct HwDLL::Cmd_Multiwait
 {
+	USAGE("Usage: w [number of waits]\n");
+
 	static void handler()
 	{
 		HwDLL::GetInstance().ORIG_Cbuf_InsertText("wait\n");
@@ -971,6 +987,8 @@ struct HwDLL::Cmd_Multiwait
 
 struct HwDLL::Cmd_BXT_Camera_Fixed
 {
+	USAGE("Usage: bxt_cam_fixed <x> <y> <z> <pitch> <yaw> <magnitude>\n");
+
 	static void handler(float x, float y, float z, float pitch, float yaw, float roll)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -987,6 +1005,8 @@ struct HwDLL::Cmd_BXT_Camera_Fixed
 
 struct HwDLL::Cmd_BXT_Camera_Clear
 {
+	NO_USAGE();
+
 	static void handler()
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -997,6 +1017,8 @@ struct HwDLL::Cmd_BXT_Camera_Clear
 
 struct HwDLL::Cmd_BXT_Camera_Offset
 {
+	USAGE("Usage: bxt_cam_offset <x> <y> <z> <pitch> <yaw> <magnitude>\n");
+
 	static void handler(float x, float y, float z, float pitch, float yaw, float roll)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -1013,6 +1035,8 @@ struct HwDLL::Cmd_BXT_Camera_Offset
 
 struct HwDLL::Cmd_BXT_Timer_Start
 {
+	NO_USAGE();
+
 	static void handler()
 	{
 		return CustomHud::SetCountingTime(true);
@@ -1021,6 +1045,8 @@ struct HwDLL::Cmd_BXT_Timer_Start
 
 struct HwDLL::Cmd_BXT_Timer_Stop
 {
+	NO_USAGE();
+
 	static void handler()
 	{
 		return CustomHud::SetCountingTime(false);
@@ -1029,6 +1055,8 @@ struct HwDLL::Cmd_BXT_Timer_Stop
 
 struct HwDLL::Cmd_BXT_Timer_Reset
 {
+	NO_USAGE();
+
 	static void handler()
 	{
 		return CustomHud::ResetTime();
@@ -1037,6 +1065,8 @@ struct HwDLL::Cmd_BXT_Timer_Reset
 
 struct HwDLL::Cmd_BXT_TAS_Autojump_Down
 {
+	NO_USAGE();
+
 	static void handler()
 	{
 		HwDLL::GetInstance().autojump = true;
@@ -1045,6 +1075,8 @@ struct HwDLL::Cmd_BXT_TAS_Autojump_Down
 
 struct HwDLL::Cmd_BXT_TAS_Autojump_Up
 {
+	NO_USAGE();
+
 	static void handler()
 	{
 		HwDLL::GetInstance().autojump = false;
@@ -1053,6 +1085,8 @@ struct HwDLL::Cmd_BXT_TAS_Autojump_Up
 
 struct HwDLL::Cmd_BXT_TAS_Ducktap_Down
 {
+	NO_USAGE();
+
 	static void handler()
 	{
 		HwDLL::GetInstance().ducktap = true;
@@ -1061,6 +1095,8 @@ struct HwDLL::Cmd_BXT_TAS_Ducktap_Down
 
 struct HwDLL::Cmd_BXT_TAS_Ducktap_Up
 {
+	NO_USAGE();
+
 	static void handler()
 	{
 		HwDLL::GetInstance().ducktap = false;
@@ -1069,6 +1105,8 @@ struct HwDLL::Cmd_BXT_TAS_Ducktap_Up
 
 struct HwDLL::Cmd_BXT_Record
 {
+	USAGE("Usage: bxt_record <demoname>\n");
+
 	static void handler(const char *demoName)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -1079,6 +1117,8 @@ struct HwDLL::Cmd_BXT_Record
 
 struct HwDLL::Cmd_BXT_Interprocess_Reset
 {
+	NO_USAGE();
+
 	static void handler()
 	{
 		Interprocess::Shutdown();
@@ -1088,6 +1128,8 @@ struct HwDLL::Cmd_BXT_Interprocess_Reset
 
 struct HwDLL::Cmd_BXT_Map
 {
+	USAGE("Usage: _bxt_map <mapname>\n");
+
 	static void handler(const char *mapName)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -1105,6 +1147,8 @@ struct HwDLL::Cmd_BXT_Map
 
 struct HwDLL::Cmd_BXT_Load
 {
+	USAGE("Usage: _bxt_load <savename>\n");
+
 	static void handler(const char *saveName)
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -1122,6 +1166,8 @@ struct HwDLL::Cmd_BXT_Load
 
 struct HwDLL::Cmd_BXT_TASLog
 {
+	NO_USAGE();
+
 	static void handler()
 	{
 		auto &hw = HwDLL::GetInstance();
@@ -1151,6 +1197,8 @@ struct HwDLL::Cmd_BXT_TASLog
 
 struct HwDLL::Cmd_BXT_Reset_Frametime_Remainder
 {
+	NO_USAGE();
+
 	static void handler()
 	{
 		if (HwDLL::GetInstance().frametime_remainder)
@@ -1176,53 +1224,39 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	if (!ORIG_Cmd_AddMallocCommand)
 		return;
 
-	CMDWRAPPER_USAGE(Usage_TAS_LoadScript, "Usage: bxt_tas_loadscript <filename>\n");
-	CMDWRAPPER_USAGE(Usage_CH_Set_Health, "Usage: bxt_ch_set_health <health>\n");
-	CMDWRAPPER_USAGE(Usage_CH_Set_Armor, "Usage: bxt_ch_set_armor <armor>\n");
-	CMDWRAPPER_USAGE(Usage_CH_Set_Origin, "Usage: bxt_ch_set_pos <x> <y> <z>\n");
-	CMDWRAPPER_USAGE(Usage_CH_Set_Origin_Offset, "Usage: bxt_ch_set_pos_offset <dx> <dy> <dz>\n");
-	CMDWRAPPER_USAGE(Usage_CH_Set_Velocity, "Usage: bxt_ch_set_vel <x> <y> <z>\n");
-	CMDWRAPPER_USAGE(Usage_CH_Set_Velocity_Angles, "Usage:\n bxt_ch_set_vel_angles <magnitude>\n bxt_ch_set_vel_angles <pitch> <yaw> <magnitude>\n");
-	CMDWRAPPER_USAGE(Usage_Camera_Fixed, "Usage: bxt_cam_fixed <x> <y> <z> <pitch> <yaw> <magnitude>\n");
-	CMDWRAPPER_USAGE(Usage_Camera_Offset, "Usage: bxt_cam_offset <x> <y> <z> <pitch> <yaw> <magnitude>\n");
-	CMDWRAPPER_USAGE(Usage_Record, "Usage: bxt_record <demoname>\n");
-	CMDWRAPPER_USAGE(Usage_Map, "Usage: _bxt_map <mapname>\n");
-	CMDWRAPPER_USAGE(Usage_Load, "Usage: _bxt_load <savename>\n");
-
-	using CmdWrapper::NoUsage;
 	using CmdWrapper::Handler;
 	typedef CmdWrapper::CmdWrapper<CmdFuncs> wrapper;
 
-	wrapper::Add<Usage_TAS_LoadScript, Handler<Cmd_BXT_TAS_LoadScript, const char *>>("bxt_tas_loadscript");
-	wrapper::AddCheat<Usage_CH_Set_Health, Handler<Cmd_BXT_CH_Set_Health, float>>("bxt_ch_set_health");
-	wrapper::AddCheat<Usage_CH_Set_Armor, Handler<Cmd_BXT_CH_Set_Armor, float>>("bxt_ch_set_armor");
-	wrapper::AddCheat<Usage_CH_Set_Origin, Handler<Cmd_BXT_CH_Set_Origin, float, float, float>>("bxt_ch_set_pos");
-	wrapper::AddCheat<Usage_CH_Set_Origin_Offset, Handler<Cmd_BXT_CH_Set_Origin_Offset, float, float, float>>("bxt_ch_set_pos_offset");
-	wrapper::AddCheat<Usage_CH_Set_Velocity, Handler<Cmd_BXT_CH_Set_Velocity, float, float, float>>("bxt_ch_set_vel");
+	wrapper::Add<Cmd_BXT_TAS_LoadScript, Handler<const char *>>("bxt_tas_loadscript");
+	wrapper::AddCheat<Cmd_BXT_CH_Set_Health, Handler<float>>("bxt_ch_set_health");
+	wrapper::AddCheat<Cmd_BXT_CH_Set_Armor, Handler<float>>("bxt_ch_set_armor");
+	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
+	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin_Offset, Handler<float, float, float>>("bxt_ch_set_pos_offset");
+	wrapper::AddCheat<Cmd_BXT_CH_Set_Velocity, Handler<float, float, float>>("bxt_ch_set_vel");
 	wrapper::AddCheat<
-		Usage_CH_Set_Velocity_Angles,
-		Handler<Cmd_BXT_CH_Set_Velocity_Angles, float>,
-		Handler<Cmd_BXT_CH_Set_Velocity_Angles, float, float, float>>("bxt_ch_set_vel_angles");
+		Cmd_BXT_CH_Set_Velocity_Angles,
+		Handler<float>,
+		Handler<float, float, float>>("bxt_ch_set_vel_angles");
 	wrapper::Add<
-		NoUsage,
-		Handler<Cmd_Multiwait>,
-		Handler<Cmd_Multiwait, int>>("w");
-	wrapper::Add<Usage_Camera_Fixed, Handler<Cmd_BXT_Camera_Fixed, float, float, float, float, float, float>>("bxt_cam_fixed");
-	wrapper::Add<Usage_Camera_Offset, Handler<Cmd_BXT_Camera_Offset, float, float, float, float, float, float>>("bxt_cam_offset");
-	wrapper::Add<NoUsage, Handler<Cmd_BXT_Camera_Clear>>("bxt_cam_clear");
-	wrapper::Add<NoUsage, Handler<Cmd_BXT_Timer_Start>>("bxt_timer_start");
-	wrapper::Add<NoUsage, Handler<Cmd_BXT_Timer_Stop>>("bxt_timer_stop");
-	wrapper::Add<NoUsage, Handler<Cmd_BXT_Timer_Reset>>("bxt_timer_reset");
-	wrapper::Add<NoUsage, Handler<Cmd_BXT_TAS_Autojump_Down>>("+bxt_tas_autojump");
-	wrapper::Add<NoUsage, Handler<Cmd_BXT_TAS_Autojump_Up>>("-bxt_tas_autojump");
-	wrapper::Add<NoUsage, Handler<Cmd_BXT_TAS_Ducktap_Down>>("+bxt_tas_ducktap");
-	wrapper::Add<NoUsage, Handler<Cmd_BXT_TAS_Ducktap_Up>>("-bxt_tas_ducktap");
-	wrapper::Add<Usage_Record, Handler<Cmd_BXT_Record, const char *>>("bxt_record");
-	wrapper::Add<Usage_Map, Handler<Cmd_BXT_Map, const char *>>("_bxt_map");
-	wrapper::Add<Usage_Load, Handler<Cmd_BXT_Load, const char *>>("_bxt_load");
-	wrapper::Add<NoUsage, Handler<Cmd_BXT_Interprocess_Reset>>("_bxt_interprocess_reset");
-	wrapper::Add<NoUsage, Handler<Cmd_BXT_Reset_Frametime_Remainder>>("_bxt_reset_frametime_remainder");
-	wrapper::Add<NoUsage, Handler<Cmd_BXT_TASLog>>("bxt_taslog");
+		Cmd_Multiwait,
+		Handler<>,
+		Handler<int>>("w");
+	wrapper::Add<Cmd_BXT_Camera_Fixed, Handler<float, float, float, float, float, float>>("bxt_cam_fixed");
+	wrapper::Add<Cmd_BXT_Camera_Offset, Handler<float, float, float, float, float, float>>("bxt_cam_offset");
+	wrapper::Add<Cmd_BXT_Camera_Clear, Handler<>>("bxt_cam_clear");
+	wrapper::Add<Cmd_BXT_Timer_Start, Handler<>>("bxt_timer_start");
+	wrapper::Add<Cmd_BXT_Timer_Stop, Handler<>>("bxt_timer_stop");
+	wrapper::Add<Cmd_BXT_Timer_Reset, Handler<>>("bxt_timer_reset");
+	wrapper::Add<Cmd_BXT_TAS_Autojump_Down, Handler<>>("+bxt_tas_autojump");
+	wrapper::Add<Cmd_BXT_TAS_Autojump_Up, Handler<>>("-bxt_tas_autojump");
+	wrapper::Add<Cmd_BXT_TAS_Ducktap_Down, Handler<>>("+bxt_tas_ducktap");
+	wrapper::Add<Cmd_BXT_TAS_Ducktap_Up, Handler<>>("-bxt_tas_ducktap");
+	wrapper::Add<Cmd_BXT_Record, Handler<const char *>>("bxt_record");
+	wrapper::Add<Cmd_BXT_Map, Handler<const char *>>("_bxt_map");
+	wrapper::Add<Cmd_BXT_Load, Handler<const char *>>("_bxt_load");
+	wrapper::Add<Cmd_BXT_Interprocess_Reset, Handler<>>("_bxt_interprocess_reset");
+	wrapper::Add<Cmd_BXT_Reset_Frametime_Remainder, Handler<>>("_bxt_reset_frametime_remainder");
+	wrapper::Add<Cmd_BXT_TASLog, Handler<>>("bxt_taslog");
 }
 
 void HwDLL::InsertCommands()

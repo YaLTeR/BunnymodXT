@@ -1071,6 +1071,11 @@ struct HwDLL::Cmd_BXT_TAS_Autojump_Down
 	{
 		HwDLL::GetInstance().autojump = true;
 	}
+
+	static void handler(const char*)
+	{
+		HwDLL::GetInstance().autojump = true;
+	}
 };
 
 struct HwDLL::Cmd_BXT_TAS_Autojump_Up
@@ -1078,6 +1083,11 @@ struct HwDLL::Cmd_BXT_TAS_Autojump_Up
 	NO_USAGE();
 
 	static void handler()
+	{
+		HwDLL::GetInstance().autojump = false;
+	}
+
+	static void handler(const char*)
 	{
 		HwDLL::GetInstance().autojump = false;
 	}
@@ -1091,6 +1101,11 @@ struct HwDLL::Cmd_BXT_TAS_Ducktap_Down
 	{
 		HwDLL::GetInstance().ducktap = true;
 	}
+
+	static void handler(const char*)
+	{
+		HwDLL::GetInstance().ducktap = true;
+	}
 };
 
 struct HwDLL::Cmd_BXT_TAS_Ducktap_Up
@@ -1098,6 +1113,11 @@ struct HwDLL::Cmd_BXT_TAS_Ducktap_Up
 	NO_USAGE();
 
 	static void handler()
+	{
+		HwDLL::GetInstance().ducktap = false;
+	}
+
+	static void handler(const char*)
 	{
 		HwDLL::GetInstance().ducktap = false;
 	}
@@ -1247,10 +1267,10 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Timer_Start, Handler<>>("bxt_timer_start");
 	wrapper::Add<Cmd_BXT_Timer_Stop, Handler<>>("bxt_timer_stop");
 	wrapper::Add<Cmd_BXT_Timer_Reset, Handler<>>("bxt_timer_reset");
-	wrapper::Add<Cmd_BXT_TAS_Autojump_Down, Handler<>>("+bxt_tas_autojump");
-	wrapper::Add<Cmd_BXT_TAS_Autojump_Up, Handler<>>("-bxt_tas_autojump");
-	wrapper::Add<Cmd_BXT_TAS_Ducktap_Down, Handler<>>("+bxt_tas_ducktap");
-	wrapper::Add<Cmd_BXT_TAS_Ducktap_Up, Handler<>>("-bxt_tas_ducktap");
+	wrapper::Add<Cmd_BXT_TAS_Autojump_Down, Handler<>, Handler<const char*>>("+bxt_tas_autojump");
+	wrapper::Add<Cmd_BXT_TAS_Autojump_Up, Handler<>, Handler<const char*>>("-bxt_tas_autojump");
+	wrapper::Add<Cmd_BXT_TAS_Ducktap_Down, Handler<>, Handler<const char*>>("+bxt_tas_ducktap");
+	wrapper::Add<Cmd_BXT_TAS_Ducktap_Up, Handler<>, Handler<const char*>>("-bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_Record, Handler<const char *>>("bxt_record");
 	wrapper::Add<Cmd_BXT_Map, Handler<const char *>>("_bxt_map");
 	wrapper::Add<Cmd_BXT_Load, Handler<const char *>>("_bxt_load");

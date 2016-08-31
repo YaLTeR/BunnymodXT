@@ -1,18 +1,16 @@
 #pragma once
 
 #include <algorithm>
-#include <type_traits>
 #include <utility>
 
-#define USAGE(text) \
-	inline static const char *usage() { return text; } \
-	using usage_t = CmdWrapper::has_usage_t
-
-#define NO_USAGE() using usage_t = CmdWrapper::has_no_usage_t
+#define USAGE(text) inline static auto usage() { return CmdWrapper::has_usage_t{ text }; }
+#define NO_USAGE() inline static auto usage() { return CmdWrapper::has_no_usage_t{}; }
 
 namespace CmdWrapper
 {
-	struct has_usage_t {};
+	struct has_usage_t {
+		const char* text;
+	};
 	struct has_no_usage_t {};
 
 	template<typename T>
@@ -90,23 +88,20 @@ namespace CmdWrapper
 		}
 
 	private:
-		template<typename H>
 		inline static void PrintUsage(has_no_usage_t)
 		{
 			// No usage, do nothing.
 		}
 
-		template<typename H>
-		inline static void PrintUsage(has_usage_t)
+		inline static void PrintUsage(has_usage_t usage)
 		{
-			CmdFuncs::UsagePrint(H::usage());
+			CmdFuncs::UsagePrint(usage.text);
 		}
 
 		template<typename H>
 		inline static void CallHandlers(int argc)
 		{
-			typename H::usage_t usage;
-			PrintUsage<H>(usage);
+			PrintUsage(H::usage());
 		}
 
 		template<typename H, typename Handler, typename... Handlers>

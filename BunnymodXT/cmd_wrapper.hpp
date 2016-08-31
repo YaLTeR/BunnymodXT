@@ -69,7 +69,7 @@ namespace CmdWrapper
 		static void Add(const char *name)
 		{
 			CmdFuncs::AddCommand(name, [] {
-				CallHandlers<H, Handlers...>();
+				CallHandlers<H, Handlers...>(CmdFuncs::Argc());
 			});
 		}
 
@@ -78,19 +78,22 @@ namespace CmdWrapper
 		{
 			CmdFuncs::AddCommand(name, [] {
 				if (CmdFuncs::IsCheating())
-					CallHandlers<H, Handlers...>();
+					CallHandlers<H, Handlers...>(CmdFuncs::Argc());
 			});
 		}
 
 	private:
-		template<typename H, typename... Handlers>
-		static void CallHandlers()
+		template<typename H>
+		inline static void CallHandlers(int argc)
 		{
-			const int argc = CmdFuncs::Argc();
-			std::array<bool, sizeof...(Handlers)> results{ Handlers::template call<CmdFuncs, H>(argc)... };
-			if (std::none_of(results.cbegin(), results.cend(), [](const bool &b) { return b; })) {
-				CmdFuncs::UsagePrint(H::usage());
-			}
+			CmdFuncs::UsagePrint(H::usage());
+		}
+
+		template<typename H, typename Handler, typename... Handlers>
+		inline static void CallHandlers(int argc)
+		{
+			if (!Handler::template call<CmdFuncs, H>(argc))
+				CallHandlers<H, Handlers...>(argc);
 		}
 	};
 }

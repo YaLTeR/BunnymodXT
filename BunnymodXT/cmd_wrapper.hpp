@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <utility>
 
-#define USAGE(text) inline static auto usage() { return CmdWrapper::has_usage_t{ text }; }
-#define NO_USAGE() inline static auto usage() { return CmdWrapper::has_no_usage_t{}; }
+#define USAGE(text) inline static auto Usage() { return CmdWrapper::has_usage_t{ text }; }
+#define NO_USAGE() inline static auto Usage() { return CmdWrapper::has_no_usage_t{}; }
 
 namespace CmdWrapper
 {
@@ -19,7 +19,7 @@ namespace CmdWrapper
 	template<>
 	struct Parser<int>
 	{
-		inline static int parse(const char *s)
+		inline static int Parse(const char *s)
 		{
 			return std::atoi(s);
 		}
@@ -28,7 +28,7 @@ namespace CmdWrapper
 	template<>
 	struct Parser<float>
 	{
-		inline static float parse(const char *s)
+		inline static float Parse(const char *s)
 		{
 			return std::atof(s);
 		}
@@ -37,7 +37,7 @@ namespace CmdWrapper
 	template<>
 	struct Parser<const char *>
 	{
-		inline static const char *parse(const char *s)
+		inline static const char *Parse(const char *s)
 		{
 			return s;
 		}
@@ -48,10 +48,10 @@ namespace CmdWrapper
 	{
 	public:
 		template<typename CmdFuncs, typename H, typename Indices = std::make_integer_sequence<int, sizeof...(Args)>>
-		inline static bool call(int argc)
+		inline static bool Call(int argc)
 		{
 			if (argc == sizeof...(Args) + 1) {
-				callImpl<CmdFuncs, H>(Indices());
+				CallImpl<CmdFuncs, H>(Indices());
 				return true;
 			} else {
 				return false;
@@ -60,9 +60,9 @@ namespace CmdWrapper
 
 	private:
 		template<typename CmdFuncs, typename H, int... Is>
-		inline static void callImpl(std::integer_sequence<int, Is...>)
+		inline static void CallImpl(std::integer_sequence<int, Is...>)
 		{
-			H::handler(Parser<Args>::parse(CmdFuncs::Argv(Is + 1))...);
+			H::handler(Parser<Args>::Parse(CmdFuncs::Argv(Is + 1))...);
 		}
 	};
 
@@ -101,13 +101,13 @@ namespace CmdWrapper
 		template<typename H>
 		inline static void CallHandlers(int argc)
 		{
-			PrintUsage(H::usage());
+			PrintUsage(H::Usage());
 		}
 
 		template<typename H, typename Handler, typename... Handlers>
 		inline static void CallHandlers(int argc)
 		{
-			if (!Handler::template call<CmdFuncs, H>(argc))
+			if (!Handler::template Call<CmdFuncs, H>(argc))
 				CallHandlers<H, Handlers...>(argc);
 		}
 	};

@@ -158,6 +158,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SCR_UpdateScreen);
 			MemUtils::MarkAsExecutable(ORIG_SV_SpawnServer);
 			MemUtils::MarkAsExecutable(ORIG_SV_Frame);
+			MemUtils::MarkAsExecutable(ORIG_CL_Stop_f);
+			MemUtils::MarkAsExecutable(ORIG_Host_Loadgame_f);
+			MemUtils::MarkAsExecutable(ORIG_Host_Reload_f);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConDPrintf);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConPrintf);
 		}
@@ -176,6 +179,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_SCR_UpdateScreen, HOOKED_SCR_UpdateScreen,
 			ORIG_SV_SpawnServer, HOOKED_SV_SpawnServer,
 			ORIG_SV_Frame, HOOKED_SV_Frame,
+			ORIG_CL_Stop_f, HOOKED_CL_Stop_f,
+			ORIG_Host_Loadgame_f, HOOKED_Host_Loadgame_f,
+			ORIG_Host_Reload_f, HOOKED_Host_Reload_f,
 			ORIG_VGuiWrap2_ConDPrintf, HOOKED_VGuiWrap2_ConDPrintf,
 			ORIG_VGuiWrap2_ConPrintf, HOOKED_VGuiWrap2_ConPrintf);
 	}
@@ -200,6 +206,9 @@ void HwDLL::Unhook()
 			ORIG_SCR_UpdateScreen,
 			ORIG_SV_SpawnServer,
 			ORIG_SV_Frame,
+			ORIG_CL_Stop_f,
+			ORIG_Host_Loadgame_f,
+			ORIG_Host_Reload_f,
 			ORIG_VGuiWrap2_ConDPrintf,
 			ORIG_VGuiWrap2_ConPrintf);
 	}
@@ -487,6 +496,9 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(PF_GetPhysicsKeyValue)
 		DEF_FUTURE(build_number)
 		DEF_FUTURE(SV_Frame)
+		DEF_FUTURE(CL_Stop_f)
+		DEF_FUTURE(Host_Loadgame_f)
+		DEF_FUTURE(Host_Reload_f)
 		DEF_FUTURE(VGuiWrap2_ConDPrintf)
 		DEF_FUTURE(VGuiWrap2_ConPrintf)
 		#undef DEF_FUTURE
@@ -665,6 +677,11 @@ void HwDLL::FindStuff()
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 296)
 						+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 300);
 					break;
+				case 3: // WON-2.
+					ORIG_SV_SpawnServer = reinterpret_cast<_SV_SpawnServer>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 284)
+						+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 288);
+					break;
 				}
 			});
 
@@ -786,6 +803,9 @@ void HwDLL::FindStuff()
 		//GET_FUTURE(RandomLong)
 		GET_FUTURE(SCR_BeginLoadingPlaque)
 		GET_FUTURE(PM_PlayerTrace)
+		GET_FUTURE(CL_Stop_f)
+		GET_FUTURE(Host_Loadgame_f)
+		GET_FUTURE(Host_Reload_f)
 		#undef GET_FUTURE
 
 		{

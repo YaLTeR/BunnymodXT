@@ -20,6 +20,9 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, SCR_UpdateScreen)
 	HOOK_DECL(void, __cdecl, SV_Frame)
 	HOOK_DECL(int, __cdecl, SV_SpawnServer, int bIsDemo, char* server, char* startspot)
+	HOOK_DECL(void, __cdecl, CL_Stop_f)
+	HOOK_DECL(void, __cdecl, Host_Loadgame_f)
+	HOOK_DECL(void, __cdecl, Host_Reload_f)
 	HOOK_DECL(void, __cdecl, VGuiWrap2_ConDPrintf, const char* msg)
 	HOOK_DECL(void, __cdecl, VGuiWrap2_ConPrintf, const char* msg)
 
@@ -215,6 +218,7 @@ protected:
 	struct Cmd_BXT_TAS_Ducktap_Down;
 	struct Cmd_BXT_TAS_Ducktap_Up;
 	struct Cmd_BXT_Record;
+	struct Cmd_BXT_AutoRecord;
 	struct Cmd_BXT_Interprocess_Reset;
 	struct Cmd_BXT_Map;
 	struct Cmd_BXT_Load;
@@ -235,6 +239,12 @@ protected:
 	bool autojump;
 	bool ducktap;
 	std::string recordDemoName;
+	std::string autoRecordDemoName;
+	size_t autoRecordDemoNumber;
+	bool autoRecordNow;
+
+	bool insideHost_Loadgame_f;
+	bool insideHost_Reload_f;
 
 	void *cls;
 	void *clientstate;

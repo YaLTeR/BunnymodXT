@@ -67,6 +67,26 @@ extern "C" void __cdecl SV_Frame()
 	HwDLL::HOOKED_SV_Frame();
 }
 
+extern "C" int __cdecl SV_SpawnServer(int bIsDemo, char* server, char* startspot)
+{
+	return HwDLL::HOOKED_SV_SpawnServer(bIsDemo, server, startspot);
+}
+
+extern "C" void __cdecl CL_Stop_f()
+{
+	HwDLL::HOOKED_CL_Stop_f();
+}
+
+extern "C" void __cdecl Host_Loadgame_f()
+{
+	HwDLL::HOOKED_Host_Loadgame_f();
+}
+
+extern "C" void __cdecl Host_Reload_f()
+{
+	HwDLL::HOOKED_Host_Reload_f();
+}
+
 extern "C" void __cdecl VGuiWrap2_ConDPrintf(const char* msg)
 {
 	HwDLL::HOOKED_VGuiWrap2_ConDPrintf(msg);
@@ -207,6 +227,9 @@ void HwDLL::Clear()
 	ORIG_SCR_UpdateScreen = nullptr;
 	ORIG_SV_Frame = nullptr;
 	ORIG_SV_SpawnServer = nullptr;
+	ORIG_CL_Stop_f = nullptr;
+	ORIG_Host_Loadgame_f = nullptr;
+	ORIG_Host_Reload_f = nullptr;
 	ORIG_VGuiWrap2_ConDPrintf = nullptr;
 	ORIG_VGuiWrap2_ConPrintf = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
@@ -227,6 +250,11 @@ void HwDLL::Clear()
 	autojump = false;
 	ducktap = false;
 	recordDemoName.clear();
+	autoRecordDemoName.clear();
+	autoRecordDemoNumber = 1;
+	autoRecordNow = false;
+	insideHost_Loadgame_f = false;
+	insideHost_Reload_f = false;
 	cls = nullptr;
 	clientstate = nullptr;
 	sv = nullptr;
@@ -387,6 +415,10 @@ void HwDLL::FindStuff()
 		FIND(Host_Changelevel2_f)
 		FIND(SCR_BeginLoadingPlaque)
 		FIND(PM_PlayerTrace)
+		FIND(CL_Stop_f)
+		FIND(Host_Loadgame_f)
+		FIND(Host_Reload_f)
+		FIND(SV_SpawnServer)
 		#undef FIND
 
 		ORIG_Host_FilterTime = reinterpret_cast<_Host_FilterTime>(MemUtils::GetSymbolAddress(m_Handle, "Host_FilterTime"));
@@ -1135,6 +1167,19 @@ struct HwDLL::Cmd_BXT_Record
 	}
 };
 
+struct HwDLL::Cmd_BXT_AutoRecord
+{
+	USAGE("Usage: bxt_autorecord <demoname>\n Records demoname_1; if a load (or changelevel on older engines) occurs - automatically records demoname_2, and so on.\n");
+
+	static void handler(const char *demoName)
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.autoRecordDemoName.assign(demoName);
+		hw.autoRecordDemoNumber = 1;
+		hw.autoRecordNow = true;
+	}
+};
+
 struct HwDLL::Cmd_BXT_Interprocess_Reset
 {
 	NO_USAGE();
@@ -1272,6 +1317,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Down, Handler<>, Handler<const char*>>("+bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Up, Handler<>, Handler<const char*>>("-bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_Record, Handler<const char *>>("bxt_record");
+	wrapper::Add<Cmd_BXT_AutoRecord, Handler<const char *>>("bxt_autorecord");
 	wrapper::Add<Cmd_BXT_Map, Handler<const char *>>("_bxt_map");
 	wrapper::Add<Cmd_BXT_Load, Handler<const char *>>("_bxt_load");
 	wrapper::Add<Cmd_BXT_Interprocess_Reset, Handler<>>("_bxt_interprocess_reset");
@@ -1631,11 +1677,20 @@ void HwDLL::InsertCommands()
 	}
 	wasRunningFrames = runningFramesBackup;
 
-	if (*reinterpret_cast<int*>(cls) == 5 && !recordDemoName.empty()) {
-		std::ostringstream ss;
-		ss << "record " << recordDemoName.c_str() << "\n";
-		ORIG_Cbuf_InsertText(ss.str().c_str());
-		recordDemoName.clear();
+	if (*reinterpret_cast<int*>(cls) == 5) {
+		if (!recordDemoName.empty()) {
+			std::ostringstream ss;
+			ss << "record " << recordDemoName.c_str() << "\n";
+			ORIG_Cbuf_InsertText(ss.str().c_str());
+			recordDemoName.clear();
+		}
+
+		if (autoRecordNow) {
+			std::ostringstream ss;
+			ss << "record " << autoRecordDemoName.c_str() << '_' << autoRecordDemoNumber++ << '\n';
+			ORIG_Cbuf_InsertText(ss.str().c_str());
+			autoRecordNow = false;
+		}
 	}
 }
 
@@ -2062,6 +2117,18 @@ HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, cha
 		lastLoadedMap = server;
 	}
 
+	if (insideHost_Loadgame_f) {
+		if (ret && !autoRecordDemoName.empty()) {
+			autoRecordNow = true;
+		} else {
+			autoRecordNow = false;
+			autoRecordDemoName.clear();
+		}
+	}
+
+	if (insideHost_Reload_f)
+		autoRecordNow = true;
+
 	return ret;
 }
 
@@ -2077,6 +2144,34 @@ HOOK_DEF_0(HwDLL, void, __cdecl, SV_Frame)
 
 	if (tasLogging)
 		logWriter.EndPhysicsFrame();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, CL_Stop_f)
+{
+	if (!insideHost_Loadgame_f && !insideHost_Reload_f) {
+		autoRecordNow = false;
+		autoRecordDemoName.clear();
+	}
+
+	ORIG_CL_Stop_f();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, Host_Loadgame_f)
+{
+	insideHost_Loadgame_f = true;
+
+	ORIG_Host_Loadgame_f();
+
+	insideHost_Loadgame_f = false;
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, Host_Reload_f)
+{
+	insideHost_Reload_f = true;
+
+	ORIG_Host_Reload_f();
+
+	insideHost_Reload_f = false;
 }
 
 HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap2_ConDPrintf, const char*, msg)

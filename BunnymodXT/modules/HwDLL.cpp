@@ -2126,7 +2126,7 @@ HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, cha
 		}
 	}
 
-	if (insideHost_Reload_f)
+	if (insideHost_Reload_f && !autoRecordDemoName.empty())
 		autoRecordNow = true;
 
 	return ret;

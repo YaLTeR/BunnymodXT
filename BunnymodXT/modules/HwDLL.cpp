@@ -1687,7 +1687,7 @@ void HwDLL::InsertCommands()
 
 		if (autoRecordNow) {
 			std::ostringstream ss;
-			ss << "record " << autoRecordDemoName.c_str() << '_' << autoRecordDemoNumber++ << '\n';
+			ss << "record \"" << autoRecordDemoName.c_str() << '_' << autoRecordDemoNumber++ << "\"\n";
 			ORIG_Cbuf_InsertText(ss.str().c_str());
 			autoRecordNow = false;
 		}

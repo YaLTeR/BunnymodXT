@@ -1194,7 +1194,7 @@ struct HwDLL::Cmd_BXT_Triggers_SetCommand
 
 	static void handler(const char* command)
 	{
-		if (CustomTriggers::triggers.size() == 0) {
+		if (CustomTriggers::triggers.empty()) {
 			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any triggers.\n");
 			return;
 		}
@@ -1211,7 +1211,7 @@ struct HwDLL::Cmd_BXT_Triggers_Delete
 
 	static void handler()
 	{
-		if (CustomTriggers::triggers.size() == 0) {
+		if (CustomTriggers::triggers.empty()) {
 			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any triggers.\n");
 			return;
 		}

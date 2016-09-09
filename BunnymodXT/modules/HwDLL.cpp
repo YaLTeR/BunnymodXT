@@ -1240,9 +1240,7 @@ struct HwDLL::Cmd_BXT_Triggers_List
 
 struct HwDLL::Cmd_BXT_Triggers_SetCommand
 {
-	// TODO: set command by trigger ID.
-
-	USAGE("Usage: bxt_triggers_setcommand <command>\n Sets the last placed trigger's command.\n");
+	USAGE("Usage: bxt_triggers_setcommand <command>\n Sets the last placed trigger's command.\n bxt_triggers_setcommand <id> <command>\n Sets the command of a trigger with the given id.\n");
 
 	static void handler(const char* command)
 	{
@@ -1252,6 +1250,16 @@ struct HwDLL::Cmd_BXT_Triggers_SetCommand
 		}
 
 		CustomTriggers::triggers.back().set_command(command);
+	}
+
+	static void handler(unsigned long id, const char* command)
+	{
+		if (id == 0 || CustomTriggers::triggers.size() < id) {
+			HwDLL::GetInstance().ORIG_Con_Printf("There's no trigger with this id.\n");
+			return;
+		}
+
+		CustomTriggers::triggers[id - 1].set_command(command);
 	}
 };
 
@@ -1419,7 +1427,10 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Triggers_Add, Handler<float, float, float, float, float, float>>("bxt_triggers_add");
 	wrapper::Add<Cmd_BXT_Triggers_Delete, Handler<>, Handler<unsigned long>>("bxt_triggers_delete");
 	wrapper::Add<Cmd_BXT_Triggers_List, Handler<>>("bxt_triggers_list");
-	wrapper::Add<Cmd_BXT_Triggers_SetCommand, Handler<const char*>>("bxt_triggers_setcommand");
+	wrapper::Add<
+		Cmd_BXT_Triggers_SetCommand,
+		Handler<const char*>,
+		Handler<unsigned long, const char*>>("bxt_triggers_setcommand");
 	wrapper::Add<Cmd_BXT_Record, Handler<const char *>>("bxt_record");
 	wrapper::Add<Cmd_BXT_AutoRecord, Handler<const char *>>("bxt_autorecord");
 	wrapper::Add<Cmd_BXT_Map, Handler<const char *>>("_bxt_map");

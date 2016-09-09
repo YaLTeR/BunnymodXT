@@ -220,6 +220,7 @@ protected:
 	struct Cmd_BXT_TAS_Ducktap_Up;
 	struct Cmd_BXT_Triggers_Add;
 	struct Cmd_BXT_Triggers_Delete;
+	struct Cmd_BXT_Triggers_Export;
 	struct Cmd_BXT_Triggers_List;
 	struct Cmd_BXT_Triggers_SetCommand;
 	struct Cmd_BXT_Record;

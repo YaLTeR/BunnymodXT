@@ -1211,6 +1211,61 @@ struct HwDLL::Cmd_BXT_Triggers_Delete
 	}
 };
 
+struct HwDLL::Cmd_BXT_Triggers_Export
+{
+	USAGE("Usage: bxt_triggers_export [cmd|script]\n");
+
+	static void handler(const char* type)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		enum class ExportType {
+			CMD,
+			SCRIPT
+		} export_type;
+
+		if (!std::strcmp(type, "cmd")) {
+			export_type = ExportType::CMD;
+		} else if (!std::strcmp(type, "script")) {
+			export_type = ExportType::SCRIPT;
+		} else {
+			hw.ORIG_Con_Printf("%s", GET_USAGE());
+			return;
+		}
+
+		auto command_separator = (export_type == ExportType::SCRIPT) ? '\n' : ';';
+
+		if (CustomTriggers::triggers.empty()) {
+			hw.ORIG_Con_Printf("You haven't placed any triggers.\n");
+			return;
+		}
+
+		bool first = true;
+		for (const auto& t : CustomTriggers::triggers) {
+			auto corners = t.get_corner_positions();
+
+			std::ostringstream oss;
+
+			if (!first)
+				oss << command_separator;
+
+			oss << "bxt_triggers_add "
+				<< corners.first.x << " " << corners.first.y << " " << corners.first.z << " "
+				<< corners.second.x << " " << corners.second.y << " " << corners.second.z;
+
+			if (t.get_command().size() > 1)
+				oss << command_separator << "bxt_triggers_setcommand \""
+					<< t.get_command().substr(0, t.get_command().size() - 1) << '\"';
+
+			hw.ORIG_Con_Printf("%s", oss.str().c_str());
+
+			first = false;
+		}
+
+		hw.ORIG_Con_Printf("\n");
+	}
+};
+
 struct HwDLL::Cmd_BXT_Triggers_List
 {
 	NO_USAGE();
@@ -1426,6 +1481,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Up, Handler<>, Handler<const char*>>("-bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_Triggers_Add, Handler<float, float, float, float, float, float>>("bxt_triggers_add");
 	wrapper::Add<Cmd_BXT_Triggers_Delete, Handler<>, Handler<unsigned long>>("bxt_triggers_delete");
+	wrapper::Add<Cmd_BXT_Triggers_Export, Handler<const char*>>("bxt_triggers_export");
 	wrapper::Add<Cmd_BXT_Triggers_List, Handler<>>("bxt_triggers_list");
 	wrapper::Add<
 		Cmd_BXT_Triggers_SetCommand,

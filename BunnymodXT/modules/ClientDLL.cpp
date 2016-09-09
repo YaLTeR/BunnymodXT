@@ -486,13 +486,35 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 		hwDLL.GetCameraOverrideAngles(pparams->viewangles);
 		hwDLL.GetCameraOverrideOrigin(pparams->vieworg);
 	} else if (hwDLL.GetIsOffsettingCamera()) {
+		static float old_camera_offset_angles[3] = { 0.0f };
+		static float old_camera_offset_origin[3] = { 0.0f };
+
 		float vector[3];
 		hwDLL.GetCameraOffsetAngles(vector);
+
+		if (pparams->paused) {
+			for (int i = 0; i < 3; ++i)
+				pparams->viewangles[i] += vector[i] - old_camera_offset_angles[i];
+		} else {
+			for (int i = 0; i < 3; ++i)
+				pparams->viewangles[i] += vector[i];
+		}
+
 		for (int i = 0; i < 3; ++i)
-			pparams->viewangles[i] += vector[i];
+			old_camera_offset_angles[i] = vector[i];
+
 		hwDLL.GetCameraOffsetOrigin(vector);
+
+		if (pparams->paused) {
+			for (int i = 0; i < 3; ++i)
+				pparams->vieworg[i] += vector[i] - old_camera_offset_origin[i];
+		} else {
+			for (int i = 0; i < 3; ++i)
+				pparams->vieworg[i] += vector[i];
+		}
+
 		for (int i = 0; i < 3; ++i)
-			pparams->vieworg[i] += vector[i];
+			old_camera_offset_origin[i] = vector[i];
 	}
 }
 

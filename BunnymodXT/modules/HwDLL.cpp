@@ -1186,23 +1186,6 @@ struct HwDLL::Cmd_BXT_Triggers_Add
 	}
 };
 
-struct HwDLL::Cmd_BXT_Triggers_SetCommand
-{
-	// TODO: set command by trigger ID.
-
-	USAGE("Usage: bxt_triggers_setcommand <command>\n Sets the last placed trigger's command.\n");
-
-	static void handler(const char* command)
-	{
-		if (CustomTriggers::triggers.empty()) {
-			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any triggers.\n");
-			return;
-		}
-
-		CustomTriggers::triggers.back().set_command(command);
-	}
-};
-
 struct HwDLL::Cmd_BXT_Triggers_Delete
 {
 	// TODO: delete by trigger ID.
@@ -1217,6 +1200,50 @@ struct HwDLL::Cmd_BXT_Triggers_Delete
 		}
 
 		CustomTriggers::triggers.erase(--CustomTriggers::triggers.end());
+	}
+};
+
+struct HwDLL::Cmd_BXT_Triggers_List
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		if (CustomTriggers::triggers.empty()) {
+			hw.ORIG_Con_Printf("You haven't placed any triggers.\n");
+			return;
+		}
+
+		for (size_t i = 0; i < CustomTriggers::triggers.size(); ++i) {
+			const auto& t = CustomTriggers::triggers[i];
+			const auto corners = t.get_corner_positions();
+
+			std::ostringstream oss;
+			oss << i + 1 << ": `" << t.get_command().substr(0, t.get_command().size() - 1) << "` - ("
+				<< corners.first.x << ", " << corners.first.y << ", " << corners.first.z << ") | ("
+				<< corners.second.x << ", " << corners.second.y << ", " << corners.second.z << ")\n";
+
+			hw.ORIG_Con_Printf("%s", oss.str().c_str());
+		}
+	}
+};
+
+struct HwDLL::Cmd_BXT_Triggers_SetCommand
+{
+	// TODO: set command by trigger ID.
+
+	USAGE("Usage: bxt_triggers_setcommand <command>\n Sets the last placed trigger's command.\n");
+
+	static void handler(const char* command)
+	{
+		if (CustomTriggers::triggers.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any triggers.\n");
+			return;
+		}
+
+		CustomTriggers::triggers.back().set_command(command);
 	}
 };
 
@@ -1382,8 +1409,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Down, Handler<>, Handler<const char*>>("+bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Up, Handler<>, Handler<const char*>>("-bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_Triggers_Add, Handler<float, float, float, float, float, float>>("bxt_triggers_add");
-	wrapper::Add<Cmd_BXT_Triggers_SetCommand, Handler<const char*>>("bxt_triggers_setcommand");
 	wrapper::Add<Cmd_BXT_Triggers_Delete, Handler<>>("bxt_triggers_delete");
+	wrapper::Add<Cmd_BXT_Triggers_List, Handler<>>("bxt_triggers_list");
+	wrapper::Add<Cmd_BXT_Triggers_SetCommand, Handler<const char*>>("bxt_triggers_setcommand");
 	wrapper::Add<Cmd_BXT_Record, Handler<const char *>>("bxt_record");
 	wrapper::Add<Cmd_BXT_AutoRecord, Handler<const char *>>("bxt_autorecord");
 	wrapper::Add<Cmd_BXT_Map, Handler<const char *>>("_bxt_map");

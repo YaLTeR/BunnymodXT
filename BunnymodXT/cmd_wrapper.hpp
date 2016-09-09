@@ -26,6 +26,15 @@ namespace CmdWrapper
 	};
 
 	template<>
+	struct Parser<unsigned long>
+	{
+		inline static unsigned long Parse(const char *s)
+		{
+			return std::strtoul(s, nullptr, 10);
+		}
+	};
+
+	template<>
 	struct Parser<float>
 	{
 		inline static float Parse(const char *s)

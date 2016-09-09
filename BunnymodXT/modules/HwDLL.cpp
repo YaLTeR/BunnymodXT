@@ -1069,7 +1069,7 @@ struct HwDLL::Cmd_BXT_Camera_Clear
 
 struct HwDLL::Cmd_BXT_Camera_Offset
 {
-	USAGE("Usage: bxt_cam_offset <x> <y> <z> <pitch> <yaw> <magnitude>\n");
+	USAGE("Usage: bxt_cam_offset <x> <y> <z> <pitch> <yaw> <roll>\n");
 
 	static void handler(float x, float y, float z, float pitch, float yaw, float roll)
 	{

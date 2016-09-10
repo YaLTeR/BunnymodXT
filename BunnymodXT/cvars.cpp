@@ -73,6 +73,15 @@ namespace CVars
 
 	CVarWrapper bxt_hud_useables("bxt_hud_useables", "0");
 	CVarWrapper bxt_hud_useables_radius("bxt_hud_useables_radius", "64");
+	CVarWrapper bxt_crosshair("bxt_crosshair", "0");
+	CVarWrapper cl_crosshairalpha("cl_crosshairalpha", "200");
+	CVarWrapper cl_crosshaircolor_b("cl_crosshaircolor_b", "50");
+	CVarWrapper cl_crosshaircolor_r("cl_crosshaircolor_r", "50");
+	CVarWrapper cl_crosshaircolor_g("cl_crosshaircolor_g", "250");
+	CVarWrapper cl_crosshairdot("cl_crosshairdot", "0");
+	CVarWrapper cl_crosshairgap("cl_crosshairgap", "0");
+	CVarWrapper cl_crosshairsize("cl_crosshairsize", "5");
+	CVarWrapper cl_crosshairthickness("cl_crosshairthickness", "1");
 
 	const std::vector<CVarWrapper*> allCVars =
 	{
@@ -136,6 +145,15 @@ namespace CVars
 		&bxt_hud_visible_landmarks_offset,
 		&bxt_hud_visible_landmarks_anchor,
 		&bxt_hud_useables,
-		&bxt_hud_useables_radius
+		&bxt_hud_useables_radius,
+		&bxt_crosshair,
+		&cl_crosshairalpha,
+		&cl_crosshaircolor_b,
+		&cl_crosshaircolor_r,
+		&cl_crosshaircolor_g,
+		&cl_crosshairdot,
+		&cl_crosshairgap,
+		&cl_crosshairsize,
+		&cl_crosshairthickness,
 	};
 }

@@ -129,6 +129,50 @@ namespace TriangleDrawing
 		}
 	}
 
+	static void DrawCrosshair(triangleapi_s *pTriAPI)
+	{
+		if (!CVars::bxt_crosshair.GetBool())
+			return;
+
+		constexpr float PROP_SCALE = 1.0f / 125;
+		constexpr float DEFAULT_GAP = 2;
+
+		const float thickness = CVars::cl_crosshairthickness.GetFloat();
+		const float size = CVars::cl_crosshairsize.GetFloat();
+		const float gap = DEFAULT_GAP + CVars::cl_crosshairgap.GetFloat();
+
+		pTriAPI->RenderMode(kRenderTransAlpha);
+		pTriAPI->CullFace(TRI_NONE);
+		pTriAPI->Color4f(
+			CVars::cl_crosshaircolor_r.GetFloat() / 255,
+			CVars::cl_crosshaircolor_g.GetFloat() / 255,
+			CVars::cl_crosshaircolor_b.GetFloat() / 255,
+			CVars::cl_crosshairalpha.GetFloat() / 255);
+
+		const auto si = CustomHud::GetScreenInfo();
+		const auto minResolution = std::min(si.iHeight, si.iWidth);
+
+		auto c1 = Vector2D(0.5 * thickness + gap, 0.5 * thickness) * PROP_SCALE * minResolution;
+		auto c2 = Vector2D(0.5 * thickness + gap + size, -0.5 * thickness) * PROP_SCALE * minResolution;
+		for (int i = 0; i < 4; ++i) {
+			const auto sc1 = Vector2D(TriangleUtils::PixelWidthToProportion(c1.x), TriangleUtils::PixelHeightToProportion(c1.y));
+			const auto sc2 = Vector2D(TriangleUtils::PixelWidthToProportion(c2.x), TriangleUtils::PixelHeightToProportion(c2.y));
+			TriangleUtils::DrawScreenRectangle(pTriAPI, sc1, sc2);
+			c1 = Vector2D(-c1.y, c1.x);
+			c2 = Vector2D(-c2.y, c2.x);
+		}
+
+		if (CVars::cl_crosshairdot.GetBool()) {
+			c1 = Vector2D(thickness, thickness) * 0.5 * PROP_SCALE * minResolution;
+			c2 = Vector2D(thickness, thickness) * -0.5 * PROP_SCALE * minResolution;
+			c1.x = TriangleUtils::PixelWidthToProportion(c1.x);
+			c1.y = TriangleUtils::PixelHeightToProportion(c1.y);
+			c2.x = TriangleUtils::PixelWidthToProportion(c2.x);
+			c2.y = TriangleUtils::PixelHeightToProportion(c2.y);
+			TriangleUtils::DrawScreenRectangle(pTriAPI, c1, c2);
+		}
+	}
+
 	void VidInit()
 	{
 		white_sprite = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Load("sprites/white.spr");
@@ -147,5 +191,6 @@ namespace TriangleDrawing
 
 		DrawNodes(pTriAPI);
 		DrawUseableEntities(pTriAPI);
+		DrawCrosshair(pTriAPI);
 	}
 }

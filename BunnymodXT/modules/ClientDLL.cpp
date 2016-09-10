@@ -410,6 +410,15 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_visible_landmarks);
 		REG(bxt_hud_visible_landmarks_offset);
 		REG(bxt_hud_visible_landmarks_anchor);
+		REG(bxt_crosshair);
+		REG(cl_crosshairalpha);
+		REG(cl_crosshaircolor_b);
+		REG(cl_crosshaircolor_r);
+		REG(cl_crosshaircolor_g);
+		REG(cl_crosshairdot);
+		REG(cl_crosshairgap);
+		REG(cl_crosshairsize);
+		REG(cl_crosshairthickness);
 	}
 	#undef REG
 }

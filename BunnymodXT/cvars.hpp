@@ -179,6 +179,15 @@ namespace CVars
 	extern CVarWrapper bxt_hud_visible_landmarks_anchor;
 	extern CVarWrapper bxt_hud_useables;
 	extern CVarWrapper bxt_hud_useables_radius;
+	extern CVarWrapper bxt_crosshair;
+	extern CVarWrapper cl_crosshairalpha;
+	extern CVarWrapper cl_crosshaircolor_b;
+	extern CVarWrapper cl_crosshaircolor_r;
+	extern CVarWrapper cl_crosshaircolor_g;
+	extern CVarWrapper cl_crosshairdot;
+	extern CVarWrapper cl_crosshairgap;
+	extern CVarWrapper cl_crosshairsize;
+	extern CVarWrapper cl_crosshairthickness;
 
 	extern const std::vector<CVarWrapper*> allCVars;
 }

@@ -1186,6 +1186,16 @@ struct HwDLL::Cmd_BXT_Triggers_Add
 	}
 };
 
+struct HwDLL::Cmd_BXT_Triggers_Clear
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		CustomTriggers::triggers.clear();
+	}
+};
+
 struct HwDLL::Cmd_BXT_Triggers_Delete
 {
 	USAGE("Usage: bxt_triggers_delete [id]\n Deletes the last placed trigger.\n If an id is given, deletes the trigger with the given id.\n");
@@ -1480,6 +1490,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Down, Handler<>, Handler<const char*>>("+bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Up, Handler<>, Handler<const char*>>("-bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_Triggers_Add, Handler<float, float, float, float, float, float>>("bxt_triggers_add");
+	wrapper::Add<Cmd_BXT_Triggers_Clear, Handler<>>("bxt_triggers_clear");
 	wrapper::Add<Cmd_BXT_Triggers_Delete, Handler<>, Handler<unsigned long>>("bxt_triggers_delete");
 	wrapper::Add<Cmd_BXT_Triggers_Export, Handler<const char*>>("bxt_triggers_export");
 	wrapper::Add<Cmd_BXT_Triggers_List, Handler<>>("bxt_triggers_list");

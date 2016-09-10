@@ -128,6 +128,7 @@ void ClientDLL::Clear()
 	ORIG_PM_PreventMegaBunnyJumping = nullptr;
 	ORIG_PM_ClipVelocity = nullptr;
 	ORIG_PM_WaterMove = nullptr;
+	ORIG_PM_Move = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
 	ORIG_HUD_Init = nullptr;
 	ORIG_HUD_VidInit = nullptr;
@@ -201,6 +202,7 @@ void ClientDLL::FindStuff()
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
 	ORIG_PM_WaterMove = reinterpret_cast<_PM_WaterMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_WaterMove")); // For Linux.
+	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move")); // For Linux.
 
 	pEngfuncs = reinterpret_cast<cl_enginefunc_t*>(MemUtils::GetSymbolAddress(m_Handle, "gEngfuncs"));
 	if (pEngfuncs) {
@@ -474,6 +476,11 @@ HOOK_DEF_4(ClientDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal,
 HOOK_DEF_0(ClientDLL, void, __cdecl, PM_WaterMove)
 {
 	return ORIG_PM_WaterMove();
+}
+
+HOOK_DEF_2(ClientDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int, server)
+{
+	return ORIG_PM_Move(ppmove, server);
 }
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)

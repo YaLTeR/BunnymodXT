@@ -1385,14 +1385,19 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CGraph__InitGraph_Linux, void*, thisptr)
 
 HOOK_DEF_2(ServerDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int, server)
 {
+	auto pmove = reinterpret_cast<uintptr_t>(ppmove);
+	auto origin = reinterpret_cast<float *>(pmove + offOrigin);
+	auto flags = reinterpret_cast<int *>(pmove + offFlags);
+
+	auto start_origin = Vector(origin);
+
 	ORIG_PM_Move(ppmove, server);
 
-	auto pmove = reinterpret_cast<uintptr_t>(ppmove);
-	float *origin = reinterpret_cast<float *>(pmove + offOrigin);
-	int *flags = reinterpret_cast<int *>(pmove + offFlags);
-
-	// TODO: swept AABB or something for proper collision checking at low framerates.
-	CustomTriggers::Update(Vector(origin), (*flags & FL_DUCKING) != 0);
+	/*
+	 * Assuming linear motion from start_origin to origin.
+	 * This is not always the case but it is a good approximation.
+	 */
+	CustomTriggers::Update(start_origin, Vector(origin), (*flags & FL_DUCKING) != 0);
 }
 
 bool ServerDLL::GetGlobalState(const std::string& name, int& state)

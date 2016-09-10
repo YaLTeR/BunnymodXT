@@ -4,9 +4,17 @@
 
 static bool serverside = false;
 
-extern "C" void __cdecl PM_PlayerMove(qboolean server)
+extern "C" void __cdecl PM_Move(struct playermove_s* ppmove, int server)
 {
 	serverside = static_cast<bool>(server);
+	if (serverside)
+		return ServerDLL::HOOKED_PM_Move(ppmove, server);
+	else
+		return ClientDLL::HOOKED_PM_Move(ppmove, server);
+}
+
+extern "C" void __cdecl PM_PlayerMove(qboolean server)
+{
 	if (serverside)
 		return ServerDLL::HOOKED_PM_PlayerMove(server);
 	else

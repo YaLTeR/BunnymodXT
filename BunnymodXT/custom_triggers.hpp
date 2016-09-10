@@ -28,9 +28,16 @@ namespace CustomTriggers
 		void set_command(std::string new_command);
 
 		void update(const Vector& player_position, bool ducking);
+
+		/*
+		 * The player has moved from player_position_start to player_position_end.
+		 * Check if they touched the trigger anywhere during that (linear) motion.
+		 */
+		void update(const Vector& player_position_start, const Vector& player_position_end, bool ducking);
 	};
 
 	extern std::vector<Trigger> triggers;
 
 	void Update(const Vector& player_position, bool ducking);
+	void Update(const Vector& player_position_start, const Vector& player_position_end, bool ducking);
 }

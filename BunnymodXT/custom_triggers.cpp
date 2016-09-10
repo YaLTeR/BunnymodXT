@@ -92,9 +92,82 @@ namespace CustomTriggers
 		}
 	}
 
+	void Trigger::update(const Vector& player_position_start, const Vector& player_position_end, bool ducking)
+	{
+		const Vector VEC_HULL_MIN(-16, -16, -36);
+		const Vector VEC_HULL_MAX(16,  16,  36);
+		const Vector VEC_DUCK_HULL_MIN(-16, -16, -18);
+		const Vector VEC_DUCK_HULL_MAX(16,  16,  18);
+
+		const Vector& hull_max = ducking ? VEC_DUCK_HULL_MAX : VEC_HULL_MAX;
+		const Vector& hull_min = ducking ? VEC_DUCK_HULL_MIN : VEC_HULL_MIN;
+
+		/*
+		 * Swept AABB.
+		 * http://www.gamedev.net/page/resources/_/technical/game-programming/swept-aabb-collision-detection-and-response-r3084
+		 * with fixes and tweaks.
+		 */
+
+		Vector vel = player_position_end - player_position_start;
+
+		// There was no movement => no need for swept AABB.
+		if (vel[0] == 0 && vel[1] == 0 && vel[2] == 0) {
+			update(player_position_start, ducking);
+			return;
+		}
+
+		float inv_entry[3], inv_exit[3];
+
+		for (int i = 0; i < 3; ++i) {
+			if (vel[i] >= 0.0f) {
+				inv_entry[i] = corner_min[i] - (player_position_start[i] + hull_max[i]);
+				inv_exit[i] = corner_max[i] - (player_position_start[i] + hull_min[i]);
+			} else {
+				inv_entry[i] = corner_max[i] - (player_position_start[i] + hull_min[i]);
+				inv_exit[i] = corner_min[i] - (player_position_start[i] + hull_max[i]);
+			}
+		}
+
+		float entry[3], exit[3];
+
+		for (int i = 0; i < 3; ++i) {
+			if (vel[i] == 0.0f) {
+				entry[i] = std::copysign(std::numeric_limits<float>::infinity(), inv_entry[i]);
+				exit[i] = std::copysign(std::numeric_limits<float>::infinity(), inv_exit[i]);
+			} else {
+				entry[i] = inv_entry[i] / vel[i];
+				exit[i] = inv_exit[i] / vel[i];
+			}
+		}
+
+		float entry_time = std::max(std::max(entry[0], entry[1]), entry[2]);
+		float exit_time = std::min(std::min(exit[0], exit[1]), exit[2]);
+
+		if (entry_time <= exit_time
+			&& ((entry[0] >= 0.0f || entry[1] >= 0.0f || entry[2] >= 0.0f)
+				|| exit_time >= 0.0f)
+			&& entry[0] <= 1.0f && entry[1] <= 1.0f && entry[2] <= 1.0f) {
+			// The player has touched the trigger.
+			if (!player_touching)
+				touch();
+
+			// Did the player end up inside the trigger?
+			if (exit_time > 1.0f)
+				player_touching = true;
+		} else {
+			player_touching = false;
+		}
+	}
+
 	void Update(const Vector& player_position, bool ducking)
 	{
 		for (auto& trigger : triggers)
 			trigger.update(player_position, ducking);
+	}
+
+	void Update(const Vector& player_position_start, const Vector& player_position_end, bool ducking)
+	{
+		for (auto& trigger : triggers)
+			trigger.update(player_position_start, player_position_end, ducking);
 	}
 }

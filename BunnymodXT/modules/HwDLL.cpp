@@ -613,7 +613,7 @@ void HwDLL::FindStuff()
 					);
 				cls = *reinterpret_cast<void**>(f + 69);
 				svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
-				offEdict = 19356;
+				offEdict = *reinterpret_cast<ptrdiff_t*>(f + 122);
 				clientstate = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 86) - 0x2AF80);
 			});
 

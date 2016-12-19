@@ -21,7 +21,7 @@ Bunnymod XT (BXT for short) is a cross-platform tool that provides speedrunning 
 ####Windows
 - You will need at least Visual Studio 2015 Update 2.
 - Get [Boost](http://www.boost.org/).
-- Get [RapidJSON](https://github.com/miloyip/rapidjson/releases/tag/v1.0.2).
+- Get [RapidJSON v1.1.0](https://github.com/miloyip/rapidjson/releases/tag/v1.1.0).
 - Create a build directory along the *src* directory.
 - Run `cmake -DBOOST_ROOT=path\to\boost\base\dir -DRapidJSON_ROOT=path\to\rapidjson\base\dir -Wno-dev ..` from the build directory.
 - Compile the **ALL_BUILD** project from the generated VS solution.
@@ -30,7 +30,7 @@ If you want to make a Windows XP-compatible build, additionally specify `-T v140
 
 ####Linux
 - Get Boost.
-- Get [RapidJSON](https://github.com/miloyip/rapidjson/releases/tag/v1.0.2).
+- Get [RapidJSON v1.1.0](https://github.com/miloyip/rapidjson/releases/tag/v1.1.0).
 - Create a build directory along the *src* directory.
 - Run `cmake -Wno-dev ..` from the build directory. You might have to specify `-DRapidJSON_ROOT=path/to/rapidjson/base/dir`.
 - Run `make` from the build directory.

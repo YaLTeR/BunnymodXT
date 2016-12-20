@@ -16,8 +16,17 @@ To rectify this, Bunnymod XT injects into the Half-Life process while leaving ev
 
 ## Installation
 
-- Windows: [Is described here](https://github.com/YaLTeR/BunnymodXT/wiki).
-- Linux: Download / build **libBunnymodXT.so** and launch Half-Life with it via **LD_PRELOAD**. [Here's a helper script](https://gist.github.com/Matherunner/18b838236670df58ddc989d42a594eec) for launching Half-Life from your terminal.
+### Windows
+
+The instructions are described [here](https://github.com/YaLTeR/BunnymodXT/wiki).
+
+### Linux
+
+1. Download or build **libBunnymodXT.so**.
+2. Download [this helper script](https://gist.github.com/Matherunner/18b838236670df58ddc989d42a594eec).
+3. Run `chmod +x runhl.sh` to make the script executable.
+4. Edit the helper script by adding the absolute path to **libBunnymodXT.so** after the `export LD_PRELOAD=` line. For instance, `export LD_PRELOAD=/home/me/dir/libBunnymodXT.so`.
+5. Launch Half-Life from the terminal by executing `./runhl.sh`.
 
 ## Documentation
 
@@ -42,8 +51,8 @@ Building on Windows requires
 Run the following commands:
 
     git clone https://github.com/YaLTeR/BunnymodXT
-    git submodule update --init --recursive
     cd BunnymodXT
+    git submodule update --init --recursive
     mkdir build
     cd build
     cmake -DBOOST_ROOT=path\to\boost\base\dir -DRapidJSON_ROOT=path\to\rapidjson\base\dir -Wno-dev ..
@@ -65,11 +74,11 @@ Many of these dependencies can be installed from a package manager.
 To build, run
 
     git clone https://github.com/YaLTeR/BunnymodXT
-    git submodule update --init --recursive
     cd BunnymodXT
+    git submodule update --init --recursive
     mkdir build
     cd build
-    cmake -DRapidJSON_ROOT=path\to\rapidjson\base\dir -Wno-dev ..
+    cmake -DRapidJSON_ROOT=path/to/rapidjson/base/dir -Wno-dev ..
     make
 
 Note that `-DBOOST_ROOT` is not required as CMake should be able to find the location of Boost in your system. In case it couldn't, you need to specify it manually like the case on Windows.

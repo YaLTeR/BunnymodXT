@@ -25,7 +25,7 @@ The instructions are described [here](https://github.com/YaLTeR/BunnymodXT/wiki)
 1. Download or build **libBunnymodXT.so**.
 2. Download [this helper script](https://gist.github.com/Matherunner/18b838236670df58ddc989d42a594eec).
 3. Run `chmod +x runhl.sh` to make the script executable.
-4. Edit the helper script by adding the absolute path to **libBunnymodXT.so** after the `export LD_PRELOAD=` line. For instance, `export LD_PRELOAD=/home/me/dir/libBunnymodXT.so`.
+4. Edit the helper script by appending the absolute path of **libBunnymodXT.so** to the end of the `export LD_PRELOAD=` line. For instance, `export LD_PRELOAD=/home/me/dir/libBunnymodXT.so`.
 5. Launch Half-Life from the terminal by executing `./runhl.sh`.
 
 ## Documentation

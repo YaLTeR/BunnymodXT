@@ -242,6 +242,7 @@ void HwDLL::Clear()
 	ORIG_VGuiWrap2_ConDPrintf = nullptr;
 	ORIG_VGuiWrap2_ConPrintf = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
+	ORIG_Cbuf_AddText = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
 	ORIG_Cvar_DirectSet = nullptr;
@@ -414,6 +415,7 @@ void HwDLL::FindStuff()
 		FIND(Cvar_DirectSet)
 		FIND(Cvar_FindVar)
 		FIND(Cbuf_InsertText)
+		FIND(Cbuf_AddText)
 		FIND(Cmd_AddMallocCommand)
 		FIND(Cmd_Argc)
 		FIND(Cmd_Args)
@@ -485,6 +487,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cvar_DirectSet)
 		DEF_FUTURE(Cvar_FindVar)
 		DEF_FUTURE(Cbuf_InsertText)
+		DEF_FUTURE(Cbuf_AddText)
 		DEF_FUTURE(Cmd_AddMallocCommand)
 		//DEF_FUTURE(RandomFloat)
 		//DEF_FUTURE(RandomLong)
@@ -798,6 +801,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Cvar_DirectSet)
 		GET_FUTURE(Cvar_FindVar)
 		GET_FUTURE(Cbuf_InsertText)
+		GET_FUTURE(Cbuf_AddText)
 		GET_FUTURE(Cmd_AddMallocCommand)
 		//GET_FUTURE(RandomFloat)
 		//GET_FUTURE(RandomLong)
@@ -1291,6 +1295,19 @@ struct HwDLL::Cmd_BXT_Reset_Frametime_Remainder
 	}
 };
 
+struct HwDLL::Cmd_BXT_Append
+{
+	USAGE("Usage: bxt_append <command>\n Appends command to the end of the command buffer, similar to how special appends _special.\n");
+
+	static void handler(const char *command)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		hw.ORIG_Cbuf_AddText(command);
+		hw.ORIG_Cbuf_AddText("\n");
+	}
+};
+
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
 	if (registeredVarsAndCmds)
@@ -1343,6 +1360,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Interprocess_Reset, Handler<>>("_bxt_interprocess_reset");
 	wrapper::Add<Cmd_BXT_Reset_Frametime_Remainder, Handler<>>("_bxt_reset_frametime_remainder");
 	wrapper::Add<Cmd_BXT_TASLog, Handler<>>("bxt_taslog");
+	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 }
 
 void HwDLL::InsertCommands()

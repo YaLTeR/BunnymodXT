@@ -170,6 +170,8 @@ private:
 protected:
 	typedef void(__cdecl *_Cbuf_InsertText) (const char* text);
 	_Cbuf_InsertText ORIG_Cbuf_InsertText;
+	typedef void(__cdecl *_Cbuf_AddText) (const char* text);
+	_Cbuf_AddText ORIG_Cbuf_AddText;
 	typedef void(__cdecl *_Con_Printf) (const char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
 	typedef void(__cdecl *_Cvar_RegisterVariable) (cvar_t* cvar);
@@ -224,6 +226,7 @@ protected:
 	struct Cmd_BXT_Load;
 	struct Cmd_BXT_Reset_Frametime_Remainder;
 	struct Cmd_BXT_TASLog;
+	struct Cmd_BXT_Append;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

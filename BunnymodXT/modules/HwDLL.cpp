@@ -1284,6 +1284,32 @@ struct HwDLL::Cmd_BXT_TASLog
 	}
 };
 
+struct HwDLL::Cmd_BXT_Heuristic
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		if (hw.svs->num_clients >= 1) {
+			edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(hw.svs->clients) + hw.offEdict);
+			if (pl) {
+				HLStrafe::PlayerData player;
+				player.Origin[0] = pl->v.origin[0];
+				player.Origin[1] = pl->v.origin[1];
+				player.Origin[2] = pl->v.origin[2];
+				player.Velocity[0] = pl->v.velocity[0];
+				player.Velocity[1] = pl->v.velocity[1];
+				player.Velocity[2] = pl->v.velocity[2];
+				player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
+
+				hw.ORIG_Con_Printf("Heuristic = %u\n", HwDLL::Heuristic(player));
+			}
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_Reset_Frametime_Remainder
 {
 	NO_USAGE();
@@ -1361,6 +1387,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Reset_Frametime_Remainder, Handler<>>("_bxt_reset_frametime_remainder");
 	wrapper::Add<Cmd_BXT_TASLog, Handler<>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
+	wrapper::Add<Cmd_BXT_Heuristic, Handler<>>("bxt_heuristic");
 }
 
 void HwDLL::InsertCommands()
@@ -2048,6 +2075,157 @@ HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3
 	tr.PlaneNormal[2] = pmtr.plane.normal[2];
 	tr.Entity = pmtr.ent;
 	return tr;
+}
+
+inline static bool reached_goal(const HLStrafe::PlayerData& player)
+{
+	const auto x = player.Origin[0];
+	const auto y = player.Origin[1];
+
+	return (x >= -3264 && x <= -2992) && (y >= 1120 && y <= 1168);
+}
+
+unsigned HwDLL::Heuristic(HLStrafe::PlayerData player)
+{
+	// Did we fall down too far?
+	if (player.Origin[2] < -430)
+		return std::numeric_limits<unsigned>::max();
+
+	unsigned frame_count = 0;
+
+	while (!reached_goal(player)) {
+		HwDLL::GetInstance().ORIG_Con_Printf("Pos: %f %f; Vel: %f %f\n", player.Origin[0], player.Origin[1], player.Velocity[0], player.Velocity[1]);
+
+		++frame_count;
+
+		// Account for possible slopeboosts (assuming perfect full slopeboosts
+		// every frame, which is not possible in-game).
+		if (player.Velocity[2] < 0
+			&& player.Origin[1] >= -2800 && player.Origin[1] <= -1724) {
+			float zmul, ymul;
+			
+			if (player.Origin[1] <= -1770) {
+				constexpr float ANGLE = 10.96f * M_PI / 180.0f;
+				const float ZM = std::sin(ANGLE) * std::sin(ANGLE);
+				const float YM = std::sin(ANGLE) * std::cos(ANGLE);
+
+				zmul = ZM;
+				ymul = YM;
+			} else {
+				constexpr float ANGLE = 28.89f * M_PI / 180.0f;
+				const float ZM = std::sin(ANGLE) * std::sin(ANGLE);
+				const float YM = std::sin(ANGLE) * std::cos(ANGLE);
+
+				zmul = ZM;
+				ymul = YM;
+			}
+
+			// -= because Z speed is negative.
+			player.Velocity[1] -= player.Velocity[2] * ymul;
+			player.Velocity[2] *= zmul;
+		}
+
+		// Calculate optimal yaw towards the ending trigger.
+		constexpr float TRIGGER_ABSMINS[2] = { -3264, 1120 };
+		constexpr float TRIGGER_ABSMAXS[2] = { -2992, 1168 };
+		constexpr float TRIGGER_HALFSIZE[2] = {
+			(TRIGGER_ABSMAXS[0] - TRIGGER_ABSMINS[0]) / 2,
+			(TRIGGER_ABSMAXS[1] - TRIGGER_ABSMINS[1]) / 2
+		};
+		constexpr float TRIGGER_CENTER[2] = {
+			TRIGGER_ABSMINS[0] + TRIGGER_HALFSIZE[0],
+			TRIGGER_ABSMINS[1] + TRIGGER_HALFSIZE[1]
+		};
+
+		float dir[2] = {
+			TRIGGER_CENTER[0] - player.Origin[0],
+			TRIGGER_CENTER[1] - player.Origin[1]
+		};
+
+		if (dir[0] <= -TRIGGER_HALFSIZE[0])
+			dir[0] += TRIGGER_HALFSIZE[0];
+		else if (dir[0] >= TRIGGER_HALFSIZE[0])
+			dir[0] -= TRIGGER_HALFSIZE[0];
+		else
+			dir[0] = 0;
+
+		if (dir[1] <= -TRIGGER_HALFSIZE[1])
+			dir[1] += TRIGGER_HALFSIZE[1];
+		else if (dir[1] >= TRIGGER_HALFSIZE[1])
+			dir[1] -= TRIGGER_HALFSIZE[1];
+		else
+			dir[1] = 0;
+
+		// dir cannot be unit (otherwise reached_goal() would return true).
+		const float dir_yaw = std::atan2(dir[1], dir[0]);
+
+		// Max speed strafe towards the ending trigger.
+		// Just assume we can groundstrafe and airstrafe always.
+		constexpr float AGST = 454.568645048495f;
+
+		const float maxspeed = player.Ducking ? 300 * 0.333f : 300;
+		player.Ducking = false;
+
+		float speed = std::hypot(player.Velocity[0], player.Velocity[1]);
+		if (speed < 270 / (1 - 4 * 0.01f)) {
+			player.Velocity[0] *= (1 - 4 * 0.01f);
+			player.Velocity[1] *= (1 - 4 * 0.01f);
+
+			const float dir_length = std::hypot(dir[0], dir[1]);
+			dir[0] /= dir_length;
+			dir[1] /= dir_length;
+
+			player.Velocity[0] += dir[0] * 0.01f * maxspeed * 10;
+			player.Velocity[1] += dir[1] * 0.01f * maxspeed * 10;
+		} else {
+			const float vel_yaw = std::atan2(player.Velocity[1], player.Velocity[0]);
+			float difference = dir_yaw - vel_yaw;
+			if (difference >= M_PI)
+				difference -= 2 * M_PI;
+			else if (difference < -M_PI)
+				difference += 2 * M_PI;
+
+			const int strafe_dir = (difference >= 0 ? -1 : 1);
+
+			float L = 30;
+			if (speed < AGST) {
+				// Groundstrafe
+				player.Velocity[0] *= (1 - 4 * 0.01f);
+				player.Velocity[1] *= (1 - 4 * 0.01f);
+				speed *= (1 - 4 * 0.01f);
+				
+				L = maxspeed;
+			}
+
+			const float tauMA = 0.01f * maxspeed * 10;
+			const float tmp = L - tauMA;
+			const float ct = tmp / speed;
+			const float st = strafe_dir * std::sqrt(1 - ct * ct);
+
+			const float ax = tauMA * (player.Velocity[0] * ct + player.Velocity[1] * st) / speed;
+			const float ay = tauMA * (-player.Velocity[0] * st + player.Velocity[1] * ct) / speed;
+			player.Velocity[0] += ax;
+			player.Velocity[1] += ay;
+		}
+
+		// Fine tuning.
+		player.Velocity[2] = 0;
+
+		player.Velocity[2] -= 800 * 0.01f;
+
+		// Can't get less than this without falling down.
+		if (player.Velocity[2] < -750)
+			player.Velocity[2] = -750;
+
+		// Fine tuning.
+		if (player.Origin[1] < -3088)
+			player.Velocity[2] = 0;
+
+		player.Origin[0] += player.Velocity[0] * 0.01f;
+		player.Origin[1] += player.Velocity[1] * 0.01f;
+	}
+
+	return frame_count;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

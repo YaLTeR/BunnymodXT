@@ -156,6 +156,8 @@ public:
 
 	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
 
+	static unsigned Heuristic(HLStrafe::PlayerData player);
+
 	unsigned QueuedSharedRNGSeeds;
 
 	double *frametime_remainder;
@@ -227,6 +229,7 @@ protected:
 	struct Cmd_BXT_Reset_Frametime_Remainder;
 	struct Cmd_BXT_TASLog;
 	struct Cmd_BXT_Append;
+	struct Cmd_BXT_Heuristic;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();
@@ -253,8 +256,10 @@ protected:
 	void *clientstate;
 	void *sv;
 	ptrdiff_t offWorldmodel;
+public:
 	svs_t *svs;
 	ptrdiff_t offEdict;
+private:
 	void *svmove;
 	void **ppmove;
 	client_t **host_client;

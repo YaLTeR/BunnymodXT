@@ -246,7 +246,6 @@ void ServerDLL::FindStuff()
 			offOnground = 224;
 			if (pattern == patterns::shared::PM_Jump.cend()) // Linux.
 			{
-				ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 1);
 				ptrdiff_t bhopcapAddr;
 				auto n = MemUtils::find_unique_sequence(
 					m_Base,
@@ -388,6 +387,9 @@ void ServerDLL::FindStuff()
 			if (!noBhopcap)
 				EngineWarning("Bhopcap disabling is not available.\n");
 		}
+
+		if (!ppmove)
+			ppmove = reinterpret_cast<void**>(MemUtils::GetSymbolAddress(m_Handle, "pmove"));
 	}
 
 	{

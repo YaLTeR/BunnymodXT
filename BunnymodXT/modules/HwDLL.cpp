@@ -1305,6 +1305,8 @@ struct HwDLL::Cmd_BXT_Heuristic
 				player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
 
 				hw.ORIG_Con_Printf("Heuristic = %u\n", HwDLL::Heuristic(player));
+				//for (int i = 0; i < 1000; ++i)
+				//        Heuristic(player);
 			}
 		}
 	}
@@ -2093,8 +2095,8 @@ unsigned HwDLL::Heuristic(HLStrafe::PlayerData player)
 
 	unsigned frame_count = 0;
 
-	while (!reached_goal(player)) {
-		HwDLL::GetInstance().ORIG_Con_Printf("Pos: %f %f; Vel: %f %f\n", player.Origin[0], player.Origin[1], player.Velocity[0], player.Velocity[1]);
+	while (!reached_goal(player) && frame_count < 3000) {
+		//HwDLL::GetInstance().ORIG_Con_Printf("Pos: %f %f; Vel: %f %f\n", player.Origin[0], player.Origin[1], player.Velocity[0], player.Velocity[1]);
 
 		++frame_count;
 

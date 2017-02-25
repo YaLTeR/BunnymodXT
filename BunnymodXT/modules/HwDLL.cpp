@@ -1312,6 +1312,16 @@ struct HwDLL::Cmd_BXT_Heuristic
 	}
 };
 
+struct HwDLL::Cmd_BXT_StartSearch
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		HwDLL::GetInstance().StartSearch();
+	}
+};
+
 struct HwDLL::Cmd_BXT_Reset_Frametime_Remainder
 {
 	NO_USAGE();
@@ -1390,6 +1400,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TASLog, Handler<>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_Heuristic, Handler<>>("bxt_heuristic");
+	wrapper::Add<Cmd_BXT_StartSearch, Handler<>>("bxt_startsearch");
 }
 
 void HwDLL::InsertCommands()
@@ -2228,6 +2239,87 @@ unsigned HwDLL::Heuristic(HLStrafe::PlayerData player)
 	}
 
 	return frame_count;
+}
+
+struct Path
+{
+	static constexpr size_t BITS_PER_FRAME = 3;
+
+	std::vector<bool> path;
+
+	inline HLTAS::StrafeDir StrafeDir(size_t frame) const
+	{
+		return path[frame * BITS_PER_FRAME] ? HLTAS::StrafeDir::RIGHT : HLTAS::StrafeDir::LEFT;
+	}
+
+	inline bool Jump(size_t frame) const
+	{
+		return path[frame * BITS_PER_FRAME + 1];
+	}
+
+	inline bool Duck(size_t frame) const
+	{
+		return path[frame * BITS_PER_FRAME + 2];
+	}
+
+	inline size_t FrameCount() const
+	{
+		return path.size() / BITS_PER_FRAME;
+	}
+
+	void Append(int frame)
+	{
+		path.push_back(frame & 1);
+		path.push_back(frame & 2);
+		path.push_back(frame & 4);
+	}
+
+	void Export() const
+	{
+		HLTAS::Input templ;
+		auto err = templ.Open("template.hltas").get();
+
+		if (err.Code != HLTAS::ErrorCode::OK) {
+			HwDLL::GetInstance().ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
+			return;
+		}
+
+		auto last_frame = templ.GetFrames().back();
+		templ.RemoveFrame(templ.GetFrames().size() - 1);
+		last_frame.Comments = "End of automatically generated frames.";
+
+		for (size_t i = 0; i < FrameCount(); ++i) {
+			HLTAS::Frame frame;
+			frame.SetType(HLTAS::StrafeType::MAXACCEL);
+			frame.SetDir(StrafeDir(i));
+			frame.Jump = Jump(i);
+			frame.Duck = Duck(i);
+			frame.Frametime = "0.010000001";
+			frame.SetRepeats(1);
+
+			if (i == 0)
+				frame.Comments = "Beginning of automatically generated frames.";
+
+			templ.InsertFrame(templ.GetFrames().size(), frame);
+		}
+
+		templ.InsertFrame(templ.GetFrames().size(), last_frame);
+		templ.Save("export.hltas");
+	}
+};
+
+void HwDLL::StartSearch()
+{
+	const HLStrafe::PlayerData starting_state{
+		.Origin = { -3200, -3520, -395 },
+		.Viewangles[1] = 90
+	};
+
+	Path p;
+	for (int i = 0; i < 8; ++i)
+		p.Append(i);
+
+	p.Export();
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

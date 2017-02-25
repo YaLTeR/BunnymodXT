@@ -193,6 +193,7 @@ public:
 	HLStrafe::TraceResult UnsafePlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
 
 	static unsigned Heuristic(HLStrafe::PlayerData player);
+	void StartSearch();
 
 	unsigned QueuedSharedRNGSeeds;
 
@@ -210,7 +211,9 @@ private:
 
 protected:
 	typedef void(__cdecl *_Con_Printf) (const char* fmt, ...);
+public:
 	_Con_Printf ORIG_Con_Printf;
+protected:
 	typedef void(__cdecl *_Cvar_RegisterVariable) (cvar_t* cvar);
 	_Cvar_RegisterVariable ORIG_Cvar_RegisterVariable;
 	typedef void(__cdecl *_Cvar_DirectSet) (cvar_t* cvar, const char* value);
@@ -276,6 +279,7 @@ protected:
 	struct Cmd_BXT_TASLog;
 	struct Cmd_BXT_Append;
 	struct Cmd_BXT_Heuristic;
+	struct Cmd_BXT_StartSearch;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

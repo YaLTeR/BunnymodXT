@@ -1,6 +1,6 @@
 # Bunnymod XT
 
-### VAC BAN WARNING: Do NOT connect to servers with this injected, or you might get VAC banned!
+### VAC BAN WARNING: Do NOT connect to servers with this loaded, or you might get VAC banned!
 
 Bunnymod XT (BXT for short) is a cross-platform tool that provides speedrunning and TAS-related features for GoldSource games such as Half-Life and its modifications.
 

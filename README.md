@@ -48,7 +48,7 @@ Building on Windows requires
 - [Boost](http://www.boost.org/)
 - [RapidJSON v1.1.0](https://github.com/miloyip/rapidjson/releases/tag/v1.1.0)
 
-Run the following commands:
+Run the following commands, replacing `path\to\boost\base\dir` and `\path\to\rapidjson\base\dir` with paths to Boost and RapidJSON base directories respectively:
 
     git clone https://github.com/YaLTeR/BunnymodXT
     cd BunnymodXT
@@ -71,7 +71,7 @@ Building on Linux requires
 
 Many of these dependencies can be installed from a package manager.
 
-To build, run
+To build, run the following commands, replacing `path/to/rapidjson/base/dir` with path to the RapidJSON base directory:
 
     git clone https://github.com/YaLTeR/BunnymodXT
     cd BunnymodXT

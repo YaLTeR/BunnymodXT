@@ -479,6 +479,15 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found VGuiWrap2_ConPrintf at %p.\n", ORIG_VGuiWrap2_ConDPrintf);
 		else
 			EngineDevWarning("[hw dll] Could not find VGuiWrap2_ConPrintf.\n");
+
+		auto CL_Move = reinterpret_cast<uintptr_t>(MemUtils::GetSymbolAddress(m_Handle, "CL_Move"));
+		if (CL_Move)
+		{
+			EngineDevMsg("[hw dll] Found CL_Move at %p.\n", CL_Move);
+			frametime_remainder = *reinterpret_cast<double**>(CL_Move + 0x1C4);
+			EngineDevMsg("[hw dll] Found frametime_remainder at %p.\n", frametime_remainder);
+		} else
+			EngineDevWarning("[hw dll] Could not find CL_Move.\n");
 	}
 	else
 	{
@@ -1295,7 +1304,7 @@ struct HwDLL::Cmd_BXT_Heuristic
 		if (hw.svs->num_clients >= 1) {
 			edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(hw.svs->clients) + hw.offEdict);
 			if (pl) {
-				HLStrafe::PlayerData player;
+				PlayerState player;
 				player.Origin[0] = pl->v.origin[0];
 				player.Origin[1] = pl->v.origin[1];
 				player.Origin[2] = pl->v.origin[2];
@@ -1442,6 +1451,12 @@ void HwDLL::InsertCommands()
 						// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
 						GetViewangles(player.Viewangles);
 						//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
+						
+						log = fopen("gt.log", "a");
+						fprintf(log, "Simulating o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f)\n",
+										     player.Origin[0], player.Origin[1], player.Origin[2],
+										     player.Velocity[0], player.Velocity[1], player.Velocity[2]);
+						fclose(log);
 					}
 				}
 
@@ -2090,7 +2105,725 @@ HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3
 	return tr;
 }
 
-inline static bool reached_goal(const HLStrafe::PlayerData& player)
+void HwDLL::InitTracing()
+{
+	oldclient = *host_client;
+	*host_client = svs->clients;
+	oldplayer = *sv_player;
+	*sv_player = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	oldmove = *ppmove;
+	*ppmove = svmove;
+	ORIG_SV_AddLinksToPM(sv_areanodes, (*sv_player)->v.origin);
+}
+
+void HwDLL::DeinitTracing()
+{
+	*ppmove = oldmove;
+	*sv_player = oldplayer;
+	*host_client = oldclient;
+}
+
+HLStrafe::TraceResult HwDLL::PlayerTrace2(const float start[3], const float end[3], HLStrafe::HullType hull)
+{
+	auto tr = HLStrafe::TraceResult{};
+
+	auto usehull = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(svmove) + 0xBC);
+	auto oldhull = *usehull;
+	*usehull = static_cast<int>(hull);
+
+	const int PM_NORMAL = 0x00000000;
+	auto pmtr = ORIG_PM_PlayerTrace(start, end, PM_NORMAL, -1);
+
+	*usehull = oldhull;
+
+	tr.AllSolid = (pmtr.allsolid != 0);
+	tr.StartSolid = (pmtr.startsolid != 0);
+	tr.Fraction = pmtr.fraction;
+	tr.EndPos[0] = pmtr.endpos[0];
+	tr.EndPos[1] = pmtr.endpos[1];
+	tr.EndPos[2] = pmtr.endpos[2];
+	tr.PlaneNormal[0] = pmtr.plane.normal[0];
+	tr.PlaneNormal[1] = pmtr.plane.normal[1];
+	tr.PlaneNormal[2] = pmtr.plane.normal[2];
+	tr.Entity = pmtr.ent;
+	return tr;
+}
+
+static constexpr float FRAMETIME = 0.010000001f;
+static constexpr float MAXSPEED = 300.0f;
+static constexpr float ACCELERATE = 10.0f;
+static constexpr float AIRACCELERATE = 10.0f;
+
+using namespace HLTAS;
+using HLStrafe::TraceFunc;
+using HLStrafe::PositionType;
+using HLStrafe::HullType;
+using HLStrafe::VecCopy;
+using HLStrafe::VecScale;
+using HLStrafe::VecSubtract;
+using HLStrafe::VecAdd;
+using HLStrafe::Length;
+using HLStrafe::DotProduct;
+using HLStrafe::CrossProduct;
+using HLStrafe::IsZero;
+using HLStrafe::AngleModRad;
+using HLStrafe::Normalize;
+using HLStrafe::M_DEG2RAD;
+using HLStrafe::M_RAD2DEG;
+using HLStrafe::M_U_RAD;
+using HLStrafe::VEC_HULL_MIN;
+using HLStrafe::VEC_HULL_MAX;
+using HLStrafe::VEC_DUCK_HULL_MIN;
+using HLStrafe::VEC_DUCK_HULL_MAX;
+using PlayerState = HwDLL::PlayerState;
+
+#define TF(x) ((x) ? "true" : "false")
+
+class PathSimulator
+{
+public:
+	PathSimulator(PlayerState& player, TraceFunc traceFunc)
+		: player(player)
+		, traceFunc(traceFunc)
+	{
+	}
+
+	void SimulateFrame(StrafeDir strafe_dir, bool jump, bool duck)
+	{
+		auto postype = GetPositionType();
+		//HwDLL::GetInstance().ORIG_Con_Printf("onground: %s, jump: %s, duck: %s\n", TF(postype == PositionType::GROUND), TF(jump), TF(duck));
+
+		const bool reduce_wishspeed = player.Ducking;
+
+		ReduceTimers();
+
+		postype = PredictDuck(postype, duck);
+
+		AddCorrectGravity();
+
+		postype = PredictJump(postype, jump);
+
+		Friction(postype);
+		CheckVelocity();
+
+		postype = Strafe(postype, reduce_wishspeed, strafe_dir);
+
+		player.WasPressingJump = jump;
+		player.WasPressingDuck = duck;
+	}
+
+protected:
+	PlayerState& player;
+	TraceFunc traceFunc;
+
+	void CheckVelocity()
+	{
+		for (std::size_t i = 0; i < 3; ++i) {
+			if (player.Velocity[i] > 2000)
+				player.Velocity[i] = 2000;
+			if (player.Velocity[i] < -2000)
+				player.Velocity[i] = -2000;
+		}
+	}
+
+	PositionType GetPositionType()
+	{
+		if (player.Velocity[2] > 180)
+			return PositionType::AIR;
+
+		float point[3];
+		VecCopy<float, 3>(player.Origin, point);
+		point[2] -= 2;
+
+		auto tr = traceFunc(player.Origin, point, (player.Ducking) ? HullType::DUCKED : HullType::NORMAL);
+		if (tr.PlaneNormal[2] < 0.7 || tr.Entity == -1)
+			return PositionType::AIR;
+
+		if (!tr.StartSolid && !tr.AllSolid)
+			VecCopy<float, 3>(tr.EndPos, player.Origin);
+		return PositionType::GROUND;
+	}
+
+	void ReduceTimers()
+	{
+		player.DuckTime = std::max(player.DuckTime - static_cast<int>(FRAMETIME * 1000), 0.f);
+	}
+
+	PositionType PredictDuck(PositionType postype, bool duck)
+	{
+		if (!duck
+			&& !player.InDuckAnimation
+			&& !player.Ducking)
+			return postype;
+
+		if (duck) {
+			if (!player.WasPressingDuck && !player.Ducking) {
+				player.DuckTime = 1000;
+				player.InDuckAnimation = true;
+			}
+
+			if (player.InDuckAnimation
+				&& (player.DuckTime / 1000.0 <= (1.0 - 0.4)
+					|| postype != PositionType::GROUND)) {
+				player.Ducking = true;
+				player.InDuckAnimation = false;
+				if (postype == PositionType::GROUND) {
+					for (std::size_t i = 0; i < 3; ++i)
+						player.Origin[i] -= (VEC_DUCK_HULL_MIN[i] - VEC_HULL_MIN[i]);
+					// Is PM_FixPlayerCrouchStuck() prediction needed here?
+					return GetPositionType();
+				}
+			}
+		} else {
+			// Unduck.
+			float newOrigin[3];
+			VecCopy<float, 3>(player.Origin, newOrigin);
+			if (postype == PositionType::GROUND)
+				for (std::size_t i = 0; i < 3; ++i)
+					newOrigin[i] += (VEC_DUCK_HULL_MIN[i] - VEC_HULL_MIN[i]);
+
+			auto tr = traceFunc(newOrigin, newOrigin, (player.Ducking) ? HullType::DUCKED : HullType::NORMAL);
+			if (!tr.StartSolid) {
+				tr = traceFunc(newOrigin, newOrigin, HullType::NORMAL);
+				if (!tr.StartSolid) {
+					player.Ducking = false;
+					player.InDuckAnimation = false;
+					player.DuckTime = 0;
+					VecCopy<float, 3>(newOrigin, player.Origin);
+
+					return GetPositionType();
+				}
+			}
+		}
+
+		return postype;
+	}
+
+	PositionType PredictJump(PositionType postype, bool jump)
+	{
+		if (!jump // Not pressing Jump.
+			|| player.WasPressingJump // Jump was already down.
+			|| postype != PositionType::GROUND) // Not on ground.
+			return postype;
+
+		player.Velocity[2] = static_cast<float>(std::sqrt(2 * 800 * 45.0));
+
+		FixupGravityVelocity();
+
+		return PositionType::AIR;
+	}
+
+	void AddCorrectGravity()
+	{
+		player.Velocity[2] -= static_cast<float>(800 * 0.5 * FRAMETIME);
+		CheckVelocity();
+	}
+
+	void FixupGravityVelocity()
+	{
+		player.Velocity[2] -= static_cast<float>(800 * 0.5 * FRAMETIME);
+		CheckVelocity();
+	}
+
+	void Friction(PositionType postype)
+	{
+		if (postype != PositionType::GROUND)
+			return;
+
+		// Doing all this in floats, mismatch is too real otherwise.
+		auto speed = static_cast<float>( std::sqrt(static_cast<double>(player.Velocity[0] * player.Velocity[0] + player.Velocity[1] * player.Velocity[1] + player.Velocity[2] * player.Velocity[2])) );
+		if (speed < 0.1)
+			return;
+
+		auto friction = 4.0f;
+
+		float start[3], stop[3];
+		start[0] = static_cast<float>(player.Origin[0] + player.Velocity[0] / speed * 16);
+		start[1] = static_cast<float>(player.Origin[1] + player.Velocity[1] / speed * 16);
+		start[2] = player.Origin[2] + ((player.Ducking) ? VEC_DUCK_HULL_MIN[2] : VEC_HULL_MIN[2]);
+		VecCopy<float, 3>(start, stop);
+		stop[2] -= 34;
+
+		auto tr = traceFunc(start, stop, (player.Ducking) ? HullType::DUCKED : HullType::NORMAL);
+		if (tr.Fraction == 1.0)
+			friction *= 2;
+
+		auto control = (speed < 100) ? 100 : speed;
+		auto drop = control * friction * FRAMETIME;
+		auto newspeed = std::max(speed - drop, 0.f);
+		VecScale<float, 3>(player.Velocity, newspeed / speed, player.Velocity);
+	}
+
+	PositionType Strafe(PositionType postype, bool reduce_wishspeed, StrafeDir strafe_dir)
+	{
+		double wishspeed = MAXSPEED;
+		if (reduce_wishspeed)
+			wishspeed *= 0.333;
+
+		player.Yaw = static_cast<float>(SideStrafeMaxAccel(postype, wishspeed, player.Yaw * M_DEG2RAD, strafe_dir == StrafeDir::RIGHT) * M_RAD2DEG);
+
+		return Move(postype, wishspeed);
+	}
+
+	double SideStrafeMaxAccel(PositionType postype, double wishspeed, double vel_yaw, bool right)
+	{
+		double theta = MaxAccelTheta(postype, wishspeed);
+		float velocities[2][2];
+		double yaws[2];
+		SideStrafeGeneral(postype, wishspeed, vel_yaw, theta, right, velocities, yaws);
+
+		double speedsqrs[2] = {
+			DotProduct<float, float, 2>(velocities[0], velocities[0]),
+			DotProduct<float, float, 2>(velocities[1], velocities[1])
+		};
+
+		if (speedsqrs[0] > speedsqrs[1]) {
+			VecCopy<float, 2>(velocities[0], player.Velocity);
+			return yaws[0];
+		} else {
+			VecCopy<float, 2>(velocities[1], player.Velocity);
+			return yaws[1];
+		}
+	}
+
+	double MaxAccelTheta(PositionType postype, double wishspeed)
+	{
+		bool onground = (postype == PositionType::GROUND);
+		double accel = onground ? ACCELERATE : AIRACCELERATE;
+		double accelspeed = accel * wishspeed * FRAMETIME;
+		if (accelspeed <= 0.0)
+			return M_PI;
+
+		if (IsZero<float, 2>(player.Velocity))
+			return 0.0;
+
+		double wishspeed_capped = onground ? wishspeed : 30;
+		double tmp = wishspeed_capped - accelspeed;
+		if (tmp <= 0.0)
+			return M_PI / 2;
+
+		double speed = Length<float, 2>(player.Velocity);
+		if (tmp < speed)
+			return std::acos(tmp / speed);
+
+		return 0.0;
+	}
+
+	static inline double ButtonsPhi(HLTAS::Button button)
+	{
+		switch (button) {
+		case HLTAS::Button::      FORWARD: return 0;
+		case HLTAS::Button:: FORWARD_LEFT: return M_PI / 4;
+		case HLTAS::Button::         LEFT: return M_PI / 2;
+		case HLTAS::Button::    BACK_LEFT: return 3 * M_PI / 4;
+		case HLTAS::Button::         BACK: return -M_PI;
+		case HLTAS::Button::   BACK_RIGHT: return -3 * M_PI / 4;
+		case HLTAS::Button::        RIGHT: return -M_PI / 2;
+		case HLTAS::Button::FORWARD_RIGHT: return -M_PI / 4;
+		default: return 0;
+		}
+	}
+
+	static inline HLTAS::Button GetBestButtons(double theta, bool right)
+	{
+		if (theta < M_PI / 8)
+			return HLTAS::Button::FORWARD;
+		else if (theta < 3 * M_PI / 8)
+			return right ? HLTAS::Button::FORWARD_RIGHT : HLTAS::Button::FORWARD_LEFT;
+		else if (theta < 5 * M_PI / 8)
+			return right ? HLTAS::Button::RIGHT : HLTAS::Button::LEFT;
+		else if (theta < 7 * M_PI / 8)
+			return right ? HLTAS::Button::BACK_RIGHT : HLTAS::Button::BACK_LEFT;
+		else
+			return HLTAS::Button::BACK;
+	}
+
+	//void AngleVectors(const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
+	//{
+	//        float		angle;
+	//        float		sr, sp, sy, cr, cp, cy;
+		
+	//        angle = angles[YAW] * (M_PI*2 / 360);
+	//        sy = sin(angle);
+	//        cy = cos(angle);
+	//        angle = angles[PITCH] * (M_PI*2 / 360);
+	//        sp = sin(angle);
+	//        cp = cos(angle);
+	//        angle = angles[ROLL] * (M_PI*2 / 360);
+	//        sr = sin(angle);
+	//        cr = cos(angle);
+
+	//        if (forward)
+	//        {
+	//                forward[0] = cp*cy;
+	//                forward[1] = cp*sy;
+	//                forward[2] = -sp;
+	//        }
+	//        if (right)
+	//        {
+	//                right[0] = (-1*sr*sp*cy+-1*cr*-sy);
+	//                right[1] = (-1*sr*sp*sy+-1*cr*cy);
+	//                right[2] = -1*sr*cp;
+	//        }
+	//        if (up)
+	//        {
+	//                up[0] = (cr*sp*cy+-sr*-sy);
+	//                up[1] = (cr*sp*sy+-sr*cy);
+	//                up[2] = cr*cp;
+	//        }
+	//}
+
+	static inline void GetAVec(float yaw, double avec[2])
+	{
+		float sy = std::sin(yaw);
+		float cy = std::cos(yaw);
+		float sp = std::sin(0.0f);
+		float cp = std::cos(0.0f);
+
+		float forward[3] = { cp * cy, cp * sy, 0 };
+
+		Normalize<float, 3>(forward, forward);
+
+		avec[0] = forward[0];
+		avec[1] = forward[1];
+	}
+
+	void SideStrafeGeneral(PositionType postype, double wishspeed, double vel_yaw, double theta, bool right, float velocities[2][2], double yaws[2])
+	{
+		auto usedButton = GetBestButtons(theta, right);
+		double phi = ButtonsPhi(usedButton);
+		theta = right ? -theta : theta;
+
+		if (!IsZero<float, 2>(player.Velocity))
+			vel_yaw = std::atan2(player.Velocity[1], player.Velocity[0]);
+
+		double yaw = vel_yaw - phi + theta;
+		yaws[0] = AngleModRad(yaw);
+		// Very rare case of yaw == anglemod(yaw).
+		if (yaws[0] == yaw) {
+			// Multiply by 1.5 because the fp precision might make the yaw a value not enough to reach the next anglemod.
+			// Or divide by 2 because it might throw us a value too far back.
+			yaws[1] = AngleModRad(yaw + std::copysign(M_U_RAD * 1.5, yaw));
+		} else
+			yaws[1] = AngleModRad(yaw + std::copysign(M_U_RAD, yaw));
+
+		//double avec[2] = { std::cos(static_cast<float>(yaws[0] + phi)), std::sin(static_cast<float>(yaws[0] + phi)) };
+		double avec[2] = { std::cos(yaws[0] + phi), std::sin(yaws[0] + phi) };
+		PlayerState pl = player;
+		VectorFME(pl, postype, wishspeed, avec);
+		VecCopy<float, 2>(pl.Velocity, velocities[0]);
+
+		avec[0] = std::cos(yaws[1] + phi);
+		avec[1] = std::sin(yaws[1] + phi);
+		VecCopy<float, 2>(player.Velocity, pl.Velocity);
+		VectorFME(pl, postype, wishspeed, avec);
+		VecCopy<float, 2>(pl.Velocity, velocities[1]);
+	}
+
+	void VectorFME(PlayerState& pl, PositionType postype, double wishspeed, const double a[2])
+	{
+		bool onground = (postype == PositionType::GROUND);
+		double wishspeed_capped = onground ? wishspeed : 30;
+		double tmp = wishspeed_capped - DotProduct<float, double, 2>(pl.Velocity, a);
+		if (tmp <= 0.0)
+			return;
+
+		double accel = onground ? ACCELERATE : AIRACCELERATE;
+		double accelspeed = accel * wishspeed * FRAMETIME;
+		if (accelspeed <= tmp)
+			tmp = accelspeed;
+
+		pl.Velocity[0] += static_cast<float>(a[0] * tmp);
+		pl.Velocity[1] += static_cast<float>(a[1] * tmp);
+	}
+
+	PositionType Move(PositionType postype, double wishspeed)
+	{
+		bool onground = (postype == PositionType::GROUND);
+		CheckVelocity();
+
+		// Move
+		wishspeed = std::min(wishspeed, static_cast<double>(MAXSPEED));
+		if (onground)
+			player.Velocity[2] = 0;
+
+		// Move
+		if (onground) {
+			// WalkMove
+			auto spd = Length<float, 3>(player.Velocity);
+			if (spd < 1) {
+				VecScale<float, 3>(player.Velocity, 0, player.Velocity); // Clear velocity.
+			} else {
+				float dest[3];
+				VecCopy<float, 3>(player.Origin, dest);
+				dest[0] += player.Velocity[0] * FRAMETIME;
+				dest[1] += player.Velocity[1] * FRAMETIME;
+
+				auto tr = traceFunc(player.Origin, dest, (player.Ducking) ? HullType::DUCKED : HullType::NORMAL);
+				if (tr.Fraction == 1.0f) {
+					VecCopy<float, 3>(tr.EndPos, player.Origin);
+				} else {
+					// Figure out the end position when trying to walk up a step.
+					auto playerUp = PlayerState(player);
+					dest[2] += 18;
+					tr = traceFunc(playerUp.Origin, dest, (player.Ducking) ? HullType::DUCKED : HullType::NORMAL);
+					if (!tr.StartSolid && !tr.AllSolid)
+						VecCopy<float, 3>(tr.EndPos, playerUp.Origin);
+
+					FlyMove(playerUp, postype);
+					VecCopy<float, 3>(playerUp.Origin, dest);
+					dest[2] -= 18;
+
+					tr = traceFunc(playerUp.Origin, dest, (player.Ducking) ? HullType::DUCKED : HullType::NORMAL);
+					if (!tr.StartSolid && !tr.AllSolid)
+						VecCopy<float, 3>(tr.EndPos, playerUp.Origin);
+
+					// Figure out the end position when _not_ trying to walk up a step.
+					auto playerDown = PlayerState(player);
+					FlyMove(playerDown, postype);
+
+					// Take whichever move was the furthest.
+					auto downdist = (playerDown.Origin[0] - player.Origin[0]) * (playerDown.Origin[0] - player.Origin[0])
+						+ (playerDown.Origin[1] - player.Origin[1]) * (playerDown.Origin[1] - player.Origin[1]);
+					auto updist = (playerUp.Origin[0] - player.Origin[0]) * (playerUp.Origin[0] - player.Origin[0])
+						+ (playerUp.Origin[1] - player.Origin[1]) * (playerUp.Origin[1] - player.Origin[1]);
+
+					if ((tr.PlaneNormal[2] < 0.7) || (downdist > updist)) {
+						VecCopy<float, 3>(playerDown.Origin, player.Origin);
+						VecCopy<float, 3>(playerDown.Velocity, player.Velocity);
+					} else {
+						VecCopy<float, 3>(playerUp.Origin, player.Origin);
+						VecCopy<float, 2>(playerUp.Velocity, player.Velocity);
+						player.Velocity[2] = playerDown.Velocity[2];
+					}
+				}
+			}
+		} else {
+			// AirMove
+			FlyMove(player, postype);
+		}
+
+		postype = GetPositionType();
+		CheckVelocity();
+		if (postype != PositionType::GROUND && postype != PositionType::WATER) {
+			FixupGravityVelocity();
+		}
+		if (postype == PositionType::GROUND)
+			player.Velocity[2] = 0;
+
+		return postype;
+	}
+
+	void FlyMove(PlayerState& pl, PositionType postype)
+	{
+		const auto MAX_BUMPS = 4;
+		const auto MAX_CLIP_PLANES = 5;
+
+		float originalVelocity[3], savedVelocity[3];
+		VecCopy<float, 3>(pl.Velocity, originalVelocity);
+		VecCopy<float, 3>(pl.Velocity, savedVelocity);
+
+		auto timeLeft = FRAMETIME;
+		auto allFraction = 0.0f;
+		auto numPlanes = 0;
+		auto blockedState = 0;
+		float planes[MAX_CLIP_PLANES][3];
+
+		for (auto bumpCount = 0; bumpCount < MAX_BUMPS; ++bumpCount) {
+			if (IsZero<float, 3>(pl.Velocity))
+				break;
+
+			float end[3];
+			for (size_t i = 0; i < 3; ++i)
+				end[i] = pl.Origin[i] + timeLeft * pl.Velocity[i];
+
+			auto tr = traceFunc(pl.Origin, end, (pl.Ducking) ? HullType::DUCKED : HullType::NORMAL);
+
+			allFraction += tr.Fraction;
+			if (tr.AllSolid) {
+				VecScale<float, 3>(pl.Velocity, 0, pl.Velocity);
+				blockedState = 4;
+				break;
+			}
+			if (tr.Fraction > 0) {
+				VecCopy<float, 3>(tr.EndPos, pl.Origin);
+				VecCopy<float, 3>(pl.Velocity, savedVelocity);
+				numPlanes = 0;
+			}
+			if (tr.Fraction == 1)
+				break;
+
+			if (tr.PlaneNormal[2] > 0.7)
+				blockedState |= 1;
+			else if (tr.PlaneNormal[2] == 0)
+				blockedState |= 2;
+
+			timeLeft -= timeLeft * tr.Fraction;
+
+			if (numPlanes >= MAX_CLIP_PLANES) {
+				VecScale<float, 3>(pl.Velocity, 0, pl.Velocity);
+				break;
+			}
+
+			VecCopy<float, 3>(tr.PlaneNormal, planes[numPlanes]);
+			numPlanes++;
+
+			if (postype != PositionType::GROUND) {
+				for (auto i = 0; i < numPlanes; ++i)
+					if (planes[i][2] > 0.7)
+						ClipVelocity(savedVelocity, planes[i], 1.0f);
+					else
+						ClipVelocity(savedVelocity, planes[i], 1.0f);
+
+				VecCopy<float, 3>(savedVelocity, pl.Velocity);
+			} else {
+				int i = 0;
+				for (i = 0; i < numPlanes; ++i) {
+					VecCopy<float, 3>(savedVelocity, pl.Velocity);
+					ClipVelocity(pl.Velocity, planes[i], 1);
+
+					int j;
+					for (j = 0; j < numPlanes; ++j)
+						if (j != i)
+							if (DotProduct<float, float, 3>(pl.Velocity, planes[j]) < 0)
+								break;
+
+					if (j == numPlanes)
+						break;
+				}
+
+				if (i == numPlanes) {
+					if (numPlanes != 2) {
+						VecScale<float, 3>(pl.Velocity, 0, pl.Velocity);
+						break;
+					}
+
+					float dir[3];
+					CrossProduct<float, float>(planes[0], planes[1], dir);
+					auto d = static_cast<float>(DotProduct<float, float, 3>(dir, pl.Velocity));
+					VecScale<float, 3>(dir, d, pl.Velocity);
+				}
+
+				if (DotProduct<float, float, 3>(pl.Velocity, originalVelocity) <= 0) {
+					VecScale<float, 3>(pl.Velocity, 0, pl.Velocity);
+					break;
+				}
+			}
+		}
+
+		if (allFraction == 0)
+			VecScale<float, 3>(pl.Velocity, 0, pl.Velocity);
+	}
+
+	int ClipVelocity(float velocity[3], const float normal[3], float overbounce)
+	{
+		const auto STOP_EPSILON = 0.1;
+
+		auto backoff = static_cast<float>(DotProduct<float, float, 3>(velocity, normal) * overbounce);
+
+		for (size_t i = 0; i < 3; ++i) {
+			auto change = normal[i] * backoff;
+			velocity[i] -= change;
+
+			if (velocity[i] > -STOP_EPSILON && velocity[i] < STOP_EPSILON)
+				velocity[i] = 0;
+		}
+
+		if (normal[2] > 0)
+			return 1;
+		else if (normal[2] == 0)
+			return 2;
+		else
+			return 0;
+	}
+};
+
+struct Path
+{
+	static constexpr size_t BITS_PER_FRAME = 3;
+
+	std::vector<bool> path;
+
+	inline HLTAS::StrafeDir StrafeDir(size_t frame) const
+	{
+		return path[frame * BITS_PER_FRAME] ? HLTAS::StrafeDir::RIGHT : HLTAS::StrafeDir::LEFT;
+	}
+
+	inline bool Jump(size_t frame) const
+	{
+		return path[frame * BITS_PER_FRAME + 1];
+	}
+
+	inline bool Duck(size_t frame) const
+	{
+		return path[frame * BITS_PER_FRAME + 2];
+	}
+
+	inline size_t FrameCount() const
+	{
+		return path.size() / BITS_PER_FRAME;
+	}
+
+	void Append(int frame)
+	{
+		path.push_back(frame & 1);
+		path.push_back(frame & 2);
+		path.push_back(frame & 4);
+	}
+
+	PlayerState Simulate(PlayerState player, HLStrafe::TraceFunc traceFunc) const
+	{
+		PathSimulator simulator(player, traceFunc);
+
+		for (size_t frame = 0; frame < FrameCount(); ++frame) {
+			fprintf(HwDLL::GetInstance().log, "Simulating o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f)\n",
+			                                     player.Origin[0], player.Origin[1], player.Origin[2],
+			                                     player.Velocity[0], player.Velocity[1], player.Velocity[2]);
+			simulator.SimulateFrame(StrafeDir(frame), Jump(frame), Duck(frame));
+		}
+
+		fprintf(HwDLL::GetInstance().log, "Simulating o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f)\n",
+		                                     player.Origin[0], player.Origin[1], player.Origin[2],
+		                                     player.Velocity[0], player.Velocity[1], player.Velocity[2]);
+
+		return player;
+	}
+
+	void Export() const
+	{
+		HLTAS::Input templ;
+		auto err = templ.Open("template.hltas").get();
+
+		if (err.Code != HLTAS::ErrorCode::OK) {
+			HwDLL::GetInstance().ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
+			return;
+		}
+
+		auto last_frame = templ.GetFrames().back();
+		templ.RemoveFrame(templ.GetFrames().size() - 1);
+		last_frame.Comments = "End of automatically generated frames.";
+
+		for (size_t i = 0; i < FrameCount(); ++i) {
+			HLTAS::Frame frame;
+			frame.SetType(HLTAS::StrafeType::MAXACCEL);
+			frame.SetDir(StrafeDir(i));
+			frame.Jump = Jump(i);
+			frame.Duck = Duck(i);
+			frame.Frametime = "0.010000001";
+			frame.SetRepeats(1);
+
+			if (i == 0)
+				frame.Comments = "Beginning of automatically generated frames.";
+
+			templ.InsertFrame(templ.GetFrames().size(), frame);
+		}
+
+		templ.InsertFrame(templ.GetFrames().size(), last_frame);
+		templ.Save("export.hltas");
+	}
+};
+
+inline static bool reached_goal(const PlayerState& player)
 {
 	const auto x = player.Origin[0];
 	const auto y = player.Origin[1];
@@ -2098,7 +2831,7 @@ inline static bool reached_goal(const HLStrafe::PlayerData& player)
 	return (x >= -3264 && x <= -2992) && (y >= 1120 && y <= 1168);
 }
 
-unsigned HwDLL::Heuristic(HLStrafe::PlayerData player)
+unsigned HwDLL::Heuristic(PlayerState player)
 {
 	// Did we fall down too far?
 	if (player.Origin[2] < -430)
@@ -2241,83 +2974,48 @@ unsigned HwDLL::Heuristic(HLStrafe::PlayerData player)
 	return frame_count;
 }
 
-struct Path
+PlayerState HwDLL::GetCurrentState()
 {
-	static constexpr size_t BITS_PER_FRAME = 3;
+	PlayerState player{};
 
-	std::vector<bool> path;
+	if (svs->num_clients >= 1) {
+		edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+		if (pl) {
+			player.Origin[0] = pl->v.origin[0];
+			player.Origin[1] = pl->v.origin[1];
+			player.Origin[2] = pl->v.origin[2];
+			player.Velocity[0] = pl->v.velocity[0];
+			player.Velocity[1] = pl->v.velocity[1];
+			player.Velocity[2] = pl->v.velocity[2];
 
-	inline HLTAS::StrafeDir StrafeDir(size_t frame) const
-	{
-		return path[frame * BITS_PER_FRAME] ? HLTAS::StrafeDir::RIGHT : HLTAS::StrafeDir::LEFT;
-	}
-
-	inline bool Jump(size_t frame) const
-	{
-		return path[frame * BITS_PER_FRAME + 1];
-	}
-
-	inline bool Duck(size_t frame) const
-	{
-		return path[frame * BITS_PER_FRAME + 2];
-	}
-
-	inline size_t FrameCount() const
-	{
-		return path.size() / BITS_PER_FRAME;
-	}
-
-	void Append(int frame)
-	{
-		path.push_back(frame & 1);
-		path.push_back(frame & 2);
-		path.push_back(frame & 4);
-	}
-
-	void Export() const
-	{
-		HLTAS::Input templ;
-		auto err = templ.Open("template.hltas").get();
-
-		if (err.Code != HLTAS::ErrorCode::OK) {
-			HwDLL::GetInstance().ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
-			return;
+			if (clientstate) {
+				float *viewangles = reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(clientstate) + 0x2ABE4);
+				player.Yaw = viewangles[1];
+			}
 		}
-
-		auto last_frame = templ.GetFrames().back();
-		templ.RemoveFrame(templ.GetFrames().size() - 1);
-		last_frame.Comments = "End of automatically generated frames.";
-
-		for (size_t i = 0; i < FrameCount(); ++i) {
-			HLTAS::Frame frame;
-			frame.SetType(HLTAS::StrafeType::MAXACCEL);
-			frame.SetDir(StrafeDir(i));
-			frame.Jump = Jump(i);
-			frame.Duck = Duck(i);
-			frame.Frametime = "0.010000001";
-			frame.SetRepeats(1);
-
-			if (i == 0)
-				frame.Comments = "Beginning of automatically generated frames.";
-
-			templ.InsertFrame(templ.GetFrames().size(), frame);
-		}
-
-		templ.InsertFrame(templ.GetFrames().size(), last_frame);
-		templ.Save("export.hltas");
 	}
-};
+
+	return player;
+}
 
 void HwDLL::StartSearch()
 {
-	const HLStrafe::PlayerData starting_state{
-		.Origin = { -3200, -3520, -395 },
-		.Viewangles[1] = 90
-	};
+	const PlayerState starting_state = GetCurrentState();
+	auto player = starting_state;
+
+	ORIG_Con_Printf("Starting state: Origin{ %.8f %.8f %.8f }, Velocity{ %.8f %.8f %.8f }.\n",
+	                player.Origin[0], player.Origin[1], player.Origin[2],
+	                player.Velocity[0], player.Velocity[1], player.Velocity[2]);
 
 	Path p;
-	for (int i = 0; i < 8; ++i)
+	for (int i = 0; i < 2000; ++i)
 		p.Append(i);
+
+	InitTracing();
+	log = fopen("sim.log", "w");
+	p.Simulate(player, std::bind(&HwDLL::PlayerTrace2, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	fclose(log);
+	DeinitTracing();
 
 	p.Export();
 }

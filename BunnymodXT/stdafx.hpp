@@ -48,6 +48,7 @@ using std::ptrdiff_t;
 
 #include <hltas.hpp>
 #include <hlstrafe.hpp>
+#include <util.hpp>
 
 #include "HLSDK/dlls/extdll.h"
 #include "HLSDK/cl_dll/wrect.h"

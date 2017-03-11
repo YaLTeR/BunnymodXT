@@ -184,6 +184,9 @@ public:
 	}
 
 	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
+	void InitTracing();
+	void DeinitTracing();
+	HLStrafe::TraceResult PlayerTrace2(const float start[3], const float end[3], HLStrafe::HullType hull);
 
 	// Don't call StartTrace() or StopTracing() twice in a row.
 	// The sequence must always be StartTracing() => StopTracing().
@@ -192,8 +195,24 @@ public:
 	// You must call StartTracting() before calling this and StopTracing() after calling this.
 	HLStrafe::TraceResult UnsafePlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
 
-	static unsigned Heuristic(HLStrafe::PlayerData player);
+	FILE* log;
+
+	struct PlayerState {
+		float Origin[3];
+		float Velocity[3];
+		float Yaw;
+
+		bool Ducking;
+		bool InDuckAnimation;
+		float DuckTime;
+
+		bool WasPressingJump;
+		bool WasPressingDuck;
+	};
+
+	static unsigned Heuristic(PlayerState player);
 	void StartSearch();
+	PlayerState GetCurrentState();
 
 	unsigned QueuedSharedRNGSeeds;
 
@@ -319,9 +338,12 @@ public:
 	ptrdiff_t offEdict;
 private:
 	void *svmove;
+	void *oldmove;
 	void **ppmove;
 	client_t **host_client;
+	client_t *oldclient;
 	edict_t **sv_player;
+	edict_t *oldplayer;
 	char *sv_areanodes;
 	cmdbuf_t *cmd_text;
 	double *host_frametime;

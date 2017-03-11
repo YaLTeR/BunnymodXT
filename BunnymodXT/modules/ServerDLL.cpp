@@ -448,6 +448,8 @@ void ServerDLL::FindStuff()
 
 		if (!ppmove)
 			ppmove = reinterpret_cast<void**>(MemUtils::GetSymbolAddress(m_Handle, "pmove"));
+
+		EngineDevMsg("[server dll] ppmove = %p\n", ppmove);
 	}
 
 	{

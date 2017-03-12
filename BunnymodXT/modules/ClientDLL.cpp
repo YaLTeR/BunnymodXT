@@ -199,6 +199,7 @@ void ClientDLL::FindStuff()
 		});
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
+	ORIG_PM_FlyMove = reinterpret_cast<_PM_FlyMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_FlyMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
 	ORIG_PM_WaterMove = reinterpret_cast<_PM_WaterMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_WaterMove")); // For Linux.
 

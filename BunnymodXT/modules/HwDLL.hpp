@@ -172,6 +172,8 @@ public:
 
 		bool WasPressingJump;
 		bool WasPressingDuck;
+
+		HLTAS::Button buttons;
 	};
 
 	static unsigned Heuristic(PlayerState player);

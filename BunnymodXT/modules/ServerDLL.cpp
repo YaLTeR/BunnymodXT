@@ -972,19 +972,30 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_WalkMove)
 	firstFlyMoveEnded = false;
 }
 
-HOOK_DEF_0(ServerDLL, void, __cdecl, PM_FlyMove)
+HOOK_DEF_0(ServerDLL, int, __cdecl, PM_FlyMove)
 {
+	const uintptr_t pmove = reinterpret_cast<const uintptr_t>(*ppmove);
+	const float *velocity = reinterpret_cast<const float *>(pmove + offVelocity);
+
+	//auto log = fopen("gt.log", "a");
+	//fprintf(log, "FlyMove i(%.8f %.8f %.8f)", velocity[0], velocity[1], velocity[2]);
+	//fclose(log);
+
 	callerIsFlyMove = true;
-	ORIG_PM_FlyMove();
+	auto rv = ORIG_PM_FlyMove();
 	callerIsFlyMove = false;
 
+	//log = fopen("gt.log", "a");
+	//fprintf(log, " o(%.8f %.8f %.8f)\n", velocity[0], velocity[1], velocity[2]);
+	//fclose(log);
+
 	if (!HwDLL::GetInstance().IsTASLogging())
-		return;
+		return rv;
 
 	if (!callerIsWalkMove) {
 		HwDLL::GetInstance().logWriter.SetCollisions(firstFlyMoveTouchQueue);
 		firstFlyMoveTouchQueue.clear();
-		return;
+		return rv;
 	}
 
 	if (!firstFlyMoveEnded) {
@@ -1001,6 +1012,8 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_FlyMove)
 		firstFlyMoveEndOrigin[1] = origin[1];
 		firstFlyMoveEndOrigin[2] = origin[2];
 	}
+
+	return rv;
 }
 
 HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const usercmd_t*, cmd, unsigned int, random_seed)

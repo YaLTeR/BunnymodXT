@@ -52,3 +52,11 @@ extern "C" void __cdecl PM_WaterMove()
 	else
 		return ClientDLL::HOOKED_PM_WaterMove();
 }
+
+extern "C" int __cdecl PM_FlyMove()
+{
+	if (serverside)
+		return ServerDLL::HOOKED_PM_FlyMove();
+	else
+		return ClientDLL::HOOKED_PM_FlyMove();
+}

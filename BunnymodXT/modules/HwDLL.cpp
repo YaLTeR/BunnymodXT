@@ -549,9 +549,11 @@ void HwDLL::FindStuff()
 		#undef FIND
 
 		ORIG_Host_FilterTime = reinterpret_cast<_Host_FilterTime>(MemUtils::GetSymbolAddress(m_Handle, "Host_FilterTime"));
-		if (ORIG_Host_FilterTime)
+		if (ORIG_Host_FilterTime) {
 			EngineDevMsg("[hw dll] Found Host_FilterTime at %p.\n", ORIG_Host_FilterTime);
-		else
+			unsigned char bytes[] = { 0x90, 0xE9 };
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ORIG_Host_FilterTime) + 0x2E), 2, bytes);
+		} else
 			EngineDevWarning("[hw dll] Could not find Host_FilterTime.\n");
 
 		ORIG_V_FadeAlpha = reinterpret_cast<_V_FadeAlpha>(MemUtils::GetSymbolAddress(m_Handle, "V_FadeAlpha"));
@@ -2012,7 +2014,7 @@ void HwDLL::InsertCommands()
 						//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
 						
 						log = fopen("gt.log", "a");
-						fprintf(log, "Simulating o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f)\n",
+						fprintf(log, "o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f) ",
 										     player.Origin[0], player.Origin[1], player.Origin[2],
 										     player.Velocity[0], player.Velocity[1], player.Velocity[2]);
 						fclose(log);
@@ -2044,6 +2046,9 @@ void HwDLL::InsertCommands()
 				StrafeState.Jump = currentKeys.Jump.IsDown();
 				StrafeState.Duck = currentKeys.Duck.IsDown();
 				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+				log = fopen("gt.log", "a");
+				fprintf(log, "\n");
+				fclose(log);
 
 				f.ResetAutofuncs();
 
@@ -2895,7 +2900,7 @@ HLStrafe::TraceResult HwDLL::PlayerTrace2(const float start[3], const float end[
 	return tr;
 }
 
-static constexpr float FRAMETIME = 0.010000001f;
+static constexpr float FRAMETIME = 10 * 0.001f;
 static constexpr float MAXSPEED = 300.0f;
 static constexpr float ACCELERATE = 10.0f;
 static constexpr float AIRACCELERATE = 10.0f;
@@ -2917,6 +2922,8 @@ using HLStrafe::Normalize;
 using HLStrafe::M_DEG2RAD;
 using HLStrafe::M_RAD2DEG;
 using HLStrafe::M_U_RAD;
+using HLStrafe::M_U_DEG;
+using HLStrafe::M_U_DEG_HALF;
 using HLStrafe::VEC_HULL_MIN;
 using HLStrafe::VEC_HULL_MAX;
 using HLStrafe::VEC_DUCK_HULL_MIN;
@@ -3108,6 +3115,8 @@ protected:
 
 		player.Yaw = static_cast<float>(SideStrafeMaxAccel(postype, wishspeed, player.Yaw * M_DEG2RAD, strafe_dir == StrafeDir::RIGHT) * M_RAD2DEG);
 
+		//fprintf(HwDLL::GetInstance().log, "y(%uu)", static_cast<unsigned>((player.Yaw + M_U_DEG_HALF) / M_U_DEG));
+
 		return Move(postype, wishspeed);
 	}
 
@@ -3122,6 +3131,8 @@ protected:
 			DotProduct<float, float, 2>(velocities[0], velocities[0]),
 			DotProduct<float, float, 2>(velocities[1], velocities[1])
 		};
+
+		//fprintf(HwDLL::GetInstance().log, "\ny1(%uu) v1(%.8f %.8f) %.16f y2(%uu) v2(%.8f %.8f) %.16f ", static_cast<unsigned>((yaws[0] + M_U_RAD / 2) / M_U_RAD), velocities[0][0], velocities[0][1], speedsqrs[0], static_cast<unsigned>((yaws[1] + M_U_RAD / 2) / M_U_RAD), velocities[1][0], velocities[1][1], speedsqrs[1]);
 
 		if (speedsqrs[0] > speedsqrs[1]) {
 			VecCopy<float, 2>(velocities[0], player.Velocity);
@@ -3183,41 +3194,6 @@ protected:
 		else
 			return HLTAS::Button::BACK;
 	}
-
-	//void AngleVectors(const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
-	//{
-	//        float		angle;
-	//        float		sr, sp, sy, cr, cp, cy;
-		
-	//        angle = angles[YAW] * (M_PI*2 / 360);
-	//        sy = sin(angle);
-	//        cy = cos(angle);
-	//        angle = angles[PITCH] * (M_PI*2 / 360);
-	//        sp = sin(angle);
-	//        cp = cos(angle);
-	//        angle = angles[ROLL] * (M_PI*2 / 360);
-	//        sr = sin(angle);
-	//        cr = cos(angle);
-
-	//        if (forward)
-	//        {
-	//                forward[0] = cp*cy;
-	//                forward[1] = cp*sy;
-	//                forward[2] = -sp;
-	//        }
-	//        if (right)
-	//        {
-	//                right[0] = (-1*sr*sp*cy+-1*cr*-sy);
-	//                right[1] = (-1*sr*sp*sy+-1*cr*cy);
-	//                right[2] = -1*sr*cp;
-	//        }
-	//        if (up)
-	//        {
-	//                up[0] = (cr*sp*cy+-sr*-sy);
-	//                up[1] = (cr*sp*sy+-sr*cy);
-	//                up[2] = cr*cp;
-	//        }
-	//}
 
 	static inline void GetAVec(float yaw, double wishspeed, HLTAS::Button buttons, double avec[2])
 	{
@@ -3313,6 +3289,8 @@ protected:
 		VecCopy<float, 2>(player.Velocity, pl.Velocity);
 		VectorFME(pl, postype, wishspeed, avec);
 		VecCopy<float, 2>(pl.Velocity, velocities[1]);
+
+		player.buttons = usedButton;
 	}
 
 	void VectorFME(PlayerState& pl, PositionType postype, double wishspeed, const double a[2])
@@ -3400,7 +3378,7 @@ protected:
 
 		postype = GetPositionType();
 		CheckVelocity();
-		if (postype != PositionType::GROUND && postype != PositionType::WATER) {
+		if (postype != PositionType::GROUND) {
 			FixupGravityVelocity();
 		}
 		if (postype == PositionType::GROUND)
@@ -3413,6 +3391,8 @@ protected:
 	{
 		const auto MAX_BUMPS = 4;
 		const auto MAX_CLIP_PLANES = 5;
+
+		//std::fprintf(HwDLL::GetInstance().log, "FlyMove i(%.8f %.8f %.8f)", pl.Velocity[0], pl.Velocity[1], pl.Velocity[2]);
 
 		float originalVelocity[3], savedVelocity[3];
 		VecCopy<float, 3>(pl.Velocity, originalVelocity);
@@ -3508,6 +3488,8 @@ protected:
 
 		if (allFraction == 0)
 			VecScale<float, 3>(pl.Velocity, 0, pl.Velocity);
+
+		//std::fprintf(HwDLL::GetInstance().log, " o(%.8f %.8f %.8f)\n", pl.Velocity[0], pl.Velocity[1], pl.Velocity[2]);
 	}
 
 	int ClipVelocity(float velocity[3], const float normal[3], float overbounce)
@@ -3571,10 +3553,11 @@ struct Path
 		PathSimulator simulator(player, traceFunc);
 
 		for (size_t frame = 0; frame < FrameCount(); ++frame) {
-			fprintf(HwDLL::GetInstance().log, "Simulating o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f)\n",
+			fprintf(HwDLL::GetInstance().log, "o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f) ",
 			                                     player.Origin[0], player.Origin[1], player.Origin[2],
 			                                     player.Velocity[0], player.Velocity[1], player.Velocity[2]);
 			simulator.SimulateFrame(StrafeDir(frame), Jump(frame), Duck(frame));
+			fprintf(HwDLL::GetInstance().log, "\n");
 		}
 
 		fprintf(HwDLL::GetInstance().log, "Simulating o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f)\n",
@@ -3584,7 +3567,7 @@ struct Path
 		return player;
 	}
 
-	void Export() const
+	void Export(PlayerState player, HLStrafe::TraceFunc traceFunc) const
 	{
 		HLTAS::Input templ;
 		auto err = templ.Open("template.hltas").get();
@@ -3598,13 +3581,23 @@ struct Path
 		templ.RemoveFrame(templ.GetFrames().size() - 1);
 		last_frame.Comments = "End of automatically generated frames.";
 
+		PathSimulator simulator(player, traceFunc);
+
 		for (size_t i = 0; i < FrameCount(); ++i) {
 			HLTAS::Frame frame;
-			frame.SetType(HLTAS::StrafeType::MAXACCEL);
-			frame.SetDir(StrafeDir(i));
+			//frame.SetType(HLTAS::StrafeType::MAXACCEL);
+			//frame.SetDir(StrafeDir(i));
 			frame.Jump = Jump(i);
 			frame.Duck = Duck(i);
 			frame.Frametime = "0.010000001";
+
+			simulator.SimulateFrame(StrafeDir(i), Jump(i), Duck(i));
+			frame.SetYaw(player.Yaw + M_U_DEG_HALF);
+			frame.Forward = (player.buttons == Button::FORWARD || player.buttons == Button::FORWARD_LEFT || player.buttons == Button::FORWARD_RIGHT);
+			frame.Back = (player.buttons == Button::BACK || player.buttons == Button::BACK_LEFT || player.buttons == Button::BACK_RIGHT);
+			frame.Left = (player.buttons == Button::LEFT || player.buttons == Button::BACK_LEFT || player.buttons == Button::FORWARD_LEFT);
+			frame.Right = (player.buttons == Button::RIGHT || player.buttons == Button::BACK_RIGHT || player.buttons == Button::FORWARD_RIGHT);
+
 			frame.SetRepeats(1);
 
 			if (i == 0)
@@ -3807,12 +3800,14 @@ void HwDLL::StartSearch()
 		p.Append(i);
 
 	InitTracing();
+
 	log = fopen("sim.log", "w");
 	p.Simulate(player, std::bind(&HwDLL::PlayerTrace2, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	fclose(log);
-	DeinitTracing();
 
-	p.Export();
+	p.Export(starting_state,std::bind(&HwDLL::PlayerTrace2, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
+	DeinitTracing();
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

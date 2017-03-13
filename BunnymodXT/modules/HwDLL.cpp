@@ -2773,6 +2773,13 @@ struct Path
 {
 	static constexpr size_t BITS_PER_FRAME = 3;
 
+	struct Node
+	{
+		HLTAS::StrafeDir strafe_dir;
+		bool jump;
+		bool duck;
+	};
+
 	std::vector<bool> path;
 
 	inline HLTAS::StrafeDir StrafeDir(size_t frame) const
@@ -2802,21 +2809,19 @@ struct Path
 		path.push_back(frame & 4);
 	}
 
+	void Append(const Node& node)
+	{
+		path.push_back(node.strafe_dir == HLTAS::StrafeDir::RIGHT ? true : false);
+		path.push_back(node.jump);
+		path.push_back(node.duck);
+	}
+
 	PlayerState Simulate(PlayerState player, HLStrafe::TraceFunc traceFunc) const
 	{
 		PathSimulator simulator(player, traceFunc);
 
-		for (size_t frame = 0; frame < FrameCount(); ++frame) {
-			fprintf(HwDLL::GetInstance().log, "o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f) ",
-			                                     player.Origin[0], player.Origin[1], player.Origin[2],
-			                                     player.Velocity[0], player.Velocity[1], player.Velocity[2]);
+		for (size_t frame = 0; frame < FrameCount(); ++frame)
 			simulator.SimulateFrame(StrafeDir(frame), Jump(frame), Duck(frame));
-			fprintf(HwDLL::GetInstance().log, "\n");
-		}
-
-		fprintf(HwDLL::GetInstance().log, "Simulating o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f)\n",
-		                                     player.Origin[0], player.Origin[1], player.Origin[2],
-		                                     player.Velocity[0], player.Velocity[1], player.Velocity[2]);
 
 		return player;
 	}
@@ -2845,7 +2850,12 @@ struct Path
 			frame.Duck = Duck(i);
 			frame.Frametime = "0.010000001";
 
+			fprintf(HwDLL::GetInstance().log, "o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f)",
+							     player.Origin[0], player.Origin[1], player.Origin[2],
+							     player.Velocity[0], player.Velocity[1], player.Velocity[2]);
 			simulator.SimulateFrame(StrafeDir(i), Jump(i), Duck(i));
+			fprintf(HwDLL::GetInstance().log, "\n");
+
 			frame.SetYaw(player.Yaw + M_U_DEG_HALF);
 			frame.Forward = (player.buttons == Button::FORWARD || player.buttons == Button::FORWARD_LEFT || player.buttons == Button::FORWARD_RIGHT);
 			frame.Back = (player.buttons == Button::BACK || player.buttons == Button::BACK_LEFT || player.buttons == Button::BACK_RIGHT);
@@ -2859,6 +2869,10 @@ struct Path
 
 			templ.InsertFrame(templ.GetFrames().size(), frame);
 		}
+
+		fprintf(HwDLL::GetInstance().log, "o(%.8f %.8f %.8f) vel(%.8f %.8f %.8f)\n",
+						     player.Origin[0], player.Origin[1], player.Origin[2],
+						     player.Velocity[0], player.Velocity[1], player.Velocity[2]);
 
 		templ.InsertFrame(templ.GetFrames().size(), last_frame);
 		templ.Save("export.hltas");
@@ -3040,26 +3054,149 @@ PlayerState HwDLL::GetCurrentState()
 	return player;
 }
 
+static void GetNeighbors(const PlayerState& player,
+                         HLStrafe::TraceFunc traceFunc,
+                         std::array<std::pair<Path::Node, PlayerState>, 8>& neighbors,
+                         uint8_t& neighbor_count)
+{
+	static constexpr Path::Node nodes[] = {
+		{ HLTAS::StrafeDir::LEFT, false, false },
+		{ HLTAS::StrafeDir::RIGHT, false, false },
+		{ HLTAS::StrafeDir::LEFT, false, true },
+		{ HLTAS::StrafeDir::RIGHT, false, true },
+		{ HLTAS::StrafeDir::LEFT, true, false },
+		{ HLTAS::StrafeDir::RIGHT, true, false },
+		{ HLTAS::StrafeDir::LEFT, true, true },
+		{ HLTAS::StrafeDir::RIGHT, true, true }
+	};
+
+	neighbor_count = 0;
+
+	for (uint8_t i = 0; i < 4; ++i) {
+		Path p;
+		p.Append(nodes[i]);
+		neighbors[neighbor_count++] = std::make_pair(nodes[i], p.Simulate(player, traceFunc));;
+	}
+
+	for (uint8_t i = 4; i < 8; ++i) {
+		Path p;
+		p.Append(nodes[i]);
+
+		auto state = p.Simulate(player, traceFunc);
+
+		// If jump did nothing, don't consider it.
+		if (state.Velocity[2] == neighbors[i - 4].second.Velocity[2])
+			continue;
+
+		neighbors[neighbor_count++] = std::make_pair(nodes[i], state);
+	}
+}
+
+static Path Search(const PlayerState& starting_state, HLStrafe::TraceFunc traceFunc)
+{
+	// A*
+	std::vector<std::pair<Path, unsigned>> open_set = { { Path(), 0 } };
+
+	const auto start = std::chrono::steady_clock::now();
+	unsigned long long iterations = 0;
+
+	double total_best = 0.0, total_sim = 0.0, total_erase = 0.0, total_rest = 0.0;
+
+	while (!open_set.empty()) {
+		++iterations;
+
+		//auto perf_start = std::chrono::steady_clock::now();
+		// Find the node with the lowest F score.
+		auto best_node_it = --open_set.cend();
+		auto best_score = best_node_it->second;
+
+		auto it = best_node_it;
+		while (it != open_set.cbegin()) {
+			--it;
+			const auto score = it->second;
+			if (score < best_score) {
+				best_node_it = it;
+				best_score = score;
+			}
+		}
+		//double best = std::chrono::duration<double>(std::chrono::steady_clock::now() - perf_start).count();
+
+		if ((iterations & 0xFF) == 0) {
+			HwDLL::GetInstance().ORIG_Con_Printf("Open set size: %zu; best node score: %u; best node frame count: %zu\n", open_set.size(), best_node_it->second, best_node_it->first.FrameCount());
+
+			const auto n = std::chrono::steady_clock::now();
+			std::chrono::duration<double> diff = n - start;
+			if (diff.count() >= 3600) {
+				//HwDLL::GetInstance().ORIG_Con_Printf("best: %.8f, sim: %.8f, erase: %.8f, rest: %.8f\n", 1000 * total_best / (iterations - 1), 1000 * total_sim / (iterations - 1), 1000 * total_erase / (iterations - 1), 1000 * total_rest / (iterations - 1));
+				return best_node_it->first;
+			}
+		}
+
+		//total_best += best;
+
+		//perf_start = std::chrono::steady_clock::now();
+		// Compute where it takes the player.
+		auto player = best_node_it->first.Simulate(starting_state, traceFunc);
+		//total_sim += std::chrono::duration<double>(std::chrono::steady_clock::now() - perf_start).count();
+
+		// Did the player reach the goal?
+		if (reached_goal(player))
+			return best_node_it->first;
+
+		auto best_node = std::move(*best_node_it);
+
+		//perf_start = std::chrono::steady_clock::now();
+		open_set.erase(best_node_it);
+		//total_erase += std::chrono::duration<double>(std::chrono::steady_clock::now() - perf_start).count();
+
+		std::array<std::pair<Path::Node, PlayerState>, 8> neighbors;
+		uint8_t neighbor_count;
+		GetNeighbors(player, traceFunc, neighbors, neighbor_count);
+
+		for (uint8_t i = 0; i < neighbor_count; ++i) {
+			const auto& neighbor = neighbors[neighbor_count - 1 - i];
+
+			auto node = best_node.first;
+			node.Append(neighbor.first);
+
+			//perf_start = std::chrono::steady_clock::now();
+			const auto score = node.FrameCount() + HwDLL::Heuristic(neighbor.second);
+			//open_set.emplace(std::upper_bound(open_set.cbegin(), open_set.cend(), score, [](unsigned a, const std::pair<Path, unsigned>& b) {
+			//                         return a < b.second;
+			//                 }),
+			//                 node,
+			//                 score);
+			//total_rest += std::chrono::duration<double>(std::chrono::steady_clock::now() - perf_start).count();
+			open_set.emplace_back(std::move(node), score);
+		}
+	}
+
+	return Path();
+}
+
 void HwDLL::StartSearch()
 {
 	const PlayerState starting_state = GetCurrentState();
-	auto player = starting_state;
 
 	ORIG_Con_Printf("Starting state: Origin{ %.8f %.8f %.8f }, Velocity{ %.8f %.8f %.8f }.\n",
-	                player.Origin[0], player.Origin[1], player.Origin[2],
-	                player.Velocity[0], player.Velocity[1], player.Velocity[2]);
-
-	Path p;
-	for (int i = 0; i < 2000; ++i)
-		p.Append(i);
+	                starting_state.Origin[0], starting_state.Origin[1], starting_state.Origin[2],
+	                starting_state.Velocity[0], starting_state.Velocity[1], starting_state.Velocity[2]);
 
 	InitTracing();
 
-	log = fopen("sim.log", "w");
-	p.Simulate(player, std::bind(&HwDLL::PlayerTrace2, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-	fclose(log);
+	const auto traceFunc = std::bind(&HwDLL::PlayerTrace2, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
-	p.Export(starting_state,std::bind(&HwDLL::PlayerTrace2, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	const auto best_path = Search(starting_state, traceFunc);
+
+	//Path p;
+	//for (int i = 0; i < 2000; ++i)
+	//        p.Append(i);
+
+	//p.Simulate(player, std::bind(&HwDLL::PlayerTrace2, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
+	log = fopen("sim.log", "w");
+	best_path.Export(starting_state, traceFunc);
+	fclose(log);
 
 	DeinitTracing();
 }

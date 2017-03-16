@@ -3,8 +3,6 @@ project (BunnymodXT)
 
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
-include(cotire)
-
 if (MSVC)
 	# Enable link-time code generation.
 	set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE} /GL")
@@ -35,9 +33,15 @@ if (MSVC)
 		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:threadSafeInit-")
 	endif ()
 else ()
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=native -mtune=native -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
-	#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=pentium-m -mfpmath=387 -m32 -g -Ofast -static-libstdc++ -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=native -mtune=native -m32 -g -Ofast -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
+	#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=pentium-m -mfpmath=387 -m32 -g -Ofast -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
+
+	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++")
+	endif ()
 endif ()
+
+include(cotire)
 
 set (Boost_USE_STATIC_LIBS ON)
 set (Boost_USE_STATIC_RUNTIME ON)
@@ -56,11 +60,20 @@ set (WINDOWS_FILES
 	SPTLib/Windows/DetoursUtils.cpp
 	SPTLib/Windows/Hooks_win.cpp
 	SPTLib/Windows/MemUtils_win.cpp
+	SPTLib/Windows/DetoursUtils.hpp
 	BunnymodXT/Windows/conutils.cpp
 	BunnymodXT/Windows/dllmain.cpp
 	BunnymodXT/Windows/interprocess.cpp
+	BunnymodXT/Windows/conutils.hpp)
 
-	# Add headers to the Windows files so they show up in VS.
+set (LINUX_FILES
+	SPTLib/Linux/Hooks_linux.cpp
+	SPTLib/Linux/MemUtils_linux.cpp
+	BunnymodXT/modules/PMSharedHooks_linux.cpp
+	BunnymodXT/Linux/main_linux.cpp
+	BunnymodXT/Linux/interprocess.cpp)
+
+set (HEADER_FILES
 	SPTLib/IHookableModule.hpp
 	SPTLib/IHookableDirFilter.hpp
 	SPTLib/IHookableNameFilter.hpp
@@ -69,7 +82,6 @@ set (WINDOWS_FILES
 	SPTLib/MemUtils.hpp
 	SPTLib/patterns.hpp
 	SPTLib/sptlib.hpp
-	SPTLib/Windows/DetoursUtils.hpp
 	BunnymodXT/modules/HwDLL.hpp
 	BunnymodXT/modules/ClientDLL.hpp
 	BunnymodXT/modules/ServerDLL.hpp
@@ -84,15 +96,7 @@ set (WINDOWS_FILES
 	BunnymodXT/sptlib-wrapper.hpp
 	BunnymodXT/stdafx.hpp
 	BunnymodXT/triangle_drawing.hpp
-	BunnymodXT/triangle_utils.hpp
-	BunnymodXT/Windows/conutils.hpp)
-
-set (LINUX_FILES
-	SPTLib/Linux/Hooks_linux.cpp
-	SPTLib/Linux/MemUtils_linux.cpp
-	BunnymodXT/modules/PMSharedHooks_linux.cpp
-	BunnymodXT/Linux/main_linux.cpp
-	BunnymodXT/Linux/interprocess.cpp)
+	BunnymodXT/triangle_utils.hpp)
 
 set (SOURCE_FILES
 	SPTLib/IHookableModule.cpp
@@ -113,9 +117,9 @@ set (SOURCE_FILES
 if (MSVC)
 	include_external_msproject (MinHook "${CMAKE_SOURCE_DIR}/SPTLib/Windows/minhook/build/VC14/libMinHook.vcxproj")
 	include_directories ("SPTLib/Windows/minhook/include")
-	set (SOURCE_FILES ${SOURCE_FILES} ${WINDOWS_FILES})
+	set (SOURCE_FILES ${SOURCE_FILES} ${WINDOWS_FILES} ${HEADER_FILES})
 else ()
-	set (SOURCE_FILES ${SOURCE_FILES} ${LINUX_FILES})
+	set (SOURCE_FILES ${SOURCE_FILES} ${LINUX_FILES} ${HEADER_FILES})
 endif ()
 
 add_library (BunnymodXT SHARED ${SOURCE_FILES})

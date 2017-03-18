@@ -479,6 +479,17 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found VGuiWrap2_ConPrintf at %p.\n", ORIG_VGuiWrap2_ConDPrintf);
 		else
 			EngineDevWarning("[hw dll] Could not find VGuiWrap2_ConPrintf.\n");
+
+		const auto CL_Move = reinterpret_cast<uintptr_t>(MemUtils::GetSymbolAddress(m_Handle, "CL_Move"));
+		if (CL_Move)
+		{
+			EngineDevMsg("[hw dll] Found CL_Move at %p.\n", CL_Move);
+			frametime_remainder = *reinterpret_cast<double**>(CL_Move + 0x1C4);
+			EngineDevMsg("[hw dll] Found frametime_remainder at %p.\n", frametime_remainder);
+		} else {
+			EngineDevWarning("[hw dll] Could not find CL_Move.\n");
+			EngineWarning("_bxt_reset_frametime_remainder has no effect.\n");
+		}
 	}
 	else
 	{

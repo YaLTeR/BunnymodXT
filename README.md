@@ -65,7 +65,7 @@ If you want to make a Windows XP-compatible build, additionally specify `-T v140
 
 Building on Linux requires
 
-- gcc or clang toolchain
+- clang toolchain
 - Boost
 - [RapidJSON v1.1.0](https://github.com/miloyip/rapidjson/releases/tag/v1.1.0)
 

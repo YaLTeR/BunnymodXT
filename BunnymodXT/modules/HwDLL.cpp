@@ -1393,6 +1393,14 @@ struct HwDLL::Cmd_BXT_TAS_Split
 			frame.SetSeed(hw.SharedRNGSeed);
 			hw.splitResult.InsertFrame(hw.splitResult.GetFrames().size(), frame);
 		}
+
+		frame = HLTAS::Frame();
+		frame.SetAlgorithm(hw.StrafeState.Algorithm);
+		hw.splitResult.InsertFrame(hw.splitResult.GetFrames().size(), frame);
+
+		frame = HLTAS::Frame();
+		frame.SetAlgorithmParameters(hw.StrafeState.Parameters);
+		hw.splitResult.InsertFrame(hw.splitResult.GetFrames().size(), frame);
 	}
 };
 
@@ -2218,7 +2226,7 @@ void HwDLL::InsertCommands()
 			preExecFramebulk = currentFramebulk;
 			auto& f = input.GetFrame(currentFramebulk);
 			// Movement frame.
-			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent && !f.ResetFrame)) {
+			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent && !f.ResetFrame && !f.StrafingAlgorithmPresent && !f.AlgorithmParametersPresent)) {
 				HLTAS::Frame resulting_frame;
 
 				if (thisFrameIs0ms)
@@ -2502,6 +2510,10 @@ void HwDLL::InsertCommands()
 					exportResult.InsertFrame(exportResult.GetFrames().size(), resulting_frame);
 
 				break;
+			} else if (f.StrafingAlgorithmPresent) {
+				StrafeState.Algorithm = f.GetAlgorithm();
+			} else if (f.AlgorithmParametersPresent) {
+				StrafeState.Parameters = f.GetAlgorithmParameters();
 			}
 
 			currentFramebulk++;
@@ -2659,7 +2671,7 @@ bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
 	while (curFramebulk < totalFramebulks) {
 		f = input.GetFrame(curFramebulk);
 		// Only movement frames can have repeats.
-		if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent && !f.ResetFrame))
+		if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent && !f.ResetFrame && !f.StrafingAlgorithmPresent && !f.AlgorithmParametersPresent))
 			return true;
 
 		curFramebulk++;

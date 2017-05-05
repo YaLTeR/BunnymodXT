@@ -596,6 +596,10 @@ void HwDLL::FindStuff()
 					offCmd_Args = 39;
 					offCmd_Argv = 144;
 					break;
+				case 3: // HL-WON
+					offCmd_Argc = 25;
+					offCmd_Args = 78;
+					offCmd_Argv = 151;
 				}
 
 				auto f = reinterpret_cast<uintptr_t>(Host_Tell_f);

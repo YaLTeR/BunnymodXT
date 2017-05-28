@@ -260,13 +260,14 @@ namespace RuntimeData
 	}
 
 	void Add(Data data) {
-		if (!CVars::_bxt_save_runtime_data_in_demos.GetBool())
-			return;
-
 		stored_data.push_back(std::move(data));
 	}
 
 	void SaveStored() {
+		if (!HwDLL::GetInstance().IsRecordingDemo()
+			|| !CVars::_bxt_save_runtime_data_in_demos.GetBool())
+			stored_data.clear();
+
 		if (stored_data.empty())
 			return;
 

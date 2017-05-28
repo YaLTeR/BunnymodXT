@@ -150,6 +150,7 @@ public:
 
 	inline bool IsPaused() { return (sv && *(reinterpret_cast<int*>(sv) + 1)); }
 
+	inline bool IsRecordingDemo() const { return demorecording && *demorecording == 1; }
 	void StoreCommand(const char* command);
 
 	inline edict_t* GetPlayerEdict() const { return *sv_player; }

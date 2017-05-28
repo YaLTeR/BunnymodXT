@@ -2262,6 +2262,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, CL_Stop_f)
 		autoRecordDemoName.clear();
 	}
 
+	// Write the final time to the demo.
+	CustomHud::SaveTimeToDemo();
+	RuntimeData::SaveStored();
+
 	ORIG_CL_Stop_f();
 }
 

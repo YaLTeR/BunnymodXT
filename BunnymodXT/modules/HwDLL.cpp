@@ -255,6 +255,7 @@ void HwDLL::Clear()
 	ORIG_PM_PlayerTrace = nullptr;
 	ORIG_SV_AddLinksToPM = nullptr;
 	ORIG_PF_GetPhysicsKeyValue = nullptr;
+	ORIG_CL_RecordHUDCommand = nullptr;
 	ORIG_build_number = nullptr;
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -430,6 +431,7 @@ void HwDLL::FindStuff()
 		FIND(Host_Loadgame_f)
 		FIND(Host_Reload_f)
 		FIND(SV_SpawnServer)
+		FIND(CL_RecordHUDCommand)
 		#undef FIND
 
 		ORIG_Host_FilterTime = reinterpret_cast<_Host_FilterTime>(MemUtils::GetSymbolAddress(m_Handle, "Host_FilterTime"));
@@ -515,6 +517,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Host_Reload_f)
 		DEF_FUTURE(VGuiWrap2_ConDPrintf)
 		DEF_FUTURE(VGuiWrap2_ConPrintf)
+		DEF_FUTURE(CL_RecordHUDCommand)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -835,6 +838,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(CL_Stop_f)
 		GET_FUTURE(Host_Loadgame_f)
 		GET_FUTURE(Host_Reload_f)
+		GET_FUTURE(CL_RecordHUDCommand)
 		#undef GET_FUTURE
 
 		{

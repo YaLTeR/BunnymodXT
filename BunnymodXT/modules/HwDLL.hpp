@@ -196,6 +196,8 @@ protected:
 	_SV_AddLinksToPM ORIG_SV_AddLinksToPM;
 	typedef char*(__cdecl *_PF_GetPhysicsKeyValue) (const edict_t* pClient, const char* key);
 	_PF_GetPhysicsKeyValue ORIG_PF_GetPhysicsKeyValue;
+	typedef void(__cdecl *_CL_RecordHUDCommand) (const char* cmdname);
+	_CL_RecordHUDCommand ORIG_CL_RecordHUDCommand;
 	typedef int(__cdecl *_build_number)();
 	_build_number ORIG_build_number;
 

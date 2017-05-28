@@ -42,6 +42,12 @@ endif ()
 
 include(cotire)
 
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+git_describe(GIT_TAG --tags)
+git_local_changes(GIT_LOCAL_CHANGES)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/BunnymodXT/git_revision.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/BunnymodXT/git_revision.cpp" @ONLY)
+
 set (Boost_USE_STATIC_LIBS ON)
 set (Boost_USE_STATIC_RUNTIME ON)
 find_package (Boost 1.57.0 REQUIRED)
@@ -98,7 +104,8 @@ set (HEADER_FILES
 	BunnymodXT/triangle_drawing.hpp
 	BunnymodXT/triangle_utils.hpp
 	BunnymodXT/TEA.hpp
-	BunnymodXT/runtime_data.hpp)
+	BunnymodXT/runtime_data.hpp
+	BunnymodXT/git_revision.hpp)
 
 set (SOURCE_FILES
 	SPTLib/IHookableModule.cpp
@@ -116,7 +123,8 @@ set (SOURCE_FILES
 	BunnymodXT/triangle_drawing.cpp
 	BunnymodXT/triangle_utils.cpp
 	BunnymodXT/TEA.cpp
-	BunnymodXT/runtime_data.cpp)
+	BunnymodXT/runtime_data.cpp
+	${CMAKE_CURRENT_BINARY_DIR}/BunnymodXT/git_revision.cpp)
 
 if (MSVC)
 	include_external_msproject (MinHook "${CMAKE_SOURCE_DIR}/SPTLib/Windows/minhook/build/VC14/libMinHook.vcxproj")

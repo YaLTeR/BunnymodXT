@@ -53,6 +53,7 @@ add_subdirectory (taslogger)
 
 include_directories ("." hltas/src hlstrafe/src taslogger)
 include_directories (SYSTEM ${RapidJSON_INCLUDE_DIR})
+include_directories (SYSTEM cereal/include)
 
 set (LIBRARY_OUTPUT_DIRECTORY ".")
 set (WINDOWS_FILES
@@ -96,7 +97,8 @@ set (HEADER_FILES
 	BunnymodXT/stdafx.hpp
 	BunnymodXT/triangle_drawing.hpp
 	BunnymodXT/triangle_utils.hpp
-	BunnymodXT/TEA.hpp)
+	BunnymodXT/TEA.hpp
+	BunnymodXT/runtime_data.hpp)
 
 set (SOURCE_FILES
 	SPTLib/IHookableModule.cpp
@@ -113,7 +115,8 @@ set (SOURCE_FILES
 	BunnymodXT/hud_custom.cpp
 	BunnymodXT/triangle_drawing.cpp
 	BunnymodXT/triangle_utils.cpp
-	BunnymodXT/TEA.cpp)
+	BunnymodXT/TEA.cpp
+	BunnymodXT/runtime_data.cpp)
 
 if (MSVC)
 	include_external_msproject (MinHook "${CMAKE_SOURCE_DIR}/SPTLib/Windows/minhook/build/VC14/libMinHook.vcxproj")

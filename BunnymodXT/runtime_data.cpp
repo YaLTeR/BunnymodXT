@@ -263,10 +263,14 @@ namespace RuntimeData
 		stored_data.push_back(std::move(data));
 	}
 
+	void Clear() {
+		stored_data.clear();
+	}
+
 	void SaveStored() {
 		if (!HwDLL::GetInstance().IsRecordingDemo()
 			|| !CVars::_bxt_save_runtime_data_in_demos.GetBool())
-			stored_data.clear();
+			Clear();
 
 		if (stored_data.empty())
 			return;
@@ -279,6 +283,6 @@ namespace RuntimeData
 		cereal::BinaryOutputArchive oa(out);
 		oa(stored_data);
 
-		stored_data.clear();
+		Clear();
 	}
 }

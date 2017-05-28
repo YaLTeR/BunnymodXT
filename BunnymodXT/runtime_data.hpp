@@ -35,5 +35,6 @@ namespace RuntimeData
 	                            ScriptExecution>;
 
 	void Add(Data data);
+	void Clear();
 	void SaveStored();
 }

@@ -761,13 +761,7 @@ namespace CustomHud
 		}
 
 		SendTimeUpdate();
-
-		RuntimeData::Add(RuntimeData::Time{
-			static_cast<uint32_t>(hours),
-			static_cast<uint8_t>(minutes),
-			static_cast<uint8_t>(seconds),
-			timeRemainder
-		});
+		SaveTimeToDemo();
 	}
 
 	void ResetTime()
@@ -793,6 +787,15 @@ namespace CustomHud
 
 		if (HwDLL::GetInstance().frametime_remainder)
 			Interprocess::WriteFrametimeRemainder(*HwDLL::GetInstance().frametime_remainder);
+	}
+
+	void SaveTimeToDemo() {
+		RuntimeData::Add(RuntimeData::Time{
+			static_cast<uint32_t>(hours),
+			static_cast<uint8_t>(minutes),
+			static_cast<uint8_t>(seconds),
+			timeRemainder
+		});
 	}
 
 	Interprocess::Time GetTime()

@@ -23,6 +23,7 @@ namespace CustomHud
 	void ResetTime();
 	void SetCountingTime(bool counting);
 	void SendTimeUpdate();
+	void SaveTimeToDemo();
 	Interprocess::Time GetTime();
 
 	const SCREENINFO& GetScreenInfo();

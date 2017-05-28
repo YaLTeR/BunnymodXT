@@ -10,3 +10,6 @@
 [submodule "taslogger"]
 	path = taslogger
 	url = https://github.com/HLTAS/taslogger.git
+[submodule "cereal"]
+	path = cereal
+	url = https://github.com/USCiLab/cereal.git

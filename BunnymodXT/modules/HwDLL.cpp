@@ -1382,6 +1382,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_fade_remove);
 	RegisterCVar(CVars::_bxt_norefresh);
 	RegisterCVar(CVars::_bxt_bunnysplit_time_update_frequency);
+	RegisterCVar(CVars::_bxt_save_runtime_data_in_demos);
 
 	if (!ORIG_Cmd_AddMallocCommand)
 		return;

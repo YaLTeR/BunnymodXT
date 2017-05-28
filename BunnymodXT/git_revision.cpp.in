@@ -1,2 +1,8 @@
-#define _GIT_SHA1 "@GIT_SHA1@-@GIT_LOCAL_CHANGES@ based on @GIT_TAG@"
-const char GIT_SHA1[] = _GIT_SHA1;
+#define _GIT_REVISION "@GIT_SHA1@-@GIT_LOCAL_CHANGES@ based on @GIT_TAG@"
+
+namespace Git
+{
+	const char* GetRevision() {
+		return _GIT_REVISION;
+	}
+}

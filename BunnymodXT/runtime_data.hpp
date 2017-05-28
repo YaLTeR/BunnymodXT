@@ -3,15 +3,17 @@
 
 namespace RuntimeData
 {
+	using BXTVersion = std::string;
+
+	// Map from CVar name to value.
+	using CVarValues = std::unordered_map<std::string, std::string>;
+
 	struct Time {
 		uint32_t hours;
 		uint8_t minutes;
 		uint8_t seconds;
 		double remainder;
 	};
-
-	// Map from CVar name to value.
-	using CVarValues = std::unordered_map<std::string, std::string>;
 
 	struct BoundCommand {
 		std::string key;
@@ -28,8 +30,9 @@ namespace RuntimeData
 		std::string contents;
 	};
 
-	using Data = boost::variant<Time,
+	using Data = boost::variant<BXTVersion,
 	                            CVarValues,
+	                            Time,
 	                            BoundCommand,
 	                            AliasExpansion,
 	                            ScriptExecution>;

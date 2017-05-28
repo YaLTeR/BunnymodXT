@@ -14,6 +14,7 @@
 #include "../bunnymodxt.hpp"
 #include "../cmd_wrapper.hpp"
 #include "../runtime_data.hpp"
+#include "../git_revision.hpp"
 
 using namespace std::literals;
 
@@ -2135,6 +2136,8 @@ void HwDLL::StoreCommand(const char* command)
 
 void HwDLL::SaveInitialDataToDemo()
 {
+	RuntimeData::Add(Git::GetRevision());
+
 	constexpr const char* cvars_to_save[] = {
 		"bxt_autojump",
 		"bxt_bhopcap",

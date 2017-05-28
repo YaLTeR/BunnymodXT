@@ -25,6 +25,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, Host_Reload_f)
 	HOOK_DECL(void, __cdecl, VGuiWrap2_ConDPrintf, const char* msg)
 	HOOK_DECL(void, __cdecl, VGuiWrap2_ConPrintf, const char* msg)
+	HOOK_DECL(void, __cdecl, CL_Record_f)
 
 	struct cmdbuf_t
 	{

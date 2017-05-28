@@ -97,6 +97,11 @@ extern "C" void __cdecl VGuiWrap2_ConPrintf(const char* msg)
 {
 	HwDLL::HOOKED_VGuiWrap2_ConPrintf(msg);
 }
+
+extern "C" void __cdecl CL_Record_f()
+{
+	HwDLL::HOOKED_CL_Record_f();
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -164,6 +169,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Host_Reload_f);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConDPrintf);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConPrintf);
+			MemUtils::MarkAsExecutable(ORIG_CL_Record_f);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -184,7 +190,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Host_Loadgame_f, HOOKED_Host_Loadgame_f,
 			ORIG_Host_Reload_f, HOOKED_Host_Reload_f,
 			ORIG_VGuiWrap2_ConDPrintf, HOOKED_VGuiWrap2_ConDPrintf,
-			ORIG_VGuiWrap2_ConPrintf, HOOKED_VGuiWrap2_ConPrintf);
+			ORIG_VGuiWrap2_ConPrintf, HOOKED_VGuiWrap2_ConPrintf,
+			ORIG_CL_Record_f, HOOKED_CL_Record_f);
 	}
 }
 
@@ -211,7 +218,8 @@ void HwDLL::Unhook()
 			ORIG_Host_Loadgame_f,
 			ORIG_Host_Reload_f,
 			ORIG_VGuiWrap2_ConDPrintf,
-			ORIG_VGuiWrap2_ConPrintf);
+			ORIG_VGuiWrap2_ConPrintf,
+			ORIG_CL_Record_f);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -257,6 +265,7 @@ void HwDLL::Clear()
 	ORIG_SV_AddLinksToPM = nullptr;
 	ORIG_PF_GetPhysicsKeyValue = nullptr;
 	ORIG_CL_RecordHUDCommand = nullptr;
+	ORIG_CL_Record_f = nullptr;
 	ORIG_build_number = nullptr;
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -434,6 +443,7 @@ void HwDLL::FindStuff()
 		FIND(Host_Reload_f)
 		FIND(SV_SpawnServer)
 		FIND(CL_RecordHUDCommand)
+		FIND(CL_Record_f)
 		#undef FIND
 
 		ORIG_Host_FilterTime = reinterpret_cast<_Host_FilterTime>(MemUtils::GetSymbolAddress(m_Handle, "Host_FilterTime"));
@@ -519,6 +529,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(VGuiWrap2_ConDPrintf)
 		DEF_FUTURE(VGuiWrap2_ConPrintf)
 		DEF_FUTURE(CL_RecordHUDCommand)
+		DEF_FUTURE(CL_Record_f)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -870,6 +881,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Host_Loadgame_f)
 		GET_FUTURE(Host_Reload_f)
 		GET_FUTURE(CL_RecordHUDCommand)
+		GET_FUTURE(CL_Record_f)
 		#undef GET_FUTURE
 
 		{
@@ -2314,4 +2326,9 @@ HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c
 	ORIG_LoadAndDecryptHwDLL(a, b, c);
 	EngineDevMsg("[hw dll] LoadAndDecryptHwDLL has been called. Rehooking.\n");
 	Hooks::HookModule(L"hl.exe");
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, CL_Record_f)
+{
+	ORIG_CL_Record_f();
 }

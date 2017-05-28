@@ -242,6 +242,7 @@ protected:
 	HLStrafe::MovementVars GetMovementVars();
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
+	void SaveInitialDataToDemo();
 
 	bool registeredVarsAndCmds;
 

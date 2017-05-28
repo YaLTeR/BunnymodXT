@@ -2133,6 +2133,40 @@ void HwDLL::StoreCommand(const char* command)
 	ORIG_CL_RecordHUDCommand(command);
 }
 
+void HwDLL::SaveInitialDataToDemo()
+{
+	constexpr const char* cvars_to_save[] = {
+		"bxt_fade_remove",
+		"bxt_hud_distance",
+		"bxt_hud_entity_hp",
+		"bxt_hud_origin",
+		"bxt_hud_selfgauss",
+		"bxt_hud_useables",
+		"bxt_hud_velocity",
+		"bxt_hud_visible_landmarks",
+		"cl_pitchdown",
+		"cl_pitchspeed",
+		"cl_pitchup",
+		"cl_yawspeed",
+		"host_framerate",
+		"host_speeds",
+		"r_drawentities",
+		"s_show",
+		"snd_show",
+	};
+
+	std::unordered_map<std::string, std::string> cvar_values;
+
+	for (const auto cvar_name : cvars_to_save) {
+		const auto cvar = FindCVar(cvar_name);
+
+		if (cvar)
+			cvar_values.emplace(cvar_name, cvar->string);
+	}
+
+	RuntimeData::Add(std::move(cvar_values));
+}
+
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)
 {
 	insideSeedRNG = true;
@@ -2330,5 +2364,10 @@ HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c
 
 HOOK_DEF_0(HwDLL, void, __cdecl, CL_Record_f)
 {
+	RuntimeData::Clear();
+
 	ORIG_CL_Record_f();
+
+	if (IsRecordingDemo())
+		SaveInitialDataToDemo();
 }

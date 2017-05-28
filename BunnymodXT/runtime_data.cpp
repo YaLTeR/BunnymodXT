@@ -278,5 +278,7 @@ namespace RuntimeData
 
 		cereal::BinaryOutputArchive oa(out);
 		oa(stored_data);
+
+		stored_data.clear();
 	}
 }

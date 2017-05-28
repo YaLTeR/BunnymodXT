@@ -747,6 +747,8 @@ namespace CustomHud
 		if (!countingTime)
 			return;
 
+		const auto previous_seconds = seconds;
+
 		frames++;
 		timeRemainder += time;
 		seconds += static_cast<int>(timeRemainder);
@@ -761,7 +763,10 @@ namespace CustomHud
 		}
 
 		SendTimeUpdate();
-		SaveTimeToDemo();
+
+		// Only save the time occasionally (to prevent large demo file size).
+		if (previous_seconds != seconds)
+			SaveTimeToDemo();
 	}
 
 	void ResetTime()

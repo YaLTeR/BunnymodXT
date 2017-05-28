@@ -2165,6 +2165,9 @@ void HwDLL::SaveInitialDataToDemo()
 	}
 
 	RuntimeData::Add(std::move(cvar_values));
+
+	// Initial BXT timer value.
+	CustomHud::SaveTimeToDemo();
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

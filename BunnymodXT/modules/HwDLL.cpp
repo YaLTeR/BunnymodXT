@@ -13,6 +13,7 @@
 #include "../interprocess.hpp"
 #include "../bunnymodxt.hpp"
 #include "../cmd_wrapper.hpp"
+#include "../runtime_data.hpp"
 
 using namespace std::literals;
 
@@ -2012,6 +2013,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		LoadingSeedCounter++;
 	}
 	insideCbuf_Execute = false;
+
+	RuntimeData::SaveStored();
 
 	if (CVars::_bxt_taslog.GetBool()) {
 		std::string buf(cmd_text->data, cmd_text->cursize);

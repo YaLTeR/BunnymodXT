@@ -5,6 +5,7 @@
 #include <SPTLib/Hooks.hpp>
 #include "hud_custom.hpp"
 #include "interprocess.hpp"
+#include "runtime_data.hpp"
 
 #include <chrono>
 
@@ -760,6 +761,13 @@ namespace CustomHud
 		}
 
 		SendTimeUpdate();
+
+		RuntimeData::Add(RuntimeData::Time{
+			static_cast<uint32_t>(hours),
+			static_cast<uint8_t>(minutes),
+			static_cast<uint8_t>(seconds),
+			timeRemainder
+		});
 	}
 
 	void ResetTime()

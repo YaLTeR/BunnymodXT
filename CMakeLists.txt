@@ -95,7 +95,8 @@ set (HEADER_FILES
 	BunnymodXT/sptlib-wrapper.hpp
 	BunnymodXT/stdafx.hpp
 	BunnymodXT/triangle_drawing.hpp
-	BunnymodXT/triangle_utils.hpp)
+	BunnymodXT/triangle_utils.hpp
+	BunnymodXT/TEA.hpp)
 
 set (SOURCE_FILES
 	SPTLib/IHookableModule.cpp
@@ -111,7 +112,8 @@ set (SOURCE_FILES
 	BunnymodXT/cvars.cpp
 	BunnymodXT/hud_custom.cpp
 	BunnymodXT/triangle_drawing.cpp
-	BunnymodXT/triangle_utils.cpp)
+	BunnymodXT/triangle_utils.cpp
+	BunnymodXT/TEA.cpp)
 
 if (MSVC)
 	include_external_msproject (MinHook "${CMAKE_SOURCE_DIR}/SPTLib/Windows/minhook/build/VC14/libMinHook.vcxproj")

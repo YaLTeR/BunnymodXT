@@ -326,9 +326,10 @@ void HwDLL::FindStuff()
 		EngineDevMsg("[hw dll] Found Cbuf_Execute at %p.\n", ORIG_Cbuf_Execute);
 
 		cls = MemUtils::GetSymbolAddress(m_Handle, "cls");
-		if (cls)
+		if (cls) {
 			EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
-		else
+			demorecording = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(cls) + 0x405c);
+		} else
 			EngineDevWarning("[hw dll] Could not find cls.\n");
 
 		sv = MemUtils::GetSymbolAddress(m_Handle, "sv");
@@ -512,7 +513,6 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(PF_GetPhysicsKeyValue)
 		DEF_FUTURE(build_number)
 		DEF_FUTURE(SV_Frame)
-		DEF_FUTURE(CL_Stop_f)
 		DEF_FUTURE(Host_Loadgame_f)
 		DEF_FUTURE(Host_Reload_f)
 		DEF_FUTURE(VGuiWrap2_ConDPrintf)
@@ -557,6 +557,26 @@ void HwDLL::FindStuff()
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 3)
 					+ reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 7
 				);
+			});
+
+		auto fCL_Stop_f = FindAsync(
+			ORIG_CL_Stop_f,
+			patterns::engine::CL_Stop_f,
+			[&](auto pattern) {
+				ptrdiff_t offset;
+				switch (pattern - patterns::engine::CL_Stop_f.cbegin())
+				{
+				default:
+				case 0: // SteamPipe
+					offset = 25;
+					break;
+
+				case 1: // NGHL
+					offset = 22;
+					break;
+				}
+
+				demorecording = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_CL_Stop_f) + offset);
 			});
 
 		void *SCR_DrawFPS;
@@ -815,6 +835,17 @@ void HwDLL::FindStuff()
 			}
 		}
 
+		{
+			auto pattern = fCL_Stop_f.get();
+			if (ORIG_CL_Stop_f) {
+				EngineDevMsg("[hw dll] Found CL_Stop_f at %p (using the %s pattern).\n", ORIG_CL_Stop_f, pattern->name());
+				EngineDevMsg("[hw dll] Found demorecording at %p.\n", demorecording);
+			} else {
+				EngineDevWarning("[hw dll] Could not find CL_Stop_f.\n");
+				ORIG_Cbuf_Execute = nullptr;
+			}
+		}
+
 		#define GET_FUTURE(future_name) \
 			{ \
 				auto pattern = f##future_name.get(); \
@@ -835,7 +866,6 @@ void HwDLL::FindStuff()
 		//GET_FUTURE(RandomLong)
 		GET_FUTURE(SCR_BeginLoadingPlaque)
 		GET_FUTURE(PM_PlayerTrace)
-		GET_FUTURE(CL_Stop_f)
 		GET_FUTURE(Host_Loadgame_f)
 		GET_FUTURE(Host_Reload_f)
 		GET_FUTURE(CL_RecordHUDCommand)
@@ -2077,6 +2107,14 @@ HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3
 	tr.PlaneNormal[2] = pmtr.plane.normal[2];
 	tr.Entity = pmtr.ent;
 	return tr;
+}
+
+void HwDLL::StoreCommand(const char* command)
+{
+	if (!ORIG_CL_RecordHUDCommand || !demorecording || *demorecording != 1)
+		return;
+
+	ORIG_CL_RecordHUDCommand(command);
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

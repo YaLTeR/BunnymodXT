@@ -150,6 +150,8 @@ public:
 
 	inline bool IsPaused() { return (sv && *(reinterpret_cast<int*>(sv) + 1)); }
 
+	void StoreCommand(const char* command);
+
 	inline edict_t* GetPlayerEdict() const { return *sv_player; }
 	inline bool IsTASLogging() const { return tasLogging; }
 	inline size_t GetPreExecFramebulk() const { return preExecFramebulk; }
@@ -264,6 +266,7 @@ protected:
 	char *sv_areanodes;
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
+	int *demorecording;
 
 	int framesTillExecuting;
 	bool executing;

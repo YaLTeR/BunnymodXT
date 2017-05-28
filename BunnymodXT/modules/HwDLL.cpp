@@ -2136,6 +2136,8 @@ void HwDLL::StoreCommand(const char* command)
 void HwDLL::SaveInitialDataToDemo()
 {
 	constexpr const char* cvars_to_save[] = {
+		"bxt_autojump",
+		"bxt_bhopcap",
 		"bxt_fade_remove",
 		"bxt_hud_distance",
 		"bxt_hud_entity_hp",

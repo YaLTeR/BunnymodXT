@@ -19,6 +19,7 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(void, __cdecl, HUD_PostRunCmd, local_state_s* from, local_state_s* to, usercmd_s* cmd, int runfuncs, double time, unsigned int random_seed)
 	HOOK_DECL(void, __cdecl, HUD_Frame, double time)
 	HOOK_DECL(void, __cdecl, HUD_DrawTransparentTriangles)
+	HOOK_DECL(int, __cdecl, HUD_Key_Event, int down, int keynum, const char* pszCurrentBinding)
 
 public:
 	static ClientDLL& GetInstance()
@@ -32,6 +33,8 @@ public:
 	virtual void Clear();
 
 	void ResetSeedsQueued() { SeedsQueued = 0; }
+
+	inline bool IsInsideKeyEvent() const { return insideKeyEvent; }
 
 	cl_enginefunc_t *pEngfuncs;
 
@@ -56,4 +59,6 @@ protected:
 	bool cantJumpNextTime;
 
 	unsigned SeedsQueued;
+
+	bool insideKeyEvent;
 };

@@ -2524,9 +2524,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, CL_Record_f)
 HOOK_DEF_1(HwDLL, void, __cdecl, Cbuf_AddText, const char*, text)
 {
 	// This isn't necessarily a bound command
-	// (because something might have been added in ClientDLL's Key_Event callback)
+	// (because something might have been added in the VGUI handler)
 	// but until something like that comes up it should be fine.
-	if (insideKeyEvent && !(text[0] == '\n' && text[1] == '\0'))
+	if (insideKeyEvent && !ClientDLL::GetInstance().IsInsideKeyEvent()
+		&& !(text[0] == '\n' && text[1] == '\0'))
 		RuntimeData::Add(RuntimeData::BoundCommand { text });
 
 	ORIG_Cbuf_AddText(text);

@@ -9,6 +9,7 @@ class HwDLL : public IHookableNameFilterOrdered
 {
 	HOOK_DECL(void, __cdecl, LoadAndDecryptHwDLL, int a, void* b, void* c)
 	HOOK_DECL(void, __cdecl, Cbuf_Execute)
+	HOOK_DECL(void, __cdecl, Cbuf_AddText, const char* text)
 	HOOK_DECL(void, __cdecl, SeedRandomNumberGenerator)
 	HOOK_DECL(time_t, __cdecl, time, time_t *Time)
 	HOOK_DECL(long double, __cdecl, RandomFloat, float a1, float a2)
@@ -174,8 +175,6 @@ private:
 protected:
 	typedef void(__cdecl *_Cbuf_InsertText) (const char* text);
 	_Cbuf_InsertText ORIG_Cbuf_InsertText;
-	typedef void(__cdecl *_Cbuf_AddText) (const char* text);
-	_Cbuf_AddText ORIG_Cbuf_AddText;
 	typedef void(__cdecl *_Con_Printf) (const char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
 	typedef void(__cdecl *_Cvar_RegisterVariable) (cvar_t* cvar);

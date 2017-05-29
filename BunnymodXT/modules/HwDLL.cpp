@@ -103,6 +103,11 @@ extern "C" void __cdecl CL_Record_f()
 {
 	HwDLL::HOOKED_CL_Record_f();
 }
+
+extern "C" void __cdecl Cbuf_AddText(const char* text)
+{
+	HwDLL::HOOKED_Cbuf_AddText(text);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -2378,4 +2383,9 @@ HOOK_DEF_0(HwDLL, void, __cdecl, CL_Record_f)
 
 	if (IsRecordingDemo())
 		SaveInitialDataToDemo();
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, Cbuf_AddText, const char*, text)
+{
+	ORIG_Cbuf_AddText(text);
 }

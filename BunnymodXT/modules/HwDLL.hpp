@@ -10,6 +10,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, LoadAndDecryptHwDLL, int a, void* b, void* c)
 	HOOK_DECL(void, __cdecl, Cbuf_Execute)
 	HOOK_DECL(void, __cdecl, Cbuf_AddText, const char* text)
+	HOOK_DECL(void, __cdecl, Cbuf_InsertTextLines, const char* text)
 	HOOK_DECL(void, __cdecl, SeedRandomNumberGenerator)
 	HOOK_DECL(time_t, __cdecl, time, time_t *Time)
 	HOOK_DECL(long double, __cdecl, RandomFloat, float a1, float a2)
@@ -28,6 +29,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, VGuiWrap2_ConPrintf, const char* msg)
 	HOOK_DECL(void, __cdecl, CL_Record_f)
 	HOOK_DECL(void, __cdecl, Key_Event, int key, int down)
+	HOOK_DECL(void, __cdecl, Cmd_Exec_f)
 
 	struct cmdbuf_t
 	{
@@ -389,4 +391,6 @@ protected:
 
 	std::string lastLoadedMap;
 	bool insideKeyEvent;
+	bool insideExec;
+	std::string execScript;
 };

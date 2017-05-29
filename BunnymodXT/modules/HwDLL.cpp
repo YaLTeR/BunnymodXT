@@ -109,9 +109,19 @@ extern "C" void __cdecl Cbuf_AddText(const char* text)
 	HwDLL::HOOKED_Cbuf_AddText(text);
 }
 
+extern "C" void __cdecl Cbuf_InsertTextLines(const char* text)
+{
+	HwDLL::HOOKED_Cbuf_InsertTextLines(text);
+}
+
 extern "C" void __cdecl Key_Event(int key, int down)
 {
 	HwDLL::HOOKED_Key_Event(key, down);
+}
+
+extern "C" void __cdecl Cmd_Exec_f()
+{
+	HwDLL::HOOKED_Cmd_Exec_f();
 }
 #endif
 
@@ -164,6 +174,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			// When the old engine loads hw.dll, it marks it as PAGE_READWRITE, without EXECUTE.
 			// So we need to mark stuff as executable manually, otherwise MinHook complains.
 			MemUtils::MarkAsExecutable(ORIG_Cbuf_Execute);
+			MemUtils::MarkAsExecutable(ORIG_Cbuf_AddText);
 			MemUtils::MarkAsExecutable(ORIG_SeedRandomNumberGenerator);
 			MemUtils::MarkAsExecutable(ORIG_time);
 			MemUtils::MarkAsExecutable(ORIG_RandomFloat);
@@ -182,11 +193,15 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConPrintf);
 			MemUtils::MarkAsExecutable(ORIG_CL_Record_f);
 			MemUtils::MarkAsExecutable(ORIG_Key_Event);
+			MemUtils::MarkAsExecutable(ORIG_Cmd_Exec_f);
+			MemUtils::MarkAsExecutable(ORIG_Cbuf_InsertTextLines);
 		}
 
 		MemUtils::Intercept(moduleName,
 			ORIG_LoadAndDecryptHwDLL, HOOKED_LoadAndDecryptHwDLL,
 			ORIG_Cbuf_Execute, HOOKED_Cbuf_Execute,
+			ORIG_Cbuf_AddText, HOOKED_Cbuf_AddText,
+			ORIG_Cbuf_InsertTextLines, HOOKED_Cbuf_InsertTextLines,
 			ORIG_SeedRandomNumberGenerator, HOOKED_SeedRandomNumberGenerator,
 			ORIG_time, HOOKED_time,
 			ORIG_RandomFloat, HOOKED_RandomFloat,
@@ -204,7 +219,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_VGuiWrap2_ConDPrintf, HOOKED_VGuiWrap2_ConDPrintf,
 			ORIG_VGuiWrap2_ConPrintf, HOOKED_VGuiWrap2_ConPrintf,
 			ORIG_CL_Record_f, HOOKED_CL_Record_f,
-			ORIG_Key_Event, HOOKED_Key_Event);
+			ORIG_Key_Event, HOOKED_Key_Event,
+			ORIG_Cmd_Exec_f, HOOKED_Cmd_Exec_f);
 	}
 }
 
@@ -215,6 +231,8 @@ void HwDLL::Unhook()
 		MemUtils::RemoveInterception(m_Name,
 			ORIG_LoadAndDecryptHwDLL,
 			ORIG_Cbuf_Execute,
+			ORIG_Cbuf_AddText,
+			ORIG_Cbuf_InsertTextLines,
 			ORIG_SeedRandomNumberGenerator,
 			ORIG_time,
 			ORIG_RandomFloat,
@@ -233,7 +251,8 @@ void HwDLL::Unhook()
 			ORIG_VGuiWrap2_ConDPrintf,
 			ORIG_VGuiWrap2_ConPrintf,
 			ORIG_CL_Record_f,
-			ORIG_Key_Event);
+			ORIG_Key_Event,
+			ORIG_Cmd_Exec_f);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -266,6 +285,7 @@ void HwDLL::Clear()
 	ORIG_VGuiWrap2_ConPrintf = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Cbuf_AddText = nullptr;
+	ORIG_Cbuf_InsertTextLines = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
 	ORIG_Cvar_DirectSet = nullptr;
@@ -282,6 +302,7 @@ void HwDLL::Clear()
 	ORIG_CL_Record_f = nullptr;
 	ORIG_build_number = nullptr;
 	ORIG_Key_Event = nullptr;
+	ORIG_Cmd_Exec_f = nullptr;
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
@@ -443,6 +464,7 @@ void HwDLL::FindStuff()
 		FIND(Cvar_FindVar)
 		FIND(Cbuf_InsertText)
 		FIND(Cbuf_AddText)
+		FIND(Cbuf_InsertTextLines)
 		FIND(Cmd_AddMallocCommand)
 		FIND(Cmd_Argc)
 		FIND(Cmd_Args)
@@ -460,6 +482,7 @@ void HwDLL::FindStuff()
 		FIND(CL_RecordHUDCommand)
 		FIND(CL_Record_f)
 		FIND(Key_Event)
+		FIND(Cmd_Exec_f)
 		#undef FIND
 
 		ORIG_Host_FilterTime = reinterpret_cast<_Host_FilterTime>(MemUtils::GetSymbolAddress(m_Handle, "Host_FilterTime"));
@@ -765,6 +788,35 @@ void HwDLL::FindStuff()
 				}
 			});
 
+		auto fCmd_Exec_f = FindAsync(
+			ORIG_Cmd_Exec_f,
+			patterns::engine::Cmd_Exec_f,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::Cmd_Exec_f.cbegin())
+				{
+				case 0: // SteamPipe.
+					ORIG_Cbuf_InsertTextLines = reinterpret_cast<_Cbuf_InsertTextLines>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 510)
+						+ reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 514);
+					break;
+				case 1: // 4554.
+					ORIG_Cbuf_InsertTextLines = reinterpret_cast<_Cbuf_InsertTextLines>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 459)
+						+ reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 463);
+					break;
+				case 2: // WON.
+					ORIG_Cbuf_InsertTextLines = reinterpret_cast<_Cbuf_InsertTextLines>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 175)
+						+ reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 179);
+					break;
+				case 3: // WON-2.
+					ORIG_Cbuf_InsertTextLines = reinterpret_cast<_Cbuf_InsertTextLines>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 441)
+						+ reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 445);
+					break;
+				}
+			});
+
 		{
 			auto pattern = fCbuf_Execute.get();
 			if (ORIG_Cbuf_Execute) {
@@ -871,6 +923,17 @@ void HwDLL::FindStuff()
 				EngineDevMsg("[hw dll] Found demorecording at %p.\n", demorecording);
 			} else {
 				EngineDevWarning("[hw dll] Could not find CL_Stop_f.\n");
+				ORIG_Cbuf_Execute = nullptr;
+			}
+		}
+
+		{
+			auto pattern = fCmd_Exec_f.get();
+			if (ORIG_Cmd_Exec_f) {
+				EngineDevMsg("[hw dll] Found Cmd_Exec_f at %p (using the %s pattern).\n", ORIG_Cmd_Exec_f, pattern->name());
+				EngineDevMsg("[hw dll] Found Cbuf_InsertTextLines at %p.\n", ORIG_Cbuf_InsertTextLines);
+			} else {
+				EngineDevWarning("[hw dll] Could not find Cmd_Exec_f.\n");
 				ORIG_Cbuf_Execute = nullptr;
 			}
 		}
@@ -2413,6 +2476,14 @@ HOOK_DEF_1(HwDLL, void, __cdecl, Cbuf_AddText, const char*, text)
 	ORIG_Cbuf_AddText(text);
 }
 
+HOOK_DEF_1(HwDLL, void, __cdecl, Cbuf_InsertTextLines, const char*, text)
+{
+	if (insideExec)
+		execScript += text;
+
+	ORIG_Cbuf_InsertTextLines(text);
+}
+
 HOOK_DEF_2(HwDLL, void, __cdecl, Key_Event, int, key, int, down)
 {
 	insideKeyEvent = true;
@@ -2420,4 +2491,22 @@ HOOK_DEF_2(HwDLL, void, __cdecl, Key_Event, int, key, int, down)
 	ORIG_Key_Event(key, down);
 
 	insideKeyEvent = false;
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, Cmd_Exec_f)
+{
+	insideExec = true;
+
+	ORIG_Cmd_Exec_f();
+
+	insideExec = false;
+
+	if (!execScript.empty()) {
+		RuntimeData::Add(RuntimeData::ScriptExecution {
+			ORIG_Cmd_Argv(1),
+			std::move(execScript)
+		});
+
+		execScript.clear();
+	}
 }

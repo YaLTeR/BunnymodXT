@@ -242,14 +242,14 @@ namespace RuntimeData
 			}
 
 			void operator()(const AliasExpansion& e) const {
-				archive(RuntimeDataType::BOUND_COMMAND);
+				archive(RuntimeDataType::ALIAS_EXPANSION);
 
 				archive(e.name);
 				archive(e.command);
 			}
 
 			void operator()(const ScriptExecution& e) const {
-				archive(RuntimeDataType::BOUND_COMMAND);
+				archive(RuntimeDataType::SCRIPT_EXECUTION);
 
 				archive(e.filename);
 				archive(e.contents);

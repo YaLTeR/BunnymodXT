@@ -2249,6 +2249,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 		}
 	}
 
+	CustomHud::SaveTimeToDemo();
+
 	return ORIG_Host_Changelevel2_f();
 }
 

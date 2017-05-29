@@ -1304,6 +1304,7 @@ struct HwDLL::Cmd_BXT_Timer_Start
 
 	static void handler()
 	{
+		CustomHud::SaveTimeToDemo();
 		return CustomHud::SetCountingTime(true);
 	}
 };
@@ -1314,6 +1315,7 @@ struct HwDLL::Cmd_BXT_Timer_Stop
 
 	static void handler()
 	{
+		CustomHud::SaveTimeToDemo();
 		return CustomHud::SetCountingTime(false);
 	}
 };
@@ -1324,6 +1326,7 @@ struct HwDLL::Cmd_BXT_Timer_Reset
 
 	static void handler()
 	{
+		CustomHud::SaveTimeToDemo();
 		return CustomHud::ResetTime();
 	}
 };

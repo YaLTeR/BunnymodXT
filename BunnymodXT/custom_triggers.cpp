@@ -1,6 +1,7 @@
 #include "stdafx.hpp"
 
 #include "modules/HwDLL.hpp"
+#include "runtime_data.hpp"
 #include "custom_triggers.hpp"
 
 namespace CustomTriggers
@@ -22,6 +23,13 @@ namespace CustomTriggers
 
 	void Trigger::touch()
 	{
+		if (!command.empty())
+			RuntimeData::Add(RuntimeData::CustomTriggerCommand {
+				corner_min,
+				corner_max,
+				command
+			});
+
 		HwDLL::GetInstance().ORIG_Cbuf_InsertText(command.c_str());
 	}
 

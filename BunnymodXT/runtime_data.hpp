@@ -42,6 +42,12 @@ namespace RuntimeData
 		std::vector<std::string> filenames;
 	};
 
+	struct CustomTriggerCommand {
+		Vector corner_min;
+		Vector corner_max;
+		std::string command;
+	};
+
 	using Data = boost::variant<VersionInfo,
 	                            CVarValues,
 	                            Time,
@@ -50,7 +56,8 @@ namespace RuntimeData
 	                            ScriptExecution,
 	                            CommandExecution,
 	                            GameEndMarker,
-	                            LoadedModules>;
+	                            LoadedModules,
+				    CustomTriggerCommand>;
 
 	void Add(Data data);
 	void Clear();

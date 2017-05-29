@@ -38,6 +38,7 @@ namespace RuntimeData
 			COMMAND_EXECUTION,
 			GAME_END_MARKER,
 			LOADED_MODULES,
+			CUSTOM_TRIGGER_COMMAND,
 		};
 
 		// Encrypting filter.
@@ -272,6 +273,18 @@ namespace RuntimeData
 				archive(RuntimeDataType::LOADED_MODULES);
 
 				archive(m.filenames);
+			}
+
+			void operator()(const CustomTriggerCommand& c) const {
+				archive(RuntimeDataType::CUSTOM_TRIGGER_COMMAND);
+
+				archive(c.corner_min.x);
+				archive(c.corner_min.y);
+				archive(c.corner_min.z);
+				archive(c.corner_max.x);
+				archive(c.corner_max.y);
+				archive(c.corner_max.z);
+				archive(c.command);
 			}
 
 		private:

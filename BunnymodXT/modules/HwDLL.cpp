@@ -2471,6 +2471,7 @@ void HwDLL::SaveInitialDataToDemo()
 		"cl_pitchspeed",
 		"cl_pitchup",
 		"cl_yawspeed",
+		"fps_max",
 		"host_framerate",
 		"host_speeds",
 		"r_drawentities",

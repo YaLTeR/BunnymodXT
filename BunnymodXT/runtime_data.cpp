@@ -37,6 +37,7 @@ namespace RuntimeData
 			SCRIPT_EXECUTION,
 			COMMAND_EXECUTION,
 			GAME_END_MARKER,
+			LOADED_MODULES,
 		};
 
 		// Encrypting filter.
@@ -265,6 +266,12 @@ namespace RuntimeData
 
 			void operator()(const GameEndMarker& m) const {
 				archive(RuntimeDataType::GAME_END_MARKER);
+			}
+
+			void operator()(const LoadedModules& m) const {
+				archive(RuntimeDataType::LOADED_MODULES);
+
+				archive(m.filenames);
 			}
 
 		private:

@@ -38,6 +38,10 @@ namespace RuntimeData
 
 	struct GameEndMarker {};
 
+	struct LoadedModules {
+		std::vector<std::string> filenames;
+	};
+
 	using Data = boost::variant<VersionInfo,
 	                            CVarValues,
 	                            Time,
@@ -45,7 +49,8 @@ namespace RuntimeData
 	                            AliasExpansion,
 	                            ScriptExecution,
 	                            CommandExecution,
-	                            GameEndMarker>;
+	                            GameEndMarker,
+	                            LoadedModules>;
 
 	void Add(Data data);
 	void Clear();

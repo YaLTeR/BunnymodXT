@@ -108,6 +108,11 @@ extern "C" void __cdecl Cbuf_AddText(const char* text)
 {
 	HwDLL::HOOKED_Cbuf_AddText(text);
 }
+
+extern "C" void __cdecl Key_Event(int key, int down)
+{
+	HwDLL::HOOKED_Key_Event(key, down);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -176,6 +181,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConDPrintf);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConPrintf);
 			MemUtils::MarkAsExecutable(ORIG_CL_Record_f);
+			MemUtils::MarkAsExecutable(ORIG_Key_Event);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -197,7 +203,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Host_Reload_f, HOOKED_Host_Reload_f,
 			ORIG_VGuiWrap2_ConDPrintf, HOOKED_VGuiWrap2_ConDPrintf,
 			ORIG_VGuiWrap2_ConPrintf, HOOKED_VGuiWrap2_ConPrintf,
-			ORIG_CL_Record_f, HOOKED_CL_Record_f);
+			ORIG_CL_Record_f, HOOKED_CL_Record_f,
+			ORIG_Key_Event, HOOKED_Key_Event);
 	}
 }
 
@@ -225,7 +232,8 @@ void HwDLL::Unhook()
 			ORIG_Host_Reload_f,
 			ORIG_VGuiWrap2_ConDPrintf,
 			ORIG_VGuiWrap2_ConPrintf,
-			ORIG_CL_Record_f);
+			ORIG_CL_Record_f,
+			ORIG_Key_Event);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -273,6 +281,7 @@ void HwDLL::Clear()
 	ORIG_CL_RecordHUDCommand = nullptr;
 	ORIG_CL_Record_f = nullptr;
 	ORIG_build_number = nullptr;
+	ORIG_Key_Event = nullptr;
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
@@ -450,6 +459,7 @@ void HwDLL::FindStuff()
 		FIND(SV_SpawnServer)
 		FIND(CL_RecordHUDCommand)
 		FIND(CL_Record_f)
+		FIND(Key_Event)
 		#undef FIND
 
 		ORIG_Host_FilterTime = reinterpret_cast<_Host_FilterTime>(MemUtils::GetSymbolAddress(m_Handle, "Host_FilterTime"));
@@ -536,6 +546,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(VGuiWrap2_ConPrintf)
 		DEF_FUTURE(CL_RecordHUDCommand)
 		DEF_FUTURE(CL_Record_f)
+		DEF_FUTURE(Key_Event)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -889,6 +900,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(CL_RecordHUDCommand)
 		GET_FUTURE(CL_Record_f)
 		GET_FUTURE(build_number);
+		GET_FUTURE(Key_Event);
 		#undef GET_FUTURE
 
 		{
@@ -2391,4 +2403,9 @@ HOOK_DEF_0(HwDLL, void, __cdecl, CL_Record_f)
 HOOK_DEF_1(HwDLL, void, __cdecl, Cbuf_AddText, const char*, text)
 {
 	ORIG_Cbuf_AddText(text);
+}
+
+HOOK_DEF_2(HwDLL, void, __cdecl, Key_Event, int, key, int, down)
+{
+	ORIG_Key_Event(key, down);
 }

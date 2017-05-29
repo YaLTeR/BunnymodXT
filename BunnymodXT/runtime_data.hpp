@@ -3,7 +3,10 @@
 
 namespace RuntimeData
 {
-	using BXTVersion = std::string;
+	struct VersionInfo {
+		int build_number;
+		std::string bxt_version;
+	};
 
 	// Map from CVar name to value.
 	using CVarValues = std::unordered_map<std::string, std::string>;
@@ -30,7 +33,7 @@ namespace RuntimeData
 		std::string contents;
 	};
 
-	using Data = boost::variant<BXTVersion,
+	using Data = boost::variant<VersionInfo,
 	                            CVarValues,
 	                            Time,
 	                            BoundCommand,

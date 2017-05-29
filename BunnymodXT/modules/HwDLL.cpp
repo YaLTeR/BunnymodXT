@@ -888,6 +888,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Host_Reload_f)
 		GET_FUTURE(CL_RecordHUDCommand)
 		GET_FUTURE(CL_Record_f)
+		GET_FUTURE(build_number);
 		#undef GET_FUTURE
 
 		{
@@ -919,7 +920,6 @@ void HwDLL::FindStuff()
 		GET_FUTURE(VGuiWrap2_ConPrintf);
 		GET_FUTURE(SCR_UpdateScreen);
 		GET_FUTURE(PF_GetPhysicsKeyValue);
-		GET_FUTURE(build_number);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -2141,7 +2141,10 @@ void HwDLL::StoreCommand(const char* command)
 
 void HwDLL::SaveInitialDataToDemo()
 {
-	RuntimeData::Add(Git::GetRevision());
+	RuntimeData::Add(RuntimeData::VersionInfo {
+		ORIG_build_number(),
+		Git::GetRevision()
+	});
 
 	constexpr const char* cvars_to_save[] = {
 		"bxt_autojump",

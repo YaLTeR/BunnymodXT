@@ -29,7 +29,7 @@ namespace RuntimeData
 		#define HEADER "//BXTD0"
 
 		enum class RuntimeDataType : uint8_t {
-			BXT_VERSION = 1,
+			VERSION_INFO = 1,
 			CVAR_VALUES ,
 			TIME,
 			BOUND_COMMAND,
@@ -213,10 +213,11 @@ namespace RuntimeData
 				: archive(archive) {
 			}
 
-			void operator()(const BXTVersion& v) const {
-				archive(RuntimeDataType::BXT_VERSION);
+			void operator()(const VersionInfo& v) const {
+				archive(RuntimeDataType::VERSION_INFO);
 
-				archive(v);
+				archive(v.build_number);
+				archive(v.bxt_version);
 			}
 
 			void operator()(const CVarValues& v) const {

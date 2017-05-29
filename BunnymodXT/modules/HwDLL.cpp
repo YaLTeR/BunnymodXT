@@ -123,6 +123,11 @@ extern "C" void __cdecl Cmd_Exec_f()
 {
 	HwDLL::HOOKED_Cmd_Exec_f();
 }
+
+extern "C" void __cdecl Cmd_TokenizeString(char* text)
+{
+	HwDLL::HOOKED_Cmd_TokenizeString(text);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -175,6 +180,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			// So we need to mark stuff as executable manually, otherwise MinHook complains.
 			MemUtils::MarkAsExecutable(ORIG_Cbuf_Execute);
 			MemUtils::MarkAsExecutable(ORIG_Cbuf_AddText);
+			MemUtils::MarkAsExecutable(ORIG_Cbuf_InsertTextLines);
+			MemUtils::MarkAsExecutable(ORIG_Cmd_TokenizeString);
 			MemUtils::MarkAsExecutable(ORIG_SeedRandomNumberGenerator);
 			MemUtils::MarkAsExecutable(ORIG_time);
 			MemUtils::MarkAsExecutable(ORIG_RandomFloat);
@@ -194,7 +201,6 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_CL_Record_f);
 			MemUtils::MarkAsExecutable(ORIG_Key_Event);
 			MemUtils::MarkAsExecutable(ORIG_Cmd_Exec_f);
-			MemUtils::MarkAsExecutable(ORIG_Cbuf_InsertTextLines);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -202,6 +208,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Cbuf_Execute, HOOKED_Cbuf_Execute,
 			ORIG_Cbuf_AddText, HOOKED_Cbuf_AddText,
 			ORIG_Cbuf_InsertTextLines, HOOKED_Cbuf_InsertTextLines,
+			ORIG_Cmd_TokenizeString, HOOKED_Cmd_TokenizeString,
 			ORIG_SeedRandomNumberGenerator, HOOKED_SeedRandomNumberGenerator,
 			ORIG_time, HOOKED_time,
 			ORIG_RandomFloat, HOOKED_RandomFloat,
@@ -233,6 +240,7 @@ void HwDLL::Unhook()
 			ORIG_Cbuf_Execute,
 			ORIG_Cbuf_AddText,
 			ORIG_Cbuf_InsertTextLines,
+			ORIG_Cmd_TokenizeString,
 			ORIG_SeedRandomNumberGenerator,
 			ORIG_time,
 			ORIG_RandomFloat,
@@ -286,6 +294,7 @@ void HwDLL::Clear()
 	ORIG_Cbuf_InsertText = nullptr;
 	ORIG_Cbuf_AddText = nullptr;
 	ORIG_Cbuf_InsertTextLines = nullptr;
+	ORIG_Cmd_TokenizeString = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
 	ORIG_Cvar_DirectSet = nullptr;
@@ -428,6 +437,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find cmd_text.\n");
 
+		cmd_alias = reinterpret_cast<cmdalias_t*>(MemUtils::GetSymbolAddress(m_Handle, "cmd_alias"));
+		if (cmd_alias)
+			EngineDevMsg("[hw dll] Found cmd_alias at %p.\n", cmd_alias);
+		else
+			EngineDevWarning("[hw dll] Could not find cmd_alias.\n");
+
 		host_frametime = reinterpret_cast<double*>(MemUtils::GetSymbolAddress(m_Handle, "host_frametime"));
 		if (host_frametime)
 			EngineDevMsg("[hw dll] Found host_frametime at %p.\n", sv);
@@ -446,7 +461,7 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find ORIG_SV_AddLinksToPM.\n");
 
-		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !host_frametime || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM)
+		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM)
 			ORIG_Cbuf_Execute = nullptr;
 
 		#define FIND(f) \
@@ -465,6 +480,7 @@ void HwDLL::FindStuff()
 		FIND(Cbuf_InsertText)
 		FIND(Cbuf_AddText)
 		FIND(Cbuf_InsertTextLines)
+		FIND(Cmd_TokenizeString)
 		FIND(Cmd_AddMallocCommand)
 		FIND(Cmd_Argc)
 		FIND(Cmd_Args)
@@ -817,6 +833,34 @@ void HwDLL::FindStuff()
 				}
 			});
 
+		void* Cmd_ExecuteString;
+		auto fCmd_ExecuteString = FindAsync(
+			Cmd_ExecuteString,
+			patterns::engine::Cmd_ExecuteString,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::Cmd_ExecuteString.cbegin())
+				{
+				case 0: // SteamPipe.
+					ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 17)
+						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 21);
+					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 77);
+					break;
+				case 1: // 4554.
+					ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 16)
+						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 20);
+					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 76);
+					break;
+				case 2: // NGHL.
+					ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 16)
+						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 20);
+					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 72);
+					break;
+				}
+			});
+
 		{
 			auto pattern = fCbuf_Execute.get();
 			if (ORIG_Cbuf_Execute) {
@@ -934,6 +978,18 @@ void HwDLL::FindStuff()
 				EngineDevMsg("[hw dll] Found Cbuf_InsertTextLines at %p.\n", ORIG_Cbuf_InsertTextLines);
 			} else {
 				EngineDevWarning("[hw dll] Could not find Cmd_Exec_f.\n");
+				ORIG_Cbuf_Execute = nullptr;
+			}
+		}
+
+		{
+			auto pattern = fCmd_ExecuteString.get();
+			if (Cmd_ExecuteString) {
+				EngineDevMsg("[hw dll] Found Cmd_ExecuteString at %p (using the %s pattern).\n", Cmd_ExecuteString, pattern->name());
+				EngineDevMsg("[hw dll] Found Cmd_TokenizeString at %p.\n", ORIG_Cmd_TokenizeString);
+				EngineDevMsg("[hw dll] Found cmd_alias at %p.\n", cmd_alias);
+			} else {
+				EngineDevWarning("[hw dll] Could not find Cmd_ExecuteString.\n");
 				ORIG_Cbuf_Execute = nullptr;
 			}
 		}
@@ -2482,6 +2538,26 @@ HOOK_DEF_1(HwDLL, void, __cdecl, Cbuf_InsertTextLines, const char*, text)
 		execScript += text;
 
 	ORIG_Cbuf_InsertTextLines(text);
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, Cmd_TokenizeString, char*, text)
+{
+	ORIG_Cmd_TokenizeString(text);
+
+	if (insideCbuf_Execute && ORIG_Cmd_Argc() > 0) {
+		auto command = ORIG_Cmd_Argv(0);
+
+		for (auto alias = cmd_alias; alias; alias = alias->next) {
+			if (!std::strncmp(alias->name, command, sizeof(alias->name))) {
+				RuntimeData::Add(RuntimeData::AliasExpansion {
+					alias->name,
+					alias->value
+				});
+
+				return;
+			}
+		}
+	}
 }
 
 HOOK_DEF_2(HwDLL, void, __cdecl, Key_Event, int, key, int, down)

@@ -11,6 +11,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, Cbuf_Execute)
 	HOOK_DECL(void, __cdecl, Cbuf_AddText, const char* text)
 	HOOK_DECL(void, __cdecl, Cbuf_InsertTextLines, const char* text)
+	HOOK_DECL(void, __cdecl, Cmd_TokenizeString, char* text)
 	HOOK_DECL(void, __cdecl, SeedRandomNumberGenerator)
 	HOOK_DECL(time_t, __cdecl, time, time_t *Time)
 	HOOK_DECL(long double, __cdecl, RandomFloat, float a1, float a2)
@@ -38,6 +39,13 @@ class HwDLL : public IHookableNameFilterOrdered
 		char *data;
 		unsigned maxsize;
 		unsigned cursize;
+	};
+
+	struct cmdalias_t
+	{
+		cmdalias_t* next;
+		char name[32];
+		char* value;
 	};
 
 	struct client_t;
@@ -272,6 +280,7 @@ protected:
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
 	int *demorecording;
+	cmdalias_t* cmd_alias;
 
 	int framesTillExecuting;
 	bool executing;

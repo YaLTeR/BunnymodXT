@@ -238,7 +238,6 @@ namespace RuntimeData
 			void operator()(const BoundCommand& c) const {
 				archive(RuntimeDataType::BOUND_COMMAND);
 
-				archive(c.key);
 				archive(c.command);
 			}
 

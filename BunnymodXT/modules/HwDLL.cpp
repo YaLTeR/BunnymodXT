@@ -2402,10 +2402,20 @@ HOOK_DEF_0(HwDLL, void, __cdecl, CL_Record_f)
 
 HOOK_DEF_1(HwDLL, void, __cdecl, Cbuf_AddText, const char*, text)
 {
+	// This isn't necessarily a bound command
+	// (because something might have been added in ClientDLL's Key_Event callback)
+	// but until something like that comes up it should be fine.
+	if (insideKeyEvent && !(text[0] == '\n' && text[1] == '\0'))
+		RuntimeData::Add(RuntimeData::BoundCommand { text });
+
 	ORIG_Cbuf_AddText(text);
 }
 
 HOOK_DEF_2(HwDLL, void, __cdecl, Key_Event, int, key, int, down)
 {
+	insideKeyEvent = true;
+
 	ORIG_Key_Event(key, down);
+
+	insideKeyEvent = false;
 }

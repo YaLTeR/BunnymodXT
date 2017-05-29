@@ -19,7 +19,6 @@ namespace RuntimeData
 	};
 
 	struct BoundCommand {
-		std::string key;
 		std::string command;
 	};
 

@@ -388,4 +388,5 @@ protected:
 	} resetState = ResetState::NORMAL;
 
 	std::string lastLoadedMap;
+	bool insideKeyEvent;
 };

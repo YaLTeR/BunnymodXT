@@ -73,6 +73,22 @@ namespace CustomHud
 		DrawString(x, y, s, consoleColor[0], consoleColor[1], consoleColor[2]);
 	}
 
+	static void DrawMultilineString(int x, int y, std::string s, float r, float g, float b)
+	{
+		while (s.size() > 0)
+		{
+			auto pos = s.find('\n');
+
+			DrawString(x, y, const_cast<char*>(s.substr(0, pos).c_str()), r, g, b);
+			y += si.iCharHeight;
+
+			if (pos != std::string::npos)
+				s = s.substr(pos + 1, std::string::npos);
+			else
+				s.erase();
+		};
+	}
+
 	static void DrawMultilineString(int x, int y, std::string s)
 	{
 		while (s.size() > 0)
@@ -627,6 +643,46 @@ namespace CustomHud
 		}
 	}
 
+	void DrawIncorrectFPSIndicator(float flTime)
+	{
+		static float lastTime = flTime;
+
+		if (CVars::bxt_hud_incorrect_fps_indicator.GetBool())
+		{
+			const auto timeDiff = flTime - lastTime;
+
+			if (timeDiff > 0) {
+				const auto fps = 1.0f / timeDiff;
+
+				if (fps > 100.1f && fps < 100.6f) {
+					const auto fps_max = CVars::fps_max.GetFloat();
+
+					if (fps_max > 99.6f && fps_max < 100.6f) {
+						const char message[] = "Your FPS seems to be incorrect.\n"
+						                       "Most likely you need to set fps_max to 99.5.\n"
+						                       "If you know what you're doing and you're sure your FPS is correct,\n"
+						                       "you can disable this message with bxt_hud_incorrect_fps_indicator 0.";
+
+						DrawMultilineString(2, 4 + si.iCharHeight, message, 1.0f, 1.0f, 1.0f);
+					}
+				} else if (fps < 99.6f && fps > 99.0f) {
+					const auto fps_max = CVars::fps_max.GetFloat();
+
+					if (fps_max < 99.7f && fps_max > 99.0f) {
+						const char message[] = "Your FPS seems to be incorrect.\n"
+						                       "Most likely you need to set fps_max to 100.\n"
+						                       "If you know what you're doing and you're sure your FPS is correct,\n"
+						                       "you can disable this message with bxt_hud_incorrect_fps_indicator 0.";
+
+						DrawMultilineString(2, 4 + si.iCharHeight, message, 1.0f, 1.0f, 1.0f);
+					}
+				}
+			}
+		}
+
+		lastTime = flTime;
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -715,6 +771,7 @@ namespace CustomHud
 		DrawEntityHP(flTime);
 		DrawSelfgaussInfo(flTime);
 		DrawVisibleLandmarks(flTime);
+		DrawIncorrectFPSIndicator(flTime);
 
 		receivedAccurateInfo = false;
 	}

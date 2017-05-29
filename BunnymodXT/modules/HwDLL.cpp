@@ -1689,6 +1689,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::_bxt_bunnysplit_time_update_frequency);
 	RegisterCVar(CVars::_bxt_save_runtime_data_in_demos);
 
+	CVars::fps_max.Assign(FindCVar("fps_max"));
+
 	if (!ORIG_Cmd_AddMallocCommand)
 		return;
 

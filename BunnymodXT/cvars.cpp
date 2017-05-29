@@ -26,6 +26,7 @@ namespace CVars
 	CVarWrapper sv_gravity;
 	CVarWrapper sv_stepsize;
 	CVarWrapper sv_bounce;
+	CVarWrapper fps_max;
 
 	// Serverside CVars
 	CVarWrapper bxt_autojump("bxt_autojump", "0");
@@ -72,6 +73,7 @@ namespace CVars
 	CVarWrapper bxt_hud_visible_landmarks("bxt_hud_visible_landmarks", "0");
 	CVarWrapper bxt_hud_visible_landmarks_offset("bxt_hud_visible_landmarks_offset", "");
 	CVarWrapper bxt_hud_visible_landmarks_anchor("bxt_hud_visible_landmarks_anchor", "0.5 0");
+	CVarWrapper bxt_hud_incorrect_fps_indicator("bxt_hud_incorrect_fps_indicator", "1");
 
 	CVarWrapper bxt_hud_useables("bxt_hud_useables", "0");
 	CVarWrapper bxt_hud_useables_radius("bxt_hud_useables_radius", "64");
@@ -97,6 +99,7 @@ namespace CVars
 		&sv_gravity,
 		&sv_stepsize,
 		&sv_bounce,
+		&fps_max,
 		&bxt_autojump,
 		&bxt_bhopcap,
 		&bxt_timer_autostop,
@@ -139,6 +142,7 @@ namespace CVars
 		&bxt_hud_visible_landmarks,
 		&bxt_hud_visible_landmarks_offset,
 		&bxt_hud_visible_landmarks_anchor,
+		&bxt_hud_incorrect_fps_indicator,
 		&bxt_hud_useables,
 		&bxt_hud_useables_radius
 	};

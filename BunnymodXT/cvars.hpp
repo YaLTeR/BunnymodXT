@@ -133,6 +133,7 @@ namespace CVars
 	extern CVarWrapper sv_gravity;
 	extern CVarWrapper sv_stepsize;
 	extern CVarWrapper sv_bounce;
+	extern CVarWrapper fps_max;
 
 	// Serverside CVars
 	extern CVarWrapper bxt_autojump;
@@ -179,6 +180,7 @@ namespace CVars
 	extern CVarWrapper bxt_hud_visible_landmarks;
 	extern CVarWrapper bxt_hud_visible_landmarks_offset;
 	extern CVarWrapper bxt_hud_visible_landmarks_anchor;
+	extern CVarWrapper bxt_hud_incorrect_fps_indicator;
 	extern CVarWrapper bxt_hud_useables;
 	extern CVarWrapper bxt_hud_useables_radius;
 

@@ -430,6 +430,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_visible_landmarks);
 		REG(bxt_hud_visible_landmarks_offset);
 		REG(bxt_hud_visible_landmarks_anchor);
+		REG(bxt_hud_incorrect_fps_indicator);
 	}
 	#undef REG
 }

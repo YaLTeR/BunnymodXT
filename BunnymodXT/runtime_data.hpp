@@ -36,13 +36,16 @@ namespace RuntimeData
 		std::string command;
 	};
 
+	struct GameEndMarker {};
+
 	using Data = boost::variant<VersionInfo,
 	                            CVarValues,
 	                            Time,
 	                            BoundCommand,
 	                            AliasExpansion,
 	                            ScriptExecution,
-	                            CommandExecution>;
+	                            CommandExecution,
+	                            GameEndMarker>;
 
 	void Add(Data data);
 	void Clear();

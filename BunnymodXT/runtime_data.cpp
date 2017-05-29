@@ -36,6 +36,7 @@ namespace RuntimeData
 			ALIAS_EXPANSION,
 			SCRIPT_EXECUTION,
 			COMMAND_EXECUTION,
+			GAME_END_MARKER,
 		};
 
 		// Encrypting filter.
@@ -260,6 +261,10 @@ namespace RuntimeData
 				archive(RuntimeDataType::COMMAND_EXECUTION);
 
 				archive(e.command);
+			}
+
+			void operator()(const GameEndMarker& m) const {
+				archive(RuntimeDataType::GAME_END_MARKER);
 			}
 
 		private:

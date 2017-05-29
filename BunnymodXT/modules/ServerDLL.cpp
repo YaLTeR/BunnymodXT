@@ -10,6 +10,7 @@
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
 #include "../interprocess.hpp"
+#include "../runtime_data.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -1046,6 +1047,8 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CNihilanth__DyingThink, void*, thisptr, 
 	if (CVars::bxt_timer_autostop.GetBool())
 		CustomHud::SetCountingTime(false);
 	Interprocess::WriteGameEnd(CustomHud::GetTime());
+	CustomHud::SaveTimeToDemo();
+	RuntimeData::Add(RuntimeData::GameEndMarker {});
 
 	return ORIG_CNihilanth__DyingThink(thisptr, edx);
 }
@@ -1064,6 +1067,8 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, COFGeneWorm__DyingThink, void*, thisptr,
 	if (CVars::bxt_timer_autostop.GetBool())
 		CustomHud::SetCountingTime(false);
 	Interprocess::WriteGameEnd(CustomHud::GetTime());
+	CustomHud::SaveTimeToDemo();
+	RuntimeData::Add(RuntimeData::GameEndMarker {});
 
 	return ORIG_COFGeneWorm__DyingThink(thisptr, edx);
 }
@@ -1073,6 +1078,8 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, COFGeneWorm__DyingThink_Linux, void*, thisp
 	if (CVars::bxt_timer_autostop.GetBool())
 		CustomHud::SetCountingTime(false);
 	Interprocess::WriteGameEnd(CustomHud::GetTime());
+	CustomHud::SaveTimeToDemo();
+	RuntimeData::Add(RuntimeData::GameEndMarker {});
 
 	return ORIG_COFGeneWorm__DyingThink_Linux(thisptr);
 }
@@ -1087,6 +1094,8 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 				if (CVars::bxt_timer_autostop.GetBool())
 					CustomHud::SetCountingTime(false);
 				Interprocess::WriteGameEnd(CustomHud::GetTime());
+				CustomHud::SaveTimeToDemo();
+				RuntimeData::Add(RuntimeData::GameEndMarker {});
 			}
 		}
 	}
@@ -1108,6 +1117,8 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, CMultiManager__ManagerUse_Linux, void*, thi
 						if (CVars::bxt_timer_autostop.GetBool())
 							CustomHud::SetCountingTime(false);
 						Interprocess::WriteGameEnd(CustomHud::GetTime());
+						CustomHud::SaveTimeToDemo();
+						RuntimeData::Add(RuntimeData::GameEndMarker {});
 					}
 				}
 			}

@@ -35,6 +35,7 @@ namespace RuntimeData
 			BOUND_COMMAND,
 			ALIAS_EXPANSION,
 			SCRIPT_EXECUTION,
+			COMMAND_EXECUTION,
 		};
 
 		// Encrypting filter.
@@ -253,6 +254,12 @@ namespace RuntimeData
 
 				archive(e.filename);
 				archive(e.contents);
+			}
+
+			void operator()(const CommandExecution& e) const {
+				archive(RuntimeDataType::COMMAND_EXECUTION);
+
+				archive(e.command);
 			}
 
 		private:

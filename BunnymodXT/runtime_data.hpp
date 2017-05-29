@@ -32,12 +32,17 @@ namespace RuntimeData
 		std::string contents;
 	};
 
+	struct CommandExecution {
+		std::string command;
+	};
+
 	using Data = boost::variant<VersionInfo,
 	                            CVarValues,
 	                            Time,
 	                            BoundCommand,
 	                            AliasExpansion,
-	                            ScriptExecution>;
+	                            ScriptExecution,
+	                            CommandExecution>;
 
 	void Add(Data data);
 	void Clear();

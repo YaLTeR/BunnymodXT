@@ -2557,6 +2557,8 @@ HOOK_DEF_1(HwDLL, void, __cdecl, Cmd_TokenizeString, char*, text)
 				return;
 			}
 		}
+
+		RuntimeData::Add(RuntimeData::CommandExecution { text });
 	}
 }
 

@@ -177,6 +177,9 @@ public:
 	double *frametime_remainder;
 	TASLogger::LogWriter logWriter;
 
+	typedef void(__cdecl *_Cbuf_InsertText) (const char* text);
+	_Cbuf_InsertText ORIG_Cbuf_InsertText;
+
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
 	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};
@@ -184,8 +187,6 @@ private:
 	void operator=(const HwDLL&);
 
 protected:
-	typedef void(__cdecl *_Cbuf_InsertText) (const char* text);
-	_Cbuf_InsertText ORIG_Cbuf_InsertText;
 	typedef void(__cdecl *_Con_Printf) (const char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
 	typedef void(__cdecl *_Cvar_RegisterVariable) (cvar_t* cvar);
@@ -235,6 +236,12 @@ protected:
 	struct Cmd_BXT_TAS_Autojump_Up;
 	struct Cmd_BXT_TAS_Ducktap_Down;
 	struct Cmd_BXT_TAS_Ducktap_Up;
+	struct Cmd_BXT_Triggers_Add;
+	struct Cmd_BXT_Triggers_Clear;
+	struct Cmd_BXT_Triggers_Delete;
+	struct Cmd_BXT_Triggers_Export;
+	struct Cmd_BXT_Triggers_List;
+	struct Cmd_BXT_Triggers_SetCommand;
 	struct Cmd_BXT_Record;
 	struct Cmd_BXT_AutoRecord;
 	struct Cmd_BXT_Interprocess_Reset;
@@ -253,6 +260,7 @@ protected:
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
 	void SaveInitialDataToDemo();
+	void UpdateCustomTriggers();
 
 	bool registeredVarsAndCmds;
 

@@ -11,6 +11,7 @@
 #include "../hud_custom.hpp"
 #include "../interprocess.hpp"
 #include "../runtime_data.hpp"
+#include "../custom_triggers.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -79,6 +80,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_PM_WalkMove, HOOKED_PM_WalkMove,
 			ORIG_PM_FlyMove, HOOKED_PM_FlyMove,
 			ORIG_PM_AddToTouched, HOOKED_PM_AddToTouched,
+			ORIG_PM_Move, HOOKED_PM_Move,
 			ORIG_CmdStart, HOOKED_CmdStart,
 			ORIG_CNihilanth__DyingThink, HOOKED_CNihilanth__DyingThink,
 			ORIG_COFGeneWorm__DyingThink, HOOKED_COFGeneWorm__DyingThink,
@@ -105,6 +107,7 @@ void ServerDLL::Unhook()
 			ORIG_PM_WalkMove,
 			ORIG_PM_FlyMove,
 			ORIG_PM_AddToTouched,
+			ORIG_PM_Move,
 			ORIG_CmdStart,
 			ORIG_CNihilanth__DyingThink,
 			ORIG_COFGeneWorm__DyingThink,
@@ -132,6 +135,7 @@ void ServerDLL::Clear()
 	ORIG_PM_FlyMove = nullptr;
 	ORIG_PM_AddToTouched = nullptr;
 	ORIG_PM_Ladder = nullptr;
+	ORIG_PM_Move = nullptr;
 	ORIG_CmdStart = nullptr;
 	ORIG_CNihilanth__DyingThink = nullptr;
 	ORIG_CNihilanth__DyingThink_Linux = nullptr;
@@ -472,10 +476,12 @@ void ServerDLL::FindStuff()
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
 	ORIG_AddToFullPack = reinterpret_cast<_AddToFullPack>(MemUtils::GetSymbolAddress(m_Handle, "_Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh"));
 	ORIG_ClientCommand = reinterpret_cast<_ClientCommand>(MemUtils::GetSymbolAddress(m_Handle, "_Z13ClientCommandP7edict_s"));
-	if (ORIG_CmdStart && ORIG_AddToFullPack && ORIG_ClientCommand) {
+	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move"));
+	if (ORIG_CmdStart && ORIG_AddToFullPack && ORIG_ClientCommand && ORIG_PM_Move) {
 		EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
 		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
 		EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
+		EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
 	} else {
 		ORIG_GetEntityAPI = reinterpret_cast<_GetEntityAPI>(MemUtils::GetSymbolAddress(m_Handle, "GetEntityAPI"));
 		if (ORIG_GetEntityAPI) {
@@ -485,9 +491,11 @@ void ServerDLL::FindStuff()
 				ORIG_CmdStart = funcs.pfnCmdStart;
 				ORIG_AddToFullPack = funcs.pfnAddToFullPack;
 				ORIG_ClientCommand = funcs.pfnClientCommand;
+				ORIG_PM_Move = funcs.pfnPM_Move;
 				EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
 				EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
 				EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
+				EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
 			} else {
 				EngineDevWarning("[server dll] Could not get the server DLL function table.\n");
 				EngineWarning("Serverside shared RNG manipulation and usercommand logging are not available.\n");
@@ -1386,6 +1394,23 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CGraph__InitGraph_Linux, void*, thisptr)
 {
 	WorldGraph = thisptr;
 	return ORIG_CGraph__InitGraph_Linux(thisptr);
+}
+
+HOOK_DEF_2(ServerDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int, server)
+{
+	auto pmove = reinterpret_cast<uintptr_t>(ppmove);
+	auto origin = reinterpret_cast<float *>(pmove + offOrigin);
+	auto flags = reinterpret_cast<int *>(pmove + offFlags);
+
+	auto start_origin = Vector(origin);
+
+	ORIG_PM_Move(ppmove, server);
+
+	/*
+	 * Assuming linear motion from start_origin to origin.
+	 * This is not always the case but it is a good approximation.
+	 */
+	CustomTriggers::Update(start_origin, Vector(origin), (*flags & FL_DUCKING) != 0);
 }
 
 bool ServerDLL::GetGlobalState(const std::string& name, int& state)

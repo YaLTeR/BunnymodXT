@@ -5,6 +5,7 @@
 
 #define USAGE(text) inline static auto Usage() { return CmdWrapper::has_usage_t{ text }; }
 #define NO_USAGE() inline static auto Usage() { return CmdWrapper::has_no_usage_t{}; }
+#define GET_USAGE() Usage()
 
 namespace CmdWrapper
 {
@@ -22,6 +23,15 @@ namespace CmdWrapper
 		inline static int Parse(const char *s)
 		{
 			return std::atoi(s);
+		}
+	};
+
+	template<>
+	struct Parser<unsigned long>
+	{
+		inline static unsigned long Parse(const char *s)
+		{
+			return std::strtoul(s, nullptr, 10);
 		}
 	};
 

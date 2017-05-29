@@ -15,6 +15,7 @@
 #include "../cmd_wrapper.hpp"
 #include "../runtime_data.hpp"
 #include "../git_revision.hpp"
+#include "../custom_triggers.hpp"
 
 using namespace std::literals;
 
@@ -1391,6 +1392,158 @@ struct HwDLL::Cmd_BXT_TAS_Ducktap_Up
 	}
 };
 
+struct HwDLL::Cmd_BXT_Triggers_Add
+{
+	USAGE("Usage: bxt_triggers_add <x1> <y1> <z1> <x2> <y2> <z2>\n Adds a custom trigger in a form of axis-aligned cuboid with opposite corners at coordinates (x1, y1, z1) and (x2, y2, z2).\n");
+
+	static void handler(float x1, float y1, float z1, float x2, float y2, float z2)
+	{
+		CustomTriggers::triggers.emplace_back(Vector(x1, y1, z1), Vector(x2, y2, z2));
+	}
+};
+
+struct HwDLL::Cmd_BXT_Triggers_Clear
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		CustomTriggers::triggers.clear();
+	}
+};
+
+struct HwDLL::Cmd_BXT_Triggers_Delete
+{
+	USAGE("Usage: bxt_triggers_delete [id]\n Deletes the last placed trigger.\n If an id is given, deletes the trigger with the given id.\n");
+
+	static void handler()
+	{
+		if (CustomTriggers::triggers.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any triggers.\n");
+			return;
+		}
+
+		CustomTriggers::triggers.erase(--CustomTriggers::triggers.end());
+	}
+
+	static void handler(unsigned long id)
+	{
+		if (id == 0 || CustomTriggers::triggers.size() < id) {
+			HwDLL::GetInstance().ORIG_Con_Printf("There's no trigger with this id.\n");
+			return;
+		}
+
+		CustomTriggers::triggers.erase(CustomTriggers::triggers.begin() + (id - 1));
+	}
+};
+
+struct HwDLL::Cmd_BXT_Triggers_Export
+{
+	USAGE("Usage: bxt_triggers_export [cmd|script]\n");
+
+	static void handler(const char* type)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		enum class ExportType {
+			CMD,
+			SCRIPT
+		} export_type;
+
+		if (!std::strcmp(type, "cmd")) {
+			export_type = ExportType::CMD;
+		} else if (!std::strcmp(type, "script")) {
+			export_type = ExportType::SCRIPT;
+		} else {
+			hw.ORIG_Con_Printf("%s", GET_USAGE());
+			return;
+		}
+
+		auto command_separator = (export_type == ExportType::SCRIPT) ? '\n' : ';';
+
+		if (CustomTriggers::triggers.empty()) {
+			hw.ORIG_Con_Printf("You haven't placed any triggers.\n");
+			return;
+		}
+
+		bool first = true;
+		for (const auto& t : CustomTriggers::triggers) {
+			auto corners = t.get_corner_positions();
+
+			std::ostringstream oss;
+
+			if (!first)
+				oss << command_separator;
+
+			oss << "bxt_triggers_add "
+				<< corners.first.x << " " << corners.first.y << " " << corners.first.z << " "
+				<< corners.second.x << " " << corners.second.y << " " << corners.second.z;
+
+			if (t.get_command().size() > 1)
+				oss << command_separator << "bxt_triggers_setcommand \""
+					<< t.get_command().substr(0, t.get_command().size() - 1) << '\"';
+
+			hw.ORIG_Con_Printf("%s", oss.str().c_str());
+
+			first = false;
+		}
+
+		hw.ORIG_Con_Printf("\n");
+	}
+};
+
+struct HwDLL::Cmd_BXT_Triggers_List
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		if (CustomTriggers::triggers.empty()) {
+			hw.ORIG_Con_Printf("You haven't placed any triggers.\n");
+			return;
+		}
+
+		for (size_t i = 0; i < CustomTriggers::triggers.size(); ++i) {
+			const auto& t = CustomTriggers::triggers[i];
+			const auto corners = t.get_corner_positions();
+
+			std::ostringstream oss;
+			oss << i + 1 << ": `" << t.get_command().substr(0, t.get_command().size() - 1) << "` - ("
+				<< corners.first.x << ", " << corners.first.y << ", " << corners.first.z << ") | ("
+				<< corners.second.x << ", " << corners.second.y << ", " << corners.second.z << ")\n";
+
+			hw.ORIG_Con_Printf("%s", oss.str().c_str());
+		}
+	}
+};
+
+struct HwDLL::Cmd_BXT_Triggers_SetCommand
+{
+	USAGE("Usage: bxt_triggers_setcommand <command>\n Sets the last placed trigger's command.\n bxt_triggers_setcommand <id> <command>\n Sets the command of a trigger with the given id.\n");
+
+	static void handler(const char* command)
+	{
+		if (CustomTriggers::triggers.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any triggers.\n");
+			return;
+		}
+
+		CustomTriggers::triggers.back().set_command(command);
+	}
+
+	static void handler(unsigned long id, const char* command)
+	{
+		if (id == 0 || CustomTriggers::triggers.size() < id) {
+			HwDLL::GetInstance().ORIG_Con_Printf("There's no trigger with this id.\n");
+			return;
+		}
+
+		CustomTriggers::triggers[id - 1].set_command(command);
+	}
+};
+
 struct HwDLL::Cmd_BXT_Record
 {
 	USAGE("Usage: bxt_record <demoname>\n");
@@ -1566,6 +1719,15 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Autojump_Up, Handler<>, Handler<const char*>>("-bxt_tas_autojump");
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Down, Handler<>, Handler<const char*>>("+bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Up, Handler<>, Handler<const char*>>("-bxt_tas_ducktap");
+	wrapper::Add<Cmd_BXT_Triggers_Add, Handler<float, float, float, float, float, float>>("bxt_triggers_add");
+	wrapper::Add<Cmd_BXT_Triggers_Clear, Handler<>>("bxt_triggers_clear");
+	wrapper::Add<Cmd_BXT_Triggers_Delete, Handler<>, Handler<unsigned long>>("bxt_triggers_delete");
+	wrapper::Add<Cmd_BXT_Triggers_Export, Handler<const char*>>("bxt_triggers_export");
+	wrapper::Add<Cmd_BXT_Triggers_List, Handler<>>("bxt_triggers_list");
+	wrapper::Add<
+		Cmd_BXT_Triggers_SetCommand,
+		Handler<const char*>,
+		Handler<unsigned long, const char*>>("bxt_triggers_setcommand");
 	wrapper::Add<Cmd_BXT_Record, Handler<const char *>>("bxt_record");
 	wrapper::Add<Cmd_BXT_AutoRecord, Handler<const char *>>("bxt_autorecord");
 	wrapper::Add<Cmd_BXT_Map, Handler<const char *>>("_bxt_map");
@@ -2053,6 +2215,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 {
 	RegisterCVarsAndCommandsIfNeeded();
 
+	UpdateCustomTriggers();
+
 	int *state = reinterpret_cast<int*>(cls);
 	int *paused = reinterpret_cast<int*>(sv)+1;
 	static unsigned counter = 1;
@@ -2325,6 +2489,18 @@ void HwDLL::SaveInitialDataToDemo()
 
 	// Initial BXT timer value.
 	CustomHud::SaveTimeToDemo();
+}
+
+void HwDLL::UpdateCustomTriggers()
+{
+	if (!svs || svs->num_clients < 1)
+		return;
+
+	edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	if (!pl)
+		return;
+
+	CustomTriggers::Update(pl->v.origin, (pl->v.flags & FL_DUCKING) != 0);
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

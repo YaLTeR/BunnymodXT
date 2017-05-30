@@ -647,6 +647,10 @@ namespace CustomHud
 	{
 		static float lastTime = flTime;
 
+		// We'll use this for checking the 99.5 FPS with fps_max 99.5 condition,
+		// because even on fps_max + 0.5 engines the FPS can oscillate down to 99.5.
+		static unsigned badFrames = 0;
+
 		if (CVars::bxt_hud_incorrect_fps_indicator.GetBool())
 		{
 			const auto timeDiff = flTime - lastTime;
@@ -669,14 +673,23 @@ namespace CustomHud
 					const auto fps_max = CVars::fps_max.GetFloat();
 
 					if (fps_max < 99.7f && fps_max > 99.0f) {
-						const char message[] = "Your FPS seems to be incorrect.\n"
-						                       "Most likely you need to set fps_max to 100.\n"
-						                       "If you know what you're doing and you're sure your FPS is correct,\n"
-						                       "you can disable this message with bxt_hud_incorrect_fps_indicator 0.";
+						if (badFrames >= 10) {
+							const char message[] = "Your FPS seems to be incorrect.\n"
+									       "Most likely you need to set fps_max to 100.\n"
+									       "If you know what you're doing and you're sure your FPS is correct,\n"
+									       "you can disable this message with bxt_hud_incorrect_fps_indicator 0.";
 
-						DrawMultilineString(2, 4 + si.iCharHeight, message, 1.0f, 1.0f, 1.0f);
+							DrawMultilineString(2, 4 + si.iCharHeight, message, 1.0f, 1.0f, 1.0f);
+						} else {
+							++badFrames;
+						}
+					} else {
+						badFrames = 0;
 					}
 				}
+
+				if (!(fps < 99.6f && fps > 99.0f))
+					badFrames = 0;
 			}
 		}
 

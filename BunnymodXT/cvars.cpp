@@ -14,6 +14,7 @@ namespace CVars
 	CVarWrapper bxt_autopause("bxt_autopause", "0");
 	CVarWrapper bxt_interprocess_enable("bxt_interprocess_enable", "0");
 	CVarWrapper bxt_fade_remove("bxt_fade_remove", "0");
+	CVarWrapper bxt_stop_demo_on_changelevel("bxt_stop_demo_on_changelevel", "0");
 
 	CVarWrapper con_color;
 	CVarWrapper sv_maxvelocity;
@@ -88,6 +89,7 @@ namespace CVars
 		&bxt_autopause,
 		&bxt_interprocess_enable,
 		&bxt_fade_remove,
+		&bxt_stop_demo_on_changelevel,
 		&con_color,
 		&sv_maxvelocity,
 		&sv_maxspeed,

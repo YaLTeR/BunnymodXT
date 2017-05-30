@@ -410,4 +410,6 @@ protected:
 	bool insideKeyEvent;
 	bool insideExec;
 	std::string execScript;
+	bool insideHost_Changelevel2_f;
+	bool dontStopAutorecord;
 };

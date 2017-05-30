@@ -357,6 +357,11 @@ void HwDLL::Clear()
 	lastLoadedMap.clear();
 	isOverridingCamera = false;
 	isOffsettingCamera = false;
+	insideKeyEvent = false;
+	insideExec = false;
+	execScript.clear();
+	insideHost_Changelevel2_f = false;
+	dontStopAutorecord = false;
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -1685,6 +1690,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_autopause);
 	RegisterCVar(CVars::bxt_interprocess_enable);
 	RegisterCVar(CVars::bxt_fade_remove);
+	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
 	RegisterCVar(CVars::_bxt_norefresh);
 	RegisterCVar(CVars::_bxt_bunnysplit_time_update_frequency);
 	RegisterCVar(CVars::_bxt_save_runtime_data_in_demos);
@@ -2574,7 +2580,15 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 
 	CustomHud::SaveTimeToDemo();
 
-	return ORIG_Host_Changelevel2_f();
+	if (CVars::bxt_stop_demo_on_changelevel.GetBool()) {
+		dontStopAutorecord = true;
+		ORIG_CL_Stop_f();
+		dontStopAutorecord = false;
+	}
+
+	insideHost_Changelevel2_f = true;
+	ORIG_Host_Changelevel2_f();
+	insideHost_Changelevel2_f = false;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SCR_BeginLoadingPlaque)
@@ -2637,6 +2651,15 @@ HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, cha
 	if (insideHost_Reload_f && !autoRecordDemoName.empty())
 		autoRecordNow = true;
 
+	if (insideHost_Changelevel2_f) {
+		if (ret && *demorecording == 0 && !autoRecordDemoName.empty()) {
+			autoRecordNow = true;
+		} else {
+			autoRecordNow = false;
+			autoRecordDemoName.clear();
+		}
+	}
+
 	return ret;
 }
 
@@ -2656,7 +2679,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, SV_Frame)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, CL_Stop_f)
 {
-	if (!insideHost_Loadgame_f && !insideHost_Reload_f) {
+	if (!insideHost_Loadgame_f && !insideHost_Reload_f && !dontStopAutorecord) {
 		autoRecordNow = false;
 		autoRecordDemoName.clear();
 	}

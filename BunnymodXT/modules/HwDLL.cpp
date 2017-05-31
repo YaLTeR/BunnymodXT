@@ -2652,8 +2652,9 @@ HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, cha
 		autoRecordNow = true;
 
 	if (insideHost_Changelevel2_f) {
-		if (ret && *demorecording == 0 && !autoRecordDemoName.empty()) {
-			autoRecordNow = true;
+		if (ret && !autoRecordDemoName.empty()) {
+			if (*demorecording == 0)
+				autoRecordNow = true;
 		} else {
 			autoRecordNow = false;
 			autoRecordDemoName.clear();

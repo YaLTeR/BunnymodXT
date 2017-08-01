@@ -1066,6 +1066,8 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CNihilanth__DyingThink_Linux, void*, thispt
 	if (CVars::bxt_timer_autostop.GetBool())
 		CustomHud::SetCountingTime(false);
 	Interprocess::WriteGameEnd(CustomHud::GetTime());
+	CustomHud::SaveTimeToDemo();
+	RuntimeData::Add(RuntimeData::GameEndMarker {});
 
 	return ORIG_CNihilanth__DyingThink_Linux(thisptr);
 }

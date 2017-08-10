@@ -2736,6 +2736,7 @@ HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c
 {
 	ORIG_LoadAndDecryptHwDLL(a, b, c);
 	EngineDevMsg("[hw dll] LoadAndDecryptHwDLL has been called. Rehooking.\n");
+	HwDLL::GetInstance().Unhook();
 	Hooks::HookModule(L"hl.exe");
 }
 

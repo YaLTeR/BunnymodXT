@@ -267,13 +267,12 @@ void HwDLL::Unhook()
 	for (auto cvar : CVars::allCVars)
 		cvar->Refresh();
 
-	m_HookedNumber = m_Names.size();
-
 	Clear();
 }
 
 void HwDLL::Clear()
 {
+	IHookableNameFilterOrdered::Clear();
 	ORIG_LoadAndDecryptHwDLL = nullptr;
 	ORIG_Cbuf_Execute = nullptr;
 	ORIG_SeedRandomNumberGenerator = nullptr;

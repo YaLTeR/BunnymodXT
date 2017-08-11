@@ -81,6 +81,7 @@ namespace CVars
 
 	const std::vector<CVarWrapper*> allCVars =
 	{
+		&_bxt_bunnysplit_time_update_frequency,
 		&_bxt_taslog,
 		&_bxt_min_frametime,
 		&_bxt_norefresh,

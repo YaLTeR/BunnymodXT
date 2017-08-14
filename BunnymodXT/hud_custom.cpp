@@ -592,7 +592,7 @@ namespace CustomHud
 			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 17) + 3);
 
 			bool selfgaussable;
-			int hitGroup;
+			int hitGroup = 0; // It's always initialized if selfgaussable is set to true, but GCC issues a warning anyway.
 			float threshold;
 			GetSelfgaussInfo(selfgaussable, threshold, hitGroup);
 

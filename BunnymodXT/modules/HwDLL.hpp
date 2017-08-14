@@ -219,6 +219,7 @@ protected:
 	void FindStuff();
 
 	struct Cmd_BXT_TAS_LoadScript;
+	struct Cmd_BXT_TAS_ExportScript;
 	struct Cmd_BXT_CH_Set_Health;
 	struct Cmd_BXT_CH_Set_Armor;
 	struct Cmd_BXT_CH_Set_Origin;
@@ -333,6 +334,8 @@ protected:
 	bool ButtonsPresent;
 	HLTAS::StrafeButtons Buttons;
 	HLStrafe::CurrentState StrafeState;
+	std::string exportFilename;
+	HLTAS::Input exportResult;
 
 	struct KeyStates
 	{

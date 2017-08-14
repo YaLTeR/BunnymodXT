@@ -1,5 +1,6 @@
 #include "../stdafx.hpp"
 
+#include <boost/algorithm/string/replace.hpp>
 #include <cerrno>
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
@@ -375,6 +376,9 @@ void HwDLL::Clear()
 		SharedRNGSeedPresent = false;
 		SharedRNGSeed = 0;
 		ButtonsPresent = false;
+		exportFilename.clear();
+		exportResult.ClearProperties();
+		exportResult.ClearFrames();
 	}
 }
 
@@ -1125,6 +1129,9 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 			return;
 		}
 
+		if (!hw.exportFilename.empty())
+			hw.exportResult.ClearProperties();
+
 		for (auto prop : hw.input.GetProperties()) {
 			if (prop.first == "demo")
 				hw.demoName = prop.second;
@@ -1137,6 +1144,9 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 				hw.SetNonSharedRNGSeed = true;
 			} else if (prop.first == "frametime0ms")
 				hw.frametime0ms = prop.second;
+
+			if (!hw.exportFilename.empty())
+				hw.exportResult.SetProperty(prop.first, prop.second);
 		}
 
 		if (!hw.input.GetFrames().empty()) {
@@ -1149,6 +1159,25 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 				hw.ORIG_Cbuf_InsertText(ss.str().c_str());
 			}
 		}
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_ExportScript
+{
+	USAGE("Usage: bxt_tas_exportscript <filename>\n Starts exporting the currently running HLTAS script into a HLTAS script with the given filename. The exported script will contain no autofuncs.\n");
+
+	static void handler(const char *fileName)
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.exportFilename = fileName;
+		hw.exportResult.ClearProperties();
+		hw.exportResult.ClearFrames();
+
+		if (hw.runningFrames)
+			for (auto prop : hw.input.GetProperties())
+				hw.exportResult.SetProperty(prop.first, prop.second);
+
+		hw.ORIG_Con_Printf("Started exporting .hltas frames.\n");
 	}
 };
 
@@ -1705,6 +1734,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	typedef CmdWrapper::CmdWrapper<CmdFuncs> wrapper;
 
 	wrapper::Add<Cmd_BXT_TAS_LoadScript, Handler<const char *>>("bxt_tas_loadscript");
+	wrapper::Add<Cmd_BXT_TAS_ExportScript, Handler<const char *>>("bxt_tas_exportscript");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Health, Handler<float>>("bxt_ch_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Armor, Handler<float>>("bxt_ch_set_armor");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
@@ -1757,6 +1787,15 @@ void HwDLL::InsertCommands()
 			auto& f = input.GetFrame(currentFramebulk);
 			// Movement frame.
 			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent && !f.ResetFrame)) {
+				HLTAS::Frame resulting_frame;
+
+				if (thisFrameIs0ms)
+					resulting_frame.Frametime = frametime0ms;
+				else
+					resulting_frame.Frametime = f.Frametime;
+
+				resulting_frame.SetRepeats(1);
+
 				auto c = f.Commands;
 				if (!c.empty()) {
 					c += '\n';
@@ -1817,11 +1856,15 @@ void HwDLL::InsertCommands()
 
 				f.ResetAutofuncs();
 
+				resulting_frame.SetPitch(p.Pitch);
+				resulting_frame.SetYaw(p.Yaw + 180.0 / 65536);
+
 				#define INS(btn) \
 					if (p.btn && !currentKeys.btn.IsDown()) \
 						KeyDown(currentKeys.btn); \
 					else if (!p.btn && currentKeys.btn.IsDown()) \
-						KeyUp(currentKeys.btn);
+						KeyUp(currentKeys.btn); \
+					resulting_frame.btn = p.btn;
 				INS(Forward)
 				INS(Left)
 				INS(Right)
@@ -1924,6 +1967,8 @@ void HwDLL::InsertCommands()
 				}
 				ORIG_Cbuf_InsertText(speeds_ss.str().c_str());
 
+				resulting_frame.Commands = boost::replace_all_copy(speeds_ss.str(), "\n", ";") + f.Commands;
+
 				// Clear impulses AFTER we handled viewangles and speeds, and only if we're active.
 				if (*reinterpret_cast<int*>(cls) == 5) {
 					currentKeys.Forward.ClearImpulses();
@@ -1975,16 +2020,30 @@ void HwDLL::InsertCommands()
 
 				thisFrameIs0ms = p.NextFrameIs0ms;
 
+				if (!exportFilename.empty())
+					exportResult.InsertFrame(exportResult.GetFrames().size(), resulting_frame);
+
 				break;
 			} else if (!f.SaveName.empty()) { // Saveload frame.
 				std::ostringstream ss;
 				ss << "save " << f.SaveName << ";load " << f.SaveName << "\n";
 				ORIG_Cbuf_InsertText(ss.str().c_str());
 				currentFramebulk++;
+
+				HLTAS::Frame resulting_frame;
+				resulting_frame.SaveName = f.SaveName;
+				if (!exportFilename.empty())
+					exportResult.InsertFrame(exportResult.GetFrames().size(), resulting_frame);
+
 				break;
 			} else if (f.SeedPresent) { // Seeds frame.
 				SharedRNGSeedPresent = true;
 				SharedRNGSeed = f.GetSeed();
+
+				HLTAS::Frame resulting_frame;
+				resulting_frame.SetSeed(f.GetSeed());
+				if (!exportFilename.empty())
+					exportResult.InsertFrame(exportResult.GetFrames().size(), resulting_frame);
 			} else if (f.BtnState != HLTAS::ButtonState::NOTHING) { // Buttons frame.
 				if (f.BtnState == HLTAS::ButtonState::SET) {
 					ButtonsPresent = true;
@@ -2003,6 +2062,13 @@ void HwDLL::InsertCommands()
 				ORIG_Cbuf_InsertText("stop\n");
 
 				currentFramebulk++;
+
+				HLTAS::Frame resulting_frame;
+				resulting_frame.ResetFrame = true;
+				resulting_frame.SetResetNonSharedRNGSeed(f.GetResetNonSharedRNGSeed());
+				if (!exportFilename.empty())
+					exportResult.InsertFrame(exportResult.GetFrames().size(), resulting_frame);
+
 				break;
 			}
 
@@ -2010,8 +2076,19 @@ void HwDLL::InsertCommands()
 		};
 
 		// Ran through all frames.
-		if (currentFramebulk >= totalFramebulks)
+		if (currentFramebulk >= totalFramebulks) {
 			runningFrames = false;
+
+			if (!exportFilename.empty()) {
+				auto error = exportResult.Save(exportFilename).get();
+				if (error.Code != HLTAS::ErrorCode::OK)
+					ORIG_Con_Printf("Error saving the exported script: %s\n", HLTAS::GetErrorMessage(error).c_str());
+
+				exportFilename.clear();
+				exportResult.ClearProperties();
+				exportResult.ClearFrames();
+			}
+		}
 	} else {
 		if (wasRunningFrames) {
 			if (!demoName.empty()) {

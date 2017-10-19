@@ -665,6 +665,11 @@ void ServerDLL::FindStuff()
 		auto pGiveFnptrsToDll = MemUtils::GetSymbolAddress(m_Handle, "GiveFnptrsToDll");
 		if (pGiveFnptrsToDll)
 		{
+			// Decay: GiveFnptrsToDll is actually a goto to the real function.
+			if (*reinterpret_cast<uint8_t*>(pGiveFnptrsToDll) == 0xE9)
+				pGiveFnptrsToDll = reinterpret_cast<void*>(*reinterpret_cast<ptrdiff_t*>(reinterpret_cast<uintptr_t>(pGiveFnptrsToDll) + 1)
+				                                           + reinterpret_cast<uintptr_t>(pGiveFnptrsToDll) + 5);
+
 			// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
 			static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 5F A3");
 			auto addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
@@ -686,7 +691,7 @@ void ServerDLL::FindStuff()
 					if (addr) {
 						svencoop = true;
 					} else {
-						// TWHL Tower (Spirit) version: mov to eax instead of ecx.
+						// TWHL Tower (Spirit) and Decay version: mov to eax instead of ecx.
 						static constexpr auto p = PATTERN("50 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 0C 8B 45 0C A3");
 						addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
 						if (addr)

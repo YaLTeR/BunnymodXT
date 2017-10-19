@@ -1167,6 +1167,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
 			if (!std::strcmp(targetname, "roll_the_credits")
 				|| !std::strcmp(targetname, "youwinmulti")
+				|| !std::strcmp(targetname, "previctory_mm")
 				|| !std::strcmp(targetname, "stairscene_mngr")) {
 				if (CVars::bxt_timer_autostop.GetBool())
 					CustomHud::SetCountingTime(false);

@@ -148,6 +148,10 @@ namespace CVars
 	extern CVarWrapper bxt_bhopcap_prediction;
 	extern CVarWrapper bxt_show_nodes;
 	extern CVarWrapper bxt_show_custom_triggers;
+	extern CVarWrapper bxt_wallhack;
+	extern CVarWrapper bxt_wallhack_additive;
+	extern CVarWrapper bxt_wallhack_alpha;
+	extern CVarWrapper bxt_novis;
 	extern CVarWrapper bxt_hud;
 	extern CVarWrapper bxt_hud_color;
 	extern CVarWrapper bxt_hud_precision;

@@ -41,6 +41,10 @@ namespace CVars
 	CVarWrapper bxt_bhopcap_prediction("bxt_bhopcap_prediction", "1");
 	CVarWrapper bxt_show_nodes("bxt_show_nodes", "0");
 	CVarWrapper bxt_show_custom_triggers("bxt_show_custom_triggers", "1");
+	CVarWrapper bxt_wallhack("bxt_wallhack", "0");
+	CVarWrapper bxt_wallhack_additive("bxt_wallhack_additive", "0");
+	CVarWrapper bxt_wallhack_alpha("bxt_wallhack_alpha", "0.6");
+	CVarWrapper bxt_novis("bxt_novis", "0");
 	CVarWrapper bxt_hud("bxt_hud", "1");
 	CVarWrapper bxt_hud_color("bxt_hud_color", "");
 	CVarWrapper bxt_hud_precision("bxt_hud_precision", "6");
@@ -112,6 +116,10 @@ namespace CVars
 		&bxt_bhopcap_prediction,
 		&bxt_show_nodes,
 		&bxt_show_custom_triggers,
+		&bxt_wallhack,
+		&bxt_wallhack_additive,
+		&bxt_wallhack_alpha,
+		&bxt_novis,
 		&bxt_hud,
 		&bxt_hud_color,
 		&bxt_hud_precision,

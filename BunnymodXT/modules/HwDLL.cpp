@@ -17,6 +17,7 @@
 #include "../runtime_data.hpp"
 #include "../git_revision.hpp"
 #include "../custom_triggers.hpp"
+#include <GL/gl.h>
 
 using namespace std::literals;
 
@@ -130,6 +131,21 @@ extern "C" void __cdecl Cmd_TokenizeString(char* text)
 {
 	HwDLL::HOOKED_Cmd_TokenizeString(text);
 }
+
+extern "C" void __cdecl R_DrawSequentialPoly(msurface_t *surf, int face)
+{
+	HwDLL::HOOKED_R_DrawSequentialPoly(surf, face);
+}
+
+extern "C" void __cdecl R_Clear()
+{
+	HwDLL::HOOKED_R_Clear();
+}
+
+extern "C" byte *__cdecl Mod_LeafPVS(mleaf_t *leaf, model_t *model)
+{
+	return HwDLL::HOOKED_Mod_LeafPVS(leaf, model);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -203,6 +219,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_CL_Record_f);
 			MemUtils::MarkAsExecutable(ORIG_Key_Event);
 			MemUtils::MarkAsExecutable(ORIG_Cmd_Exec_f);
+			MemUtils::MarkAsExecutable(ORIG_R_DrawSequentialPoly);
+			MemUtils::MarkAsExecutable(ORIG_R_Clear);
+			MemUtils::MarkAsExecutable(ORIG_Mod_LeafPVS);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -229,7 +248,10 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_VGuiWrap2_ConPrintf, HOOKED_VGuiWrap2_ConPrintf,
 			ORIG_CL_Record_f, HOOKED_CL_Record_f,
 			ORIG_Key_Event, HOOKED_Key_Event,
-			ORIG_Cmd_Exec_f, HOOKED_Cmd_Exec_f);
+			ORIG_Cmd_Exec_f, HOOKED_Cmd_Exec_f,
+			ORIG_R_DrawSequentialPoly, HOOKED_R_DrawSequentialPoly,
+			ORIG_R_Clear, HOOKED_R_Clear,
+			ORIG_Mod_LeafPVS, HOOKED_Mod_LeafPVS);
 	}
 }
 
@@ -262,7 +284,10 @@ void HwDLL::Unhook()
 			ORIG_VGuiWrap2_ConPrintf,
 			ORIG_CL_Record_f,
 			ORIG_Key_Event,
-			ORIG_Cmd_Exec_f);
+			ORIG_Cmd_Exec_f,
+			ORIG_R_DrawSequentialPoly,
+			ORIG_R_Clear,
+			ORIG_Mod_LeafPVS);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -313,6 +338,10 @@ void HwDLL::Clear()
 	ORIG_build_number = nullptr;
 	ORIG_Key_Event = nullptr;
 	ORIG_Cmd_Exec_f = nullptr;
+	ORIG_R_DrawSequentialPoly = nullptr;
+	ORIG_R_Clear = nullptr;
+	ORIG_Mod_LeafPVS = nullptr;
+
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
@@ -558,6 +587,28 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find VGuiWrap2_ConPrintf.\n");
 
+		ORIG_R_DrawSequentialPoly = reinterpret_cast<_R_DrawSequentialPoly>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawSequentialPoly"));
+		if (ORIG_R_DrawSequentialPoly) {
+			EngineDevMsg("[hw dll] Found R_DrawSequentialPoly at %p.\n", ORIG_R_DrawSequentialPoly);
+		} else {
+			EngineDevWarning("[hw dll] Could not find R_DrawSequentialPoly.\n");
+			EngineWarning("Wallhacking is not available.\n");
+		}
+
+		ORIG_R_Clear = reinterpret_cast<_R_Clear>(MemUtils::GetSymbolAddress(m_Handle, "R_Clear"));
+		if (ORIG_R_DrawSequentialPoly)
+			EngineDevMsg("[hw dll] Found R_Clear at %p.\n", ORIG_R_Clear);
+		else
+			EngineDevWarning("[hw dll] Could not find R_Clear.\n");
+
+		ORIG_Mod_LeafPVS = reinterpret_cast<_Mod_LeafPVS>(MemUtils::GetSymbolAddress(m_Handle, "Mod_LeafPVS"));
+		if (ORIG_R_DrawSequentialPoly) {
+			EngineDevMsg("[hw dll] Found Mod_LeafPVS at %p.\n", ORIG_Mod_LeafPVS);
+		} else {
+			EngineDevWarning("[hw dll] Could not find Mod_LeafPVS.\n");
+			EngineWarning("bxt_novis has no effect.\n");
+		}
+
 		const auto CL_Move = reinterpret_cast<uintptr_t>(MemUtils::GetSymbolAddress(m_Handle, "CL_Move"));
 		if (CL_Move)
 		{
@@ -592,6 +643,9 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Host_Reload_f)
 		DEF_FUTURE(VGuiWrap2_ConDPrintf)
 		DEF_FUTURE(VGuiWrap2_ConPrintf)
+		DEF_FUTURE(R_DrawSequentialPoly)
+		DEF_FUTURE(R_Clear)
+		DEF_FUTURE(Mod_LeafPVS)
 		DEF_FUTURE(CL_RecordHUDCommand)
 		DEF_FUTURE(CL_Record_f)
 		DEF_FUTURE(Key_Event)
@@ -1061,6 +1115,9 @@ void HwDLL::FindStuff()
 		GET_FUTURE(VGuiWrap2_ConDPrintf);
 		GET_FUTURE(VGuiWrap2_ConPrintf);
 		GET_FUTURE(SCR_UpdateScreen);
+		GET_FUTURE(R_DrawSequentialPoly);
+		GET_FUTURE(R_Clear);
+		GET_FUTURE(Mod_LeafPVS);
 		GET_FUTURE(PF_GetPhysicsKeyValue);
 
 		if (oldEngine) {
@@ -1724,6 +1781,10 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_interprocess_enable);
 	RegisterCVar(CVars::bxt_fade_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
+	RegisterCVar(CVars::bxt_wallhack);
+	RegisterCVar(CVars::bxt_wallhack_additive);
+	RegisterCVar(CVars::bxt_wallhack_alpha);
+	RegisterCVar(CVars::bxt_novis);
 	RegisterCVar(CVars::_bxt_norefresh);
 	RegisterCVar(CVars::_bxt_bunnysplit_time_update_frequency);
 	RegisterCVar(CVars::_bxt_save_runtime_data_in_demos);
@@ -2558,6 +2619,9 @@ void HwDLL::SaveInitialDataToDemo()
 		"bxt_hud_visible_landmarks",
 		"bxt_show_hidden_entities",
 		"bxt_show_triggers",
+		"bxt_wallhack",
+		"bxt_wallhack_additive",
+		"bxt_wallhack_alpha",
 		"chase_active",
 		"cl_anglespeedkey",
 		"cl_backspeed",
@@ -2900,4 +2964,47 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cmd_Exec_f)
 
 		execScript.clear();
 	}
+}
+
+// This function is hooked instead of some top-level drawing functions because
+// we want NPCs to remain opaque, to make them more visible. This function draws
+// the worldspawn and other brush entities but not studio models (NPCs).
+HOOK_DEF_2(HwDLL, void, __cdecl, R_DrawSequentialPoly, msurface_t *, surf, int, face)
+{
+	if (!(CmdFuncs::IsCheating() && CVars::bxt_wallhack.GetBool())) {
+		ORIG_R_DrawSequentialPoly(surf, face);
+		return;
+	}
+
+	glEnable(GL_BLEND);
+	glDepthMask(GL_FALSE);
+	if (CVars::bxt_wallhack_additive.GetBool()) {
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	} else {
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	glColor4f(1.0f, 1.0f, 1.0f, CVars::bxt_wallhack_alpha.GetFloat());
+
+	ORIG_R_DrawSequentialPoly(surf, face);
+
+	glDepthMask(GL_TRUE);
+	glDisable(GL_BLEND);
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
+{
+	// This is needed or everything will look washed out or with unintended
+	// motion blur.
+	if (CmdFuncs::IsCheating() && CVars::bxt_wallhack.GetBool()) {
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	ORIG_R_Clear();
+}
+
+HOOK_DEF_2(HwDLL, byte *, __cdecl, Mod_LeafPVS, mleaf_t *, leaf, model_t *, model)
+{
+	// Idea from advancedfx: this is done so that distant NPCs don't disappear,
+	// as they do with r_novis 1.
+	return ORIG_Mod_LeafPVS(CVars::bxt_novis.GetBool() ? model->leafs : leaf, model);
 }

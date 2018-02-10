@@ -31,6 +31,9 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, CL_Record_f)
 	HOOK_DECL(void, __cdecl, Key_Event, int key, int down)
 	HOOK_DECL(void, __cdecl, Cmd_Exec_f)
+	HOOK_DECL(void, __cdecl, R_DrawSequentialPoly, msurface_t *surf, int face)
+	HOOK_DECL(void, __cdecl, R_Clear)
+	HOOK_DECL(byte *, __cdecl, Mod_LeafPVS, mleaf_t *leaf, model_t *model)
 
 	struct cmdbuf_t
 	{

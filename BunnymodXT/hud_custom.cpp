@@ -615,8 +615,7 @@ namespace CustomHud
 
 	void DrawVisibleLandmarks(float flTime)
 	{
-		globalvars_t **ppGlobals = ServerDLL::GetInstance().ppGlobals;
-		if (CVars::bxt_hud_visible_landmarks.GetBool() && ppGlobals)
+		if (CVars::bxt_hud_visible_landmarks.GetBool())
 		{
 			int x, y;
 			GetPosition(CVars::bxt_hud_visible_landmarks_offset, CVars::bxt_hud_visible_landmarks_anchor, &x, &y, -20, 0);
@@ -636,7 +635,7 @@ namespace CustomHud
 				if (!pentPlayer || !efun->pfnEntOffsetOfPEntity(pentPlayer))
 					continue;
 
-				out << (*ppGlobals)->pStringBase + pent->v.targetname << '\n';
+				out << ServerDLL::GetInstance().GetString(pent->v.targetname) << '\n';
 			}
 
 			DrawMultilineString(x, y, out.str());

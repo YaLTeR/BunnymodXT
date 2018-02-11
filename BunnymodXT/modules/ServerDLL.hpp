@@ -52,12 +52,12 @@ public:
 	std::vector<const Vector *> GetNodePositions() const;
 
 	inline const char *GetString(int string) const {
-		assert(ppGlobals);
+		if (!ppGlobals)
+			return nullptr;
 		return (*ppGlobals)->pStringBase + string;
 	}
 
 	enginefuncs_t *pEngfuncs;
-	globalvars_t **ppGlobals;
 
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
@@ -108,6 +108,7 @@ protected:
 	ptrdiff_t offBasevelocity;
 
 	void *pGlobalState;
+	globalvars_t **ppGlobals;
 
 	static const ptrdiff_t offFuncIsPlayer = 0x9C;
 	static const ptrdiff_t offFuncCenter = 0xC8;

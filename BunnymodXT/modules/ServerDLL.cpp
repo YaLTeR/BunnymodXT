@@ -756,7 +756,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_timer_autostop);
 	if (ORIG_AddToFullPack) {
 		REG(bxt_show_hidden_entities);
-		REG(bxt_show_triggers);
+		REG(bxt_show_triggers_legacy);
 	}
 	#undef REG
 }
@@ -1293,7 +1293,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 			ent->v.effects &= ~EF_NODRAW;
 			ent->v.rendermode = kRenderNormal;
 		}
-	} else if (is_trigger && CVars::bxt_show_triggers.GetBool()) {
+	} else if (is_trigger && CVars::bxt_show_triggers_legacy.GetBool()) {
 		ent->v.effects &= ~EF_NODRAW;
 		ent->v.rendermode = kRenderTransColor;
 		if (ent->v.solid == SOLID_NOT && std::strcmp(classname + 8, "transition") != 0)

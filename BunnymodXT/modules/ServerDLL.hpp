@@ -51,6 +51,11 @@ public:
 	std::vector<const edict_t *> GetUseableEntities(const Vector &origin, float radius) const;
 	std::vector<const Vector *> GetNodePositions() const;
 
+	inline const char *GetString(int string) const {
+		assert(ppGlobals);
+		return (*ppGlobals)->pStringBase + string;
+	}
+
 	enginefuncs_t *pEngfuncs;
 	globalvars_t **ppGlobals;
 

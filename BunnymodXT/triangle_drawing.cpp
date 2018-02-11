@@ -130,7 +130,120 @@ namespace TriangleDrawing
 		}
 	}
 
+	static void GetTriggerColor(const char *classname, bool inactive, float *r, float *g, float *b, float *a)
+	{
+		classname += 8;
+		if (std::strcmp(classname, "changelevel") == 0) {
+			// Bright green
+			*r = 79.0f;
+			*g = 255.0f;
+			*b = 10.0f;
+			*a = inactive ? 20.0f : 50.0f;
+		} else if (std::strcmp(classname, "hurt") == 0) {
+			// Red
+			*r = 255.0f;
+			*g = 0.0f;
+			*b = 0.0f;
+			*a = inactive ? 20.0f : 50.0f;
+		} else if (std::strcmp(classname, "multiple") == 0) {
+			// Blue
+			*r = 0.0f;
+			*g = 50.0f;
+			*b = 255.0f;
+			*a = inactive ? 20.0f : 60.0f;
+		} else if (std::strcmp(classname, "once") == 0) {
+			// Cyan
+			*r = 0.0f;
+			*g = 255.0f;
+			*b = 255.0f;
+			*a = inactive ? 20.0f : 50.0f;
+		} else if (std::strcmp(classname, "push") == 0) {
+			// Bright yellow
+			*r = 255.0f;
+			*g = 255.0f;
+			*b = 0.0f;
+			*a = inactive ? 20.0f : 50.0f;
+		} else if (std::strcmp(classname, "teleport") == 0) {
+			// Dull green
+			*r = 81.0f;
+			*g = 147.0f;
+			*b = 49.0f;
+			*a = inactive ? 20.0f : 50.0f;
+		} else if (std::strcmp(classname, "transition") == 0) {
+			// Magenta
+			*r = 203.0f;
+			*g = 103.0f;
+			*b = 212.0f;
+			*a = 50.0f;
+		} else {
+			// White
+			*r = 255.0f;
+			*g = 255.0f;
+			*b = 255.0f;
+			*a = inactive ? 20.0f : 30.0f;
+		}
+
+		*r /= 255.0f;
+		*g /= 255.0f;
+		*b /= 255.0f;
+		*a /= 255.0f;
+	}
+
+	float GetPulsatingAlpha(float a, float time)
+	{
+		constexpr float speed = 8.0f;
+		float s = std::sinf(speed * time);
+		s *= 0.05f;
+		s += a;
+		s = std::max(s, 0.0f);
+		s = std::min(s, 1.0f);
+		return s;
+	}
+
 	static void DrawTriggers(triangleapi_s *pTriAPI)
+	{
+		if (!CVars::bxt_show_triggers.GetBool() || CVars::bxt_show_triggers_legacy.GetBool())
+			return;
+
+		pTriAPI->RenderMode(kRenderTransAdd);
+		pTriAPI->CullFace(TRI_NONE);
+
+		const double svTime = HwDLL::GetInstance().GetTime();
+		edict_t *edicts;
+		const int numEdicts = HwDLL::GetInstance().GetEdicts(&edicts);
+		for (int e = 1; e < numEdicts; ++e) {
+			const edict_t *ent = edicts + e;
+			if (!HwDLL::GetInstance().IsValidEdict(ent))
+				continue;
+
+			const char *classname = ServerDLL::GetInstance().GetString(ent->v.classname);
+			if (std::strncmp(classname, "trigger_", 8) != 0)
+				continue;
+
+			const model_t *model = HwDLL::GetInstance().GetModelByIndex(ent->v.modelindex);
+			if (!model)
+				continue;
+
+			const bool active = ent->v.solid != SOLID_NOT || std::strcmp(classname, "trigger_transition") == 0;
+			const msurface_t *surfs = model->surfaces + model->firstmodelsurface;
+			for (int i = 0; i < model->nummodelsurfaces; ++i) {
+				// Offset to make each surface look slightly different
+				const float offset = i * M_PI / 7;
+				float r, g, b, a;
+				GetTriggerColor(classname, !active, &r, &g, &b, &a);
+				if (active)
+					a = GetPulsatingAlpha(a, svTime + offset);
+
+				pTriAPI->Color4f(r, g, b, a);
+				pTriAPI->Begin(TRI_POLYGON);
+				for (int j = 0; j < surfs[i].polys->numverts; ++j)
+					pTriAPI->Vertex3fv(surfs[i].polys->verts[j]);
+				pTriAPI->End();
+			}
+		}
+	}
+
+	static void DrawCustomTriggers(triangleapi_s *pTriAPI)
 	{
 		if (!CVars::bxt_show_custom_triggers.GetBool())
 			return;
@@ -169,5 +282,6 @@ namespace TriangleDrawing
 		DrawNodes(pTriAPI);
 		DrawUseableEntities(pTriAPI);
 		DrawTriggers(pTriAPI);
+		DrawCustomTriggers(pTriAPI);
 	}
 }

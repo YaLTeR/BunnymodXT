@@ -169,9 +169,24 @@ public:
 	inline bool IsRecordingDemo() const { return demorecording && *demorecording == 1; }
 	void StoreCommand(const char* command);
 
+	inline double GetTime() const {
+		return *reinterpret_cast<double *>(reinterpret_cast<uintptr_t>(sv) + offTime);
+	}
 	inline edict_t* GetPlayerEdict() const { return *sv_player; }
 	inline bool IsTASLogging() const { return tasLogging; }
 	inline size_t GetPreExecFramebulk() const { return preExecFramebulk; }
+
+	inline int GetEdicts(edict_t **edicts) const {
+		*edicts = *reinterpret_cast<edict_t **>(reinterpret_cast<uintptr_t>(sv) + offEdicts);
+		return *reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(sv) + offNumEdicts);
+	}
+	inline model_t *GetModelByIndex(int index) const {
+		model_t **models = reinterpret_cast<model_t **>(reinterpret_cast<uintptr_t>(sv) + offModels);
+		return *(models + index);
+	}
+	inline bool IsValidEdict(const edict_t *edict) const {
+		return edict && !edict->free;
+	}
 
 	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
 
@@ -281,7 +296,11 @@ protected:
 	void *cls;
 	void *clientstate;
 	void *sv;
+	ptrdiff_t offTime;
 	ptrdiff_t offWorldmodel;
+	ptrdiff_t offModels;
+	ptrdiff_t offNumEdicts;
+	ptrdiff_t offEdicts;
 	svs_t *svs;
 	ptrdiff_t offEdict;
 	void *svmove;

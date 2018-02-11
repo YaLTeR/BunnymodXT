@@ -354,7 +354,11 @@ void HwDLL::Clear()
 	cls = nullptr;
 	clientstate = nullptr;
 	sv = nullptr;
+	offTime = 0;
 	offWorldmodel = 0;
+	offModels = 0;
+	offNumEdicts = 0;
+	offEdicts = 0;
 	svs = nullptr;
 	offEdict = 0;
 	svmove = nullptr;
@@ -428,7 +432,11 @@ void HwDLL::FindStuff()
 		sv = MemUtils::GetSymbolAddress(m_Handle, "sv");
 		if (sv) {
 			EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
+			offTime = 0xc;
 			offWorldmodel = 296;
+			offModels = 0x30948;
+			offNumEdicts = 0x3bc50;
+			offEdicts = 0x3bc58;
 		} else
 			EngineDevWarning("[hw dll] Could not find sv.\n");
 
@@ -778,7 +786,11 @@ void HwDLL::FindStuff()
 			[&](auto pattern) {
 				auto f = reinterpret_cast<uintptr_t>(Host_AutoSave_f);
 				sv = *reinterpret_cast<void**>(f + 19);
+				offTime = 0x10;
 				offWorldmodel = 304;
+				offModels = 0x30950;
+				offNumEdicts = 0x3bc58;
+				offEdicts = 0x3bc60;
 				ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
 					*reinterpret_cast<ptrdiff_t*>(f + 33)
 					+ (f + 37)
@@ -1784,6 +1796,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
 	RegisterCVar(CVars::bxt_wallhack_alpha);
+	RegisterCVar(CVars::bxt_show_triggers);
 	RegisterCVar(CVars::bxt_novis);
 	RegisterCVar(CVars::_bxt_norefresh);
 	RegisterCVar(CVars::_bxt_bunnysplit_time_update_frequency);
@@ -2619,6 +2632,7 @@ void HwDLL::SaveInitialDataToDemo()
 		"bxt_hud_visible_landmarks",
 		"bxt_show_hidden_entities",
 		"bxt_show_triggers",
+		"bxt_show_triggers_legacy",
 		"bxt_wallhack",
 		"bxt_wallhack_additive",
 		"bxt_wallhack_alpha",

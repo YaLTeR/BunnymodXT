@@ -292,14 +292,14 @@ namespace CustomHud
 		{
 			int x, y;
 			GetPosition(CVars::bxt_hud_velocity_offset, CVars::bxt_hud_velocity_anchor, &x, &y, -200, 0);
-			
+
 			if (receivedAccurateInfo)
 				DrawString(x, y, "Velocity:");
 			else
 				DrawString(x, y, "Velocity:", 1.0f, 0.0f, 0.0f);
 
 			y += si.iCharHeight;
-			
+
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
 			out.precision(precision);
@@ -643,13 +643,13 @@ namespace CustomHud
 		}
 	}
 
-	static void DrawHealth(float flTime)
+	void DrawHealth(float flTime)
 	{
-		if (CVars::bxt_hud_healthmeter.GetBool())
+		if (CVars::bxt_hud_health.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_healthmeter_offset, CVars::bxt_hud_healthmeter_anchor, &x, &y, 0, -4 * NumberHeight);
-			DrawNumber((int) player.health, x, y);
+			GetPosition(CVars::bxt_hud_health_offset, CVars::bxt_hud_health_anchor, &x, &y, 0, -4 * NumberHeight);
+			DrawNumber(static_cast<int>(player.health), x, y);
 		}
 	}
 
@@ -746,7 +746,7 @@ namespace CustomHud
 						path += p->szSprite;
 						path += ".spr";
 						NumberSprites[digit] = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Load(path.c_str());
-						
+
 						if (!digit)
 						{
 							NumberWidth = p->rc.right - p->rc.left;

@@ -9,6 +9,7 @@ namespace CustomHud
 		float origin[3];
 		float velocity[3];
 		float viewangles[3];
+		float health;
 	} playerinfo;
 
 	void Init();

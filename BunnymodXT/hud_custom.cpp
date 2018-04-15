@@ -248,7 +248,7 @@ namespace CustomHud
 
 	void GetAccurateInfo()
 	{
-		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity);
+		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, &player.health);
 		HwDLL::GetInstance().GetViewangles(player.viewangles);
 	}
 
@@ -643,6 +643,16 @@ namespace CustomHud
 		}
 	}
 
+	static void DrawHealth(float flTime)
+	{
+		if (CVars::bxt_hud_healthmeter.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_healthmeter_offset, CVars::bxt_hud_healthmeter_anchor, &x, &y, 0, -4 * NumberHeight);
+			DrawNumber(player.health, x, y);
+		}
+	}
+
 	void DrawIncorrectFPSIndicator(float flTime)
 	{
 		static float lastTime = flTime;
@@ -774,6 +784,7 @@ namespace CustomHud
 		UpdateColors();
 		GetAccurateInfo();
 
+		DrawHealth(flTime);
 		DrawVelocity(flTime);
 		DrawOrigin(flTime);
 		DrawViewangles(flTime);

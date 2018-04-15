@@ -2444,7 +2444,7 @@ void HwDLL::SetPlayerVelocity(float velocity[3])
 	player.Velocity[2] = velocity[2];
 }
 
-bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3])
+bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float* health)
 {
 	if (!svs || svs->num_clients < 1)
 		return false;
@@ -2459,6 +2459,7 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3])
 	velocity[0] = pl->v.velocity[0];
 	velocity[1] = pl->v.velocity[1];
 	velocity[2] = pl->v.velocity[2];
+	*health = pl->v.health;
 
 	return true;
 }

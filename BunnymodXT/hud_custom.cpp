@@ -248,7 +248,7 @@ namespace CustomHud
 
 	void GetAccurateInfo()
 	{
-		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, &player.health);
+		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.health);
 		HwDLL::GetInstance().GetViewangles(player.viewangles);
 	}
 
@@ -649,7 +649,7 @@ namespace CustomHud
 		{
 			int x, y;
 			GetPosition(CVars::bxt_hud_healthmeter_offset, CVars::bxt_hud_healthmeter_anchor, &x, &y, 0, -4 * NumberHeight);
-			DrawNumber(player.health, x, y);
+			DrawNumber((int) player.health, x, y);
 		}
 	}
 

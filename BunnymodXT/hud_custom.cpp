@@ -113,16 +113,137 @@ namespace CustomHud
 		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x, y, &NumberSpriteRects[digit]);
 	}
 
+	static inline int DrawBitmap(int x, int y, const int bitmap[], int width, int height, int r, int g, int b) {
+		for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++)
+				ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x + j, y + i, 1, 1, r, g, b, bitmap[i * width + j]);
+
+		return width;
+	}
+
+	static void DrawDot(int x, int y, int r, int g, int b)
+	{
+		const int Dot320[] = {
+			143, 199, 122,
+			255, 255, 218,
+			120, 169, 95
+		};
+
+		const int Dot640[] = {
+			21,  114, 128, 128, 83,  21,
+			150, 255, 255, 255, 255, 104,
+			239, 255, 255, 255, 255, 192,
+			226, 255, 255, 255, 255, 165,
+			114, 255, 255, 255, 255, 65,
+			29,  43,  89,  89,  29,  29
+		};
+
+		if (si.iWidth < 640)
+			DrawBitmap(x, y, Dot320, 3, 3, r, g, b);
+		else
+			DrawBitmap(x, y, Dot640, 6, 6, r, g, b);
+	}
+
+	static void DrawLine(int x, int y, int length, int r, int g, int b) {
+		if ((si.iWidth < 640 && length < 3) || length < 5) {
+			// might as well draw a dot
+			DrawDot(x, y, r, g, b);
+		}
+
+
+		const int Line640_left[] = {
+			21,  114,
+			150, 255,
+			239, 255,
+			226, 255,
+			114, 255,
+			29,  43
+		};
+
+		const int Line640_repeat[] = {
+			128,
+			255,
+			255,
+			255,
+			255,
+			89
+		};
+
+		const int Line640_Right[] = {
+			 83,  21,
+			 255, 104,
+			 255, 192,
+			 255, 165,
+			 255, 65,
+			  29,  29
+		};
+
+		const int Line320_left[] = {
+			143,
+			255,
+			120,
+		};
+
+		const int Line320_repeat[] = {
+			 199,
+			 255,
+			 169,
+		};
+
+		const int Line320_Right[] = {
+			 122,
+			 218,
+			 95
+		};
+
+		const int *Line_Left;
+		const int *Line_Repeat;
+		const int *Line_Right;
+		int linesprite_height;
+		int linesprite_width;
+
+
+		if (si.iWidth <= 640) {
+			Line_Left = Line320_left;
+			Line_Repeat = Line320_repeat;
+			Line_Right = Line320_Right;
+			linesprite_height = 3;
+			linesprite_width = 1;
+		}
+		else {
+			Line_Left = Line640_left;
+			Line_Repeat = Line640_repeat;
+			Line_Right = Line640_Right;
+			linesprite_height = 6;
+			linesprite_width = 2;
+		}
+
+		y -= linesprite_height / 2;
+
+		x += DrawBitmap(x, y, Line_Left, linesprite_width, linesprite_height, r, g, b);
+
+
+		for (int xOffset = 0; xOffset < length - linesprite_width * 2; xOffset++) {
+			x += DrawBitmap(x, y, Line_Repeat, 1, linesprite_height, r, g, b);
+		}
+
+		DrawBitmap(x, y, Line_Right, linesprite_width, linesprite_height, r, g, b);
+
+	}
+
 	static int DrawNumber(int number, int x, int y, int r, int g, int b, int fieldMinWidth = 1)
 	{
 		if (number < 0)
 		{
 			if (number == std::numeric_limits<int>::min())
+			{
 				number = 0;
+			}
 			else
+			{
 				number = abs(number);
-
-			// TODO: draw a minus sign.
+				DrawLine(x - NumberWidth, y + NumberHeight / 2 , NumberWidth, r, g, b);
+			}
 		}
 
 		static_assert(sizeof(int) >= 4, "Int less than 4 bytes in size is not supported.");
@@ -160,31 +281,11 @@ namespace CustomHud
 		return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2], fieldMinWidth);
 	}
 
-	static void DrawDot(int x, int y, int r, int g, int b)
-	{
-		const int Dot320[] = {
-			143, 199, 122,
-			255, 255, 218,
-			120, 169, 95
-		};
-		const int Dot640[] = {
-			21,  114, 128, 83,  21,
-			150, 255, 255, 255, 104,
-			239, 255, 255, 255, 192,
-			226, 255, 255, 255, 165,
-			114, 255, 255, 255, 65,
-			29,  43,  89,  29,  29
-		};
+	
 
-		if (si.iWidth < 640)
-			for (int i = 0; i < 3; ++i)
-				for (int j = 0; j < 3; ++j)
-					ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x + j, y + i, 1, 1, r, g, b, Dot320[i*3 + j]);
-		else
-			for (int i = 0; i < 6; ++i)
-				for (int j = 0; j < 5; ++j)
-					ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x + j, y + i, 1, 1, r, g, b, Dot640[i*5 + j]);
-	}
+	
+
+	
 
 	static void DrawDecimalSeparator(int x, int y, int r, int g, int b)
 	{

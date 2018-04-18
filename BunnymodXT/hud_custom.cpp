@@ -148,6 +148,7 @@ namespace CustomHud
 		if ((si.iWidth < 640 && length < 3) || length < 5) {
 			// might as well draw a dot
 			DrawDot(x, y, r, g, b);
+			return;
 		}
 
 
@@ -171,11 +172,11 @@ namespace CustomHud
 
 		const int Line640_Right[] = {
 			 83,  21,
-			 255, 104,
-			 255, 192,
-			 255, 165,
-			 255, 65,
-			  29,  29
+			255, 104,
+			255, 192,
+			255, 165,
+			255,  65,
+			 29,  29
 		};
 
 		const int Line320_left[] = {
@@ -185,50 +186,46 @@ namespace CustomHud
 		};
 
 		const int Line320_repeat[] = {
-			 199,
-			 255,
-			 169,
+			199,
+			255,
+			169,
 		};
 
 		const int Line320_Right[] = {
-			 122,
-			 218,
-			 95
+			122,
+			218,
+			95
 		};
 
-		const int *Line_Left;
-		const int *Line_Repeat;
-		const int *Line_Right;
+		const int *line_left;
+		const int *line_repeat;
+		const int *line_right;
 		int linesprite_height;
 		int linesprite_width;
 
-
 		if (si.iWidth <= 640) {
-			Line_Left = Line320_left;
-			Line_Repeat = Line320_repeat;
-			Line_Right = Line320_Right;
+			line_left = Line320_left;
+			line_repeat = Line320_repeat;
+			line_right = Line320_Right;
 			linesprite_height = 3;
 			linesprite_width = 1;
-		}
-		else {
-			Line_Left = Line640_left;
-			Line_Repeat = Line640_repeat;
-			Line_Right = Line640_Right;
+		} else {
+			line_left = Line640_left;
+			line_repeat = Line640_repeat;
+			line_right = Line640_Right;
 			linesprite_height = 6;
 			linesprite_width = 2;
 		}
 
 		y -= linesprite_height / 2;
 
-		x += DrawBitmap(x, y, Line_Left, linesprite_width, linesprite_height, r, g, b);
-
+		x += DrawBitmap(x, y, line_left, linesprite_width, linesprite_height, r, g, b);
 
 		for (int xOffset = 0; xOffset < length - linesprite_width * 2; xOffset++) {
-			x += DrawBitmap(x, y, Line_Repeat, 1, linesprite_height, r, g, b);
+			x += DrawBitmap(x, y, line_repeat, 1, linesprite_height, r, g, b);
 		}
 
-		DrawBitmap(x, y, Line_Right, linesprite_width, linesprite_height, r, g, b);
-
+		DrawBitmap(x, y, line_right, linesprite_width, linesprite_height, r, g, b);
 	}
 
 	static int DrawNumber(int number, int x, int y, int r, int g, int b, int fieldMinWidth = 1)

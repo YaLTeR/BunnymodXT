@@ -889,8 +889,18 @@ namespace CustomHud
 					// Trace.
 					const auto result = HwDLL::GetInstance().UnsafePlayerTrace(start, end, hull_type);
 
-					const auto value = 255 - static_cast<int>(std::round(result.Fraction * 255));
-					glColor4ub(value, value, value, 255);
+					if (CVars::bxt_collision_depth_map_colors.GetBool()) {
+						const auto make_color = [](int value) {
+							return (value & 0xFF) ^ ((value >> 8) & 0xFF) ^ ((value >> 16) & 0xFF) ^ ((value >> 24) & 0xFF);
+						};
+						glColor4ub(make_color(*reinterpret_cast<const int*>(&result.PlaneNormal[0])),
+						           make_color(*reinterpret_cast<const int*>(&result.PlaneNormal[1])),
+						           make_color(*reinterpret_cast<const int*>(&result.PlaneNormal[2])),
+						           255);
+					} else {
+						const auto value = 255 - static_cast<int>(std::round(result.Fraction * 255));
+						glColor4ub(value, value, value, 255);
+					}
 
 					glBegin(GL_QUADS);
 					glVertex2f(x, y);

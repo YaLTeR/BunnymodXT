@@ -43,6 +43,7 @@ namespace CVars
 	CVarWrapper bxt_show_nodes("bxt_show_nodes", "0");
 	CVarWrapper bxt_show_custom_triggers("bxt_show_custom_triggers", "1");
 	CVarWrapper bxt_collision_depth_map("bxt_collision_depth_map", "0");
+	CVarWrapper bxt_collision_depth_map_colors("bxt_collision_depth_map_colors", "0");
 	CVarWrapper bxt_collision_depth_map_hull("bxt_collision_depth_map_hull", "2");
 	CVarWrapper bxt_collision_depth_map_max_depth("bxt_collision_depth_map_max_depth", "500");
 	CVarWrapper bxt_hud("bxt_hud", "1");
@@ -121,6 +122,7 @@ namespace CVars
 		&bxt_show_nodes,
 		&bxt_show_custom_triggers,
 		&bxt_collision_depth_map,
+		&bxt_collision_depth_map_colors,
 		&bxt_collision_depth_map_hull,
 		&bxt_collision_depth_map_max_depth,
 		&bxt_hud,

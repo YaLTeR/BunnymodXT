@@ -150,6 +150,7 @@ namespace CVars
 	extern CVarWrapper bxt_show_nodes;
 	extern CVarWrapper bxt_show_custom_triggers;
 	extern CVarWrapper bxt_collision_depth_map;
+	extern CVarWrapper bxt_collision_depth_map_colors;
 	extern CVarWrapper bxt_collision_depth_map_hull;
 	extern CVarWrapper bxt_collision_depth_map_max_depth;
 	extern CVarWrapper bxt_hud;

@@ -1728,6 +1728,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::_bxt_bunnysplit_time_update_frequency);
 	RegisterCVar(CVars::_bxt_save_runtime_data_in_demos);
 	RegisterCVar(CVars::bxt_collision_depth_map);
+	RegisterCVar(CVars::bxt_collision_depth_map_colors);
 	RegisterCVar(CVars::bxt_collision_depth_map_hull);
 	RegisterCVar(CVars::bxt_collision_depth_map_max_depth);
 

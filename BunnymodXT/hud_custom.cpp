@@ -835,12 +835,16 @@ namespace CustomHud
 			const auto cos_beta = std::cos(beta);
 			const auto sin_beta = std::sin(beta);
 
-			// The trace starting point.
+			// The trace starting point and forward vector.
 			float start[3];
 			ClientDLL::GetInstance().pEngfuncs->pEventAPI->EV_LocalPlayerViewheight(start);
 			start[0] += player.origin[0];
 			start[1] += player.origin[1];
 			start[2] += player.origin[2];
+
+			// Forward vector.
+			float forward[3], right[3], up[3];
+			ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player.viewangles, forward, right, up);
 
 			HwDLL::GetInstance().StartTracing();
 
@@ -859,12 +863,7 @@ namespace CustomHud
 					// Law of sines ambiguity.
 					if (x * x > a * a + l * l)
 						theta += 2 * (M_PI_2 - theta);
-
-					auto new_yaw = (player.viewangles[1] * M_DEG2RAD - fov / 2 + theta) * M_RAD2DEG;
-					if (new_yaw < 0)
-						new_yaw += 360;
-					else if (new_yaw >= 360)
-						new_yaw -= 360;
+					const auto hor_angle = -(fov / 2 - theta);
 
 					// Vertical angle.
 					const auto vl = std::sqrt(y * y + b_sq - 2 * y * b * cos_beta);
@@ -872,23 +871,19 @@ namespace CustomHud
 					// Law of sines ambiguity.
 					if (y * y > b_sq + vl * vl)
 						phi += 2 * (M_PI_2 - phi);
-
-					const auto new_pitch = (player.viewangles[0] * M_DEG2RAD - vfov / 2 + phi) * M_RAD2DEG;
-
-					// Forward vector.
-					// Pretty sure this math works only for pitch = 0 (force_centerview),
-					// the general case should compute the unmodified forward vector and then rotate that,
-					// but I can't think of an easy way of doing that and this works decently enough.
-					// Or maybe I'm mistaken and it works regardless of pitch. ¯\_(ツ)_/¯ might as well be the case.
-					const float angles[3] = { new_pitch, new_yaw, player.viewangles[2] };
-					float forward[3], right[3], up[3];
-					ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(angles, forward, right, up);
+					const auto vert_angle = vfov / 2 - phi;
 
 					// End position.
+					const float new_forward[3] = {
+						forward[0] + right[0] * hor_angle + up[0] * vert_angle,
+						forward[1] + right[1] * hor_angle + up[1] * vert_angle,
+						forward[2] + right[2] * hor_angle + up[2] * vert_angle
+					};
+					const auto new_forward_len = std::sqrt(new_forward[0] * new_forward[0] + new_forward[1] * new_forward[1] + new_forward[2] * new_forward[2]);
 					const float end[3] = {
-						start[0] + forward[0] * max_depth,
-						start[1] + forward[1] * max_depth,
-						start[2] + forward[2] * max_depth
+						start[0] + new_forward[0] / new_forward_len * max_depth,
+						start[1] + new_forward[1] / new_forward_len * max_depth,
+						start[2] + new_forward[2] / new_forward_len * max_depth
 					};
 
 					// Trace.
@@ -897,12 +892,11 @@ namespace CustomHud
 					const auto value = 255 - static_cast<int>(std::round(result.Fraction * 255));
 					glColor4ub(value, value, value, 255);
 
-					const auto draw_x = si.iWidth - x - 1;
 					glBegin(GL_QUADS);
-					glVertex2f(draw_x, y);
-					glVertex2f(draw_x, y + 1);
-					glVertex2f(draw_x + 1, y + 1);
-					glVertex2f(draw_x + 1, y);
+					glVertex2f(x, y);
+					glVertex2f(x, y + 1);
+					glVertex2f(x + 1, y + 1);
+					glVertex2f(x + 1, y);
 					glEnd();
 				}
 			}

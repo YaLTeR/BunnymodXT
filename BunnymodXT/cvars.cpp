@@ -28,6 +28,7 @@ namespace CVars
 	CVarWrapper sv_stepsize;
 	CVarWrapper sv_bounce;
 	CVarWrapper fps_max;
+	CVarWrapper default_fov;
 
 	// Serverside CVars
 	CVarWrapper bxt_autojump("bxt_autojump", "0");
@@ -41,6 +42,9 @@ namespace CVars
 	CVarWrapper bxt_bhopcap_prediction("bxt_bhopcap_prediction", "1");
 	CVarWrapper bxt_show_nodes("bxt_show_nodes", "0");
 	CVarWrapper bxt_show_custom_triggers("bxt_show_custom_triggers", "1");
+	CVarWrapper bxt_collision_depth_map("bxt_collision_depth_map", "0");
+	CVarWrapper bxt_collision_depth_map_hull("bxt_collision_depth_map_hull", "2");
+	CVarWrapper bxt_collision_depth_map_max_depth("bxt_collision_depth_map_max_depth", "500");
 	CVarWrapper bxt_hud("bxt_hud", "1");
 	CVarWrapper bxt_hud_color("bxt_hud_color", "");
 	CVarWrapper bxt_hud_precision("bxt_hud_precision", "6");
@@ -106,6 +110,7 @@ namespace CVars
 		&sv_stepsize,
 		&sv_bounce,
 		&fps_max,
+		&default_fov,
 		&bxt_autojump,
 		&bxt_bhopcap,
 		&bxt_timer_autostop,
@@ -115,6 +120,9 @@ namespace CVars
 		&bxt_bhopcap_prediction,
 		&bxt_show_nodes,
 		&bxt_show_custom_triggers,
+		&bxt_collision_depth_map,
+		&bxt_collision_depth_map_hull,
+		&bxt_collision_depth_map_max_depth,
 		&bxt_hud,
 		&bxt_hud_color,
 		&bxt_hud_precision,

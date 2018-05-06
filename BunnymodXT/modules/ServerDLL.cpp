@@ -1206,9 +1206,12 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, CMultiManager__ManagerUse_Linux, void*, thi
 	return ORIG_CMultiManager__ManagerUse_Linux(thisptr, pActivator, pCaller, useType, value);
 }
 
-void ServerDLL::GetTriggerColor(const char *classname, int solidType, float &r, float &g, float &b, float &a) const
+void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a)
 {
 	assert(std::strncmp(classname, "trigger_", 8) == 0);
+
+	// The alpha should be lower in additive modes.
+	constexpr std::array<std::array<float, 2>, 2> common_alphas{ { 120.0f, 50.0f }, { 50.0f, 20.0f } };
 
 	classname += 8;
 	if (std::strcmp(classname, "changelevel") == 0) {
@@ -1216,49 +1219,49 @@ void ServerDLL::GetTriggerColor(const char *classname, int solidType, float &r, 
 		r = 79;
 		g = 255;
 		b = 10;
-		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
+		a = common_alphas[inactive][additive];
 	} else if (std::strcmp(classname, "hurt") == 0) {
 		// Red
 		r = 255;
 		g = 0;
 		b = 0;
-		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
+		a = common_alphas[inactive][additive];
 	} else if (std::strcmp(classname, "multiple") == 0) {
 		// Blue
 		r = 0;
 		g = 0;
 		b = 255;
-		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
+		a = common_alphas[inactive][additive];
 	} else if (std::strcmp(classname, "once") == 0) {
 		// Cyan
 		r = 0;
 		g = 255;
 		b = 255;
-		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
+		a = common_alphas[inactive][additive];
 	} else if (std::strcmp(classname, "push") == 0) {
 		// Bright yellow
 		r = 255;
 		g = 255;
 		b = 0;
-		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
+		a = common_alphas[inactive][additive];
 	} else if (std::strcmp(classname, "teleport") == 0) {
 		// Dull green
 		r = 81;
 		g = 147;
 		b = 49;
-		a = (solidType == SOLID_NOT) ? 50.f : 120.f;
+		a = common_alphas[inactive][additive];
 	} else if (std::strcmp(classname, "transition") == 0) {
 		// Magenta
 		r = 203;
 		g = 103;
 		b = 212;
-		a = 120;
+		a = additive ? 50.0f : 120.0f;
 	} else {
 		// White
 		r = 255;
 		g = 255;
 		b = 255;
-		a = (solidType == SOLID_NOT) ? 50.f : 100.f;
+		a = common_alphas[inactive][additive];
 	}
 }
 
@@ -1300,7 +1303,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 			ent->v.renderfx = kRenderNormal;
 		else
 			ent->v.renderfx = kRenderFxPulseFast;
-		GetTriggerColor(classname, ent->v.solid, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z, ent->v.renderamt);
+		GetTriggerColor(classname, ent->v.solid == SOLID_NOT, false, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z, ent->v.renderamt);
 	}
 
 	auto ret = ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);

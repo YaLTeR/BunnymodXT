@@ -52,10 +52,11 @@ public:
 	std::vector<const Vector *> GetNodePositions() const;
 
 	inline const char *GetString(int string) const {
-		if (!ppGlobals)
-			return nullptr;
+		assert(ppGlobals);
 		return (*ppGlobals)->pStringBase + string;
 	}
+
+	static void GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a);
 
 	enginefuncs_t *pEngfuncs;
 
@@ -63,8 +64,6 @@ private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
 	ServerDLL(const ServerDLL&);
 	void operator=(const ServerDLL&);
-
-	void GetTriggerColor(const char *classname, int solidType, float &r, float &g, float &b, float &a) const;
 
 protected:
 	typedef int(__cdecl *_GetEntityAPI)(DLL_FUNCTIONS* pFunctionTable, int interfaceVersion);

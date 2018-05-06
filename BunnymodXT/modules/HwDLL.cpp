@@ -2,6 +2,7 @@
 
 #include <boost/algorithm/string/replace.hpp>
 #include <cerrno>
+#include <GL/gl.h>
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
@@ -17,7 +18,6 @@
 #include "../runtime_data.hpp"
 #include "../git_revision.hpp"
 #include "../custom_triggers.hpp"
-#include <GL/gl.h>
 
 using namespace std::literals;
 

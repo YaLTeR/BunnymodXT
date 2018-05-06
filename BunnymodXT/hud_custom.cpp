@@ -278,12 +278,6 @@ namespace CustomHud
 		return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2], fieldMinWidth);
 	}
 
-	
-
-	
-
-	
-
 	static void DrawDecimalSeparator(int x, int y, int r, int g, int b)
 	{
 		x += (NumberWidth - 6) / 2;
@@ -740,6 +734,41 @@ namespace CustomHud
 		}
 	}
 
+	void DrawNihilanthInfo(float flTime)
+	{
+		static const char *IRRITATIONS[4] = {"idle", "attacking", "opened", "killed"};
+
+		if (CVars::bxt_hud_nihilanth.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 20) + 3);
+
+			std::ostringstream out;
+			out << "Nihilanth:\n";
+
+			float health;
+			int level, irritation, nspheres;
+			bool recharger;
+			if (ServerDLL::GetInstance().GetNihilanthInfo(health, level, irritation, recharger, nspheres)) {
+				// This check is in case the offset for m_irritation is wrong
+				// and so some weird values are obtained.
+				const char *irritation_str = "INVALID";
+				if (0 <= irritation && irritation <= 3) {
+					irritation_str = IRRITATIONS[irritation];
+				}
+				out << "health " << health << '\n'
+					<< "level " << level << "/10\n"
+					<< "irritation " << irritation << " (" << irritation_str << ")\n"
+					<< "recharger " << (recharger ? "found" : "not found") << '\n'
+					<< "spheres " << nspheres << "/20";
+			} else {
+				out << "Cannot be found";
+			}
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
 	void DrawHealth(float flTime)
 	{
 		if (CVars::bxt_hud_health.GetBool())
@@ -1004,6 +1033,7 @@ namespace CustomHud
 		DrawEntityHP(flTime);
 		DrawSelfgaussInfo(flTime);
 		DrawVisibleLandmarks(flTime);
+		DrawNihilanthInfo(flTime);
 		DrawIncorrectFPSIndicator(flTime);
 		DrawCollisionDepthMap(flTime);
 

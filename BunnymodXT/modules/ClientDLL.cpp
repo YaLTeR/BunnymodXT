@@ -430,6 +430,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_health);
 		REG(bxt_hud_health_offset);
 		REG(bxt_hud_health_anchor);
+		REG(bxt_hud_nihilanth);
+		REG(bxt_hud_nihilanth_offset);
+		REG(bxt_hud_nihilanth_anchor);
 		REG(bxt_hud_timer);
 		REG(bxt_hud_timer_offset);
 		REG(bxt_hud_timer_anchor);

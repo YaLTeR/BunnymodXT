@@ -50,6 +50,7 @@ public:
 
 	std::vector<const edict_t *> GetUseableEntities(const Vector &origin, float radius) const;
 	std::vector<const Vector *> GetNodePositions() const;
+	bool GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres) const;
 
 	inline const char *GetString(int string) const {
 		assert(ppGlobals);
@@ -112,6 +113,12 @@ protected:
 	static const ptrdiff_t offFuncIsPlayer = 0x9C;
 	static const ptrdiff_t offFuncCenter = 0xC8;
 	static const ptrdiff_t offFuncObjectCaps = 0x14;
+
+	// FIXME: sadly these offsets only work on the latest steam on Windows
+	static const ptrdiff_t offNihilanthLevel = 0x304;
+	static const ptrdiff_t offNihilanthIrritation = 0x300;
+	static const ptrdiff_t offNihilanthRecharger = 0x30C;
+	static const ptrdiff_t offNihilanthSpheres = 0x314;
 
 	ptrdiff_t offm_iClientFOV;
 	ptrdiff_t offm_rgAmmoLast;

@@ -1522,3 +1522,30 @@ std::vector<const Vector *> ServerDLL::GetNodePositions() const
 
 	return positions;
 }
+
+bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres) const
+{
+	// Assume there's only one nihilanth!
+	edict_t *pent = pEngfuncs->pfnFindEntityByString(nullptr, "classname", "monster_nihilanth");
+	if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent)) {
+		return false;
+	}
+
+	health = pent->v.health;
+	const auto pobj = reinterpret_cast<uintptr_t>(pent->pvPrivateData);
+	level = *reinterpret_cast<int *>(pobj + offNihilanthLevel);
+	irritation = *reinterpret_cast<int *>(pobj + offNihilanthIrritation);
+	// sizeof(EHANDLE) is 8, like uint64_t
+	recharger = *reinterpret_cast<uint64_t *>(pobj + offNihilanthRecharger) != 0;
+	const auto *spheres = reinterpret_cast<uint64_t *>(pobj + offNihilanthSpheres);
+
+	nspheres = 0;
+	// Exactly 20 spheres in total
+	for (int i = 0; i < 20; ++i) {
+		if (spheres[i]) {
+			++nspheres;
+		}
+	}
+
+	return true;
+}

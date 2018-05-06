@@ -1800,8 +1800,13 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::_bxt_norefresh);
 	RegisterCVar(CVars::_bxt_bunnysplit_time_update_frequency);
 	RegisterCVar(CVars::_bxt_save_runtime_data_in_demos);
+	RegisterCVar(CVars::bxt_collision_depth_map);
+	RegisterCVar(CVars::bxt_collision_depth_map_colors);
+	RegisterCVar(CVars::bxt_collision_depth_map_hull);
+	RegisterCVar(CVars::bxt_collision_depth_map_max_depth);
 
 	CVars::fps_max.Assign(FindCVar("fps_max"));
+	CVars::default_fov.Assign(FindCVar("default_fov"));
 
 	if (!ORIG_Cmd_AddMallocCommand)
 		return;
@@ -2550,6 +2555,38 @@ void HwDLL::GetViewangles(float* va)
 
 HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull)
 {
+	StartTracing();
+	const auto rv = UnsafePlayerTrace(start, end, hull);
+	StopTracing();
+
+	return rv;
+}
+
+void HwDLL::StartTracing() {
+	if (!ORIG_PM_PlayerTrace || svs->num_clients < 1) {
+		return;
+	}
+
+	trace_oldclient = *host_client;
+	*host_client = svs->clients;
+	trace_oldplayer = *sv_player;
+	*sv_player = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	trace_oldmove = *ppmove;
+	*ppmove = svmove;
+	ORIG_SV_AddLinksToPM(sv_areanodes, (*sv_player)->v.origin);
+}
+
+void HwDLL::StopTracing() {
+	if (!ORIG_PM_PlayerTrace || svs->num_clients < 1) {
+		return;
+	}
+
+	*ppmove = trace_oldmove;
+	*sv_player = trace_oldplayer;
+	*host_client = trace_oldclient;
+}
+
+HLStrafe::TraceResult HwDLL::UnsafePlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull) {
 	auto tr = HLStrafe::TraceResult{};
 
 	if (!ORIG_PM_PlayerTrace || svs->num_clients < 1) {
@@ -2561,14 +2598,6 @@ HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3
 		return tr;
 	}
 
-	auto oldclient = *host_client;
-	*host_client = svs->clients;
-	auto oldplayer = *sv_player;
-	*sv_player = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
-	auto oldmove = *ppmove;
-	*ppmove = svmove;
-	ORIG_SV_AddLinksToPM(sv_areanodes, (*sv_player)->v.origin);
-
 	auto usehull = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(svmove) + 0xBC);
 	auto oldhull = *usehull;
 	*usehull = static_cast<int>(hull);
@@ -2577,9 +2606,6 @@ HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3
 	auto pmtr = ORIG_PM_PlayerTrace(start, end, PM_NORMAL, -1);
 
 	*usehull = oldhull;
-	*ppmove = oldmove;
-	*sv_player = oldplayer;
-	*host_client = oldclient;
 
 	tr.AllSolid = (pmtr.allsolid != 0);
 	tr.StartSolid = (pmtr.startsolid != 0);

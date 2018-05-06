@@ -190,6 +190,13 @@ public:
 
 	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
 
+	// Don't call StartTrace() or StopTracing() twice in a row.
+	// The sequence must always be StartTracing() => StopTracing().
+	void StartTracing();
+	void StopTracing();
+	// You must call StartTracting() before calling this and StopTracing() after calling this.
+	HLStrafe::TraceResult UnsafePlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
+
 	unsigned QueuedSharedRNGSeeds;
 
 	double *frametime_remainder;
@@ -335,6 +342,10 @@ protected:
 
 	bool insideSeedRNG;
 	unsigned LastRandomSeed;
+
+	client_t* trace_oldclient;
+	edict_t* trace_oldplayer;
+	void* trace_oldmove;
 
 	HLStrafe::PlayerData player;
 	HLTAS::Input input;

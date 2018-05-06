@@ -7,7 +7,7 @@
 #include "interprocess.hpp"
 #include "runtime_data.hpp"
 
-#include <chrono>
+#include <GL/gl.h>
 
 namespace CustomHud
 {
@@ -803,6 +803,118 @@ namespace CustomHud
 		lastTime = flTime;
 	}
 
+	static void DrawColllisionDepthMap(float flTime)
+	{
+		if (CVars::bxt_collision_depth_map.GetBool())
+		{
+			constexpr float M_DEG2RAD = float(M_PI) / 180.f;
+			constexpr float M_RAD2DEG = 180.f / float(M_PI);
+
+			const auto hull_type = static_cast<HLStrafe::HullType>(std::clamp(CVars::bxt_collision_depth_map_hull.GetInt(), 0, 2));
+
+			// Arbitrary sanity clamps.
+			const auto max_depth = std::max(CVars::bxt_collision_depth_map_max_depth.GetFloat(), 10.f);
+
+			// Some horizontal constants.
+			const auto fov = std::clamp(CVars::default_fov.GetFloat(), 30.f, 150.f) * M_DEG2RAD;
+			const auto alpha = float(M_PI_2) - fov / 2;
+			const auto cos_alpha = std::cos(alpha);
+			const auto sin_alpha = std::sin(alpha);
+			const auto a = si.iWidth / std::sin(fov) * sin_alpha;
+			const auto a_sq = a * a;
+
+			// Some vertical constants.
+			const auto b_sq = a * a - (si.iWidth * si.iWidth - si.iHeight * si.iHeight) / 4.f;
+			const auto b = std::sqrt(b_sq);
+			const auto vfov = std::acos(1 - (si.iHeight * si.iHeight) / (2 * b_sq));
+			const auto beta = float(M_PI_2) - vfov / 2;
+			const auto cos_beta = std::cos(beta);
+			const auto sin_beta = std::sin(beta);
+
+			// The trace starting point and forward vector.
+			float start[3];
+			ClientDLL::GetInstance().pEngfuncs->pEventAPI->EV_LocalPlayerViewheight(start);
+			start[0] += player.origin[0];
+			start[1] += player.origin[1];
+			start[2] += player.origin[2];
+
+			// Forward vector.
+			float forward[3], right[3], up[3];
+			ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player.viewangles, forward, right, up);
+
+			HwDLL::GetInstance().StartTracing();
+
+			// Set up some OpenGL stuff.
+			glDisable(GL_TEXTURE_2D);
+			glEnable(GL_BLEND);
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+			// Main loop.
+			for (int y = 0; y < si.iHeight; ++y) {
+				for (int x = 0; x < si.iWidth; ++x) {
+					// Horizontal angle.
+					const auto l = std::sqrt(x * x + a_sq - 2 * x * a * cos_alpha);
+					auto theta = std::asin(sin_alpha * x / l);
+					// Law of sines ambiguity.
+					if (x * x > a * a + l * l)
+						theta += 2 * (M_PI_2 - theta);
+					const auto hor_angle = -(fov / 2 - theta);
+
+					// Vertical angle.
+					const auto vl = std::sqrt(y * y + b_sq - 2 * y * b * cos_beta);
+					auto phi = std::asin(sin_beta * y / vl);
+					// Law of sines ambiguity.
+					if (y * y > b_sq + vl * vl)
+						phi += 2 * (M_PI_2 - phi);
+					const auto vert_angle = vfov / 2 - phi;
+
+					// End position.
+					const float new_forward[3] = {
+						forward[0] + right[0] * hor_angle + up[0] * vert_angle,
+						forward[1] + right[1] * hor_angle + up[1] * vert_angle,
+						forward[2] + right[2] * hor_angle + up[2] * vert_angle
+					};
+					const auto new_forward_len = std::sqrt(new_forward[0] * new_forward[0] + new_forward[1] * new_forward[1] + new_forward[2] * new_forward[2]);
+					const float end[3] = {
+						start[0] + new_forward[0] / new_forward_len * max_depth,
+						start[1] + new_forward[1] / new_forward_len * max_depth,
+						start[2] + new_forward[2] / new_forward_len * max_depth
+					};
+
+					// Trace.
+					const auto result = HwDLL::GetInstance().UnsafePlayerTrace(start, end, hull_type);
+
+					if (CVars::bxt_collision_depth_map_colors.GetBool()) {
+						const auto make_color = [](int value) {
+							return (value & 0xFF) ^ ((value >> 8) & 0xFF) ^ ((value >> 16) & 0xFF) ^ ((value >> 24) & 0xFF);
+						};
+						glColor4ub(make_color(*reinterpret_cast<const int*>(&result.PlaneNormal[0])),
+						           make_color(*reinterpret_cast<const int*>(&result.PlaneNormal[1])),
+						           make_color(*reinterpret_cast<const int*>(&result.PlaneNormal[2])),
+						           255);
+					} else {
+						const auto value = 255 - static_cast<int>(std::round(result.Fraction * 255));
+						glColor4ub(value, value, value, 255);
+					}
+
+					glBegin(GL_QUADS);
+					glVertex2f(x, y);
+					glVertex2f(x, y + 1);
+					glVertex2f(x + 1, y + 1);
+					glVertex2f(x + 1, y);
+					glEnd();
+				}
+			}
+
+			glColor3f(1.0f, 1.0f, 1.0f);
+			glDisable(GL_BLEND);
+			glEnable(GL_TEXTURE_2D);
+
+			HwDLL::GetInstance().StopTracing();
+		}
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -893,6 +1005,7 @@ namespace CustomHud
 		DrawSelfgaussInfo(flTime);
 		DrawVisibleLandmarks(flTime);
 		DrawIncorrectFPSIndicator(flTime);
+		DrawColllisionDepthMap(flTime);
 
 		receivedAccurateInfo = false;
 	}

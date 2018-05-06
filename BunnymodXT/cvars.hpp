@@ -135,6 +135,7 @@ namespace CVars
 	extern CVarWrapper sv_stepsize;
 	extern CVarWrapper sv_bounce;
 	extern CVarWrapper fps_max;
+	extern CVarWrapper default_fov;
 
 	// Serverside CVars
 	extern CVarWrapper bxt_autojump;
@@ -153,6 +154,10 @@ namespace CVars
 	extern CVarWrapper bxt_wallhack_alpha;
 	extern CVarWrapper bxt_novis;
 	extern CVarWrapper bxt_show_triggers;
+	extern CVarWrapper bxt_collision_depth_map;
+	extern CVarWrapper bxt_collision_depth_map_colors;
+	extern CVarWrapper bxt_collision_depth_map_hull;
+	extern CVarWrapper bxt_collision_depth_map_max_depth;
 	extern CVarWrapper bxt_hud;
 	extern CVarWrapper bxt_hud_color;
 	extern CVarWrapper bxt_hud_precision;

@@ -736,7 +736,7 @@ namespace CustomHud
 
 	void DrawNihilanthInfo(float flTime)
 	{
-		static const char *IRRITATIONS[4] = {"idle", "attacking", "opened", "killed"};
+		static const char *IRRITATIONS[4] = {"Idle", "Attacking", "Opened", "Killed"};
 
 		if (CVars::bxt_hud_nihilanth.GetBool())
 		{
@@ -756,13 +756,13 @@ namespace CustomHud
 				if (0 <= irritation && irritation <= 3) {
 					irritation_str = IRRITATIONS[irritation];
 				}
-				out << "health " << health << '\n'
-					<< "level " << level << "/10\n"
-					<< "irritation " << irritation << " (" << irritation_str << ")\n"
-					<< "recharger " << (recharger ? "found" : "not found") << '\n'
-					<< "spheres " << nspheres << "/20";
+				out << "Health: " << health << '\n'
+					<< "Level: " << level << "/10\n"
+					<< "Irritation: " << irritation << " (" << irritation_str << ")\n"
+					<< "Recharger: " << (recharger ? "Found" : "Not found") << '\n'
+					<< "Spheres: " << nspheres << "/20";
 			} else {
-				out << "Cannot be found";
+				out << "Not found";
 			}
 
 			DrawMultilineString(x, y, out.str());

@@ -172,10 +172,14 @@ namespace TriangleDrawing
 				const float offset = i * M_PI / 7;
 				float r, g, b, a;
 				ServerDLL::GetTriggerColor(classname, !active, true, r, g, b, a);
+				r /= 255.0f;
+				g /= 255.0f;
+				b /= 255.0f;
+				a /= 255.0f;
 				if (active)
 					a = GetPulsatingAlpha(a, svTime + offset);
 
-				pTriAPI->Color4f(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+				pTriAPI->Color4f(r, g, b, a);
 				pTriAPI->Begin(TRI_POLYGON);
 				for (int j = 0; j < surfs[i].polys->numverts; ++j)
 					pTriAPI->Vertex3fv(surfs[i].polys->verts[j]);

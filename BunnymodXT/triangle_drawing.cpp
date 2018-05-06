@@ -130,7 +130,65 @@ namespace TriangleDrawing
 		}
 	}
 
+	static float GetPulsatingAlpha(float a, float time)
+	{
+		constexpr float speed = 8.0f;
+		float s = std::sinf(speed * time);
+		s *= 0.05f;
+		s += a;
+		s = std::max(s, 0.0f);
+		s = std::min(s, 1.0f);
+		return s;
+	}
+
 	static void DrawTriggers(triangleapi_s *pTriAPI)
+	{
+		if (!CVars::bxt_show_triggers.GetBool() || CVars::bxt_show_triggers_legacy.GetBool())
+			return;
+
+		pTriAPI->RenderMode(kRenderTransAdd);
+		pTriAPI->CullFace(TRI_NONE);
+
+		const double svTime = HwDLL::GetInstance().GetTime();
+		edict_t *edicts;
+		const int numEdicts = HwDLL::GetInstance().GetEdicts(&edicts);
+		for (int e = 1; e < numEdicts; ++e) {
+			const edict_t *ent = edicts + e;
+			if (!HwDLL::GetInstance().IsValidEdict(ent))
+				continue;
+
+			const char *classname = ServerDLL::GetInstance().GetString(ent->v.classname);
+			if (std::strncmp(classname, "trigger_", 8) != 0)
+				continue;
+
+			const model_t *model = HwDLL::GetInstance().GetModelByIndex(ent->v.modelindex);
+			if (!model)
+				continue;
+
+			const bool active = ent->v.solid != SOLID_NOT || std::strcmp(classname, "trigger_transition") == 0;
+			const msurface_t *surfs = model->surfaces + model->firstmodelsurface;
+			for (int i = 0; i < model->nummodelsurfaces; ++i) {
+				// Offset to make each surface look slightly different
+				const float offset = i * M_PI / 7;
+				float r, g, b, a;
+				ServerDLL::GetTriggerColor(classname, !active, true, r, g, b, a);
+				r /= 255.0f;
+				g /= 255.0f;
+				b /= 255.0f;
+				a /= 255.0f;
+				if (active)
+					a = GetPulsatingAlpha(a, svTime + offset);
+
+				pTriAPI->Color4f(r, g, b, a);
+				pTriAPI->Begin(TRI_POLYGON);
+				for (int j = 0; j < surfs[i].polys->numverts; ++j)
+					pTriAPI->Vertex3fv(surfs[i].polys->verts[j]);
+				pTriAPI->End();
+			}
+		}
+	}
+
+	static void DrawCustomTriggers(triangleapi_s *pTriAPI)
 	{
 		if (!CVars::bxt_show_custom_triggers.GetBool())
 			return;
@@ -169,5 +227,6 @@ namespace TriangleDrawing
 		DrawNodes(pTriAPI);
 		DrawUseableEntities(pTriAPI);
 		DrawTriggers(pTriAPI);
+		DrawCustomTriggers(pTriAPI);
 	}
 }

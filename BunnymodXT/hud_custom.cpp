@@ -7,9 +7,6 @@
 #include "interprocess.hpp"
 #include "runtime_data.hpp"
 
-#include <algorithm>
-#include <chrono>
-
 #include <GL/gl.h>
 
 namespace CustomHud
@@ -811,8 +808,8 @@ namespace CustomHud
 	{
 		if (CVars::bxt_collision_depth_map.GetBool())
 		{
-			constexpr float M_DEG2RAD = M_PI / 180.f;
-			constexpr float M_RAD2DEG = 180.f / M_PI;
+			constexpr float M_DEG2RAD = float(M_PI) / 180.f;
+			constexpr float M_RAD2DEG = 180.f / float(M_PI);
 
 			const auto hull_type = static_cast<HLStrafe::HullType>(std::clamp(CVars::bxt_collision_depth_map_hull.GetInt(), 0, 2));
 
@@ -821,7 +818,7 @@ namespace CustomHud
 
 			// Some horizontal constants.
 			const auto fov = std::clamp(CVars::default_fov.GetFloat(), 30.f, 150.f) * M_DEG2RAD;
-			const auto alpha = float { M_PI_2 } - fov / 2;
+			const auto alpha = float(M_PI_2) - fov / 2;
 			const auto cos_alpha = std::cos(alpha);
 			const auto sin_alpha = std::sin(alpha);
 			const auto a = si.iWidth / std::sin(fov) * sin_alpha;
@@ -831,7 +828,7 @@ namespace CustomHud
 			const auto b_sq = a * a - (si.iWidth * si.iWidth - si.iHeight * si.iHeight) / 4.f;
 			const auto b = std::sqrt(b_sq);
 			const auto vfov = std::acos(1 - (si.iHeight * si.iHeight) / (2 * b_sq));
-			const auto beta = float { M_PI_2 } - vfov / 2;
+			const auto beta = float(M_PI_2) - vfov / 2;
 			const auto cos_beta = std::cos(beta);
 			const auto sin_beta = std::sin(beta);
 

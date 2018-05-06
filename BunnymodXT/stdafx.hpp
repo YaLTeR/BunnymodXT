@@ -4,6 +4,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
+#define _USE_MATH_DEFINES
 #include <Windows.h>
 #include <process.h>
 #else
@@ -29,6 +30,7 @@
 #include <cstring>
 #include <ctime>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <fstream>

@@ -1211,7 +1211,10 @@ void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool addit
 	assert(std::strncmp(classname, "trigger_", 8) == 0);
 
 	// The alpha should be lower in additive modes.
-	constexpr std::array<std::array<float, 2>, 2> common_alphas{ { 120.0f, 50.0f }, { 50.0f, 20.0f } };
+	constexpr std::array<std::array<float, 2>, 2> common_alphas{
+		std::array<float, 2>{ 120.0f, 50.0f },
+		std::array<float, 2>{ 50.0f, 20.0f }
+	};
 
 	classname += 8;
 	if (std::strcmp(classname, "changelevel") == 0) {

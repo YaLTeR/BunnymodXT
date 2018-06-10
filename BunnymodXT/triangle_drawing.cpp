@@ -133,7 +133,7 @@ namespace TriangleDrawing
 	static float GetPulsatingAlpha(float a, float time)
 	{
 		constexpr float speed = 8.0f;
-		float s = std::sinf(speed * time);
+		float s = std::sin(speed * time);
 		s *= 0.05f;
 		s += a;
 		s = std::max(s, 0.0f);

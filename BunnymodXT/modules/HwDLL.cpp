@@ -1805,6 +1805,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_collision_depth_map_hull);
 	RegisterCVar(CVars::bxt_collision_depth_map_max_depth);
 
+	CVars::sv_cheats.Assign(FindCVar("sv_cheats"));
 	CVars::fps_max.Assign(FindCVar("fps_max"));
 	CVars::default_fov.Assign(FindCVar("default_fov"));
 
@@ -3011,7 +3012,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cmd_Exec_f)
 // the worldspawn and other brush entities but not studio models (NPCs).
 HOOK_DEF_2(HwDLL, void, __cdecl, R_DrawSequentialPoly, msurface_t *, surf, int, face)
 {
-	if (!(CmdFuncs::IsCheating() && CVars::bxt_wallhack.GetBool())) {
+	if (!(CVars::sv_cheats.GetBool() && CVars::bxt_wallhack.GetBool())) {
 		ORIG_R_DrawSequentialPoly(surf, face);
 		return;
 	}
@@ -3035,7 +3036,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (CmdFuncs::IsCheating() && CVars::bxt_wallhack.GetBool()) {
+	if (CVars::sv_cheats.GetBool() && CVars::bxt_wallhack.GetBool()) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}

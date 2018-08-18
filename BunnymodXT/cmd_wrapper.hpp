@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <utility>
+#include "cvars.hpp"
 
 #define USAGE(text) inline static auto Usage() { return CmdWrapper::has_usage_t{ text }; }
 #define NO_USAGE() inline static auto Usage() { return CmdWrapper::has_no_usage_t{}; }
@@ -92,7 +93,7 @@ namespace CmdWrapper
 		static void AddCheat(const char *name)
 		{
 			CmdFuncs::AddCommand(name, [] {
-				if (CmdFuncs::IsCheating())
+				if (CVars::sv_cheats.GetBool())
 					CallHandlers<H, Handlers...>(CmdFuncs::Argc());
 			});
 		}

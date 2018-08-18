@@ -17,6 +17,7 @@ namespace CVars
 	CVarWrapper bxt_stop_demo_on_changelevel("bxt_stop_demo_on_changelevel", "0");
 
 	CVarWrapper con_color;
+	CVarWrapper sv_cheats;
 	CVarWrapper sv_maxvelocity;
 	CVarWrapper sv_maxspeed;
 	CVarWrapper sv_stopspeed;
@@ -105,6 +106,7 @@ namespace CVars
 		&bxt_fade_remove,
 		&bxt_stop_demo_on_changelevel,
 		&con_color,
+		&sv_cheats,
 		&sv_maxvelocity,
 		&sv_maxspeed,
 		&sv_stopspeed,

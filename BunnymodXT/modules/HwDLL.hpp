@@ -107,11 +107,6 @@ class HwDLL : public IHookableNameFilterOrdered
 		{
 			return HwDLL::GetInstance().ORIG_Con_Printf("%s", s);
 		}
-
-		inline static bool IsCheating()
-		{
-			return HwDLL::GetInstance().FindCVar("sv_cheats")->value != 0.0f;
-		}
 	};
 
 public:

@@ -124,6 +124,7 @@ namespace CVars
 	extern CVarWrapper bxt_stop_demo_on_changelevel;
 
 	extern CVarWrapper con_color;
+	extern CVarWrapper sv_cheats;
 	extern CVarWrapper sv_maxvelocity;
 	extern CVarWrapper sv_maxspeed;
 	extern CVarWrapper sv_stopspeed;

@@ -803,7 +803,7 @@ namespace CustomHud
 		lastTime = flTime;
 	}
 
-	static void DrawColllisionDepthMap(float flTime)
+	static void DrawCollisionDepthMap(float flTime)
 	{
 		if (CVars::bxt_collision_depth_map.GetBool())
 		{
@@ -1005,7 +1005,7 @@ namespace CustomHud
 		DrawSelfgaussInfo(flTime);
 		DrawVisibleLandmarks(flTime);
 		DrawIncorrectFPSIndicator(flTime);
-		DrawColllisionDepthMap(flTime);
+		DrawCollisionDepthMap(flTime);
 
 		receivedAccurateInfo = false;
 	}

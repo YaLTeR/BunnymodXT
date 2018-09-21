@@ -2301,12 +2301,12 @@ void HwDLL::InsertCommands()
 						KeyDown(currentKeys.btn); \
 					else if (!btn && currentKeys.btn.IsDown()) \
 						KeyUp(currentKeys.btn);
-			if (ducktap) {
+			if (jumpbug) {
+				INS(Duck)
+				INS(Jump)
+			} else if (ducktap) {
 				INS(Duck)
 			} else if (autojump) {
-				INS(Jump)
-			} else if (jumpbug) {
-				INS(Duck)
 				INS(Jump)
 			}
 			#undef INS

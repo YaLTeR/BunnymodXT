@@ -2253,9 +2253,8 @@ void HwDLL::InsertCommands()
 			bool Duck = false, Jump = false;
 
 			auto playerCopy = HLStrafe::PlayerData(player); // Our copy that we will mess with.
-			HLStrafe::TraceFunc traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+			auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 			auto postype = GetPositionType(playerCopy, traceFunc);
-			auto vars = GetMovementVars();
 			if (postype == HLStrafe::PositionType::GROUND) {
 				if (ducktap) {
 					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {
@@ -2275,7 +2274,7 @@ void HwDLL::InsertCommands()
 				}
 			} else if (jumpbug && postype == HLStrafe::PositionType::AIR) {
 				if (player.Ducking) {
-					// Predict what will happen when we unduck.
+					// Predict what will happen if we unduck.
 					playerCopy.Ducking = false;
 					playerCopy.InDuckAnimation = false;
 					playerCopy.DuckTime = 0;
@@ -2287,6 +2286,7 @@ void HwDLL::InsertCommands()
 						Duck = false;
 					}
 				} else {
+					auto vars = GetMovementVars();
 					auto nextPostype = HLStrafe::Move(playerCopy, vars, postype, vars.Maxspeed, traceFunc);
 					if (nextPostype == HLStrafe::PositionType::GROUND) {
 						// Duck to prepare for the Jumpbug.

@@ -184,6 +184,10 @@ void ServerDLL::Clear()
 	offm_cNodes = 0;
 	size_CNode = 0;
 	pGlobalState = nullptr;
+	offNihilanthLevel = 0;
+	offNihilanthIrritation = 0;
+	offNihilanthRecharger = 0;
+	offNihilanthSpheres = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	pEngfuncs = nullptr;
 	ppGlobals = nullptr;
@@ -356,6 +360,44 @@ void ServerDLL::FindStuff()
 			pGlobalState = *reinterpret_cast<void**>(pDispatchRestore + 153);
 		});
 
+	uintptr_t pCNihilanth__NextActivity;
+	auto fCNihilanth__NextActivity = FindAsync(
+		pCNihilanth__NextActivity,
+		patterns::server::CNihilanth__NextActivity,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CNihilanth__NextActivity.cbegin()) {
+			case 0: // HL-SteamPipe-Linux
+				offNihilanthLevel = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x298);
+				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x21);
+				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x282);
+				break;
+			case 1: // HL-SteamPipe
+				offNihilanthLevel = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x203);
+				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x16);
+				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x1ee);
+				break;
+			default:
+				assert(false);
+			}
+		});
+
+	uintptr_t pCNihilanth__EmitSphere;
+	auto fCNihilanth__EmitSphere = FindAsync(
+		pCNihilanth__EmitSphere,
+		patterns::server::CNihilanth__EmitSphere,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CNihilanth__EmitSphere.cbegin()) {
+			case 0: // HL-SteamPipe-Linux
+				offNihilanthSpheres = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__EmitSphere + 0x2f);
+				break;
+			case 1: // HL-SteamPipe
+				offNihilanthSpheres = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__EmitSphere + 0x15);
+				break;
+			default:
+				assert(false);
+			}
+		});
+
 	bool noBhopcap = false;
 	{
 		auto pattern = fPM_PreventMegaBunnyJumping.get();
@@ -476,6 +518,26 @@ void ServerDLL::FindStuff()
 				EngineDevWarning("[server dll] Could not find CGraph::InitGraph.\n");
 				EngineWarning("AI node display is not available.\n");
 			}
+		}
+	}
+
+	{
+		auto pattern = fCNihilanth__NextActivity.get();
+		if (pCNihilanth__NextActivity) {
+			EngineDevMsg("[server dll] Found CNihilanth::NextActivity at %p (using the %s pattern).\n", pCNihilanth__NextActivity, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find CNihilanth::NextActivity.\n");
+			EngineWarning("bxt_hud_nihilanth is not available.\n");
+		}
+	}
+
+	{
+		auto pattern = fCNihilanth__EmitSphere.get();
+		if (pCNihilanth__EmitSphere) {
+			EngineDevMsg("[server dll] Found CNihilanth::EmitSphere at %p (using the %s pattern).\n", pCNihilanth__EmitSphere, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find CNihilanth::EmitSphere.\n");
+			EngineWarning("bxt_hud_nihilanth is not available.\n");
 		}
 	}
 
@@ -1525,6 +1587,12 @@ std::vector<const Vector *> ServerDLL::GetNodePositions() const
 
 bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres) const
 {
+	if (offNihilanthLevel == 0
+		|| offNihilanthIrritation == 0
+		|| offNihilanthRecharger == 0
+		|| offNihilanthSpheres == 0)
+		return false;
+
 	// Assume there's only one nihilanth!
 	edict_t *pent = pEngfuncs->pfnFindEntityByString(nullptr, "classname", "monster_nihilanth");
 	if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent)) {

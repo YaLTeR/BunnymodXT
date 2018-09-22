@@ -114,11 +114,10 @@ protected:
 	static const ptrdiff_t offFuncCenter = 0xC8;
 	static const ptrdiff_t offFuncObjectCaps = 0x14;
 
-	// FIXME: sadly these offsets only work on the latest steam on Windows
-	static const ptrdiff_t offNihilanthLevel = 0x304;
-	static const ptrdiff_t offNihilanthIrritation = 0x300;
-	static const ptrdiff_t offNihilanthRecharger = 0x30C;
-	static const ptrdiff_t offNihilanthSpheres = 0x314;
+	ptrdiff_t offNihilanthLevel;
+	ptrdiff_t offNihilanthIrritation;
+	ptrdiff_t offNihilanthRecharger;
+	ptrdiff_t offNihilanthSpheres;
 
 	ptrdiff_t offm_iClientFOV;
 	ptrdiff_t offm_rgAmmoLast;

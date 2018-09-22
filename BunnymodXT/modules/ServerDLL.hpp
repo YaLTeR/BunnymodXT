@@ -50,6 +50,7 @@ public:
 
 	std::vector<const edict_t *> GetUseableEntities(const Vector &origin, float radius) const;
 	std::vector<const Vector *> GetNodePositions() const;
+	bool GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres) const;
 
 	inline const char *GetString(int string) const {
 		assert(ppGlobals);
@@ -112,6 +113,11 @@ protected:
 	static const ptrdiff_t offFuncIsPlayer = 0x9C;
 	static const ptrdiff_t offFuncCenter = 0xC8;
 	static const ptrdiff_t offFuncObjectCaps = 0x14;
+
+	ptrdiff_t offNihilanthLevel;
+	ptrdiff_t offNihilanthIrritation;
+	ptrdiff_t offNihilanthRecharger;
+	ptrdiff_t offNihilanthSpheres;
 
 	ptrdiff_t offm_iClientFOV;
 	ptrdiff_t offm_rgAmmoLast;

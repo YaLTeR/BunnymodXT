@@ -2716,6 +2716,7 @@ void HwDLL::SaveInitialDataToDemo()
 		"bxt_hud_origin",
 		"bxt_hud_selfgauss",
 		"bxt_hud_useables",
+		"bxt_hud_nihilanth",
 		"bxt_hud_velocity",
 		"bxt_hud_visible_landmarks",
 		"bxt_novis",

@@ -360,21 +360,26 @@ void ServerDLL::FindStuff()
 			pGlobalState = *reinterpret_cast<void**>(pDispatchRestore + 153);
 		});
 
-	uintptr_t pCNihilanth__NextActivity;
-	auto fCNihilanth__NextActivity = FindAsync(
-		pCNihilanth__NextActivity,
-		patterns::server::CNihilanth__NextActivity,
+	uintptr_t pMiddleOfCNihilanth__NextActivity;
+	auto fMiddleOfCNihilanth__NextActivity = FindAsync(
+		pMiddleOfCNihilanth__NextActivity,
+		patterns::server::MiddleOfCNihilanth__NextActivity,
 		[&](auto pattern) {
-			switch (pattern - patterns::server::CNihilanth__NextActivity.cbegin()) {
+			switch (pattern - patterns::server::MiddleOfCNihilanth__NextActivity.cbegin()) {
 			case 0: // HL-SteamPipe-Linux
-				offNihilanthLevel = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x298);
-				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x21);
-				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x282);
+				offNihilanthLevel = *reinterpret_cast<ptrdiff_t*>(pMiddleOfCNihilanth__NextActivity + 0x298);
+				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t*>(pMiddleOfCNihilanth__NextActivity + 0x21);
+				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t*>(pMiddleOfCNihilanth__NextActivity + 0x282);
 				break;
 			case 1: // HL-SteamPipe
-				offNihilanthLevel = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x203);
-				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x16);
-				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__NextActivity + 0x1ee);
+				offNihilanthLevel = *reinterpret_cast<ptrdiff_t*>(pMiddleOfCNihilanth__NextActivity + 0x42);
+				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t*>(pMiddleOfCNihilanth__NextActivity - 0x1ab);
+				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t*>(pMiddleOfCNihilanth__NextActivity + 0x2d);
+				break;
+			case 2: // HL-WON
+				offNihilanthLevel = *reinterpret_cast<ptrdiff_t*>(pMiddleOfCNihilanth__NextActivity + 0x40);
+				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t*>(pMiddleOfCNihilanth__NextActivity - 0x1ab);
+				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t*>(pMiddleOfCNihilanth__NextActivity + 0x2b);
 				break;
 			default:
 				assert(false);
@@ -522,11 +527,11 @@ void ServerDLL::FindStuff()
 	}
 
 	{
-		auto pattern = fCNihilanth__NextActivity.get();
-		if (pCNihilanth__NextActivity) {
-			EngineDevMsg("[server dll] Found CNihilanth::NextActivity at %p (using the %s pattern).\n", pCNihilanth__NextActivity, pattern->name());
+		auto pattern = fMiddleOfCNihilanth__NextActivity.get();
+		if (pMiddleOfCNihilanth__NextActivity) {
+			EngineDevMsg("[server dll] Found the CNihilanth::NextActivity pattern at %p (using the %s pattern).\n", pMiddleOfCNihilanth__NextActivity, pattern->name());
 		} else {
-			EngineDevWarning("[server dll] Could not find CNihilanth::NextActivity.\n");
+			EngineDevWarning("[server dll] Could not find the CNihilanth::NextActivity pattern.\n");
 			EngineWarning("bxt_hud_nihilanth is not available.\n");
 		}
 	}

@@ -345,6 +345,7 @@ void HwDLL::Clear()
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
+	jumpbug = false;
 	recordDemoName.clear();
 	autoRecordDemoName.clear();
 	autoRecordDemoNumber = 1;
@@ -1499,6 +1500,36 @@ struct HwDLL::Cmd_BXT_TAS_Ducktap_Up
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Jumpbug_Down
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		HwDLL::GetInstance().jumpbug = true;
+	}
+
+	static void handler(const char*)
+	{
+		HwDLL::GetInstance().jumpbug = true;
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_Jumpbug_Up
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		HwDLL::GetInstance().jumpbug = false;
+	}
+
+	static void handler(const char*)
+	{
+		HwDLL::GetInstance().jumpbug = false;
+	}
+};
+
 struct HwDLL::Cmd_BXT_Triggers_Add
 {
 	USAGE("Usage: bxt_triggers_add <x1> <y1> <z1> <x2> <y2> <z2>\n Adds a custom trigger in a form of axis-aligned cuboid with opposite corners at coordinates (x1, y1, z1) and (x2, y2, z2).\n");
@@ -1840,6 +1871,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Autojump_Up, Handler<>, Handler<const char*>>("-bxt_tas_autojump");
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Down, Handler<>, Handler<const char*>>("+bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Up, Handler<>, Handler<const char*>>("-bxt_tas_ducktap");
+	wrapper::Add<Cmd_BXT_TAS_Jumpbug_Down, Handler<>, Handler<const char*>>("+bxt_tas_jumpbug");
+	wrapper::Add<Cmd_BXT_TAS_Jumpbug_Up, Handler<>, Handler<const char*>>("-bxt_tas_jumpbug");
 	wrapper::Add<Cmd_BXT_Triggers_Add, Handler<float, float, float, float, float, float>>("bxt_triggers_add");
 	wrapper::Add<Cmd_BXT_Triggers_Clear, Handler<>>("bxt_triggers_clear");
 	wrapper::Add<Cmd_BXT_Triggers_Delete, Handler<>, Handler<unsigned long>>("bxt_triggers_delete");
@@ -2190,7 +2223,7 @@ void HwDLL::InsertCommands()
 		}
 
 		// Manual autofuncs.
-		if (autojump || ducktap) {
+		if (autojump || ducktap || jumpbug) {
 			if (svs->num_clients >= 1) {
 				edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
 				if (pl) {
@@ -2220,7 +2253,8 @@ void HwDLL::InsertCommands()
 			bool Duck = false, Jump = false;
 
 			auto playerCopy = HLStrafe::PlayerData(player); // Our copy that we will mess with.
-			auto postype = GetPositionType(playerCopy, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+			auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+			auto postype = GetPositionType(playerCopy, traceFunc);
 			if (postype == HLStrafe::PositionType::GROUND) {
 				if (ducktap) {
 					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {
@@ -2235,8 +2269,30 @@ void HwDLL::InsertCommands()
 						if (!tr.StartSolid)
 							Duck = true;
 					}
-				} else if (!currentKeys.Jump.IsDown()) {
+				} else if (autojump && !currentKeys.Jump.IsDown()) {
 					Jump = true;
+				}
+			} else if (jumpbug && postype == HLStrafe::PositionType::AIR) {
+				if (player.Ducking) {
+					// Predict what will happen if we unduck.
+					playerCopy.Ducking = false;
+					playerCopy.InDuckAnimation = false;
+					playerCopy.DuckTime = 0;
+
+					auto nextPostype = HLStrafe::GetPositionType(playerCopy, traceFunc);
+					if (nextPostype == HLStrafe::PositionType::GROUND) {
+						// Jumpbug if we're about to land.
+						Jump = true;
+						Duck = false;
+					}
+				} else {
+					auto vars = GetMovementVars();
+					auto nextPostype = HLStrafe::Move(playerCopy, vars, postype, vars.Maxspeed, traceFunc);
+					if (nextPostype == HLStrafe::PositionType::GROUND) {
+						// Duck to prepare for the Jumpbug.
+						Duck = true;
+						Jump = false;
+					}
 				}
 			}
 
@@ -2245,9 +2301,12 @@ void HwDLL::InsertCommands()
 						KeyDown(currentKeys.btn); \
 					else if (!btn && currentKeys.btn.IsDown()) \
 						KeyUp(currentKeys.btn);
-			if (ducktap) {
+			if (jumpbug) {
 				INS(Duck)
-			} else {
+				INS(Jump)
+			} else if (ducktap) {
+				INS(Duck)
+			} else if (autojump) {
 				INS(Jump)
 			}
 			#undef INS

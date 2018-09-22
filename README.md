@@ -59,7 +59,7 @@ Run the following commands, replacing `path\to\boost\base\dir` and `\path\to\rap
 
 Then compile the `ALL_BUILD` project from the generated VS solution.
 
-If you want to make a Windows XP-compatible build, additionally specify `-T v140_xp` (or the equivalent for your Visual Studio version) in the `cmake` command line arguments.
+If you want to make a Windows XP-compatible build, additionally specify `-T v141_xp` (or the equivalent for your Visual Studio version) in the `cmake` command line arguments.
 
 ### Linux
 

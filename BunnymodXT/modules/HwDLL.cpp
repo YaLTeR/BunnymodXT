@@ -605,13 +605,13 @@ void HwDLL::FindStuff()
 		}
 
 		ORIG_R_Clear = reinterpret_cast<_R_Clear>(MemUtils::GetSymbolAddress(m_Handle, "R_Clear"));
-		if (ORIG_R_DrawSequentialPoly)
+		if (ORIG_R_Clear)
 			EngineDevMsg("[hw dll] Found R_Clear at %p.\n", ORIG_R_Clear);
 		else
 			EngineDevWarning("[hw dll] Could not find R_Clear.\n");
 
 		ORIG_Mod_LeafPVS = reinterpret_cast<_Mod_LeafPVS>(MemUtils::GetSymbolAddress(m_Handle, "Mod_LeafPVS"));
-		if (ORIG_R_DrawSequentialPoly) {
+		if (ORIG_Mod_LeafPVS) {
 			EngineDevMsg("[hw dll] Found Mod_LeafPVS at %p.\n", ORIG_Mod_LeafPVS);
 		} else {
 			EngineDevWarning("[hw dll] Could not find Mod_LeafPVS.\n");

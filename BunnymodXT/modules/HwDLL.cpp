@@ -3216,8 +3216,8 @@ HOOK_DEF_2(HwDLL, void, __cdecl, R_RotateForEntity, float *, origin, cl_entity_s
 	ORIG_R_RotateForEntity(origin, ent);
 
 	if (CVars::bxt_collision_hulls.GetInt()) {
-        constexpr ptrdiff_t offset_model = 0xb94;
-        const auto *model = *(model_t **)((uintptr_t)ent + offset_model);
+		constexpr ptrdiff_t offset_model = 0xb94;
+		const auto *model = *(model_t **)((uintptr_t)ent + offset_model);
 		hullInfo.lazy_init_hull(ORIG_Mod_FindName, CVars::bxt_collision_hulls.GetInt());
 		hullInfo.draw_model_hull(model, CVars::bxt_collision_hulls_alpha.GetFloat());
 	} else {

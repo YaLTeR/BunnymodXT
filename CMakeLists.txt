@@ -99,6 +99,7 @@ set (HEADER_FILES
 	BunnymodXT/cmd_wrapper.hpp
 	BunnymodXT/custom_triggers.hpp
 	BunnymodXT/cvars.hpp
+	BunnymodXT/draw_hulls.hpp
 	BunnymodXT/hud_custom.hpp
 	BunnymodXT/interprocess.hpp
 	BunnymodXT/modules.hpp
@@ -125,6 +126,7 @@ set (SOURCE_FILES
 	BunnymodXT/modules/ServerDLL.cpp
 	BunnymodXT/custom_triggers.cpp
 	BunnymodXT/cvars.cpp
+	BunnymodXT/draw_hulls.cpp
 	BunnymodXT/hud_custom.cpp
 	BunnymodXT/triangle_drawing.cpp
 	BunnymodXT/triangle_utils.cpp

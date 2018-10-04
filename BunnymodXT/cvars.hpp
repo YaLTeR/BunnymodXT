@@ -155,6 +155,8 @@ namespace CVars
 	extern CVarWrapper bxt_wallhack_alpha;
 	extern CVarWrapper bxt_novis;
 	extern CVarWrapper bxt_show_triggers;
+	extern CVarWrapper bxt_collision_hulls;
+	extern CVarWrapper bxt_collision_hulls_alpha;
 	extern CVarWrapper bxt_collision_depth_map;
 	extern CVarWrapper bxt_collision_depth_map_colors;
 	extern CVarWrapper bxt_collision_depth_map_hull;

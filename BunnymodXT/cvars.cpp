@@ -48,6 +48,8 @@ namespace CVars
 	CVarWrapper bxt_wallhack_alpha("bxt_wallhack_alpha", "0.6");
 	CVarWrapper bxt_novis("bxt_novis", "0");
 	CVarWrapper bxt_show_triggers("bxt_show_triggers", "0");
+	CVarWrapper bxt_collision_hulls("bxt_collision_hulls", "0");
+	CVarWrapper bxt_collision_hulls_alpha("bxt_collision_hulls_alpha", "0.9");
 	CVarWrapper bxt_collision_depth_map("bxt_collision_depth_map", "0");
 	CVarWrapper bxt_collision_depth_map_colors("bxt_collision_depth_map_colors", "0");
 	CVarWrapper bxt_collision_depth_map_hull("bxt_collision_depth_map_hull", "2");
@@ -135,6 +137,8 @@ namespace CVars
 		&bxt_novis,
 		&bxt_show_triggers,
 		&bxt_show_triggers_legacy,
+		&bxt_collision_hulls,
+		&bxt_collision_hulls_alpha,
 		&bxt_collision_depth_map,
 		&bxt_collision_depth_map_colors,
 		&bxt_collision_depth_map_hull,

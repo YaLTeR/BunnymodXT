@@ -4,6 +4,7 @@
 #include <SPTLib/IHookableNameFilterOrdered.hpp>
 #include "../cvars.hpp"
 #include "taslogger/writer.hpp"
+#include "../draw_hulls.hpp"
 
 class HwDLL : public IHookableNameFilterOrdered
 {
@@ -34,6 +35,10 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, R_DrawSequentialPoly, msurface_t *surf, int face)
 	HOOK_DECL(void, __cdecl, R_Clear)
 	HOOK_DECL(byte *, __cdecl, Mod_LeafPVS, mleaf_t *leaf, model_t *model)
+	HOOK_DECL(void, __cdecl, R_DrawWorld);
+	HOOK_DECL(void, __cdecl, R_DrawBrushModel, cl_entity_s *ent)
+	HOOK_DECL(void, __cdecl, R_RotateForEntity, float *origin, cl_entity_s *ent)
+	HOOK_DECL(void, __cdecl, Mod_LoadBrushModel, model_s *mod, void *buffer)
 
 	struct cmdbuf_t
 	{
@@ -235,6 +240,8 @@ protected:
 	_CL_RecordHUDCommand ORIG_CL_RecordHUDCommand;
 	typedef int(__cdecl *_build_number)();
 	_build_number ORIG_build_number;
+	typedef model_s *(__cdecl *_Mod_FindName) (int trackCRC, const char *name);
+	_Mod_FindName ORIG_Mod_FindName;
 
 	void FindStuff();
 
@@ -447,4 +454,6 @@ protected:
 	std::string execScript;
 	bool insideHost_Changelevel2_f;
 	bool dontStopAutorecord;
+
+	DrawHulls::HullInfo hullInfo;
 };

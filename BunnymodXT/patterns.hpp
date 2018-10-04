@@ -291,6 +291,31 @@ namespace patterns
 			"HL-4554",
 			"8B 54 24 08 8B 44 24 04 8B 8A 8C 00 00 00 3B C1 75 06 B8 ?? ?? ?? ?? C3 56 8B 35 ?? ?? ?? ?? 85 F6"
 		);
+
+		PATTERNS(R_DrawWorld,
+			"HL-SteamPipe",
+			"55 8B EC 81 EC B8 0B 00 00 68 B8 0B 00 00 8D 85 48 F4 FF FF 6A 00 50 E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 8B 15"
+		);
+
+		PATTERNS(R_DrawBrushModel,
+			"HL-SteamPipe",
+			"55 8B EC 83 EC 50 53 56 57 8B 7D 08 89 3D ?? ?? ?? ?? C7 05 ?? ?? ?? ?? FF FF FF FF D9 87 54 0B 00 00 D8 1D ?? ?? ?? ?? 8B"
+		);
+
+		PATTERNS(R_RotateForEntity,
+			"HL-SteamPipe",
+			"55 8B EC 83 EC 20 8B 45 08 8B 08 8B 50 04 8B 40 08 89 4D EC 8B 4D 0C 89 55 F0 89 45 F4 8B 91 5C 0B 00 00 8B 81 54 0B 00 00"
+		);
+
+		PATTERNS(Mod_LoadBrushModel,
+			"HL-SteamPipe",
+			"55 8B EC 83 EC 0C A1 ?? ?? ?? ?? 53 56 8B 75 0C 57 33 DB 8B 0E 89 58 44 51 FF 15 ?? ?? ?? ?? 83 C4 04 83 F8 1D 74 33"
+		);
+
+		PATTERNS(Mod_FindName,
+			"HL-SteamPipe",
+			"55 8B EC 8B 45 0C 53 56 57 8A 08 33 FF 84 C9 75 0D 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 04 A1 ?? ?? ?? ?? 33 DB 85 C0"
+		);
 	}
 
 	namespace server

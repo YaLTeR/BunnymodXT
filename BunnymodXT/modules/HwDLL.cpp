@@ -146,6 +146,26 @@ extern "C" byte *__cdecl Mod_LeafPVS(mleaf_t *leaf, model_t *model)
 {
 	return HwDLL::HOOKED_Mod_LeafPVS(leaf, model);
 }
+
+extern "C" void __cdecl R_DrawWorld()
+{
+	HwDLL::HOOKED_R_DrawWorld();
+}
+
+extern "C" void __cdecl R_DrawBrushModel(cl_entity_s *ent)
+{
+	HwDLL::HOOKED_R_DrawBrushModel(ent);
+}
+
+extern "C" void __cdecl R_RotateForEntity(float *origin, cl_entity_s *ent)
+{
+	HwDLL::HOOKED_R_RotateForEntity(origin, ent);
+}
+
+extern "C" void __cdecl Mod_LoadBrushModel(model_s *mod, void *buffer)
+{
+	HwDLL::HOOKED_Mod_LoadBrushModel(mod, buffer);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -222,6 +242,10 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_DrawSequentialPoly);
 			MemUtils::MarkAsExecutable(ORIG_R_Clear);
 			MemUtils::MarkAsExecutable(ORIG_Mod_LeafPVS);
+			MemUtils::MarkAsExecutable(ORIG_R_DrawWorld);
+			MemUtils::MarkAsExecutable(ORIG_R_DrawBrushModel);
+			MemUtils::MarkAsExecutable(ORIG_R_RotateForEntity);
+			MemUtils::MarkAsExecutable(ORIG_Mod_LoadBrushModel);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -251,7 +275,11 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Cmd_Exec_f, HOOKED_Cmd_Exec_f,
 			ORIG_R_DrawSequentialPoly, HOOKED_R_DrawSequentialPoly,
 			ORIG_R_Clear, HOOKED_R_Clear,
-			ORIG_Mod_LeafPVS, HOOKED_Mod_LeafPVS);
+			ORIG_Mod_LeafPVS, HOOKED_Mod_LeafPVS,
+			ORIG_R_DrawWorld, HOOKED_R_DrawWorld,
+			ORIG_R_DrawBrushModel, HOOKED_R_DrawBrushModel,
+			ORIG_R_RotateForEntity, HOOKED_R_RotateForEntity,
+			ORIG_Mod_LoadBrushModel, HOOKED_Mod_LoadBrushModel);
 	}
 }
 
@@ -287,7 +315,11 @@ void HwDLL::Unhook()
 			ORIG_Cmd_Exec_f,
 			ORIG_R_DrawSequentialPoly,
 			ORIG_R_Clear,
-			ORIG_Mod_LeafPVS);
+			ORIG_Mod_LeafPVS,
+			ORIG_R_DrawWorld,
+			ORIG_R_DrawBrushModel,
+			ORIG_R_RotateForEntity,
+			ORIG_Mod_LoadBrushModel);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -341,6 +373,11 @@ void HwDLL::Clear()
 	ORIG_R_DrawSequentialPoly = nullptr;
 	ORIG_R_Clear = nullptr;
 	ORIG_Mod_LeafPVS = nullptr;
+	ORIG_R_DrawWorld = nullptr;
+	ORIG_R_DrawBrushModel = nullptr;
+	ORIG_R_RotateForEntity = nullptr;
+	ORIG_Mod_LoadBrushModel = nullptr;
+	ORIG_Mod_FindName = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -546,6 +583,7 @@ void HwDLL::FindStuff()
 		FIND(CL_Record_f)
 		FIND(Key_Event)
 		FIND(Cmd_Exec_f)
+		FIND(Mod_FindName)
 		#undef FIND
 
 		ORIG_Host_FilterTime = reinterpret_cast<_Host_FilterTime>(MemUtils::GetSymbolAddress(m_Handle, "Host_FilterTime"));
@@ -618,6 +656,34 @@ void HwDLL::FindStuff()
 			EngineWarning("bxt_novis has no effect.\n");
 		}
 
+		ORIG_R_DrawWorld = reinterpret_cast<_R_DrawWorld>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawWorld"));
+		if (ORIG_R_DrawWorld) {
+			EngineDevMsg("[hw dll] Found R_DrawWorld at %p.\n", ORIG_R_DrawWorld);
+		} else {
+			EngineDevWarning("[hw dll] Could not find R_DrawWorld.\n");
+		}
+
+		ORIG_R_DrawBrushModel = reinterpret_cast<_R_DrawBrushModel>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawBrushModel"));
+		if (ORIG_R_DrawBrushModel) {
+			EngineDevMsg("[hw dll] Found R_DrawBrushModel at %p.\n", ORIG_R_DrawBrushModel);
+		} else {
+			EngineDevWarning("[hw dll] Could not find R_DrawBrushModel.\n");
+		}
+
+		ORIG_R_RotateForEntity = reinterpret_cast<_R_RotateForEntity>(MemUtils::GetSymbolAddress(m_Handle, "R_RotateForEntity"));
+		if (ORIG_R_RotateForEntity) {
+			EngineDevMsg("[hw dll] Found R_RotateForEntity at %p.\n", ORIG_R_RotateForEntity);
+		} else {
+			EngineDevWarning("[hw dll] Could not find R_RotateForEntity.\n");
+		}
+
+		ORIG_Mod_LoadBrushModel = reinterpret_cast<_Mod_LoadBrushModel>(MemUtils::GetSymbolAddress(m_Handle, "Mod_LoadBrushModel"));
+		if (ORIG_Mod_LoadBrushModel) {
+			EngineDevMsg("[hw dll] Found Mod_LoadBrushModel at %p.\n", ORIG_Mod_LoadBrushModel);
+		} else {
+			EngineDevWarning("[hw dll] Could not find Mod_LoadBrushModel.\n");
+		}
+
 		const auto CL_Move = reinterpret_cast<uintptr_t>(MemUtils::GetSymbolAddress(m_Handle, "CL_Move"));
 		if (CL_Move)
 		{
@@ -655,6 +721,11 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(R_DrawSequentialPoly)
 		DEF_FUTURE(R_Clear)
 		DEF_FUTURE(Mod_LeafPVS)
+		DEF_FUTURE(R_DrawWorld)
+		DEF_FUTURE(R_DrawBrushModel)
+		DEF_FUTURE(R_RotateForEntity)
+		DEF_FUTURE(Mod_LoadBrushModel)
+		DEF_FUTURE(Mod_FindName)
 		DEF_FUTURE(CL_RecordHUDCommand)
 		DEF_FUTURE(CL_Record_f)
 		DEF_FUTURE(Key_Event)
@@ -1131,6 +1202,11 @@ void HwDLL::FindStuff()
 		GET_FUTURE(R_DrawSequentialPoly);
 		GET_FUTURE(R_Clear);
 		GET_FUTURE(Mod_LeafPVS);
+		GET_FUTURE(R_DrawWorld);
+		GET_FUTURE(R_DrawBrushModel);
+		GET_FUTURE(R_RotateForEntity);
+		GET_FUTURE(Mod_LoadBrushModel);
+		GET_FUTURE(Mod_FindName);
 		GET_FUTURE(PF_GetPhysicsKeyValue);
 
 		if (oldEngine) {
@@ -1831,6 +1907,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::_bxt_norefresh);
 	RegisterCVar(CVars::_bxt_bunnysplit_time_update_frequency);
 	RegisterCVar(CVars::_bxt_save_runtime_data_in_demos);
+	RegisterCVar(CVars::bxt_collision_hulls);
+	RegisterCVar(CVars::bxt_collision_hulls_alpha);
 	RegisterCVar(CVars::bxt_collision_depth_map);
 	RegisterCVar(CVars::bxt_collision_depth_map_colors);
 	RegisterCVar(CVars::bxt_collision_depth_map_hull);
@@ -2720,6 +2798,7 @@ void HwDLL::SaveInitialDataToDemo()
 		"bxt_hud_velocity",
 		"bxt_hud_visible_landmarks",
 		"bxt_novis",
+		"bxt_collision_hulls",
 		"bxt_show_hidden_entities",
 		"bxt_show_triggers",
 		"bxt_show_triggers_legacy",
@@ -3111,4 +3190,44 @@ HOOK_DEF_2(HwDLL, byte *, __cdecl, Mod_LeafPVS, mleaf_t *, leaf, model_t *, mode
 	// Idea from advancedfx: this is done so that distant NPCs don't disappear,
 	// as they do with r_novis 1.
 	return ORIG_Mod_LeafPVS(CVars::bxt_novis.GetBool() ? model->leafs : leaf, model);
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawWorld)
+{
+	ORIG_R_DrawWorld();
+
+	if (CVars::bxt_collision_hulls.GetInt()) {
+		hullInfo.lazy_init_hull(ORIG_Mod_FindName, CVars::bxt_collision_hulls.GetInt());
+		hullInfo.draw_world_hull(CVars::bxt_collision_hulls_alpha.GetFloat());
+	} else {
+		hullInfo.clean();
+	}
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, R_DrawBrushModel, cl_entity_s *, ent)
+{
+	hullInfo.set_in_draw_brush(true);
+	ORIG_R_DrawBrushModel(ent);
+	hullInfo.set_in_draw_brush(false);
+}
+
+HOOK_DEF_2(HwDLL, void, __cdecl, R_RotateForEntity, float *, origin, cl_entity_s *, ent)
+{
+	ORIG_R_RotateForEntity(origin, ent);
+
+	if (CVars::bxt_collision_hulls.GetInt()) {
+		constexpr ptrdiff_t offset_model = 0xb94;
+		const auto *model = *(model_t **)((uintptr_t)ent + offset_model);
+		hullInfo.lazy_init_hull(ORIG_Mod_FindName, CVars::bxt_collision_hulls.GetInt());
+		hullInfo.draw_model_hull(model, CVars::bxt_collision_hulls_alpha.GetFloat());
+	} else {
+		hullInfo.clean();
+	}
+}
+
+HOOK_DEF_2(HwDLL, void, __cdecl, Mod_LoadBrushModel, model_s *, mod, void *, buffer)
+{
+	ORIG_Mod_LoadBrushModel(mod, buffer);
+
+	hullInfo.reset_worldmod(mod);
 }

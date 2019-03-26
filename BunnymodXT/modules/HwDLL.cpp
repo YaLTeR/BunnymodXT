@@ -918,19 +918,25 @@ void HwDLL::FindStuff()
 			[&](auto pattern) {
 				switch (pattern - patterns::engine::Cmd_ExecuteString.cbegin())
 				{
-				case 0: // SteamPipe.
+				case 0: // SteamPipe-8183
+					ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 22)
+						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 26);
+					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 82);
+					break;
+				case 1: // SteamPipe.
 					ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 17)
 						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 21);
 					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 77);
 					break;
-				case 1: // 4554.
+				case 2: // 4554.
 					ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 16)
 						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 20);
 					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 76);
 					break;
-				case 2: // NGHL.
+				case 3: // NGHL.
 					ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 16)
 						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 20);

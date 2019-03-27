@@ -680,10 +680,13 @@ void HwDLL::FindStuff()
 			[&](auto pattern) {
 				switch (pattern - patterns::engine::Cbuf_Execute.cbegin())
 				{
-				case 0:
+				case 0: // HL-SteamPipe-8183
+					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
+					break;
+				case 1: // HL-SteamPipe
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 11) - offsetof(cmdbuf_t, cursize));
 					break;
-				case 1:
+				case 2: // HL-NGHL
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 2) - offsetof(cmdbuf_t, cursize));
 					break;
 				}
@@ -918,11 +921,11 @@ void HwDLL::FindStuff()
 			[&](auto pattern) {
 				switch (pattern - patterns::engine::Cmd_ExecuteString.cbegin())
 				{
-				case 0: // SteamPipe-8183
+				case 0: // SteamPipe-8183.
 					ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 22)
 						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 26);
-					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 82);
+					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 83);
 					break;
 				case 1: // SteamPipe.
 					ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(

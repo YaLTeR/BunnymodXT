@@ -680,10 +680,13 @@ void HwDLL::FindStuff()
 			[&](auto pattern) {
 				switch (pattern - patterns::engine::Cbuf_Execute.cbegin())
 				{
-				case 0:
+				case 0: // HL-SteamPipe-8183
+					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
+					break;
+				case 1: // HL-SteamPipe
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 11) - offsetof(cmdbuf_t, cursize));
 					break;
-				case 1:
+				case 2: // HL-NGHL
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 2) - offsetof(cmdbuf_t, cursize));
 					break;
 				}
@@ -911,6 +914,22 @@ void HwDLL::FindStuff()
 				}
 			});
 
+		void* Cmd_ExecuteStringWithPrivilegeCheck;
+		auto fCmd_ExecuteStringWithPrivilegeCheck = FindAsync(
+			Cmd_ExecuteStringWithPrivilegeCheck,
+			patterns::engine::Cmd_ExecuteStringWithPrivilegeCheck,
+			[&](auto pattern) {
+			switch (pattern - patterns::engine::Cmd_ExecuteStringWithPrivilegeCheck.cbegin())
+			{
+			case 0: // SteamPipe-8183.
+				ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(Cmd_ExecuteStringWithPrivilegeCheck) + 22)
+					+ reinterpret_cast<uintptr_t>(Cmd_ExecuteStringWithPrivilegeCheck) + 26);
+				cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteStringWithPrivilegeCheck) + 83);
+				break;
+			}
+		});
+
 		void* Cmd_ExecuteString;
 		auto fCmd_ExecuteString = FindAsync(
 			Cmd_ExecuteString,
@@ -1061,13 +1080,24 @@ void HwDLL::FindStuff()
 		}
 
 		{
-			auto pattern = fCmd_ExecuteString.get();
-			if (Cmd_ExecuteString) {
-				EngineDevMsg("[hw dll] Found Cmd_ExecuteString at %p (using the %s pattern).\n", Cmd_ExecuteString, pattern->name());
+			auto found = false;
+			auto pattern1 = fCmd_ExecuteStringWithPrivilegeCheck.get();
+			if (Cmd_ExecuteStringWithPrivilegeCheck) {
+				found = true;
+				EngineDevMsg("[hw dll] Found Cmd_ExecuteStringWithPrivilegeCheck at %p (using the %s pattern).\n", Cmd_ExecuteStringWithPrivilegeCheck, pattern1->name());
+			} else {
+				auto pattern2 = fCmd_ExecuteString.get();
+				if (Cmd_ExecuteString) {
+					found = true;
+					EngineDevMsg("[hw dll] Found Cmd_ExecuteString at %p (using the %s pattern).\n", Cmd_ExecuteString, pattern2->name());
+				}
+			}
+
+			if (found) {
 				EngineDevMsg("[hw dll] Found Cmd_TokenizeString at %p.\n", ORIG_Cmd_TokenizeString);
 				EngineDevMsg("[hw dll] Found cmd_alias at %p.\n", cmd_alias);
 			} else {
-				EngineDevWarning("[hw dll] Could not find Cmd_ExecuteString.\n");
+				EngineDevWarning("[hw dll] Could not find Cmd_ExecuteString or Cmd_ExecuteStringWithPrivilegeCheck.\n");
 				ORIG_Cbuf_Execute = nullptr;
 			}
 		}

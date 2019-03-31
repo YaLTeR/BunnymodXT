@@ -38,10 +38,10 @@ if (MSVC)
 	endif ()
 else ()
 	# set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -m32 -g -Ofast -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium-m -mfpmath=387 -m32 -g -Ofast -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium-m -mfpmath=387 -mno-sse -m32 -g -Ofast -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
 
-	# On Clang this causes warnings when compiling precompiled headers (done by Cotire).
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++")
+	set(CMAKE_SHARED_LINKER_FLAGS
+		"${CMAKE_SHARED_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 endif ()
 
 include(cotire)
@@ -142,10 +142,16 @@ endif ()
 
 add_library (BunnymodXT SHARED ${SOURCE_FILES})
 set_target_properties(BunnymodXT PROPERTIES
-	COTIRE_CXX_PREFIX_HEADER_INIT "BunnymodXT/stdafx.hpp"
 	CXX_STANDARD 17
 	CXX_STANDARD_REQUIRED ON)
-cotire(BunnymodXT)
+
+# Interaction between Cotire and C++17 enforcement breaks Clang,
+# and due to something severely outdated in Cotire GCC refuses to use its precompiled headers too.
+if (MSVC)
+	set_target_properties(BunnymodXT PROPERTIES
+		COTIRE_CXX_PREFIX_HEADER_INIT "BunnymodXT/stdafx.hpp")
+	cotire(BunnymodXT)
+endif ()
 
 target_link_libraries (BunnymodXT hltas hlstrafe taslogger ${Boost_LIBRARIES})
 if (NOT MSVC)

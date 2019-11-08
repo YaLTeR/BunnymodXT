@@ -651,3 +651,8 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_Key_Event, int, down, int, keynum, const
 
 	return rv;
 }
+
+HOOK_DEF_0(ClientDLL, int, __cdecl, PM_FlyMove)
+{
+	return ORIG_PM_FlyMove();
+}

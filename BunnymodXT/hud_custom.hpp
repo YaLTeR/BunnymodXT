@@ -17,7 +17,7 @@ namespace CustomHud
 	void VidInit();
 	void Draw(float flTime);
 
-	void UpdatePlayerInfo(float vel[3], float org[3]);
+	void UpdatePlayerInfo(const float vel[3], const float org[3]);
 	void UpdatePlayerInfoInaccurate(float vel[3], float org[3]);
 
 	void TimePassed(double time);
@@ -28,4 +28,6 @@ namespace CustomHud
 	Interprocess::Time GetTime();
 
 	const SCREENINFO& GetScreenInfo();
+
+	void SetupTraceVectors(float start[3], float end[3]);
 };

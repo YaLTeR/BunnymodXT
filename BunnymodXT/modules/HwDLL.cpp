@@ -401,6 +401,12 @@ void HwDLL::Clear()
 	coarse_nodes.clear();
 	coarse_nodes_vector.clear();
 	next_coarse_nodes = std::queue<CoarseNode>();
+	finding_coarse_path = false;
+	coarse_path_open_set.clear();
+	coarse_path_nodes.clear();
+	coarse_path_distances.clear();
+	coarse_path_closed_set.clear();
+	coarse_path_target = CoarseNode(0, 0, 0, 0, 0);
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -1872,6 +1878,16 @@ struct HwDLL::Cmd_BXT_FindCoarseNodes
 	}
 };
 
+struct HwDLL::Cmd_BXT_FindCoarsePath
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		HwDLL::GetInstance().FindCoarsePath();
+	}
+};
+
 struct HwDLL::Cmd_BXT_Reset_Frametime_Remainder
 {
 	NO_USAGE();
@@ -1978,6 +1994,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Heuristic, Handler<>>("bxt_heuristic");
 	wrapper::Add<Cmd_BXT_StartSearch, Handler<>>("bxt_startsearch");
 	wrapper::Add<Cmd_BXT_FindCoarseNodes, Handler<>>("bxt_find_coarse_nodes");
+	wrapper::Add<Cmd_BXT_FindCoarsePath, Handler<>>("bxt_find_coarse_path");
 }
 
 void HwDLL::InsertCommands()
@@ -2586,6 +2603,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	ORIG_Cbuf_Execute(); // executing might change inside if we had some kind of load command in the buffer.
 
 	FindCoarseNodesStep();
+	FindCoarsePathStep();
 
 	// Stuffcmds is inside valve.rc, which is executed by the very first Cbuf_Execute().
 	// So everything that we wanted to not happen if we're resetting already did its checks now.
@@ -2667,14 +2685,14 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	}
 }
 
-void HwDLL::SetPlayerOrigin(float origin[3])
+void HwDLL::SetPlayerOrigin(const float origin[3])
 {
 	player.Origin[0] = origin[0];
 	player.Origin[1] = origin[1];
 	player.Origin[2] = origin[2];
 }
 
-void HwDLL::SetPlayerVelocity(float velocity[3])
+void HwDLL::SetPlayerVelocity(const float velocity[3])
 {
 	player.Velocity[0] = velocity[0];
 	player.Velocity[1] = velocity[1];
@@ -3975,6 +3993,13 @@ void HwDLL::FindCoarseNodes()
 
 	finding_coarse_nodes = true;
 
+	finding_coarse_path = false;
+	coarse_path_open_set.clear();
+	coarse_path_nodes.clear();
+	coarse_path_distances.clear();
+	coarse_path_closed_set.clear();
+	coarse_path_target = CoarseNode(0, 0, 0, 0, 0);
+
 	const PlayerState starting_state = GetCurrentState();
 	ORIG_Con_Printf("Starting state: Origin{ %.8f %.8f %.8f }.\n",
 	                starting_state.Origin[0], starting_state.Origin[1], starting_state.Origin[2]);
@@ -4084,6 +4109,206 @@ void HwDLL::FindCoarseNodesStep()
 
 	if (next_coarse_nodes.empty())
 		ORIG_Con_Printf("Found %u nodes.", (unsigned) coarse_nodes.size());
+}
+
+void HwDLL::FindCoarsePath()
+{
+	if (finding_coarse_path)
+	{
+		finding_coarse_path = false;
+		return;
+	}
+
+	finding_coarse_path = true;
+
+	finding_coarse_nodes = false;
+	coarse_nodes.clear();
+	coarse_nodes_vector.clear();
+	next_coarse_nodes = std::queue<CoarseNode>();
+
+	const PlayerState starting_state = GetCurrentState();
+	ORIG_Con_Printf("Starting state: Origin{ %.8f %.8f %.8f }.\n",
+	                starting_state.Origin[0], starting_state.Origin[1], starting_state.Origin[2]);
+
+	VecCopy(starting_state.Origin, coarse_node_base_origin);
+	auto starting_node = CoarseNode(0, 0, starting_state.Origin[2], 0, 0);
+
+	CustomHud::UpdatePlayerInfo(starting_state.Velocity, starting_state.Origin);
+	float start[3], end[3];
+	CustomHud::SetupTraceVectors(start, end);
+
+	InitTracing();
+	auto tr = PlayerTrace(start, end, HullType::POINT);
+
+	coarse_path_target = CoarseNode(
+		(tr.EndPos[0] - starting_state.Origin[0]) / COARSE_NODE_STEP,
+		(tr.EndPos[1] - starting_state.Origin[1]) / COARSE_NODE_STEP,
+		tr.EndPos[2],
+		0,
+		0
+	);
+
+	// Put it at the correct height.
+	float pos[3], pos_up[3];
+	CoarseNodeOrigin(coarse_path_target, pos);
+	VecCopy(pos, pos_up);
+	pos_up[2] += 37;
+	tr = PlayerTrace(pos_up, pos, HullType::NORMAL);
+	coarse_path_target.z = tr.EndPos[2];
+	DeinitTracing();
+
+	coarse_path_open_set.clear();
+	coarse_path_nodes.clear();
+	coarse_path_distances.clear();
+	coarse_path_closed_set.clear();
+
+	// This 0.f should be heuristic but it doesn't matter here.
+	coarse_path_open_set.emplace_back(starting_node, 0.f);
+	coarse_path_nodes.push_back(starting_node);
+	coarse_path_distances.push_back(0.f);
+}
+
+void HwDLL::FindCoarsePathStep()
+{
+	if (!finding_coarse_path)
+		return;
+
+	// Nothing to search.
+	if (coarse_path_open_set.empty())
+		return;
+
+	InitTracing();
+
+	ORIG_Con_Printf("Open set size: %u\n.", (unsigned) coarse_path_open_set.size());
+
+	for (int steps = 0; steps < 10; ++steps) {
+		if (coarse_path_open_set.empty())
+			break;
+
+		// Find the node with the lowest F score.
+		auto best_node_it = --coarse_path_open_set.cend();
+		auto best_score = best_node_it->second;
+
+		auto it = best_node_it;
+		while (it != coarse_path_open_set.cbegin()) {
+			--it;
+			const auto score = it->second;
+			if (score < best_score) {
+				best_node_it = it;
+				best_score = score;
+			}
+		}
+
+		auto current = best_node_it->first;
+		coarse_path_open_set.erase(best_node_it);
+		coarse_path_closed_set.insert(current);
+
+		if (current == coarse_path_target) {
+			ORIG_Con_Printf("Reached target, distance = %f.\n", coarse_path_distances[current.index]);
+			coarse_path_target = current;
+			finding_coarse_path = false;
+			return;
+		}
+
+		float current_origin[3];
+		CoarseNodeOrigin(current, current_origin);
+
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dy = -1; dy <= 1; dy++) {
+				auto adjacent = CoarseNode(
+					current.x + dx,
+					current.y + dy,
+					current.z,
+					coarse_path_nodes.size(),
+					current.index
+				);
+
+				// Check to filter out some same node searches quickly.
+				if (coarse_path_closed_set.find(adjacent) != coarse_path_closed_set.cend())
+					continue;
+
+				float origin[3];
+				CoarseNodeOrigin(adjacent, origin);
+
+				// Trace down to find the ground.
+				float adjusted_origin[3];
+				VecCopy(origin, adjusted_origin);
+				adjusted_origin[2] -= 36; // Arbitrary.
+
+				auto tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
+
+				// The node is inside a wall.
+				if (tr.StartSolid)
+				{
+					// Try starting from 18 units up for the stepsize.
+					adjusted_origin[2] = origin[2];
+					origin[2] += 18;
+
+					tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
+
+					// Still inside a wall.
+					if (tr.StartSolid)
+						continue;
+
+					// We are good to go with stepsize.
+				}
+				// The node is ontop of a pit.
+				else if (tr.Fraction == 1.f)
+					continue;
+
+				adjusted_origin[2] = tr.EndPos[2];
+
+				// Trace from the current position to check if we can move there.
+				// Trace to the original (not adjusted) origin, otherwise the trace hits corners.
+				tr = PlayerTrace(current_origin, origin, HullType::NORMAL);
+
+				// Can't move there.
+				if (tr.Fraction != 1.f)
+					continue;
+
+				// Set the origin to the down origin to force the node to the ground.
+				adjacent.z = adjusted_origin[2];
+
+				// Don't push nodes that we already know about.
+				if (coarse_path_closed_set.find(adjacent) != coarse_path_closed_set.cend())
+					continue;
+
+				auto node_distance = [](const CoarseNode& a, const CoarseNode& b) {
+					return COARSE_NODE_STEP
+						* std::sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+				};
+
+				float distance = coarse_path_distances[current.index] + node_distance(current, adjacent);
+				float heuristic = node_distance(adjacent, coarse_path_target);
+
+				for (auto& p: coarse_path_open_set) {
+					if (p.first == adjacent) {
+						adjacent = p.first;
+
+						if (distance + heuristic < p.second) {
+							p.second = distance + heuristic;
+							p.first.parent = current.index;
+							coarse_path_nodes[p.first.index] = p.first;
+							coarse_path_distances[p.first.index] = distance;
+						}
+
+						break;
+					}
+				}
+
+				if (adjacent.index == coarse_path_nodes.size()) {
+					coarse_path_open_set.emplace_back(adjacent, distance + heuristic);
+					coarse_path_nodes.push_back(adjacent);
+					coarse_path_distances.push_back(distance);
+				}
+			}
+		}
+	}
+
+	DeinitTracing();
+
+	if (coarse_path_open_set.empty())
+		ORIG_Con_Printf("Couldn't reach the target.");
 }
 
 void HwDLL::CoarseNodeOrigin(const CoarseNode& node, float origin[3])

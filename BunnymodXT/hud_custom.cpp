@@ -557,7 +557,7 @@ namespace CustomHud
 		}
 	}
 
-	static void SetupTraceVectors(float start[3], float end[3])
+	void SetupTraceVectors(float start[3], float end[3])
 	{
 		ClientDLL::GetInstance().pEngfuncs->pEventAPI->EV_LocalPlayerViewheight(start);
 		start[0] += player.origin[0];
@@ -1040,7 +1040,7 @@ namespace CustomHud
 		receivedAccurateInfo = false;
 	}
 
-	void UpdatePlayerInfo(float vel[3], float org[3])
+	void UpdatePlayerInfo(const float vel[3], const float org[3])
 	{
 		vecCopy(vel, player.velocity);
 		vecCopy(org, player.origin);

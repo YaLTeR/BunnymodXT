@@ -166,8 +166,8 @@ public:
 	void RegisterCVar(CVarWrapper& cvar);
 	cvar_t* FindCVar(const char* name);
 
-	void SetPlayerOrigin(float origin[3]);
-	void SetPlayerVelocity(float velocity[3]);
+	void SetPlayerOrigin(const float origin[3]);
+	void SetPlayerVelocity(const float velocity[3]);
 	bool TryGettingAccurateInfo(float origin[3], float velocity[3], float& health);
 	void GetViewangles(float* va);
 
@@ -265,6 +265,15 @@ public:
 	void FindCoarseNodesStep();
 	void CoarseNodeOrigin(const CoarseNode& node, float origin[3]);
 
+	bool finding_coarse_path;
+	CoarseNode coarse_path_target = CoarseNode(0, 0, 0, 0, 0);
+	std::vector<std::pair<CoarseNode, float>> coarse_path_open_set;
+	std::vector<CoarseNode> coarse_path_nodes;
+	std::vector<float> coarse_path_distances;
+	std::unordered_set<CoarseNode, boost::hash<CoarseNode>> coarse_path_closed_set;
+	void FindCoarsePath();
+	void FindCoarsePathStep();
+
 	unsigned QueuedSharedRNGSeeds;
 
 	double *frametime_remainder;
@@ -351,6 +360,7 @@ protected:
 	struct Cmd_BXT_Heuristic;
 	struct Cmd_BXT_StartSearch;
 	struct Cmd_BXT_FindCoarseNodes;
+	struct Cmd_BXT_FindCoarsePath;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

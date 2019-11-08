@@ -208,6 +208,21 @@ namespace TriangleDrawing
 		}
 	}
 
+	static void DrawCoarseNodes(triangleapi_s *pTriAPI)
+	{
+		pTriAPI->RenderMode(kRenderTransAdd);
+		pTriAPI->CullFace(TRI_NONE);
+
+		auto base_origin = Vector(HwDLL::GetInstance().coarse_node_base_origin);
+
+		pTriAPI->Color4f(1.0f, 0.0f, 0.0f, 1.0f);
+		for (const auto& node : HwDLL::GetInstance().coarse_nodes) {
+			Vector origin = Vector(node.x, node.y, 0.f) * COARSE_NODE_STEP + base_origin;
+			origin.z = node.z;
+			TriangleUtils::DrawPyramid(pTriAPI, origin, 10, 30);
+		}
+	}
+
 	void VidInit()
 	{
 		white_sprite = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Load("sprites/white.spr");
@@ -228,5 +243,6 @@ namespace TriangleDrawing
 		DrawUseableEntities(pTriAPI);
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);
+		DrawCoarseNodes(pTriAPI);
 	}
 }

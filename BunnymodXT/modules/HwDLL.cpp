@@ -397,6 +397,10 @@ void HwDLL::Clear()
 	insideHost_Changelevel2_f = false;
 	dontStopAutorecord = false;
 
+	finding_coarse_nodes = false;
+	coarse_nodes.clear();
+	next_coarse_nodes = std::queue<CoarseNode>();
+
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
 		demoName.clear();
@@ -1857,6 +1861,16 @@ struct HwDLL::Cmd_BXT_StartSearch
 	}
 };
 
+struct HwDLL::Cmd_BXT_FindCoarseNodes
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		HwDLL::GetInstance().FindCoarseNodes();
+	}
+};
+
 struct HwDLL::Cmd_BXT_Reset_Frametime_Remainder
 {
 	NO_USAGE();
@@ -1962,6 +1976,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_Heuristic, Handler<>>("bxt_heuristic");
 	wrapper::Add<Cmd_BXT_StartSearch, Handler<>>("bxt_startsearch");
+	wrapper::Add<Cmd_BXT_FindCoarseNodes, Handler<>>("bxt_find_coarse_nodes");
 }
 
 void HwDLL::InsertCommands()
@@ -2568,6 +2583,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 	insideCbuf_Execute = true;
 	ORIG_Cbuf_Execute(); // executing might change inside if we had some kind of load command in the buffer.
+
+	FindCoarseNodesStep();
 
 	// Stuffcmds is inside valve.rc, which is executed by the very first Cbuf_Execute().
 	// So everything that we wanted to not happen if we're resetting already did its checks now.
@@ -3945,6 +3962,114 @@ void HwDLL::StartSearch()
 	fclose(log);
 
 	DeinitTracing();
+}
+
+void HwDLL::FindCoarseNodes()
+{
+	if (finding_coarse_nodes)
+	{
+		finding_coarse_nodes = false;
+		return;
+	}
+
+	finding_coarse_nodes = true;
+
+	const PlayerState starting_state = GetCurrentState();
+	ORIG_Con_Printf("Starting state: Origin{ %.8f %.8f %.8f }.\n",
+	                starting_state.Origin[0], starting_state.Origin[1], starting_state.Origin[2]);
+
+	VecCopy(starting_state.Origin, coarse_node_base_origin);
+	auto starting_node = CoarseNode(0, 0, starting_state.Origin[2]);
+
+	coarse_nodes.clear();
+	next_coarse_nodes = std::queue<CoarseNode>();
+	next_coarse_nodes.push(starting_node);
+	coarse_nodes.insert(starting_node);
+}
+
+void HwDLL::FindCoarseNodesStep()
+{
+	if (!finding_coarse_nodes)
+		return;
+
+	// Found all nodes.
+	if (next_coarse_nodes.empty())
+		return;
+
+	InitTracing();
+
+	const auto traceFunc = std::bind(&HwDLL::PlayerTrace2, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+
+	// Empty the whole queue on a single iteration.
+	auto steps = next_coarse_nodes.size();
+	ORIG_Con_Printf("Queue size: %u\n.", (unsigned) steps);
+	for (size_t step = 0; step < steps; ++step) {
+		CoarseNode current = next_coarse_nodes.front();
+		next_coarse_nodes.pop();
+
+		float current_origin[3];
+		CoarseNodeOrigin(current, current_origin);
+
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dy = -1; dy <= 1; dy++) {
+				auto adjacent = CoarseNode(current.x + dx, current.y + dy, current.z);
+
+				// Check to filter out some same node searches quickly.
+				if (coarse_nodes.find(adjacent) != coarse_nodes.cend())
+					continue;
+
+				float origin[3];
+				CoarseNodeOrigin(adjacent, origin);
+
+				// Trace down to find the ground.
+				float origin_down[3];
+				VecCopy(origin, origin_down);
+				origin_down[2] -= 36; // Arbitrary.
+
+				auto tr = traceFunc(origin, origin_down, HullType::NORMAL);
+
+				// The node is inside a wall.
+				if (tr.StartSolid)
+					continue;
+				// The node is ontop of a pit.
+				if (tr.Fraction == 1.f)
+					continue;
+
+				origin_down[2] = tr.EndPos[2];
+
+				// Trace from the current position to check if we can move there.
+				// Trace to the original (not down) origin, otherwise the trace hits corners.
+				tr = traceFunc(current_origin, origin, HullType::NORMAL);
+
+				// Can't move there.
+				if (tr.Fraction != 1.f)
+					continue;
+
+				// Set the origin to the down origin to force the node to the ground.
+				adjacent.z = origin_down[2];
+
+				// Don't push nodes that we already know about.
+				if (coarse_nodes.find(adjacent) != coarse_nodes.cend())
+					continue;
+
+				coarse_nodes.insert(adjacent);
+				next_coarse_nodes.push(adjacent);
+			}
+		}
+	}
+
+	DeinitTracing();
+
+	if (next_coarse_nodes.empty())
+		ORIG_Con_Printf("Found %u nodes.", (unsigned) coarse_nodes.size());
+}
+
+void HwDLL::CoarseNodeOrigin(const CoarseNode& node, float origin[3])
+{
+	VecCopy(coarse_node_base_origin, origin);
+	origin[0] += node.x * COARSE_NODE_STEP;
+	origin[1] += node.y * COARSE_NODE_STEP;
+	origin[2] = node.z;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

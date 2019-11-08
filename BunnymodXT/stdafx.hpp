@@ -39,7 +39,9 @@
 #include <iomanip>
 #include <sstream>
 #include <vector>
+#include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 using std::uintptr_t;

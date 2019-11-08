@@ -5,6 +5,35 @@
 #include "../cvars.hpp"
 #include "taslogger/writer.hpp"
 
+#include <boost/container_hash/hash.hpp>
+
+constexpr const float COARSE_NODE_STEP = 32.f;
+
+struct CoarseNode {
+	// Multiply by COARSE_NODE_STEP and add to coarse_node_base_origin to get world origin.
+	int x;
+	int y;
+
+	float z;
+
+	CoarseNode(int x, int y, float z) : x(x), y(y), z(z) {}
+
+	bool operator==(const CoarseNode& other) const
+	{
+		return x == other.x && y == other.y && z == other.z;
+	}
+
+	friend std::size_t hash_value(const CoarseNode& node)
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, node.x);
+		boost::hash_combine(seed, node.y);
+		boost::hash_combine(seed, node.z);
+
+		return seed;
+	}
+};
+
 class HwDLL : public IHookableNameFilterOrdered
 {
 	HOOK_DECL(void, __cdecl, LoadAndDecryptHwDLL, int a, void* b, void* c)
@@ -216,6 +245,14 @@ public:
 	void StartSearch();
 	PlayerState GetCurrentState();
 
+	bool finding_coarse_nodes;
+	std::unordered_set<CoarseNode, boost::hash<CoarseNode>> coarse_nodes;
+	std::queue<CoarseNode> next_coarse_nodes;
+	float coarse_node_base_origin[3];
+	void FindCoarseNodes();
+	void FindCoarseNodesStep();
+	void CoarseNodeOrigin(const CoarseNode& node, float origin[3]);
+
 	unsigned QueuedSharedRNGSeeds;
 
 	double *frametime_remainder;
@@ -301,6 +338,7 @@ protected:
 	struct Cmd_BXT_Append;
 	struct Cmd_BXT_Heuristic;
 	struct Cmd_BXT_StartSearch;
+	struct Cmd_BXT_FindCoarseNodes;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

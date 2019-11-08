@@ -4022,23 +4022,35 @@ void HwDLL::FindCoarseNodesStep()
 				CoarseNodeOrigin(adjacent, origin);
 
 				// Trace down to find the ground.
-				float origin_down[3];
-				VecCopy(origin, origin_down);
-				origin_down[2] -= 36; // Arbitrary.
+				float adjusted_origin[3];
+				VecCopy(origin, adjusted_origin);
+				adjusted_origin[2] -= 36; // Arbitrary.
 
-				auto tr = traceFunc(origin, origin_down, HullType::NORMAL);
+				auto tr = traceFunc(origin, adjusted_origin, HullType::NORMAL);
 
 				// The node is inside a wall.
 				if (tr.StartSolid)
-					continue;
+				{
+					// Try starting from 18 units up for the stepsize.
+					adjusted_origin[2] = origin[2];
+					origin[2] += 18;
+
+					tr = traceFunc(origin, adjusted_origin, HullType::NORMAL);
+
+					// Still inside a wall.
+					if (tr.StartSolid)
+						continue;
+
+					// We are good to go with stepsize.
+				}
 				// The node is ontop of a pit.
-				if (tr.Fraction == 1.f)
+				else if (tr.Fraction == 1.f)
 					continue;
 
-				origin_down[2] = tr.EndPos[2];
+				adjusted_origin[2] = tr.EndPos[2];
 
 				// Trace from the current position to check if we can move there.
-				// Trace to the original (not down) origin, otherwise the trace hits corners.
+				// Trace to the original (not adjusted) origin, otherwise the trace hits corners.
 				tr = traceFunc(current_origin, origin, HullType::NORMAL);
 
 				// Can't move there.
@@ -4046,7 +4058,7 @@ void HwDLL::FindCoarseNodesStep()
 					continue;
 
 				// Set the origin to the down origin to force the node to the ground.
-				adjacent.z = origin_down[2];
+				adjacent.z = adjusted_origin[2];
 
 				// Don't push nodes that we already know about.
 				if (coarse_nodes.find(adjacent) != coarse_nodes.cend())

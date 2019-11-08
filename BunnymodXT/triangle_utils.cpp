@@ -38,6 +38,14 @@ namespace TriangleUtils
 		pTriAPI->End();
 	}
 
+	void DrawLine(triangleapi_s *pTriAPI, Vector a, Vector b)
+	{
+		pTriAPI->Begin(TRI_LINES);
+		pTriAPI->Vertex3f(a.x, a.y, a.z);
+		pTriAPI->Vertex3f(b.x, b.y, b.z);
+		pTriAPI->End();
+	}
+
 	void DrawScreenTriangle(triangleapi_s *pTriAPI, Vector origin, float sideLength)
 	{
 		// The magic number is sqrt(3) / 6

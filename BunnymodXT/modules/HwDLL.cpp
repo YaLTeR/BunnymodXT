@@ -399,6 +399,7 @@ void HwDLL::Clear()
 
 	finding_coarse_nodes = false;
 	coarse_nodes.clear();
+	coarse_nodes_vector.clear();
 	next_coarse_nodes = std::queue<CoarseNode>();
 
 	if (resetState == ResetState::NORMAL) {
@@ -3979,12 +3980,14 @@ void HwDLL::FindCoarseNodes()
 	                starting_state.Origin[0], starting_state.Origin[1], starting_state.Origin[2]);
 
 	VecCopy(starting_state.Origin, coarse_node_base_origin);
-	auto starting_node = CoarseNode(0, 0, starting_state.Origin[2]);
+	auto starting_node = CoarseNode(0, 0, starting_state.Origin[2], 0, 0);
 
 	coarse_nodes.clear();
+	coarse_nodes_vector.clear();
 	next_coarse_nodes = std::queue<CoarseNode>();
 	next_coarse_nodes.push(starting_node);
 	coarse_nodes.insert(starting_node);
+	coarse_nodes_vector.push_back(starting_node);
 }
 
 void HwDLL::FindCoarseNodesStep()
@@ -4012,7 +4015,13 @@ void HwDLL::FindCoarseNodesStep()
 
 		for (int dx = -1; dx <= 1; dx++) {
 			for (int dy = -1; dy <= 1; dy++) {
-				auto adjacent = CoarseNode(current.x + dx, current.y + dy, current.z);
+				auto adjacent = CoarseNode(
+					current.x + dx,
+					current.y + dy,
+					current.z,
+					coarse_nodes_vector.size(),
+					current.index
+				);
 
 				// Check to filter out some same node searches quickly.
 				if (coarse_nodes.find(adjacent) != coarse_nodes.cend())
@@ -4065,6 +4074,7 @@ void HwDLL::FindCoarseNodesStep()
 					continue;
 
 				coarse_nodes.insert(adjacent);
+				coarse_nodes_vector.push_back(adjacent);
 				next_coarse_nodes.push(adjacent);
 			}
 		}

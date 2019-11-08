@@ -16,7 +16,18 @@ struct CoarseNode {
 
 	float z;
 
-	CoarseNode(int x, int y, float z) : x(x), y(y), z(z) {}
+	// This node's index in coarse_nodes_vector.
+	size_t index;
+	// The parent node's index in coarse_nodes_vector.
+	size_t parent;
+
+	CoarseNode(int x, int y, float z, size_t index, size_t parent)
+		: x(x)
+		, y(y)
+		, z(z)
+		, index(index)
+		, parent(parent)
+	{}
 
 	bool operator==(const CoarseNode& other) const
 	{
@@ -247,6 +258,7 @@ public:
 
 	bool finding_coarse_nodes;
 	std::unordered_set<CoarseNode, boost::hash<CoarseNode>> coarse_nodes;
+	std::vector<CoarseNode> coarse_nodes_vector;
 	std::queue<CoarseNode> next_coarse_nodes;
 	float coarse_node_base_origin[3];
 	void FindCoarseNodes();

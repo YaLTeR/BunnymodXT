@@ -213,13 +213,23 @@ namespace TriangleDrawing
 		pTriAPI->RenderMode(kRenderTransAdd);
 		pTriAPI->CullFace(TRI_NONE);
 
-		auto base_origin = Vector(HwDLL::GetInstance().coarse_node_base_origin);
-
-		pTriAPI->Color4f(1.0f, 0.0f, 0.0f, 1.0f);
 		for (const auto& node : HwDLL::GetInstance().coarse_nodes) {
-			Vector origin = Vector(node.x, node.y, 0.f) * COARSE_NODE_STEP + base_origin;
-			origin.z = node.z;
+			Vector origin;
+			HwDLL::GetInstance().CoarseNodeOrigin(node, origin);
+
+			pTriAPI->Color4f(1.0f, 0.0f, 0.0f, 1.0f);
 			TriangleUtils::DrawPyramid(pTriAPI, origin, 10, 30);
+
+			if (node.parent != node.index)
+			{
+				auto parent = HwDLL::GetInstance().coarse_nodes_vector[node.parent];
+
+				Vector parent_origin;
+				HwDLL::GetInstance().CoarseNodeOrigin(parent, parent_origin);
+
+				pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
+				TriangleUtils::DrawLine(pTriAPI, origin, parent_origin);
+			}
 		}
 	}
 

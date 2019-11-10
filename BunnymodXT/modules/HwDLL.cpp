@@ -407,6 +407,7 @@ void HwDLL::Clear()
 	coarse_path_distances.clear();
 	coarse_path_closed_set.clear();
 	coarse_path_target = CoarseNode(0, 0, 0, 0, 0);
+	coarse_path_final.clear();
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -1888,6 +1889,16 @@ struct HwDLL::Cmd_BXT_FindCoarsePath
 	}
 };
 
+struct HwDLL::Cmd_BXT_FollowCoarsePath
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		HwDLL::GetInstance().FollowCoarsePath();
+	}
+};
+
 struct HwDLL::Cmd_BXT_Reset_Frametime_Remainder
 {
 	NO_USAGE();
@@ -1995,6 +2006,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_StartSearch, Handler<>>("bxt_startsearch");
 	wrapper::Add<Cmd_BXT_FindCoarseNodes, Handler<>>("bxt_find_coarse_nodes");
 	wrapper::Add<Cmd_BXT_FindCoarsePath, Handler<>>("bxt_find_coarse_path");
+	wrapper::Add<Cmd_BXT_FollowCoarsePath, Handler<>>("bxt_follow_coarse_path");
 }
 
 void HwDLL::InsertCommands()
@@ -2604,6 +2616,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 	FindCoarseNodesStep();
 	FindCoarsePathStep();
+	FollowCoarsePathStep();
 
 	// Stuffcmds is inside valve.rc, which is executed by the very first Cbuf_Execute().
 	// So everything that we wanted to not happen if we're resetting already did its checks now.
@@ -2950,11 +2963,13 @@ using HLStrafe::VecScale;
 using HLStrafe::VecSubtract;
 using HLStrafe::VecAdd;
 using HLStrafe::Length;
+using HLStrafe::Distance;
 using HLStrafe::DotProduct;
 using HLStrafe::CrossProduct;
 using HLStrafe::IsZero;
 using HLStrafe::AngleModRad;
 using HLStrafe::Normalize;
+using HLStrafe::Atan2;
 using HLStrafe::M_DEG2RAD;
 using HLStrafe::M_RAD2DEG;
 using HLStrafe::M_U_RAD;
@@ -3999,6 +4014,8 @@ void HwDLL::FindCoarseNodes()
 	coarse_path_distances.clear();
 	coarse_path_closed_set.clear();
 	coarse_path_target = CoarseNode(0, 0, 0, 0, 0);
+	coarse_path_final.clear();
+	following_coarse_path = false;
 
 	const PlayerState starting_state = GetCurrentState();
 	ORIG_Con_Printf("Starting state: Origin{ %.8f %.8f %.8f }.\n",
@@ -4091,6 +4108,21 @@ void HwDLL::FindCoarseNodesStep()
 				if (tr.Fraction != 1.f)
 					continue;
 
+				// Check if there's a gap in the middle.
+				float direction[3];
+				VecSubtract(adjusted_origin, current_origin, direction);
+				VecScale(direction, 0.5, direction);
+				float middle[3];
+				VecAdd(current_origin, direction, middle);
+				float middle_down[3];
+				VecCopy(middle, middle_down);
+				middle_down[2] -= 18; // Step size.
+				tr = traceFunc(middle, middle_down, HullType::NORMAL);
+
+				// There's a large gap in the middle.
+				if (tr.Fraction == 1.f)
+					continue;
+
 				// Set the origin to the down origin to force the node to the ground.
 				adjacent.z = adjusted_origin[2];
 
@@ -4107,8 +4139,10 @@ void HwDLL::FindCoarseNodesStep()
 
 	DeinitTracing();
 
-	if (next_coarse_nodes.empty())
+	if (next_coarse_nodes.empty()) {
+		finding_coarse_nodes = false;
 		ORIG_Con_Printf("Found %u nodes.", (unsigned) coarse_nodes.size());
+	}
 }
 
 void HwDLL::FindCoarsePath()
@@ -4125,6 +4159,7 @@ void HwDLL::FindCoarsePath()
 	coarse_nodes.clear();
 	coarse_nodes_vector.clear();
 	next_coarse_nodes = std::queue<CoarseNode>();
+	following_coarse_path = false;
 
 	const PlayerState starting_state = GetCurrentState();
 	ORIG_Con_Printf("Starting state: Origin{ %.8f %.8f %.8f }.\n",
@@ -4161,6 +4196,7 @@ void HwDLL::FindCoarsePath()
 	coarse_path_nodes.clear();
 	coarse_path_distances.clear();
 	coarse_path_closed_set.clear();
+	coarse_path_final.clear();
 
 	// This 0.f should be heuristic but it doesn't matter here.
 	coarse_path_open_set.emplace_back(starting_node, 0.f);
@@ -4207,6 +4243,12 @@ void HwDLL::FindCoarsePathStep()
 			ORIG_Con_Printf("Reached target, distance = %f.\n", coarse_path_distances[current.index]);
 			coarse_path_target = current;
 			finding_coarse_path = false;
+
+			while (current.index != current.parent) {
+				coarse_path_final.push_back(current.index);
+				current = coarse_path_nodes[current.parent];
+			}
+
 			return;
 		}
 
@@ -4266,6 +4308,21 @@ void HwDLL::FindCoarsePathStep()
 				if (tr.Fraction != 1.f)
 					continue;
 
+				// Check if there's a gap in the middle.
+				float direction[3];
+				VecSubtract(adjusted_origin, current_origin, direction);
+				VecScale(direction, 0.5, direction);
+				float middle[3];
+				VecAdd(current_origin, direction, middle);
+				float middle_down[3];
+				VecCopy(middle, middle_down);
+				middle_down[2] -= 18; // Step size.
+				tr = PlayerTrace(middle, middle_down, HullType::NORMAL);
+
+				// There's a large gap in the middle.
+				if (tr.Fraction == 1.f)
+					continue;
+
 				// Set the origin to the down origin to force the node to the ground.
 				adjacent.z = adjusted_origin[2];
 
@@ -4273,13 +4330,8 @@ void HwDLL::FindCoarsePathStep()
 				if (coarse_path_closed_set.find(adjacent) != coarse_path_closed_set.cend())
 					continue;
 
-				auto node_distance = [](const CoarseNode& a, const CoarseNode& b) {
-					return COARSE_NODE_STEP
-						* std::sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
-				};
-
-				float distance = coarse_path_distances[current.index] + node_distance(current, adjacent);
-				float heuristic = node_distance(adjacent, coarse_path_target);
+				float distance = coarse_path_distances[current.index] + current.distance_to(adjacent);
+				float heuristic = adjacent.distance_to(coarse_path_target);
 
 				for (auto& p: coarse_path_open_set) {
 					if (p.first == adjacent) {
@@ -4309,6 +4361,75 @@ void HwDLL::FindCoarsePathStep()
 
 	if (coarse_path_open_set.empty())
 		ORIG_Con_Printf("Couldn't reach the target.");
+}
+
+void HwDLL::FollowCoarsePath()
+{
+	if (following_coarse_path) {
+		following_coarse_path = false;
+		return;
+	}
+
+	if (coarse_path_final.empty()) {
+		ORIG_Con_Printf("No path to follow.");
+		return;
+	}
+
+	following_coarse_path = true;
+	following_next_node = coarse_path_final.size() - 1;
+}
+
+void HwDLL::FollowCoarsePathStep()
+{
+	if (!following_coarse_path)
+		return;
+
+	const PlayerState player = GetCurrentState();
+
+	auto target = coarse_path_nodes[coarse_path_final[following_next_node]];
+	float target_origin[3];
+	CoarseNodeOrigin(target, target_origin);
+	auto distance = Distance(player.Origin, target_origin);
+
+	// Only switch to the next node once fully stopped.
+	if (distance < 1.f && IsZero(player.Velocity)) {
+		// Came close enough to the node.
+		if (following_next_node == 0) {
+			ORIG_Con_Printf("Reached target.\n");
+			following_coarse_path = false;
+			return;
+		}
+
+		// Switch to the next one.
+		following_next_node--;
+		target = coarse_path_nodes[coarse_path_final[following_next_node]];
+		CoarseNodeOrigin(target, target_origin);
+		distance = Distance(player.Origin, target_origin);
+	}
+
+	float difference[3];
+	VecSubtract(target_origin, player.Origin, difference);
+	double yaw = Atan2(difference[1], difference[0]) * M_RAD2DEG;
+
+	auto frame = Frame();
+	frame.SetYaw(yaw);
+	if (distance >= 1.)
+		frame.Forward = true;
+	if (distance < 5.f)
+		frame.Use = true;
+
+	runningFrames = true;
+	totalFramebulks = 1;
+	currentFramebulk = 0;
+	currentRepeat = 0;
+	StrafeState = HLStrafe::CurrentState();
+	ButtonsPresent = false;
+	SharedRNGSeedPresent = false;
+	SetNonSharedRNGSeed = false;
+	thisFrameIs0ms = false;
+
+	input.Clear();
+	input.InsertFrame(0, frame);
 }
 
 void HwDLL::CoarseNodeOrigin(const CoarseNode& node, float origin[3])

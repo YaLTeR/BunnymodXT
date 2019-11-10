@@ -29,6 +29,12 @@ struct CoarseNode {
 		, parent(parent)
 	{}
 
+	float distance_to(const CoarseNode& other) const
+	{
+		return COARSE_NODE_STEP
+			* std::sqrt((x - other.x) * (x - other.x) + (y - other.y) * (y - other.y));
+	}
+
 	bool operator==(const CoarseNode& other) const
 	{
 		return x == other.x && y == other.y && z == other.z;
@@ -271,8 +277,14 @@ public:
 	std::vector<CoarseNode> coarse_path_nodes;
 	std::vector<float> coarse_path_distances;
 	std::unordered_set<CoarseNode, boost::hash<CoarseNode>> coarse_path_closed_set;
+	std::vector<size_t> coarse_path_final;
 	void FindCoarsePath();
 	void FindCoarsePathStep();
+
+	bool following_coarse_path;
+	size_t following_next_node; // Index into coarse_path_final.
+	void FollowCoarsePath();
+	void FollowCoarsePathStep();
 
 	unsigned QueuedSharedRNGSeeds;
 
@@ -361,6 +373,7 @@ protected:
 	struct Cmd_BXT_StartSearch;
 	struct Cmd_BXT_FindCoarseNodes;
 	struct Cmd_BXT_FindCoarsePath;
+	struct Cmd_BXT_FollowCoarsePath;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

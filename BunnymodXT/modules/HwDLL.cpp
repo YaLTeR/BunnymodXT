@@ -4043,21 +4043,38 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 				if (tr.StartSolid)
 					continue;
 
+				adjusted_origin[2] = tr.EndPos[2];
+
+				// Since our coarse node distance is large, tracing directly from current origin to
+				// adjusted origin is likely to hit a corner. So trace up and then forward.
+				float up[3];
+				VecCopy(current_origin, up);
+				up[2] = tr.EndPos[2];
+
+				tr = PlayerTrace(current_origin, up, HullType::NORMAL);
+				if (tr.Fraction != 1.f)
+					continue;
+
+				tr = PlayerTrace(up, adjusted_origin, HullType::NORMAL);
+				if (tr.Fraction != 1.f)
+					continue;
+
 				// We are good to go with stepsize.
 			}
 			// The node is ontop of a pit.
-			else if (tr.Fraction == 1.f)
+			else if (tr.Fraction == 1.f) {
 				continue;
+			} else {
+				adjusted_origin[2] = tr.EndPos[2];
 
-			adjusted_origin[2] = tr.EndPos[2];
+				// Trace from the current position to check if we can move there.
+				// Trace to the original (not adjusted) origin, otherwise the trace hits corners.
+				tr = PlayerTrace(current_origin, origin, HullType::NORMAL);
 
-			// Trace from the current position to check if we can move there.
-			// Trace to the original (not adjusted) origin, otherwise the trace hits corners.
-			tr = PlayerTrace(current_origin, origin, HullType::NORMAL);
-
-			// Can't move there.
-			if (tr.Fraction != 1.f)
-				continue;
+				// Can't move there.
+				if (tr.Fraction != 1.f)
+					continue;
+			}
 
 			// Check if there's a gap in the middle.
 			float direction[3];

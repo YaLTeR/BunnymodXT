@@ -270,6 +270,11 @@ public:
 	void FindCoarseNodes();
 	void FindCoarseNodesStep();
 	void CoarseNodeOrigin(const CoarseNode& node, float origin[3]);
+	void ForEachCoarseNodeNeighbor(
+		const CoarseNode& node,
+		std::function<bool(const CoarseNode& neighbor)> already_found,
+		std::function<void(CoarseNode)> callback
+	);
 
 	bool finding_coarse_path;
 	CoarseNode coarse_path_target = CoarseNode(0, 0, 0, 0, 0);

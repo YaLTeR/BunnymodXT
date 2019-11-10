@@ -3998,6 +3998,94 @@ void HwDLL::StartSearch()
 	DeinitTracing();
 }
 
+void HwDLL::ForEachCoarseNodeNeighbor(
+	const CoarseNode& node,
+	std::function<bool(const CoarseNode& neighbor)> already_found,
+	std::function<void(CoarseNode)> callback
+) {
+	float current_origin[3];
+	CoarseNodeOrigin(node, current_origin);
+
+	for (int dx = -1; dx <= 1; dx++) {
+		for (int dy = -1; dy <= 1; dy++) {
+			auto adjacent = CoarseNode(
+				node.x + dx,
+				node.y + dy,
+				node.z,
+				0,
+				node.index
+			);
+
+			// Check to filter out some same node searches quickly.
+			if (already_found(adjacent))
+				continue;
+
+			float origin[3];
+			CoarseNodeOrigin(adjacent, origin);
+
+			// Trace down to find the ground.
+			float adjusted_origin[3];
+			VecCopy(origin, adjusted_origin);
+			adjusted_origin[2] -= 36; // Arbitrary.
+
+			auto tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
+
+			// The node is inside a wall.
+			if (tr.StartSolid)
+			{
+				// Try starting from 18 units up for the stepsize.
+				adjusted_origin[2] = origin[2];
+				origin[2] += 18;
+
+				tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
+
+				// Still inside a wall.
+				if (tr.StartSolid)
+					continue;
+
+				// We are good to go with stepsize.
+			}
+			// The node is ontop of a pit.
+			else if (tr.Fraction == 1.f)
+				continue;
+
+			adjusted_origin[2] = tr.EndPos[2];
+
+			// Trace from the current position to check if we can move there.
+			// Trace to the original (not adjusted) origin, otherwise the trace hits corners.
+			tr = PlayerTrace(current_origin, origin, HullType::NORMAL);
+
+			// Can't move there.
+			if (tr.Fraction != 1.f)
+				continue;
+
+			// Check if there's a gap in the middle.
+			float direction[3];
+			VecSubtract(adjusted_origin, current_origin, direction);
+			VecScale(direction, 0.5, direction);
+			float middle[3];
+			VecAdd(current_origin, direction, middle);
+			float middle_down[3];
+			VecCopy(middle, middle_down);
+			middle_down[2] -= 18; // Step size.
+			tr = PlayerTrace(middle, middle_down, HullType::NORMAL);
+
+			// There's a large gap in the middle.
+			if (tr.Fraction == 1.f)
+				continue;
+
+			// Set the origin to the down origin to force the node to the ground.
+			adjacent.z = adjusted_origin[2];
+
+			// Don't push nodes that we already know about.
+			if (already_found(adjacent))
+				continue;
+
+			callback(adjacent);
+		}
+	}
+}
+
 void HwDLL::FindCoarseNodes()
 {
 	if (finding_coarse_nodes)
@@ -4052,89 +4140,14 @@ void HwDLL::FindCoarseNodesStep()
 		CoarseNode current = next_coarse_nodes.front();
 		next_coarse_nodes.pop();
 
-		float current_origin[3];
-		CoarseNodeOrigin(current, current_origin);
-
-		for (int dx = -1; dx <= 1; dx++) {
-			for (int dy = -1; dy <= 1; dy++) {
-				auto adjacent = CoarseNode(
-					current.x + dx,
-					current.y + dy,
-					current.z,
-					coarse_nodes_vector.size(),
-					current.index
-				);
-
-				// Check to filter out some same node searches quickly.
-				if (coarse_nodes.find(adjacent) != coarse_nodes.cend())
-					continue;
-
-				float origin[3];
-				CoarseNodeOrigin(adjacent, origin);
-
-				// Trace down to find the ground.
-				float adjusted_origin[3];
-				VecCopy(origin, adjusted_origin);
-				adjusted_origin[2] -= 36; // Arbitrary.
-
-				auto tr = traceFunc(origin, adjusted_origin, HullType::NORMAL);
-
-				// The node is inside a wall.
-				if (tr.StartSolid)
-				{
-					// Try starting from 18 units up for the stepsize.
-					adjusted_origin[2] = origin[2];
-					origin[2] += 18;
-
-					tr = traceFunc(origin, adjusted_origin, HullType::NORMAL);
-
-					// Still inside a wall.
-					if (tr.StartSolid)
-						continue;
-
-					// We are good to go with stepsize.
-				}
-				// The node is ontop of a pit.
-				else if (tr.Fraction == 1.f)
-					continue;
-
-				adjusted_origin[2] = tr.EndPos[2];
-
-				// Trace from the current position to check if we can move there.
-				// Trace to the original (not adjusted) origin, otherwise the trace hits corners.
-				tr = traceFunc(current_origin, origin, HullType::NORMAL);
-
-				// Can't move there.
-				if (tr.Fraction != 1.f)
-					continue;
-
-				// Check if there's a gap in the middle.
-				float direction[3];
-				VecSubtract(adjusted_origin, current_origin, direction);
-				VecScale(direction, 0.5, direction);
-				float middle[3];
-				VecAdd(current_origin, direction, middle);
-				float middle_down[3];
-				VecCopy(middle, middle_down);
-				middle_down[2] -= 18; // Step size.
-				tr = traceFunc(middle, middle_down, HullType::NORMAL);
-
-				// There's a large gap in the middle.
-				if (tr.Fraction == 1.f)
-					continue;
-
-				// Set the origin to the down origin to force the node to the ground.
-				adjacent.z = adjusted_origin[2];
-
-				// Don't push nodes that we already know about.
-				if (coarse_nodes.find(adjacent) != coarse_nodes.cend())
-					continue;
-
-				coarse_nodes.insert(adjacent);
-				coarse_nodes_vector.push_back(adjacent);
-				next_coarse_nodes.push(adjacent);
-			}
-		}
+		ForEachCoarseNodeNeighbor(current, [this](const CoarseNode& adjacent){
+			return coarse_nodes.find(adjacent) != coarse_nodes.cend();
+		}, [this](CoarseNode adjacent){
+			adjacent.index = coarse_nodes_vector.size();
+			coarse_nodes.insert(adjacent);
+			coarse_nodes_vector.push_back(adjacent);
+			next_coarse_nodes.push(adjacent);
+		});
 	}
 
 	DeinitTracing();
@@ -4252,109 +4265,35 @@ void HwDLL::FindCoarsePathStep()
 			return;
 		}
 
-		float current_origin[3];
-		CoarseNodeOrigin(current, current_origin);
+		ForEachCoarseNodeNeighbor(current, [this](const CoarseNode& adjacent){
+			return coarse_path_closed_set.find(adjacent) != coarse_path_closed_set.cend();
+		}, [this, &current](CoarseNode adjacent){
+			adjacent.index = coarse_path_nodes.size();
 
-		for (int dx = -1; dx <= 1; dx++) {
-			for (int dy = -1; dy <= 1; dy++) {
-				auto adjacent = CoarseNode(
-					current.x + dx,
-					current.y + dy,
-					current.z,
-					coarse_path_nodes.size(),
-					current.index
-				);
+			float distance = coarse_path_distances[current.index] + current.distance_to(adjacent);
+			float heuristic = adjacent.distance_to(coarse_path_target);
 
-				// Check to filter out some same node searches quickly.
-				if (coarse_path_closed_set.find(adjacent) != coarse_path_closed_set.cend())
-					continue;
+			for (auto& p: coarse_path_open_set) {
+				if (p.first == adjacent) {
+					adjacent = p.first;
 
-				float origin[3];
-				CoarseNodeOrigin(adjacent, origin);
-
-				// Trace down to find the ground.
-				float adjusted_origin[3];
-				VecCopy(origin, adjusted_origin);
-				adjusted_origin[2] -= 36; // Arbitrary.
-
-				auto tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
-
-				// The node is inside a wall.
-				if (tr.StartSolid)
-				{
-					// Try starting from 18 units up for the stepsize.
-					adjusted_origin[2] = origin[2];
-					origin[2] += 18;
-
-					tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
-
-					// Still inside a wall.
-					if (tr.StartSolid)
-						continue;
-
-					// We are good to go with stepsize.
-				}
-				// The node is ontop of a pit.
-				else if (tr.Fraction == 1.f)
-					continue;
-
-				adjusted_origin[2] = tr.EndPos[2];
-
-				// Trace from the current position to check if we can move there.
-				// Trace to the original (not adjusted) origin, otherwise the trace hits corners.
-				tr = PlayerTrace(current_origin, origin, HullType::NORMAL);
-
-				// Can't move there.
-				if (tr.Fraction != 1.f)
-					continue;
-
-				// Check if there's a gap in the middle.
-				float direction[3];
-				VecSubtract(adjusted_origin, current_origin, direction);
-				VecScale(direction, 0.5, direction);
-				float middle[3];
-				VecAdd(current_origin, direction, middle);
-				float middle_down[3];
-				VecCopy(middle, middle_down);
-				middle_down[2] -= 18; // Step size.
-				tr = PlayerTrace(middle, middle_down, HullType::NORMAL);
-
-				// There's a large gap in the middle.
-				if (tr.Fraction == 1.f)
-					continue;
-
-				// Set the origin to the down origin to force the node to the ground.
-				adjacent.z = adjusted_origin[2];
-
-				// Don't push nodes that we already know about.
-				if (coarse_path_closed_set.find(adjacent) != coarse_path_closed_set.cend())
-					continue;
-
-				float distance = coarse_path_distances[current.index] + current.distance_to(adjacent);
-				float heuristic = adjacent.distance_to(coarse_path_target);
-
-				for (auto& p: coarse_path_open_set) {
-					if (p.first == adjacent) {
-						adjacent = p.first;
-
-						if (distance + heuristic < p.second) {
-							p.second = distance + heuristic;
-							p.first.parent = current.index;
-							coarse_path_nodes[p.first.index] = p.first;
-							coarse_path_distances[p.first.index] = distance;
-						}
-
-						break;
+					if (distance + heuristic < p.second) {
+						p.second = distance + heuristic;
+						p.first.parent = current.index;
+						coarse_path_nodes[p.first.index] = p.first;
+						coarse_path_distances[p.first.index] = distance;
 					}
-				}
 
-				if (adjacent.index == coarse_path_nodes.size()) {
-					coarse_path_open_set.emplace_back(adjacent, distance + heuristic);
-					coarse_path_nodes.push_back(adjacent);
-					coarse_path_distances.push_back(distance);
+					break;
 				}
 			}
-		}
+
+			if (adjacent.index == coarse_path_nodes.size()) {
+				coarse_path_open_set.emplace_back(adjacent, distance + heuristic);
+				coarse_path_nodes.push_back(adjacent);
+				coarse_path_distances.push_back(distance);
+			}
+		});
 	}
 
 	DeinitTracing();

@@ -4379,6 +4379,12 @@ void HwDLL::CoarseNodeOrigin(const CoarseNode& node, float origin[3])
 	origin[2] = node.z;
 }
 
+void HwDLL::CoarseNodeDrawOrigin(const CoarseNode& node, float origin[3])
+{
+	CoarseNodeOrigin(node, origin);
+	origin[2] -= 36;
+}
+
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)
 {
 	insideSeedRNG = true;

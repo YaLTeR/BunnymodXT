@@ -215,7 +215,7 @@ namespace TriangleDrawing
 
 		for (const auto& node : HwDLL::GetInstance().coarse_nodes) {
 			Vector origin;
-			HwDLL::GetInstance().CoarseNodeOrigin(node, origin);
+			HwDLL::GetInstance().CoarseNodeDrawOrigin(node, origin);
 
 			pTriAPI->Color4f(1.0f, 0.0f, 0.0f, 1.0f);
 			TriangleUtils::DrawPyramid(pTriAPI, origin, 5, 10);
@@ -225,7 +225,7 @@ namespace TriangleDrawing
 				auto parent = HwDLL::GetInstance().coarse_nodes_vector[node.parent];
 
 				Vector parent_origin;
-				HwDLL::GetInstance().CoarseNodeOrigin(parent, parent_origin);
+				HwDLL::GetInstance().CoarseNodeDrawOrigin(parent, parent_origin);
 
 				pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
 				TriangleUtils::DrawLine(pTriAPI, origin, parent_origin);
@@ -240,7 +240,7 @@ namespace TriangleDrawing
 
 		auto target = HwDLL::GetInstance().coarse_path_target;
 		Vector origin;
-		HwDLL::GetInstance().CoarseNodeOrigin(target, origin);
+		HwDLL::GetInstance().CoarseNodeDrawOrigin(target, origin);
 		pTriAPI->Color4f(0.0f, 0.0f, 1.0f, 1.0f);
 		TriangleUtils::DrawPyramid(pTriAPI, origin, 5, 10);
 
@@ -249,7 +249,7 @@ namespace TriangleDrawing
 				continue;
 
 			Vector origin;
-			HwDLL::GetInstance().CoarseNodeOrigin(node, origin);
+			HwDLL::GetInstance().CoarseNodeDrawOrigin(node, origin);
 
 			pTriAPI->Color4f(1.0f, 0.0f, 0.0f, 1.0f);
 			TriangleUtils::DrawPyramid(pTriAPI, origin, 5, 10);
@@ -259,7 +259,7 @@ namespace TriangleDrawing
 				auto parent = HwDLL::GetInstance().coarse_path_nodes[node.parent];
 
 				Vector parent_origin;
-				HwDLL::GetInstance().CoarseNodeOrigin(parent, parent_origin);
+				HwDLL::GetInstance().CoarseNodeDrawOrigin(parent, parent_origin);
 
 				pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
 				TriangleUtils::DrawLine(pTriAPI, origin, parent_origin);
@@ -270,7 +270,7 @@ namespace TriangleDrawing
 			const auto& node = p.first;
 
 			Vector origin;
-			HwDLL::GetInstance().CoarseNodeOrigin(node, origin);
+			HwDLL::GetInstance().CoarseNodeDrawOrigin(node, origin);
 
 			pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 1.0f);
 			TriangleUtils::DrawPyramid(pTriAPI, origin, 5, 10);
@@ -280,7 +280,7 @@ namespace TriangleDrawing
 				auto parent = HwDLL::GetInstance().coarse_path_nodes[node.parent];
 
 				Vector parent_origin;
-				HwDLL::GetInstance().CoarseNodeOrigin(parent, parent_origin);
+				HwDLL::GetInstance().CoarseNodeDrawOrigin(parent, parent_origin);
 
 				pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
 				TriangleUtils::DrawLine(pTriAPI, origin, parent_origin);
@@ -290,13 +290,11 @@ namespace TriangleDrawing
 		if (target.index != target.parent) {
 			Vector origin;
 			HwDLL::GetInstance().CoarseNodeOrigin(target, origin);
-			origin.z += 30;
 
 			while (target.index != target.parent) {
 				auto parent = HwDLL::GetInstance().coarse_path_nodes[target.parent];
 				Vector parent_origin;
 				HwDLL::GetInstance().CoarseNodeOrigin(parent, parent_origin);
-				parent_origin.z += 30;
 
 				pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 0.5f);
 				TriangleUtils::DrawLine(pTriAPI, origin, parent_origin);

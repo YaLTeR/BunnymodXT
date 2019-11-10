@@ -270,6 +270,7 @@ public:
 	void FindCoarseNodes();
 	void FindCoarseNodesStep();
 	void CoarseNodeOrigin(const CoarseNode& node, float origin[3]);
+	void CoarseNodeDrawOrigin(const CoarseNode& node, float origin[3]);
 	void ForEachCoarseNodeNeighbor(
 		const CoarseNode& node,
 		std::function<bool(const CoarseNode& neighbor)> already_found,

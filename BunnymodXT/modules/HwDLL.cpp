@@ -4003,6 +4003,9 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 	std::function<bool(const CoarseNode& neighbor)> already_found,
 	std::function<void(CoarseNode)> callback
 ) {
+	// No-damage fall distance.
+	const float MAX_FALL_DISTANCE = 210;
+
 	float current_origin[3];
 	CoarseNodeOrigin(node, current_origin);
 
@@ -4026,7 +4029,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 			// Trace down to find the ground.
 			float adjusted_origin[3];
 			VecCopy(origin, adjusted_origin);
-			adjusted_origin[2] -= 36; // Arbitrary.
+			adjusted_origin[2] -= MAX_FALL_DISTANCE;
 
 			auto tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
 
@@ -4084,7 +4087,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 			VecAdd(current_origin, direction, middle);
 			float middle_down[3];
 			VecCopy(middle, middle_down);
-			middle_down[2] -= 18; // Step size.
+			middle_down[2] -= MAX_FALL_DISTANCE;
 			tr = PlayerTrace(middle, middle_down, HullType::NORMAL);
 
 			// There's a large gap in the middle.

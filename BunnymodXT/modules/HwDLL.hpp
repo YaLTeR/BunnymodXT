@@ -37,17 +37,8 @@ struct CoarseNode {
 
 	bool operator==(const CoarseNode& other) const
 	{
-		return x == other.x && y == other.y && z == other.z;
-	}
-
-	friend std::size_t hash_value(const CoarseNode& node)
-	{
-		std::size_t seed = 0;
-		boost::hash_combine(seed, node.x);
-		boost::hash_combine(seed, node.y);
-		boost::hash_combine(seed, node.z);
-
-		return seed;
+		// Z is about the minimal distance between two ducked positions.
+		return x == other.x && y == other.y && fabs(z - other.z) < 36;
 	}
 };
 
@@ -263,7 +254,7 @@ public:
 	PlayerState GetCurrentState();
 
 	bool finding_coarse_nodes;
-	std::unordered_set<CoarseNode, boost::hash<CoarseNode>> coarse_nodes;
+	std::vector<CoarseNode> coarse_nodes;
 	std::vector<CoarseNode> coarse_nodes_vector;
 	std::queue<CoarseNode> next_coarse_nodes;
 	float coarse_node_base_origin[3];
@@ -282,7 +273,7 @@ public:
 	std::vector<std::pair<CoarseNode, float>> coarse_path_open_set;
 	std::vector<CoarseNode> coarse_path_nodes;
 	std::vector<float> coarse_path_distances;
-	std::unordered_set<CoarseNode, boost::hash<CoarseNode>> coarse_path_closed_set;
+	std::vector<CoarseNode> coarse_path_closed_set;
 	std::vector<size_t> coarse_path_final;
 	void FindCoarsePath();
 	void FindCoarsePathStep();

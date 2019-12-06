@@ -4133,7 +4133,7 @@ void HwDLL::FindCoarseNodes()
 	coarse_nodes_vector.clear();
 	next_coarse_nodes = std::queue<CoarseNode>();
 	next_coarse_nodes.push(starting_node);
-	coarse_nodes.insert(starting_node);
+	coarse_nodes.push_back(starting_node);
 	coarse_nodes_vector.push_back(starting_node);
 }
 
@@ -4158,10 +4158,11 @@ void HwDLL::FindCoarseNodesStep()
 		next_coarse_nodes.pop();
 
 		ForEachCoarseNodeNeighbor(current, [this](const CoarseNode& adjacent){
-			return coarse_nodes.find(adjacent) != coarse_nodes.cend();
+			auto it = std::find(coarse_nodes.cbegin(), coarse_nodes.cend(), adjacent);
+			return it != coarse_nodes.cend();
 		}, [this](CoarseNode adjacent){
 			adjacent.index = coarse_nodes_vector.size();
-			coarse_nodes.insert(adjacent);
+			coarse_nodes.push_back(adjacent);
 			coarse_nodes_vector.push_back(adjacent);
 			next_coarse_nodes.push(adjacent);
 		});
@@ -4267,7 +4268,7 @@ void HwDLL::FindCoarsePathStep()
 
 		auto current = best_node_it->first;
 		coarse_path_open_set.erase(best_node_it);
-		coarse_path_closed_set.insert(current);
+		coarse_path_closed_set.push_back(current);
 
 		if (current == coarse_path_target) {
 			ORIG_Con_Printf("Reached target, distance = %f.\n", coarse_path_distances[current.index]);
@@ -4283,7 +4284,9 @@ void HwDLL::FindCoarsePathStep()
 		}
 
 		ForEachCoarseNodeNeighbor(current, [this](const CoarseNode& adjacent){
-			return coarse_path_closed_set.find(adjacent) != coarse_path_closed_set.cend();
+			auto it = std::find(coarse_path_closed_set.cbegin(), coarse_path_closed_set.cend(),
+				adjacent);
+			return it != coarse_path_closed_set.cend();
 		}, [this, &current](CoarseNode adjacent){
 			adjacent.index = coarse_path_nodes.size();
 

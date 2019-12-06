@@ -4050,8 +4050,25 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 				tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
 
 				// Still inside a wall.
-				if (tr.StartSolid)
-					continue;
+				if (tr.StartSolid) {
+					// See if we can jump up.
+					if (adjacent.jump)
+						// Not if we need to jump forward though.
+						continue;
+
+					// Jump + duck height is a little above 59.
+					origin[2] = adjusted_origin[2] + 60;
+
+					tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
+
+					// Still inside a wall.
+					if (tr.StartSolid) {
+						continue;
+					}
+
+					// All good.
+					adjacent.jump_up = true;
+				}
 
 				adjusted_origin[2] = tr.EndPos[2];
 
@@ -4069,7 +4086,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 				if (tr.Fraction != 1.f)
 					continue;
 
-				// We are good to go with stepsize.
+				// We are good to go.
 			}
 			// The node is ontop of a pit.
 			else if (tr.Fraction == 1.f) {
@@ -4309,6 +4326,7 @@ void HwDLL::FindCoarsePathStep()
 						p.second = distance + heuristic;
 						p.first.parent = current.index;
 						p.first.jump = adjacent.jump;
+						p.first.jump_up = adjacent.jump_up;
 						coarse_path_nodes[p.first.index] = p.first;
 						coarse_path_distances[p.first.index] = distance;
 					}
@@ -4408,6 +4426,15 @@ void HwDLL::FollowCoarsePathStep()
 		if (distance >= 5 && target.jump && !in_air && speed > 190) {
 			frame.Jump = true;
 		}
+
+		if (target_origin[2] - player.Origin[2] > 18 && target.jump_up && !in_air
+				&& !player.Ducking) {
+			frame.Jump = true;
+		}
+	}
+
+	if (target.jump_up && in_air) {
+		frame.Duck = true;
 	}
 
 	frame.SetYaw(yaw);

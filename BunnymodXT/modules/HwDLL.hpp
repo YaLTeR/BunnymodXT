@@ -23,6 +23,8 @@ struct CoarseNode {
 
 	// This node needs a jump forward from the parent node.
 	bool jump;
+	// This node needs a jump up from the parent node.
+	bool jump_up;
 
 	CoarseNode(int x, int y, float z, size_t index, size_t parent)
 		: x(x)
@@ -31,6 +33,7 @@ struct CoarseNode {
 		, index(index)
 		, parent(parent)
 		, jump(false)
+		, jump_up(false)
 	{}
 
 	float distance_to(const CoarseNode& other) const

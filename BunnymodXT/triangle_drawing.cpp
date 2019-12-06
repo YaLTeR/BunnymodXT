@@ -229,6 +229,8 @@ namespace TriangleDrawing
 
 				if (node.jump) {
 					pTriAPI->Color4f(1.0f, 0.5f, 0.0f, 0.5f);
+				} else if (node.jump_up) {
+					pTriAPI->Color4f(1.0f, 0.25f, 0.0f, 0.5f);
 				} else {
 					pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
 				}
@@ -268,6 +270,8 @@ namespace TriangleDrawing
 
 				if (node.jump) {
 					pTriAPI->Color4f(1.0f, 0.5f, 0.0f, 0.5f);
+				} else if (node.jump_up) {
+					pTriAPI->Color4f(1.0f, 0.25f, 0.0f, 0.5f);
 				} else {
 					pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
 				}
@@ -294,6 +298,8 @@ namespace TriangleDrawing
 
 				if (node.jump) {
 					pTriAPI->Color4f(1.0f, 0.5f, 0.0f, 0.5f);
+				} else if (node.jump_up) {
+					pTriAPI->Color4f(1.0f, 0.25f, 0.0f, 0.5f);
 				} else {
 					pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
 				}

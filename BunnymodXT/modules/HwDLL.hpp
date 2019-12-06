@@ -282,6 +282,7 @@ public:
 	size_t following_next_node; // Index into coarse_path_final.
 	void FollowCoarsePath();
 	void FollowCoarsePathStep();
+	void FillPlayerData();
 
 	unsigned QueuedSharedRNGSeeds;
 

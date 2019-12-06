@@ -4343,7 +4343,7 @@ void HwDLL::FollowCoarsePathStep()
 	if (!following_coarse_path)
 		return;
 
-	const PlayerState player = GetCurrentState();
+	FillPlayerData();
 
 	auto target = coarse_path_nodes[coarse_path_final[following_next_node]];
 	float target_origin[3];
@@ -4370,12 +4370,31 @@ void HwDLL::FollowCoarsePathStep()
 	VecSubtract(target_origin, player.Origin, difference);
 	double yaw = Atan2(difference[1], difference[0]) * M_RAD2DEG;
 
+	bool slow_down_in_the_air = false;
+
+	InitTracing();
+	auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	if (GetPositionType(player, traceFunc) != PositionType::GROUND) {
+		if (Length(player.Velocity) > 30.f) {
+			// We're in the air and moving too quickly. Try to slow down.
+			slow_down_in_the_air = true;
+		}
+	}
+	DeinitTracing();
+
 	auto frame = Frame();
+
+	if (slow_down_in_the_air) {
+		yaw = Atan2(player.Velocity[1], player.Velocity[0]) * M_RAD2DEG;
+		frame.Back = true;
+	} else {
+		if (distance >= 1.)
+			frame.Forward = true;
+		if (distance < 5.f)
+			frame.Use = true;
+	}
+
 	frame.SetYaw(yaw);
-	if (distance >= 1.)
-		frame.Forward = true;
-	if (distance < 5.f)
-		frame.Use = true;
 
 	runningFrames = true;
 	totalFramebulks = 1;
@@ -4389,6 +4408,34 @@ void HwDLL::FollowCoarsePathStep()
 
 	input.Clear();
 	input.InsertFrame(0, frame);
+}
+
+void HwDLL::FillPlayerData()
+{
+	if (svs->num_clients >= 1) {
+		edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+		if (pl) {
+			player.Origin[0] = pl->v.origin[0];
+			player.Origin[1] = pl->v.origin[1];
+			player.Origin[2] = pl->v.origin[2];
+			player.Velocity[0] = pl->v.velocity[0];
+			player.Velocity[1] = pl->v.velocity[1];
+			player.Velocity[2] = pl->v.velocity[2];
+			player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
+			player.InDuckAnimation = (pl->v.bInDuck != 0);
+			player.DuckTime = static_cast<float>(pl->v.flDuckTime);
+
+			if (ORIG_PF_GetPhysicsKeyValue) {
+				auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));
+				player.HasLJModule = (slj == 1);
+			} else {
+				player.HasLJModule = false;
+			}
+
+			// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
+			GetViewangles(player.Viewangles);
+		}
+	}
 }
 
 void HwDLL::CoarseNodeOrigin(const CoarseNode& node, float origin[3])

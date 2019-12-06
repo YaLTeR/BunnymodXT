@@ -21,12 +21,16 @@ struct CoarseNode {
 	// The parent node's index in coarse_nodes_vector.
 	size_t parent;
 
+	// This node needs a jump forward from the parent node.
+	bool jump;
+
 	CoarseNode(int x, int y, float z, size_t index, size_t parent)
 		: x(x)
 		, y(y)
 		, z(z)
 		, index(index)
 		, parent(parent)
+		, jump(false)
 	{}
 
 	float distance_to(const CoarseNode& other) const

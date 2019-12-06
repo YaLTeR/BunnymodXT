@@ -4009,8 +4009,8 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 	float current_origin[3];
 	CoarseNodeOrigin(node, current_origin);
 
-	for (int dx = -1; dx <= 1; dx++) {
-		for (int dy = -1; dy <= 1; dy++) {
+	for (int dx = -4; dx <= 4; dx++) {
+		for (int dy = -4; dy <= 4; dy++) {
 			auto adjacent = CoarseNode(
 				node.x + dx,
 				node.y + dy,
@@ -4018,6 +4018,13 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 				0,
 				node.index
 			);
+
+			// Check if the node is too far.
+			if (node.distance_to(adjacent) >= 136) {
+				continue;
+			}
+
+			adjacent.jump = (abs(dx) > 1 || abs(dy) > 1);
 
 			// Check to filter out some same node searches quickly.
 			if (already_found(adjacent))
@@ -4298,15 +4305,15 @@ void HwDLL::FindCoarsePathStep()
 
 			for (auto& p: coarse_path_open_set) {
 				if (p.first == adjacent) {
-					adjacent = p.first;
-
 					if (distance + heuristic < p.second) {
 						p.second = distance + heuristic;
 						p.first.parent = current.index;
+						p.first.jump = adjacent.jump;
 						coarse_path_nodes[p.first.index] = p.first;
 						coarse_path_distances[p.first.index] = distance;
 					}
 
+					adjacent = p.first;
 					break;
 				}
 			}
@@ -4347,11 +4354,12 @@ void HwDLL::FollowCoarsePathStep()
 		return;
 
 	FillPlayerData();
+	float speed = Length(player.Velocity);
 
 	auto target = coarse_path_nodes[coarse_path_final[following_next_node]];
 	float target_origin[3];
 	CoarseNodeOrigin(target, target_origin);
-	auto distance = Distance(player.Origin, target_origin);
+	auto distance = Distance<float, float, 2>(player.Origin, target_origin);
 
 	// Only switch to the next node once fully stopped.
 	if (distance < 1.f && IsZero(player.Velocity)) {
@@ -4366,7 +4374,7 @@ void HwDLL::FollowCoarsePathStep()
 		following_next_node--;
 		target = coarse_path_nodes[coarse_path_final[following_next_node]];
 		CoarseNodeOrigin(target, target_origin);
-		distance = Distance(player.Origin, target_origin);
+		distance = Distance<float, float, 2>(player.Origin, target_origin);
 	}
 
 	float difference[3];
@@ -4377,8 +4385,9 @@ void HwDLL::FollowCoarsePathStep()
 
 	InitTracing();
 	auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-	if (GetPositionType(player, traceFunc) != PositionType::GROUND) {
-		if (Length(player.Velocity) > 30.f) {
+	bool in_air = GetPositionType(player, traceFunc) != PositionType::GROUND;
+	if (in_air) {
+		if (speed > 30.f && distance < 5.f) {
 			// We're in the air and moving too quickly. Try to slow down.
 			slow_down_in_the_air = true;
 		}
@@ -4395,6 +4404,10 @@ void HwDLL::FollowCoarsePathStep()
 			frame.Forward = true;
 		if (distance < 5.f)
 			frame.Use = true;
+
+		if (distance >= 5 && target.jump && !in_air && speed > 190) {
+			frame.Jump = true;
+		}
 	}
 
 	frame.SetYaw(yaw);

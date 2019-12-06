@@ -227,7 +227,12 @@ namespace TriangleDrawing
 				Vector parent_origin;
 				HwDLL::GetInstance().CoarseNodeDrawOrigin(parent, parent_origin);
 
-				pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
+				if (node.jump) {
+					pTriAPI->Color4f(1.0f, 0.5f, 0.0f, 0.5f);
+				} else {
+					pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
+				}
+
 				TriangleUtils::DrawLine(pTriAPI, origin, parent_origin);
 			}
 		}
@@ -261,7 +266,12 @@ namespace TriangleDrawing
 				Vector parent_origin;
 				HwDLL::GetInstance().CoarseNodeDrawOrigin(parent, parent_origin);
 
-				pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
+				if (node.jump) {
+					pTriAPI->Color4f(1.0f, 0.5f, 0.0f, 0.5f);
+				} else {
+					pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
+				}
+
 				TriangleUtils::DrawLine(pTriAPI, origin, parent_origin);
 			}
 		}
@@ -282,7 +292,12 @@ namespace TriangleDrawing
 				Vector parent_origin;
 				HwDLL::GetInstance().CoarseNodeDrawOrigin(parent, parent_origin);
 
-				pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
+				if (node.jump) {
+					pTriAPI->Color4f(1.0f, 0.5f, 0.0f, 0.5f);
+				} else {
+					pTriAPI->Color4f(1.0f, 1.0f, 0.0f, 0.5f);
+				}
+
 				TriangleUtils::DrawLine(pTriAPI, origin, parent_origin);
 			}
 		}

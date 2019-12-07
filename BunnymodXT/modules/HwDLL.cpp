@@ -4451,7 +4451,8 @@ void HwDLL::FollowCoarsePathStep()
 	auto target = coarse_path_nodes[coarse_path_final[following_next_node]];
 	float target_origin[3];
 	CoarseNodeOrigin(target, target_origin);
-	auto distance = Distance<float, float, 2>(player.Origin, target_origin);
+	auto distance = Distance(player.Origin, target_origin);
+	auto distance_2d = Distance<float, float, 2>(player.Origin, target_origin);
 
 	// Only switch to the next node once fully stopped.
 	if (distance < 1.f && IsZero(player.Velocity)) {
@@ -4466,7 +4467,8 @@ void HwDLL::FollowCoarsePathStep()
 		following_next_node--;
 		target = coarse_path_nodes[coarse_path_final[following_next_node]];
 		CoarseNodeOrigin(target, target_origin);
-		distance = Distance<float, float, 2>(player.Origin, target_origin);
+		distance = Distance(player.Origin, target_origin);
+		distance_2d = Distance<float, float, 2>(player.Origin, target_origin);
 	}
 
 	float difference[3];
@@ -4479,7 +4481,7 @@ void HwDLL::FollowCoarsePathStep()
 	auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 	bool in_air = GetPositionType(player, traceFunc) != PositionType::GROUND;
 	if (in_air) {
-		if (speed > 30.f && distance < 5.f) {
+		if (speed > 30.f && distance_2d < 5.f) {
 			// We're in the air and moving too quickly. Try to slow down.
 			slow_down_in_the_air = true;
 		}
@@ -4497,7 +4499,7 @@ void HwDLL::FollowCoarsePathStep()
 		if (distance < 5.f)
 			frame.Use = true;
 
-		if (distance >= 5 && target.jump && !in_air && speed > 190) {
+		if (distance_2d >= 5 && target.jump && !in_air && speed > 190) {
 			frame.Jump = true;
 		}
 

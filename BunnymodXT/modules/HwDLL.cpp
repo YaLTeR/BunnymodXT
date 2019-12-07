@@ -408,6 +408,8 @@ void HwDLL::Clear()
 	coarse_path_closed_set.clear();
 	coarse_path_target = CoarseNode(0, 0, 0, 0, 0);
 	coarse_path_final.clear();
+	following_coarse_path = false;
+	going_back_frames_left = 0;
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -4438,6 +4440,7 @@ void HwDLL::FollowCoarsePath()
 
 	following_coarse_path = true;
 	following_next_node = coarse_path_final.size() - 1;
+	going_back_frames_left = 0;
 }
 
 void HwDLL::FollowCoarsePathStep()
@@ -4454,12 +4457,15 @@ void HwDLL::FollowCoarsePathStep()
 	auto distance = Distance(player.Origin, target_origin);
 	auto distance_2d = Distance<float, float, 2>(player.Origin, target_origin);
 
+	InitTracing();
+
 	// Only switch to the next node once fully stopped.
 	if (distance < 1.f && IsZero(player.Velocity)) {
 		// Came close enough to the node.
 		if (following_next_node == 0) {
 			ORIG_Con_Printf("Reached target.\n");
 			following_coarse_path = false;
+			DeinitTracing();
 			return;
 		}
 
@@ -4469,6 +4475,22 @@ void HwDLL::FollowCoarsePathStep()
 		CoarseNodeOrigin(target, target_origin);
 		distance = Distance(player.Origin, target_origin);
 		distance_2d = Distance<float, float, 2>(player.Origin, target_origin);
+
+		float difference[3];
+		VecSubtract(target_origin, player.Origin, difference);
+		Normalize(difference, difference);
+		VecScale(difference, 8, difference); // Approximately the number of units when we jump.
+		float jump_point[3];
+		VecAdd(player.Origin, difference, jump_point);
+		float down[3];
+		VecCopy(jump_point, down);
+		down[2] -= 1;
+		auto tr = PlayerTrace(jump_point, down, HullType::NORMAL);
+		if (tr.Fraction == 1) {
+			// There's a gap where we need to jump so go back first.
+			ORIG_Con_Printf("There's a gap, going back\n");
+			going_back_frames_left = 7;
+		}
 	}
 
 	float difference[3];
@@ -4477,7 +4499,6 @@ void HwDLL::FollowCoarsePathStep()
 
 	bool slow_down_in_the_air = false;
 
-	InitTracing();
 	auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 	bool in_air = GetPositionType(player, traceFunc) != PositionType::GROUND;
 	if (in_air) {
@@ -4499,8 +4520,21 @@ void HwDLL::FollowCoarsePathStep()
 		if (distance < 5.f)
 			frame.Use = true;
 
-		if (distance_2d >= 5 && target.jump && !in_air && speed > 190) {
+		if (going_back_frames_left > 0) {
+			going_back_frames_left--;
+			frame.Back = true;
+			frame.Forward = false;
+		}
+
+		if (distance_2d >= 5 && target.jump && !in_air && speed > 200
+				&& going_back_frames_left == 0) {
 			frame.Jump = true;
+
+			auto& parent = coarse_path_nodes[target.parent];
+			float origin[3];
+			CoarseNodeOrigin(parent, origin);
+			float distance = Distance<float, float, 2>(origin, player.Origin);
+			ORIG_Con_Printf("Jumping %f units from parent\n", distance);
 		}
 
 		if (target_origin[2] - player.Origin[2] > 18 && target.jump_up && !in_air
@@ -4509,8 +4543,8 @@ void HwDLL::FollowCoarsePathStep()
 		}
 	}
 
-	if (target.jump_up && in_air) {
-		frame.Duck = true;
+	if ((target.jump_up || target.jump) && in_air) {
+		frame.Dbc = true;
 	}
 
 	frame.SetYaw(yaw);

@@ -287,6 +287,7 @@ public:
 
 	bool following_coarse_path;
 	size_t following_next_node; // Index into coarse_path_final.
+	int going_back_frames_left;
 	void FollowCoarsePath();
 	void FollowCoarsePathStep();
 	void FillPlayerData();

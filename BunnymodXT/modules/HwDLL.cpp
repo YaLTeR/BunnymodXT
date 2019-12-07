@@ -4056,7 +4056,12 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 			{
 				// Try starting from 18 units up for the stepsize.
 				adjusted_origin[2] = origin[2];
-				origin[2] += 18;
+
+				float stepsize = 18;
+				if (adjacent.jump)
+					// When jumping we can jump a little higher.
+					stepsize = 33;
+				origin[2] += stepsize;
 
 				tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
 

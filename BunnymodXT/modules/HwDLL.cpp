@@ -4009,6 +4009,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 	const float MAX_FALL_DISTANCE = 210;
 	// Jump + duck height is a little above 59.
 	const float MAX_JUMP_HEIGHT = 60;
+	const float MAX_STANDING_JUMP_HEIGHT = MAX_JUMP_HEIGHT - 18;
 
 	float current_origin[3];
 	CoarseNodeOrigin(node, current_origin);
@@ -4047,7 +4048,12 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 			// Trace down to find the ground.
 			float adjusted_origin[3];
 			VecCopy(origin, adjusted_origin);
-			adjusted_origin[2] -= MAX_FALL_DISTANCE;
+
+			float max_fall_distance = MAX_FALL_DISTANCE;
+			if (adjacent.jump)
+				// Account for the fact that we jump.
+				max_fall_distance = MAX_FALL_DISTANCE - MAX_STANDING_JUMP_HEIGHT;
+			adjusted_origin[2] -= max_fall_distance;
 
 			auto tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
 

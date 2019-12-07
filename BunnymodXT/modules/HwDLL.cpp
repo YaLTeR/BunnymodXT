@@ -4005,6 +4005,8 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 ) {
 	// No-damage fall distance.
 	const float MAX_FALL_DISTANCE = 210;
+	// Jump + duck height is a little above 59.
+	const float MAX_JUMP_HEIGHT = 60;
 
 	float current_origin[3];
 	CoarseNodeOrigin(node, current_origin);
@@ -4056,8 +4058,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 						// Not if we need to jump forward though.
 						continue;
 
-					// Jump + duck height is a little above 59.
-					origin[2] = adjusted_origin[2] + 60;
+					origin[2] = adjusted_origin[2] + MAX_JUMP_HEIGHT;
 
 					tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
 
@@ -4104,19 +4105,49 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 			}
 
 			// Check if there's a gap in the middle.
-			float direction[3];
-			VecSubtract(adjusted_origin, current_origin, direction);
-			VecScale(direction, 0.5, direction);
-			float middle[3];
-			VecAdd(current_origin, direction, middle);
-			float middle_down[3];
-			VecCopy(middle, middle_down);
-			middle_down[2] -= MAX_FALL_DISTANCE;
-			tr = PlayerTrace(middle, middle_down, HullType::NORMAL);
+			//
+			// Find the middle point by tracing between current and adjusted origin, but at the
+			// highest z between the two. This should work correctly both when going up and when
+			// doing down.
+			if (!adjacent.jump) {
+				float max_z_current_origin[3];
+				VecCopy(current_origin, max_z_current_origin);
+				float max_z_adjusted_origin[3];
+				VecCopy(adjusted_origin, max_z_adjusted_origin);
+				max_z_current_origin[2] = std::max(max_z_current_origin[2], max_z_adjusted_origin[2]);
+				max_z_adjusted_origin[2] = max_z_current_origin[2];
 
-			// There's a large gap in the middle.
-			if (tr.Fraction == 1.f)
-				continue;
+				float direction[3];
+				VecSubtract(max_z_adjusted_origin, max_z_current_origin, direction);
+				VecScale(direction, 0.5, direction);
+				float middle[3];
+				VecAdd(max_z_current_origin, direction, middle);
+				float middle_down[3];
+				VecCopy(middle, middle_down);
+				middle_down[2] -= MAX_FALL_DISTANCE;
+				tr = PlayerTrace(middle, middle_down, HullType::NORMAL);
+
+				if (tr.StartSolid) {
+					// Should be impossible.
+					ORIG_Con_Printf("%d, %d: tr.StartSolid when checking middle gap.\n", dx, dy);
+					continue;
+				}
+
+				// There's a large gap in the middle.
+				if (tr.Fraction == 1.f) {
+					continue;
+				}
+
+				// The gap is larger than stepsize would allow.
+				float max_gap = 18;
+				if (adjacent.jump_up) {
+					max_gap = MAX_JUMP_HEIGHT;
+				}
+
+				if (adjusted_origin[2] - tr.EndPos[2] > max_gap) {
+					continue;
+				}
+			}
 
 			// Set the origin to the down origin to force the node to the ground.
 			adjacent.z = adjusted_origin[2];

@@ -4092,6 +4092,14 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 					adjacent.jump_up = true;
 				}
 
+				if (tr.PlaneNormal[2] < 0.7) {
+					// Can't stand here.
+#ifdef NEIGHBOR_DEBUG
+					ORIG_Con_Printf("%d, %d: plane normal < 0.7\n", dx, dy);
+#endif
+					continue;
+				}
+
 				adjusted_origin[2] = tr.EndPos[2];
 
 				// Since our coarse node distance is large, tracing directly from current origin to
@@ -4125,6 +4133,14 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 #endif
 				continue;
 			} else {
+				if (tr.PlaneNormal[2] < 0.7) {
+					// Can't stand here.
+#ifdef NEIGHBOR_DEBUG
+					ORIG_Con_Printf("%d, %d: plane normal < 0.7\n", dx, dy);
+#endif
+					continue;
+				}
+
 				adjusted_origin[2] = tr.EndPos[2];
 
 				// Trace from the current position to check if we can move there.

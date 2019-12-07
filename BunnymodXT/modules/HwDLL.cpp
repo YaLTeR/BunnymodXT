@@ -4454,7 +4454,7 @@ void HwDLL::FollowCoarsePathStep()
 		return;
 
 	FillPlayerData();
-	float speed = Length(player.Velocity);
+	float speed = Length<float, 2>(player.Velocity);
 
 	auto target = coarse_path_nodes[coarse_path_final[following_next_node]];
 	float target_origin[3];

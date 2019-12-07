@@ -4272,7 +4272,7 @@ void HwDLL::FindCoarseNodesStep()
 
 	// Empty the whole queue on a single iteration.
 	auto steps = next_coarse_nodes.size();
-	ORIG_Con_Printf("Queue size: %u\n.", (unsigned) steps);
+	ORIG_Con_Printf("Queue size: %u\n", (unsigned) steps);
 	for (size_t step = 0; step < steps; ++step) {
 		CoarseNode current = next_coarse_nodes.front();
 		next_coarse_nodes.pop();

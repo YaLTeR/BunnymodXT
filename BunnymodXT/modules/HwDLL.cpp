@@ -4023,14 +4023,21 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 
 			// Check if the node is too far.
 			if (node.distance_to(adjacent) >= 136) {
+#ifdef NEIGHBOR_DEBUG
+				ORIG_Con_Printf("%d, %d: too far\n", dx, dy);
+#endif
 				continue;
 			}
 
 			adjacent.jump = (abs(dx) > 1 || abs(dy) > 1);
 
 			// Check to filter out some same node searches quickly.
-			if (already_found(adjacent))
+			if (already_found(adjacent)) {
+#ifdef NEIGHBOR_DEBUG
+				ORIG_Con_Printf("%d, %d: already found 1\n", dx, dy);
+#endif
 				continue;
+			}
 
 			float origin[3];
 			CoarseNodeOrigin(adjacent, origin);
@@ -4054,9 +4061,13 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 				// Still inside a wall.
 				if (tr.StartSolid) {
 					// See if we can jump up.
-					if (adjacent.jump)
+					if (adjacent.jump) {
 						// Not if we need to jump forward though.
+#ifdef NEIGHBOR_DEBUG
+						ORIG_Con_Printf("%d, %d: jump forward but higher than stepsize\n", dx, dy);
+#endif
 						continue;
+					}
 
 					origin[2] = adjusted_origin[2] + MAX_JUMP_HEIGHT;
 
@@ -4064,6 +4075,9 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 
 					// Still inside a wall.
 					if (tr.StartSolid) {
+#ifdef NEIGHBOR_DEBUG
+						ORIG_Con_Printf("%d, %d: higher than jump up\n", dx, dy);
+#endif
 						continue;
 					}
 
@@ -4080,17 +4094,28 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 				up[2] = tr.EndPos[2];
 
 				tr = PlayerTrace(current_origin, up, HullType::NORMAL);
-				if (tr.Fraction != 1.f)
+				if (tr.Fraction != 1.f) {
+#ifdef NEIGHBOR_DEBUG
+					ORIG_Con_Printf("%d, %d: can't trace up\n", dx, dy);
+#endif
 					continue;
+				}
 
 				tr = PlayerTrace(up, adjusted_origin, HullType::NORMAL);
-				if (tr.Fraction != 1.f)
+				if (tr.Fraction != 1.f) {
+#ifdef NEIGHBOR_DEBUG
+					ORIG_Con_Printf("%d, %d: can't trace from up to position\n", dx, dy);
+#endif
 					continue;
+				}
 
 				// We are good to go.
 			}
 			// The node is ontop of a pit.
 			else if (tr.Fraction == 1.f) {
+#ifdef NEIGHBOR_DEBUG
+				ORIG_Con_Printf("%d, %d: ontop of a pit\n", dx, dy);
+#endif
 				continue;
 			} else {
 				adjusted_origin[2] = tr.EndPos[2];
@@ -4100,8 +4125,12 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 				tr = PlayerTrace(current_origin, origin, HullType::NORMAL);
 
 				// Can't move there.
-				if (tr.Fraction != 1.f)
+				if (tr.Fraction != 1.f) {
+#ifdef NEIGHBOR_DEBUG
+					ORIG_Con_Printf("%d, %d: can't trace forward to above position\n", dx, dy);
+#endif
 					continue;
+				}
 			}
 
 			// Check if there's a gap in the middle.
@@ -4135,6 +4164,9 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 
 				// There's a large gap in the middle.
 				if (tr.Fraction == 1.f) {
+#ifdef NEIGHBOR_DEBUG
+					ORIG_Con_Printf("%d, %d: middle gap too large\n", dx, dy);
+#endif
 					continue;
 				}
 
@@ -4145,6 +4177,9 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 				}
 
 				if (adjusted_origin[2] - tr.EndPos[2] > max_gap) {
+#ifdef NEIGHBOR_DEBUG
+					ORIG_Con_Printf("%d, %d: middle gap larger than %f\n", dx, dy, max_gap);
+#endif
 					continue;
 				}
 			}
@@ -4153,8 +4188,12 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 			adjacent.z = adjusted_origin[2];
 
 			// Don't push nodes that we already know about.
-			if (already_found(adjacent))
+			if (already_found(adjacent)) {
+#ifdef NEIGHBOR_DEBUG
+				ORIG_Con_Printf("%d, %d: already found 2\n", dx, dy);
+#endif
 				continue;
+			}
 
 			callback(adjacent);
 		}
@@ -4227,6 +4266,10 @@ void HwDLL::FindCoarseNodesStep()
 	}
 
 	DeinitTracing();
+
+#ifdef NEIGHBOR_DEBUG
+	finding_coarse_nodes = false;
+#endif
 
 	if (next_coarse_nodes.empty()) {
 		finding_coarse_nodes = false;

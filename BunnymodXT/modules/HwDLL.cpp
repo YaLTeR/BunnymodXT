@@ -4347,7 +4347,7 @@ void HwDLL::FindCoarsePathStep()
 
 	InitTracing();
 
-	ORIG_Con_Printf("Open set size: %u\n.", (unsigned) coarse_path_open_set.size());
+	ORIG_Con_Printf("Open set size: %u\n", (unsigned) coarse_path_open_set.size());
 
 	for (int steps = 0; steps < 10; ++steps) {
 		if (coarse_path_open_set.empty())

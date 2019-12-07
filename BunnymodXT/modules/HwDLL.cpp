@@ -4014,6 +4014,8 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 	float current_origin[3];
 	CoarseNodeOrigin(node, current_origin);
 
+// #define NEIGHBOR_DEBUG
+
 	for (int dx = -4; dx <= 4; dx++) {
 		for (int dy = -4; dy <= 4; dy++) {
 			auto adjacent = CoarseNode(
@@ -4056,6 +4058,19 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 			adjusted_origin[2] -= max_fall_distance;
 
 			auto tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
+
+#ifdef NEIGHBOR_DEBUG
+			ORIG_Con_Printf(
+				"%d, %d: AllSolid %s, StartSolid %s, Fraction %f, Entity %d, EndPos %.02f %.02f %.02f, PlaneNormal %.02f %.02f %.02f\n",
+				dx, dy,
+				tr.AllSolid ? "true" : "false",
+				tr.StartSolid ? "true" : "false",
+				tr.Fraction,
+				tr.Entity,
+				tr.EndPos[0], tr.EndPos[1], tr.EndPos[2],
+				tr.PlaneNormal[0], tr.PlaneNormal[1], tr.PlaneNormal[2]
+			);
+#endif
 
 			// The node is inside a wall.
 			if (tr.StartSolid)

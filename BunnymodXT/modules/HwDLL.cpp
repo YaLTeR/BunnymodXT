@@ -4047,6 +4047,11 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 			float origin[3];
 			CoarseNodeOrigin(adjacent, origin);
 
+			// Start by tracing from the current origin to see if there's a wall.
+			// Turns out tracing down to find the floor ignores certain brush or entity configurations.
+			auto tr = UnsafePlayerTrace(current_origin, origin, HullType::NORMAL);
+			bool node_inside_a_wall = (tr.Fraction != 1);
+
 			// Trace down to find the ground.
 			float adjusted_origin[3];
 			VecCopy(origin, adjusted_origin);
@@ -4073,7 +4078,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 #endif
 
 			// The node is inside a wall.
-			if (tr.StartSolid)
+			if (node_inside_a_wall) // Would use tr.StartSolid if the tracing worked properly.
 			{
 				// Try starting from 18 units up for the stepsize.
 				adjusted_origin[2] = origin[2];

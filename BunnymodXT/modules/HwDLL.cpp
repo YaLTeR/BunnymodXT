@@ -4057,7 +4057,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 				max_fall_distance = MAX_FALL_DISTANCE - MAX_STANDING_JUMP_HEIGHT;
 			adjusted_origin[2] -= max_fall_distance;
 
-			auto tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
+			tr = UnsafePlayerTrace(origin, adjusted_origin, HullType::NORMAL);
 
 #ifdef NEIGHBOR_DEBUG
 			ORIG_Con_Printf(
@@ -4084,7 +4084,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 					stepsize = 33;
 				origin[2] += stepsize;
 
-				tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
+				tr = UnsafePlayerTrace(origin, adjusted_origin, HullType::NORMAL);
 
 				// Still inside a wall.
 				if (tr.StartSolid) {
@@ -4099,7 +4099,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 
 					origin[2] = adjusted_origin[2] + MAX_JUMP_HEIGHT;
 
-					tr = PlayerTrace(origin, adjusted_origin, HullType::NORMAL);
+					tr = UnsafePlayerTrace(origin, adjusted_origin, HullType::NORMAL);
 
 					// Still inside a wall.
 					if (tr.StartSolid) {
@@ -4129,7 +4129,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 				VecCopy(current_origin, up);
 				up[2] = tr.EndPos[2];
 
-				tr = PlayerTrace(current_origin, up, HullType::NORMAL);
+				tr = UnsafePlayerTrace(current_origin, up, HullType::NORMAL);
 				if (tr.Fraction != 1.f) {
 #ifdef NEIGHBOR_DEBUG
 					ORIG_Con_Printf("%d, %d: can't trace up\n", dx, dy);
@@ -4137,7 +4137,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 					continue;
 				}
 
-				tr = PlayerTrace(up, adjusted_origin, HullType::NORMAL);
+				tr = UnsafePlayerTrace(up, adjusted_origin, HullType::NORMAL);
 				if (tr.Fraction != 1.f) {
 #ifdef NEIGHBOR_DEBUG
 					ORIG_Con_Printf("%d, %d: can't trace from up to position\n", dx, dy);
@@ -4166,7 +4166,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 
 				// Trace from the current position to check if we can move there.
 				// Trace to the original (not adjusted) origin, otherwise the trace hits corners.
-				tr = PlayerTrace(current_origin, origin, HullType::NORMAL);
+				tr = UnsafePlayerTrace(current_origin, origin, HullType::NORMAL);
 
 				// Can't move there.
 				if (tr.Fraction != 1.f) {
@@ -4198,7 +4198,7 @@ void HwDLL::ForEachCoarseNodeNeighbor(
 				float middle_down[3];
 				VecCopy(middle, middle_down);
 				middle_down[2] -= MAX_FALL_DISTANCE;
-				tr = PlayerTrace(middle, middle_down, HullType::NORMAL);
+				tr = UnsafePlayerTrace(middle, middle_down, HullType::NORMAL);
 
 				if (tr.StartSolid) {
 					// Should be impossible.
@@ -4287,9 +4287,7 @@ void HwDLL::FindCoarseNodesStep()
 	if (next_coarse_nodes.empty())
 		return;
 
-	InitTracing();
-
-	const auto traceFunc = std::bind(&HwDLL::PlayerTrace2, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	StartTracing();
 
 	// Empty the whole queue on a single iteration.
 	auto steps = next_coarse_nodes.size();
@@ -4309,7 +4307,7 @@ void HwDLL::FindCoarseNodesStep()
 		});
 	}
 
-	DeinitTracing();
+	StopTracing();
 
 #ifdef NEIGHBOR_DEBUG
 	finding_coarse_nodes = false;
@@ -4348,8 +4346,8 @@ void HwDLL::FindCoarsePath()
 	float start[3], end[3];
 	CustomHud::SetupTraceVectors(start, end);
 
-	InitTracing();
-	auto tr = PlayerTrace(start, end, HullType::POINT);
+	StartTracing();
+	auto tr = UnsafePlayerTrace(start, end, HullType::POINT);
 
 	coarse_path_target = CoarseNode(
 		(tr.EndPos[0] - starting_state.Origin[0]) / COARSE_NODE_STEP,
@@ -4364,9 +4362,9 @@ void HwDLL::FindCoarsePath()
 	CoarseNodeOrigin(coarse_path_target, pos);
 	VecCopy(pos, pos_up);
 	pos_up[2] += 37;
-	tr = PlayerTrace(pos_up, pos, HullType::NORMAL);
+	tr = UnsafePlayerTrace(pos_up, pos, HullType::NORMAL);
 	coarse_path_target.z = tr.EndPos[2];
-	DeinitTracing();
+	StopTracing();
 
 	coarse_path_open_set.clear();
 	coarse_path_nodes.clear();
@@ -4389,7 +4387,7 @@ void HwDLL::FindCoarsePathStep()
 	if (coarse_path_open_set.empty())
 		return;
 
-	InitTracing();
+	StartTracing();
 
 	ORIG_Con_Printf("Open set size: %u\n", (unsigned) coarse_path_open_set.size());
 
@@ -4425,6 +4423,7 @@ void HwDLL::FindCoarsePathStep()
 				current = coarse_path_nodes[current.parent];
 			}
 
+			StopTracing();
 			return;
 		}
 
@@ -4462,7 +4461,7 @@ void HwDLL::FindCoarsePathStep()
 		});
 	}
 
-	DeinitTracing();
+	StopTracing();
 
 	if (coarse_path_open_set.empty())
 		ORIG_Con_Printf("Couldn't reach the target.");
@@ -4499,7 +4498,7 @@ void HwDLL::FollowCoarsePathStep()
 	auto distance = Distance(player.Origin, target_origin);
 	auto distance_2d = Distance<float, float, 2>(player.Origin, target_origin);
 
-	InitTracing();
+	StartTracing();
 
 	// Only switch to the next node once fully stopped.
 	if (distance < 1.f && IsZero(player.Velocity)) {
@@ -4507,7 +4506,7 @@ void HwDLL::FollowCoarsePathStep()
 		if (following_next_node == 0) {
 			ORIG_Con_Printf("Reached target.\n");
 			following_coarse_path = false;
-			DeinitTracing();
+			StopTracing();
 			return;
 		}
 
@@ -4527,7 +4526,7 @@ void HwDLL::FollowCoarsePathStep()
 		float down[3];
 		VecCopy(jump_point, down);
 		down[2] -= 1;
-		auto tr = PlayerTrace(jump_point, down, HullType::NORMAL);
+		auto tr = UnsafePlayerTrace(jump_point, down, HullType::NORMAL);
 		if (tr.Fraction == 1) {
 			// There's a gap where we need to jump so go back first.
 			ORIG_Con_Printf("There's a gap, going back\n");
@@ -4541,7 +4540,7 @@ void HwDLL::FollowCoarsePathStep()
 
 	bool slow_down_in_the_air = false;
 
-	auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	auto traceFunc = std::bind(&HwDLL::UnsafePlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 	bool in_air = GetPositionType(player, traceFunc) != PositionType::GROUND;
 	if (in_air) {
 		if (speed > 30.f && distance_2d < 5.f) {
@@ -4549,7 +4548,7 @@ void HwDLL::FollowCoarsePathStep()
 			slow_down_in_the_air = true;
 		}
 	}
-	DeinitTracing();
+	StopTracing();
 
 	auto frame = Frame();
 

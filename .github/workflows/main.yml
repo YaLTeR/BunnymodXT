@@ -1,0 +1,54 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build-linux:
+    name: Build on Linux
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Fetch submodules
+      run: git submodule update --init --recursive
+
+    - name: Install dependencies
+      run: sudo apt install g++-multilib libboost-dev rapidjson-dev mesa-common-dev
+
+    - name: Generate the build system
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+
+    - name: Build
+      run: cmake --build build
+
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Fetch submodules
+      run: git submodule update --init --recursive
+
+    - name: Download RapidJSON
+      run: |
+        $client = New-Object System.Net.WebClient
+        $client.DownloadFile("https://github.com/Tencent/rapidjson/archive/v1.1.0.zip", "../rapidjson.zip")
+        # The output path in DownloadFile seems to be relative to the powershell starting directory,
+        # not the current directory. So cd .. afterwards to avoid confusion.
+        cd ..
+        7z x rapidjson.zip
+
+    - name: Generate the build system
+      run: |
+        mkdir build
+        cd build
+        cmake -A Win32 -DRapidJSON_ROOT="../../rapidjson-1.1.0" ..
+
+    - name: Build
+      run: cmake --build build

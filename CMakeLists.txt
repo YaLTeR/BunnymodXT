@@ -12,6 +12,10 @@ if (MSVC)
 		message (FATAL_ERROR "Visual Studio 2017 or 2019 is required")
 	endif()
 
+	if (NOT CMAKE_GENERATOR_PLATFORM MATCHES "Win32")
+		message (FATAL_ERROR "Only the Win32 platform is supported. Pass -A Win32 to CMake")
+	endif ()
+
 	# Enable link-time code generation.
 	set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE} /GL")
 	set (CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS} ${CMAKE_STATIC_LINKER_FLAGS_RELEASE} /LTCG")

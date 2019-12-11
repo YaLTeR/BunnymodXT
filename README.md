@@ -55,7 +55,7 @@ Run the following commands, replacing `path\to\boost\base\dir` and `\path\to\rap
     git submodule update --init --recursive
     mkdir build
     cd build
-    cmake -DBOOST_ROOT=path\to\boost\base\dir -DRapidJSON_ROOT=path\to\rapidjson\base\dir -Wno-dev ..
+    cmake -A Win32 -DBOOST_ROOT=path\to\boost\base\dir -DRapidJSON_ROOT=path\to\rapidjson\base\dir -Wno-dev ..
 
 Then compile the `ALL_BUILD` project from the generated VS solution.
 

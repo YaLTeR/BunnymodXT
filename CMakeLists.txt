@@ -4,8 +4,12 @@ project (BunnymodXT)
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
 if (MSVC)
-	if (NOT MSVC_TOOLSET_VERSION MATCHES "141")
-		message (FATAL_ERROR "Visual Studio 2017 is required")
+	if (MSVC_TOOLSET_VERSION MATCHES "141")
+		set (MINHOOK_PROJECT_DIR "VC15")
+	elseif (MSVC_TOOLSET_VERSION MATCHES "142")
+		set (MINHOOK_PROJECT_DIR "VC16")
+	else ()
+		message (FATAL_ERROR "Visual Studio 2017 or 2019 is required")
 	endif()
 
 	# Enable link-time code generation.
@@ -133,7 +137,7 @@ set (SOURCE_FILES
 	${CMAKE_CURRENT_BINARY_DIR}/BunnymodXT/git_revision.cpp)
 
 if (MSVC)
-	include_external_msproject (MinHook "${CMAKE_SOURCE_DIR}/SPTLib/Windows/minhook/build/VC15/libMinHook.vcxproj")
+	include_external_msproject (MinHook "${CMAKE_SOURCE_DIR}/SPTLib/Windows/minhook/build/${MINHOOK_PROJECT_DIR}/libMinHook.vcxproj")
 	include_directories ("SPTLib/Windows/minhook/include")
 	set (SOURCE_FILES ${SOURCE_FILES} ${WINDOWS_FILES} ${HEADER_FILES})
 else ()

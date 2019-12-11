@@ -44,7 +44,7 @@ The instructions are described [here](https://github.com/YaLTeR/BunnymodXT/wiki)
 
 Building on Windows requires
 
-- Visual Studio 2017
+- Visual Studio 2017 or 2019
 - [Boost](http://www.boost.org/)
 - [RapidJSON v1.1.0](https://github.com/miloyip/rapidjson/releases/tag/v1.1.0)
 

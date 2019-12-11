@@ -60,8 +60,6 @@ git_describe(GIT_TAG --tags)
 git_local_changes(GIT_LOCAL_CHANGES)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/BunnymodXT/git_revision.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/BunnymodXT/git_revision.cpp" @ONLY)
 
-set (Boost_USE_STATIC_LIBS ON)
-set (Boost_USE_STATIC_RUNTIME ON)
 find_package (Boost 1.57.0 REQUIRED)
 include_directories (SYSTEM ${Boost_INCLUDE_DIR})
 
@@ -161,7 +159,7 @@ if (MSVC)
 	cotire(BunnymodXT)
 endif ()
 
-target_link_libraries (BunnymodXT hltas hlstrafe taslogger ${Boost_LIBRARIES})
+target_link_libraries (BunnymodXT hltas hlstrafe taslogger)
 if (NOT MSVC)
 	target_link_libraries (BunnymodXT pthread rt)
 else()

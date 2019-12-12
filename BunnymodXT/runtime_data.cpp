@@ -181,7 +181,7 @@ namespace RuntimeData
 
 				do {
 					std::streamsize free_space = 63 - pos;
-					auto to_move = std::min(n, free_space);
+					auto to_move = static_cast<uint8_t>(std::min(n, free_space));
 					std::memmove(&buffer[pos], s, to_move);
 
 					pos += to_move;

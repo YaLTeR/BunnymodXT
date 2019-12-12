@@ -149,7 +149,7 @@ namespace TriangleDrawing
 		pTriAPI->RenderMode(kRenderTransAdd);
 		pTriAPI->CullFace(TRI_NONE);
 
-		const double svTime = HwDLL::GetInstance().GetTime();
+		const float svTime = static_cast<float>(HwDLL::GetInstance().GetTime());
 		edict_t *edicts;
 		const int numEdicts = HwDLL::GetInstance().GetEdicts(&edicts);
 		for (int e = 1; e < numEdicts; ++e) {
@@ -169,7 +169,7 @@ namespace TriangleDrawing
 			const msurface_t *surfs = model->surfaces + model->firstmodelsurface;
 			for (int i = 0; i < model->nummodelsurfaces; ++i) {
 				// Offset to make each surface look slightly different
-				const float offset = i * M_PI / 7;
+				const float offset = i * float(M_PI) / 7;
 				float r, g, b, a;
 				ServerDLL::GetTriggerColor(classname, !active, true, r, g, b, a);
 				r /= 255.0f;

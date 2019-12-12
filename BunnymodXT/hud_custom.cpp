@@ -887,7 +887,7 @@ namespace CustomHud
 					auto theta = std::asin(sin_alpha * x / l);
 					// Law of sines ambiguity.
 					if (x * x > a * a + l * l)
-						theta += 2 * (M_PI_2 - theta);
+						theta += 2 * (float(M_PI_2) - theta);
 					const auto hor_angle = -(fov / 2 - theta);
 
 					// Vertical angle.
@@ -895,7 +895,7 @@ namespace CustomHud
 					auto phi = std::asin(sin_beta * y / vl);
 					// Law of sines ambiguity.
 					if (y * y > b_sq + vl * vl)
-						phi += 2 * (M_PI_2 - phi);
+						phi += 2 * (float(M_PI_2) - phi);
 					const auto vert_angle = vfov / 2 - phi;
 
 					// End position.
@@ -928,10 +928,10 @@ namespace CustomHud
 					}
 
 					glBegin(GL_QUADS);
-					glVertex2f(x, y);
-					glVertex2f(x, y + 1);
-					glVertex2f(x + 1, y + 1);
-					glVertex2f(x + 1, y);
+					glVertex2i(x, y);
+					glVertex2i(x, y + 1);
+					glVertex2i(x + 1, y + 1);
+					glVertex2i(x + 1, y);
 					glEnd();
 				}
 			}

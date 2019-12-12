@@ -1057,7 +1057,7 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_WalkMove)
 	if (!firstFlyMoveEnded)
 		return;
 
-	const uintptr_t pmove = reinterpret_cast<const uintptr_t>(*ppmove);
+	const uintptr_t pmove = reinterpret_cast<uintptr_t>(*ppmove);
 	const float *velocity = reinterpret_cast<const float *>(pmove + offVelocity);
 	const float *origin = reinterpret_cast<const float *>(pmove + offOrigin);
 
@@ -1091,7 +1091,7 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_FlyMove)
 	if (!firstFlyMoveEnded) {
 		firstFlyMoveEnded = true;
 
-		const uintptr_t pmove = reinterpret_cast<const uintptr_t>(*ppmove);
+		const uintptr_t pmove = reinterpret_cast<uintptr_t>(*ppmove);
 		const float *velocity = reinterpret_cast<const float *>(pmove + offVelocity);
 		const float *origin = reinterpret_cast<const float *>(pmove + offOrigin);
 

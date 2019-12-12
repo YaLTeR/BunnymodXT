@@ -41,7 +41,7 @@ namespace CmdWrapper
 	{
 		inline static float Parse(const char *s)
 		{
-			return std::atof(s);
+			return std::strtof(s, nullptr);
 		}
 	};
 

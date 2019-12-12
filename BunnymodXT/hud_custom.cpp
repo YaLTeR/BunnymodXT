@@ -915,12 +915,12 @@ namespace CustomHud
 					const auto result = HwDLL::GetInstance().UnsafePlayerTrace(start, end, hull_type);
 
 					if (CVars::bxt_collision_depth_map_colors.GetBool()) {
-						const auto make_color = [](int value) {
-							return (value & 0xFF) ^ ((value >> 8) & 0xFF) ^ ((value >> 16) & 0xFF) ^ ((value >> 24) & 0xFF);
+						const auto make_color = [](const unsigned char value[4]) {
+							return value[0] ^ value[1] ^ value[2] ^ value[3];
 						};
-						glColor4ub(make_color(*reinterpret_cast<const int*>(&result.PlaneNormal[0])),
-						           make_color(*reinterpret_cast<const int*>(&result.PlaneNormal[1])),
-						           make_color(*reinterpret_cast<const int*>(&result.PlaneNormal[2])),
+						glColor4ub(make_color(reinterpret_cast<const unsigned char*>(&result.PlaneNormal[0])),
+						           make_color(reinterpret_cast<const unsigned char*>(&result.PlaneNormal[1])),
+						           make_color(reinterpret_cast<const unsigned char*>(&result.PlaneNormal[2])),
 						           255);
 					} else {
 						const auto value = 255 - static_cast<int>(std::round(result.Fraction * 255));

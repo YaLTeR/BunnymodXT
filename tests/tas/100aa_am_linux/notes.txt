@@ -1,0 +1,6 @@
+This is the Windows 100aa AM TAS. It doesn't sync on Linux, so the player never
+leaves c1a0. It can still be used for the TAS testing purposes, though, because
+this "wrong" execution should still be fully consistent and reproducible.
+
+This test should sync on Bunnymod XT built with GCC and should not sync on
+Bunnymod XT built with Clang.

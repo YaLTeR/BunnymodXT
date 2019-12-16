@@ -45,8 +45,13 @@ if (MSVC)
 		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:threadSafeInit-")
 	endif ()
 else ()
-	# set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -m32 -g -Ofast -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium-m -mfpmath=387 -mno-sse -m32 -g -Ofast -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium-m -mfpmath=387 -mno-sse -m32 -g -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
+
+	if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		# Not supported on Clang.
+		# Required for reproducibility of hlstrafe between different optimization levels.
+		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffloat-store")
+	endif ()
 
 	set(CMAKE_SHARED_LINKER_FLAGS
 		"${CMAKE_SHARED_LINKER_FLAGS} -static-libgcc -static-libstdc++")

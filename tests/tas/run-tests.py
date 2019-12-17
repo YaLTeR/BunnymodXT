@@ -28,6 +28,16 @@ def read_log(path):
             yield state['pos'], state['vel']
 
 
+# HL seems to stop command-line arguments at a ':'.
+# This function replaces the colon after the drive on Windows.
+def remove_windows_drive_colon(path):
+    # If path looks like C:\something, make it \\127.0.0.1\C$\something
+    if path[1] == ':':
+        path = '\\\\127.0.0.1\\' + path[0] + '$' + path[2:]
+
+    return path
+
+
 def main():
     parser = ArgumentParser()
     parser.add_argument(
@@ -47,11 +57,13 @@ def main():
         exit(1)
 
     script_dir = dirname(realpath(__file__))
-    if '-' in script_dir:
-        print(("The script directory '%s' contains a dash. Unfortunately, "
-               "that's not supported due to how Half-Life's command-line "
-               "argument parsing works. Please copy the entire test folder "
-               "into a directory without dashes.") % script_dir)
+    script_dir = remove_windows_drive_colon(script_dir)
+    if '-' in script_dir or ':' in script_dir:
+        print(("The script directory '%s' contains a dash '-' or a colon ':'. "
+               "Unfortunately, that's not supported due to how Half-Life's "
+               "command-line argument parsing works. Please copy the entire "
+               "test folder into a directory without dashes or colons.")
+              % script_dir)
         exit(1)
 
     taslogger_path = join(script_dir, 'taslogger.log')

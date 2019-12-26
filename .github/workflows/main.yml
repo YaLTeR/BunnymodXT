@@ -16,6 +16,14 @@ jobs:
     - name: Install dependencies
       run: sudo apt install g++-multilib libboost-dev rapidjson-dev mesa-common-dev
 
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        target: i686-unknown-linux-gnu
+        override: true
+
     - name: Generate the build system
       run: |
         mkdir build
@@ -34,6 +42,14 @@ jobs:
 
     - name: Fetch submodules
       run: git submodule update --init --recursive
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        target: i686-pc-windows-msvc
+        override: true
 
     - name: Download RapidJSON
       run: |

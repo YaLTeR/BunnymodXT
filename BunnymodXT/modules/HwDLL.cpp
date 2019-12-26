@@ -176,10 +176,15 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 		auto script = std::getenv("BXT_SCRIPT");
 		if (script) {
 			std::string filename(script);
-			auto err = input.Open(filename).get();
-			if (err.Code != HLTAS::ErrorCode::OK)
-				EngineWarning("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
-			else
+			auto err = input.Open(filename);
+			if (err.Code != HLTAS::ErrorCode::OK) {
+				const auto& message = input.GetErrorMessage();
+				if (message.empty()) {
+					EngineWarning("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
+				} else {
+					EngineWarning("Error loading the script: %s\n", message.c_str());
+				}
+			} else
 				for (auto prop : input.GetProperties())
 					if (prop.first == "seed") {
 						std::istringstream ss(prop.second);
@@ -1223,9 +1228,14 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		hw.SetNonSharedRNGSeed = false;
 		hw.thisFrameIs0ms = false;
 
-		auto err = hw.input.Open(fileName).get();
+		auto err = hw.input.Open(fileName);
 		if (err.Code != HLTAS::ErrorCode::OK) {
-			hw.ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
+			const auto& message = hw.input.GetErrorMessage();
+			if (message.empty()) {
+				hw.ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
+			} else {
+				hw.ORIG_Con_Printf("Error loading the script: %s\n", message.c_str());
+			}
 			return;
 		}
 
@@ -2225,7 +2235,7 @@ void HwDLL::InsertCommands()
 			runningFrames = false;
 
 			if (!exportFilename.empty()) {
-				auto error = exportResult.Save(exportFilename).get();
+				auto error = exportResult.Save(exportFilename);
 				if (error.Code == HLTAS::ErrorCode::OK)
 					ORIG_Con_Printf("Exporting finished successfully.\n");
 				else

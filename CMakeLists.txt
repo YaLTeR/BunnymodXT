@@ -1,7 +1,14 @@
 cmake_minimum_required (VERSION 3.12)
-project (BunnymodXT)
 
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+
+if (NOT CMAKE_GENERATOR MATCHES "Visual Studio .+")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+endif ()
+
+# Call project() after setting -m32 so it is taken into account.
+# Specifically, this allows CMAKE_SIZEOF_VOID_P to get the correct 32-bit value.
+project (BunnymodXT)
 
 if (MSVC)
 	if (MSVC_TOOLSET_VERSION MATCHES "141")
@@ -45,7 +52,7 @@ if (MSVC)
 		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:threadSafeInit-")
 	endif ()
 else ()
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium-m -mfpmath=387 -mno-sse -m32 -g -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium-m -mfpmath=387 -mno-sse -g -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wno-unused-variable -Wno-missing-braces")
 
 	if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 		# Not supported on Clang.
@@ -68,11 +75,11 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/BunnymodXT/git_revision.cpp.in" "${C
 find_package (Boost 1.57.0 REQUIRED)
 include_directories (SYSTEM ${Boost_INCLUDE_DIR})
 
-add_subdirectory (hltas)
+# hltas is already included as part of hlstrafe.
 add_subdirectory (hlstrafe)
 add_subdirectory (taslogger)
 
-include_directories ("." hltas/src hlstrafe/src taslogger)
+include_directories ("." taslogger)
 include_directories (SYSTEM ${RapidJSON_INCLUDE_DIR})
 include_directories (SYSTEM cereal/include)
 
@@ -164,7 +171,7 @@ if (MSVC)
 	cotire(BunnymodXT)
 endif ()
 
-target_link_libraries (BunnymodXT hltas hlstrafe taslogger)
+target_link_libraries (BunnymodXT hltas-cpp hlstrafe taslogger)
 if (NOT MSVC)
 	target_link_libraries (BunnymodXT pthread rt)
 else()

@@ -47,6 +47,8 @@ Building on Windows requires
 - Visual Studio 2017 or 2019
 - [Boost](http://www.boost.org/)
 - [RapidJSON v1.1.0](https://github.com/miloyip/rapidjson/releases/tag/v1.1.0)
+- [Rust](https://rustup.rs/)
+  - The `i686-pc-windows-msvc` target must be installed. You can do that using `rustup target add i686-pc-windows-msvc`.
 
 Run the following commands, replacing `path\to\boost\base\dir` and `\path\to\rapidjson\base\dir` with paths to Boost and RapidJSON base directories respectively:
 
@@ -59,7 +61,7 @@ Run the following commands, replacing `path\to\boost\base\dir` and `\path\to\rap
 
 Then compile the `ALL_BUILD` project from the generated VS solution.
 
-If you want to make a Windows XP-compatible build, additionally specify `-T v141_xp` (or the equivalent for your Visual Studio version) in the `cmake` command line arguments.
+If you want to make a release build, you need to specify `-DCMAKE_BUILD_TYPE=Release` in the `cmake` command line arguments. This is needed because the Rust CMake module uses that variable to determine whether to build the crate in release or debug mode.
 
 ### Linux
 
@@ -68,6 +70,8 @@ Building on Linux requires
 - A recent GCC or Clang toolchain
 - Boost
 - [RapidJSON v1.1.0](https://github.com/miloyip/rapidjson/releases/tag/v1.1.0)
+- Rust: either from your distribution's packages, or from [rustup](https://rustup.rs/).
+  - The `i686-unknown-linux-gnu` target must be installed. You can do that using `rustup target add i686-unknown-linux-gnu`.
 
 Many of these dependencies can be installed from a package manager.
 

@@ -75,14 +75,12 @@ Building on Linux requires
 
 Many of these dependencies can be installed from a package manager.
 
-To build, run the following commands, replacing `path/to/rapidjson/base/dir` with path to the RapidJSON base directory:
-
     git clone https://github.com/YaLTeR/BunnymodXT
     cd BunnymodXT
     git submodule update --init --recursive
     mkdir build
     cd build
-    cmake -DRapidJSON_ROOT=path/to/rapidjson/base/dir -Wno-dev ..
+    cmake -Wno-dev ..
     make
 
-Note that `-DBOOST_ROOT` is not required as CMake should be able to find the location of Boost in your system. In case it couldn't, you need to specify it manually like the case on Windows.
+Note that `-DBOOST_ROOT` and `-DRapidJSON_ROOT` are not required as CMake should be able to find the location of these libraries in your system. In case it couldn't, you need to specify them manually like the case on Windows.

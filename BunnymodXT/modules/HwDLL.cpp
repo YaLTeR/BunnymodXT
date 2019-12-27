@@ -402,6 +402,7 @@ void HwDLL::Clear()
 	execScript.clear();
 	insideHost_Changelevel2_f = false;
 	dontStopAutorecord = false;
+	hltas_filename.clear();
 
 	edit_strafe_active = false;
 
@@ -1230,6 +1231,7 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		hw.SharedRNGSeedPresent = false;
 		hw.SetNonSharedRNGSeed = false;
 		hw.thisFrameIs0ms = false;
+		hw.hltas_filename = fileName;
 
 		auto err = hw.input.Open(fileName);
 		if (err.Code != HLTAS::ErrorCode::OK) {

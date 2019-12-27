@@ -354,6 +354,7 @@ protected:
 	void* trace_oldmove;
 
 	HLStrafe::PlayerData player;
+	std::string hltas_filename;
 	HLTAS::Input input;
 	std::string demoName;
 	std::string saveName;

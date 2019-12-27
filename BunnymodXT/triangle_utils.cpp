@@ -184,4 +184,12 @@ namespace TriangleUtils
 
 		pTriAPI->End();
 	}
+
+	void DrawLine(triangleapi_s *pTriAPI, Vector start, Vector end)
+	{
+		pTriAPI->Begin(TRI_LINES);
+		pTriAPI->Vertex3f(start.x, start.y, start.z);
+		pTriAPI->Vertex3f(end.x, end.y, end.z);
+		pTriAPI->End();
+	}
 };

@@ -294,8 +294,7 @@ namespace TriangleDrawing
 
 		size_t frame;
 		size_t frame_limit = 5 / frametime;
-		size_t frames_until_mouse = 0;
-		bool went_past_mouse = false;
+		size_t frames_until_mouse = frame_limit;
 		for (frame = 0; frame < frame_limit; ++frame)
 		{
 			auto processed_frame = HLStrafe::MainFunc(
@@ -315,15 +314,11 @@ namespace TriangleDrawing
 			);
 
 			player = processed_frame.NewPlayerData;
-
 			origin = player.Origin;
 
-			if (!went_past_mouse)
-				frames_until_mouse = frame + 1;
-
 			auto new_distance_from_mouse = (mouse_world - origin).Length2D();
-			if (new_distance_from_mouse > distance_from_mouse)
-				went_past_mouse = true;
+			if (frames_until_mouse == frame_limit && new_distance_from_mouse > distance_from_mouse)
+				frames_until_mouse = frame + 1;
 			distance_from_mouse = new_distance_from_mouse;
 
 			positions.push_back(origin);

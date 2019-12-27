@@ -41,6 +41,8 @@ public:
 
 	int *g_iVisibleMouse;
 
+	Vector last_vieworg;
+
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};
 	ClientDLL(const ClientDLL&);

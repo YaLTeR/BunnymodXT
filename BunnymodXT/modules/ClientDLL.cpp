@@ -157,6 +157,7 @@ void ClientDLL::Clear()
 	cantJumpNextTime = false;
 	SeedsQueued = 0;
 	m_Intercepted = false;
+	last_vieworg = Vector();
 }
 
 void ClientDLL::FindStuff()
@@ -559,6 +560,8 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 		for (int i = 0; i < 3; ++i)
 			old_camera_offset_origin[i] = vector[i];
 	}
+
+	last_vieworg = pparams->vieworg;
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Init)

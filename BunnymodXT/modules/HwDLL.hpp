@@ -212,6 +212,7 @@ protected:
 	typedef void(__cdecl *_Con_Printf) (const char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
 
+	HLStrafe::PlayerData GetPlayerData();
 	void SetEditStrafe(bool enabled);
 
 	typedef void(__cdecl *_Cvar_RegisterVariable) (cvar_t* cvar);

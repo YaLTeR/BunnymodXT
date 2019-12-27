@@ -2466,6 +2466,33 @@ bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
 	return false;
 }
 
+HLStrafe::PlayerData HwDLL::GetPlayerData()
+{
+	HLStrafe::PlayerData player{};
+
+	edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	player.Origin[0] = pl->v.origin[0];
+	player.Origin[1] = pl->v.origin[1];
+	player.Origin[2] = pl->v.origin[2];
+	player.Velocity[0] = pl->v.velocity[0];
+	player.Velocity[1] = pl->v.velocity[1];
+	player.Velocity[2] = pl->v.velocity[2];
+	player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
+	player.InDuckAnimation = (pl->v.bInDuck != 0);
+	player.DuckTime = static_cast<float>(pl->v.flDuckTime);
+
+	if (ORIG_PF_GetPhysicsKeyValue) {
+		auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));
+		player.HasLJModule = (slj == 1);
+	} else {
+		player.HasLJModule = false;
+	}
+
+	GetViewangles(player.Viewangles);
+
+	return player;
+}
+
 void HwDLL::ResetButtons()
 {
 	ORIG_Cbuf_InsertText("-forward\n"

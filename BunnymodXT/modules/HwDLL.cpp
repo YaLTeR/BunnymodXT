@@ -1,5 +1,6 @@
 #include "../stdafx.hpp"
 
+#include <SDL2/SDL.h>
 #include <boost/algorithm/string/replace.hpp>
 #include <cerrno>
 #include <GL/gl.h>
@@ -401,6 +402,8 @@ void HwDLL::Clear()
 	execScript.clear();
 	insideHost_Changelevel2_f = false;
 	dontStopAutorecord = false;
+
+	edit_strafe_active = false;
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -1894,6 +1897,31 @@ struct HwDLL::Cmd_BXT_Append
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Edit_Strafe
+{
+	USAGE("Usage: bxt_tas_edit_strafe <1|0>\n");
+
+	static void handler(int enabled)
+	{
+		HwDLL::GetInstance().SetEditStrafe(enabled);
+	}
+};
+
+void HwDLL::SetEditStrafe(bool enabled)
+{
+	auto& cl = ClientDLL::GetInstance();
+
+	if (enabled) {
+		*cl.g_iVisibleMouse = true;
+		SDL_SetRelativeMouseMode(SDL_FALSE);
+		edit_strafe_active = true;
+	} else {
+		*cl.g_iVisibleMouse = false;
+		SDL_SetRelativeMouseMode(SDL_TRUE);
+		edit_strafe_active = false;
+	}
+}
+
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 {
 	if (registeredVarsAndCmds)
@@ -1974,6 +2002,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Reset_Frametime_Remainder, Handler<>>("_bxt_reset_frametime_remainder");
 	wrapper::Add<Cmd_BXT_TASLog, Handler<>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
+	wrapper::Add<Cmd_BXT_TAS_Edit_Strafe, Handler<int>>("bxt_tas_edit_strafe");
 }
 
 void HwDLL::InsertCommands()

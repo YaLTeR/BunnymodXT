@@ -200,6 +200,8 @@ public:
 	typedef void(__cdecl *_Cbuf_InsertText) (const char* text);
 	_Cbuf_InsertText ORIG_Cbuf_InsertText;
 
+	bool edit_strafe_active;
+
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
 	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};
@@ -209,6 +211,9 @@ private:
 protected:
 	typedef void(__cdecl *_Con_Printf) (const char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
+
+	void SetEditStrafe(bool enabled);
+
 	typedef void(__cdecl *_Cvar_RegisterVariable) (cvar_t* cvar);
 	_Cvar_RegisterVariable ORIG_Cvar_RegisterVariable;
 	typedef void(__cdecl *_Cvar_DirectSet) (cvar_t* cvar, const char* value);
@@ -274,6 +279,7 @@ protected:
 	struct Cmd_BXT_Reset_Frametime_Remainder;
 	struct Cmd_BXT_TASLog;
 	struct Cmd_BXT_Append;
+	struct Cmd_BXT_TAS_Edit_Strafe;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

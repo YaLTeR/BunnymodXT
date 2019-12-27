@@ -259,7 +259,6 @@ namespace TriangleDrawing
 
 		auto dir = mouse_world - origin;
 		float yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
-		// hw.ORIG_Con_Printf("yaw: %f", yaw);
 
 		// Strafe towards the yaw.
 		const auto movement_vars = hw.GetMovementVars();

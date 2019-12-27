@@ -1294,6 +1294,49 @@ struct HwDLL::Cmd_BXT_TAS_ExportScript
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Split
+{
+	USAGE("Usage: bxt_tas_split <filename>\n Splits the currently running .hltas script by performing a saveload and putting the remaining frames into the output .hltas script.\n");
+
+	static void handler(const char *fileName)
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		if (!hw.runningFrames) {
+			hw.ORIG_Con_Printf("No TAS script is currently running.\n");
+			return;
+		}
+
+		std::ostringstream oss;
+		oss << "bxt_autopause 1;save \"" << fileName << "\";load \"" << fileName << "\"\n";
+		hw.ORIG_Cbuf_InsertText(oss.str().c_str());
+
+		hw.splitFilename = std::string(fileName) + ".hltas";
+		hw.splitResult.ClearProperties();
+		hw.splitResult.ClearFrames();
+
+		for (auto prop : hw.input.GetProperties())
+			hw.splitResult.SetProperty(prop.first, prop.second);
+
+		// Add a couple of state frames.
+		HLTAS::Frame frame;
+		frame.SetLgagstMinSpeed(hw.StrafeState.LgagstMinSpeed);
+		hw.splitResult.InsertFrame(hw.splitResult.GetFrames().size(), frame);
+
+		if (hw.ButtonsPresent) {
+			frame = HLTAS::Frame();
+			frame.SetButtons(hw.Buttons);
+			hw.splitResult.InsertFrame(hw.splitResult.GetFrames().size(), frame);
+		}
+
+		if (hw.SharedRNGSeedPresent) {
+			frame = HLTAS::Frame();
+			frame.SetSeed(hw.SharedRNGSeed);
+			hw.splitResult.InsertFrame(hw.splitResult.GetFrames().size(), frame);
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_Set_Health
 {
 	USAGE("Usage: bxt_ch_set_health <health>\n");
@@ -1888,6 +1931,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 
 	wrapper::Add<Cmd_BXT_TAS_LoadScript, Handler<const char *>>("bxt_tas_loadscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportScript, Handler<const char *>>("bxt_tas_exportscript");
+	wrapper::Add<Cmd_BXT_TAS_Split, Handler<const char *>>("bxt_tas_split");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Health, Handler<float>>("bxt_ch_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Armor, Handler<float>>("bxt_ch_set_armor");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
@@ -2576,7 +2620,82 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		// For stopping Cbuf_Execute. Goes first because InsertCommands() inserts into beginning.
 		if (cmd_text->cursize)
 			ORIG_Cbuf_InsertText("wait\n");
-		InsertCommands();
+
+		if (!splitFilename.empty() && *state == 4) {
+			auto split_frame_index = currentRepeat > 0 ? currentFramebulk : (currentFramebulk > 0 ? currentFramebulk - 1 : currentFramebulk);
+			auto split_frame = input.GetFrame(split_frame_index);
+
+			HLTAS::Frame frame;
+			frame.SetRepeats(1);
+			frame.Frametime = split_frame.Frametime;
+			splitResult.InsertFrame(splitResult.GetFrames().size(), frame);
+		} else {
+			if (!splitFilename.empty()) {
+				// Cancel the bxt_autopause that we added.
+				pauseOnTheFirstFrame = false;
+
+				// Put the remaining framebulks into our new script.
+				// The first movement frame needs to contain a "pause" command.
+				if (currentRepeat > 0) {
+					// The bxt_tas_split framebulk had multiple repeats.
+					auto f = input.GetFrame(currentFramebulk);
+
+					auto f2 = f;
+					f2.SetRepeats(1);
+					f2.Commands = "pause;" + f2.Commands;
+					splitResult.InsertFrame(splitResult.GetFrames().size(), f2);
+
+					if (f.GetRepeats() - currentRepeat - 1 > 0) {
+						f.SetRepeats(f.GetRepeats() - currentRepeat - 1);
+						splitResult.InsertFrame(splitResult.GetFrames().size(), f);
+					}
+
+					for (auto i = currentFramebulk + 1; i < totalFramebulks; ++i) {
+						splitResult.InsertFrame(splitResult.GetFrames().size(), input.GetFrame(i));
+					}
+				} else {
+					bool got_movement_frame = false;
+					for (auto i = currentFramebulk; i < totalFramebulks; ++i) {
+						auto f = input.GetFrame(i);
+
+						if (f.GetRepeats() > 0 && !got_movement_frame) {
+							got_movement_frame = true;
+
+							auto f2 = f;
+							f2.SetRepeats(1);
+							f2.Commands = "pause;" + f2.Commands;
+							splitResult.InsertFrame(splitResult.GetFrames().size(), f2);
+
+							if (f.GetRepeats() - 1 > 0) {
+								f.SetRepeats(f.GetRepeats() - 1);
+								splitResult.InsertFrame(splitResult.GetFrames().size(), f);
+							}
+
+							continue;
+						}
+
+						splitResult.InsertFrame(splitResult.GetFrames().size(), f);
+					}
+				}
+
+				std::ifstream file(splitFilename);
+				if (file) {
+					ORIG_Con_Printf("Error splitting: the target .hltas script exists. Remove it manually if you really want to split.\n");
+				} else {
+					auto error = splitResult.Save(splitFilename);
+					if (error.Code == HLTAS::ErrorCode::OK)
+						ORIG_Con_Printf("Splitting finished successfully.\n");
+					else
+						ORIG_Con_Printf("Error saving the split script: %s\n", HLTAS::GetErrorMessage(error).c_str());
+				}
+
+				splitFilename.clear();
+				splitResult.ClearProperties();
+				splitResult.ClearFrames();
+			}
+
+			InsertCommands();
+		}
 
 		if (*state == 5 && pauseOnTheFirstFrame) {
 			ORIG_Cbuf_InsertText("setpause\n");

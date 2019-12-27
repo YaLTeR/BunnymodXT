@@ -240,6 +240,7 @@ protected:
 
 	struct Cmd_BXT_TAS_LoadScript;
 	struct Cmd_BXT_TAS_ExportScript;
+	struct Cmd_BXT_TAS_Split;
 	struct Cmd_BXT_CH_Set_Health;
 	struct Cmd_BXT_CH_Set_Armor;
 	struct Cmd_BXT_CH_Set_Origin;
@@ -368,6 +369,8 @@ protected:
 	HLStrafe::CurrentState StrafeState;
 	std::string exportFilename;
 	HLTAS::Input exportResult;
+	std::string splitFilename;
+	HLTAS::Input splitResult;
 
 	struct KeyStates
 	{

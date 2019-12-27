@@ -208,13 +208,14 @@ private:
 	HwDLL(const HwDLL&);
 	void operator=(const HwDLL&);
 
-protected:
+public:
 	typedef void(__cdecl *_Con_Printf) (const char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
 
 	HLStrafe::PlayerData GetPlayerData();
 	void SetEditStrafe(bool enabled);
 
+protected:
 	typedef void(__cdecl *_Cvar_RegisterVariable) (cvar_t* cvar);
 	_Cvar_RegisterVariable ORIG_Cvar_RegisterVariable;
 	typedef void(__cdecl *_Cvar_DirectSet) (cvar_t* cvar, const char* value);
@@ -287,7 +288,9 @@ protected:
 	bool GetNextMovementFrame(HLTAS::Frame& f);
 	void ResetButtons();
 	void FindCVarsIfNeeded();
+public:
 	HLStrafe::MovementVars GetMovementVars();
+protected:
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
 	void SaveInitialDataToDemo();
@@ -355,8 +358,10 @@ protected:
 	void* trace_oldmove;
 
 	HLStrafe::PlayerData player;
+public:
 	std::string hltas_filename;
 	HLTAS::Input input;
+protected:
 	std::string demoName;
 	std::string saveName;
 	std::string frametime0ms;
@@ -372,14 +377,17 @@ protected:
 	bool CountingSharedRNGSeed;
 	unsigned SharedRNGSeedCounter;
 	unsigned LoadingSeedCounter;
+public:
 	bool ButtonsPresent;
 	HLTAS::StrafeButtons Buttons;
 	HLStrafe::CurrentState StrafeState;
+protected:
 	std::string exportFilename;
 	HLTAS::Input exportResult;
 	std::string splitFilename;
 	HLTAS::Input splitResult;
 
+public:
 	struct KeyStates
 	{
 		KeyStates() :
@@ -441,6 +449,7 @@ protected:
 		Key Attack2;
 		Key Reload;
 	} currentKeys;
+protected:
 
 	// Do not clear these inside Clear().
 	bool SetNonSharedRNGSeed = false;

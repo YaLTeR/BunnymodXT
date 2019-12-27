@@ -1,5 +1,6 @@
 #include "stdafx.hpp"
 
+#include <SDL2/SDL.h>
 #include "custom_triggers.hpp"
 #include "triangle_drawing.hpp"
 #include "triangle_utils.hpp"
@@ -208,6 +209,159 @@ namespace TriangleDrawing
 		}
 	}
 
+	static void DrawStrafeEditor(triangleapi_s *pTriAPI)
+	{
+		using HLStrafe::HullType;
+		using HLTAS::StrafeDir;
+		using HLTAS::StrafeType;
+		using std::vector;
+		const double M_RAD2DEG = 180 / M_PI;
+		static bool left_was_pressed = false;
+
+		auto& hw = HwDLL::GetInstance();
+		if (!hw.edit_strafe_active)
+			return;
+		auto& cl = ClientDLL::GetInstance();
+
+		int x, y;
+		auto mouse_state = SDL_GetMouseState(&x, &y);
+		Vector2D mouse(x, y);
+		auto left_pressed = (mouse_state & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
+		bool left_got_pressed = false;
+		if (left_pressed && !left_was_pressed)
+			left_got_pressed = true;
+		left_was_pressed = left_pressed;
+
+		// Convert from SDL_GetMouseState coordinates to ScreenToWorld coordinates.
+		auto convert = [](Vector2D v) {
+			return Vector2D(
+				TriangleUtils::PixelWidthToProportion(v.x) * 2 - 1,
+				-TriangleUtils::PixelHeightToProportion(v.y) * 2 + 1
+			);
+		};
+
+		auto player_edict = hw.GetPlayerEdict();
+		auto origin = player_edict->v.origin;
+		auto view = origin + player_edict->v.view_ofs;
+
+		// Get the world point corresponding to where the mouse is on screen.
+		auto mouse_stw = convert(mouse);
+		auto mouse_stw_3d = Vector(mouse_stw.x, mouse_stw.y, 0);
+		Vector mouse_world_close;
+		// ScreenToWorld doesn't trace, so its point is very close in front of the player.
+		pTriAPI->ScreenToWorld(mouse_stw_3d, mouse_world_close);
+
+		// Trace to find the world point we're interested in.
+		Vector mouse_dir = (mouse_world_close - view).Normalize();
+		Vector end = view + mouse_dir * 8192;
+		auto tr = hw.PlayerTrace(view, end, HullType::POINT);
+		Vector mouse_world(tr.EndPos);
+
+		auto dir = mouse_world - origin;
+		float yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
+		// hw.ORIG_Con_Printf("yaw: %f", yaw);
+
+		// Strafe towards the yaw.
+		const auto movement_vars = hw.GetMovementVars();
+
+		auto frametime = movement_vars.Frametime;
+		auto frame_bulk = HLTAS::Frame();
+		auto frame_count = hw.input.GetFrames().size();
+		if (frame_count > 0) {
+			frame_bulk = hw.input.GetFrames()[frame_count - 1];
+			frame_bulk.Commands.clear();
+			frame_bulk.SetRepeats(100);
+			frame_bulk.SetDir(StrafeDir::YAW);
+			frame_bulk.SetYaw(yaw);
+			frametime = std::strtof(frame_bulk.Frametime.c_str(), nullptr);
+		} else {
+			frame_bulk.Strafe = true;
+			frame_bulk.SetDir(StrafeDir::YAW);
+			frame_bulk.SetType(StrafeType::MAXACCEL);
+			frame_bulk.SetYaw(yaw);
+		}
+
+		vector<Vector> positions;
+		positions.push_back(origin);
+
+		auto strafe_state = hw.StrafeState;
+		strafe_state.Jump = hw.currentKeys.Jump.IsDown();
+		strafe_state.Duck = hw.currentKeys.Duck.IsDown();
+
+		auto player = hw.GetPlayerData();
+		auto distance_from_mouse = (mouse_world - origin).Length2D();
+
+		hw.StartTracing();
+
+		size_t frame;
+		size_t frame_limit = 5 / frametime;
+		size_t frames_until_mouse = 0;
+		bool went_past_mouse = false;
+		for (frame = 0; frame < frame_limit; ++frame)
+		{
+			auto processed_frame = HLStrafe::MainFunc(
+				player,
+				movement_vars,
+				frame_bulk,
+				strafe_state,
+				hw.Buttons,
+				hw.ButtonsPresent,
+				std::bind(
+					&HwDLL::UnsafePlayerTrace,
+					&hw,
+					std::placeholders::_1,
+					std::placeholders::_2,
+					std::placeholders::_3
+				)
+			);
+
+			player = processed_frame.NewPlayerData;
+
+			origin = player.Origin;
+
+			if (!went_past_mouse)
+				frames_until_mouse = frame + 1;
+
+			auto new_distance_from_mouse = (mouse_world - origin).Length2D();
+			if (new_distance_from_mouse > distance_from_mouse)
+				went_past_mouse = true;
+			distance_from_mouse = new_distance_from_mouse;
+
+			positions.push_back(origin);
+		}
+
+		hw.StopTracing();
+
+		frame_bulk.SetRepeats(frames_until_mouse);
+
+		// Draw the positions.
+		pTriAPI->RenderMode(kRenderTransColor);
+		pTriAPI->Color4f(0, 1, 0, 1);
+		TriangleUtils::DrawPyramid(pTriAPI, mouse_world, 10, 20);
+
+		for (size_t frame = 1; frame < positions.size(); ++frame) {
+			TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
+
+			if (frame == frames_until_mouse)
+				pTriAPI->Color4f(0, 1, 1, 1);
+		}
+
+		if (left_got_pressed) {
+			hw.SetEditStrafe(false);
+
+			if (frame_count == 0)
+				return;
+
+			hw.input.InsertFrame(frame_count - 1, frame_bulk);
+
+			auto err = hw.input.Save(hw.hltas_filename);
+			if (err.Code == HLTAS::ErrorCode::OK)
+				hw.ORIG_Con_Printf("Saved the script: %s\n", hw.hltas_filename.c_str());
+			else
+				hw.ORIG_Con_Printf("Error saving the script: %s\n", HLTAS::GetErrorMessage(err).c_str());
+		}
+	}
+
 	void VidInit()
 	{
 		white_sprite = ClientDLL::GetInstance().pEngfuncs->pfnSPR_Load("sprites/white.spr");
@@ -228,5 +382,6 @@ namespace TriangleDrawing
 		DrawUseableEntities(pTriAPI);
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);
+		DrawStrafeEditor(pTriAPI);
 	}
 }

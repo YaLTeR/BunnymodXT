@@ -39,6 +39,8 @@ public:
 
 	cl_enginefunc_t *pEngfuncs;
 
+	int *g_iVisibleMouse;
+
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};
 	ClientDLL(const ClientDLL&);

@@ -147,6 +147,7 @@ void ClientDLL::Clear()
 	ORIG_HUD_Frame = nullptr;
 	ORIG_HUD_DrawTransparentTriangles = nullptr;
 	ORIG_HUD_Key_Event = nullptr;
+	g_iVisibleMouse = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -307,6 +308,13 @@ void ClientDLL::FindStuff()
 		EngineDevMsg("[client dll] Found HUD_Key_Event at %p.\n", ORIG_HUD_Key_Event);
 	} else {
 		EngineDevWarning("[client dll] Could not find HUD_Key_Event.\n");
+	}
+
+	g_iVisibleMouse = reinterpret_cast<int*>(MemUtils::GetSymbolAddress(m_Handle, "g_iVisibleMouse"));
+	if (g_iVisibleMouse) {
+		EngineDevMsg("[client dll] Found g_iVisibleMouse at %p.\n", g_iVisibleMouse);
+	} else {
+		EngineDevWarning("[client dll] Could not find g_iVisibleMouse.\n");
 	}
 
 	bool noBhopcap = false;

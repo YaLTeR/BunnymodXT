@@ -295,6 +295,7 @@ namespace TriangleDrawing
 		size_t frame;
 		size_t frame_limit = 5 / frametime;
 		size_t frames_until_mouse = frame_limit;
+		size_t frames_until_non_ground_collision = frame_limit;
 		for (frame = 0; frame < frame_limit; ++frame)
 		{
 			auto processed_frame = HLStrafe::MainFunc(
@@ -321,6 +322,14 @@ namespace TriangleDrawing
 				frames_until_mouse = frame + 1;
 			distance_from_mouse = new_distance_from_mouse;
 
+			// If we bumped into something along the way
+			if (frames_until_non_ground_collision == frame_limit && processed_frame.fractions[0] != 1) {
+				auto n = processed_frame.normalzs[0];
+				// And it wasn't a ground or a ceiling
+				if (n < 0.7 && n != -1)
+					frames_until_non_ground_collision = frame;
+			}
+
 			positions.push_back(origin);
 		}
 
@@ -334,10 +343,19 @@ namespace TriangleDrawing
 		TriangleUtils::DrawPyramid(pTriAPI, mouse_world, 10, 20);
 
 		for (size_t frame = 1; frame < positions.size(); ++frame) {
-			TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
+			if (frame > frames_until_non_ground_collision) {
+				if (frame > frames_until_mouse)
+					pTriAPI->Color4f(1, 0, 0, 1);
+				else
+					pTriAPI->Color4f(1, 0.5, 0, 1);
+			} else {
+				if (frame > frames_until_mouse)
+					pTriAPI->Color4f(0, 1, 1, 1);
+				else
+					pTriAPI->Color4f(0, 1, 0, 1);
+			}
 
-			if (frame == frames_until_mouse)
-				pTriAPI->Color4f(0, 1, 1, 1);
+			TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
 		}
 
 		if (left_got_pressed) {

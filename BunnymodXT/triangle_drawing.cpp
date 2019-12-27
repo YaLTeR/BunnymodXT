@@ -242,7 +242,7 @@ namespace TriangleDrawing
 
 		auto player_edict = hw.GetPlayerEdict();
 		auto origin = player_edict->v.origin;
-		auto view = origin + player_edict->v.view_ofs;
+		auto view = cl.last_vieworg;
 
 		// Get the world point corresponding to where the mouse is on screen.
 		auto mouse_stw = convert(mouse);

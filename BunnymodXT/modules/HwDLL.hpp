@@ -183,6 +183,11 @@ public:
 		return edict && !edict->free;
 	}
 
+	inline float GetFrameTime() const {
+		// This is how it's done inside the game.
+		return static_cast<float>(static_cast<float>(std::floor(*host_frametime * 1000)) * 0.001);
+	}
+
 	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
 
 	// Don't call StartTrace() or StopTracing() twice in a row.

@@ -2573,7 +2573,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	auto vars = HLStrafe::MovementVars();
 	
 	FindCVarsIfNeeded();
-	vars.Frametime = static_cast<float>(static_cast<float>(std::floor(*host_frametime * 1000)) * 0.001); // This is how it's done inside the game.
+	vars.Frametime = GetFrameTime();
 	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
 	vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
 	vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
@@ -3052,7 +3052,7 @@ void HwDLL::FreeCamTick()
 	if (buttons & IN_MOVELEFT)
 		direction += -right;
 
-	auto frametime = static_cast<float>(static_cast<float>(std::floor(*host_frametime * 1000)) * 0.001);
+	auto frametime = GetFrameTime();
 	auto step = frametime * 320;
 
 	// No easy access to +speed unfortunately.

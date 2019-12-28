@@ -345,6 +345,7 @@ namespace TriangleDrawing
 
 		if (left_got_pressed) {
 			hw.SetEditStrafe(false);
+			hw.SetFreeCam(false);
 
 			if (frame_count == 0)
 				return;

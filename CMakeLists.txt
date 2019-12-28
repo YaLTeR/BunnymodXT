@@ -128,6 +128,7 @@ set (HEADER_FILES
 	BunnymodXT/triangle_utils.hpp
 	BunnymodXT/TEA.hpp
 	BunnymodXT/runtime_data.hpp
+	BunnymodXT/input_editor.hpp
 	BunnymodXT/git_revision.hpp)
 
 set (SOURCE_FILES
@@ -148,6 +149,7 @@ set (SOURCE_FILES
 	BunnymodXT/triangle_utils.cpp
 	BunnymodXT/TEA.cpp
 	BunnymodXT/runtime_data.cpp
+	BunnymodXT/input_editor.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/BunnymodXT/git_revision.cpp)
 
 if (MSVC)

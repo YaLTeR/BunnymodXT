@@ -405,6 +405,7 @@ void HwDLL::Clear()
 	hltas_filename.clear();
 
 	edit_strafe_active = false;
+	edit_strafe_input = EditedInput();
 	free_cam_active = false;
 
 	if (resetState == ResetState::NORMAL) {
@@ -1931,6 +1932,28 @@ void HwDLL::SetEditStrafe(bool enabled)
 		// *cl.g_iVisibleMouse = true;
 		// SDL_SetRelativeMouseMode(SDL_FALSE);
 		edit_strafe_active = true;
+
+		auto frame_bulk = HLTAS::Frame();
+		auto frame_count = input.GetFrames().size();
+		if (frame_count > 0) {
+			// Copy the last frame.
+			frame_bulk = input.GetFrames()[frame_count - 1];
+			frame_bulk.Commands.clear();
+
+			// Make sure the strafe direction is Yaw.
+			frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
+		} else {
+			// If there's no input just make a s03 frame bulk.
+			frame_bulk.Strafe = true;
+			frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
+			frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
+		}
+
+		// Simulate 5 seconds.
+		frame_bulk.SetRepeats(5 / GetFrameTime());
+
+		edit_strafe_input = EditedInput();
+		edit_strafe_input.frame_bulks.push_back(frame_bulk);
 	} else {
 		// *cl.g_iVisibleMouse = false;
 		// SDL_SetRelativeMouseMode(SDL_TRUE);

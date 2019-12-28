@@ -246,88 +246,39 @@ namespace TriangleDrawing
 		float yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
 
 		// Strafe towards the yaw.
-		const auto movement_vars = hw.GetMovementVars();
-
-		auto frametime = movement_vars.Frametime;
-		auto frame_bulk = HLTAS::Frame();
-		auto frame_count = hw.input.GetFrames().size();
-		if (frame_count > 0) {
-			frame_bulk = hw.input.GetFrames()[frame_count - 1];
-			frame_bulk.Commands.clear();
-			frame_bulk.SetRepeats(100);
-			frame_bulk.SetDir(StrafeDir::YAW);
-			frame_bulk.SetYaw(yaw);
-			frametime = std::strtof(frame_bulk.Frametime.c_str(), nullptr);
-		} else {
-			frame_bulk.Strafe = true;
-			frame_bulk.SetDir(StrafeDir::YAW);
-			frame_bulk.SetType(StrafeType::MAXACCEL);
-			frame_bulk.SetYaw(yaw);
-		}
-
-		vector<Vector> positions;
-		positions.push_back(origin);
-
-		auto strafe_state = hw.StrafeState;
-		strafe_state.Jump = hw.currentKeys.Jump.IsDown();
-		strafe_state.Duck = hw.currentKeys.Duck.IsDown();
-
-		auto player = hw.GetPlayerData();
-		auto distance_from_mouse = (mouse_world - origin).Length2D();
-
-		hw.StartTracing();
-
-		size_t frame;
-		size_t frame_limit = 5 / frametime;
-		size_t frames_until_mouse = frame_limit;
-		size_t frames_until_non_ground_collision = frame_limit;
-		for (frame = 0; frame < frame_limit; ++frame)
-		{
-			auto processed_frame = HLStrafe::MainFunc(
-				player,
-				movement_vars,
-				frame_bulk,
-				strafe_state,
-				hw.Buttons,
-				hw.ButtonsPresent,
-				std::bind(
-					&HwDLL::UnsafePlayerTrace,
-					&hw,
-					std::placeholders::_1,
-					std::placeholders::_2,
-					std::placeholders::_3
-				)
-			);
-
-			player = processed_frame.NewPlayerData;
-			origin = player.Origin;
-
-			auto new_distance_from_mouse = (mouse_world - origin).Length2D();
-			if (frames_until_mouse == frame_limit && new_distance_from_mouse > distance_from_mouse)
-				frames_until_mouse = frame + 1;
-			distance_from_mouse = new_distance_from_mouse;
-
-			// If we bumped into something along the way
-			if (frames_until_non_ground_collision == frame_limit && processed_frame.fractions[0] != 1) {
-				auto n = processed_frame.normalzs[0];
-				// And it wasn't a ground or a ceiling
-				if (n < 0.7 && n != -1)
-					frames_until_non_ground_collision = frame;
-			}
-
-			positions.push_back(origin);
-		}
-
-		hw.StopTracing();
-
-		frame_bulk.SetRepeats(frames_until_mouse);
+		hw.edit_strafe_input.frame_bulks[0].SetYaw(yaw);
+		hw.edit_strafe_input.simulate();
 
 		// Draw the positions.
 		pTriAPI->RenderMode(kRenderTransColor);
 		pTriAPI->Color4f(0, 1, 0, 1);
 		TriangleUtils::DrawPyramid(pTriAPI, mouse_world, 10, 20);
 
+		const auto& positions = hw.edit_strafe_input.positions;
+		const auto& fractions = hw.edit_strafe_input.fractions;
+		const auto& normalzs = hw.edit_strafe_input.normalzs;
+
+		size_t frame_limit = positions.size() - 1;
+		auto distance_from_mouse = (mouse_world - origin).Length2D();
+		size_t frames_until_mouse = frame_limit;
+		size_t frames_until_non_ground_collision = frame_limit;
+
 		for (size_t frame = 1; frame < positions.size(); ++frame) {
+			origin = positions[frame];
+
+			auto new_distance_from_mouse = (mouse_world - origin).Length2D();
+			if (frames_until_mouse == frame_limit && new_distance_from_mouse > distance_from_mouse)
+				frames_until_mouse = frame;
+			distance_from_mouse = new_distance_from_mouse;
+
+			// If we bumped into something along the way
+			if (frames_until_non_ground_collision == frame_limit && fractions[frame] != 1) {
+				auto n = normalzs[frame];
+				// And it wasn't a ground or a ceiling
+				if (n < 0.7 && n != -1)
+					frames_until_non_ground_collision = frame;
+			}
+
 			if (frame > frames_until_non_ground_collision) {
 				if (frame > frames_until_mouse)
 					pTriAPI->Color4f(1, 0, 0, 1);
@@ -347,16 +298,8 @@ namespace TriangleDrawing
 			hw.SetEditStrafe(false);
 			hw.SetFreeCam(false);
 
-			if (frame_count == 0)
-				return;
-
-			hw.input.InsertFrame(frame_count - 1, frame_bulk);
-
-			auto err = hw.input.Save(hw.hltas_filename);
-			if (err.Code == HLTAS::ErrorCode::OK)
-				hw.ORIG_Con_Printf("Saved the script: %s\n", hw.hltas_filename.c_str());
-			else
-				hw.ORIG_Con_Printf("Error saving the script: %s\n", HLTAS::GetErrorMessage(err).c_str());
+			hw.edit_strafe_input.frame_bulks[0].SetRepeats(frames_until_mouse);
+			hw.edit_strafe_input.save();
 		}
 	}
 

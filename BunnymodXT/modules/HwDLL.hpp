@@ -4,6 +4,7 @@
 #include <SPTLib/IHookableNameFilterOrdered.hpp>
 #include "../cvars.hpp"
 #include "taslogger/writer.hpp"
+#include "../input_editor.hpp"
 
 class HwDLL : public IHookableNameFilterOrdered
 {
@@ -206,6 +207,7 @@ public:
 	_Cbuf_InsertText ORIG_Cbuf_InsertText;
 
 	bool edit_strafe_active;
+	EditedInput edit_strafe_input;
 
 	bool free_cam_active;
 	void SetFreeCam(bool enabled);

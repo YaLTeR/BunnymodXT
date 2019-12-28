@@ -202,6 +202,9 @@ public:
 
 	bool edit_strafe_active;
 
+	bool free_cam_active;
+	void FreeCamTick();
+
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
 	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};
@@ -282,6 +285,7 @@ protected:
 	struct Cmd_BXT_TASLog;
 	struct Cmd_BXT_Append;
 	struct Cmd_BXT_TAS_Edit_Strafe;
+	struct Cmd_BXT_FreeCam;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

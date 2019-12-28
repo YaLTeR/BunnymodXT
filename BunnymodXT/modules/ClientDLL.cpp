@@ -541,7 +541,10 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 
 	const HwDLL &hwDLL = HwDLL::GetInstance();
 	if (hwDLL.GetIsOverridingCamera()) {
-		hwDLL.GetCameraOverrideAngles(pparams->viewangles);
+		// We want to keep looking as is in freecam.
+		if (!hwDLL.free_cam_active)
+			hwDLL.GetCameraOverrideAngles(pparams->viewangles);
+
 		hwDLL.GetCameraOverrideOrigin(pparams->vieworg);
 	} else if (hwDLL.GetIsOffsettingCamera()) {
 		static float old_camera_offset_angles[3] = { 0.0f };
@@ -624,6 +627,9 @@ HOOK_DEF_6(ClientDLL, void, __cdecl, HUD_PostRunCmd, local_state_s*, from, local
 	}
 
 	last_buttons = cmd->buttons;
+
+	// Not sure if this is the best spot.
+	HwDLL::GetInstance().FreeCamTick();
 
 	if (CVars::_bxt_taslog.GetBool())
 		if (pEngfuncs)

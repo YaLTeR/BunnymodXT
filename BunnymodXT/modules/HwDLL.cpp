@@ -405,6 +405,7 @@ void HwDLL::Clear()
 	hltas_filename.clear();
 
 	edit_strafe_active = false;
+	free_cam_active = false;
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -1909,17 +1910,47 @@ struct HwDLL::Cmd_BXT_TAS_Edit_Strafe
 	}
 };
 
+struct HwDLL::Cmd_BXT_FreeCam
+{
+	USAGE("Usage: bxt_freecam <1|0>\n");
+
+	static void handler(int enabled)
+	{
+		auto& hw = HwDLL::GetInstance();
+		auto& cl = ClientDLL::GetInstance();
+
+		if (enabled) {
+			hw.free_cam_active = true;
+
+			auto org = cl.last_vieworg;
+			auto ang = cl.last_viewangles;
+
+			hw.isOverridingCamera = true;
+			hw.isOffsettingCamera = false;
+			hw.cameraOverrideOrigin[0] = org.x;
+			hw.cameraOverrideOrigin[1] = org.y;
+			hw.cameraOverrideOrigin[2] = org.z;
+			hw.cameraOverrideAngles[0] = ang.x;
+			hw.cameraOverrideAngles[1] = ang.y;
+			hw.cameraOverrideAngles[2] = ang.z;
+		} else {
+			hw.free_cam_active = false;
+			hw.isOverridingCamera = false;
+		}
+	}
+};
+
 void HwDLL::SetEditStrafe(bool enabled)
 {
 	auto& cl = ClientDLL::GetInstance();
 
 	if (enabled) {
-		*cl.g_iVisibleMouse = true;
-		SDL_SetRelativeMouseMode(SDL_FALSE);
+		// *cl.g_iVisibleMouse = true;
+		// SDL_SetRelativeMouseMode(SDL_FALSE);
 		edit_strafe_active = true;
 	} else {
-		*cl.g_iVisibleMouse = false;
-		SDL_SetRelativeMouseMode(SDL_TRUE);
+		// *cl.g_iVisibleMouse = false;
+		// SDL_SetRelativeMouseMode(SDL_TRUE);
 		edit_strafe_active = false;
 	}
 }
@@ -2005,6 +2036,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TASLog, Handler<>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_TAS_Edit_Strafe, Handler<int>>("bxt_tas_edit_strafe");
+	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 }
 
 void HwDLL::InsertCommands()
@@ -2990,6 +3022,43 @@ void HwDLL::UpdateCustomTriggers()
 		return;
 
 	CustomTriggers::Update(pl->v.origin, (pl->v.flags & FL_DUCKING) != 0);
+}
+
+void HwDLL::FreeCamTick()
+{
+	if (!free_cam_active)
+		return;
+
+	auto& cl = ClientDLL::GetInstance();
+
+	Vector forward, right, up;
+	cl.pEngfuncs->pfnAngleVectors(cl.last_viewangles, forward, right, up);
+
+	Vector direction(0, 0, 0);
+	auto buttons = cl.last_buttons;
+	if (buttons & IN_FORWARD)
+		direction += forward;
+	if (buttons & IN_BACK)
+		direction += -forward;
+	if (buttons & IN_MOVERIGHT)
+		direction += right;
+	if (buttons & IN_MOVELEFT)
+		direction += -right;
+
+	auto frametime = static_cast<float>(static_cast<float>(std::floor(*host_frametime * 1000)) * 0.001);
+	auto step = frametime * 320;
+
+	// No easy access to +speed unfortunately.
+	if (buttons & IN_ALT1)
+		step *= 2;
+	if (buttons & IN_DUCK)
+		step /= 2;
+
+	direction *= step;
+
+	cameraOverrideOrigin[0] += direction[0];
+	cameraOverrideOrigin[1] += direction[1];
+	cameraOverrideOrigin[2] += direction[2];
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

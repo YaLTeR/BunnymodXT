@@ -406,6 +406,10 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_useables_radius);
 	}
 
+	if (ORIG_V_CalcRefdef) {
+		REG(bxt_unlock_camera_during_pause);
+	}
+
 	if (ORIG_HUD_Init)
 	{
 		CVars::con_color.Assign(HwDLL::GetInstance().FindCVar("con_color"));
@@ -523,7 +527,15 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 {
 	CustomHud::UpdatePlayerInfoInaccurate(pparams->simvel, pparams->simorg);
 
+	auto paused = pparams->paused;
+
+	if (CVars::bxt_unlock_camera_during_pause.GetBool())
+		pparams->paused = false;
+
 	ORIG_V_CalcRefdef(pparams);
+
+	if (CVars::bxt_unlock_camera_during_pause.GetBool())
+		pparams->paused = paused;
 
 	const HwDLL &hwDLL = HwDLL::GetInstance();
 	if (hwDLL.GetIsOverridingCamera()) {

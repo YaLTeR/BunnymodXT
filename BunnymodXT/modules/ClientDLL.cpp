@@ -158,6 +158,7 @@ void ClientDLL::Clear()
 	SeedsQueued = 0;
 	m_Intercepted = false;
 	last_vieworg = Vector();
+	last_viewangles = Vector();
 }
 
 void ClientDLL::FindStuff()
@@ -574,6 +575,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 	}
 
 	last_vieworg = pparams->vieworg;
+	last_viewangles = pparams->viewangles;
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Init)

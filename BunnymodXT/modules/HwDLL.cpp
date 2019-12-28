@@ -1457,6 +1457,7 @@ struct HwDLL::Cmd_BXT_Camera_Fixed
 		auto &hw = HwDLL::GetInstance();
 		hw.isOverridingCamera = true;
 		hw.isOffsettingCamera = false;
+		hw.free_cam_active = false;
 		hw.cameraOverrideOrigin[0] = x;
 		hw.cameraOverrideOrigin[1] = y;
 		hw.cameraOverrideOrigin[2] = z;
@@ -1475,6 +1476,7 @@ struct HwDLL::Cmd_BXT_Camera_Clear
 		auto &hw = HwDLL::GetInstance();
 		hw.isOverridingCamera = false;
 		hw.isOffsettingCamera = false;
+		hw.free_cam_active = false;
 	}
 };
 
@@ -1487,6 +1489,7 @@ struct HwDLL::Cmd_BXT_Camera_Offset
 		auto &hw = HwDLL::GetInstance();
 		hw.isOverridingCamera = false;
 		hw.isOffsettingCamera = true;
+		hw.free_cam_active = false;
 		hw.cameraOffsetOrigin[0] = x;
 		hw.cameraOffsetOrigin[1] = y;
 		hw.cameraOffsetOrigin[2] = z;

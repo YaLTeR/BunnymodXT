@@ -223,37 +223,22 @@ namespace TriangleDrawing
 			return;
 		auto& cl = ClientDLL::GetInstance();
 
-		int x, y;
-		auto mouse_state = SDL_GetMouseState(&x, &y);
-		Vector2D mouse(x, y);
+		auto mouse_state = SDL_GetMouseState(nullptr, nullptr);
 		auto left_pressed = (mouse_state & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
 		bool left_got_pressed = false;
 		if (left_pressed && !left_was_pressed)
 			left_got_pressed = true;
 		left_was_pressed = left_pressed;
 
-		// Convert from SDL_GetMouseState coordinates to ScreenToWorld coordinates.
-		auto convert = [](Vector2D v) {
-			return Vector2D(
-				TriangleUtils::PixelWidthToProportion(v.x) * 2 - 1,
-				-TriangleUtils::PixelHeightToProportion(v.y) * 2 + 1
-			);
-		};
-
 		auto player_edict = hw.GetPlayerEdict();
 		auto origin = player_edict->v.origin;
 		auto view = cl.last_vieworg;
 
-		// Get the world point corresponding to where the mouse is on screen.
-		auto mouse_stw = convert(mouse);
-		auto mouse_stw_3d = Vector(mouse_stw.x, mouse_stw.y, 0);
-		Vector mouse_world_close;
-		// ScreenToWorld doesn't trace, so its point is very close in front of the player.
-		pTriAPI->ScreenToWorld(mouse_stw_3d, mouse_world_close);
+		Vector forward, right, up;
+		cl.pEngfuncs->pfnAngleVectors(cl.last_viewangles, forward, right, up);
 
 		// Trace to find the world point we're interested in.
-		Vector mouse_dir = (mouse_world_close - view).Normalize();
-		Vector end = view + mouse_dir * 8192;
+		Vector end = view + forward * 8192;
 		auto tr = hw.PlayerTrace(view, end, HullType::POINT);
 		Vector mouse_world(tr.EndPos);
 

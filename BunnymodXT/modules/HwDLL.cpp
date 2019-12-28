@@ -1919,27 +1919,7 @@ struct HwDLL::Cmd_BXT_FreeCam
 
 	static void handler(int enabled)
 	{
-		auto& hw = HwDLL::GetInstance();
-		auto& cl = ClientDLL::GetInstance();
-
-		if (enabled) {
-			hw.free_cam_active = true;
-
-			auto org = cl.last_vieworg;
-			auto ang = cl.last_viewangles;
-
-			hw.isOverridingCamera = true;
-			hw.isOffsettingCamera = false;
-			hw.cameraOverrideOrigin[0] = org.x;
-			hw.cameraOverrideOrigin[1] = org.y;
-			hw.cameraOverrideOrigin[2] = org.z;
-			hw.cameraOverrideAngles[0] = ang.x;
-			hw.cameraOverrideAngles[1] = ang.y;
-			hw.cameraOverrideAngles[2] = ang.z;
-		} else {
-			hw.free_cam_active = false;
-			hw.isOverridingCamera = false;
-		}
+		HwDLL::GetInstance().SetFreeCam(enabled);
 	}
 };
 
@@ -1955,6 +1935,30 @@ void HwDLL::SetEditStrafe(bool enabled)
 		// *cl.g_iVisibleMouse = false;
 		// SDL_SetRelativeMouseMode(SDL_TRUE);
 		edit_strafe_active = false;
+	}
+}
+
+void HwDLL::SetFreeCam(bool enabled)
+{
+	auto& cl = ClientDLL::GetInstance();
+
+	if (enabled) {
+		free_cam_active = true;
+
+		auto org = cl.last_vieworg;
+		auto ang = cl.last_viewangles;
+
+		isOverridingCamera = true;
+		isOffsettingCamera = false;
+		cameraOverrideOrigin[0] = org.x;
+		cameraOverrideOrigin[1] = org.y;
+		cameraOverrideOrigin[2] = org.z;
+		cameraOverrideAngles[0] = ang.x;
+		cameraOverrideAngles[1] = ang.y;
+		cameraOverrideAngles[2] = ang.z;
+	} else {
+		free_cam_active = false;
+		isOverridingCamera = false;
 	}
 }
 

@@ -203,6 +203,7 @@ public:
 	bool edit_strafe_active;
 
 	bool free_cam_active;
+	void SetFreeCam(bool enabled);
 	void FreeCamTick();
 
 private:

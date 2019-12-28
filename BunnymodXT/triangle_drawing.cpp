@@ -216,7 +216,6 @@ namespace TriangleDrawing
 		using HLTAS::StrafeType;
 		using std::vector;
 		const double M_RAD2DEG = 180 / M_PI;
-		static bool left_was_pressed = false;
 
 		auto& hw = HwDLL::GetInstance();
 		if (!hw.edit_strafe_active)
@@ -224,16 +223,22 @@ namespace TriangleDrawing
 		auto& cl = ClientDLL::GetInstance();
 
 		auto mouse_state = SDL_GetMouseState(nullptr, nullptr);
+
+		static bool left_was_pressed = false;
 		auto left_pressed = (mouse_state & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
 		bool left_got_pressed = false;
 		if (left_pressed && !left_was_pressed)
 			left_got_pressed = true;
 		left_was_pressed = left_pressed;
 
-		auto player_edict = hw.GetPlayerEdict();
-		auto origin = player_edict->v.origin;
-		auto view = cl.last_vieworg;
+		static bool right_was_pressed = false;
+		auto right_pressed = (mouse_state & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
+		bool right_got_pressed = false;
+		if (right_pressed && !right_was_pressed)
+			right_got_pressed = true;
+		right_was_pressed = right_pressed;
 
+		auto view = cl.last_vieworg;
 		Vector forward, right, up;
 		cl.pEngfuncs->pfnAngleVectors(cl.last_viewangles, forward, right, up);
 
@@ -242,53 +247,66 @@ namespace TriangleDrawing
 		auto tr = hw.PlayerTrace(view, end, HullType::POINT);
 		Vector mouse_world(tr.EndPos);
 
-		auto dir = mouse_world - origin;
+		auto& input = hw.edit_strafe_input;
+		const auto& positions = input.positions;
+		const auto& fractions = input.fractions;
+		const auto& normalzs = input.normalzs;
+		auto& last_frame_bulk = input.frame_bulks[input.frame_bulks.size() - 1];
+
+		size_t last_frame_bulk_start = 0;
+		for (size_t i = 0; i < input.frame_bulks.size() - 1; ++i) {
+			last_frame_bulk_start += input.frame_bulks[i].GetRepeats();
+		}
+
+		input.simulate();
+
+		auto last_frame_bulk_origin = positions[last_frame_bulk_start];
+		auto dir = mouse_world - last_frame_bulk_origin;
 		float yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
 
 		// Strafe towards the yaw.
-		hw.edit_strafe_input.frame_bulks[0].SetYaw(yaw);
-		hw.edit_strafe_input.simulate();
+		last_frame_bulk.SetYaw(yaw);
+		input.simulate();
 
 		// Draw the positions.
 		pTriAPI->RenderMode(kRenderTransColor);
 		pTriAPI->Color4f(0, 1, 0, 1);
 		TriangleUtils::DrawPyramid(pTriAPI, mouse_world, 10, 20);
 
-		const auto& positions = hw.edit_strafe_input.positions;
-		const auto& fractions = hw.edit_strafe_input.fractions;
-		const auto& normalzs = hw.edit_strafe_input.normalzs;
-
 		size_t frame_limit = positions.size() - 1;
-		auto distance_from_mouse = (mouse_world - origin).Length2D();
+		auto distance_from_mouse = (mouse_world - last_frame_bulk_origin).Length2D();
 		size_t frames_until_mouse = frame_limit;
 		size_t frames_until_non_ground_collision = frame_limit;
 
+		pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
 		for (size_t frame = 1; frame < positions.size(); ++frame) {
-			origin = positions[frame];
+			const auto& origin = positions[frame];
 
-			auto new_distance_from_mouse = (mouse_world - origin).Length2D();
-			if (frames_until_mouse == frame_limit && new_distance_from_mouse > distance_from_mouse)
-				frames_until_mouse = frame;
-			distance_from_mouse = new_distance_from_mouse;
+			if (frame > last_frame_bulk_start) {
+				auto new_distance_from_mouse = (mouse_world - origin).Length2D();
+				if (frames_until_mouse == frame_limit && new_distance_from_mouse > distance_from_mouse)
+					frames_until_mouse = frame;
+				distance_from_mouse = new_distance_from_mouse;
 
-			// If we bumped into something along the way
-			if (frames_until_non_ground_collision == frame_limit && fractions[frame] != 1) {
-				auto n = normalzs[frame];
-				// And it wasn't a ground or a ceiling
-				if (n < 0.7 && n != -1)
-					frames_until_non_ground_collision = frame;
-			}
+				// If we bumped into something along the way
+				if (frames_until_non_ground_collision == frame_limit && fractions[frame] != 1) {
+					auto n = normalzs[frame];
+					// And it wasn't a ground or a ceiling
+					if (n < 0.7 && n != -1)
+						frames_until_non_ground_collision = frame;
+				}
 
-			if (frame > frames_until_non_ground_collision) {
-				if (frame > frames_until_mouse)
-					pTriAPI->Color4f(1, 0, 0, 1);
-				else
-					pTriAPI->Color4f(1, 0.5, 0, 1);
-			} else {
-				if (frame > frames_until_mouse)
-					pTriAPI->Color4f(0, 1, 1, 1);
-				else
-					pTriAPI->Color4f(0, 1, 0, 1);
+				if (frame > frames_until_non_ground_collision) {
+					if (frame > frames_until_mouse)
+						pTriAPI->Color4f(1, 0, 0, 1);
+					else
+						pTriAPI->Color4f(1, 0.5, 0, 1);
+				} else {
+					if (frame > frames_until_mouse)
+						pTriAPI->Color4f(0, 1, 1, 1);
+					else
+						pTriAPI->Color4f(0, 1, 0, 1);
+				}
 			}
 
 			TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
@@ -298,8 +316,12 @@ namespace TriangleDrawing
 			hw.SetEditStrafe(false);
 			hw.SetFreeCam(false);
 
-			hw.edit_strafe_input.frame_bulks[0].SetRepeats(frames_until_mouse);
-			hw.edit_strafe_input.save();
+			last_frame_bulk.SetRepeats(frames_until_mouse - last_frame_bulk_start);
+			input.save();
+		} else if (right_got_pressed) {
+			auto new_frame_bulk = last_frame_bulk;
+			last_frame_bulk.SetRepeats(frames_until_mouse - last_frame_bulk_start);
+			input.frame_bulks.push_back(new_frame_bulk);
 		}
 	}
 

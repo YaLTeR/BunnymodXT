@@ -159,6 +159,7 @@ void ClientDLL::Clear()
 	m_Intercepted = false;
 	last_vieworg = Vector();
 	last_viewangles = Vector();
+	last_buttons = 0;
 }
 
 void ClientDLL::FindStuff()
@@ -621,6 +622,8 @@ HOOK_DEF_6(ClientDLL, void, __cdecl, HUD_PostRunCmd, local_state_s*, from, local
 		SeedsQueued++;
 		changedSeed = true;
 	}
+
+	last_buttons = cmd->buttons;
 
 	if (CVars::_bxt_taslog.GetBool())
 		if (pEngfuncs)

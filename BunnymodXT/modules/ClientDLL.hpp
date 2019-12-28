@@ -43,6 +43,7 @@ public:
 
 	Vector last_vieworg;
 	Vector last_viewangles;
+	unsigned short last_buttons;
 
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};

@@ -368,15 +368,14 @@ namespace TriangleDrawing
 			float closest_edge_px_dist;
 			size_t closest_edge_frame = 0;
 
-			pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
-			for (size_t frame = 1; frame < positions.size(); ++frame) {
-				const auto& origin = positions[frame];
+			static size_t closest_edge_prev_frame_bulk_index = 0;
 
-				TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
-
-				if (frame == frame_bulk_starts[next_frame_bulk_start_index]) {
-					if (next_frame_bulk_start_index + 1 != frame_bulk_starts.size())
-						++next_frame_bulk_start_index;
+			if (left_pressed) {
+				// Don't change the selected frame bulk while dragging.
+				closest_edge_frame = frame_bulk_starts[closest_edge_prev_frame_bulk_index + 1];
+			} else {
+				for (size_t i = 1; i < frame_bulk_starts.size(); ++i) {
+					auto frame = frame_bulk_starts[i];
 
 					auto disp = positions[frame] - view;
 					if (DotProduct(forward, disp) > 0) {
@@ -390,35 +389,71 @@ namespace TriangleDrawing
 							closest_edge_frame = frame;
 							closest_edge_px_dist = dist;
 							closest_edge_px = screen_point_px;
+							closest_edge_prev_frame_bulk_index = i - 1;
 						}
 					}
 				}
 			}
 
-			for (size_t i = 1; i < frame_bulk_starts.size(); ++i) {
-				auto frame = frame_bulk_starts[i];
+			static int saved_repeats = 0;
+			if (left_got_pressed && closest_edge_frame != 0)
+				saved_repeats = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetRepeats();
 
-				auto line = (positions[frame] - positions[frame - 1]).Normalize();
 
-				Vector perpendicular;
-				if (line.x == 0 && line.y == 0)
-					perpendicular = Vector(1, 0, 0);
-				else if (line.x == 0)
-					perpendicular = Vector(1, 0, 0);
-				else if (line.y == 0)
-					perpendicular = Vector(0, 1, 0);
-				else
-					perpendicular = Vector(1, -line.x / line.y, 0).Normalize();
 
-				perpendicular *= 5;
-				Vector a = positions[frame] + perpendicular, b = positions[frame] - perpendicular;
+			pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
+			for (size_t frame = 1; frame < positions.size(); ++frame) {
 
-				if (frame == closest_edge_frame)
-					pTriAPI->Color4f(1, 1, 1, 1);
-				else
-					pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
+				TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
 
-				TriangleUtils::DrawLine(pTriAPI, a, b);
+
+				if (frame == frame_bulk_starts[next_frame_bulk_start_index]) {
+					if (next_frame_bulk_start_index + 1 != frame_bulk_starts.size())
+						++next_frame_bulk_start_index;
+
+					auto line = (positions[frame] - positions[frame - 1]).Normalize();
+
+					Vector perpendicular;
+					if (line.x == 0 && line.y == 0)
+						perpendicular = Vector(1, 0, 0);
+					else if (line.x == 0)
+						perpendicular = Vector(1, 0, 0);
+					else if (line.y == 0)
+						perpendicular = Vector(0, 1, 0);
+					else
+						perpendicular = Vector(1, -line.x / line.y, 0).Normalize();
+
+					perpendicular *= 5;
+					Vector a = positions[frame] + perpendicular, b = positions[frame] - perpendicular;
+
+					if (frame == closest_edge_frame) {
+						pTriAPI->Color4f(1, 1, 1, 1);
+
+						if (left_pressed) {
+							auto mouse_diff = mouse - left_pressed_at;
+
+							Vector origin = positions[frame];
+							Vector screen_point;
+							pTriAPI->WorldToScreen(origin, screen_point);
+							auto screen_point_px = stw_to_pixels(screen_point.Make2D());
+							Vector prev_origin = positions[frame - 1];
+							Vector prev_screen_point;
+							pTriAPI->WorldToScreen(prev_origin, prev_screen_point);
+							auto prev_screen_point_px = stw_to_pixels(prev_screen_point.Make2D());
+							auto diff = screen_point_px - prev_screen_point_px;
+
+							auto increase = DotProduct(mouse_diff, diff) > 0;
+							auto amount = mouse_diff.Length() * (increase ? 1 : -1);
+							amount *= 0.1;
+							auto new_repeats = std::max(1, saved_repeats + static_cast<int>(amount));
+							input.frame_bulks[closest_edge_prev_frame_bulk_index].SetRepeats(new_repeats);
+						}
+					} else {
+						pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
+					}
+
+					TriangleUtils::DrawLine(pTriAPI, a, b);
+				}
 			}
 		}
 	}

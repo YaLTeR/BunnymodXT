@@ -404,7 +404,7 @@ void HwDLL::Clear()
 	dontStopAutorecord = false;
 	hltas_filename.clear();
 
-	edit_strafe_active = false;
+	edit_strafe_mode = EditStrafeMode::DISABLED;
 	edit_strafe_input = EditedInput();
 	free_cam_active = false;
 
@@ -1906,11 +1906,21 @@ struct HwDLL::Cmd_BXT_Append
 
 struct HwDLL::Cmd_BXT_TAS_Edit_Strafe
 {
-	USAGE("Usage: bxt_tas_edit_strafe <1|0>\n");
+	USAGE("Usage: bxt_tas_edit_strafe <0|1|2>\n");
 
-	static void handler(int enabled)
+	static void handler(int mode)
 	{
-		HwDLL::GetInstance().SetEditStrafe(enabled);
+		EditStrafeMode edit_strafe_mode;
+		if (mode == 0)
+			edit_strafe_mode = EditStrafeMode::DISABLED;
+		else if (mode == 1)
+			edit_strafe_mode = EditStrafeMode::APPEND;
+		else if (mode == 2)
+			edit_strafe_mode = EditStrafeMode::EDIT;
+		else
+			return;
+
+		HwDLL::GetInstance().SetEditStrafe(edit_strafe_mode);
 	}
 };
 
@@ -1924,15 +1934,24 @@ struct HwDLL::Cmd_BXT_FreeCam
 	}
 };
 
-void HwDLL::SetEditStrafe(bool enabled)
+void HwDLL::SetEditStrafe(EditStrafeMode mode)
 {
 	auto& cl = ClientDLL::GetInstance();
 
-	if (enabled) {
-		// *cl.g_iVisibleMouse = true;
-		// SDL_SetRelativeMouseMode(SDL_FALSE);
-		edit_strafe_active = true;
+	if (mode == EditStrafeMode::EDIT) {
+		*cl.g_iVisibleMouse = true;
+		SDL_SetRelativeMouseMode(SDL_FALSE);
 
+		if (edit_strafe_mode == EditStrafeMode::DISABLED)
+			edit_strafe_input = EditedInput();
+		else if (edit_strafe_mode == EditStrafeMode::APPEND)
+			edit_strafe_input.frame_bulks.erase(edit_strafe_input.frame_bulks.end() - 1);
+	} else {
+		*cl.g_iVisibleMouse = false;
+		SDL_SetRelativeMouseMode(SDL_TRUE);
+	}
+
+	if (edit_strafe_mode != EditStrafeMode::APPEND && mode == EditStrafeMode::APPEND) {
 		auto frame_bulk = HLTAS::Frame();
 		auto frame_count = input.GetFrames().size();
 		if (frame_count > 0) {
@@ -1952,13 +1971,13 @@ void HwDLL::SetEditStrafe(bool enabled)
 		// Simulate 5 seconds.
 		frame_bulk.SetRepeats(5 / GetFrameTime());
 
-		edit_strafe_input = EditedInput();
+		if (edit_strafe_mode == EditStrafeMode::DISABLED)
+			edit_strafe_input = EditedInput();
+
 		edit_strafe_input.frame_bulks.push_back(frame_bulk);
-	} else {
-		// *cl.g_iVisibleMouse = false;
-		// SDL_SetRelativeMouseMode(SDL_TRUE);
-		edit_strafe_active = false;
 	}
+
+	edit_strafe_mode = mode;
 }
 
 void HwDLL::SetFreeCam(bool enabled)

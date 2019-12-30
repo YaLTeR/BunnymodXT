@@ -218,11 +218,21 @@ namespace TriangleDrawing
 		const double M_RAD2DEG = 180 / M_PI;
 
 		auto& hw = HwDLL::GetInstance();
-		if (!hw.edit_strafe_active)
+		if (hw.edit_strafe_mode == EditStrafeMode::DISABLED)
 			return;
 		auto& cl = ClientDLL::GetInstance();
 
-		auto mouse_state = SDL_GetMouseState(nullptr, nullptr);
+		int x, y;
+		auto mouse_state = SDL_GetMouseState(&x, &y);
+		Vector2D mouse(x, y);
+
+		// Convert from ScreenToWorld coordinates to SDL_GetMouseState coordinates.
+		auto stw_to_pixels = [](Vector2D v) {
+			return Vector2D(
+				TriangleUtils::ProportionToPixelWidth((v.x + 1) / 2),
+				TriangleUtils::ProportionToPixelHeight(-(v.y - 1) / 2)
+			);
+		};
 
 		static bool left_was_pressed = false;
 		auto left_pressed = (mouse_state & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
@@ -251,66 +261,139 @@ namespace TriangleDrawing
 		const auto& positions = input.positions;
 		const auto& fractions = input.fractions;
 		const auto& normalzs = input.normalzs;
-		auto& last_frame_bulk = input.frame_bulks[input.frame_bulks.size() - 1];
+		const auto& frame_bulk_starts = input.frame_bulk_starts;
 
 		input.simulate();
 
-		size_t last_frame_bulk_start = input.frame_bulk_starts[input.frame_bulk_starts.size() - 2];
-		auto last_frame_bulk_origin = positions[last_frame_bulk_start];
-		auto dir = mouse_world - last_frame_bulk_origin;
-		float yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
+		if (hw.edit_strafe_mode == EditStrafeMode::APPEND) {
+			auto& last_frame_bulk = input.frame_bulks[input.frame_bulks.size() - 1];
+			size_t last_frame_bulk_start = input.frame_bulk_starts[input.frame_bulk_starts.size() - 2];
+			auto last_frame_bulk_origin = positions[last_frame_bulk_start];
+			auto dir = mouse_world - last_frame_bulk_origin;
+			float yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
 
-		// Strafe towards the yaw.
-		last_frame_bulk.SetYaw(yaw);
-		input.simulate();
+			// Strafe towards the yaw.
+			last_frame_bulk.SetYaw(yaw);
+			input.simulate();
 
-		// Draw the positions.
-		pTriAPI->RenderMode(kRenderTransColor);
-		pTriAPI->Color4f(0, 1, 0, 1);
-		TriangleUtils::DrawPyramid(pTriAPI, mouse_world, 10, 20);
+			// Draw the positions.
+			pTriAPI->RenderMode(kRenderTransColor);
+			pTriAPI->Color4f(0, 1, 0, 1);
+			TriangleUtils::DrawPyramid(pTriAPI, mouse_world, 10, 20);
 
-		size_t frame_limit = positions.size() - 1;
-		auto distance_from_mouse = (mouse_world - last_frame_bulk_origin).Length2D();
-		size_t frames_until_mouse = frame_limit;
-		size_t frames_until_non_ground_collision = frame_limit;
-		size_t next_frame_bulk_start_index = 1;
+			size_t frame_limit = positions.size() - 1;
+			auto distance_from_mouse = (mouse_world - last_frame_bulk_origin).Length2D();
+			size_t frames_until_mouse = frame_limit;
+			size_t frames_until_non_ground_collision = frame_limit;
+			size_t next_frame_bulk_start_index = 1;
 
-		pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
-		for (size_t frame = 1; frame < positions.size(); ++frame) {
-			const auto& origin = positions[frame];
+			pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
+			for (size_t frame = 1; frame < positions.size(); ++frame) {
+				const auto& origin = positions[frame];
 
-			if (frame > last_frame_bulk_start) {
-				auto new_distance_from_mouse = (mouse_world - origin).Length2D();
-				if (frames_until_mouse == frame_limit && new_distance_from_mouse > distance_from_mouse)
-					frames_until_mouse = frame;
-				distance_from_mouse = new_distance_from_mouse;
+				if (frame > last_frame_bulk_start) {
+					auto new_distance_from_mouse = (mouse_world - origin).Length2D();
+					if (frames_until_mouse == frame_limit && new_distance_from_mouse > distance_from_mouse)
+						frames_until_mouse = frame;
+					distance_from_mouse = new_distance_from_mouse;
 
-				// If we bumped into something along the way
-				if (frames_until_non_ground_collision == frame_limit && fractions[frame] != 1) {
-					auto n = normalzs[frame];
-					// And it wasn't a ground or a ceiling
-					if (n < 0.7 && n != -1)
-						frames_until_non_ground_collision = frame;
+					// If we bumped into something along the way
+					if (frames_until_non_ground_collision == frame_limit && fractions[frame] != 1) {
+						auto n = normalzs[frame];
+						// And it wasn't a ground or a ceiling
+						if (n < 0.7 && n != -1)
+							frames_until_non_ground_collision = frame;
+					}
+
+					if (frame > frames_until_non_ground_collision) {
+						if (frame > frames_until_mouse)
+							pTriAPI->Color4f(1, 0, 0, 1);
+						else
+							pTriAPI->Color4f(1, 0.5, 0, 1);
+					} else {
+						if (frame > frames_until_mouse)
+							pTriAPI->Color4f(0, 1, 1, 1);
+						else
+							pTriAPI->Color4f(0, 1, 0, 1);
+					}
 				}
 
-				if (frame > frames_until_non_ground_collision) {
-					if (frame > frames_until_mouse)
-						pTriAPI->Color4f(1, 0, 0, 1);
+				TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
+
+				// Draw a small perpendicular line between frame bulks.
+				if (frame == frame_bulk_starts[next_frame_bulk_start_index]) {
+					if (next_frame_bulk_start_index + 1 != frame_bulk_starts.size())
+						++next_frame_bulk_start_index;
+
+					auto line = (positions[frame] - positions[frame - 1]).Normalize();
+
+					Vector perpendicular;
+					if (line.x == 0 && line.y == 0)
+						perpendicular = Vector(1, 0, 0);
+					else if (line.x == 0)
+						perpendicular = Vector(1, 0, 0);
+					else if (line.y == 0)
+						perpendicular = Vector(0, 1, 0);
 					else
-						pTriAPI->Color4f(1, 0.5, 0, 1);
-				} else {
-					if (frame > frames_until_mouse)
-						pTriAPI->Color4f(0, 1, 1, 1);
-					else
-						pTriAPI->Color4f(0, 1, 0, 1);
+						perpendicular = Vector(1, -line.x / line.y, 0).Normalize();
+
+					perpendicular *= 5;
+					Vector a = positions[frame] + perpendicular, b = positions[frame] - perpendicular;
+					TriangleUtils::DrawLine(pTriAPI, a, b);
 				}
 			}
 
-			TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
+			if (left_got_pressed) {
+				hw.SetEditStrafe(EditStrafeMode::DISABLED);
+				hw.SetFreeCam(false);
 
-			if (frame == input.frame_bulk_starts[next_frame_bulk_start_index]) {
-				if (next_frame_bulk_start_index + 1 != input.frame_bulk_starts.size())
-					++next_frame_bulk_start_index;
+				last_frame_bulk.SetRepeats(frames_until_mouse - last_frame_bulk_start);
+				input.save();
+			} else if (right_got_pressed) {
+				auto new_frame_bulk = last_frame_bulk;
+				last_frame_bulk.SetRepeats(frames_until_mouse - last_frame_bulk_start);
+				input.frame_bulks.push_back(new_frame_bulk);
+			}
+		} else {
+			// EditStrafeMode::EDIT
+			if (input.frame_bulks.size() == 0)
+				return;
+
+			size_t next_frame_bulk_start_index = 1;
+
+			Vector2D closest_edge_px;
+			float closest_edge_px_dist;
+			size_t closest_edge_frame = 0;
+
+			pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
+			for (size_t frame = 1; frame < positions.size(); ++frame) {
+				const auto& origin = positions[frame];
+
+				TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
+
+				if (frame == frame_bulk_starts[next_frame_bulk_start_index]) {
+					if (next_frame_bulk_start_index + 1 != frame_bulk_starts.size())
+						++next_frame_bulk_start_index;
+
+					auto disp = positions[frame] - view;
+					if (DotProduct(forward, disp) > 0) {
+						Vector origin = positions[frame];
+						Vector screen_point;
+						pTriAPI->WorldToScreen(origin, screen_point);
+						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
+						auto dist = (screen_point_px - mouse).Length();
+
+						if (closest_edge_frame == 0 || dist < closest_edge_px_dist) {
+							closest_edge_frame = frame;
+							closest_edge_px_dist = dist;
+							closest_edge_px = screen_point_px;
+						}
+					}
+				}
+			}
+
+			for (size_t i = 1; i < frame_bulk_starts.size(); ++i) {
+				auto frame = frame_bulk_starts[i];
 
 				auto line = (positions[frame] - positions[frame - 1]).Normalize();
 
@@ -326,20 +409,14 @@ namespace TriangleDrawing
 
 				perpendicular *= 5;
 				Vector a = positions[frame] + perpendicular, b = positions[frame] - perpendicular;
+
+				if (frame == closest_edge_frame)
+					pTriAPI->Color4f(1, 1, 1, 1);
+				else
+					pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
+
 				TriangleUtils::DrawLine(pTriAPI, a, b);
 			}
-		}
-
-		if (left_got_pressed) {
-			hw.SetEditStrafe(false);
-			hw.SetFreeCam(false);
-
-			last_frame_bulk.SetRepeats(frames_until_mouse - last_frame_bulk_start);
-			input.save();
-		} else if (right_got_pressed) {
-			auto new_frame_bulk = last_frame_bulk;
-			last_frame_bulk.SetRepeats(frames_until_mouse - last_frame_bulk_start);
-			input.frame_bulks.push_back(new_frame_bulk);
 		}
 	}
 

@@ -6,6 +6,12 @@
 #include "taslogger/writer.hpp"
 #include "../input_editor.hpp"
 
+enum class EditStrafeMode {
+	DISABLED,
+	APPEND,
+	EDIT
+};
+
 class HwDLL : public IHookableNameFilterOrdered
 {
 	HOOK_DECL(void, __cdecl, LoadAndDecryptHwDLL, int a, void* b, void* c)
@@ -206,8 +212,9 @@ public:
 	typedef void(__cdecl *_Cbuf_InsertText) (const char* text);
 	_Cbuf_InsertText ORIG_Cbuf_InsertText;
 
-	bool edit_strafe_active;
+	EditStrafeMode edit_strafe_mode;
 	EditedInput edit_strafe_input;
+	void SetEditStrafe(EditStrafeMode mode);
 
 	bool free_cam_active;
 	void SetFreeCam(bool enabled);
@@ -224,7 +231,6 @@ public:
 	_Con_Printf ORIG_Con_Printf;
 
 	HLStrafe::PlayerData GetPlayerData();
-	void SetEditStrafe(bool enabled);
 
 protected:
 	typedef void(__cdecl *_Cvar_RegisterVariable) (cvar_t* cvar);

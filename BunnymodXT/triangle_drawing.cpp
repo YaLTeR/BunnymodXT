@@ -235,10 +235,13 @@ namespace TriangleDrawing
 		};
 
 		static bool left_was_pressed = false;
+		static Vector2D left_pressed_at = Vector2D(0, 0);
 		auto left_pressed = (mouse_state & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
 		bool left_got_pressed = false;
-		if (left_pressed && !left_was_pressed)
+		if (left_pressed && !left_was_pressed) {
 			left_got_pressed = true;
+			left_pressed_at = mouse;
+		}
 		left_was_pressed = left_pressed;
 
 		static bool right_was_pressed = false;

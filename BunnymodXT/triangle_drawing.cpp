@@ -273,6 +273,7 @@ namespace TriangleDrawing
 		auto distance_from_mouse = (mouse_world - last_frame_bulk_origin).Length2D();
 		size_t frames_until_mouse = frame_limit;
 		size_t frames_until_non_ground_collision = frame_limit;
+		size_t next_frame_bulk_start_index = 1;
 
 		pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
 		for (size_t frame = 1; frame < positions.size(); ++frame) {
@@ -306,6 +307,27 @@ namespace TriangleDrawing
 			}
 
 			TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
+
+			if (frame == input.frame_bulk_starts[next_frame_bulk_start_index]) {
+				if (next_frame_bulk_start_index + 1 != input.frame_bulk_starts.size())
+					++next_frame_bulk_start_index;
+
+				auto line = (positions[frame] - positions[frame - 1]).Normalize();
+
+				Vector perpendicular;
+				if (line.x == 0 && line.y == 0)
+					perpendicular = Vector(1, 0, 0);
+				else if (line.x == 0)
+					perpendicular = Vector(1, 0, 0);
+				else if (line.y == 0)
+					perpendicular = Vector(0, 1, 0);
+				else
+					perpendicular = Vector(1, -line.x / line.y, 0).Normalize();
+
+				perpendicular *= 5;
+				Vector a = positions[frame] + perpendicular, b = positions[frame] - perpendicular;
+				TriangleUtils::DrawLine(pTriAPI, a, b);
+			}
 		}
 
 		if (left_got_pressed) {

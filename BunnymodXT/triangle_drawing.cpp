@@ -253,13 +253,9 @@ namespace TriangleDrawing
 		const auto& normalzs = input.normalzs;
 		auto& last_frame_bulk = input.frame_bulks[input.frame_bulks.size() - 1];
 
-		size_t last_frame_bulk_start = 0;
-		for (size_t i = 0; i < input.frame_bulks.size() - 1; ++i) {
-			last_frame_bulk_start += input.frame_bulks[i].GetRepeats();
-		}
-
 		input.simulate();
 
+		size_t last_frame_bulk_start = input.frame_bulk_starts[input.frame_bulk_starts.size() - 2];
 		auto last_frame_bulk_origin = positions[last_frame_bulk_start];
 		auto dir = mouse_world - last_frame_bulk_origin;
 		float yaw = atan2(dir.y, dir.x) * M_RAD2DEG;

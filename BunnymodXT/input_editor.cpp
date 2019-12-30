@@ -6,6 +6,7 @@
 void EditedInput::simulate() {
 	auto& hw = HwDLL::GetInstance();
 
+	frame_bulk_starts.clear();
 	positions.clear();
 	fractions.clear();
 	normalzs.clear();
@@ -32,6 +33,9 @@ void EditedInput::simulate() {
 		std::placeholders::_3
 	);
 
+	size_t total_frames = 0;
+	frame_bulk_starts.push_back(0);
+
 	for (const auto& frame_bulk : frame_bulks) {
 		for (size_t frame = 0; frame < frame_bulk.GetRepeats(); ++frame) {
 			auto processed_frame = HLStrafe::MainFunc(
@@ -50,6 +54,9 @@ void EditedInput::simulate() {
 			fractions.push_back(processed_frame.fractions[0]);
 			normalzs.push_back(processed_frame.normalzs[0]);
 		}
+
+		total_frames += frame_bulk.GetRepeats();
+		frame_bulk_starts.push_back(total_frames);
 	}
 
 	hw.StopTracing();

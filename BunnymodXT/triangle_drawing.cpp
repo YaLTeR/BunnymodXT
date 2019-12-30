@@ -399,13 +399,42 @@ namespace TriangleDrawing
 			if (left_got_pressed && closest_edge_frame != 0)
 				saved_repeats = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetRepeats();
 
+			size_t frame_limit = positions.size() - 1;
+			size_t frames_until_non_ground_collision = frame_limit;
 
+			// Apply color to frame bulks right before and after the selected edge.
+			size_t color_from = frame_limit;
+			size_t color_to = frame_limit;
+			if (closest_edge_frame != 0) {
+				color_from = frame_bulk_starts[closest_edge_prev_frame_bulk_index];
+				if (closest_edge_prev_frame_bulk_index + 2 < frame_bulk_starts.size())
+					color_to = frame_bulk_starts[closest_edge_prev_frame_bulk_index + 2];
+			}
 
 			pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
 			for (size_t frame = 1; frame < positions.size(); ++frame) {
+				if (frame > color_from && frame <= color_to) {
+					// If we bumped into something along the way
+					if (frames_until_non_ground_collision == frame_limit && fractions[frame] != 1) {
+						auto n = normalzs[frame];
+						// And it wasn't a ground or a ceiling
+						if (n < 0.7 && n != -1)
+							frames_until_non_ground_collision = frame;
+					}
+
+					if (frame > frames_until_non_ground_collision) {
+						pTriAPI->Color4f(1, 0, 0, 1);
+					} else {
+						pTriAPI->Color4f(0, 1, 0, 1);
+					}
+				}
 
 				TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
 
+				// Reset the coloring on the edge.
+				if (closest_edge_frame != 0
+						&& frame == frame_bulk_starts[closest_edge_prev_frame_bulk_index + 1])
+					frames_until_non_ground_collision = frame_limit;
 
 				if (frame == frame_bulk_starts[next_frame_bulk_start_index]) {
 					if (next_frame_bulk_start_index + 1 != frame_bulk_starts.size())

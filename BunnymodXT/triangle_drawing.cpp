@@ -373,7 +373,7 @@ namespace TriangleDrawing
 
 			static size_t closest_edge_prev_frame_bulk_index = 0;
 
-			if (left_pressed) {
+			if (left_pressed || right_pressed) {
 				// Don't change the selected frame bulk while dragging.
 				closest_edge_frame = frame_bulk_starts[closest_edge_prev_frame_bulk_index + 1];
 			} else {
@@ -401,6 +401,10 @@ namespace TriangleDrawing
 			static int saved_repeats = 0;
 			if (left_got_pressed && closest_edge_frame != 0)
 				saved_repeats = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetRepeats();
+
+			static double saved_yaw = 0;
+			if (right_got_pressed && closest_edge_frame != 0)
+				saved_yaw = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYaw();
 
 			size_t frame_limit = positions.size() - 1;
 			size_t frames_until_non_ground_collision = frame_limit;
@@ -455,6 +459,14 @@ namespace TriangleDrawing
 					else
 						perpendicular = Vector(1, -line.x / line.y, 0).Normalize();
 
+					// Make sure it's oriented in a particular way: this makes right-drag to change
+					// yaw behave as expected (the yaw will change in the direction where you move
+					// the mouse).
+					if (perpendicular.x * line.y - perpendicular.y * line.x > 0) {
+						perpendicular.x = -perpendicular.x;
+						perpendicular.y = -perpendicular.y;
+					}
+
 					perpendicular *= 5;
 					Vector a = positions[frame] + perpendicular, b = positions[frame] - perpendicular;
 
@@ -479,6 +491,24 @@ namespace TriangleDrawing
 							amount *= 0.1;
 							auto new_repeats = std::max(1, saved_repeats + static_cast<int>(amount));
 							input.frame_bulks[closest_edge_prev_frame_bulk_index].SetRepeats(new_repeats);
+						}
+
+						if (right_pressed) {
+							auto mouse_diff = mouse - right_pressed_at;
+
+							Vector a_screen_point;
+							pTriAPI->WorldToScreen(a, a_screen_point);
+							auto a_screen_point_px = stw_to_pixels(a_screen_point.Make2D());
+							Vector b_screen_point;
+							pTriAPI->WorldToScreen(b, b_screen_point);
+							auto b_screen_point_px = stw_to_pixels(b_screen_point.Make2D());
+							auto diff = a_screen_point_px - b_screen_point_px;
+
+							auto increase = DotProduct(mouse_diff, diff) > 0;
+							auto amount = mouse_diff.Length() * (increase ? 1 : -1);
+							amount *= 0.1;
+							auto new_yaw = saved_yaw + static_cast<int>(amount);
+							input.frame_bulks[closest_edge_prev_frame_bulk_index].SetYaw(new_yaw);
 						}
 					} else {
 						pTriAPI->Color4f(0.8, 0.8, 0.8, 1);

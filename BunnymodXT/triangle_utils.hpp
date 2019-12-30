@@ -4,6 +4,8 @@ namespace TriangleUtils
 {
 	float PixelWidthToProportion(float pixels);
 	float PixelHeightToProportion(float pixels);
+	float ProportionToPixelWidth(float proportion);
+	float ProportionToPixelHeight(float proportion);
 
 	void DrawPyramid(triangleapi_s *pTriAPI, Vector origin, float width, float height);
 	void DrawScreenTriangle(triangleapi_s *pTriAPI, Vector center, float sideLength);

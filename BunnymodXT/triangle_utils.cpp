@@ -15,6 +15,16 @@ namespace TriangleUtils
 		return pixels / CustomHud::GetScreenInfo().iHeight;
 	}
 
+	float ProportionToPixelWidth(float proportion)
+	{
+		return proportion * CustomHud::GetScreenInfo().iWidth;
+	}
+
+	float ProportionToPixelHeight(float proportion)
+	{
+		return proportion * CustomHud::GetScreenInfo().iHeight;
+	}
+
 	void DrawPyramid(triangleapi_s *pTriAPI, Vector origin, float width, float height)
 	{
 		const float halfWidth = width * 0.5f;

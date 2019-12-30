@@ -1938,13 +1938,26 @@ void HwDLL::SetEditStrafe(EditStrafeMode mode)
 {
 	auto& cl = ClientDLL::GetInstance();
 
+	if (edit_strafe_mode == EditStrafeMode::DISABLED && mode != EditStrafeMode::DISABLED) {
+		edit_strafe_input = EditedInput();
+
+		// If invoked while running a script, put all frame bulks up until the last one for editing.
+		if (runningFrames) {
+			auto limit = input.GetFrames().size() - 1;
+			for (size_t i = currentFramebulk; i < limit; ++i) {
+				edit_strafe_input.frame_bulks.push_back(input.GetFrames()[currentFramebulk]);
+				input.RemoveFrame(currentFramebulk);
+			}
+
+			runningFrames = false;
+		}
+	}
+
 	if (mode == EditStrafeMode::EDIT) {
 		*cl.g_iVisibleMouse = true;
 		SDL_SetRelativeMouseMode(SDL_FALSE);
 
-		if (edit_strafe_mode == EditStrafeMode::DISABLED)
-			edit_strafe_input = EditedInput();
-		else if (edit_strafe_mode == EditStrafeMode::APPEND)
+		if (edit_strafe_mode == EditStrafeMode::APPEND)
 			edit_strafe_input.frame_bulks.erase(edit_strafe_input.frame_bulks.end() - 1);
 	} else {
 		*cl.g_iVisibleMouse = false;
@@ -1970,10 +1983,6 @@ void HwDLL::SetEditStrafe(EditStrafeMode mode)
 
 		// Simulate 5 seconds.
 		frame_bulk.SetRepeats(5 / GetFrameTime());
-
-		if (edit_strafe_mode == EditStrafeMode::DISABLED)
-			edit_strafe_input = EditedInput();
-
 		edit_strafe_input.frame_bulks.push_back(frame_bulk);
 	}
 

@@ -101,6 +101,7 @@ unsigned int __stdcall MainThread(void* args)
 	Hooks::AddToHookedModules(&HwDLL::GetInstance());
 	Hooks::AddToHookedModules(&ClientDLL::GetInstance());
 	Hooks::AddToHookedModules(&ServerDLL::GetInstance());
+	Hooks::AddToHookedModules(&SDL::GetInstance());
 	Hooks::Init(true);
 
 	auto resume_event = OpenEventW(EVENT_MODIFY_STATE, FALSE, EVENT_NAME);

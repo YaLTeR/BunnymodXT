@@ -1,6 +1,5 @@
 #include "stdafx.hpp"
 
-#include <SDL2/SDL.h>
 #include "custom_triggers.hpp"
 #include "triangle_drawing.hpp"
 #include "triangle_utils.hpp"
@@ -223,7 +222,7 @@ namespace TriangleDrawing
 		auto& cl = ClientDLL::GetInstance();
 
 		int x, y;
-		auto mouse_state = SDL_GetMouseState(&x, &y);
+		auto mouse_state = SDL::GetInstance().GetMouseState(&x, &y);
 		Vector2D mouse(x, y);
 
 		// Convert from ScreenToWorld coordinates to SDL_GetMouseState coordinates.

@@ -1,6 +1,5 @@
 #include "../stdafx.hpp"
 
-#include <SDL2/SDL.h>
 #include <boost/algorithm/string/replace.hpp>
 #include <cerrno>
 #include <GL/gl.h>
@@ -10,6 +9,7 @@
 #include "HwDLL.hpp"
 #include "ClientDLL.hpp"
 #include "ServerDLL.hpp"
+#include "SDL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
@@ -1955,13 +1955,13 @@ void HwDLL::SetEditStrafe(EditStrafeMode mode)
 
 	if (mode == EditStrafeMode::EDIT) {
 		*cl.g_iVisibleMouse = true;
-		SDL_SetRelativeMouseMode(SDL_FALSE);
+		SDL::GetInstance().SetRelativeMouseMode(false);
 
 		if (edit_strafe_mode == EditStrafeMode::APPEND)
 			edit_strafe_input.frame_bulks.erase(edit_strafe_input.frame_bulks.end() - 1);
 	} else {
 		*cl.g_iVisibleMouse = false;
-		SDL_SetRelativeMouseMode(SDL_TRUE);
+		SDL::GetInstance().SetRelativeMouseMode(true);
 	}
 
 	if (edit_strafe_mode != EditStrafeMode::APPEND && mode == EditStrafeMode::APPEND) {

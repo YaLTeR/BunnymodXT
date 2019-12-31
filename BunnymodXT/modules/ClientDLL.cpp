@@ -97,6 +97,10 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_HUD_DrawTransparentTriangles, HOOKED_HUD_DrawTransparentTriangles,
 			ORIG_HUD_Key_Event, HOOKED_HUD_Key_Event);
 	}
+
+	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
+	// we never see it loaded. Try loading it here.
+	Hooks::HookModule(L"SDL2.dll");
 }
 
 void ClientDLL::Unhook()

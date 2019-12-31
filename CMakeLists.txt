@@ -113,6 +113,7 @@ set (HEADER_FILES
 	BunnymodXT/modules/HwDLL.hpp
 	BunnymodXT/modules/ClientDLL.hpp
 	BunnymodXT/modules/ServerDLL.hpp
+	BunnymodXT/modules/SDL.hpp
 	BunnymodXT/bunnymodxt.hpp
 	BunnymodXT/cmd_wrapper.hpp
 	BunnymodXT/custom_triggers.hpp
@@ -142,6 +143,7 @@ set (SOURCE_FILES
 	BunnymodXT/modules/HwDLL.cpp
 	BunnymodXT/modules/ClientDLL.cpp
 	BunnymodXT/modules/ServerDLL.cpp
+	BunnymodXT/modules/SDL.cpp
 	BunnymodXT/custom_triggers.cpp
 	BunnymodXT/cvars.cpp
 	BunnymodXT/hud_custom.cpp

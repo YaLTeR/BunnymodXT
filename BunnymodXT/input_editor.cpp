@@ -3,25 +3,34 @@
 #include "input_editor.hpp"
 #include "modules.hpp"
 
-void EditedInput::simulate() {
+void EditedInput::simulate(SimulateFrameBulks what) {
 	auto& hw = HwDLL::GetInstance();
 
-	frame_bulk_starts.clear();
-	positions.clear();
-	fractions.clear();
-	normalzs.clear();
+	HLStrafe::PlayerData player;
+	HLStrafe::CurrentState strafe_state;
 
-	auto player = hw.GetPlayerData();
-	positions.push_back(player.Origin);
-	fractions.push_back(1);
-	normalzs.push_back(0);
+	if (what == SimulateFrameBulks::ALL_EXCEPT_LAST) {
+		frame_bulk_starts.clear();
+		positions.clear();
+		fractions.clear();
+		normalzs.clear();
+
+		player = hw.GetPlayerData();
+		positions.push_back(player.Origin);
+		fractions.push_back(1);
+		normalzs.push_back(0);
+		frame_bulk_starts.push_back(0);
+
+		strafe_state = hw.StrafeState;
+		strafe_state.Jump = hw.currentKeys.Jump.IsDown();
+		strafe_state.Duck = hw.currentKeys.Duck.IsDown();
+	} else {
+		player = saved_player;
+		strafe_state = saved_state;
+	}
 
 	const auto movement_vars = hw.GetMovementVars();
 	const auto frametime = movement_vars.Frametime;
-
-	auto strafe_state = hw.StrafeState;
-	strafe_state.Jump = hw.currentKeys.Jump.IsDown();
-	strafe_state.Duck = hw.currentKeys.Duck.IsDown();
 
 	hw.StartTracing();
 
@@ -33,10 +42,16 @@ void EditedInput::simulate() {
 		std::placeholders::_3
 	);
 
-	size_t total_frames = 0;
-	frame_bulk_starts.push_back(0);
+	size_t total_frames = frame_bulk_starts[frame_bulk_starts.size() - 1];
 
-	for (const auto& frame_bulk : frame_bulks) {
+	for (size_t index = 0; index < frame_bulks.size(); ++index) {
+		if (what == SimulateFrameBulks::ALL_EXCEPT_LAST && index == frame_bulks.size() - 1)
+			break;
+		if (what == SimulateFrameBulks::LAST && index != frame_bulks.size() - 1)
+			continue;
+
+		const auto& frame_bulk = frame_bulks[index];
+
 		for (size_t frame = 0; frame < frame_bulk.GetRepeats(); ++frame) {
 			auto processed_frame = HLStrafe::MainFunc(
 				player,
@@ -60,6 +75,9 @@ void EditedInput::simulate() {
 	}
 
 	hw.StopTracing();
+
+	saved_player = player;
+	saved_state = strafe_state;
 }
 
 void EditedInput::save() {

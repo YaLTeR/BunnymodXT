@@ -268,18 +268,18 @@ namespace TriangleDrawing
 		const auto& normalzs = input.normalzs;
 		const auto& frame_bulk_starts = input.frame_bulk_starts;
 
-		input.simulate();
+		input.simulate(SimulateFrameBulks::ALL_EXCEPT_LAST);
 
 		if (hw.edit_strafe_mode == EditStrafeMode::APPEND) {
 			auto& last_frame_bulk = input.frame_bulks[input.frame_bulks.size() - 1];
-			size_t last_frame_bulk_start = input.frame_bulk_starts[input.frame_bulk_starts.size() - 2];
+			size_t last_frame_bulk_start = input.frame_bulk_starts[input.frame_bulk_starts.size() - 1];
 			auto last_frame_bulk_origin = positions[last_frame_bulk_start];
 			auto dir = mouse_world - last_frame_bulk_origin;
 			float yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
 
 			// Strafe towards the yaw.
 			last_frame_bulk.SetYaw(yaw);
-			input.simulate();
+			input.simulate(SimulateFrameBulks::LAST);
 
 			// Draw the positions.
 			pTriAPI->RenderMode(kRenderTransColor);
@@ -363,6 +363,8 @@ namespace TriangleDrawing
 			// EditStrafeMode::EDIT
 			if (input.frame_bulks.size() == 0)
 				return;
+
+			input.simulate(SimulateFrameBulks::LAST);
 
 			size_t next_frame_bulk_start_index = 1;
 

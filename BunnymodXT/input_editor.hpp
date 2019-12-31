@@ -1,5 +1,10 @@
 #pragma once
 
+enum class SimulateFrameBulks {
+	ALL_EXCEPT_LAST,
+	LAST
+};
+
 struct EditedInput {
 	std::vector<HLTAS::Frame> frame_bulks;
 	// Frame numbers of the first frame of each frame bulk, and the total frame count as the last entry.
@@ -8,6 +13,9 @@ struct EditedInput {
 	std::vector<float> fractions;
 	std::vector<float> normalzs;
 
-	void simulate();
+	HLStrafe::PlayerData saved_player;
+	HLStrafe::CurrentState saved_state;
+
+	void simulate(SimulateFrameBulks what);
 	void save();
 };

@@ -1926,7 +1926,7 @@ struct HwDLL::Cmd_BXT_TAS_Edit_Strafe
 
 struct HwDLL::Cmd_BXT_FreeCam
 {
-	USAGE("Usage: bxt_freecam <1|0>\n");
+	USAGE("Usage: bxt_freecam <0|1>\n Enables the freecam mode. Most useful when paused with bxt_unlock_camera_during_pause 1.\n");
 
 	static void handler(int enabled)
 	{

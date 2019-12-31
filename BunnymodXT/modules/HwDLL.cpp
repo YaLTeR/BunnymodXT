@@ -1954,13 +1954,13 @@ void HwDLL::SetEditStrafe(EditStrafeMode mode)
 	}
 
 	if (mode == EditStrafeMode::EDIT) {
-		*cl.g_iVisibleMouse = true;
+		cl.SetMouseState(false);
 		SDL::GetInstance().SetRelativeMouseMode(false);
 
 		if (edit_strafe_mode == EditStrafeMode::APPEND)
 			edit_strafe_input.frame_bulks.erase(edit_strafe_input.frame_bulks.end() - 1);
 	} else {
-		*cl.g_iVisibleMouse = false;
+		cl.SetMouseState(true);
 		SDL::GetInstance().SetRelativeMouseMode(true);
 	}
 

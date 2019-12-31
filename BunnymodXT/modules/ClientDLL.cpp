@@ -151,7 +151,8 @@ void ClientDLL::Clear()
 	ORIG_HUD_Frame = nullptr;
 	ORIG_HUD_DrawTransparentTriangles = nullptr;
 	ORIG_HUD_Key_Event = nullptr;
-	g_iVisibleMouse = nullptr;
+	ORIG_IN_ActivateMouse = nullptr;
+	ORIG_IN_DeactivateMouse = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -317,11 +318,18 @@ void ClientDLL::FindStuff()
 		EngineDevWarning("[client dll] Could not find HUD_Key_Event.\n");
 	}
 
-	g_iVisibleMouse = reinterpret_cast<int*>(MemUtils::GetSymbolAddress(m_Handle, "g_iVisibleMouse"));
-	if (g_iVisibleMouse) {
-		EngineDevMsg("[client dll] Found g_iVisibleMouse at %p.\n", g_iVisibleMouse);
+	ORIG_IN_ActivateMouse = reinterpret_cast<_IN_ActivateMouse>(MemUtils::GetSymbolAddress(m_Handle, "IN_ActivateMouse"));
+	if (ORIG_IN_ActivateMouse) {
+		EngineDevMsg("[client dll] Found IN_ActivateMouse at %p.\n", ORIG_IN_ActivateMouse);
 	} else {
-		EngineDevWarning("[client dll] Could not find g_iVisibleMouse.\n");
+		EngineDevWarning("[client dll] Could not find IN_ActivateMouse.\n");
+	}
+
+	ORIG_IN_DeactivateMouse = reinterpret_cast<_IN_DeactivateMouse>(MemUtils::GetSymbolAddress(m_Handle, "IN_DeactivateMouse"));
+	if (ORIG_IN_DeactivateMouse) {
+		EngineDevMsg("[client dll] Found IN_DeactivateMouse at %p.\n", ORIG_IN_DeactivateMouse);
+	} else {
+		EngineDevWarning("[client dll] Could not find IN_DeactivateMouse.\n");
 	}
 
 	bool noBhopcap = false;
@@ -461,6 +469,16 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_incorrect_fps_indicator);
 	}
 	#undef REG
+}
+
+void ClientDLL::SetMouseState(bool active)
+{
+	if (ORIG_IN_ActivateMouse && ORIG_IN_DeactivateMouse) {
+		if (active)
+			ORIG_IN_ActivateMouse();
+		else
+			ORIG_IN_DeactivateMouse();
+	}
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)

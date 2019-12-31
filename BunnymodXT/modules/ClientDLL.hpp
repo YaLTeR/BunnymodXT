@@ -39,11 +39,12 @@ public:
 
 	cl_enginefunc_t *pEngfuncs;
 
-	int *g_iVisibleMouse;
-
 	Vector last_vieworg;
 	Vector last_viewangles;
 	unsigned short last_buttons;
+
+	// When set to false, the mouse won't move the camera.
+	void SetMouseState(bool active);
 
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};
@@ -51,6 +52,11 @@ private:
 	void operator=(const ClientDLL&);
 
 protected:
+	typedef void(__cdecl *_IN_ActivateMouse) ();
+	_IN_ActivateMouse ORIG_IN_ActivateMouse;
+	typedef void(__cdecl *_IN_DeactivateMouse) ();
+	_IN_DeactivateMouse ORIG_IN_DeactivateMouse;
+
 	void FindStuff();
 	bool FindHUDFunctions();
 	void RegisterCVarsAndCommands();

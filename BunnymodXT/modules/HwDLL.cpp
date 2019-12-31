@@ -1906,7 +1906,7 @@ struct HwDLL::Cmd_BXT_Append
 
 struct HwDLL::Cmd_BXT_TAS_Edit_Strafe
 {
-	USAGE("Usage: bxt_tas_edit_strafe <0|1|2>\n");
+	USAGE("Usage: bxt_tas_edit_strafe <0|1|2>\n Controls the strafe editor. 0: disable, 1: append mode, 2: edit mode.\n");
 
 	static void handler(int mode)
 	{

@@ -1975,10 +1975,12 @@ void HwDLL::SetEditStrafe(EditStrafeMode mode)
 			// Make sure the strafe direction is Yaw.
 			frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
 		} else {
-			// If there's no input just make a s03 frame bulk.
+			// If there's no input just make a s03lj frame bulk.
 			frame_bulk.Strafe = true;
 			frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
 			frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
+			frame_bulk.Lgagst = true;
+			frame_bulk.Autojump = true;
 		}
 
 		// Simulate 5 seconds.

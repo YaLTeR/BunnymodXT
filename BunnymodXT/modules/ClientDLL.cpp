@@ -551,17 +551,25 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 {
 	CustomHud::UpdatePlayerInfoInaccurate(pparams->simvel, pparams->simorg);
 
-	auto paused = pparams->paused;
+	const HwDLL &hwDLL = HwDLL::GetInstance();
 
-	if (CVars::bxt_unlock_camera_during_pause.GetBool())
+	static bool free_cam_was_active = false;
+
+	auto paused = pparams->paused;
+	auto unlock_camera = CVars::bxt_unlock_camera_during_pause.GetBool() || hwDLL.free_cam_active
+		// We want to unlock the camera 1 frame after free cam has been disabled so that it can
+		// snap back to its original position.
+		|| (!hwDLL.free_cam_active && free_cam_was_active);
+	free_cam_was_active = hwDLL.free_cam_active;
+
+	if (unlock_camera)
 		pparams->paused = false;
 
 	ORIG_V_CalcRefdef(pparams);
 
-	if (CVars::bxt_unlock_camera_during_pause.GetBool())
+	if (unlock_camera)
 		pparams->paused = paused;
 
-	const HwDLL &hwDLL = HwDLL::GetInstance();
 	if (hwDLL.GetIsOverridingCamera()) {
 		// We want to keep looking as is in freecam.
 		if (!hwDLL.free_cam_active)

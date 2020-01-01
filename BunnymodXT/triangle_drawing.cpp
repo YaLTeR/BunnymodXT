@@ -405,7 +405,8 @@ namespace TriangleDrawing
 				saved_repeats = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetRepeats();
 
 			static double saved_yaw = 0;
-			if (right_got_pressed && closest_edge_frame != 0)
+			if (right_got_pressed && closest_edge_frame != 0
+					&& input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYawPresent())
 				saved_yaw = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYaw();
 
 			size_t frame_limit = positions.size() - 1;
@@ -473,12 +474,16 @@ namespace TriangleDrawing
 					Vector a = positions[frame] + perpendicular, b = positions[frame] - perpendicular;
 
 					if (frame == closest_edge_frame) {
+						auto& frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
+
 						// Visualize the target yaw.
-						auto yaw = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYaw() * M_DEG2RAD;
-						auto yaw_dir = Vector(std::cos(yaw), std::sin(yaw), 0);
-						yaw_dir *= 20;
-						pTriAPI->Color4f(0.5, 0.5, 1, 1);
-						TriangleUtils::DrawLine(pTriAPI, positions[frame] - yaw_dir, positions[frame] + yaw_dir);
+						if (frame_bulk.GetYawPresent()) {
+							auto yaw = frame_bulk.GetYaw() * M_DEG2RAD;
+							auto yaw_dir = Vector(std::cos(yaw), std::sin(yaw), 0);
+							yaw_dir *= 20;
+							pTriAPI->Color4f(0.5, 0.5, 1, 1);
+							TriangleUtils::DrawLine(pTriAPI, positions[frame] - yaw_dir, positions[frame] + yaw_dir);
+						}
 
 						pTriAPI->Color4f(1, 1, 1, 1);
 
@@ -499,10 +504,10 @@ namespace TriangleDrawing
 							auto amount = mouse_diff.Length() * (increase ? 1 : -1);
 							amount *= 0.1;
 							auto new_repeats = std::max(1, saved_repeats + static_cast<int>(amount));
-							input.frame_bulks[closest_edge_prev_frame_bulk_index].SetRepeats(new_repeats);
+							frame_bulk.SetRepeats(new_repeats);
 						}
 
-						if (right_pressed) {
+						if (right_pressed && frame_bulk.GetYawPresent()) {
 							auto mouse_diff = mouse - right_pressed_at;
 
 							Vector a_screen_point;
@@ -517,7 +522,7 @@ namespace TriangleDrawing
 							auto amount = mouse_diff.Length() * (increase ? 1 : -1);
 							amount *= 0.1;
 							auto new_yaw = saved_yaw + amount;
-							input.frame_bulks[closest_edge_prev_frame_bulk_index].SetYaw(new_yaw);
+							frame_bulk.SetYaw(new_yaw);
 						}
 					} else {
 						pTriAPI->Color4f(0.8, 0.8, 0.8, 1);

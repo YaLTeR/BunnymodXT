@@ -511,13 +511,13 @@ void HwDLL::FindStuff()
 		if (ORIG_hudGetViewAngles)
 			EngineDevMsg("[hw dll] Found hudGetViewAngles at %p.\n", ORIG_hudGetViewAngles);
 		else
-			EngineDevWarning("[hw dll] Could not find ORIG_hudGetViewAngles.\n");
+			EngineDevWarning("[hw dll] Could not find hudGetViewAngles.\n");
 
 		ORIG_SV_AddLinksToPM = reinterpret_cast<_SV_AddLinksToPM>(MemUtils::GetSymbolAddress(m_Handle, "SV_AddLinksToPM"));
 		if (ORIG_SV_AddLinksToPM)
 			EngineDevMsg("[hw dll] Found SV_AddLinksToPM at %p.\n", ORIG_SV_AddLinksToPM);
 		else
-			EngineDevWarning("[hw dll] Could not find ORIG_SV_AddLinksToPM.\n");
+			EngineDevWarning("[hw dll] Could not find SV_AddLinksToPM.\n");
 
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM)
 			ORIG_Cbuf_Execute = nullptr;

@@ -302,6 +302,7 @@ protected:
 	struct Cmd_BXT_Append;
 	struct Cmd_BXT_TAS_Edit_Strafe;
 	struct Cmd_BXT_TAS_Edit_Strafe_Save;
+	struct Cmd_BXT_TAS_Edit_Strafe_Delete_Last_Point;
 	struct Cmd_BXT_FreeCam;
 
 	void RegisterCVarsAndCommandsIfNeeded();

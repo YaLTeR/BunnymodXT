@@ -1967,6 +1967,25 @@ struct HwDLL::Cmd_BXT_TAS_Edit_Strafe_Save
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Edit_Strafe_Delete_Last_Point
+{
+	USAGE("Usage: bxt_tas_edit_strafe_delete_last_point\n Deletes the last point in the edited input.\n");
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+		auto& frame_bulks = hw.edit_strafe_input.frame_bulks;
+
+		if (hw.edit_strafe_mode == EditStrafeMode::APPEND) {
+			if (frame_bulks.size() > 1)
+				frame_bulks.erase(frame_bulks.end() - 2);
+		} else if (hw.edit_strafe_mode == EditStrafeMode::EDIT) {
+			if (frame_bulks.size() > 0)
+				frame_bulks.erase(frame_bulks.end() - 1);
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_FreeCam
 {
 	USAGE("Usage: bxt_freecam <0|1>\n Enables the freecam mode. Most useful when paused with bxt_unlock_camera_during_pause 1.\n");
@@ -2155,6 +2174,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_TAS_Edit_Strafe, Handler<int>>("bxt_tas_edit_strafe");
 	wrapper::Add<Cmd_BXT_TAS_Edit_Strafe_Save, Handler<>>("bxt_tas_edit_strafe_save");
+	wrapper::Add<Cmd_BXT_TAS_Edit_Strafe_Delete_Last_Point, Handler<>>("bxt_tas_edit_strafe_delete_last_point");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 }
 

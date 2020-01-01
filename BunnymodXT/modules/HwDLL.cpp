@@ -1240,6 +1240,9 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		if (hw.resetState != ResetState::NORMAL)
 			return;
 
+		// Save the input and disable the input editor.
+		hw.SaveEditedInput();
+
 		hw.runningFrames = false;
 		hw.currentFramebulk = 0;
 		hw.currentRepeat = 0;
@@ -1298,6 +1301,11 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 			// Fairly certain that's what you want in 100% of cases.
 			if (hw.frametime_remainder)
 				*hw.frametime_remainder = 0;
+
+			// Disable the freecam. A case could be made for it being useful, however with the
+			// current implementation it just uses the viewangles from the strafing and so isn't
+			// really useful.
+			hw.SetFreeCam(false);
 		}
 	}
 };
@@ -1954,17 +1962,7 @@ struct HwDLL::Cmd_BXT_TAS_Edit_Strafe_Save
 	static void handler()
 	{
 		auto& hw = HwDLL::GetInstance();
-		if (hw.edit_strafe_mode == EditStrafeMode::DISABLED)
-			return;
-
-		if (hw.edit_strafe_mode == EditStrafeMode::APPEND) {
-			// Append mode always has the last frame bulk that we're currently editing.
-			// We don't want it to be saved.
-			hw.edit_strafe_input.frame_bulks.erase(hw.edit_strafe_input.frame_bulks.end() - 1);
-		}
-
-		hw.edit_strafe_input.save();
-		hw.SetEditStrafe(EditStrafeMode::DISABLED);
+		hw.SaveEditedInput();
 		hw.SetFreeCam(false);
 	}
 };
@@ -2058,6 +2056,21 @@ void HwDLL::SetFreeCam(bool enabled)
 		free_cam_active = false;
 		isOverridingCamera = false;
 	}
+}
+
+void HwDLL::SaveEditedInput()
+{
+	if (edit_strafe_mode == EditStrafeMode::DISABLED)
+		return;
+
+	if (edit_strafe_mode == EditStrafeMode::APPEND) {
+		// Append mode always has the last frame bulk that we're currently editing.
+		// We don't want it to be saved.
+		edit_strafe_input.frame_bulks.erase(edit_strafe_input.frame_bulks.end() - 1);
+	}
+
+	edit_strafe_input.save();
+	SetEditStrafe(EditStrafeMode::DISABLED);
 }
 
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()

@@ -216,6 +216,7 @@ public:
 	EditStrafeMode edit_strafe_mode;
 	EditedInput edit_strafe_input;
 	void SetEditStrafe(EditStrafeMode mode);
+	void SaveEditedInput();
 
 	bool free_cam_active;
 	void SetFreeCam(bool enabled);

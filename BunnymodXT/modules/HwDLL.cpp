@@ -1947,6 +1947,28 @@ struct HwDLL::Cmd_BXT_TAS_Edit_Strafe
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Edit_Strafe_Save
+{
+	USAGE("Usage: bxt_tas_edit_strafe_save\n Saves the currently edited input into the script.\n");
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+		if (hw.edit_strafe_mode == EditStrafeMode::DISABLED)
+			return;
+
+		if (hw.edit_strafe_mode == EditStrafeMode::APPEND) {
+			// Append mode always has the last frame bulk that we're currently editing.
+			// We don't want it to be saved.
+			hw.edit_strafe_input.frame_bulks.erase(hw.edit_strafe_input.frame_bulks.end() - 1);
+		}
+
+		hw.edit_strafe_input.save();
+		hw.SetEditStrafe(EditStrafeMode::DISABLED);
+		hw.SetFreeCam(false);
+	}
+};
+
 struct HwDLL::Cmd_BXT_FreeCam
 {
 	USAGE("Usage: bxt_freecam <0|1>\n Enables the freecam mode. Most useful when paused with bxt_unlock_camera_during_pause 1.\n");
@@ -2119,6 +2141,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TASLog, Handler<>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_TAS_Edit_Strafe, Handler<int>>("bxt_tas_edit_strafe");
+	wrapper::Add<Cmd_BXT_TAS_Edit_Strafe_Save, Handler<>>("bxt_tas_edit_strafe_save");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 }
 

@@ -196,7 +196,7 @@ public:
 		return static_cast<float>(static_cast<float>(std::floor(*host_frametime * 1000)) * 0.001);
 	}
 
-	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
+	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull, bool extendDistanceLimit = false);
 
 	// Don't call StartTrace() or StopTracing() twice in a row.
 	// The sequence must always be StartTracing() => StopTracing().

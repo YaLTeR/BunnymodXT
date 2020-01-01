@@ -259,7 +259,7 @@ namespace TriangleDrawing
 
 		// Trace to find the world point we're interested in.
 		Vector end = view + forward * 8192;
-		auto tr = hw.PlayerTrace(view, end, HullType::POINT);
+		auto tr = hw.PlayerTrace(view, end, HullType::POINT, true);
 		Vector mouse_world(tr.EndPos);
 
 		auto& input = hw.edit_strafe_input;

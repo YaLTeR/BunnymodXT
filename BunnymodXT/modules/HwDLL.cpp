@@ -2233,7 +2233,7 @@ void HwDLL::InsertCommands()
 
 				StrafeState.Jump = currentKeys.Jump.IsDown();
 				StrafeState.Duck = currentKeys.Duck.IsDown();
-				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false));
 
 				f.ResetAutofuncs();
 
@@ -2519,7 +2519,7 @@ void HwDLL::InsertCommands()
 			bool Duck = false, Jump = false;
 
 			auto playerCopy = HLStrafe::PlayerData(player); // Our copy that we will mess with.
-			auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+			auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false);
 			auto postype = GetPositionType(playerCopy, traceFunc);
 			if (postype == HLStrafe::PositionType::GROUND) {
 				if (ducktap) {
@@ -2981,9 +2981,9 @@ void HwDLL::GetViewangles(float* va)
 		ORIG_hudGetViewAngles(va);
 }
 
-HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull)
+HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull, bool extendDistanceLimit)
 {
-	StartTracing();
+	StartTracing(extendDistanceLimit);
 	const auto rv = UnsafePlayerTrace(start, end, hull);
 	StopTracing();
 

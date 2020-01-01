@@ -147,6 +147,11 @@ extern "C" byte *__cdecl Mod_LeafPVS(mleaf_t *leaf, model_t *model)
 {
 	return HwDLL::HOOKED_Mod_LeafPVS(leaf, model);
 }
+
+extern "C" void __cdecl SV_AddLinksToPM_(void *node, float *pmove_mins, float *pmove_maxs)
+{
+	HwDLL::HOOKED_SV_AddLinksToPM_(node, pmove_mins, pmove_maxs);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -228,6 +233,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_DrawSequentialPoly);
 			MemUtils::MarkAsExecutable(ORIG_R_Clear);
 			MemUtils::MarkAsExecutable(ORIG_Mod_LeafPVS);
+			MemUtils::MarkAsExecutable(ORIG_SV_AddLinksToPM_);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -257,7 +263,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Cmd_Exec_f, HOOKED_Cmd_Exec_f,
 			ORIG_R_DrawSequentialPoly, HOOKED_R_DrawSequentialPoly,
 			ORIG_R_Clear, HOOKED_R_Clear,
-			ORIG_Mod_LeafPVS, HOOKED_Mod_LeafPVS);
+			ORIG_Mod_LeafPVS, HOOKED_Mod_LeafPVS,
+			ORIG_SV_AddLinksToPM_, HOOKED_SV_AddLinksToPM_);
 	}
 }
 
@@ -293,7 +300,8 @@ void HwDLL::Unhook()
 			ORIG_Cmd_Exec_f,
 			ORIG_R_DrawSequentialPoly,
 			ORIG_R_Clear,
-			ORIG_Mod_LeafPVS);
+			ORIG_Mod_LeafPVS,
+			ORIG_SV_AddLinksToPM_);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -347,6 +355,7 @@ void HwDLL::Clear()
 	ORIG_R_DrawSequentialPoly = nullptr;
 	ORIG_R_Clear = nullptr;
 	ORIG_Mod_LeafPVS = nullptr;
+	ORIG_SV_AddLinksToPM_ = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -407,6 +416,7 @@ void HwDLL::Clear()
 	edit_strafe_mode = EditStrafeMode::DISABLED;
 	edit_strafe_input = EditedInput();
 	free_cam_active = false;
+	extendPlayerTraceDistanceLimit = false;
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -518,6 +528,12 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found SV_AddLinksToPM at %p.\n", ORIG_SV_AddLinksToPM);
 		else
 			EngineDevWarning("[hw dll] Could not find SV_AddLinksToPM.\n");
+
+		ORIG_SV_AddLinksToPM_ = reinterpret_cast<_SV_AddLinksToPM_>(MemUtils::GetSymbolAddress(m_Handle, "SV_AddLinksToPM_"));
+		if (ORIG_SV_AddLinksToPM_)
+			EngineDevMsg("[hw dll] Found SV_AddLinksToPM_ at %p.\n", ORIG_SV_AddLinksToPM_);
+		else
+			EngineDevWarning("[hw dll] Could not find SV_AddLinksToPM_.\n");
 
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM)
 			ORIG_Cbuf_Execute = nullptr;
@@ -669,6 +685,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(CL_RecordHUDCommand)
 		DEF_FUTURE(CL_Record_f)
 		DEF_FUTURE(Key_Event)
+		DEF_FUTURE(SV_AddLinksToPM_)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1173,6 +1190,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(R_Clear);
 		GET_FUTURE(Mod_LeafPVS);
 		GET_FUTURE(PF_GetPhysicsKeyValue);
+		GET_FUTURE(SV_AddLinksToPM_);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -2931,7 +2949,7 @@ HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3
 	return rv;
 }
 
-void HwDLL::StartTracing() {
+void HwDLL::StartTracing(bool extendDistanceLimit) {
 	if (!ORIG_PM_PlayerTrace || svs->num_clients < 1) {
 		return;
 	}
@@ -2942,7 +2960,13 @@ void HwDLL::StartTracing() {
 	*sv_player = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
 	trace_oldmove = *ppmove;
 	*ppmove = svmove;
+
+	if (extendDistanceLimit)
+		extendPlayerTraceDistanceLimit = true;
+
 	ORIG_SV_AddLinksToPM(sv_areanodes, (*sv_player)->v.origin);
+
+	extendPlayerTraceDistanceLimit = false;
 }
 
 void HwDLL::StopTracing() {
@@ -3457,4 +3481,16 @@ HOOK_DEF_2(HwDLL, byte *, __cdecl, Mod_LeafPVS, mleaf_t *, leaf, model_t *, mode
 	// Idea from advancedfx: this is done so that distant NPCs don't disappear,
 	// as they do with r_novis 1.
 	return ORIG_Mod_LeafPVS(CVars::bxt_novis.GetBool() ? model->leafs : leaf, model);
+}
+
+HOOK_DEF_3(HwDLL, void, __cdecl, SV_AddLinksToPM_, void *, node, float *, pmove_mins, float *, pmove_maxs)
+{
+	if (extendPlayerTraceDistanceLimit) {
+		for (int i = 0; i < 3; ++i) {
+			pmove_mins[i] -= 100000;
+			pmove_maxs[i] += 100000;
+		}
+	}
+
+	ORIG_SV_AddLinksToPM_(node, pmove_mins, pmove_maxs);
 }

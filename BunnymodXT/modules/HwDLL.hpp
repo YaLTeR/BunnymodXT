@@ -41,6 +41,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, R_DrawSequentialPoly, msurface_t *surf, int face)
 	HOOK_DECL(void, __cdecl, R_Clear)
 	HOOK_DECL(byte *, __cdecl, Mod_LeafPVS, mleaf_t *leaf, model_t *model)
+	HOOK_DECL(void, __cdecl, SV_AddLinksToPM_, void *node, float *pmove_mins, float *pmove_maxs)
 
 	struct cmdbuf_t
 	{
@@ -199,7 +200,7 @@ public:
 
 	// Don't call StartTrace() or StopTracing() twice in a row.
 	// The sequence must always be StartTracing() => StopTracing().
-	void StartTracing();
+	void StartTracing(bool extendDistanceLimit = false);
 	void StopTracing();
 	// You must call StartTracting() before calling this and StopTracing() after calling this.
 	HLStrafe::TraceResult UnsafePlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull);
@@ -485,4 +486,6 @@ protected:
 	std::string execScript;
 	bool insideHost_Changelevel2_f;
 	bool dontStopAutorecord;
+
+	bool extendPlayerTraceDistanceLimit;
 };

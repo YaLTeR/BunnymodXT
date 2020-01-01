@@ -308,6 +308,11 @@ namespace patterns
 			"HL-4554",
 			"8B 54 24 08 8B 44 24 04 8B 8A 8C 00 00 00 3B C1 75 06 B8 ?? ?? ?? ?? C3 56 8B 35 ?? ?? ?? ?? 85 F6"
 		);
+
+		PATTERNS(SV_AddLinksToPM_,
+			"HL-SteamPipe",
+			"55 8B EC 83 EC 14 8B 4D 08 53 8B 5D 10 56 57 8B 79 1C 8D 41 18 3B F8 0F 84 ?? ?? ?? ?? 8B 47 04 83 C7 F8 89 45 EC 8B 87 ?? ?? ?? ?? 85 C0 74 35 8B 0D ?? ?? ?? ?? 85 C9 75 14 8B 0D"
+		);
 	}
 
 	namespace server

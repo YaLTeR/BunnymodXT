@@ -516,7 +516,7 @@ namespace TriangleDrawing
 							auto increase = DotProduct(mouse_diff, diff) > 0;
 							auto amount = mouse_diff.Length() * (increase ? 1 : -1);
 							amount *= 0.1;
-							auto new_yaw = saved_yaw + static_cast<int>(amount);
+							auto new_yaw = saved_yaw + amount;
 							input.frame_bulks[closest_edge_prev_frame_bulk_index].SetYaw(new_yaw);
 						}
 					} else {

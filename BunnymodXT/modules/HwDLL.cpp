@@ -2046,7 +2046,7 @@ void HwDLL::SetEditStrafe(EditStrafeMode mode)
 		}
 
 		// Simulate 5 seconds.
-		frame_bulk.SetRepeats(5 / GetFrameTime());
+		frame_bulk.SetRepeats(500);
 		edit_strafe_input.frame_bulks.push_back(frame_bulk);
 	}
 

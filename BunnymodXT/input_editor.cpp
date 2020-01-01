@@ -32,7 +32,7 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 	const auto movement_vars = hw.GetMovementVars();
 	const auto frametime = movement_vars.Frametime;
 
-	hw.StartTracing();
+	hw.StartTracing(true);
 
 	const auto trace_func = std::bind(
 		&HwDLL::UnsafePlayerTrace,

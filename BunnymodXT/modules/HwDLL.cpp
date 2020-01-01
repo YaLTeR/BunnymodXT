@@ -1293,6 +1293,11 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 				ss << "host_framerate " << f.Frametime.c_str() << "\n";
 				hw.ORIG_Cbuf_InsertText(ss.str().c_str());
 			}
+
+			// Reset the frametime remainder automatically upon starting a script.
+			// Fairly certain that's what you want in 100% of cases.
+			if (hw.frametime_remainder)
+				*hw.frametime_remainder = 0;
 		}
 	}
 };

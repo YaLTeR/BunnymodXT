@@ -567,9 +567,6 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 
 	ORIG_V_CalcRefdef(pparams);
 
-	if (unlock_camera)
-		pparams->paused = paused;
-
 	if (hwDLL.GetIsOverridingCamera()) {
 		// We want to keep looking as is in freecam.
 		if (!hwDLL.free_cam_active)
@@ -607,6 +604,9 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 		for (int i = 0; i < 3; ++i)
 			old_camera_offset_origin[i] = vector[i];
 	}
+
+	if (unlock_camera)
+		pparams->paused = paused;
 
 	last_vieworg = pparams->vieworg;
 	last_viewangles = pparams->viewangles;

@@ -215,6 +215,7 @@ namespace TriangleDrawing
 		using HLTAS::StrafeType;
 		using std::vector;
 		const double M_RAD2DEG = 180 / M_PI;
+		const double M_DEG2RAD = M_PI / 180;
 
 		auto& hw = HwDLL::GetInstance();
 		if (hw.edit_strafe_mode == EditStrafeMode::DISABLED)
@@ -472,6 +473,13 @@ namespace TriangleDrawing
 					Vector a = positions[frame] + perpendicular, b = positions[frame] - perpendicular;
 
 					if (frame == closest_edge_frame) {
+						// Visualize the target yaw.
+						auto yaw = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYaw() * M_DEG2RAD;
+						auto yaw_dir = Vector(std::cos(yaw), std::sin(yaw), 0);
+						yaw_dir *= 20;
+						pTriAPI->Color4f(0.5, 0.5, 1, 1);
+						TriangleUtils::DrawLine(pTriAPI, positions[frame] - yaw_dir, positions[frame] + yaw_dir);
+
 						pTriAPI->Color4f(1, 1, 1, 1);
 
 						if (left_pressed) {

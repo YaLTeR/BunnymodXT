@@ -1998,11 +1998,15 @@ struct HwDLL::Cmd_BXT_TAS_Edit_Strafe_Delete_Last_Point
 		auto& frame_bulks = hw.edit_strafe_input.frame_bulks;
 
 		if (hw.edit_strafe_mode == EditStrafeMode::APPEND) {
-			if (frame_bulks.size() > 1)
+			if (frame_bulks.size() > 1) {
+				hw.edit_strafe_input.mark_as_stale(frame_bulks.size() - 2);
 				frame_bulks.erase(frame_bulks.end() - 2);
 		} else if (hw.edit_strafe_mode == EditStrafeMode::EDIT) {
-			if (frame_bulks.size() > 0)
+			}
+			if (frame_bulks.size() > 0) {
+				hw.edit_strafe_input.mark_as_stale(frame_bulks.size() - 1);
 				frame_bulks.erase(frame_bulks.end() - 1);
+			}
 		}
 	}
 };
@@ -2023,6 +2027,7 @@ void HwDLL::SetEditStrafe(EditStrafeMode mode)
 
 	if (edit_strafe_mode == EditStrafeMode::DISABLED && mode != EditStrafeMode::DISABLED) {
 		edit_strafe_input = EditedInput();
+		edit_strafe_input.initialize();
 
 		// If invoked while running a script, put all frame bulks up until the last one for editing.
 		if (runningFrames) {
@@ -2043,8 +2048,10 @@ void HwDLL::SetEditStrafe(EditStrafeMode mode)
 		cl.SetMouseState(false);
 		SDL::GetInstance().SetRelativeMouseMode(false);
 
-		if (edit_strafe_mode == EditStrafeMode::APPEND)
+		if (edit_strafe_mode == EditStrafeMode::APPEND) {
+			edit_strafe_input.mark_as_stale(edit_strafe_input.frame_bulks.size() - 1);
 			edit_strafe_input.frame_bulks.erase(edit_strafe_input.frame_bulks.end() - 1);
+		}
 	} else {
 		cl.SetMouseState(true);
 		SDL::GetInstance().SetRelativeMouseMode(true);

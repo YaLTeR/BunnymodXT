@@ -3,34 +3,34 @@
 #include "input_editor.hpp"
 #include "modules.hpp"
 
-void EditedInput::simulate(SimulateFrameBulks what) {
+void EditedInput::initialize() {
 	auto& hw = HwDLL::GetInstance();
 
-	HLStrafe::PlayerData player;
-	HLStrafe::CurrentState strafe_state;
+	auto player = hw.GetPlayerData();
+	saved_player.push_back(player);
+	positions.push_back(player.Origin);
+	fractions.push_back(1);
+	normalzs.push_back(0);
+	frame_bulk_starts.push_back(0);
 
-	if (what == SimulateFrameBulks::ALL_EXCEPT_LAST) {
-		frame_bulk_starts.clear();
-		positions.clear();
-		fractions.clear();
-		normalzs.clear();
+	auto strafe_state = hw.StrafeState;
+	strafe_state.Jump = hw.currentKeys.Jump.IsDown();
+	strafe_state.Duck = hw.currentKeys.Duck.IsDown();
+	saved_state.push_back(strafe_state);
+}
 
-		player = hw.GetPlayerData();
-		positions.push_back(player.Origin);
-		fractions.push_back(1);
-		normalzs.push_back(0);
-		frame_bulk_starts.push_back(0);
+void EditedInput::simulate(SimulateFrameBulks what) {
+	// Erase all stale state.
+	auto first_frame_bulk = saved_player.size() - 1;
 
-		strafe_state = hw.StrafeState;
-		strafe_state.Jump = hw.currentKeys.Jump.IsDown();
-		strafe_state.Duck = hw.currentKeys.Duck.IsDown();
-	} else {
-		player = saved_player;
-		strafe_state = saved_state;
-	}
+	// Return early if we don't need to simulate anything.
+	if (first_frame_bulk == frame_bulks.size())
+		return;
 
+	auto& hw = HwDLL::GetInstance();
 	const auto movement_vars = hw.GetMovementVars();
-	const auto frametime = movement_vars.Frametime;
+	auto player = saved_player[first_frame_bulk];
+	auto strafe_state = saved_state[first_frame_bulk];
 
 	hw.StartTracing(true);
 
@@ -44,11 +44,9 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 
 	size_t total_frames = frame_bulk_starts[frame_bulk_starts.size() - 1];
 
-	for (size_t index = 0; index < frame_bulks.size(); ++index) {
+	for (size_t index = first_frame_bulk; index < frame_bulks.size(); ++index) {
 		if (what == SimulateFrameBulks::ALL_EXCEPT_LAST && index == frame_bulks.size() - 1)
 			break;
-		if (what == SimulateFrameBulks::LAST && index != frame_bulks.size() - 1)
-			continue;
 
 		const auto& frame_bulk = frame_bulks[index];
 
@@ -73,12 +71,12 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 
 		total_frames += frame_bulk.GetRepeats();
 		frame_bulk_starts.push_back(total_frames);
+
+		saved_player.push_back(player);
+		saved_state.push_back(strafe_state);
 	}
 
 	hw.StopTracing();
-
-	saved_player = player;
-	saved_state = strafe_state;
 }
 
 void EditedInput::save() {
@@ -101,4 +99,15 @@ void EditedInput::save() {
 		hw.ORIG_Con_Printf("Saved the script: %s\n", hw.hltas_filename.c_str());
 	else
 		hw.ORIG_Con_Printf("Error saving the script: %s\n", HLTAS::GetErrorMessage(err).c_str());
+}
+
+void EditedInput::mark_as_stale(size_t frame_bulk_index) {
+	frame_bulk_starts.erase(frame_bulk_starts.begin() + frame_bulk_index + 1, frame_bulk_starts.end());
+	saved_player.erase(saved_player.begin() + frame_bulk_index + 1, saved_player.end());
+	saved_state.erase(saved_state.begin() + frame_bulk_index + 1, saved_state.end());
+
+	auto first_frame = frame_bulk_starts[frame_bulk_starts.size() - 1];
+	positions.erase(positions.begin() + first_frame + 1, positions.end());
+	fractions.erase(fractions.begin() + first_frame + 1, fractions.end());
+	normalzs.erase(normalzs.begin() + first_frame + 1, normalzs.end());
 }

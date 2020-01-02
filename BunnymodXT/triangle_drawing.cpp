@@ -272,15 +272,17 @@ namespace TriangleDrawing
 		input.simulate(SimulateFrameBulks::ALL_EXCEPT_LAST);
 
 		if (hw.edit_strafe_mode == EditStrafeMode::APPEND) {
-			auto& last_frame_bulk = input.frame_bulks[input.frame_bulks.size() - 1];
-			size_t last_frame_bulk_start = input.frame_bulk_starts[input.frame_bulk_starts.size() - 1];
+			auto last_frame_bulk_index = input.frame_bulks.size() - 1;
+			auto& last_frame_bulk = input.frame_bulks[last_frame_bulk_index];
+			size_t last_frame_bulk_start = input.frame_bulk_starts[last_frame_bulk_index];
 			auto last_frame_bulk_origin = positions[last_frame_bulk_start];
 			auto dir = mouse_world - last_frame_bulk_origin;
 			float yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
 
 			// Strafe towards the yaw.
 			last_frame_bulk.SetYaw(yaw);
-			input.simulate(SimulateFrameBulks::LAST);
+			input.mark_as_stale(last_frame_bulk_index);
+			input.simulate(SimulateFrameBulks::ALL);
 
 			// Draw the positions.
 			pTriAPI->RenderMode(kRenderTransColor);
@@ -358,6 +360,7 @@ namespace TriangleDrawing
 			} else if (right_got_pressed) {
 				auto new_frame_bulk = last_frame_bulk;
 				last_frame_bulk.SetRepeats(frames_until_mouse - last_frame_bulk_start);
+				input.mark_as_stale(last_frame_bulk_index);
 				input.frame_bulks.push_back(new_frame_bulk);
 			}
 		} else {
@@ -365,7 +368,7 @@ namespace TriangleDrawing
 			if (input.frame_bulks.size() == 0)
 				return;
 
-			input.simulate(SimulateFrameBulks::LAST);
+			input.simulate(SimulateFrameBulks::ALL);
 
 			size_t next_frame_bulk_start_index = 1;
 
@@ -420,6 +423,8 @@ namespace TriangleDrawing
 				if (closest_edge_prev_frame_bulk_index + 2 < frame_bulk_starts.size())
 					color_to = frame_bulk_starts[closest_edge_prev_frame_bulk_index + 2];
 			}
+
+			size_t stale_index = input.frame_bulks.size();
 
 			pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
 			for (size_t frame = 1; frame < positions.size(); ++frame) {
@@ -503,8 +508,11 @@ namespace TriangleDrawing
 							auto increase = DotProduct(mouse_diff, diff) > 0;
 							auto amount = mouse_diff.Length() * (increase ? 1 : -1);
 							amount *= 0.1;
-							auto new_repeats = std::max(1, saved_repeats + static_cast<int>(amount));
-							frame_bulk.SetRepeats(new_repeats);
+							auto new_repeats = static_cast<unsigned>(std::max(1, saved_repeats + static_cast<int>(amount)));
+							if (frame_bulk.GetRepeats() != new_repeats) {
+								stale_index = closest_edge_prev_frame_bulk_index;
+								frame_bulk.SetRepeats(new_repeats);
+							}
 						}
 
 						if (right_pressed && frame_bulk.GetYawPresent()) {
@@ -522,7 +530,10 @@ namespace TriangleDrawing
 							auto amount = mouse_diff.Length() * (increase ? 1 : -1);
 							amount *= 0.1;
 							auto new_yaw = saved_yaw + amount;
-							frame_bulk.SetYaw(new_yaw);
+							if (frame_bulk.GetYaw() != new_yaw) {
+								stale_index = closest_edge_prev_frame_bulk_index;
+								frame_bulk.SetYaw(new_yaw);
+							}
 						}
 					} else {
 						pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
@@ -531,6 +542,8 @@ namespace TriangleDrawing
 					TriangleUtils::DrawLine(pTriAPI, a, b);
 				}
 			}
+
+			input.mark_as_stale(stale_index);
 		}
 	}
 

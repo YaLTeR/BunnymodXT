@@ -1,8 +1,8 @@
 #pragma once
 
 enum class SimulateFrameBulks {
-	ALL_EXCEPT_LAST,
-	LAST
+	ALL,
+	ALL_EXCEPT_LAST
 };
 
 struct EditedInput {
@@ -13,9 +13,14 @@ struct EditedInput {
 	std::vector<float> fractions;
 	std::vector<float> normalzs;
 
-	HLStrafe::PlayerData saved_player;
-	HLStrafe::CurrentState saved_state;
+	// PlayerData after simulating every frame bulk.
+	std::vector<HLStrafe::PlayerData> saved_player;
+	// CurrentState after simulating every frame bulk.
+	std::vector<HLStrafe::CurrentState> saved_state;
 
+	// Clears and initializes EditedInput with the current player data.
+	void initialize();
 	void simulate(SimulateFrameBulks what);
 	void save();
+	void mark_as_stale(size_t frame_bulk_index);
 };

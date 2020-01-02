@@ -6,7 +6,7 @@
 #include "taslogger/writer.hpp"
 #include "../input_editor.hpp"
 
-enum class EditStrafeMode {
+enum class TASEditorMode {
 	DISABLED,
 	APPEND,
 	EDIT
@@ -213,9 +213,9 @@ public:
 	typedef void(__cdecl *_Cbuf_InsertText) (const char* text);
 	_Cbuf_InsertText ORIG_Cbuf_InsertText;
 
-	EditStrafeMode edit_strafe_mode;
-	EditedInput edit_strafe_input;
-	void SetEditStrafe(EditStrafeMode mode);
+	TASEditorMode tas_editor_mode;
+	EditedInput tas_editor_input;
+	void SetTASEditorMode(TASEditorMode mode);
 	void SaveEditedInput();
 
 	bool free_cam_active;
@@ -300,9 +300,9 @@ protected:
 	struct Cmd_BXT_Reset_Frametime_Remainder;
 	struct Cmd_BXT_TASLog;
 	struct Cmd_BXT_Append;
-	struct Cmd_BXT_TAS_Edit_Strafe;
-	struct Cmd_BXT_TAS_Edit_Strafe_Save;
-	struct Cmd_BXT_TAS_Edit_Strafe_Delete_Last_Point;
+	struct Cmd_BXT_TAS_Editor;
+	struct Cmd_BXT_TAS_Editor_Save;
+	struct Cmd_BXT_TAS_Editor_Delete_Last_Point;
 	struct Cmd_BXT_FreeCam;
 
 	void RegisterCVarsAndCommandsIfNeeded();

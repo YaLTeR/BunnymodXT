@@ -218,7 +218,7 @@ namespace TriangleDrawing
 		const double M_DEG2RAD = M_PI / 180;
 
 		auto& hw = HwDLL::GetInstance();
-		if (hw.edit_strafe_mode == EditStrafeMode::DISABLED)
+		if (hw.tas_editor_mode == TASEditorMode::DISABLED)
 			return;
 		auto& cl = ClientDLL::GetInstance();
 
@@ -263,7 +263,7 @@ namespace TriangleDrawing
 		auto tr = hw.PlayerTrace(view, end, HullType::POINT, true);
 		Vector mouse_world(tr.EndPos);
 
-		auto& input = hw.edit_strafe_input;
+		auto& input = hw.tas_editor_input;
 		const auto& positions = input.positions;
 		const auto& fractions = input.fractions;
 		const auto& normalzs = input.normalzs;
@@ -271,7 +271,7 @@ namespace TriangleDrawing
 
 		input.simulate(SimulateFrameBulks::ALL_EXCEPT_LAST);
 
-		if (hw.edit_strafe_mode == EditStrafeMode::APPEND) {
+		if (hw.tas_editor_mode == TASEditorMode::APPEND) {
 			auto last_frame_bulk_index = input.frame_bulks.size() - 1;
 			auto& last_frame_bulk = input.frame_bulks[last_frame_bulk_index];
 			size_t last_frame_bulk_start = input.frame_bulk_starts[last_frame_bulk_index];
@@ -352,7 +352,7 @@ namespace TriangleDrawing
 			}
 
 			if (left_got_pressed) {
-				hw.SetEditStrafe(EditStrafeMode::DISABLED);
+				hw.SetTASEditorMode(TASEditorMode::DISABLED);
 				hw.SetFreeCam(false);
 
 				last_frame_bulk.SetRepeats(frames_until_mouse - last_frame_bulk_start);
@@ -364,7 +364,7 @@ namespace TriangleDrawing
 				input.frame_bulks.push_back(new_frame_bulk);
 			}
 		} else {
-			// EditStrafeMode::EDIT
+			// TASEditorMode::EDIT
 			if (input.frame_bulks.size() == 0)
 				return;
 

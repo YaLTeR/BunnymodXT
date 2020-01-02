@@ -413,8 +413,8 @@ void HwDLL::Clear()
 	dontStopAutorecord = false;
 	hltas_filename.clear();
 
-	edit_strafe_mode = EditStrafeMode::DISABLED;
-	edit_strafe_input = EditedInput();
+	tas_editor_mode = TASEditorMode::DISABLED;
+	tas_editor_input = EditedInput();
 	free_cam_active = false;
 	extendPlayerTraceDistanceLimit = false;
 
@@ -1956,29 +1956,29 @@ struct HwDLL::Cmd_BXT_Append
 	}
 };
 
-struct HwDLL::Cmd_BXT_TAS_Edit_Strafe
+struct HwDLL::Cmd_BXT_TAS_Editor
 {
-	USAGE("Usage: bxt_tas_edit_strafe <0|1|2>\n Controls the strafe editor. 0: disable, 1: append mode, 2: edit mode.\n");
+	USAGE("Usage: bxt_tas_editor <0|1|2>\n Controls the TAS editor. 0: disable, 1: append mode, 2: edit mode.\n");
 
 	static void handler(int mode)
 	{
-		EditStrafeMode edit_strafe_mode;
+		TASEditorMode tas_editor_mode;
 		if (mode == 0)
-			edit_strafe_mode = EditStrafeMode::DISABLED;
+			tas_editor_mode = TASEditorMode::DISABLED;
 		else if (mode == 1)
-			edit_strafe_mode = EditStrafeMode::APPEND;
+			tas_editor_mode = TASEditorMode::APPEND;
 		else if (mode == 2)
-			edit_strafe_mode = EditStrafeMode::EDIT;
+			tas_editor_mode = TASEditorMode::EDIT;
 		else
 			return;
 
-		HwDLL::GetInstance().SetEditStrafe(edit_strafe_mode);
+		HwDLL::GetInstance().SetTASEditorMode(tas_editor_mode);
 	}
 };
 
-struct HwDLL::Cmd_BXT_TAS_Edit_Strafe_Save
+struct HwDLL::Cmd_BXT_TAS_Editor_Save
 {
-	USAGE("Usage: bxt_tas_edit_strafe_save\n Saves the currently edited input into the script.\n");
+	USAGE("Usage: bxt_tas_editor_save\n Saves the currently edited input into the script.\n");
 
 	static void handler()
 	{
@@ -1988,23 +1988,23 @@ struct HwDLL::Cmd_BXT_TAS_Edit_Strafe_Save
 	}
 };
 
-struct HwDLL::Cmd_BXT_TAS_Edit_Strafe_Delete_Last_Point
+struct HwDLL::Cmd_BXT_TAS_Editor_Delete_Last_Point
 {
-	USAGE("Usage: bxt_tas_edit_strafe_delete_last_point\n Deletes the last point in the edited input.\n");
+	USAGE("Usage: bxt_tas_editor_delete_last_point\n Deletes the last point in the edited input.\n");
 
 	static void handler()
 	{
 		auto& hw = HwDLL::GetInstance();
-		auto& frame_bulks = hw.edit_strafe_input.frame_bulks;
+		auto& frame_bulks = hw.tas_editor_input.frame_bulks;
 
-		if (hw.edit_strafe_mode == EditStrafeMode::APPEND) {
+		if (hw.tas_editor_mode == TASEditorMode::APPEND) {
 			if (frame_bulks.size() > 1) {
-				hw.edit_strafe_input.mark_as_stale(frame_bulks.size() - 2);
+				hw.tas_editor_input.mark_as_stale(frame_bulks.size() - 2);
 				frame_bulks.erase(frame_bulks.end() - 2);
-		} else if (hw.edit_strafe_mode == EditStrafeMode::EDIT) {
 			}
+		} else if (hw.tas_editor_mode == TASEditorMode::EDIT) {
 			if (frame_bulks.size() > 0) {
-				hw.edit_strafe_input.mark_as_stale(frame_bulks.size() - 1);
+				hw.tas_editor_input.mark_as_stale(frame_bulks.size() - 1);
 				frame_bulks.erase(frame_bulks.end() - 1);
 			}
 		}
@@ -2021,19 +2021,19 @@ struct HwDLL::Cmd_BXT_FreeCam
 	}
 };
 
-void HwDLL::SetEditStrafe(EditStrafeMode mode)
+void HwDLL::SetTASEditorMode(TASEditorMode mode)
 {
 	auto& cl = ClientDLL::GetInstance();
 
-	if (edit_strafe_mode == EditStrafeMode::DISABLED && mode != EditStrafeMode::DISABLED) {
-		edit_strafe_input = EditedInput();
-		edit_strafe_input.initialize();
+	if (tas_editor_mode == TASEditorMode::DISABLED && mode != TASEditorMode::DISABLED) {
+		tas_editor_input = EditedInput();
+		tas_editor_input.initialize();
 
 		// If invoked while running a script, put all frame bulks up until the last one for editing.
 		if (runningFrames) {
 			auto limit = input.GetFrames().size() - 1;
 			for (size_t i = currentFramebulk; i < limit; ++i) {
-				edit_strafe_input.frame_bulks.push_back(input.GetFrames()[currentFramebulk]);
+				tas_editor_input.frame_bulks.push_back(input.GetFrames()[currentFramebulk]);
 				input.RemoveFrame(currentFramebulk);
 			}
 
@@ -2044,20 +2044,20 @@ void HwDLL::SetEditStrafe(EditStrafeMode mode)
 		}
 	}
 
-	if (mode == EditStrafeMode::EDIT) {
+	if (mode == TASEditorMode::EDIT) {
 		cl.SetMouseState(false);
 		SDL::GetInstance().SetRelativeMouseMode(false);
 
-		if (edit_strafe_mode == EditStrafeMode::APPEND) {
-			edit_strafe_input.mark_as_stale(edit_strafe_input.frame_bulks.size() - 1);
-			edit_strafe_input.frame_bulks.erase(edit_strafe_input.frame_bulks.end() - 1);
+		if (tas_editor_mode == TASEditorMode::APPEND) {
+			tas_editor_input.mark_as_stale(tas_editor_input.frame_bulks.size() - 1);
+			tas_editor_input.frame_bulks.erase(tas_editor_input.frame_bulks.end() - 1);
 		}
 	} else {
 		cl.SetMouseState(true);
 		SDL::GetInstance().SetRelativeMouseMode(true);
 	}
 
-	if (edit_strafe_mode != EditStrafeMode::APPEND && mode == EditStrafeMode::APPEND) {
+	if (tas_editor_mode != TASEditorMode::APPEND && mode == TASEditorMode::APPEND) {
 		auto frame_bulk = HLTAS::Frame();
 		auto frame_count = input.GetFrames().size();
 		if (frame_count > 0) {
@@ -2078,10 +2078,10 @@ void HwDLL::SetEditStrafe(EditStrafeMode mode)
 
 		// Simulate 5 seconds.
 		frame_bulk.SetRepeats(500);
-		edit_strafe_input.frame_bulks.push_back(frame_bulk);
+		tas_editor_input.frame_bulks.push_back(frame_bulk);
 	}
 
-	edit_strafe_mode = mode;
+	tas_editor_mode = mode;
 }
 
 void HwDLL::SetFreeCam(bool enabled)
@@ -2110,17 +2110,17 @@ void HwDLL::SetFreeCam(bool enabled)
 
 void HwDLL::SaveEditedInput()
 {
-	if (edit_strafe_mode == EditStrafeMode::DISABLED)
+	if (tas_editor_mode == TASEditorMode::DISABLED)
 		return;
 
-	if (edit_strafe_mode == EditStrafeMode::APPEND) {
+	if (tas_editor_mode == TASEditorMode::APPEND) {
 		// Append mode always has the last frame bulk that we're currently editing.
 		// We don't want it to be saved.
-		edit_strafe_input.frame_bulks.erase(edit_strafe_input.frame_bulks.end() - 1);
+		tas_editor_input.frame_bulks.erase(tas_editor_input.frame_bulks.end() - 1);
 	}
 
-	edit_strafe_input.save();
-	SetEditStrafe(EditStrafeMode::DISABLED);
+	tas_editor_input.save();
+	SetTASEditorMode(TASEditorMode::DISABLED);
 }
 
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()
@@ -2203,9 +2203,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Reset_Frametime_Remainder, Handler<>>("_bxt_reset_frametime_remainder");
 	wrapper::Add<Cmd_BXT_TASLog, Handler<>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
-	wrapper::Add<Cmd_BXT_TAS_Edit_Strafe, Handler<int>>("bxt_tas_edit_strafe");
-	wrapper::Add<Cmd_BXT_TAS_Edit_Strafe_Save, Handler<>>("bxt_tas_edit_strafe_save");
-	wrapper::Add<Cmd_BXT_TAS_Edit_Strafe_Delete_Last_Point, Handler<>>("bxt_tas_edit_strafe_delete_last_point");
+	wrapper::Add<Cmd_BXT_TAS_Editor, Handler<int>>("bxt_tas_editor");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Save, Handler<>>("bxt_tas_editor_save");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Last_Point, Handler<>>("bxt_tas_editor_delete_last_point");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 }
 

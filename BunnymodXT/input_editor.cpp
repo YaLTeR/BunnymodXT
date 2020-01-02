@@ -60,7 +60,8 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 				strafe_state,
 				hw.Buttons,
 				hw.ButtonsPresent,
-				trace_func
+				trace_func,
+				hw.hlstrafe_version
 			);
 
 			player = processed_frame.NewPlayerData;

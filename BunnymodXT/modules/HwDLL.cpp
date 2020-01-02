@@ -420,6 +420,7 @@ void HwDLL::Clear()
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
+		hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
 		demoName.clear();
 		saveName.clear();
 		frametime0ms.clear();
@@ -1251,6 +1252,7 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		hw.demoName.clear();
 		hw.saveName.clear();
 		hw.frametime0ms.clear();
+		hw.hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
 		hw.SharedRNGSeedPresent = false;
 		hw.SetNonSharedRNGSeed = false;
 		hw.thisFrameIs0ms = false;
@@ -1270,6 +1272,7 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		if (!hw.exportFilename.empty())
 			hw.exportResult.ClearProperties();
 
+		bool saw_hlstrafe_version = false;
 		for (auto prop : hw.input.GetProperties()) {
 			if (prop.first == "demo")
 				hw.demoName = prop.second;
@@ -1282,9 +1285,27 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 				hw.SetNonSharedRNGSeed = true;
 			} else if (prop.first == "frametime0ms")
 				hw.frametime0ms = prop.second;
+			else if (prop.first == "hlstrafe_version") {
+				hw.hlstrafe_version = std::strtoul(prop.second.c_str(), nullptr, 10);
+
+				saw_hlstrafe_version = true;
+
+				if (hw.hlstrafe_version > HLStrafe::MAX_SUPPORTED_VERSION) {
+					hw.ORIG_Con_Printf("Error loading the script: hlstrafe_version %u is too high (maximum supported version: %u)\n", hw.hlstrafe_version, HLStrafe::MAX_SUPPORTED_VERSION);
+					return;
+				}
+			}
 
 			if (!hw.exportFilename.empty())
 				hw.exportResult.SetProperty(prop.first, prop.second);
+		}
+
+		if (saw_hlstrafe_version) {
+			if (hw.hlstrafe_version < HLStrafe::MAX_SUPPORTED_VERSION)
+				hw.ORIG_Con_Printf("The script's hlstrafe_version is %u, but the latest version is %u. If this is an old script, keep it as is. For new scripts, please add a \"hlstrafe_version %u\" property to get the most accurate TAS prediction.\n", hw.hlstrafe_version, HLStrafe::MAX_SUPPORTED_VERSION, HLStrafe::MAX_SUPPORTED_VERSION);
+		} else {
+			hw.hlstrafe_version = 1;
+			hw.ORIG_Con_Printf("No hlstrafe_version property found in the script. If this is an old script, keep it as is, or add a \"hlstrafe_version 1\" property explicitly. For new scripts, please add a \"hlstrafe_version %u\" property to get the most accurate TAS prediction.\n", HLStrafe::MAX_SUPPORTED_VERSION);
 		}
 
 		if (!hw.input.GetFrames().empty()) {
@@ -2012,6 +2033,9 @@ void HwDLL::SetEditStrafe(EditStrafeMode mode)
 			}
 
 			runningFrames = false;
+		} else {
+			// If invoked outside of a script, make sure the hlstrafe version is latest.
+			hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
 		}
 	}
 
@@ -2253,7 +2277,7 @@ void HwDLL::InsertCommands()
 
 				StrafeState.Jump = currentKeys.Jump.IsDown();
 				StrafeState.Duck = currentKeys.Duck.IsDown();
-				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false));
+				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), hlstrafe_version);
 
 				f.ResetAutofuncs();
 

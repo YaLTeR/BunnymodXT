@@ -216,6 +216,7 @@ public:
 	TASEditorMode tas_editor_mode;
 	EditedInput tas_editor_input;
 	bool tas_editor_delete_point;
+	bool tas_editor_insert_point;
 	void SetTASEditorMode(TASEditorMode mode);
 	void SaveEditedInput();
 
@@ -305,6 +306,7 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Save;
 	struct Cmd_BXT_TAS_Editor_Delete_Last_Point;
 	struct Cmd_BXT_TAS_Editor_Delete_Point;
+	struct Cmd_BXT_TAS_Editor_Insert_Point;
 	struct Cmd_BXT_FreeCam;
 
 	void RegisterCVarsAndCommandsIfNeeded();

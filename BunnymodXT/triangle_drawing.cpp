@@ -426,6 +426,9 @@ namespace TriangleDrawing
 
 			size_t stale_index = input.frame_bulks.size();
 
+			size_t closest_frame = 0;
+			float closest_frame_px_dist;
+
 			pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
 			for (size_t frame = 1; frame < positions.size(); ++frame) {
 				if (frame > color_from && frame <= color_to) {
@@ -445,6 +448,23 @@ namespace TriangleDrawing
 				}
 
 				TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
+
+				// If we're inserting, we need to find the closest frame.
+				if (hw.tas_editor_insert_point) {
+					auto disp = positions[frame] - view;
+					if (DotProduct(forward, disp) > 0) {
+						Vector origin = positions[frame];
+						Vector screen_point;
+						pTriAPI->WorldToScreen(origin, screen_point);
+						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
+						auto dist = (screen_point_px - mouse).Length();
+
+						if (closest_frame == 0 || dist < closest_frame_px_dist) {
+							closest_frame = frame;
+							closest_frame_px_dist = dist;
+						}
+					}
+				}
 
 				// Reset the coloring on the edge.
 				if (closest_edge_frame != 0
@@ -543,6 +563,32 @@ namespace TriangleDrawing
 				}
 			}
 
+			if (closest_frame != 0 && hw.tas_editor_insert_point) {
+				size_t frame_bulk_index = 0;
+				for (size_t i = 0; i < frame_bulk_starts.size(); ++i) {
+					if (closest_frame > frame_bulk_starts[i])
+						frame_bulk_index = i;
+				}
+
+				auto split_at_frames = closest_frame - frame_bulk_starts[frame_bulk_index];
+				auto& frame_bulk = input.frame_bulks[frame_bulk_index];
+
+				if (split_at_frames == 0)
+					split_at_frames = 1;
+				if (split_at_frames == frame_bulk.GetRepeats())
+					split_at_frames -= 1;
+
+				if (split_at_frames != 0) {
+					auto new_frame_bulk_repeats = frame_bulk.GetRepeats() - split_at_frames;
+					frame_bulk.SetRepeats(split_at_frames);
+					auto new_frame_bulk = frame_bulk;
+					new_frame_bulk.Commands.clear();
+					new_frame_bulk.SetRepeats(new_frame_bulk_repeats);
+					input.frame_bulks.insert(input.frame_bulks.begin() + frame_bulk_index + 1, new_frame_bulk);
+					stale_index = frame_bulk_index;
+				}
+			}
+
 			if (closest_edge_frame != 0 && hw.tas_editor_delete_point) {
 				input.frame_bulks.erase(input.frame_bulks.begin() + closest_edge_prev_frame_bulk_index);
 				stale_index = closest_edge_prev_frame_bulk_index;
@@ -556,6 +602,7 @@ namespace TriangleDrawing
 	{
 		auto& hw = HwDLL::GetInstance();
 		hw.tas_editor_delete_point = false;
+		hw.tas_editor_insert_point = false;
 	}
 
 	void VidInit()

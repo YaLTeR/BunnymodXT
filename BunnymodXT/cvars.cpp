@@ -15,6 +15,7 @@ namespace CVars
 	CVarWrapper bxt_interprocess_enable("bxt_interprocess_enable", "0");
 	CVarWrapper bxt_fade_remove("bxt_fade_remove", "0");
 	CVarWrapper bxt_stop_demo_on_changelevel("bxt_stop_demo_on_changelevel", "0");
+	CVarWrapper bxt_tas_editor_append_frames("bxt_tas_editor_append_frames", "500");
 
 	CVarWrapper con_color;
 	CVarWrapper sv_cheats;
@@ -108,6 +109,7 @@ namespace CVars
 		&bxt_interprocess_enable,
 		&bxt_fade_remove,
 		&bxt_stop_demo_on_changelevel,
+		&bxt_tas_editor_append_frames,
 		&con_color,
 		&sv_cheats,
 		&sv_maxvelocity,

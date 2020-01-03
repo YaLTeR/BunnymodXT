@@ -427,6 +427,7 @@ void HwDLL::Clear()
 	tas_editor_toggle_dbc = false;
 	tas_editor_toggle_dbg = false;
 	tas_editor_toggle_dwj = false;
+	tas_editor_set_run_point_and_save = false;
 	free_cam_active = false;
 	extendPlayerTraceDistanceLimit = false;
 
@@ -2174,6 +2175,16 @@ struct HwDLL::Cmd_BXT_FreeCam
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save
+{
+	USAGE("Usage: bxt_tas_editor_set_run_point_and_save\n Makes the script execute up to the selected point and resume editing from it.\n");
+
+	static void handler()
+	{
+		HwDLL::GetInstance().tas_editor_set_run_point_and_save = true;
+	}
+};
+
 void HwDLL::SetTASEditorMode(TASEditorMode mode)
 {
 	auto& cl = ClientDLL::GetInstance();
@@ -2370,6 +2381,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S22, Handler<>>("bxt_tas_editor_toggle_s22");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S13, Handler<>>("bxt_tas_editor_toggle_s13");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S03, Handler<>>("bxt_tas_editor_toggle_s03");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save, Handler<>>("bxt_tas_editor_set_run_point_and_save");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Last_Point, Handler<>>("bxt_tas_editor_delete_last_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Point, Handler<>>("bxt_tas_editor_delete_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Insert_Point, Handler<>>("bxt_tas_editor_insert_point");

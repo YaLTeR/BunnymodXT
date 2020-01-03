@@ -664,6 +664,13 @@ namespace TriangleDrawing
 				}
 			}
 
+			if (closest_edge_frame != 0 && hw.tas_editor_set_run_point_and_save) {
+				input.frame_bulks[closest_edge_prev_frame_bulk_index + 1].Commands = input.frame_bulks[0].Commands;
+				input.frame_bulks[0].Commands.clear();
+				hw.SaveEditedInput();
+				return;
+			}
+
 			if (closest_frame != 0 && hw.tas_editor_insert_point) {
 				size_t frame_bulk_index = 0;
 				for (size_t i = 0; i < frame_bulk_starts.size(); ++i) {
@@ -714,6 +721,7 @@ namespace TriangleDrawing
 		hw.tas_editor_toggle_dbc = false;
 		hw.tas_editor_toggle_dbg = false;
 		hw.tas_editor_toggle_dwj = false;
+		hw.tas_editor_set_run_point_and_save = false;
 	}
 
 	void VidInit()

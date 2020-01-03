@@ -227,6 +227,7 @@ public:
 	bool tas_editor_toggle_dbc;
 	bool tas_editor_toggle_dbg;
 	bool tas_editor_toggle_dwj;
+	bool tas_editor_set_run_point_and_save;
 	void SetTASEditorMode(TASEditorMode mode);
 	void SaveEditedInput();
 
@@ -327,6 +328,7 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Toggle_Dbc;
 	struct Cmd_BXT_TAS_Editor_Toggle_Dbg;
 	struct Cmd_BXT_TAS_Editor_Toggle_Dwj;
+	struct Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save;
 	struct Cmd_BXT_FreeCam;
 
 	void RegisterCVarsAndCommandsIfNeeded();

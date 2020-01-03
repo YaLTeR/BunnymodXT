@@ -440,6 +440,7 @@ void HwDLL::Clear()
 		wasRunningFrames = false;
 		currentFramebulk = 0;
 		totalFramebulks = 0;
+		totalFrames = 0;
 		StrafeState = HLStrafe::CurrentState();
 		SharedRNGSeedPresent = false;
 		SharedRNGSeed = 0;
@@ -1329,6 +1330,18 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 				ss << "host_framerate " << f.Frametime.c_str() << "\n";
 				hw.ORIG_Cbuf_InsertText(ss.str().c_str());
 			}
+
+			hw.totalFrames = 0;
+			for (const auto& frame_bulk : hw.input.GetFrames()) {
+				if (!frame_bulk.IsMovement())
+					continue;
+
+				hw.totalFrames += frame_bulk.GetRepeats();
+			}
+
+			auto norefresh_until_frames = CVars::bxt_tas_norefresh_until_last_frames.GetInt();
+			if (norefresh_until_frames > 0 && hw.totalFrames > static_cast<size_t>(norefresh_until_frames))
+				CVars::_bxt_norefresh.Set("1");
 
 			// Reset the frametime remainder automatically upon starting a script.
 			// Fairly certain that's what you want in 100% of cases.
@@ -2277,6 +2290,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_fade_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
 	RegisterCVar(CVars::bxt_tas_editor_append_frames);
+	RegisterCVar(CVars::bxt_tas_norefresh_until_last_frames);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
 	RegisterCVar(CVars::bxt_wallhack_alpha);
@@ -2583,6 +2597,11 @@ void HwDLL::InsertCommands()
 					currentRepeat = 0;
 					currentFramebulk++;
 				}
+
+				--totalFrames;
+				auto norefresh_until_frames = CVars::bxt_tas_norefresh_until_last_frames.GetInt();
+				if (norefresh_until_frames > 0 && totalFrames <= static_cast<size_t>(norefresh_until_frames))
+					CVars::_bxt_norefresh.Set("0");
 
 				if (p.NextFrameIs0ms) {
 					if (!thisFrameIs0ms) {

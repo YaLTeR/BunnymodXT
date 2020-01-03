@@ -123,6 +123,7 @@ namespace CVars
 	extern CVarWrapper bxt_fade_remove;
 	extern CVarWrapper bxt_stop_demo_on_changelevel;
 	extern CVarWrapper bxt_tas_editor_append_frames;
+	extern CVarWrapper bxt_tas_norefresh_until_last_frames;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_cheats;

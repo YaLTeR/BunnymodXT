@@ -555,6 +555,107 @@ namespace TriangleDrawing
 								frame_bulk.SetYaw(new_yaw);
 							}
 						}
+
+						if (hw.tas_editor_toggle_s03) {
+							if (!frame_bulk.Strafe
+									|| frame_bulk.GetDir() != HLTAS::StrafeDir::YAW
+									|| frame_bulk.GetType() != HLTAS::StrafeType::MAXACCEL) {
+								frame_bulk.Strafe = true;
+								frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
+								frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
+
+								if (!frame_bulk.GetYawPresent()) {
+									const auto& prev_frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
+									frame_bulk.SetYaw(prev_frame_bulk.GetYawPresent() ? prev_frame_bulk.GetYaw() : 0);
+								}
+							} else {
+								frame_bulk.Strafe = false;
+							}
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_s13) {
+							if (!frame_bulk.Strafe
+									|| frame_bulk.GetDir() != HLTAS::StrafeDir::YAW
+									|| frame_bulk.GetType() != HLTAS::StrafeType::MAXANGLE) {
+								frame_bulk.Strafe = true;
+								frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
+								frame_bulk.SetType(HLTAS::StrafeType::MAXANGLE);
+
+								if (!frame_bulk.GetYawPresent()) {
+									const auto& prev_frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
+									frame_bulk.SetYaw(prev_frame_bulk.GetYawPresent() ? prev_frame_bulk.GetYaw() : 0);
+								}
+							} else {
+								frame_bulk.Strafe = false;
+							}
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_s22) {
+							if (!frame_bulk.Strafe
+									|| frame_bulk.GetDir() != HLTAS::StrafeDir::YAW
+									|| frame_bulk.GetType() != HLTAS::StrafeType::MAXDECCEL) {
+								frame_bulk.Strafe = true;
+								frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
+								frame_bulk.SetType(HLTAS::StrafeType::MAXDECCEL);
+							} else {
+								frame_bulk.Strafe = false;
+							}
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_lgagst) {
+							if (frame_bulk.Lgagst) {
+								frame_bulk.Lgagst = false;
+							} else if (frame_bulk.Autojump || frame_bulk.Ducktap) {
+								frame_bulk.Lgagst = true;
+							}
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_autojump) {
+							frame_bulk.Autojump = !frame_bulk.Autojump;
+							if (frame_bulk.Autojump) {
+								if (frame_bulk.Ducktap)
+									frame_bulk.Ducktap = false;
+							} else {
+								frame_bulk.Lgagst = false;
+							}
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_ducktap) {
+							frame_bulk.Ducktap = !frame_bulk.Ducktap;
+							if (frame_bulk.Ducktap) {
+								frame_bulk.SetDucktap0ms(!hw.frametime0ms.empty());
+								if (frame_bulk.Autojump)
+									frame_bulk.Autojump = false;
+							} else {
+								frame_bulk.Lgagst = false;
+							}
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_jumpbug) {
+							frame_bulk.Jumpbug = !frame_bulk.Jumpbug;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_dbc) {
+							frame_bulk.Dbc = !frame_bulk.Dbc;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_dbg) {
+							frame_bulk.Dbg = !frame_bulk.Dbg;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_dwj) {
+							frame_bulk.Dwj = !frame_bulk.Dwj;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
 					} else {
 						pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
 					}
@@ -603,6 +704,16 @@ namespace TriangleDrawing
 		auto& hw = HwDLL::GetInstance();
 		hw.tas_editor_delete_point = false;
 		hw.tas_editor_insert_point = false;
+		hw.tas_editor_toggle_s03 = false;
+		hw.tas_editor_toggle_s13 = false;
+		hw.tas_editor_toggle_s22 = false;
+		hw.tas_editor_toggle_lgagst = false;
+		hw.tas_editor_toggle_autojump = false;
+		hw.tas_editor_toggle_ducktap = false;
+		hw.tas_editor_toggle_jumpbug = false;
+		hw.tas_editor_toggle_dbc = false;
+		hw.tas_editor_toggle_dbg = false;
+		hw.tas_editor_toggle_dwj = false;
 	}
 
 	void VidInit()

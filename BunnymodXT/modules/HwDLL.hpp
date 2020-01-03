@@ -217,6 +217,16 @@ public:
 	EditedInput tas_editor_input;
 	bool tas_editor_delete_point;
 	bool tas_editor_insert_point;
+	bool tas_editor_toggle_s03;
+	bool tas_editor_toggle_s13;
+	bool tas_editor_toggle_s22;
+	bool tas_editor_toggle_lgagst;
+	bool tas_editor_toggle_autojump;
+	bool tas_editor_toggle_ducktap;
+	bool tas_editor_toggle_jumpbug;
+	bool tas_editor_toggle_dbc;
+	bool tas_editor_toggle_dbg;
+	bool tas_editor_toggle_dwj;
 	void SetTASEditorMode(TASEditorMode mode);
 	void SaveEditedInput();
 
@@ -307,6 +317,16 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Delete_Last_Point;
 	struct Cmd_BXT_TAS_Editor_Delete_Point;
 	struct Cmd_BXT_TAS_Editor_Insert_Point;
+	struct Cmd_BXT_TAS_Editor_Toggle_S03;
+	struct Cmd_BXT_TAS_Editor_Toggle_S13;
+	struct Cmd_BXT_TAS_Editor_Toggle_S22;
+	struct Cmd_BXT_TAS_Editor_Toggle_Lgagst;
+	struct Cmd_BXT_TAS_Editor_Toggle_Autojump;
+	struct Cmd_BXT_TAS_Editor_Toggle_Ducktap;
+	struct Cmd_BXT_TAS_Editor_Toggle_Jumpbug;
+	struct Cmd_BXT_TAS_Editor_Toggle_Dbc;
+	struct Cmd_BXT_TAS_Editor_Toggle_Dbg;
+	struct Cmd_BXT_TAS_Editor_Toggle_Dwj;
 	struct Cmd_BXT_FreeCam;
 
 	void RegisterCVarsAndCommandsIfNeeded();
@@ -391,7 +411,9 @@ public:
 protected:
 	std::string demoName;
 	std::string saveName;
+public:
 	std::string frametime0ms;
+protected:
 	bool runningFrames;
 	bool wasRunningFrames;
 	size_t currentFramebulk;

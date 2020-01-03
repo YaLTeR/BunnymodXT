@@ -224,7 +224,7 @@ namespace TriangleDrawing
 
 		int x, y;
 		auto mouse_state = SDL::GetInstance().GetMouseState(&x, &y);
-		Vector2D mouse(x, y);
+		Vector2D mouse(static_cast<float>(x), static_cast<float>(y));
 
 		// Convert from ScreenToWorld coordinates to SDL_GetMouseState coordinates.
 		auto stw_to_pixels = [](Vector2D v) {
@@ -274,10 +274,10 @@ namespace TriangleDrawing
 		if (hw.tas_editor_mode == TASEditorMode::APPEND) {
 			auto last_frame_bulk_index = input.frame_bulks.size() - 1;
 			auto& last_frame_bulk = input.frame_bulks[last_frame_bulk_index];
-			size_t last_frame_bulk_start = input.frame_bulk_starts[last_frame_bulk_index];
+			auto last_frame_bulk_start = input.frame_bulk_starts[last_frame_bulk_index];
 			auto last_frame_bulk_origin = positions[last_frame_bulk_start];
 			auto dir = mouse_world - last_frame_bulk_origin;
-			float yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
+			auto yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
 
 			// Strafe towards the yaw.
 			last_frame_bulk.SetYaw(yaw);
@@ -295,7 +295,7 @@ namespace TriangleDrawing
 			size_t frames_until_non_ground_collision = frame_limit;
 			size_t next_frame_bulk_start_index = 1;
 
-			pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
+			pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
 			for (size_t frame = 1; frame < positions.size(); ++frame) {
 				const auto& origin = positions[frame];
 
@@ -429,7 +429,7 @@ namespace TriangleDrawing
 			size_t closest_frame = 0;
 			float closest_frame_px_dist;
 
-			pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
+			pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
 			for (size_t frame = 1; frame < positions.size(); ++frame) {
 				if (frame > color_from && frame <= color_to) {
 					// If we bumped into something along the way
@@ -504,7 +504,7 @@ namespace TriangleDrawing
 						// Visualize the target yaw.
 						if (frame_bulk.GetYawPresent()) {
 							auto yaw = frame_bulk.GetYaw() * M_DEG2RAD;
-							auto yaw_dir = Vector(std::cos(yaw), std::sin(yaw), 0);
+							auto yaw_dir = Vector(static_cast<float>(std::cos(yaw)), static_cast<float>(std::sin(yaw)), 0);
 							yaw_dir *= 20;
 							pTriAPI->Color4f(0.5, 0.5, 1, 1);
 							TriangleUtils::DrawLine(pTriAPI, positions[frame] - yaw_dir, positions[frame] + yaw_dir);
@@ -527,7 +527,7 @@ namespace TriangleDrawing
 
 							auto increase = DotProduct(mouse_diff, diff) > 0;
 							auto amount = mouse_diff.Length() * (increase ? 1 : -1);
-							amount *= 0.1;
+							amount *= 0.1f;
 							auto new_repeats = static_cast<unsigned>(std::max(1, saved_repeats + static_cast<int>(amount)));
 							if (frame_bulk.GetRepeats() != new_repeats) {
 								stale_index = closest_edge_prev_frame_bulk_index;
@@ -548,7 +548,7 @@ namespace TriangleDrawing
 
 							auto increase = DotProduct(mouse_diff, diff) > 0;
 							auto amount = mouse_diff.Length() * (increase ? 1 : -1);
-							amount *= 0.1;
+							amount *= 0.1f;
 							auto new_yaw = saved_yaw + amount;
 							if (frame_bulk.GetYaw() != new_yaw) {
 								stale_index = closest_edge_prev_frame_bulk_index;
@@ -657,7 +657,7 @@ namespace TriangleDrawing
 							stale_index = closest_edge_prev_frame_bulk_index;
 						}
 					} else {
-						pTriAPI->Color4f(0.8, 0.8, 0.8, 1);
+						pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
 					}
 
 					TriangleUtils::DrawLine(pTriAPI, a, b);

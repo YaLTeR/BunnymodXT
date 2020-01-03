@@ -2370,7 +2370,7 @@ void HwDLL::InsertCommands()
 			preExecFramebulk = currentFramebulk;
 			auto& f = input.GetFrame(currentFramebulk);
 			// Movement frame.
-			if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent && !f.ResetFrame && !f.StrafingAlgorithmPresent && !f.AlgorithmParametersPresent)) {
+			if (currentRepeat || f.IsMovement()) {
 				HLTAS::Frame resulting_frame;
 
 				if (thisFrameIs0ms)
@@ -2815,7 +2815,7 @@ bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
 	while (curFramebulk < totalFramebulks) {
 		f = input.GetFrame(curFramebulk);
 		// Only movement frames can have repeats.
-		if (currentRepeat || (f.SaveName.empty() && !f.SeedPresent && f.BtnState == HLTAS::ButtonState::NOTHING && !f.LgagstMinSpeedPresent && !f.ResetFrame && !f.StrafingAlgorithmPresent && !f.AlgorithmParametersPresent))
+		if (currentRepeat || f.IsMovement())
 			return true;
 
 		curFramebulk++;

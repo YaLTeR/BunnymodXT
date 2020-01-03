@@ -543,8 +543,19 @@ namespace TriangleDrawing
 				}
 			}
 
+			if (closest_edge_frame != 0 && hw.tas_editor_delete_point) {
+				input.frame_bulks.erase(input.frame_bulks.begin() + closest_edge_prev_frame_bulk_index);
+				stale_index = closest_edge_prev_frame_bulk_index;
+			}
+
 			input.mark_as_stale(stale_index);
 		}
+	}
+
+	void ResetTASEditorCommands()
+	{
+		auto& hw = HwDLL::GetInstance();
+		hw.tas_editor_delete_point = false;
 	}
 
 	void VidInit()
@@ -567,6 +578,8 @@ namespace TriangleDrawing
 		DrawUseableEntities(pTriAPI);
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);
+
 		DrawStrafeEditor(pTriAPI);
+		ResetTASEditorCommands();
 	}
 }

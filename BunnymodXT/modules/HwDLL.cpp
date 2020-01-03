@@ -415,6 +415,7 @@ void HwDLL::Clear()
 
 	tas_editor_mode = TASEditorMode::DISABLED;
 	tas_editor_input = EditedInput();
+	tas_editor_delete_point = false;
 	free_cam_active = false;
 	extendPlayerTraceDistanceLimit = false;
 
@@ -2019,6 +2020,16 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Delete_Last_Point
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Delete_Point
+{
+	USAGE("Usage: bxt_tas_editor_delete_point\n Deletes the currently selected point in edit mode.\n");
+
+	static void handler()
+	{
+		HwDLL::GetInstance().tas_editor_delete_point = true;
+	}
+};
+
 struct HwDLL::Cmd_BXT_FreeCam
 {
 	USAGE("Usage: bxt_freecam <0|1>\n Enables the freecam mode. Most useful when paused with bxt_unlock_camera_during_pause 1.\n");
@@ -2214,6 +2225,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor, Handler<int>>("bxt_tas_editor");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Save, Handler<>>("bxt_tas_editor_save");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Last_Point, Handler<>>("bxt_tas_editor_delete_last_point");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Point, Handler<>>("bxt_tas_editor_delete_point");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 }
 

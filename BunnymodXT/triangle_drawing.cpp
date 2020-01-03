@@ -208,7 +208,7 @@ namespace TriangleDrawing
 		}
 	}
 
-	static void DrawStrafeEditor(triangleapi_s *pTriAPI)
+	static void DrawTASEditor(triangleapi_s *pTriAPI)
 	{
 		using HLStrafe::HullType;
 		using HLTAS::StrafeDir;
@@ -579,7 +579,7 @@ namespace TriangleDrawing
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);
 
-		DrawStrafeEditor(pTriAPI);
+		DrawTASEditor(pTriAPI);
 		ResetTASEditorCommands();
 	}
 }

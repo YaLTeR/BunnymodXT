@@ -2358,22 +2358,23 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Reset_Frametime_Remainder, Handler<>>("_bxt_reset_frametime_remainder");
 	wrapper::Add<Cmd_BXT_TASLog, Handler<>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
-	wrapper::Add<Cmd_BXT_TAS_Editor, Handler<int>>("bxt_tas_editor");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Save, Handler<>>("bxt_tas_editor_save");
+	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
+
+	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Dwj, Handler<>>("bxt_tas_editor_toggle_dwj");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Dbg, Handler<>>("bxt_tas_editor_toggle_dbg");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Dbc, Handler<>>("bxt_tas_editor_toggle_dbc");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Jumpbug, Handler<>>("bxt_tas_editor_toggle_jumpbug");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Ducktap, Handler<>>("bxt_tas_editor_toggle_ducktap");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Autojump, Handler<>>("bxt_tas_editor_toggle_autojump");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Lgagst, Handler<>>("bxt_tas_editor_toggle_lgagst");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S22, Handler<>>("bxt_tas_editor_toggle_s22");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S13, Handler<>>("bxt_tas_editor_toggle_s13");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S03, Handler<>>("bxt_tas_editor_toggle_s03");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Last_Point, Handler<>>("bxt_tas_editor_delete_last_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Point, Handler<>>("bxt_tas_editor_delete_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Insert_Point, Handler<>>("bxt_tas_editor_insert_point");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S03, Handler<>>("bxt_tas_editor_toggle_s03");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S13, Handler<>>("bxt_tas_editor_toggle_s13");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S22, Handler<>>("bxt_tas_editor_toggle_s22");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Lgagst, Handler<>>("bxt_tas_editor_toggle_lgagst");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Autojump, Handler<>>("bxt_tas_editor_toggle_autojump");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Ducktap, Handler<>>("bxt_tas_editor_toggle_ducktap");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Jumpbug, Handler<>>("bxt_tas_editor_toggle_jumpbug");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Dbc, Handler<>>("bxt_tas_editor_toggle_dbc");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Dbg, Handler<>>("bxt_tas_editor_toggle_dbg");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Dwj, Handler<>>("bxt_tas_editor_toggle_dwj");
-	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Save, Handler<>>("bxt_tas_editor_save");
+	wrapper::Add<Cmd_BXT_TAS_Editor, Handler<int>>("bxt_tas_editor");
 }
 
 void HwDLL::InsertCommands()

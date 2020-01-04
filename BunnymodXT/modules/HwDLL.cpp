@@ -2352,6 +2352,10 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 			frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
 			frame_bulk.Lgagst = true;
 			frame_bulk.Autojump = true;
+
+			std::ostringstream oss;
+			oss << GetFrameTime();
+			frame_bulk.Frametime = oss.str();
 		}
 
 		frame_bulk.SetRepeats(std::max(1, CVars::bxt_tas_editor_append_frames.GetInt()));

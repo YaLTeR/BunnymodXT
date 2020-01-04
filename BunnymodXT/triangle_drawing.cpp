@@ -726,7 +726,10 @@ namespace TriangleDrawing
 				}
 			}
 
-			if (closest_edge_frame != 0 && hw.tas_editor_set_run_point_and_save) {
+			if (closest_edge_frame != 0
+					// TODO: make it possible to set the very end as the run point.
+					&& closest_edge_prev_frame_bulk_index + 1 < input.frame_bulks.size()
+					&& hw.tas_editor_set_run_point_and_save) {
 				input.frame_bulks[closest_edge_prev_frame_bulk_index + 1].Commands = input.frame_bulks[0].Commands;
 				input.frame_bulks[0].Commands.clear();
 				hw.SaveEditedInput();

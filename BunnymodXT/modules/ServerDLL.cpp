@@ -325,6 +325,11 @@ void ServerDLL::FindStuff()
 				offm_rgAmmoLast = 0x53C;
 				offm_iClientFOV = 0x47C;
 				break;
+			case 4:  // HL-SteamPipe-8308
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x558;
+				offm_iClientFOV = 0x4B0;
+				break;
 			default:
 				assert(false);
 			}

@@ -748,6 +748,9 @@ void HwDLL::FindStuff()
 				case 2: // HL-NGHL
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 2) - offsetof(cmdbuf_t, cursize));
 					break;
+				case 3: // HL-SteamPipe-8308
+					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
+					break;
 				}
 			});
 
@@ -969,6 +972,11 @@ void HwDLL::FindStuff()
 					ORIG_Cbuf_InsertTextLines = reinterpret_cast<_Cbuf_InsertTextLines>(
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 441)
 						+ reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 445);
+					break;
+				case 4: // HL-SteamPipe-8308.
+					ORIG_Cbuf_InsertTextLines = reinterpret_cast<_Cbuf_InsertTextLines>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 769)
+						+ reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 773);
 					break;
 				}
 			});

@@ -1503,7 +1503,9 @@ struct HwDLL::Cmd_BXT_TAS_New
 		hw.newTASResult.ClearProperties();
 		hw.newTASResult.ClearFrames();
 
-		hw.newTASResult.SetProperty("hlstrafe_version", "2");
+		std::ostringstream oss;
+		oss << HLStrafe::MAX_SUPPORTED_VERSION;
+		hw.newTASResult.SetProperty("hlstrafe_version", oss.str());
 
 		if (zero_ms_ducktap)
 			hw.newTASResult.SetProperty("frametime0ms", "0.0000000001");

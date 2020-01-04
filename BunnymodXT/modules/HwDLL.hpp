@@ -227,6 +227,18 @@ public:
 	bool tas_editor_toggle_dbc;
 	bool tas_editor_toggle_dbg;
 	bool tas_editor_toggle_dwj;
+	bool tas_editor_toggle_forward;
+	bool tas_editor_toggle_left;
+	bool tas_editor_toggle_right;
+	bool tas_editor_toggle_back;
+	bool tas_editor_toggle_up;
+	bool tas_editor_toggle_down;
+	bool tas_editor_toggle_jump;
+	bool tas_editor_toggle_duck;
+	bool tas_editor_toggle_use;
+	bool tas_editor_toggle_attack1;
+	bool tas_editor_toggle_attack2;
+	bool tas_editor_toggle_reload;
 	bool tas_editor_set_run_point_and_save;
 	void SetTASEditorMode(TASEditorMode mode);
 	void SaveEditedInput();

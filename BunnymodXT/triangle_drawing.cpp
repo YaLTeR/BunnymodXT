@@ -658,6 +658,66 @@ namespace TriangleDrawing
 							frame_bulk.Dwj = !frame_bulk.Dwj;
 							stale_index = closest_edge_prev_frame_bulk_index;
 						}
+
+						if (hw.tas_editor_toggle_forward) {
+							frame_bulk.Forward = !frame_bulk.Forward;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_left) {
+							frame_bulk.Left = !frame_bulk.Left;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_right) {
+							frame_bulk.Right = !frame_bulk.Right;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_back) {
+							frame_bulk.Back = !frame_bulk.Back;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_up) {
+							frame_bulk.Up = !frame_bulk.Up;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_down) {
+							frame_bulk.Down = !frame_bulk.Down;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_jump) {
+							frame_bulk.Jump = !frame_bulk.Jump;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_duck) {
+							frame_bulk.Duck = !frame_bulk.Duck;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_use) {
+							frame_bulk.Use = !frame_bulk.Use;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_attack1) {
+							frame_bulk.Attack1 = !frame_bulk.Attack1;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_attack2) {
+							frame_bulk.Attack2 = !frame_bulk.Attack2;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
+
+						if (hw.tas_editor_toggle_reload) {
+							frame_bulk.Reload = !frame_bulk.Reload;
+							stale_index = closest_edge_prev_frame_bulk_index;
+						}
 					} else {
 						pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
 					}
@@ -723,6 +783,18 @@ namespace TriangleDrawing
 		hw.tas_editor_toggle_dbc = false;
 		hw.tas_editor_toggle_dbg = false;
 		hw.tas_editor_toggle_dwj = false;
+		hw.tas_editor_toggle_forward = false;
+		hw.tas_editor_toggle_left = false;
+		hw.tas_editor_toggle_right = false;
+		hw.tas_editor_toggle_back = false;
+		hw.tas_editor_toggle_up = false;
+		hw.tas_editor_toggle_down = false;
+		hw.tas_editor_toggle_jump = false;
+		hw.tas_editor_toggle_duck = false;
+		hw.tas_editor_toggle_use = false;
+		hw.tas_editor_toggle_attack1 = false;
+		hw.tas_editor_toggle_attack2 = false;
+		hw.tas_editor_toggle_reload = false;
 		hw.tas_editor_set_run_point_and_save = false;
 	}
 

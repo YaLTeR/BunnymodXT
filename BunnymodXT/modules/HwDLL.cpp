@@ -427,6 +427,18 @@ void HwDLL::Clear()
 	tas_editor_toggle_dbc = false;
 	tas_editor_toggle_dbg = false;
 	tas_editor_toggle_dwj = false;
+	tas_editor_toggle_forward = false;
+	tas_editor_toggle_left = false;
+	tas_editor_toggle_right = false;
+	tas_editor_toggle_back = false;
+	tas_editor_toggle_up = false;
+	tas_editor_toggle_down = false;
+	tas_editor_toggle_jump = false;
+	tas_editor_toggle_duck = false;
+	tas_editor_toggle_use = false;
+	tas_editor_toggle_attack1 = false;
+	tas_editor_toggle_attack2 = false;
+	tas_editor_toggle_reload = false;
 	tas_editor_set_run_point_and_save = false;
 	free_cam_active = false;
 	extendPlayerTraceDistanceLimit = false;
@@ -2077,7 +2089,19 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 	      " - jumpbug,\n"
 	      " - dbc - duck before collision,\n"
 	      " - dbg - duck before ground,\n"
-	      " - dwj - duck when jump (useful for the long-jump module).\n"
+	      " - dwj - duck when jump (useful for the long-jump module),\n"
+	      " - forward - +forward,\n"
+	      " - left - +moveleft,\n"
+	      " - right - +moveright,\n"
+	      " - back - +back,\n"
+	      " - up - +moveup,\n"
+	      " - down - +movedown,\n"
+	      " - jump - +jump,\n"
+	      " - duck - +duck,\n"
+	      " - use - +use,\n"
+	      " - attack1 - +attack1,\n"
+	      " - attack2 - +attack2,\n"
+	      " - reload - +reload.\n"
 	);
 
 	static void handler(const char *what)
@@ -2102,6 +2126,30 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 			HwDLL::GetInstance().tas_editor_toggle_dbg = true;
 		} else if (!strcmp(what, "dwj")) {
 			HwDLL::GetInstance().tas_editor_toggle_dwj = true;
+		} else if (!strcmp(what, "forward")) {
+			HwDLL::GetInstance().tas_editor_toggle_forward = true;
+		} else if (!strcmp(what, "left")) {
+			HwDLL::GetInstance().tas_editor_toggle_left = true;
+		} else if (!strcmp(what, "right")) {
+			HwDLL::GetInstance().tas_editor_toggle_right = true;
+		} else if (!strcmp(what, "back")) {
+			HwDLL::GetInstance().tas_editor_toggle_back = true;
+		} else if (!strcmp(what, "up")) {
+			HwDLL::GetInstance().tas_editor_toggle_up = true;
+		} else if (!strcmp(what, "down")) {
+			HwDLL::GetInstance().tas_editor_toggle_down = true;
+		} else if (!strcmp(what, "jump")) {
+			HwDLL::GetInstance().tas_editor_toggle_jump = true;
+		} else if (!strcmp(what, "duck")) {
+			HwDLL::GetInstance().tas_editor_toggle_duck = true;
+		} else if (!strcmp(what, "use")) {
+			HwDLL::GetInstance().tas_editor_toggle_use = true;
+		} else if (!strcmp(what, "attack1")) {
+			HwDLL::GetInstance().tas_editor_toggle_attack1 = true;
+		} else if (!strcmp(what, "attack2")) {
+			HwDLL::GetInstance().tas_editor_toggle_attack2 = true;
+		} else if (!strcmp(what, "reload")) {
+			HwDLL::GetInstance().tas_editor_toggle_reload = true;
 		}
 	}
 };

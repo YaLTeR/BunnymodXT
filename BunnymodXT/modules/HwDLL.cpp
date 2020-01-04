@@ -2332,6 +2332,7 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 		if (frame_count > 0) {
 			// Copy the last frame.
 			frame_bulk = input.GetFrames()[frame_count - 1];
+			frame_bulk.Comments.clear();
 			frame_bulk.Commands.clear();
 
 			// Make sure the strafe direction is Yaw.

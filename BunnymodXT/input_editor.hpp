@@ -18,6 +18,8 @@ struct EditedInput {
 	// CurrentState after simulating every frame bulk.
 	std::vector<HLStrafe::CurrentState> saved_state;
 
+	HLStrafe::MovementVars initial_movement_vars;
+
 	// Clears and initializes EditedInput with the current player data.
 	void initialize();
 	void simulate(SimulateFrameBulks what);

@@ -17,6 +17,8 @@ void EditedInput::initialize() {
 	strafe_state.Jump = hw.currentKeys.Jump.IsDown();
 	strafe_state.Duck = hw.currentKeys.Duck.IsDown();
 	saved_state.push_back(strafe_state);
+
+	initial_movement_vars = hw.GetMovementVars();
 }
 
 void EditedInput::simulate(SimulateFrameBulks what) {
@@ -28,9 +30,9 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 		return;
 
 	auto& hw = HwDLL::GetInstance();
-	const auto movement_vars = hw.GetMovementVars();
 	auto player = saved_player[first_frame_bulk];
 	auto strafe_state = saved_state[first_frame_bulk];
+	auto movement_vars = initial_movement_vars;
 
 	hw.StartTracing(true);
 
@@ -49,6 +51,9 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 			break;
 
 		const auto& frame_bulk = frame_bulks[index];
+
+		const auto host_frametime = std::strtof(frame_bulk.Frametime.c_str(), nullptr);
+		movement_vars.Frametime = static_cast<float>(static_cast<float>(std::floor(host_frametime * 1000)) * 0.001);
 
 		for (size_t frame = 0; frame < frame_bulk.GetRepeats(); ++frame) {
 			auto processed_frame = HLStrafe::MainFunc(

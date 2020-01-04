@@ -525,12 +525,10 @@ namespace TriangleDrawing
 								Vector prev_screen_point;
 								pTriAPI->WorldToScreen(prev_origin, prev_screen_point);
 								auto prev_screen_point_px = stw_to_pixels(prev_screen_point.Make2D());
-								saved_diff = screen_point_px - prev_screen_point_px;
+								saved_diff = (screen_point_px - prev_screen_point_px).Normalize();
 							}
 
-							auto increase = DotProduct(mouse_diff, saved_diff) > 0;
-							auto amount = mouse_diff.Length() * (increase ? 1 : -1);
-							amount *= 0.1f;
+							auto amount = DotProduct(mouse_diff, saved_diff) * 0.1f;
 							auto new_repeats = static_cast<unsigned>(std::max(1, saved_repeats + static_cast<int>(amount)));
 							if (frame_bulk.GetRepeats() != new_repeats) {
 								stale_index = closest_edge_prev_frame_bulk_index;
@@ -549,12 +547,10 @@ namespace TriangleDrawing
 								Vector b_screen_point;
 								pTriAPI->WorldToScreen(b, b_screen_point);
 								auto b_screen_point_px = stw_to_pixels(b_screen_point.Make2D());
-								saved_diff = a_screen_point_px - b_screen_point_px;
+								saved_diff = (a_screen_point_px - b_screen_point_px).Normalize();
 							}
 
-							auto increase = DotProduct(mouse_diff, saved_diff) > 0;
-							auto amount = mouse_diff.Length() * (increase ? 1 : -1);
-							amount *= 0.1f;
+							auto amount = DotProduct(mouse_diff, saved_diff) * 0.1f;
 							auto new_yaw = saved_yaw + amount;
 							if (frame_bulk.GetYaw() != new_yaw) {
 								stale_index = closest_edge_prev_frame_bulk_index;

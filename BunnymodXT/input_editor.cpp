@@ -53,7 +53,8 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 		const auto& frame_bulk = frame_bulks[index];
 
 		const auto host_frametime = std::strtof(frame_bulk.Frametime.c_str(), nullptr);
-		movement_vars.Frametime = static_cast<float>(static_cast<float>(std::floor(host_frametime * 1000)) * 0.001);
+		const auto frametime = static_cast<float>(static_cast<float>(std::floor(host_frametime * 1000)) * 0.001);
+		movement_vars.Frametime = frametime;
 
 		for (size_t frame = 0; frame < frame_bulk.GetRepeats(); ++frame) {
 			auto processed_frame = HLStrafe::MainFunc(
@@ -72,6 +73,20 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 			positions.push_back(player.Origin);
 			fractions.push_back(processed_frame.fractions[0]);
 			normalzs.push_back(processed_frame.normalzs[0]);
+
+			// TODO:
+			// - assumes frametime0ms is high enough to always give zero frametime
+			//   (this is how it should be set up anyway)
+			// - assumes NextFrameIs0ms can't happen on the last frame of a bulk
+			//   (rare, also not sure if handled correctly by the actual TAS running code)
+			if (processed_frame.NextFrameIs0ms)
+				movement_vars.Frametime = 0;
+			else
+				movement_vars.Frametime = frametime;
+
+			// PredictThis is needed because 0ms frames are batched client-side. Since we're
+			// re-using the HLStrafe prediction, here they are already predicted.
+			strafe_state.PredictThis = HLStrafe::State0ms::NOTHING;
 		}
 
 		total_frames += frame_bulk.GetRepeats();

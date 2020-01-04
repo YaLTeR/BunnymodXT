@@ -318,16 +318,7 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Delete_Last_Point;
 	struct Cmd_BXT_TAS_Editor_Delete_Point;
 	struct Cmd_BXT_TAS_Editor_Insert_Point;
-	struct Cmd_BXT_TAS_Editor_Toggle_S03;
-	struct Cmd_BXT_TAS_Editor_Toggle_S13;
-	struct Cmd_BXT_TAS_Editor_Toggle_S22;
-	struct Cmd_BXT_TAS_Editor_Toggle_Lgagst;
-	struct Cmd_BXT_TAS_Editor_Toggle_Autojump;
-	struct Cmd_BXT_TAS_Editor_Toggle_Ducktap;
-	struct Cmd_BXT_TAS_Editor_Toggle_Jumpbug;
-	struct Cmd_BXT_TAS_Editor_Toggle_Dbc;
-	struct Cmd_BXT_TAS_Editor_Toggle_Dbg;
-	struct Cmd_BXT_TAS_Editor_Toggle_Dwj;
+	struct Cmd_BXT_TAS_Editor_Toggle;
 	struct Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save;
 	struct Cmd_BXT_FreeCam;
 

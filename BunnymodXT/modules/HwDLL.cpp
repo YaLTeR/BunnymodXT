@@ -2065,103 +2065,44 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Insert_Point
 	}
 };
 
-struct HwDLL::Cmd_BXT_TAS_Editor_Toggle_S03
+struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 {
-	USAGE("Usage: bxt_tas_editor_toggle_s03\n Toggles s03 on the currently selected point.\n");
+	USAGE("Usage: bxt_tas_editor_toggle <what>\n Toggles a function on the currently selected point. You can toggle:\n"
+	      " - s03 - speed increasing strafing,\n"
+	      " - s13 - quick turn strafing,\n"
+	      " - s22 - slow down strafing,\n"
+	      " - lgagst - makes autojump and ducktap trigger at optimal speed,\n"
+	      " - autojump,\n"
+	      " - ducktap,\n"
+	      " - jumpbug,\n"
+	      " - dbc - duck before collision,\n"
+	      " - dbg - duck before ground,\n"
+	      " - dwj - duck when jump (useful for the long-jump module).\n"
+	);
 
-	static void handler()
+	static void handler(const char *what)
 	{
-		HwDLL::GetInstance().tas_editor_toggle_s03 = true;
-	}
-};
-
-struct HwDLL::Cmd_BXT_TAS_Editor_Toggle_S13
-{
-	USAGE("Usage: bxt_tas_editor_toggle_s13\n Toggles s13 on the currently selected point.\n");
-
-	static void handler()
-	{
-		HwDLL::GetInstance().tas_editor_toggle_s13 = true;
-	}
-};
-
-struct HwDLL::Cmd_BXT_TAS_Editor_Toggle_S22
-{
-	USAGE("Usage: bxt_tas_editor_toggle_s22\n Toggles s22 on the currently selected point.\n");
-
-	static void handler()
-	{
-		HwDLL::GetInstance().tas_editor_toggle_s22 = true;
-	}
-};
-
-struct HwDLL::Cmd_BXT_TAS_Editor_Toggle_Lgagst
-{
-	USAGE("Usage: bxt_tas_editor_toggle_lgagst\n Toggles lgagst on the currently selected point.\n");
-
-	static void handler()
-	{
-		HwDLL::GetInstance().tas_editor_toggle_lgagst = true;
-	}
-};
-
-struct HwDLL::Cmd_BXT_TAS_Editor_Toggle_Autojump
-{
-	USAGE("Usage: bxt_tas_editor_toggle_autojump\n Toggles autojump on the currently selected point.\n");
-
-	static void handler()
-	{
-		HwDLL::GetInstance().tas_editor_toggle_autojump = true;
-	}
-};
-
-struct HwDLL::Cmd_BXT_TAS_Editor_Toggle_Ducktap
-{
-	USAGE("Usage: bxt_tas_editor_toggle_ducktap\n Toggles ducktap on the currently selected point.\n");
-
-	static void handler()
-	{
-		HwDLL::GetInstance().tas_editor_toggle_ducktap = true;
-	}
-};
-
-struct HwDLL::Cmd_BXT_TAS_Editor_Toggle_Jumpbug
-{
-	USAGE("Usage: bxt_tas_editor_toggle_jumpbug\n Toggles jumpbug on the currently selected point.\n");
-
-	static void handler()
-	{
-		HwDLL::GetInstance().tas_editor_toggle_jumpbug = true;
-	}
-};
-
-struct HwDLL::Cmd_BXT_TAS_Editor_Toggle_Dbc
-{
-	USAGE("Usage: bxt_tas_editor_toggle_dbc\n Toggles duck before collision on the currently selected point.\n");
-
-	static void handler()
-	{
-		HwDLL::GetInstance().tas_editor_toggle_dbc = true;
-	}
-};
-
-struct HwDLL::Cmd_BXT_TAS_Editor_Toggle_Dbg
-{
-	USAGE("Usage: bxt_tas_editor_toggle_dbg\n Toggles duck before ground on the currently selected point.\n");
-
-	static void handler()
-	{
-		HwDLL::GetInstance().tas_editor_toggle_dbg = true;
-	}
-};
-
-struct HwDLL::Cmd_BXT_TAS_Editor_Toggle_Dwj
-{
-	USAGE("Usage: bxt_tas_editor_toggle_dwj\n Toggles duck when jump on the currently selected point.\n");
-
-	static void handler()
-	{
-		HwDLL::GetInstance().tas_editor_toggle_dwj = true;
+		if (!strcmp(what, "s03")) {
+			HwDLL::GetInstance().tas_editor_toggle_s03 = true;
+		} else if (!strcmp(what, "s13")) {
+			HwDLL::GetInstance().tas_editor_toggle_s13 = true;
+		} else if (!strcmp(what, "s22")) {
+			HwDLL::GetInstance().tas_editor_toggle_s22 = true;
+		} else if (!strcmp(what, "lgagst")) {
+			HwDLL::GetInstance().tas_editor_toggle_lgagst = true;
+		} else if (!strcmp(what, "autojump")) {
+			HwDLL::GetInstance().tas_editor_toggle_autojump = true;
+		} else if (!strcmp(what, "ducktap")) {
+			HwDLL::GetInstance().tas_editor_toggle_ducktap = true;
+		} else if (!strcmp(what, "jumpbug")) {
+			HwDLL::GetInstance().tas_editor_toggle_jumpbug = true;
+		} else if (!strcmp(what, "dbc")) {
+			HwDLL::GetInstance().tas_editor_toggle_dbc = true;
+		} else if (!strcmp(what, "dbg")) {
+			HwDLL::GetInstance().tas_editor_toggle_dbg = true;
+		} else if (!strcmp(what, "dwj")) {
+			HwDLL::GetInstance().tas_editor_toggle_dwj = true;
+		}
 	}
 };
 
@@ -2371,16 +2312,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Dwj, Handler<>>("bxt_tas_editor_toggle_dwj");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Dbg, Handler<>>("bxt_tas_editor_toggle_dbg");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Dbc, Handler<>>("bxt_tas_editor_toggle_dbc");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Jumpbug, Handler<>>("bxt_tas_editor_toggle_jumpbug");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Ducktap, Handler<>>("bxt_tas_editor_toggle_ducktap");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Autojump, Handler<>>("bxt_tas_editor_toggle_autojump");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_Lgagst, Handler<>>("bxt_tas_editor_toggle_lgagst");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S22, Handler<>>("bxt_tas_editor_toggle_s22");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S13, Handler<>>("bxt_tas_editor_toggle_s13");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle_S03, Handler<>>("bxt_tas_editor_toggle_s03");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle, Handler<const char*>>("bxt_tas_editor_toggle");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save, Handler<>>("bxt_tas_editor_set_run_point_and_save");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Last_Point, Handler<>>("bxt_tas_editor_delete_last_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Point, Handler<>>("bxt_tas_editor_delete_point");

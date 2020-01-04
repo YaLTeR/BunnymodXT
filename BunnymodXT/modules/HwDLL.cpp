@@ -412,6 +412,10 @@ void HwDLL::Clear()
 	insideHost_Changelevel2_f = false;
 	dontStopAutorecord = false;
 	hltas_filename.clear();
+	newTASStartingCommand.clear();
+	newTASFilename.clear();
+	newTASResult.ClearProperties();
+	newTASResult.ClearFrames();
 
 	tas_editor_mode = TASEditorMode::DISABLED;
 	tas_editor_input = EditedInput();
@@ -1442,6 +1446,117 @@ struct HwDLL::Cmd_BXT_TAS_Split
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_New
+{
+	USAGE("Usage: bxt_tas_new <filename> <starting command> <FPS>\n Creates a new TAS script ready to use with the TAS editor.\n\n"
+	      " filename is the filename of the script that will be created. The .hltas extension will be added automatically.\n\n"
+	      " starting command is the command to launch the map or load the save which the TAS will start from, for example \"map c1a0\" or \"load tas-start\".\n\n"
+	      " FPS is the initial FPS for the TAS, for example 100 or 250 or 1000.\n\n"
+	      " Example:\n  bxt_tas_new full-game \"map c1a0\" 100\n");
+
+	static void handler(const char *filename, const char *command, int fps)
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		std::string frametime;
+		switch (fps) {
+			case 1000:
+				frametime = "0.001";
+				break;
+			case 500:
+				frametime = "0.002";
+				break;
+			case 250:
+				frametime = "0.004";
+				break;
+			case 100:
+				frametime = "0.010000001";
+				break;
+
+			default:
+				hw.ORIG_Con_Printf("You specified FPS = %d, however only FPS = 1000, 500, 250 or 100 are currently supported. If you need another FPS value, use one of the supported FPS values, and then change the frametime manually in the script");
+				if (fps > 0)
+					hw.ORIG_Con_Printf(" (you will want something around %f)", 1.f / fps);
+				hw.ORIG_Con_Printf(".\n");
+				return;
+		}
+
+		const auto bhopcap = CVars::bxt_bhopcap.GetBool();
+		// Assumption: FPS below 1000 is a hard limit, which means we definitely can't set it higher than 1000.
+		const auto zero_ms_ducktap = (fps == 1000);
+
+		std::string cmd(command);
+		hw.newTASStartingCommand = cmd;
+
+		cmd += "\n";
+		hw.ORIG_Cbuf_InsertText(cmd.c_str());
+
+		hw.newTASFilename = std::string(filename) + ".hltas";
+		hw.newTASResult.ClearProperties();
+		hw.newTASResult.ClearFrames();
+
+		hw.newTASResult.SetProperty("hlstrafe_version", "2");
+
+		if (zero_ms_ducktap)
+			hw.newTASResult.SetProperty("frametime0ms", "0.0000000001");
+
+		HLTAS::Frame frame;
+		frame.SetAlgorithm(HLTAS::StrafingAlgorithm::VECTORIAL);
+		frame.Comments = " Enable vectorial strafing.\n"
+		                 " This makes the camera movement very smooth, but reduces the FPS of the TAS editor.\n"
+		                 " To improve the TAS editor FPS, you can increase the 0.1 parameter\n"
+		                 " on the target_yaw line below (for example, to 1).\n"
+		                 " This will also increase the camera flickering, though.\n"
+		                 " You can also disable the vectorial strafing by removing this line.";
+		hw.newTASResult.PushFrame(frame);
+
+		frame = HLTAS::Frame();
+		HLTAS::AlgorithmParameters parameters;
+		parameters.Type = HLTAS::ConstraintsType::VELOCITY_AVG;
+		parameters.Parameters.VelocityAvg.Constraints = 0.1;
+		frame.SetAlgorithmParameters(parameters);
+		frame.Comments = " Vectorial strafing will make the player look towards where he's moving +- 0.1 degrees.";
+		hw.newTASResult.PushFrame(frame);
+
+		// The frame bulk for waiting for the load.
+		frame = HLTAS::Frame();
+		frame.Frametime = frametime;
+		frame.Comments = " Wait for the game to fully load.";
+		hw.newTASResult.PushFrame(frame);
+
+		// The actual first frame bulk with some reasonable defaults.
+		frame = HLTAS::Frame();
+		frame.Frametime = frametime;
+		frame.SetRepeats(1);
+		frame.Strafe = true;
+		frame.SetDir(HLTAS::StrafeDir::YAW);
+		frame.SetType(HLTAS::StrafeType::MAXACCEL);
+		frame.Lgagst = true;
+
+		frame.Comments = " The default settings are: \n"
+		                 " - s03 (speed increasing strafing),\n"
+		                 " - lgagst (leave ground at optimal speed),\n";
+
+		if (bhopcap) {
+			frame.Ducktap = true;
+
+			if (zero_ms_ducktap) {
+				frame.SetDucktap0ms(true);
+				frame.Comments += " - 0ms ducktap without ground friction (since the bunnyhop cap was detected and the FPS is 1000),\n";
+			} else {
+				frame.Comments += " - regular ducktap (since the bunnyhop cap was detected and the FPS is below 1000),\n";
+			}
+		} else {
+			frame.Autojump = true;
+			frame.Comments += " - autojump,\n";
+		}
+		frame.Dbc = true;
+		frame.Comments += " - automatic duck before collision.";
+		frame.Commands = "pause;bxt_tas_editor 1;bxt_freecam 1";
+		hw.newTASResult.PushFrame(frame);
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_Set_Health
 {
 	USAGE("Usage: bxt_ch_set_health <health>\n");
@@ -2316,6 +2431,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_LoadScript, Handler<const char *>>("bxt_tas_loadscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportScript, Handler<const char *>>("bxt_tas_exportscript");
 	wrapper::Add<Cmd_BXT_TAS_Split, Handler<const char *>>("bxt_tas_split");
+	wrapper::Add<Cmd_BXT_TAS_New, Handler<const char *, const char *, int>>("bxt_tas_new");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Health, Handler<float>>("bxt_ch_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Armor, Handler<float>>("bxt_ch_set_armor");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
@@ -3050,15 +3166,24 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		if (cmd_text->cursize)
 			ORIG_Cbuf_InsertText("wait\n");
 
-		if (!splitFilename.empty() && *state == 4) {
-			auto split_frame_index = currentRepeat > 0 ? currentFramebulk : (currentFramebulk > 0 ? currentFramebulk - 1 : currentFramebulk);
-			auto split_frame = input.GetFrame(split_frame_index);
+		if (*state == 4) {
+			if (!splitFilename.empty()) {
+				auto split_frame_index = currentRepeat > 0 ? currentFramebulk : (currentFramebulk > 0 ? currentFramebulk - 1 : currentFramebulk);
+				auto split_frame = input.GetFrame(split_frame_index);
 
-			HLTAS::Frame frame;
-			frame.SetRepeats(1);
-			frame.Frametime = split_frame.Frametime;
-			splitResult.InsertFrame(splitResult.GetFrames().size(), frame);
-		} else {
+				HLTAS::Frame frame;
+				frame.SetRepeats(1);
+				frame.Frametime = split_frame.Frametime;
+				splitResult.InsertFrame(splitResult.GetFrames().size(), frame);
+			}
+
+			if (!newTASFilename.empty()) {
+				auto& frame = newTASResult.GetFrame(2);
+				frame.SetRepeats(frame.GetRepeats() + 1);
+			}
+		}
+
+		if (*state == 5) {
 			if (!splitFilename.empty()) {
 				// Cancel the bxt_autopause that we added.
 				pauseOnTheFirstFrame = false;
@@ -3123,8 +3248,29 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 				splitResult.ClearFrames();
 			}
 
-			InsertCommands();
+			if (!newTASFilename.empty()) {
+				if (newTASResult.GetFrame(2).GetRepeats() == 0)
+					newTASResult.RemoveFrame(2);
+
+				std::ifstream file(newTASFilename);
+				if (file) {
+					ORIG_Con_Printf("Error creating the new TAS: the target .hltas script (%s) already exists. Please rename or remove it first.\n", newTASFilename.c_str());
+				} else {
+					auto error = newTASResult.Save(newTASFilename);
+					if (error.Code == HLTAS::ErrorCode::OK)
+						ORIG_Con_Printf("New TAS has been created successfully. Use this bind for launching it:\n bind / \"%s;bxt_tas_loadscript %s\"\n", newTASStartingCommand.c_str(), newTASFilename.c_str());
+					else
+						ORIG_Con_Printf("Error saving the new TAS: %s\n", HLTAS::GetErrorMessage(error).c_str());
+				}
+
+				newTASStartingCommand.clear();
+				newTASFilename.clear();
+				newTASResult.ClearProperties();
+				newTASResult.ClearFrames();
+			}
 		}
+
+		InsertCommands();
 
 		if (*state == 5 && pauseOnTheFirstFrame) {
 			ORIG_Cbuf_InsertText("setpause\n");

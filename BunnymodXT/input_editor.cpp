@@ -65,7 +65,8 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 			// Break early if already simulating for more than 10 milliseconds to keep the FPS high.
 			auto now = std::chrono::steady_clock::now();
 			auto simulating_for = now - start;
-			if (std::chrono::duration_cast<std::chrono::milliseconds>(simulating_for).count() > 10)
+			if (std::chrono::duration_cast<std::chrono::milliseconds>(simulating_for).count()
+					> CVars::bxt_tas_editor_simulate_for_ms.GetInt())
 				break;
 
 			// TODO:

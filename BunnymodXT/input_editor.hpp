@@ -14,9 +14,9 @@ struct EditedInput {
 	std::vector<float> normalzs;
 
 	// PlayerData after simulating every frame bulk.
-	std::vector<HLStrafe::PlayerData> saved_player;
+	std::vector<HLStrafe::PlayerData> player_datas;
 	// CurrentState after simulating every frame bulk.
-	std::vector<HLStrafe::CurrentState> saved_state;
+	std::vector<HLStrafe::CurrentState> strafe_states;
 
 	HLStrafe::MovementVars initial_movement_vars;
 

@@ -7,7 +7,7 @@ void EditedInput::initialize() {
 	auto& hw = HwDLL::GetInstance();
 
 	auto player = hw.GetPlayerData();
-	saved_player.push_back(player);
+	player_datas.push_back(player);
 	positions.push_back(player.Origin);
 	fractions.push_back(1);
 	normalzs.push_back(0);
@@ -16,22 +16,22 @@ void EditedInput::initialize() {
 	auto strafe_state = hw.StrafeState;
 	strafe_state.Jump = hw.currentKeys.Jump.IsDown();
 	strafe_state.Duck = hw.currentKeys.Duck.IsDown();
-	saved_state.push_back(strafe_state);
+	strafe_states.push_back(strafe_state);
 
 	initial_movement_vars = hw.GetMovementVars();
 }
 
 void EditedInput::simulate(SimulateFrameBulks what) {
 	// Erase all stale state.
-	auto first_frame_bulk = saved_player.size() - 1;
+	auto first_frame_bulk = player_datas.size() - 1;
 
 	// Return early if we don't need to simulate anything.
 	if (first_frame_bulk == frame_bulks.size())
 		return;
 
 	auto& hw = HwDLL::GetInstance();
-	auto player = saved_player[first_frame_bulk];
-	auto strafe_state = saved_state[first_frame_bulk];
+	auto player = player_datas[first_frame_bulk];
+	auto strafe_state = strafe_states[first_frame_bulk];
 	auto movement_vars = initial_movement_vars;
 
 	hw.StartTracing(true);
@@ -92,8 +92,8 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 		total_frames += frame_bulk.GetRepeats();
 		frame_bulk_starts.push_back(total_frames);
 
-		saved_player.push_back(player);
-		saved_state.push_back(strafe_state);
+		player_datas.push_back(player);
+		strafe_states.push_back(strafe_state);
 	}
 
 	hw.StopTracing();
@@ -123,8 +123,8 @@ void EditedInput::save() {
 
 void EditedInput::mark_as_stale(size_t frame_bulk_index) {
 	frame_bulk_starts.erase(frame_bulk_starts.begin() + frame_bulk_index + 1, frame_bulk_starts.end());
-	saved_player.erase(saved_player.begin() + frame_bulk_index + 1, saved_player.end());
-	saved_state.erase(saved_state.begin() + frame_bulk_index + 1, saved_state.end());
+	player_datas.erase(player_datas.begin() + frame_bulk_index + 1, player_datas.end());
+	strafe_states.erase(strafe_states.begin() + frame_bulk_index + 1, strafe_states.end());
 
 	auto first_frame = frame_bulk_starts[frame_bulk_starts.size() - 1];
 	positions.erase(positions.begin() + first_frame + 1, positions.end());

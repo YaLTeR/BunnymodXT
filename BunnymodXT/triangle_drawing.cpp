@@ -274,26 +274,36 @@ namespace TriangleDrawing
 		if (hw.tas_editor_mode == TASEditorMode::APPEND) {
 			auto last_frame_bulk_index = input.frame_bulks.size() - 1;
 			auto& last_frame_bulk = input.frame_bulks[last_frame_bulk_index];
-			auto last_frame_bulk_start = input.frame_bulk_starts[last_frame_bulk_index];
-			auto last_frame_bulk_origin = positions[last_frame_bulk_start];
-			auto dir = mouse_world - last_frame_bulk_origin;
-			auto yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
 
-			// Strafe towards the yaw.
-			last_frame_bulk.SetYaw(yaw);
-			input.mark_as_stale(last_frame_bulk_index);
-			input.simulate(SimulateFrameBulks::ALL);
+			size_t frame_limit = positions.size() - 1;
+			float distance_from_mouse = 0;
+			size_t frames_until_mouse = frame_limit;
+			size_t frames_until_non_ground_collision = frame_limit;
+			size_t next_frame_bulk_start_index = 1;
+			auto last_frame_bulk_start = frame_limit;
+
+			// If we finished simulating everything up to the last frame bulk.
+			if (input.frame_bulk_starts.size() > last_frame_bulk_index) {
+				last_frame_bulk_start = input.frame_bulk_starts[last_frame_bulk_index];
+				auto last_frame_bulk_origin = positions[last_frame_bulk_start];
+				distance_from_mouse = (mouse_world - last_frame_bulk_origin).Length2D();
+
+				auto dir = mouse_world - last_frame_bulk_origin;
+				auto yaw = atan2(dir.y, dir.x) * M_RAD2DEG;
+
+				// Strafe towards the yaw.
+				if (!last_frame_bulk.GetYawPresent() || last_frame_bulk.GetYaw() != yaw) {
+					last_frame_bulk.SetYaw(yaw);
+					input.mark_as_stale(last_frame_bulk_index);
+				}
+
+				input.simulate(SimulateFrameBulks::ALL);
+			}
 
 			// Draw the positions.
 			pTriAPI->RenderMode(kRenderTransColor);
 			pTriAPI->Color4f(0, 1, 0, 1);
 			TriangleUtils::DrawPyramid(pTriAPI, mouse_world, 10, 20);
-
-			size_t frame_limit = positions.size() - 1;
-			auto distance_from_mouse = (mouse_world - last_frame_bulk_origin).Length2D();
-			size_t frames_until_mouse = frame_limit;
-			size_t frames_until_non_ground_collision = frame_limit;
-			size_t next_frame_bulk_start_index = 1;
 
 			pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
 			for (size_t frame = 1; frame < positions.size(); ++frame) {
@@ -378,9 +388,16 @@ namespace TriangleDrawing
 
 			static size_t closest_edge_prev_frame_bulk_index = 0;
 
+			size_t frame_limit = positions.size() - 1;
+
 			if (left_pressed || right_pressed) {
 				// Don't change the selected frame bulk while dragging.
-				closest_edge_frame = frame_bulk_starts[closest_edge_prev_frame_bulk_index + 1];
+				if (closest_edge_prev_frame_bulk_index + 1 < frame_bulk_starts.size()) {
+					closest_edge_frame = frame_bulk_starts[closest_edge_prev_frame_bulk_index + 1];
+				} else {
+					// Set to frame_limit if the simulation hasn't finished yet.
+					closest_edge_frame = frame_limit;
+				}
 			} else {
 				for (size_t i = 1; i < frame_bulk_starts.size(); ++i) {
 					auto frame = frame_bulk_starts[i];
@@ -412,7 +429,6 @@ namespace TriangleDrawing
 					&& input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYawPresent())
 				saved_yaw = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYaw();
 
-			size_t frame_limit = positions.size() - 1;
 			size_t frames_until_non_ground_collision = frame_limit;
 
 			// Apply color to frame bulks right before and after the selected edge.
@@ -428,6 +444,9 @@ namespace TriangleDrawing
 
 			size_t closest_frame = 0;
 			float closest_frame_px_dist;
+
+			static Vector2D saved_lmb_diff;
+			static Vector2D saved_rmb_diff;
 
 			pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
 			for (size_t frame = 1; frame < positions.size(); ++frame) {
@@ -467,8 +486,7 @@ namespace TriangleDrawing
 				}
 
 				// Reset the coloring on the edge.
-				if (closest_edge_frame != 0
-						&& frame == frame_bulk_starts[closest_edge_prev_frame_bulk_index + 1])
+				if (closest_edge_frame != 0 && frame == closest_edge_frame)
 					frames_until_non_ground_collision = frame_limit;
 
 				if (frame == frame_bulk_starts[next_frame_bulk_start_index]) {
@@ -512,217 +530,218 @@ namespace TriangleDrawing
 
 						pTriAPI->Color4f(1, 1, 1, 1);
 
-						if (left_pressed) {
-							auto mouse_diff = mouse - left_pressed_at;
-
-							static Vector2D saved_diff;
-							if (left_got_pressed) {
-								Vector origin = positions[frame];
-								Vector screen_point;
-								pTriAPI->WorldToScreen(origin, screen_point);
-								auto screen_point_px = stw_to_pixels(screen_point.Make2D());
-								Vector prev_origin = positions[frame - 1];
-								Vector prev_screen_point;
-								pTriAPI->WorldToScreen(prev_origin, prev_screen_point);
-								auto prev_screen_point_px = stw_to_pixels(prev_screen_point.Make2D());
-								saved_diff = (screen_point_px - prev_screen_point_px).Normalize();
-							}
-
-							auto amount = DotProduct(mouse_diff, saved_diff) * 0.1f;
-							auto new_repeats = static_cast<unsigned>(std::max(1, saved_repeats + static_cast<int>(amount)));
-							if (frame_bulk.GetRepeats() != new_repeats) {
-								stale_index = closest_edge_prev_frame_bulk_index;
-								frame_bulk.SetRepeats(new_repeats);
-							}
+						if (left_got_pressed) {
+							Vector origin = positions[frame];
+							Vector screen_point;
+							pTriAPI->WorldToScreen(origin, screen_point);
+							auto screen_point_px = stw_to_pixels(screen_point.Make2D());
+							Vector prev_origin = positions[frame - 1];
+							Vector prev_screen_point;
+							pTriAPI->WorldToScreen(prev_origin, prev_screen_point);
+							auto prev_screen_point_px = stw_to_pixels(prev_screen_point.Make2D());
+							saved_lmb_diff = (screen_point_px - prev_screen_point_px).Normalize();
 						}
 
-						if (right_pressed && frame_bulk.GetYawPresent()) {
-							auto mouse_diff = mouse - right_pressed_at;
-
-							static Vector2D saved_diff;
-							if (right_got_pressed) {
-								Vector a_screen_point;
-								pTriAPI->WorldToScreen(a, a_screen_point);
-								auto a_screen_point_px = stw_to_pixels(a_screen_point.Make2D());
-								Vector b_screen_point;
-								pTriAPI->WorldToScreen(b, b_screen_point);
-								auto b_screen_point_px = stw_to_pixels(b_screen_point.Make2D());
-								saved_diff = (a_screen_point_px - b_screen_point_px).Normalize();
-							}
-
-							auto amount = DotProduct(mouse_diff, saved_diff) * 0.1f;
-							auto new_yaw = saved_yaw + amount;
-							if (frame_bulk.GetYaw() != new_yaw) {
-								stale_index = closest_edge_prev_frame_bulk_index;
-								frame_bulk.SetYaw(new_yaw);
-							}
-						}
-
-						if (hw.tas_editor_toggle_s03) {
-							if (!frame_bulk.Strafe
-									|| frame_bulk.GetDir() != HLTAS::StrafeDir::YAW
-									|| frame_bulk.GetType() != HLTAS::StrafeType::MAXACCEL) {
-								frame_bulk.Strafe = true;
-								frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
-								frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
-
-								if (!frame_bulk.GetYawPresent()) {
-									const auto& prev_frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
-									frame_bulk.SetYaw(prev_frame_bulk.GetYawPresent() ? prev_frame_bulk.GetYaw() : 0);
-								}
-							} else {
-								frame_bulk.Strafe = false;
-							}
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_s13) {
-							if (!frame_bulk.Strafe
-									|| frame_bulk.GetDir() != HLTAS::StrafeDir::YAW
-									|| frame_bulk.GetType() != HLTAS::StrafeType::MAXANGLE) {
-								frame_bulk.Strafe = true;
-								frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
-								frame_bulk.SetType(HLTAS::StrafeType::MAXANGLE);
-
-								if (!frame_bulk.GetYawPresent()) {
-									const auto& prev_frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
-									frame_bulk.SetYaw(prev_frame_bulk.GetYawPresent() ? prev_frame_bulk.GetYaw() : 0);
-								}
-							} else {
-								frame_bulk.Strafe = false;
-							}
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_s22) {
-							if (!frame_bulk.Strafe
-									|| frame_bulk.GetDir() != HLTAS::StrafeDir::YAW
-									|| frame_bulk.GetType() != HLTAS::StrafeType::MAXDECCEL) {
-								frame_bulk.Strafe = true;
-								frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
-								frame_bulk.SetType(HLTAS::StrafeType::MAXDECCEL);
-							} else {
-								frame_bulk.Strafe = false;
-							}
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_lgagst) {
-							if (frame_bulk.Lgagst) {
-								frame_bulk.Lgagst = false;
-							} else if (frame_bulk.Autojump || frame_bulk.Ducktap) {
-								frame_bulk.Lgagst = true;
-							}
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_autojump) {
-							frame_bulk.Autojump = !frame_bulk.Autojump;
-							if (frame_bulk.Autojump) {
-								if (frame_bulk.Ducktap)
-									frame_bulk.Ducktap = false;
-							} else {
-								frame_bulk.Lgagst = false;
-							}
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_ducktap) {
-							frame_bulk.Ducktap = !frame_bulk.Ducktap;
-							if (frame_bulk.Ducktap) {
-								frame_bulk.SetDucktap0ms(!hw.frametime0ms.empty());
-								if (frame_bulk.Autojump)
-									frame_bulk.Autojump = false;
-							} else {
-								frame_bulk.Lgagst = false;
-							}
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_jumpbug) {
-							frame_bulk.Jumpbug = !frame_bulk.Jumpbug;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_dbc) {
-							frame_bulk.Dbc = !frame_bulk.Dbc;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_dbg) {
-							frame_bulk.Dbg = !frame_bulk.Dbg;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_dwj) {
-							frame_bulk.Dwj = !frame_bulk.Dwj;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_forward) {
-							frame_bulk.Forward = !frame_bulk.Forward;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_left) {
-							frame_bulk.Left = !frame_bulk.Left;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_right) {
-							frame_bulk.Right = !frame_bulk.Right;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_back) {
-							frame_bulk.Back = !frame_bulk.Back;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_up) {
-							frame_bulk.Up = !frame_bulk.Up;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_down) {
-							frame_bulk.Down = !frame_bulk.Down;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_jump) {
-							frame_bulk.Jump = !frame_bulk.Jump;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_duck) {
-							frame_bulk.Duck = !frame_bulk.Duck;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_use) {
-							frame_bulk.Use = !frame_bulk.Use;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_attack1) {
-							frame_bulk.Attack1 = !frame_bulk.Attack1;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_attack2) {
-							frame_bulk.Attack2 = !frame_bulk.Attack2;
-							stale_index = closest_edge_prev_frame_bulk_index;
-						}
-
-						if (hw.tas_editor_toggle_reload) {
-							frame_bulk.Reload = !frame_bulk.Reload;
-							stale_index = closest_edge_prev_frame_bulk_index;
+						if (right_got_pressed) {
+							Vector a_screen_point;
+							pTriAPI->WorldToScreen(a, a_screen_point);
+							auto a_screen_point_px = stw_to_pixels(a_screen_point.Make2D());
+							Vector b_screen_point;
+							pTriAPI->WorldToScreen(b, b_screen_point);
+							auto b_screen_point_px = stw_to_pixels(b_screen_point.Make2D());
+							saved_rmb_diff = (a_screen_point_px - b_screen_point_px).Normalize();
 						}
 					} else {
 						pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
 					}
 
 					TriangleUtils::DrawLine(pTriAPI, a, b);
+				}
+			}
+
+			if (closest_edge_frame != 0) {
+				auto& frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
+				if (left_pressed) {
+					auto mouse_diff = mouse - left_pressed_at;
+
+					auto amount = DotProduct(mouse_diff, saved_lmb_diff) * 0.1f;
+					auto new_repeats = static_cast<unsigned>(std::max(1, saved_repeats + static_cast<int>(amount)));
+					if (frame_bulk.GetRepeats() != new_repeats) {
+						stale_index = closest_edge_prev_frame_bulk_index;
+						frame_bulk.SetRepeats(new_repeats);
+					}
+				}
+
+				if (right_pressed && frame_bulk.GetYawPresent()) {
+					auto mouse_diff = mouse - right_pressed_at;
+
+					auto amount = DotProduct(mouse_diff, saved_rmb_diff) * 0.1f;
+					auto new_yaw = saved_yaw + amount;
+					if (frame_bulk.GetYaw() != new_yaw) {
+						stale_index = closest_edge_prev_frame_bulk_index;
+						frame_bulk.SetYaw(new_yaw);
+					}
+				}
+
+				if (hw.tas_editor_toggle_s03) {
+					if (!frame_bulk.Strafe
+							|| frame_bulk.GetDir() != HLTAS::StrafeDir::YAW
+							|| frame_bulk.GetType() != HLTAS::StrafeType::MAXACCEL) {
+						frame_bulk.Strafe = true;
+						frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
+						frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
+
+						if (!frame_bulk.GetYawPresent()) {
+							const auto& prev_frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
+							frame_bulk.SetYaw(prev_frame_bulk.GetYawPresent() ? prev_frame_bulk.GetYaw() : 0);
+						}
+					} else {
+						frame_bulk.Strafe = false;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_s13) {
+					if (!frame_bulk.Strafe
+							|| frame_bulk.GetDir() != HLTAS::StrafeDir::YAW
+							|| frame_bulk.GetType() != HLTAS::StrafeType::MAXANGLE) {
+						frame_bulk.Strafe = true;
+						frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
+						frame_bulk.SetType(HLTAS::StrafeType::MAXANGLE);
+
+						if (!frame_bulk.GetYawPresent()) {
+							const auto& prev_frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
+							frame_bulk.SetYaw(prev_frame_bulk.GetYawPresent() ? prev_frame_bulk.GetYaw() : 0);
+						}
+					} else {
+						frame_bulk.Strafe = false;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_s22) {
+					if (!frame_bulk.Strafe
+							|| frame_bulk.GetDir() != HLTAS::StrafeDir::YAW
+							|| frame_bulk.GetType() != HLTAS::StrafeType::MAXDECCEL) {
+						frame_bulk.Strafe = true;
+						frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
+						frame_bulk.SetType(HLTAS::StrafeType::MAXDECCEL);
+					} else {
+						frame_bulk.Strafe = false;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_lgagst) {
+					if (frame_bulk.Lgagst) {
+						frame_bulk.Lgagst = false;
+					} else if (frame_bulk.Autojump || frame_bulk.Ducktap) {
+						frame_bulk.Lgagst = true;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_autojump) {
+					frame_bulk.Autojump = !frame_bulk.Autojump;
+					if (frame_bulk.Autojump) {
+						if (frame_bulk.Ducktap)
+							frame_bulk.Ducktap = false;
+					} else {
+						frame_bulk.Lgagst = false;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_ducktap) {
+					frame_bulk.Ducktap = !frame_bulk.Ducktap;
+					if (frame_bulk.Ducktap) {
+						frame_bulk.SetDucktap0ms(!hw.frametime0ms.empty());
+						if (frame_bulk.Autojump)
+							frame_bulk.Autojump = false;
+					} else {
+						frame_bulk.Lgagst = false;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_jumpbug) {
+					frame_bulk.Jumpbug = !frame_bulk.Jumpbug;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_dbc) {
+					frame_bulk.Dbc = !frame_bulk.Dbc;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_dbg) {
+					frame_bulk.Dbg = !frame_bulk.Dbg;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_dwj) {
+					frame_bulk.Dwj = !frame_bulk.Dwj;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_forward) {
+					frame_bulk.Forward = !frame_bulk.Forward;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_left) {
+					frame_bulk.Left = !frame_bulk.Left;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_right) {
+					frame_bulk.Right = !frame_bulk.Right;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_back) {
+					frame_bulk.Back = !frame_bulk.Back;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_up) {
+					frame_bulk.Up = !frame_bulk.Up;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_down) {
+					frame_bulk.Down = !frame_bulk.Down;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_jump) {
+					frame_bulk.Jump = !frame_bulk.Jump;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_duck) {
+					frame_bulk.Duck = !frame_bulk.Duck;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_use) {
+					frame_bulk.Use = !frame_bulk.Use;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_attack1) {
+					frame_bulk.Attack1 = !frame_bulk.Attack1;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_attack2) {
+					frame_bulk.Attack2 = !frame_bulk.Attack2;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_reload) {
+					frame_bulk.Reload = !frame_bulk.Reload;
+					stale_index = closest_edge_prev_frame_bulk_index;
 				}
 			}
 

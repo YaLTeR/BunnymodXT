@@ -19,6 +19,11 @@ void EditedInput::initialize() {
 	strafe_states.push_back(strafe_state);
 
 	initial_movement_vars = hw.GetMovementVars();
+
+	saved_player = player;
+	saved_state = strafe_state;
+	saved_frame = 0;
+	saved_next_frame_is_0ms = false;
 }
 
 void EditedInput::simulate(SimulateFrameBulks what) {
@@ -30,8 +35,6 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 		return;
 
 	auto& hw = HwDLL::GetInstance();
-	auto player = player_datas[first_frame_bulk];
-	auto strafe_state = strafe_states[first_frame_bulk];
 	auto movement_vars = initial_movement_vars;
 
 	hw.StartTracing(true);
@@ -46,6 +49,8 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 
 	size_t total_frames = frame_bulk_starts[frame_bulk_starts.size() - 1];
 
+	auto start = std::chrono::steady_clock::now();
+
 	for (size_t index = first_frame_bulk; index < frame_bulks.size(); ++index) {
 		if (what == SimulateFrameBulks::ALL_EXCEPT_LAST && index == frame_bulks.size() - 1)
 			break;
@@ -56,44 +61,54 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 		const auto frametime = static_cast<float>(static_cast<float>(std::floor(host_frametime * 1000)) * 0.001);
 		movement_vars.Frametime = frametime;
 
-		for (size_t frame = 0; frame < frame_bulk.GetRepeats(); ++frame) {
+		for (; saved_frame < frame_bulk.GetRepeats(); ++saved_frame) {
+			// Break early if already simulating for more than 10 milliseconds to keep the FPS high.
+			auto now = std::chrono::steady_clock::now();
+			auto simulating_for = now - start;
+			if (std::chrono::duration_cast<std::chrono::milliseconds>(simulating_for).count() > 10)
+				break;
+
+			// TODO:
+			// - assumes frametime0ms is high enough to always give zero frametime
+			//   (this is how it should be set up anyway)
+			if (saved_next_frame_is_0ms)
+				movement_vars.Frametime = 0;
+			else
+				movement_vars.Frametime = frametime;
+
 			auto processed_frame = HLStrafe::MainFunc(
-				player,
+				saved_player,
 				movement_vars,
 				frame_bulk,
-				strafe_state,
+				saved_state,
 				hw.Buttons,
 				hw.ButtonsPresent,
 				trace_func,
 				hw.hlstrafe_version
 			);
 
-			player = processed_frame.NewPlayerData;
+			saved_player = processed_frame.NewPlayerData;
+			saved_next_frame_is_0ms = processed_frame.NextFrameIs0ms;
 
-			positions.push_back(player.Origin);
+			positions.push_back(saved_player.Origin);
 			fractions.push_back(processed_frame.fractions[0]);
 			normalzs.push_back(processed_frame.normalzs[0]);
 
-			// TODO:
-			// - assumes frametime0ms is high enough to always give zero frametime
-			//   (this is how it should be set up anyway)
-			// - assumes NextFrameIs0ms can't happen on the last frame of a bulk
-			//   (rare, also not sure if handled correctly by the actual TAS running code)
-			if (processed_frame.NextFrameIs0ms)
-				movement_vars.Frametime = 0;
-			else
-				movement_vars.Frametime = frametime;
-
 			// PredictThis is needed because 0ms frames are batched client-side. Since we're
 			// re-using the HLStrafe prediction, here they are already predicted.
-			strafe_state.PredictThis = HLStrafe::State0ms::NOTHING;
+			saved_state.PredictThis = HLStrafe::State0ms::NOTHING;
 		}
+
+		// If we broke out early.
+		if (saved_frame < frame_bulk.GetRepeats())
+			break;
 
 		total_frames += frame_bulk.GetRepeats();
 		frame_bulk_starts.push_back(total_frames);
 
-		player_datas.push_back(player);
-		strafe_states.push_back(strafe_state);
+		player_datas.push_back(saved_player);
+		strafe_states.push_back(saved_state);
+		saved_frame = 0;
 	}
 
 	hw.StopTracing();
@@ -122,6 +137,9 @@ void EditedInput::save() {
 }
 
 void EditedInput::mark_as_stale(size_t frame_bulk_index) {
+	if (frame_bulk_index == frame_bulks.size())
+		return;
+
 	frame_bulk_starts.erase(frame_bulk_starts.begin() + frame_bulk_index + 1, frame_bulk_starts.end());
 	player_datas.erase(player_datas.begin() + frame_bulk_index + 1, player_datas.end());
 	strafe_states.erase(strafe_states.begin() + frame_bulk_index + 1, strafe_states.end());
@@ -130,4 +148,9 @@ void EditedInput::mark_as_stale(size_t frame_bulk_index) {
 	positions.erase(positions.begin() + first_frame + 1, positions.end());
 	fractions.erase(fractions.begin() + first_frame + 1, fractions.end());
 	normalzs.erase(normalzs.begin() + first_frame + 1, normalzs.end());
+
+	saved_player = *(player_datas.cend() - 1);
+	saved_state = *(strafe_states.cend() - 1);
+	saved_frame = 0;
+	saved_next_frame_is_0ms = false; // TODO: needs to be restored from simulating previous frame bulks.
 }

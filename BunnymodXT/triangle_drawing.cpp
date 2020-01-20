@@ -275,12 +275,8 @@ namespace TriangleDrawing
 			auto last_frame_bulk_index = input.frame_bulks.size() - 1;
 			auto& last_frame_bulk = input.frame_bulks[last_frame_bulk_index];
 
-			size_t frame_limit = positions.size() - 1;
 			float distance_from_mouse = 0;
-			size_t frames_until_mouse = frame_limit;
-			size_t frames_until_non_ground_collision = frame_limit;
-			size_t next_frame_bulk_start_index = 1;
-			auto last_frame_bulk_start = frame_limit;
+			auto last_frame_bulk_start = positions.size() - 1;
 
 			if (input.simulated_until_last_frame_bulk()) {
 				last_frame_bulk_start = input.frame_bulk_starts[last_frame_bulk_index];
@@ -298,6 +294,11 @@ namespace TriangleDrawing
 
 				input.simulate(SimulateFrameBulks::ALL);
 			}
+
+			size_t frame_limit = positions.size() - 1;
+			size_t frames_until_mouse = frame_limit;
+			size_t frames_until_non_ground_collision = frame_limit;
+			size_t next_frame_bulk_start_index = 1;
 
 			// Draw the positions.
 			pTriAPI->RenderMode(kRenderTransColor);

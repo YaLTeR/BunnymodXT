@@ -459,6 +459,7 @@ void HwDLL::Clear()
 		totalFramebulks = 0;
 		totalFrames = 0;
 		StrafeState = HLStrafe::CurrentState();
+		PrevStrafeState = HLStrafe::CurrentState();
 		SharedRNGSeedPresent = false;
 		SharedRNGSeed = 0;
 		ButtonsPresent = false;
@@ -1286,6 +1287,7 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		hw.currentFramebulk = 0;
 		hw.currentRepeat = 0;
 		hw.StrafeState = HLStrafe::CurrentState();
+		hw.PrevStrafeState = HLStrafe::CurrentState();
 		hw.ButtonsPresent = false;
 		hw.demoName.clear();
 		hw.saveName.clear();
@@ -2578,6 +2580,7 @@ void HwDLL::InsertCommands()
 
 				StrafeState.Jump = currentKeys.Jump.IsDown();
 				StrafeState.Duck = currentKeys.Duck.IsDown();
+				PrevStrafeState = StrafeState;
 				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), hlstrafe_version);
 
 				f.ResetAutofuncs();

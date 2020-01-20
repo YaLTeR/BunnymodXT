@@ -1562,7 +1562,7 @@ struct HwDLL::Cmd_BXT_TAS_New
 		}
 		frame.Dbc = true;
 		frame.Comments += " - automatic duck before collision.";
-		frame.Commands = "pause;bxt_tas_editor 1;bxt_freecam 1";
+		frame.Commands = "pause;bxt_tas_editor 1";
 		hw.newTASResult.PushFrame(frame);
 	}
 };
@@ -2302,6 +2302,9 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save
 void HwDLL::SetTASEditorMode(TASEditorMode mode)
 {
 	auto& cl = ClientDLL::GetInstance();
+
+	if (mode != TASEditorMode::DISABLED)
+		SetFreeCam(true);
 
 	if (tas_editor_mode == TASEditorMode::DISABLED && mode != TASEditorMode::DISABLED) {
 		tas_editor_input = EditedInput();

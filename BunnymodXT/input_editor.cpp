@@ -22,7 +22,6 @@ void EditedInput::initialize() {
 }
 
 void EditedInput::simulate(SimulateFrameBulks what) {
-	// Erase all stale state.
 	auto first_frame_bulk = frame_bulk_starts.size() - 1;
 
 	// Return early if we don't need to simulate anything.
@@ -42,7 +41,7 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 		std::placeholders::_3
 	);
 
-	size_t total_frames = frame_bulk_starts[frame_bulk_starts.size() - 1];
+	size_t total_frames = frame_bulk_starts[first_frame_bulk];
 
 	auto player = *(player_datas.cend() - 1);
 	auto strafe_state = *(strafe_states.cend() - 1);
@@ -60,9 +59,10 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 		const auto frametime = static_cast<float>(static_cast<float>(std::floor(host_frametime * 1000)) * 0.001);
 		movement_vars.Frametime = frametime;
 
-		size_t frame = player_datas.size() - 1 - *(frame_bulk_starts.cend() - 1);
+		size_t frame = player_datas.size() - 1 - total_frames;
 		for (; frame < frame_bulk.GetRepeats(); ++frame) {
-			// Break early if already simulating for more than 10 milliseconds to keep the FPS high.
+			// Break early if already simulating for more than a set number of milliseconds
+			// to keep the FPS high.
 			auto now = std::chrono::steady_clock::now();
 			auto simulating_for = now - start;
 			if (std::chrono::duration_cast<std::chrono::milliseconds>(simulating_for).count()

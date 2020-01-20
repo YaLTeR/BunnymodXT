@@ -15,7 +15,6 @@ namespace CVars
 	CVarWrapper bxt_interprocess_enable("bxt_interprocess_enable", "0");
 	CVarWrapper bxt_fade_remove("bxt_fade_remove", "0");
 	CVarWrapper bxt_stop_demo_on_changelevel("bxt_stop_demo_on_changelevel", "0");
-	CVarWrapper bxt_tas_editor_append_frames("bxt_tas_editor_append_frames", "150");
 	CVarWrapper bxt_tas_editor_simulate_for_ms("bxt_tas_editor_simulate_for_ms", "40");
 	CVarWrapper bxt_tas_norefresh_until_last_frames("bxt_tas_norefresh_until_last_frames", "0");
 
@@ -111,7 +110,6 @@ namespace CVars
 		&bxt_interprocess_enable,
 		&bxt_fade_remove,
 		&bxt_stop_demo_on_changelevel,
-		&bxt_tas_editor_append_frames,
 		&bxt_tas_editor_simulate_for_ms,
 		&bxt_tas_norefresh_until_last_frames,
 		&con_color,

@@ -2360,7 +2360,7 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 			frame_bulk.Frametime = oss.str();
 		}
 
-		frame_bulk.SetRepeats(std::max(1, CVars::bxt_tas_editor_append_frames.GetInt()));
+		frame_bulk.SetRepeats(1);
 		tas_editor_input.frame_bulks.push_back(frame_bulk);
 	}
 
@@ -2419,7 +2419,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_interprocess_enable);
 	RegisterCVar(CVars::bxt_fade_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
-	RegisterCVar(CVars::bxt_tas_editor_append_frames);
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
 	RegisterCVar(CVars::bxt_tas_norefresh_until_last_frames);
 	RegisterCVar(CVars::bxt_wallhack);

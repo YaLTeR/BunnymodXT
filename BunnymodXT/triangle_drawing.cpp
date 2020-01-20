@@ -372,6 +372,16 @@ namespace TriangleDrawing
 				last_frame_bulk.SetRepeats(frames_until_mouse - last_frame_bulk_start);
 				input.mark_as_stale(last_frame_bulk_index);
 				input.frame_bulks.push_back(new_frame_bulk);
+			} else if (frames_until_mouse != frame_limit || input.simulated_all_frames()) {
+				auto host_frametime = std::strtof(last_frame_bulk.Frametime.c_str(), nullptr);
+				auto frametime = static_cast<float>(static_cast<float>(std::floor(host_frametime * 1000)) * 0.001);
+				auto frames_past_mouse = static_cast<unsigned>(1. / frametime); // Simulate 1 second past mouse.
+				auto repeats = frames_until_mouse - last_frame_bulk_start + frames_past_mouse;
+
+				if (last_frame_bulk.GetRepeats() != repeats) {
+					last_frame_bulk.SetRepeats(repeats);
+					input.mark_as_stale(last_frame_bulk_index);
+				}
 			}
 		} else {
 			// TASEditorMode::EDIT

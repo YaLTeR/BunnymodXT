@@ -264,7 +264,7 @@ namespace TriangleDrawing
 		Vector mouse_world(tr.EndPos);
 
 		auto& input = hw.tas_editor_input;
-		const auto& positions = input.positions;
+		const auto& player_datas = input.player_datas;
 		const auto& fractions = input.fractions;
 		const auto& normalzs = input.normalzs;
 		const auto& frame_bulk_starts = input.frame_bulk_starts;
@@ -276,11 +276,11 @@ namespace TriangleDrawing
 			auto& last_frame_bulk = input.frame_bulks[last_frame_bulk_index];
 
 			float distance_from_mouse = 0;
-			auto last_frame_bulk_start = positions.size() - 1;
+			auto last_frame_bulk_start = player_datas.size() - 1;
 
 			if (input.simulated_until_last_frame_bulk()) {
 				last_frame_bulk_start = input.frame_bulk_starts[last_frame_bulk_index];
-				auto last_frame_bulk_origin = positions[last_frame_bulk_start];
+				auto last_frame_bulk_origin = Vector(player_datas[last_frame_bulk_start].Origin);
 				distance_from_mouse = (mouse_world - last_frame_bulk_origin).Length2D();
 
 				auto dir = mouse_world - last_frame_bulk_origin;
@@ -295,7 +295,7 @@ namespace TriangleDrawing
 				input.simulate(SimulateFrameBulks::ALL);
 			}
 
-			size_t frame_limit = positions.size() - 1;
+			size_t frame_limit = player_datas.size() - 1;
 			size_t frames_until_mouse = frame_limit;
 			size_t frames_until_non_ground_collision = frame_limit;
 			size_t next_frame_bulk_start_index = 1;
@@ -306,8 +306,8 @@ namespace TriangleDrawing
 			TriangleUtils::DrawPyramid(pTriAPI, mouse_world, 10, 20);
 
 			pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
-			for (size_t frame = 1; frame < positions.size(); ++frame) {
-				const auto& origin = positions[frame];
+			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
+				const auto origin = Vector(player_datas[frame].Origin);
 
 				if (frame > last_frame_bulk_start) {
 					auto new_distance_from_mouse = (mouse_world - origin).Length2D();
@@ -336,14 +336,15 @@ namespace TriangleDrawing
 					}
 				}
 
-				TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
+				const auto prev_origin = Vector(player_datas[frame - 1].Origin);
+				TriangleUtils::DrawLine(pTriAPI, prev_origin, origin);
 
 				// Draw a small perpendicular line between frame bulks.
 				if (frame == frame_bulk_starts[next_frame_bulk_start_index]) {
 					if (next_frame_bulk_start_index + 1 != frame_bulk_starts.size())
 						++next_frame_bulk_start_index;
 
-					auto line = (positions[frame] - positions[frame - 1]).Normalize();
+					auto line = (origin - prev_origin).Normalize();
 
 					Vector perpendicular;
 					if (line.x == 0 && line.y == 0)
@@ -356,7 +357,7 @@ namespace TriangleDrawing
 						perpendicular = Vector(1, -line.x / line.y, 0).Normalize();
 
 					perpendicular *= 5;
-					Vector a = positions[frame] + perpendicular, b = positions[frame] - perpendicular;
+					Vector a = origin + perpendicular, b = origin - perpendicular;
 					TriangleUtils::DrawLine(pTriAPI, a, b);
 				}
 			}
@@ -398,7 +399,7 @@ namespace TriangleDrawing
 
 			static size_t closest_edge_prev_frame_bulk_index = 0;
 
-			size_t frame_limit = positions.size() - 1;
+			size_t frame_limit = player_datas.size() - 1;
 
 			if (left_pressed || right_pressed) {
 				// Don't change the selected frame bulk while dragging.
@@ -412,11 +413,12 @@ namespace TriangleDrawing
 				for (size_t i = 1; i < frame_bulk_starts.size(); ++i) {
 					auto frame = frame_bulk_starts[i];
 
-					auto disp = positions[frame] - view;
+					const auto origin = Vector(player_datas[frame].Origin);
+					auto disp = origin - view;
 					if (DotProduct(forward, disp) > 0) {
-						Vector origin = positions[frame];
+						Vector origin_ = origin;
 						Vector screen_point;
-						pTriAPI->WorldToScreen(origin, screen_point);
+						pTriAPI->WorldToScreen(origin_, screen_point);
 						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 						auto dist = (screen_point_px - mouse).Length();
 
@@ -459,7 +461,9 @@ namespace TriangleDrawing
 			static Vector2D saved_rmb_diff;
 
 			pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
-			for (size_t frame = 1; frame < positions.size(); ++frame) {
+			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
+				const auto origin = Vector(player_datas[frame].Origin);
+
 				if (frame > color_from && frame <= color_to) {
 					// If we bumped into something along the way
 					if (frames_until_non_ground_collision == frame_limit && fractions[frame] != 1) {
@@ -476,15 +480,16 @@ namespace TriangleDrawing
 					}
 				}
 
-				TriangleUtils::DrawLine(pTriAPI, positions[frame - 1], positions[frame]);
+				const auto prev_origin = Vector(player_datas[frame - 1].Origin);
+				TriangleUtils::DrawLine(pTriAPI, prev_origin, origin);
 
 				// If we're inserting, we need to find the closest frame.
 				if (hw.tas_editor_insert_point) {
-					auto disp = positions[frame] - view;
+					auto disp = origin - view;
 					if (DotProduct(forward, disp) > 0) {
-						Vector origin = positions[frame];
+						Vector origin_ = origin;
 						Vector screen_point;
-						pTriAPI->WorldToScreen(origin, screen_point);
+						pTriAPI->WorldToScreen(origin_, screen_point);
 						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 						auto dist = (screen_point_px - mouse).Length();
 
@@ -503,7 +508,7 @@ namespace TriangleDrawing
 					if (next_frame_bulk_start_index + 1 != frame_bulk_starts.size())
 						++next_frame_bulk_start_index;
 
-					auto line = (positions[frame] - positions[frame - 1]).Normalize();
+					auto line = (origin - prev_origin).Normalize();
 
 					Vector perpendicular;
 					if (line.x == 0 && line.y == 0)
@@ -524,7 +529,7 @@ namespace TriangleDrawing
 					}
 
 					perpendicular *= 5;
-					Vector a = positions[frame] + perpendicular, b = positions[frame] - perpendicular;
+					Vector a = origin + perpendicular, b = origin - perpendicular;
 
 					if (frame == closest_edge_frame) {
 						auto& frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
@@ -535,19 +540,19 @@ namespace TriangleDrawing
 							auto yaw_dir = Vector(static_cast<float>(std::cos(yaw)), static_cast<float>(std::sin(yaw)), 0);
 							yaw_dir *= 20;
 							pTriAPI->Color4f(0.5, 0.5, 1, 1);
-							TriangleUtils::DrawLine(pTriAPI, positions[frame] - yaw_dir, positions[frame] + yaw_dir);
+							TriangleUtils::DrawLine(pTriAPI, origin - yaw_dir, origin + yaw_dir);
 						}
 
 						pTriAPI->Color4f(1, 1, 1, 1);
 
 						if (left_got_pressed) {
-							Vector origin = positions[frame];
+							Vector origin_ = origin;
 							Vector screen_point;
-							pTriAPI->WorldToScreen(origin, screen_point);
+							pTriAPI->WorldToScreen(origin_, screen_point);
 							auto screen_point_px = stw_to_pixels(screen_point.Make2D());
-							Vector prev_origin = positions[frame - 1];
+							Vector prev_origin_ = prev_origin;
 							Vector prev_screen_point;
-							pTriAPI->WorldToScreen(prev_origin, prev_screen_point);
+							pTriAPI->WorldToScreen(prev_origin_, prev_screen_point);
 							auto prev_screen_point_px = stw_to_pixels(prev_screen_point.Make2D());
 							saved_lmb_diff = (screen_point_px - prev_screen_point_px).Normalize();
 						}

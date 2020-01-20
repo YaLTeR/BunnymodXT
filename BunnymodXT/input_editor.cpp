@@ -13,9 +13,9 @@ void EditedInput::initialize() {
 	frame_bulk_starts.push_back(0);
 	next_frame_is_0mss.push_back(0);
 
-	auto strafe_state = hw.StrafeState;
-	strafe_state.Jump = hw.currentKeys.Jump.IsDown();
-	strafe_state.Duck = hw.currentKeys.Duck.IsDown();
+	// TODO: replace with hw.StrafeState when the
+	// one-frame-being-run-from-tas-editor-enable-frame-bulk issue is solved.
+	auto strafe_state = hw.PrevStrafeState;
 	strafe_states.push_back(strafe_state);
 
 	initial_movement_vars = hw.GetMovementVars();

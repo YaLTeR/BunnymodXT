@@ -41,4 +41,7 @@ struct EditedInput {
 	// This means that frame_bulk_starts and other arrays contain entries corresponding to the state
 	// right before the last frame bulk.
 	bool simulated_until_last_frame_bulk() const;
+
+	// Returns true if all frames were simulated.
+	bool simulated_all_frames() const;
 };

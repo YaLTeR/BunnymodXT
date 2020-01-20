@@ -160,3 +160,8 @@ bool EditedInput::simulated_until_last_frame_bulk() const {
 	// >= because frame_bulk_starts also contains the total frame count in the end.
 	return frame_bulk_starts.size() >= frame_bulks.size();
 }
+
+bool EditedInput::simulated_all_frames() const {
+	// If we have the total frame count, then we simulated all frames.
+	return frame_bulk_starts.size() == frame_bulks.size() + 1;
+}

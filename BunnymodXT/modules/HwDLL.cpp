@@ -3551,7 +3551,7 @@ void HwDLL::FreeCamTick()
 	if (buttons & IN_MOVELEFT)
 		direction += -right;
 
-	auto frametime = GetFrameTime();
+	auto frametime = static_cast<float>(*host_frametime);
 	auto step = frametime * 320;
 
 	// No easy access to +speed unfortunately.

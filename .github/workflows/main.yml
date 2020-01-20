@@ -14,7 +14,9 @@ jobs:
       run: git submodule update --init --recursive
 
     - name: Install dependencies
-      run: sudo apt install g++-multilib libboost-dev rapidjson-dev mesa-common-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install g++-multilib libboost-dev rapidjson-dev mesa-common-dev
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1

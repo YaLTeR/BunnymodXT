@@ -1366,7 +1366,7 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 
 			auto norefresh_until_frames = CVars::bxt_tas_norefresh_until_last_frames.GetInt();
 			if (norefresh_until_frames > 0 && hw.totalFrames > static_cast<size_t>(norefresh_until_frames))
-				CVars::_bxt_norefresh.Set("1");
+				hw.ORIG_Cbuf_InsertText("_bxt_norefresh 1\n");
 
 			// Reset the frametime remainder automatically upon starting a script.
 			// Fairly certain that's what you want in 100% of cases.
@@ -2319,9 +2319,7 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 			}
 
 			runningFrames = false;
-			CVars::_bxt_norefresh.Set("0");
-			ORIG_Cbuf_InsertText("host_framerate 0\n");
-			CVars::_bxt_min_frametime.Set("0");
+			ORIG_Cbuf_InsertText("host_framerate 0;_bxt_norefresh 0;_bxt_min_frametime 0\n");
 		} else {
 			// If invoked outside of a script, make sure the hlstrafe version is latest.
 			hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
@@ -2730,7 +2728,7 @@ void HwDLL::InsertCommands()
 				--totalFrames;
 				auto norefresh_until_frames = CVars::bxt_tas_norefresh_until_last_frames.GetInt();
 				if (norefresh_until_frames > 0 && totalFrames <= static_cast<size_t>(norefresh_until_frames))
-					CVars::_bxt_norefresh.Set("0");
+					ORIG_Cbuf_InsertText("_bxt_norefresh 0\n");
 
 				if (p.NextFrameIs0ms) {
 					if (!thisFrameIs0ms) {
@@ -2830,8 +2828,7 @@ void HwDLL::InsertCommands()
 		}
 	} else {
 		if (wasRunningFrames) {
-			ORIG_Cbuf_InsertText("host_framerate 0\n");
-			CVars::_bxt_min_frametime.Set("0");
+			ORIG_Cbuf_InsertText("host_framerate 0;_bxt_min_frametime 0\n");
 
 			if (!demoName.empty()) {
 				ORIG_Cbuf_InsertText("stop\n");

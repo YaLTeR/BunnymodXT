@@ -136,12 +136,12 @@ void EditedInput::save() {
 }
 
 void EditedInput::mark_as_stale(size_t frame_bulk_index) {
-	if (frame_bulk_index == frame_bulks.size())
+	if (frame_bulk_index > frame_bulk_starts.size())
 		return;
 
 	frame_bulk_starts.erase(frame_bulk_starts.begin() + frame_bulk_index + 1, frame_bulk_starts.end());
 
-	auto first_frame = frame_bulk_starts[frame_bulk_starts.size() - 1];
+	auto first_frame = std::min(*(frame_bulk_starts.cend() - 1), player_datas.size() - 1);
 	player_datas.erase(player_datas.begin() + first_frame + 1, player_datas.end());
 	strafe_states.erase(strafe_states.begin() + first_frame + 1, strafe_states.end());
 	fractions.erase(fractions.begin() + first_frame + 1, fractions.end());

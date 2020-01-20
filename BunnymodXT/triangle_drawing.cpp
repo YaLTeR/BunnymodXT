@@ -452,7 +452,7 @@ namespace TriangleDrawing
 					color_to = frame_bulk_starts[closest_edge_prev_frame_bulk_index + 2];
 			}
 
-			size_t stale_index = input.frame_bulks.size();
+			size_t stale_index = std::numeric_limits<size_t>::max();
 
 			size_t closest_frame = 0;
 			float closest_frame_px_dist;

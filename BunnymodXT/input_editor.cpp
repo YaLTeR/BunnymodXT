@@ -155,3 +155,8 @@ void EditedInput::mark_as_stale(size_t frame_bulk_index) {
 	saved_frame = 0;
 	saved_next_frame_is_0ms = false; // TODO: needs to be restored from simulating previous frame bulks.
 }
+
+bool EditedInput::simulated_until_last_frame_bulk() const {
+	// >= because frame_bulk_starts also contains the total frame count in the end.
+	return frame_bulk_starts.size() >= frame_bulks.size();
+}

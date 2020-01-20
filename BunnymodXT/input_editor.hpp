@@ -35,4 +35,10 @@ struct EditedInput {
 	void simulate(SimulateFrameBulks what);
 	void save();
 	void mark_as_stale(size_t frame_bulk_index);
+
+	// Returns true if all frames until the last frame bulk were simulated.
+	//
+	// This means that frame_bulk_starts and other arrays contain entries corresponding to the state
+	// right before the last frame bulk.
+	bool simulated_until_last_frame_bulk() const;
 };

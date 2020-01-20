@@ -282,8 +282,7 @@ namespace TriangleDrawing
 			size_t next_frame_bulk_start_index = 1;
 			auto last_frame_bulk_start = frame_limit;
 
-			// If we finished simulating everything up to the last frame bulk.
-			if (input.frame_bulk_starts.size() > last_frame_bulk_index) {
+			if (input.simulated_until_last_frame_bulk()) {
 				last_frame_bulk_start = input.frame_bulk_starts[last_frame_bulk_index];
 				auto last_frame_bulk_origin = positions[last_frame_bulk_start];
 				distance_from_mouse = (mouse_world - last_frame_bulk_origin).Length2D();

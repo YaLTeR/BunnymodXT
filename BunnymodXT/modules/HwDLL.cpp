@@ -2321,6 +2321,7 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 			runningFrames = false;
 			CVars::_bxt_norefresh.Set("0");
 			ORIG_Cbuf_InsertText("host_framerate 0\n");
+			CVars::_bxt_min_frametime.Set("0");
 		} else {
 			// If invoked outside of a script, make sure the hlstrafe version is latest.
 			hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
@@ -2830,6 +2831,7 @@ void HwDLL::InsertCommands()
 	} else {
 		if (wasRunningFrames) {
 			ORIG_Cbuf_InsertText("host_framerate 0\n");
+			CVars::_bxt_min_frametime.Set("0");
 
 			if (!demoName.empty()) {
 				ORIG_Cbuf_InsertText("stop\n");

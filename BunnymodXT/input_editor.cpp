@@ -88,6 +88,22 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 				hw.hlstrafe_version
 			);
 
+			// printf(
+			//     "origin %.8f %.8f %.8f => %.8f %.8f %.8f vel %.8f %.8f %.8f => %.8f %.8f %.8f\n",
+			//     player.Origin[0],
+			//     player.Origin[1],
+			//     player.Origin[2],
+			//     processed_frame.NewPlayerData.Origin[0],
+			//     processed_frame.NewPlayerData.Origin[1],
+			//     processed_frame.NewPlayerData.Origin[2],
+			//     player.Velocity[0],
+			//     player.Velocity[1],
+			//     player.Velocity[2],
+			//     processed_frame.NewPlayerData.Velocity[0],
+			//     processed_frame.NewPlayerData.Velocity[1],
+			//     processed_frame.NewPlayerData.Velocity[2]
+			// );
+
 			player = processed_frame.NewPlayerData;
 			next_frame_is_0ms = processed_frame.NextFrameIs0ms;
 

@@ -370,19 +370,14 @@ namespace TriangleDrawing
 				input.save();
 			} else if (right_got_pressed) {
 				auto new_frame_bulk = last_frame_bulk;
-				last_frame_bulk.SetRepeats(frames_until_mouse - last_frame_bulk_start);
-				input.mark_as_stale(last_frame_bulk_index);
+				input.set_repeats(last_frame_bulk_index, frames_until_mouse - last_frame_bulk_start);
 				input.frame_bulks.push_back(new_frame_bulk);
 			} else if (frames_until_mouse != frame_limit || input.simulated_all_frames()) {
 				auto host_frametime = std::strtof(last_frame_bulk.Frametime.c_str(), nullptr);
 				auto frametime = static_cast<float>(static_cast<float>(std::floor(host_frametime * 1000)) * 0.001);
 				auto frames_past_mouse = static_cast<unsigned>(1. / frametime); // Simulate 1 second past mouse.
 				auto repeats = frames_until_mouse - last_frame_bulk_start + frames_past_mouse;
-
-				if (last_frame_bulk.GetRepeats() != repeats) {
-					last_frame_bulk.SetRepeats(repeats);
-					input.mark_as_stale(last_frame_bulk_index);
-				}
+				input.set_repeats(last_frame_bulk_index, repeats);
 			}
 		} else {
 			// TASEditorMode::EDIT
@@ -581,10 +576,7 @@ namespace TriangleDrawing
 
 					auto amount = DotProduct(mouse_diff, saved_lmb_diff) * 0.1f;
 					auto new_repeats = static_cast<unsigned>(std::max(1, saved_repeats + static_cast<int>(amount)));
-					if (frame_bulk.GetRepeats() != new_repeats) {
-						stale_index = closest_edge_prev_frame_bulk_index;
-						frame_bulk.SetRepeats(new_repeats);
-					}
+					input.set_repeats(closest_edge_prev_frame_bulk_index, new_repeats);
 				}
 
 				if (right_pressed && frame_bulk.GetYawPresent()) {
@@ -790,12 +782,11 @@ namespace TriangleDrawing
 
 				if (split_at_frames != 0) {
 					auto new_frame_bulk_repeats = frame_bulk.GetRepeats() - split_at_frames;
-					frame_bulk.SetRepeats(split_at_frames);
+					input.set_repeats(frame_bulk_index, split_at_frames);
 					auto new_frame_bulk = frame_bulk;
 					new_frame_bulk.Commands.clear();
 					new_frame_bulk.SetRepeats(new_frame_bulk_repeats);
 					input.frame_bulks.insert(input.frame_bulks.begin() + frame_bulk_index + 1, new_frame_bulk);
-					stale_index = frame_bulk_index;
 				}
 			}
 

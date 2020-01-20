@@ -28,6 +28,11 @@ struct EditedInput {
 	void save();
 	void mark_as_stale(size_t frame_bulk_index);
 
+	// Sets the repeats for the frame bulk at the given index.
+	//
+	// Invalidates the cached positions in an optimal way to reduce unnecessary simulations.
+	void set_repeats(size_t frame_bulk_index, unsigned repeats);
+
 	// Returns true if all frames until the last frame bulk were simulated.
 	//
 	// This means that frame_bulk_starts and other arrays contain entries corresponding to the state

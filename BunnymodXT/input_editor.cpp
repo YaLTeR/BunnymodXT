@@ -149,6 +149,44 @@ void EditedInput::mark_as_stale(size_t frame_bulk_index) {
 	next_frame_is_0mss.erase(next_frame_is_0mss.begin() + first_frame + 1, next_frame_is_0mss.end());
 }
 
+void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
+	auto& frame_bulk = frame_bulks[frame_bulk_index];
+	auto old_repeats = frame_bulk.GetRepeats();
+
+	// If the repeat count is the same, no need to change anything.
+	if (old_repeats == repeats)
+		return;
+
+	frame_bulk.SetRepeats(repeats);
+
+	// If we haven't simulated up to this frame bulk yet, no need to invalidate anything.
+	if (frame_bulk_index >= frame_bulk_starts.size())
+		return;
+
+	if (repeats > old_repeats) {
+		// When extending the frame bulk, delete the total frame count and/or any later frame bulk starts.
+		if (frame_bulk_index + 1 < frame_bulk_starts.size())
+			frame_bulk_starts.erase(frame_bulk_starts.begin() + frame_bulk_index + 1, frame_bulk_starts.end());
+	} else {
+		// When reducing the frame bulk, delete only any later frame bulk starts.
+		if (frame_bulk_index + 2 < frame_bulk_starts.size())
+			frame_bulk_starts.erase(frame_bulk_starts.begin() + frame_bulk_index + 2, frame_bulk_starts.end());
+	}
+
+	// Invalidate all later frames, if they exist.
+	auto last_frame = frame_bulk_starts[frame_bulk_index] + std::min(repeats, old_repeats);
+	if (last_frame >= player_datas.size() - 2)
+		return;
+
+	player_datas.erase(player_datas.begin() + last_frame + 1, player_datas.end());
+	strafe_states.erase(strafe_states.begin() + last_frame + 1, strafe_states.end());
+	fractions.erase(fractions.begin() + last_frame + 1, fractions.end());
+	normalzs.erase(normalzs.begin() + last_frame + 1, normalzs.end());
+	next_frame_is_0mss.erase(next_frame_is_0mss.begin() + last_frame + 1, next_frame_is_0mss.end());
+
+	// Update the frame count.
+	if (frame_bulk_index + 1 < frame_bulk_starts.size())
+		frame_bulk_starts[frame_bulk_index + 1] = last_frame;
 }
 
 bool EditedInput::simulated_until_last_frame_bulk() const {

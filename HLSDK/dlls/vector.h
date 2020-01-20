@@ -65,7 +65,7 @@ public:
 	//inline Vector(double X, double Y, double Z)		{ x = (float)X; y = (float)Y; z = (float)Z;	}
 	//inline Vector(int X, int Y, int Z)				{ x = (float)X; y = (float)Y; z = (float)Z;	}
 	inline Vector(const Vector& v)					{ x = v.x; y = v.y; z = v.z;				} 
-	inline Vector(float rgfl[3])					{ x = rgfl[0]; y = rgfl[1]; z = rgfl[2];	}
+	inline Vector(const float rgfl[3])					{ x = rgfl[0]; y = rgfl[1]; z = rgfl[2];	}
 	inline Vector& operator=(const Vector& v) { x = v.x; y = v.y; z = v.z; return *this; }
 
 	// Operators

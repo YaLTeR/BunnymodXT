@@ -5,6 +5,8 @@
 #include "triangle_utils.hpp"
 #include "modules.hpp"
 
+#include "hud_custom.hpp"
+
 namespace TriangleDrawing
 {
 	static HSPRITE_HL white_sprite = 0;
@@ -571,6 +573,10 @@ namespace TriangleDrawing
 
 			if (closest_edge_frame != 0) {
 				auto& frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
+
+				// Update the HUD status before any changes, since that's the state that was visualized earlier.
+				CustomHud::UpdateTASEditorStatus(frame_bulk);
+
 				if (left_pressed) {
 					auto mouse_diff = mouse - left_pressed_at;
 

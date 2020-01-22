@@ -9,6 +9,8 @@
 
 #include <GL/gl.h>
 
+#include "modules/HwDLL.hpp"
+
 namespace CustomHud
 {
 	static const float FADE_DURATION_JUMPSPEED = 0.7f;
@@ -33,6 +35,36 @@ namespace CustomHud
 	static std::array<client_sprite_t*, 10> NumberSpritePointers;
 	static int NumberWidth;
 	static int NumberHeight;
+
+	struct FrameBulkStatus {
+		bool strafe;
+		HLTAS::StrafeType strafe_type;
+		HLTAS::StrafeDir strafe_dir;
+
+		bool lgagst;
+		bool autojump;
+		bool ducktap;
+		bool jumpbug;
+		bool dbc;
+		bool dbg;
+		bool dwj;
+
+		bool forward;
+		bool left;
+		bool right;
+		bool back;
+		bool up;
+		bool down;
+
+		bool jump;
+		bool duck;
+		bool use;
+		bool attack1;
+		bool attack2;
+		bool reload;
+	};
+	static FrameBulkStatus frame_bulk_status;
+	static bool frame_bulk_selected;
 
 	template<typename T, size_t size = 3>
 	static inline void vecCopy(const T src[], T dest[])
@@ -944,6 +976,82 @@ namespace CustomHud
 		}
 	}
 
+	static void DrawTASEditorStatus()
+	{
+		if (!CVars::bxt_hud_tas_editor_status.GetBool())
+			return;
+
+		int x, y;
+		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 26) + 3);
+
+		std::ostringstream out;
+		out.setf(std::ios::fixed);
+		out.precision(precision);
+		out << "TAS Editor Status:\n";
+		if (frame_bulk_selected) {
+			out << "Strafing:\n  ";
+			if (frame_bulk_status.strafe) {
+				out << 's'
+					<< static_cast<int>(frame_bulk_status.strafe_type)
+					<< static_cast<int>(frame_bulk_status.strafe_dir);
+
+				switch (frame_bulk_status.strafe_type) {
+					case HLTAS::StrafeType::MAXACCEL:
+						out << " (speed increasing)";
+						break;
+					case HLTAS::StrafeType::MAXANGLE:
+						out << " (quick turn)";
+						break;
+					case HLTAS::StrafeType::MAXDECCEL:
+						out << " (slow down)";
+						break;
+					case HLTAS::StrafeType::CONSTSPEED:
+						out << " (constant speed)";
+						break;
+					default:
+						assert(false);
+						break;
+				}
+			} else {
+				out << "disabled";
+			}
+
+			out << "\nEnabled Actions:\n";
+
+			const std::pair<const char*, bool> actions[] = {
+				{ "lgagst", frame_bulk_status.lgagst },
+				{ "auto jump", frame_bulk_status.autojump },
+				{ "duck tap", frame_bulk_status.ducktap },
+				{ "jump bug", frame_bulk_status.jumpbug },
+				{ "duck before collision", frame_bulk_status.dbc },
+				{ "duck before ground", frame_bulk_status.dbg },
+				{ "duck when jump", frame_bulk_status.dwj },
+				{ "forward", frame_bulk_status.forward },
+				{ "left", frame_bulk_status.left },
+				{ "right", frame_bulk_status.right },
+				{ "back", frame_bulk_status.back },
+				{ "up", frame_bulk_status.up },
+				{ "down", frame_bulk_status.down },
+				{ "jump", frame_bulk_status.jump },
+				{ "duck", frame_bulk_status.duck },
+				{ "use", frame_bulk_status.use },
+				{ "attack1", frame_bulk_status.attack1 },
+				{ "attack2", frame_bulk_status.attack2 },
+				{ "reload", frame_bulk_status.reload }
+			};
+			for (const auto& action : actions) {
+				if (!action.second)
+					continue;
+
+				out << "  " << action.first << '\n';
+			}
+		} else {
+			out << " no frame bulk selected";
+		}
+
+		DrawMultilineString(x, y, out.str());
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -1036,8 +1144,10 @@ namespace CustomHud
 		DrawNihilanthInfo(flTime);
 		DrawIncorrectFPSIndicator(flTime);
 		DrawCollisionDepthMap(flTime);
+		DrawTASEditorStatus();
 
 		receivedAccurateInfo = false;
+		frame_bulk_selected = false;
 	}
 
 	void UpdatePlayerInfo(float vel[3], float org[3])
@@ -1137,5 +1247,39 @@ namespace CustomHud
 	const SCREENINFO& GetScreenInfo()
 	{
 		return si;
+	}
+
+	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk)
+	{
+		frame_bulk_selected = true;
+		frame_bulk_status = FrameBulkStatus{};
+
+		frame_bulk_status.strafe = frame_bulk.Strafe;
+		if (frame_bulk_status.strafe) {
+			frame_bulk_status.strafe_type = frame_bulk.GetType();
+			frame_bulk_status.strafe_dir = frame_bulk.GetDir();
+		}
+
+		frame_bulk_status.lgagst = frame_bulk.Lgagst;
+		frame_bulk_status.autojump = frame_bulk.Autojump;
+		frame_bulk_status.ducktap = frame_bulk.Ducktap;
+		frame_bulk_status.jumpbug = frame_bulk.Jumpbug;
+		frame_bulk_status.dbc = frame_bulk.Dbc;
+		frame_bulk_status.dbg = frame_bulk.Dbg;
+		frame_bulk_status.dwj = frame_bulk.Dwj;
+
+		frame_bulk_status.forward = frame_bulk.Forward;
+		frame_bulk_status.left = frame_bulk.Left;
+		frame_bulk_status.right = frame_bulk.Right;
+		frame_bulk_status.back = frame_bulk.Back;
+		frame_bulk_status.up = frame_bulk.Up;
+		frame_bulk_status.down = frame_bulk.Down;
+
+		frame_bulk_status.jump = frame_bulk.Jump;
+		frame_bulk_status.duck = frame_bulk.Duck;
+		frame_bulk_status.use = frame_bulk.Use;
+		frame_bulk_status.attack1 = frame_bulk.Attack1;
+		frame_bulk_status.attack2 = frame_bulk.Attack2;
+		frame_bulk_status.reload = frame_bulk.Reload;
 	}
 }

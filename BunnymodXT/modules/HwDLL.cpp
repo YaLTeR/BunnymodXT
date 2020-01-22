@@ -3508,7 +3508,7 @@ void HwDLL::SaveInitialDataToDemo()
 		"r_fullbright",
 		"s_show",
 		"snd_show",
-		"sv_cheats",
+		"sv_cheats"
 	};
 
 	std::unordered_map<std::string, std::string> cvar_values;

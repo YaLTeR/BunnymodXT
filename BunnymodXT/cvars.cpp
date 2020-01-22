@@ -97,6 +97,9 @@ namespace CVars
 	CVarWrapper bxt_hud_incorrect_fps_indicator("bxt_hud_incorrect_fps_indicator", "1");
 	CVarWrapper bxt_hud_useables("bxt_hud_useables", "0");
 	CVarWrapper bxt_hud_useables_radius("bxt_hud_useables_radius", "64");
+	CVarWrapper bxt_hud_tas_editor_status("bxt_hud_tas_editor_status", "0");
+	CVarWrapper bxt_hud_tas_editor_status_offset("bxt_hud_tas_editor_status_offset", "");
+	CVarWrapper bxt_hud_tas_editor_status_anchor("bxt_hud_tas_editor_status_anchor", "1 0");
 
 	const std::vector<CVarWrapper*> allCVars =
 	{
@@ -186,6 +189,9 @@ namespace CVars
 		&bxt_hud_visible_landmarks_anchor,
 		&bxt_hud_incorrect_fps_indicator,
 		&bxt_hud_useables,
-		&bxt_hud_useables_radius
+		&bxt_hud_useables_radius,
+		&bxt_hud_tas_editor_status,
+		&bxt_hud_tas_editor_status_offset,
+		&bxt_hud_tas_editor_status_anchor
 	};
 }

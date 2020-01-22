@@ -28,4 +28,6 @@ namespace CustomHud
 	Interprocess::Time GetTime();
 
 	const SCREENINFO& GetScreenInfo();
+
+	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk);
 };

@@ -3509,6 +3509,7 @@ void HwDLL::SaveInitialDataToDemo()
 		"s_show",
 		"snd_show",
 		"sv_cheats",
+		"bxt_hud_editor_status"
 	};
 
 	std::unordered_map<std::string, std::string> cvar_values;

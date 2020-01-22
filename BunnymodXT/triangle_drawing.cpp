@@ -5,6 +5,8 @@
 #include "triangle_utils.hpp"
 #include "modules.hpp"
 
+#include "hud_custom.hpp"
+
 namespace TriangleDrawing
 {
 	static HSPRITE_HL white_sprite = 0;
@@ -694,7 +696,7 @@ namespace TriangleDrawing
 				if (hw.tas_editor_toggle_forward) {
 					frame_bulk.Forward = !frame_bulk.Forward;
 					stale_index = closest_edge_prev_frame_bulk_index;
-				}
+				};
 
 				if (hw.tas_editor_toggle_left) {
 					frame_bulk.Left = !frame_bulk.Left;
@@ -750,6 +752,8 @@ namespace TriangleDrawing
 					frame_bulk.Reload = !frame_bulk.Reload;
 					stale_index = closest_edge_prev_frame_bulk_index;
 				}
+
+				CustomHud::UpdateEditorStatus(frame_bulk.GetType(), frame_bulk.Lgagst, frame_bulk.Autojump, frame_bulk.Ducktap, frame_bulk.Jumpbug, frame_bulk.Dbc, frame_bulk.Dbg, frame_bulk.Dwj, frame_bulk.Forward, frame_bulk.Left, frame_bulk.Right, frame_bulk.Back, frame_bulk.Up, frame_bulk.Down, frame_bulk.Jump, frame_bulk.Duck, frame_bulk.Use, frame_bulk.Attack1, frame_bulk.Attack2, frame_bulk.Reload);
 			}
 
 			if (closest_edge_frame != 0

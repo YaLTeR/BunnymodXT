@@ -28,4 +28,6 @@ namespace CustomHud
 	Interprocess::Time GetTime();
 
 	const SCREENINFO& GetScreenInfo();
+
+	void UpdateEditorStatus(const HLTAS::StrafeType, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool, const bool);
 };

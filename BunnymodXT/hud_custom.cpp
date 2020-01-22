@@ -9,6 +9,8 @@
 
 #include <GL/gl.h>
 
+#include "modules/HwDLL.hpp"
+
 namespace CustomHud
 {
 	static const float FADE_DURATION_JUMPSPEED = 0.7f;
@@ -375,6 +377,136 @@ namespace CustomHud
 				std::istringstream color_ss(colorStr);
 				color_ss >> hudColor[0] >> hudColor[1] >> hudColor[2];
 			}
+		}
+	}
+
+	HLTAS::StrafeType tas_editor_framebulk_strafe_saved;
+
+	bool
+		tas_editor_toggle_lgagst_saved,
+		tas_editor_toggle_autojump_saved,
+		tas_editor_toggle_ducktap_saved,
+		tas_editor_toggle_jumpbug_saved,
+		tas_editor_toggle_dbc_saved,
+		tas_editor_toggle_dbg_saved,
+		tas_editor_toggle_dwj_saved,
+		tas_editor_toggle_forward_saved,
+		tas_editor_toggle_left_saved,
+		tas_editor_toggle_right_saved,
+		tas_editor_toggle_back_saved,
+		tas_editor_toggle_up_saved,
+		tas_editor_toggle_down_saved,
+		tas_editor_toggle_jump_saved,
+		tas_editor_toggle_duck_saved,
+		tas_editor_toggle_use_saved,
+		tas_editor_toggle_attack1_saved,
+		tas_editor_toggle_attack2_saved,
+		tas_editor_toggle_reload_saved;
+
+	void UpdateEditorStatus(const HLTAS::StrafeType type, const bool _tas_editor_toggle_lgagst_saved, const bool _tas_editor_toggle_autojump_saved, const bool _tas_editor_toggle_ducktap_saved, const bool _tas_editor_toggle_jumpbug_saved, const bool _tas_editor_toggle_dbc_saved, const bool _tas_editor_toggle_dbg_saved, const bool _tas_editor_toggle_dwj_saved, const bool _tas_editor_toggle_forward_saved, const bool _tas_editor_toggle_left_saved, const bool _tas_editor_toggle_right_saved, const bool _tas_editor_toggle_back_saved, const bool _tas_editor_toggle_up_saved, const bool _tas_editor_toggle_down_saved, const bool _tas_editor_toggle_jump_saved, const bool _tas_editor_toggle_duck_saved, const bool _tas_editor_toggle_use_saved, const bool _tas_editor_toggle_attack1_saved, const bool _tas_editor_toggle_attack2_saved, const bool _tas_editor_toggle_reload_saved) {
+		tas_editor_framebulk_strafe_saved = type;
+		tas_editor_toggle_lgagst_saved = _tas_editor_toggle_lgagst_saved;
+		tas_editor_toggle_autojump_saved = _tas_editor_toggle_autojump_saved;
+		tas_editor_toggle_ducktap_saved = _tas_editor_toggle_ducktap_saved;
+		tas_editor_toggle_jumpbug_saved = _tas_editor_toggle_jumpbug_saved;
+		tas_editor_toggle_dbc_saved = _tas_editor_toggle_dbc_saved;
+		tas_editor_toggle_dbg_saved = _tas_editor_toggle_dbg_saved;
+		tas_editor_toggle_dwj_saved = _tas_editor_toggle_dwj_saved;
+		tas_editor_toggle_forward_saved = _tas_editor_toggle_forward_saved;
+		tas_editor_toggle_left_saved = _tas_editor_toggle_left_saved;
+		tas_editor_toggle_right_saved = _tas_editor_toggle_right_saved;
+		tas_editor_toggle_back_saved = _tas_editor_toggle_back_saved;
+		tas_editor_toggle_up_saved = _tas_editor_toggle_up_saved;
+		tas_editor_toggle_down_saved = _tas_editor_toggle_down_saved;
+		tas_editor_toggle_jump_saved = _tas_editor_toggle_jump_saved;
+		tas_editor_toggle_duck_saved = _tas_editor_toggle_duck_saved;
+		tas_editor_toggle_use_saved = _tas_editor_toggle_use_saved;
+		tas_editor_toggle_attack1_saved = _tas_editor_toggle_attack1_saved;
+		tas_editor_toggle_attack2_saved = _tas_editor_toggle_attack2_saved;
+		tas_editor_toggle_reload_saved = _tas_editor_toggle_reload_saved;
+	}
+
+	void DrawEditorStatus()
+	{
+		if (CVars::bxt_hud_editor_status.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_editor_status_offset, CVars::bxt_hud_editor_status_anchor, &x, &y, -200, (si.iCharHeight * 19) + 2);
+
+			static const char* TAS_EDITOR_ENABLE_DISABLE_STRING[] = {
+				"lgagst",
+				"auto jump",
+				"duck tap",
+				"jump bug",
+				"duck before collision",
+				"duck before ground",
+				"duck when jump",
+				"forward",
+				"left",
+				"right",
+				"back",
+				"up",
+				"down",
+				"jump",
+				"duck",
+				"use",
+				"attack1",
+				"attack2",
+				"reload"
+			};
+			const bool TAS_EDITOR_ENABLE_DISABLE_BOOL[] = {
+				tas_editor_toggle_lgagst_saved,
+				tas_editor_toggle_autojump_saved,
+				tas_editor_toggle_ducktap_saved,
+				tas_editor_toggle_jumpbug_saved,
+				tas_editor_toggle_dbc_saved,
+				tas_editor_toggle_dbg_saved,
+				tas_editor_toggle_dwj_saved,
+				tas_editor_toggle_forward_saved,
+				tas_editor_toggle_left_saved,
+				tas_editor_toggle_right_saved,
+				tas_editor_toggle_back_saved,
+				tas_editor_toggle_up_saved,
+				tas_editor_toggle_down_saved,
+				tas_editor_toggle_jump_saved,
+				tas_editor_toggle_duck_saved,
+				tas_editor_toggle_use_saved,
+				tas_editor_toggle_attack1_saved,
+				tas_editor_toggle_attack2_saved,
+				tas_editor_toggle_reload_saved
+			};
+			const size_t TasEditorEnableDisableArrayLength = std::extent<decltype(TAS_EDITOR_ENABLE_DISABLE_BOOL)>::value;
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "TAS Editor Status:\n"
+				<< "Strafe Mode: ";
+			switch (tas_editor_framebulk_strafe_saved) {
+				case HLTAS::StrafeType::CONSTSPEED:
+					out << "Constant";
+					break;
+				case HLTAS::StrafeType::MAXACCEL:
+					out << "s03 (speed increasing)";
+					break;
+				case HLTAS::StrafeType::MAXANGLE:
+					out << "s13 (quick turn)";
+					break;
+				case HLTAS::StrafeType::MAXDECCEL:
+					out << "s22 (slow down)";
+					break;
+				default:
+					break;
+			}
+			out << "\nEnabled Movements:\n";
+
+			for (int i = 0; i < TasEditorEnableDisableArrayLength; i++) {
+				if (TAS_EDITOR_ENABLE_DISABLE_BOOL[i]) {
+					out << "  " << TAS_EDITOR_ENABLE_DISABLE_STRING[i]
+						<< (i == TasEditorEnableDisableArrayLength ? "" : "\n");
+				}
+			}			
+			DrawMultilineString(x, y, out.str());
 		}
 	}
 
@@ -1036,6 +1168,7 @@ namespace CustomHud
 		DrawNihilanthInfo(flTime);
 		DrawIncorrectFPSIndicator(flTime);
 		DrawCollisionDepthMap(flTime);
+		DrawEditorStatus();
 
 		receivedAccurateInfo = false;
 	}

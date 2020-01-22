@@ -204,6 +204,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_incorrect_fps_indicator;
 	extern CVarWrapper bxt_hud_useables;
 	extern CVarWrapper bxt_hud_useables_radius;
+	extern CVarWrapper bxt_hud_editor_status;
+	extern CVarWrapper bxt_hud_editor_status_offset;
+	extern CVarWrapper bxt_hud_editor_status_anchor;
 
 	extern const std::vector<CVarWrapper*> allCVars;
 }

@@ -302,6 +302,12 @@ namespace TriangleDrawing
 			size_t frames_until_non_ground_collision = frame_limit;
 			size_t next_frame_bulk_start_index = 1;
 
+			// frame_bulk_starts always contains at least 1 element (zero), in which case we don't
+			// want to access it with next_frame_bulk_start_index. Fortunately, frame is never zero,
+			// so if we set this to 0 this will disable the code below that we want to disable.
+			if (input.frame_bulk_starts.size() == 1)
+				next_frame_bulk_start_index = 0;
+
 			// Draw the positions.
 			pTriAPI->RenderMode(kRenderTransColor);
 			pTriAPI->Color4f(0, 1, 0, 1);
@@ -389,6 +395,12 @@ namespace TriangleDrawing
 			input.simulate(SimulateFrameBulks::ALL);
 
 			size_t next_frame_bulk_start_index = 1;
+
+			// frame_bulk_starts always contains at least 1 element (zero), in which case we don't
+			// want to access it with next_frame_bulk_start_index. Fortunately, frame is never zero,
+			// so if we set this to 0 this will disable the code below that we want to disable.
+			if (input.frame_bulk_starts.size() == 1)
+				next_frame_bulk_start_index = 0;
 
 			Vector2D closest_edge_px;
 			float closest_edge_px_dist;

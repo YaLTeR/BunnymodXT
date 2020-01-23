@@ -879,9 +879,11 @@ namespace CustomHud
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+			const auto pixel_scale = CVars::bxt_collision_depth_map_pixel_scale.GetInt();
+
 			// Main loop.
-			for (int y = 0; y < si.iHeight; ++y) {
-				for (int x = 0; x < si.iWidth; ++x) {
+			for (int y = 0; y < si.iHeight; y += pixel_scale) {
+				for (int x = 0; x < si.iWidth; x += pixel_scale) {
 					// Horizontal angle.
 					const auto l = std::sqrt(x * x + a_sq - 2 * x * a * cos_alpha);
 					auto theta = std::asin(sin_alpha * x / l);
@@ -918,20 +920,22 @@ namespace CustomHud
 						const auto make_color = [](const unsigned char value[4]) {
 							return value[0] ^ value[1] ^ value[2] ^ value[3];
 						};
-						glColor4ub(make_color(reinterpret_cast<const unsigned char*>(&result.PlaneNormal[0])),
-						           make_color(reinterpret_cast<const unsigned char*>(&result.PlaneNormal[1])),
-						           make_color(reinterpret_cast<const unsigned char*>(&result.PlaneNormal[2])),
-						           255);
-					} else {
+						glColor4ub(
+							make_color(reinterpret_cast<const unsigned char*>(&result.PlaneNormal[0])),
+							make_color(reinterpret_cast<const unsigned char*>(&result.PlaneNormal[1])),
+							make_color(reinterpret_cast<const unsigned char*>(&result.PlaneNormal[2])),
+							255);
+					}
+					else {
 						const auto value = 255 - static_cast<int>(std::round(result.Fraction * 255));
 						glColor4ub(value, value, value, 255);
 					}
 
 					glBegin(GL_QUADS);
 					glVertex2i(x, y);
-					glVertex2i(x, y + 1);
-					glVertex2i(x + 1, y + 1);
-					glVertex2i(x + 1, y);
+					glVertex2i(x, y + pixel_scale);
+					glVertex2i(x + pixel_scale, y + pixel_scale);
+					glVertex2i(x + pixel_scale, y);
 					glEnd();
 				}
 			}

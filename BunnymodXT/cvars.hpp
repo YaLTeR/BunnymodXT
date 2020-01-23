@@ -161,6 +161,7 @@ namespace CVars
 	extern CVarWrapper bxt_collision_depth_map_colors;
 	extern CVarWrapper bxt_collision_depth_map_hull;
 	extern CVarWrapper bxt_collision_depth_map_max_depth;
+	extern CVarWrapper bxt_collision_depth_map_pixel_scale;
 	extern CVarWrapper bxt_unlock_camera_during_pause;
 	extern CVarWrapper bxt_hud;
 	extern CVarWrapper bxt_hud_color;

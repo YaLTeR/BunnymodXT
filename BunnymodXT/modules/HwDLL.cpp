@@ -414,8 +414,7 @@ void HwDLL::Clear()
 	hltas_filename.clear();
 	newTASStartingCommand.clear();
 	newTASFilename.clear();
-	newTASResult.ClearProperties();
-	newTASResult.ClearFrames();
+	newTASResult.Clear();
 
 	tas_editor_mode = TASEditorMode::DISABLED;
 	tas_editor_input = EditedInput();
@@ -464,8 +463,7 @@ void HwDLL::Clear()
 		SharedRNGSeed = 0;
 		ButtonsPresent = false;
 		exportFilename.clear();
-		exportResult.ClearProperties();
-		exportResult.ClearFrames();
+		exportResult.Clear();
 	}
 }
 
@@ -1391,8 +1389,7 @@ struct HwDLL::Cmd_BXT_TAS_ExportScript
 	{
 		auto &hw = HwDLL::GetInstance();
 		hw.exportFilename = fileName;
-		hw.exportResult.ClearProperties();
-		hw.exportResult.ClearFrames();
+		hw.exportResult.Clear();
 
 		if (hw.exportFilename.empty())
 			return;
@@ -1423,8 +1420,7 @@ struct HwDLL::Cmd_BXT_TAS_Split
 		hw.ORIG_Cbuf_InsertText(oss.str().c_str());
 
 		hw.splitFilename = std::string(fileName) + ".hltas";
-		hw.splitResult.ClearProperties();
-		hw.splitResult.ClearFrames();
+		hw.splitResult.Clear();
 
 		for (auto prop : hw.input.GetProperties())
 			hw.splitResult.SetProperty(prop.first, prop.second);
@@ -1502,8 +1498,7 @@ struct HwDLL::Cmd_BXT_TAS_New
 		hw.ORIG_Cbuf_InsertText(cmd.c_str());
 
 		hw.newTASFilename = std::string(filename) + ".hltas";
-		hw.newTASResult.ClearProperties();
-		hw.newTASResult.ClearFrames();
+		hw.newTASResult.Clear();
 
 		std::ostringstream oss;
 		oss << HLStrafe::MAX_SUPPORTED_VERSION;
@@ -2825,8 +2820,7 @@ void HwDLL::InsertCommands()
 					ORIG_Con_Printf("Error saving the exported script: %s\n", HLTAS::GetErrorMessage(error).c_str());
 
 				exportFilename.clear();
-				exportResult.ClearProperties();
-				exportResult.ClearFrames();
+				exportResult.Clear();
 			}
 		}
 	} else {
@@ -3267,8 +3261,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 				}
 
 				splitFilename.clear();
-				splitResult.ClearProperties();
-				splitResult.ClearFrames();
+				splitResult.Clear();
 			}
 
 			if (!newTASFilename.empty()) {
@@ -3288,8 +3281,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 				newTASStartingCommand.clear();
 				newTASFilename.clear();
-				newTASResult.ClearProperties();
-				newTASResult.ClearFrames();
+				newTASResult.Clear();
 			}
 		}
 

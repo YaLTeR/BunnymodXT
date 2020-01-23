@@ -60,6 +60,12 @@ else ()
 		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffloat-store")
 	endif ()
 
+	if (NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug")
+		option (GLIBCXX_DEBUG "Enable libstdc++ debug checks." ON)
+	else ()
+		option (GLIBCXX_DEBUG "Enable libstdc++ debug checks." OFF)
+	endif ()
+
 	set(CMAKE_SHARED_LINKER_FLAGS
 		"${CMAKE_SHARED_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 endif ()
@@ -173,6 +179,16 @@ if (MSVC)
 	set_target_properties(BunnymodXT PROPERTIES
 		COTIRE_CXX_PREFIX_HEADER_INIT "BunnymodXT/stdafx.hpp")
 	cotire(BunnymodXT)
+endif ()
+
+if (NOT MSVC)
+	if (GLIBCXX_DEBUG)
+		# Don't enable on HLStrafe because the VCT becomes unusably slow with this.
+		target_compile_definitions (BunnymodXT PRIVATE _GLIBCXX_DEBUG)
+		# If I don't enable it on hltas-cpp, BXT crashes when trying to call HLTAS::Input::Clear().
+		target_compile_definitions (hltas-cpp PRIVATE _GLIBCXX_DEBUG)
+		message (STATUS "Enabled the libstdc++ debug mode")
+	endif ()
 endif ()
 
 target_link_libraries (BunnymodXT hltas-cpp hlstrafe taslogger)

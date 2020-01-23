@@ -876,21 +876,14 @@ namespace CustomHud
 			// Arbitrary sanity clamps.
 			const auto max_depth = std::max(CVars::bxt_collision_depth_map_max_depth.GetFloat(), 10.f);
 
-			// Some horizontal constants.
-			const auto fov = std::clamp(CVars::default_fov.GetFloat(), 30.f, 150.f) * M_DEG2RAD;
-			const auto alpha = float(M_PI_2) - fov / 2;
-			const auto cos_alpha = std::cos(alpha);
-			const auto sin_alpha = std::sin(alpha);
-			const auto a = si.iWidth / std::sin(fov) * sin_alpha;
-			const auto a_sq = a * a;
+			// Some constants.
+			const float aspect_ratio = (float)si.iHeight / (float)si.iWidth;
 
-			// Some vertical constants.
-			const auto b_sq = a * a - (si.iWidth * si.iWidth - si.iHeight * si.iHeight) / 4.f;
-			const auto b = std::sqrt(b_sq);
-			const auto vfov = std::acos(1 - (si.iHeight * si.iHeight) / (2 * b_sq));
-			const auto beta = float(M_PI_2) - vfov / 2;
-			const auto cos_beta = std::cos(beta);
-			const auto sin_beta = std::sin(beta);
+			const auto fov = std::clamp(CVars::default_fov.GetFloat(), 30.f, 150.f) * M_DEG2RAD;
+			const auto vfov = 2.f * std::atan(std::tan(fov * 0.5f) * aspect_ratio);
+
+			const float screen_width = max_depth * (float) std::tan(fov * 0.5);
+			const float screen_height = max_depth * (float) std::tan(vfov * 0.5);
 
 			// The trace starting point and forward vector.
 			float start[3];
@@ -915,34 +908,17 @@ namespace CustomHud
 
 			// Main loop.
 			for (int y = 0; y < si.iHeight; y += pixel_scale) {
+				// -1 <= y_offset <= 1
+				const float y_offset = -((float)y / (float)si.iHeight - 0.5f) * 2.f;
+
 				for (int x = 0; x < si.iWidth; x += pixel_scale) {
-					// Horizontal angle.
-					const auto l = std::sqrt(x * x + a_sq - 2 * x * a * cos_alpha);
-					auto theta = std::asin(sin_alpha * x / l);
-					// Law of sines ambiguity.
-					if (x * x > a * a + l * l)
-						theta += 2 * (float(M_PI_2) - theta);
-					const auto hor_angle = -(fov / 2 - theta);
+					// -1 <= x_offset <= 1
+					const float x_offset = ((float)x / (float)si.iWidth - 0.5f) * 2.f;
 
-					// Vertical angle.
-					const auto vl = std::sqrt(y * y + b_sq - 2 * y * b * cos_beta);
-					auto phi = std::asin(sin_beta * y / vl);
-					// Law of sines ambiguity.
-					if (y * y > b_sq + vl * vl)
-						phi += 2 * (float(M_PI_2) - phi);
-					const auto vert_angle = vfov / 2 - phi;
-
-					// End position.
-					const float new_forward[3] = {
-						forward[0] + right[0] * hor_angle + up[0] * vert_angle,
-						forward[1] + right[1] * hor_angle + up[1] * vert_angle,
-						forward[2] + right[2] * hor_angle + up[2] * vert_angle
-					};
-					const auto new_forward_len = std::sqrt(new_forward[0] * new_forward[0] + new_forward[1] * new_forward[1] + new_forward[2] * new_forward[2]);
 					const float end[3] = {
-						start[0] + new_forward[0] / new_forward_len * max_depth,
-						start[1] + new_forward[1] / new_forward_len * max_depth,
-						start[2] + new_forward[2] / new_forward_len * max_depth
+						start[0] + forward[0] * max_depth + screen_width * x_offset * right[0] + screen_height * y_offset * up[0],
+						start[1] + forward[1] * max_depth + screen_width * x_offset * right[1] + screen_height * y_offset * up[1],
+						start[2] + forward[2] * max_depth + screen_width * x_offset * right[2] + screen_height * y_offset * up[2],
 					};
 
 					// Trace.
@@ -957,8 +933,7 @@ namespace CustomHud
 							make_color(reinterpret_cast<const unsigned char*>(&result.PlaneNormal[1])),
 							make_color(reinterpret_cast<const unsigned char*>(&result.PlaneNormal[2])),
 							255);
-					}
-					else {
+					} else {
 						const auto value = 255 - static_cast<int>(std::round(result.Fraction * 255));
 						glColor4ub(value, value, value, 255);
 					}

@@ -464,7 +464,8 @@ namespace TriangleDrawing
 			size_t stale_index = std::numeric_limits<size_t>::max();
 
 			size_t closest_frame = 0;
-			float closest_frame_px_dist;
+			// This initial value is never used, but g++ in release mode doesn't see that.
+			float closest_frame_px_dist = 0;
 
 			static Vector2D saved_lmb_diff;
 			static Vector2D saved_rmb_diff;

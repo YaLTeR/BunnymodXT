@@ -53,7 +53,7 @@ namespace CVars
 	CVarWrapper bxt_collision_depth_map("bxt_collision_depth_map", "0");
 	CVarWrapper bxt_collision_depth_map_colors("bxt_collision_depth_map_colors", "0");
 	CVarWrapper bxt_collision_depth_map_hull("bxt_collision_depth_map_hull", "2");
-	CVarWrapper bxt_collision_depth_map_max_depth("bxt_collision_depth_map_max_depth", "500");
+	CVarWrapper bxt_collision_depth_map_max_depth("bxt_collision_depth_map_max_depth", "1000");
 	CVarWrapper bxt_collision_depth_map_pixel_scale("bxt_collision_depth_map_pixel_scale", "8");
 	CVarWrapper bxt_collision_depth_map_remove_distance_limit("bxt_collision_depth_map_remove_distance_limit", "1");
 	CVarWrapper bxt_unlock_camera_during_pause("bxt_unlock_camera_during_pause", "0");

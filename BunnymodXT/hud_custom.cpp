@@ -896,7 +896,8 @@ namespace CustomHud
 			float forward[3], right[3], up[3];
 			ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player.viewangles, forward, right, up);
 
-			HwDLL::GetInstance().StartTracing();
+			const auto remove_limit = CVars::bxt_collision_depth_map_remove_distance_limit.GetBool();
+			HwDLL::GetInstance().StartTracing(remove_limit);
 
 			// Set up some OpenGL stuff.
 			glDisable(GL_TEXTURE_2D);

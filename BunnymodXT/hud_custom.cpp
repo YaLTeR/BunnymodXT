@@ -885,16 +885,11 @@ namespace CustomHud
 			const float screen_width = max_depth * (float) std::tan(fov * 0.5);
 			const float screen_height = max_depth * (float) std::tan(vfov * 0.5);
 
-			// The trace starting point and forward vector.
-			float start[3];
-			ClientDLL::GetInstance().pEngfuncs->pEventAPI->EV_LocalPlayerViewheight(start);
-			start[0] += player.origin[0];
-			start[1] += player.origin[1];
-			start[2] += player.origin[2];
-
-			// Forward vector.
-			float forward[3], right[3], up[3];
-			ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player.viewangles, forward, right, up);
+			// The trace starting point and forward/right/up vectors.
+			const auto& cl = ClientDLL::GetInstance();
+			const auto start = cl.last_vieworg;
+			Vector forward, right, up;
+			cl.pEngfuncs->pfnAngleVectors(cl.last_viewangles, forward, right, up);
 
 			const auto remove_limit = CVars::bxt_collision_depth_map_remove_distance_limit.GetBool();
 			HwDLL::GetInstance().StartTracing(remove_limit);
@@ -916,11 +911,9 @@ namespace CustomHud
 					// -1 <= x_offset <= 1
 					const float x_offset = ((float)x / (float)si.iWidth - 0.5f) * 2.f;
 
-					const float end[3] = {
-						start[0] + forward[0] * max_depth + screen_width * x_offset * right[0] + screen_height * y_offset * up[0],
-						start[1] + forward[1] * max_depth + screen_width * x_offset * right[1] + screen_height * y_offset * up[1],
-						start[2] + forward[2] * max_depth + screen_width * x_offset * right[2] + screen_height * y_offset * up[2],
-					};
+					const auto end = start + forward * max_depth
+						+ screen_width * x_offset * right
+						+ screen_height * y_offset * up;
 
 					// Trace.
 					const auto result = HwDLL::GetInstance().UnsafePlayerTrace(start, end, hull_type);

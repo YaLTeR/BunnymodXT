@@ -2432,6 +2432,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_collision_depth_map_colors);
 	RegisterCVar(CVars::bxt_collision_depth_map_hull);
 	RegisterCVar(CVars::bxt_collision_depth_map_max_depth);
+	RegisterCVar(CVars::bxt_collision_depth_map_pixel_scale);
 
 	CVars::sv_cheats.Assign(FindCVar("sv_cheats"));
 	CVars::fps_max.Assign(FindCVar("fps_max"));

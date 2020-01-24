@@ -12,6 +12,7 @@
 #include "../interprocess.hpp"
 #include "../runtime_data.hpp"
 #include "../custom_triggers.hpp"
+#include "../rs.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -195,6 +196,8 @@ void ServerDLL::Clear()
 	cantJumpNextTime.clear();
 	m_Intercepted = false;
 	WorldGraph = nullptr;
+
+	rs_server_clear();
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -1537,13 +1540,15 @@ HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CGraph__InitGraph, void*, thisptr)
 {
 	WorldGraph = thisptr;
-	return ORIG_CGraph__InitGraph(thisptr);
+	ORIG_CGraph__InitGraph(thisptr);
+	rs_init_graph(thisptr);
 }
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, CGraph__InitGraph_Linux, void*, thisptr)
 {
 	WorldGraph = thisptr;
-	return ORIG_CGraph__InitGraph_Linux(thisptr);
+	ORIG_CGraph__InitGraph_Linux(thisptr);
+	rs_init_graph(thisptr);
 }
 
 HOOK_DEF_2(ServerDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int, server)

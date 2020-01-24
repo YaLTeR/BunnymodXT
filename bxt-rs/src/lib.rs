@@ -1,5 +1,9 @@
 mod ffi;
 mod globals;
+
+mod server;
+pub use server::{rs_init_graph, rs_server_clear};
+
 mod triangle_api;
 
 mod triangle_drawing;

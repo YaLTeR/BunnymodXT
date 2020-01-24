@@ -68,3 +68,35 @@ jobs:
 
     - name: Build
       run: cmake --build build
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install Rust
+      uses: hecrj/setup-rust-action@v1
+      with:
+        components: clippy
+        targets: i686-unknown-linux-gnu
+
+    - name: Run Clippy
+      run: cargo clippy
+
+  rustfmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install Rust
+      uses: hecrj/setup-rust-action@v1
+      with:
+        components: rustfmt
+        targets: i686-unknown-linux-gnu
+
+    - name: Run rustfmt
+      run: cargo fmt -- --check || true

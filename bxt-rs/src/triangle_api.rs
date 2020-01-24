@@ -67,6 +67,10 @@ impl<'a> TriangleApi<'a> {
         unsafe { (self.api.RenderMode)(mode as _) }
     }
 
+    pub fn cull(&self, style: CullStyle) {
+        unsafe { (self.api.CullFace)(style as _) }
+    }
+
     pub fn color(&self, r: f32, g: f32, b: f32, a: f32) {
         unsafe { (self.api.Color4f)(r, g, b, a) }
     }

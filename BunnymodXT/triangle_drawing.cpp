@@ -4,6 +4,7 @@
 #include "triangle_drawing.hpp"
 #include "triangle_utils.hpp"
 #include "modules.hpp"
+#include "rs.hpp"
 
 #include "hud_custom.hpp"
 
@@ -871,5 +872,7 @@ namespace TriangleDrawing
 
 		DrawTASEditor(pTriAPI);
 		ResetTASEditorCommands();
+
+		rs_tri_draw(pTriAPI);
 	}
 }

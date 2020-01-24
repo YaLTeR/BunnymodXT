@@ -1,0 +1,11 @@
+[package]
+name = "bxt-rs"
+version = "0.1.0"
+authors = ["Ivan Molodetskikh <yalterz@gmail.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+ultraviolet = "0.4.5"

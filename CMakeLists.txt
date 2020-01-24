@@ -84,6 +84,7 @@ include_directories (SYSTEM ${Boost_INCLUDE_DIR})
 # hltas is already included as part of hlstrafe.
 add_subdirectory (hlstrafe)
 add_subdirectory (taslogger)
+add_subdirectory (bxt-rs)
 
 include_directories ("." taslogger)
 include_directories (SYSTEM ${RapidJSON_INCLUDE_DIR})
@@ -136,6 +137,7 @@ set (HEADER_FILES
 	BunnymodXT/TEA.hpp
 	BunnymodXT/runtime_data.hpp
 	BunnymodXT/input_editor.hpp
+	BunnymodXT/rs.hpp
 	BunnymodXT/git_revision.hpp)
 
 set (SOURCE_FILES
@@ -191,7 +193,7 @@ if (NOT MSVC)
 	endif ()
 endif ()
 
-target_link_libraries (BunnymodXT hltas-cpp hlstrafe taslogger)
+target_link_libraries (BunnymodXT hltas-cpp hlstrafe taslogger bxt-rs)
 if (NOT MSVC)
 	target_link_libraries (BunnymodXT pthread rt)
 else()

@@ -181,10 +181,6 @@ void ServerDLL::Clear()
 	offInDuck = 0;
 	offFlags = 0;
 	offBasevelocity = 0;
-	offm_pNodes = 0;
-	offm_vecOrigin = 0;
-	offm_cNodes = 0;
-	size_CNode = 0;
 	pGlobalState = nullptr;
 	offNihilanthLevel = 0;
 	offNihilanthIrritation = 0;
@@ -195,7 +191,6 @@ void ServerDLL::Clear()
 	ppGlobals = nullptr;
 	cantJumpNextTime.clear();
 	m_Intercepted = false;
-	WorldGraph = nullptr;
 
 	rs_server_clear();
 }
@@ -344,22 +339,7 @@ void ServerDLL::FindStuff()
 	auto fPM_Ladder = FindFunctionAsync(ORIG_PM_Ladder, "PM_Ladder", patterns::shared::PM_Ladder);
 	auto fCPushable__Move = FindAsync(ORIG_CPushable__Move, patterns::server::CPushable__Move);
 	auto fCBasePlayer__TakeDamage = FindAsync(ORIG_CBasePlayer__TakeDamage, patterns::server::CBasePlayer__TakeDamage);
-
-	auto fCGraph__InitGraph = FindAsync(
-		ORIG_CGraph__InitGraph,
-		patterns::server::CGraph__InitGraph,
-		[&](auto pattern) {
-			switch (pattern - patterns::server::CGraph__InitGraph.cbegin()) {
-			case 0:  // HL-SteamPipe
-				offm_pNodes = 0x0C;
-				offm_vecOrigin = 0x00;
-				offm_cNodes = 0x18;
-				size_CNode = 0x58;
-				break;
-			default:
-				assert(false);
-			}
-		});
+	auto fCGraph__InitGraph = FindAsync(ORIG_CGraph__InitGraph, patterns::server::CGraph__InitGraph);
 
 	uintptr_t pDispatchRestore;
 	auto fDispatchRestore = FindAsync(
@@ -522,11 +502,6 @@ void ServerDLL::FindStuff()
 		} else {
 			ORIG_CGraph__InitGraph_Linux = reinterpret_cast<_CGraph__InitGraph_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN6CGraph9InitGraphEv"));
 			if (ORIG_CGraph__InitGraph_Linux) {
-				offm_pNodes = 0x0C;
-				offm_vecOrigin = 0x00;
-				offm_cNodes = 0x18;
-				size_CNode = 0x58;
-
 				EngineDevMsg("[server dll] Found CGraph::InitGraph [Linux] at %p.\n", ORIG_CGraph__InitGraph);
 			} else {
 				EngineDevWarning("[server dll] Could not find CGraph::InitGraph.\n");
@@ -1539,14 +1514,12 @@ HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, 
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CGraph__InitGraph, void*, thisptr)
 {
-	WorldGraph = thisptr;
 	ORIG_CGraph__InitGraph(thisptr);
 	rs_init_graph(thisptr);
 }
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, CGraph__InitGraph_Linux, void*, thisptr)
 {
-	WorldGraph = thisptr;
 	ORIG_CGraph__InitGraph_Linux(thisptr);
 	rs_init_graph(thisptr);
 }
@@ -1583,23 +1556,6 @@ bool ServerDLL::GetGlobalState(const std::string& name, int& state)
 	}
 
 	return false;
-}
-
-std::vector<const Vector *> ServerDLL::GetNodePositions() const
-{
-	std::vector<const Vector *> positions;
-	if (!WorldGraph) {
-		return positions;
-	}
-
-	const int count = *reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(WorldGraph) + offm_cNodes);
-	uintptr_t nodes = *reinterpret_cast<uintptr_t *>(reinterpret_cast<uintptr_t>(WorldGraph) + offm_pNodes);
-	for (int i = 0; i < count; ++i) {
-		positions.push_back(reinterpret_cast<Vector *>(nodes + offm_vecOrigin));
-		nodes += size_CNode;
-	}
-
-	return positions;
 }
 
 bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres) const

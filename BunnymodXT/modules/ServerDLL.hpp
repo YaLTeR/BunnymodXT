@@ -49,7 +49,6 @@ public:
 	bool GetGlobalState(const std::string& name, int& state);
 
 	std::vector<const edict_t *> GetUseableEntities(const Vector &origin, float radius) const;
-	std::vector<const Vector *> GetNodePositions() const;
 	bool GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres) const;
 
 	inline const char *GetString(int string) const {
@@ -122,12 +121,6 @@ protected:
 	ptrdiff_t offm_iClientFOV;
 	ptrdiff_t offm_rgAmmoLast;
 	int maxAmmoSlots;
-
-	void *WorldGraph = nullptr;
-	size_t size_CNode;
-	ptrdiff_t offm_pNodes;
-	ptrdiff_t offm_cNodes;
-	ptrdiff_t offm_vecOrigin;
 
 	ptrdiff_t offBhopcap;
 	byte originalBhopcapInsn[6];

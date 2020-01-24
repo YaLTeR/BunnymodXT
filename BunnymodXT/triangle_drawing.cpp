@@ -12,19 +12,6 @@ namespace TriangleDrawing
 {
 	static HSPRITE_HL white_sprite = 0;
 
-	static void DrawNodes(triangleapi_s *pTriAPI)
-	{
-		if (!CVars::bxt_show_nodes.GetBool())
-			return;
-
-		pTriAPI->RenderMode(kRenderTransAdd);
-		pTriAPI->CullFace(TRI_NONE);
-		pTriAPI->Color4f(0.722f, 0.0f, 0.341f, 1.0f);
-		for (const Vector *position : ServerDLL::GetInstance().GetNodePositions()) {
-			TriangleUtils::DrawPyramid(pTriAPI, *position, 10, 30);
-		}
-	}
-
 	// From util.cpp of HLSDK.
 	static Vector UTIL_ClampVectorToBox(const Vector &input, const Vector &clampSize)
 	{
@@ -865,7 +852,6 @@ namespace TriangleDrawing
 		if (!pTriAPI->SpriteTexture(const_cast<model_s*>(pEngfuncs->GetSpritePointer(white_sprite)), 0))
 			return;
 
-		DrawNodes(pTriAPI);
 		DrawUseableEntities(pTriAPI);
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);

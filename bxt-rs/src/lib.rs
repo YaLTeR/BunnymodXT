@@ -1,4 +1,5 @@
 mod ffi;
+mod globals;
 mod triangle_api;
 
 mod triangle_drawing;

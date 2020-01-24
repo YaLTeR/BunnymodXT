@@ -85,4 +85,30 @@ impl<'a> TriangleApi<'a> {
         unsafe { (self.api.ScreenToWorld)(screen.as_ptr(), world.as_mut_ptr()) }
         world
     }
+
+    pub fn pyramid(&self, position: Vec3, width: f32, height: f32) {
+        let half_width = width * 0.5;
+        let bottom = [
+            position + Vec3::new(half_width, half_width, 0.),
+            position + Vec3::new(half_width, -half_width, 0.),
+            position + Vec3::new(-half_width, -half_width, 0.),
+            position + Vec3::new(-half_width, half_width, 0.),
+            position + Vec3::new(half_width, half_width, 0.),
+        ];
+
+        self.cull(CullStyle::Front);
+
+        self.begin(Primitive::Quads);
+        for &v in bottom[..4].iter().rev() {
+            self.vertex(v);
+        }
+        self.end();
+
+        self.begin(Primitive::TriangleFan);
+        self.vertex(position + Vec3::new(0., 0., height));
+        for &v in &bottom {
+            self.vertex(v);
+        }
+        self.end();
+    }
 }

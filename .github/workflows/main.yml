@@ -36,6 +36,9 @@ jobs:
     - name: Build
       run: cmake --build build
 
+    - name: Run Rust tests
+      run: cargo test --target=i686-unknown-linux-gnu
+
   build-windows:
     name: Build on Windows
     runs-on: windows-latest
@@ -68,6 +71,9 @@ jobs:
 
     - name: Build
       run: cmake --build build
+
+    - name: Run Rust tests
+      run: cargo test --target=i686-pc-windows-msvc
 
   clippy:
     name: Clippy

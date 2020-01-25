@@ -1,3 +1,5 @@
+//! Global variables.
+
 use crate::utils::RacyRefCell;
 
 // If access is needed to multiple globals simultaneously, and the issue can't be solved with

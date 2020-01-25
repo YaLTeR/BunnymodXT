@@ -1,3 +1,5 @@
+//! Data and functions dependent on the server library.
+
 use std::{os::raw::c_int, panic::catch_unwind, process::abort, ptr::null};
 
 use ultraviolet::Vec3;
@@ -10,23 +12,28 @@ use crate::{utils::MainThreadMarker, utils::RacyRefCell};
 // The Server invariants are upheld for this global.
 pub static SERVER: RacyRefCell<Server> = RacyRefCell::new(Server::new());
 
+/// Data dependent on the server library.
 pub struct Server {
+    /// Pointer to the `WorldGraph` object.
     // Invariant: either null or valid to get nodes from.
     world_graph: *const Graph,
 }
 
+/// Opaque type for `CGraph` from the HLSDK.
 #[repr(C)]
 pub struct Graph {
     _private: [u8; 0],
 }
 
 impl Server {
+    /// Creates a new `Server` instance.
     const fn new() -> Self {
         Self {
             world_graph: null(),
         }
     }
 
+    /// Returns positions of AI nodes.
     pub fn node_positions(&self) -> Vec<Vec3> {
         const OFF_M_C_NODES: usize = 0x18;
         const OFF_M_P_NODES: usize = 0x0C;

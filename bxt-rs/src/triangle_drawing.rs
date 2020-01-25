@@ -1,7 +1,10 @@
+//! Drawing in 3D space.
+
 use std::{panic::catch_unwind, process::abort};
 
 use crate::{ffi::triangle_api as ffi, triangle_api::*, utils::MainThreadMarker};
 
+/// Draws the AI nodes.
 fn draw_nodes(marker: MainThreadMarker, tri: &TriangleApi) {
     if !marker.cvars().bxt_show_nodes.bool() {
         return;

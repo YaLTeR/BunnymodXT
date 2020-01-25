@@ -1,3 +1,5 @@
+//! The main thread marker.
+
 use std::{
     cell::{Ref, RefMut},
     marker::PhantomData,

@@ -1,3 +1,5 @@
+//! Console variables.
+
 use std::{ffi::CStr, os::raw::c_char, panic::catch_unwind, process::abort, ptr::null};
 
 use crate::{ffi::cvar::*, utils::MainThreadMarker, utils::RacyRefCell};
@@ -8,16 +10,20 @@ use crate::{ffi::cvar::*, utils::MainThreadMarker, utils::RacyRefCell};
 // The CVar invariants are upheld for this global.
 pub static CVARS: RacyRefCell<CVars> = RacyRefCell::new(CVars::new());
 
+/// Wraps a console variable.
 pub struct CVar {
+    /// Pointer to the cvar.
     // Invariant: if this is not null, it's safe to access string and value.
     ptr: *const cvar_s,
 }
 
+/// All console variables.
 pub struct CVars {
     pub bxt_show_nodes: CVar,
 }
 
 impl CVar {
+    /// Creates a new `CVar`.
     const fn new() -> Self {
         Self { ptr: null() }
     }
@@ -33,6 +39,7 @@ impl CVar {
 }
 
 impl CVars {
+    /// Creates a new `CVars`.
     const fn new() -> Self {
         Self {
             bxt_show_nodes: CVar::new(),

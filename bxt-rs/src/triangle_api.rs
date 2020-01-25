@@ -1,13 +1,17 @@
+//! Primitives for drawing in 3D space.
 #![allow(unused)]
 
 use ultraviolet::{Vec2, Vec3};
 
 use crate::ffi::triangle_api as ffi;
 
+/// Triangle API wrapper for drawing in 3D space.
 pub struct TriangleApi<'a> {
+    /// Raw API.
     api: &'a ffi::triangleapi_s,
 }
 
+/// Primitive types which determine how vertices are drawn.
 #[repr(i32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Primitive {
@@ -20,13 +24,17 @@ pub enum Primitive {
     QuadStrip = ffi::TRI_QUAD_STRIP,
 }
 
+/// Polygon culling style.
 #[repr(i32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum CullStyle {
+    /// Only the back face is drawn, defined as clockwise vertices.
     Front = ffi::TRICULLSTYLE_TRI_FRONT,
+    /// Both front and back faces are drawn.
     None = ffi::TRICULLSTYLE_TRI_NONE,
 }
 
+/// Compositing mode.
 #[repr(i32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum RenderMode {
@@ -55,30 +63,40 @@ impl<'a> TriangleApi<'a> {
         Self { api }
     }
 
+    /// Starts the specified primitive drawing mode.
     pub fn begin(&self, primitive: Primitive) {
         unsafe { (self.api.Begin)(primitive as _) }
     }
 
+    /// Stops the current primitive drawing mode.
     pub fn end(&self) {
         unsafe { (self.api.End)() }
     }
 
+    /// Sets the render mode.
     pub fn render_mode(&self, mode: RenderMode) {
         unsafe { (self.api.RenderMode)(mode as _) }
     }
 
+    /// Sets the cull style.
     pub fn cull(&self, style: CullStyle) {
         unsafe { (self.api.CullFace)(style as _) }
     }
 
+    /// Sets the vertex color.
     pub fn color(&self, r: f32, g: f32, b: f32, a: f32) {
         unsafe { (self.api.Color4f)(r, g, b, a) }
     }
 
-    pub fn vertex(&self, v: Vec3) {
-        unsafe { (self.api.Vertex3fv)(v.as_ptr()) }
+    /// Adds a vertex at the given position.
+    pub fn vertex(&self, position: Vec3) {
+        unsafe { (self.api.Vertex3fv)(position.as_ptr()) }
     }
 
+    /// Converts screen coordinates to world coordinates.
+    ///
+    /// The screen coordinate system ranges from -1 to 1 where (-1, -1) is the bottom-left corner
+    /// of the screen.
     pub fn screen_to_world(&self, screen: Vec2) -> Vec3 {
         let screen = Vec3::from(screen);
         let mut world = Vec3::zero();
@@ -86,6 +104,7 @@ impl<'a> TriangleApi<'a> {
         world
     }
 
+    /// Draws a pyramid.
     pub fn pyramid(&self, position: Vec3, width: f32, height: f32) {
         let half_width = width * 0.5;
         let bottom = [

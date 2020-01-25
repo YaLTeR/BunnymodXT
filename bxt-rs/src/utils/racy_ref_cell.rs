@@ -1,3 +1,5 @@
+//! A `RefCell` marked as `Send + Sync` for use in `static`s.
+
 use std::cell::{Ref, RefCell, RefMut};
 
 /// An unsafe `RefCell` with `Send` and `Sync`, intended to be used as a `static` and accessible

@@ -1,3 +1,5 @@
+//! Utility objects.
+
 pub mod marker;
 pub use marker::MainThreadMarker;
 

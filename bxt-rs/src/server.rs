@@ -2,11 +2,11 @@ use std::{os::raw::c_int, panic::catch_unwind, process::abort, ptr::null};
 
 use ultraviolet::Vec3;
 
-use crate::{globals::MainThreadMarker, utils::racy_ref_cell::RacyRefCell};
+use crate::{utils::marker::MainThreadMarker, utils::racy_ref_cell::RacyRefCell};
 
 /// The server global. Access through [`MainThreadMarker::server`].
 ///
-/// [`MainThreadMarker::server`]: ../globals/struct.MainThreadMarker.html#method.server
+/// [`MainThreadMarker::server`]: ../utils/marker/struct.MainThreadMarker.html#method.server
 // The Server invariants are upheld for this global.
 pub static SERVER: RacyRefCell<Server> = RacyRefCell::new(Server::new());
 

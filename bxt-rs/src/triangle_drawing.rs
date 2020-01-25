@@ -1,6 +1,6 @@
 use std::{panic::catch_unwind, process::abort};
 
-use crate::{ffi::triangle_api as ffi, globals::MainThreadMarker, triangle_api::*};
+use crate::{ffi::triangle_api as ffi, triangle_api::*, utils::marker::MainThreadMarker};
 
 fn draw_nodes(marker: MainThreadMarker, tri: &TriangleApi) {
     tri.render_mode(RenderMode::TransAdd);

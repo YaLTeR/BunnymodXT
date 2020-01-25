@@ -1,3 +1,6 @@
+mod cvar;
+pub use cvar::rs_init_cvar;
+
 mod ffi;
 mod globals;
 

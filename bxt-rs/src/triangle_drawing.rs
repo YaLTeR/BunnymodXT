@@ -3,6 +3,10 @@ use std::{panic::catch_unwind, process::abort};
 use crate::{ffi::triangle_api as ffi, triangle_api::*, utils::MainThreadMarker};
 
 fn draw_nodes(marker: MainThreadMarker, tri: &TriangleApi) {
+    if !marker.cvars().bxt_show_nodes.bool() {
+        return;
+    }
+
     tri.render_mode(RenderMode::TransAdd);
     tri.color(0.722, 0., 0.341, 1.);
 

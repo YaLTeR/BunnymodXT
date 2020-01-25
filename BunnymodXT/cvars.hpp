@@ -1,5 +1,7 @@
 #pragma once
 
+#include "rs.hpp"
+
 class CVarWrapper
 {
 public:
@@ -36,6 +38,8 @@ inline CVarWrapper::CVarWrapper(const char* name, const char* string)
 	m_CVar->flags = 0;
 	m_CVar->value = static_cast<float>(std::atof(m_String));
 	m_CVar->next = nullptr;
+
+	rs_init_cvar(name, m_CVar);
 }
 
 inline CVarWrapper::~CVarWrapper()

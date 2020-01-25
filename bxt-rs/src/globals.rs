@@ -1,4 +1,4 @@
-use crate::utils::racy_ref_cell::RacyRefCell;
+use crate::utils::RacyRefCell;
 
 // If access is needed to multiple globals simultaneously, and the issue can't be solved with
 // partial borrows, these globals can be split into their own RacyRefCells with corresponding

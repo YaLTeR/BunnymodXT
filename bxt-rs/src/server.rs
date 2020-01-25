@@ -2,7 +2,7 @@ use std::{os::raw::c_int, panic::catch_unwind, process::abort, ptr::null};
 
 use ultraviolet::Vec3;
 
-use crate::{utils::marker::MainThreadMarker, utils::racy_ref_cell::RacyRefCell};
+use crate::{utils::MainThreadMarker, utils::RacyRefCell};
 
 /// The server global. Access through [`MainThreadMarker::server`].
 ///

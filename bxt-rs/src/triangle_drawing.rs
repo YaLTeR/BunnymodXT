@@ -6,8 +6,7 @@ fn draw_nodes(marker: MainThreadMarker, tri: &TriangleApi) {
     tri.render_mode(RenderMode::TransAdd);
     tri.color(0.722, 0., 0.341, 1.);
 
-    let server = &marker.globals().server;
-    for position in server.node_positions() {
+    for position in marker.server().node_positions() {
         tri.pyramid(position, 10., 30.);
     }
 }

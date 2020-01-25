@@ -35,6 +35,7 @@ impl MainThreadMarker {
     ///
     /// [`MainThreadGlobals`]: ../../globals/struct.MainThreadGlobals.html
     #[inline]
+    #[allow(unused)] // TODO: remove when we have some globals.
     pub fn globals(self) -> Ref<'static, MainThreadGlobals> {
         // We know we're on the main thread because we accept self which is a MainThreadMarker.
         unsafe { GLOBALS.borrow() }
@@ -44,6 +45,7 @@ impl MainThreadMarker {
     ///
     /// [`MainThreadGlobals`]: ../../globals/struct.MainThreadGlobals.html
     #[inline]
+    #[allow(unused)] // TODO: remove when we have some globals.
     pub fn globals_mut(self) -> RefMut<'static, MainThreadGlobals> {
         // We know we're on the main thread because we accept self which is a MainThreadMarker.
         unsafe { GLOBALS.borrow_mut() }

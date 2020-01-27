@@ -1565,6 +1565,7 @@ fn bindgen_test_layout_CurrentState() {
     );
 }
 
+#[cfg(not(test))]
 extern "C" {
     pub fn bxt_start_simulating(extend_distance_limit: c_int);
     pub fn bxt_simulate(
@@ -1574,4 +1575,22 @@ extern "C" {
         curState: *mut CurrentState,
     ) -> ProcessedFrame;
     pub fn bxt_stop_simulating();
+}
+
+#[cfg(test)]
+pub unsafe extern "C" fn bxt_start_simulating(_extend_distance_limit: c_int) {
+    unreachable!()
+}
+#[cfg(test)]
+pub unsafe extern "C" fn bxt_simulate(
+    _player: *const PlayerData,
+    _vars: *const MovementVars,
+    _frame: *const hltas_cpp::hltas_frame,
+    _curState: *mut CurrentState,
+) -> ProcessedFrame {
+    unreachable!()
+}
+#[cfg(test)]
+pub unsafe extern "C" fn bxt_stop_simulating() {
+    unreachable!()
 }

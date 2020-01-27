@@ -3567,6 +3567,50 @@ void HwDLL::FreeCamTick()
 	cameraOverrideOrigin[2] += direction[2];
 }
 
+// These are wrappers for bxt-rs to call HLStrafe::MainFunc. They are needed
+// because it accepts a std::function which cannot be created from the Rust
+// side.
+
+static HLStrafe::TraceFunc simulation_trace_func;
+
+extern "C" {
+	void bxt_start_simulating(int extend_distance_limit) {
+		auto& hw = HwDLL::GetInstance();
+
+		hw.StartTracing(extend_distance_limit);
+
+		simulation_trace_func = std::bind(
+			&HwDLL::UnsafePlayerTrace,
+			&hw,
+			std::placeholders::_1,
+			std::placeholders::_2,
+			std::placeholders::_3
+		);
+	}
+
+	HLStrafe::ProcessedFrame bxt_simulate(
+		const HLStrafe::PlayerData& player,
+		const HLStrafe::MovementVars& vars,
+		const hltas_frame& frame,
+		HLStrafe::CurrentState& curState,
+		unsigned version
+	) {
+		return HLStrafe::MainFunc(
+			player,
+			vars,
+			HLTAS::Frame(frame),
+			curState,
+			simulation_trace_func,
+			version
+		);
+	}
+
+	void bxt_stop_simulating() {
+		simulation_trace_func = nullptr;
+		HwDLL::GetInstance().StopTracing();
+	}
+}
+
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)
 {
 	insideSeedRNG = true;

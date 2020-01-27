@@ -1530,3 +1530,15 @@ fn bindgen_test_layout_CurrentState() {
         )
     );
 }
+
+extern "C" {
+    pub fn bxt_start_simulating(extend_distance_limit: c_int);
+    pub fn bxt_simulate(
+        player: *const PlayerData,
+        vars: *const MovementVars,
+        frame: *const hltas_cpp::hltas_frame,
+        curState: *mut CurrentState,
+        version: c_uint,
+    ) -> ProcessedFrame;
+    pub fn bxt_stop_simulating();
+}

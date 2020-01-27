@@ -106,7 +106,7 @@ impl<'a> TasEditor<'a> {
     /// # Panics
     ///
     /// Panics if `first_line` is higher than the number of lines in the HLTAS.
-    pub fn new(
+    pub fn new_owned(
         path: &str,
         first_line: usize,
         player: PlayerData,
@@ -143,7 +143,7 @@ impl<'a> TasEditor<'a> {
     /// Updates and draws the TAS editor.
     pub fn tick(
         &mut self,
-        marker: MainThreadMarker,
+        _marker: MainThreadMarker,
         tri: &TriangleApi,
         simulation: &mut Simulation,
     ) {
@@ -246,8 +246,7 @@ impl<'a> Input<'a> {
             })
             // Add the line count in the end, it will be returned if we simulated everything.
             .chain(once(self.lines.len()))
-            .skip(first_frame_bulk_index)
-            .next()
+            .nth(first_frame_bulk_index)
             .unwrap()
     }
 
@@ -295,7 +294,7 @@ pub unsafe extern "C" fn rs_create_tas_editor(
             2 => Mode::Edit,
             _ => panic!("invalid mode: {}", mode),
         };
-        marker.globals_mut().tas_editor = Some(TasEditor::new(
+        marker.globals_mut().tas_editor = Some(TasEditor::new_owned(
             path,
             first_line as _,
             player,

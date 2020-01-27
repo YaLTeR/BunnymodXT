@@ -89,7 +89,6 @@ jobs:
       uses: hecrj/setup-rust-action@v1
       with:
         components: clippy
-        targets: i686-unknown-linux-gnu
 
     - name: Run Clippy
       run: cargo clippy
@@ -105,7 +104,6 @@ jobs:
       uses: hecrj/setup-rust-action@v1
       with:
         components: rustfmt
-        targets: i686-unknown-linux-gnu
 
     - name: Run rustfmt
       run: cargo fmt -- --check || true

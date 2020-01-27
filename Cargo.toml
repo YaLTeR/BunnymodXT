@@ -2,3 +2,6 @@
 members = [
     "bxt-rs",
 ]
+exclude = [
+    "hlstrafe/hltas",
+]

@@ -106,4 +106,4 @@ jobs:
         components: rustfmt
 
     - name: Run rustfmt
-      run: cargo fmt -- --check || true
+      run: cargo fmt -- --check

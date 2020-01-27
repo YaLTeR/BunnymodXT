@@ -82,8 +82,6 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 				movement_vars,
 				frame_bulk,
 				strafe_state,
-				hw.Buttons,
-				hw.ButtonsPresent,
 				trace_func,
 				hw.hlstrafe_version
 			);

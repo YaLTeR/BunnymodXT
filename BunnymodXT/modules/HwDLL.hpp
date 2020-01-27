@@ -434,8 +434,6 @@ protected:
 	unsigned SharedRNGSeedCounter;
 	unsigned LoadingSeedCounter;
 public:
-	bool ButtonsPresent;
-	HLTAS::StrafeButtons Buttons;
 	HLStrafe::CurrentState StrafeState;
 	HLStrafe::CurrentState PrevStrafeState;
 protected:

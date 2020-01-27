@@ -461,7 +461,6 @@ void HwDLL::Clear()
 		PrevStrafeState = HLStrafe::CurrentState();
 		SharedRNGSeedPresent = false;
 		SharedRNGSeed = 0;
-		ButtonsPresent = false;
 		exportFilename.clear();
 		exportResult.Clear();
 	}
@@ -1286,7 +1285,6 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		hw.currentRepeat = 0;
 		hw.StrafeState = HLStrafe::CurrentState();
 		hw.PrevStrafeState = HLStrafe::CurrentState();
-		hw.ButtonsPresent = false;
 		hw.demoName.clear();
 		hw.saveName.clear();
 		hw.frametime0ms.clear();
@@ -1430,9 +1428,9 @@ struct HwDLL::Cmd_BXT_TAS_Split
 		frame.SetLgagstMinSpeed(hw.StrafeState.LgagstMinSpeed);
 		hw.splitResult.InsertFrame(hw.splitResult.GetFrames().size(), frame);
 
-		if (hw.ButtonsPresent) {
+		if (hw.StrafeState.ButtonsPresent) {
 			frame = HLTAS::Frame();
-			frame.SetButtons(hw.Buttons);
+			frame.SetButtons(hw.StrafeState.Buttons);
 			hw.splitResult.InsertFrame(hw.splitResult.GetFrames().size(), frame);
 		}
 
@@ -2578,7 +2576,7 @@ void HwDLL::InsertCommands()
 				StrafeState.Jump = currentKeys.Jump.IsDown();
 				StrafeState.Duck = currentKeys.Duck.IsDown();
 				PrevStrafeState = StrafeState;
-				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), hlstrafe_version);
+				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), hlstrafe_version);
 
 				f.ResetAutofuncs();
 
@@ -2777,10 +2775,10 @@ void HwDLL::InsertCommands()
 					exportResult.InsertFrame(exportResult.GetFrames().size(), resulting_frame);
 			} else if (f.BtnState != HLTAS::ButtonState::NOTHING) { // Buttons frame.
 				if (f.BtnState == HLTAS::ButtonState::SET) {
-					ButtonsPresent = true;
-					Buttons = f.GetButtons();
+					StrafeState.ButtonsPresent = true;
+					StrafeState.Buttons = f.GetButtons();
 				} else
-					ButtonsPresent = false;
+					StrafeState.ButtonsPresent = false;
 			} else if (f.LgagstMinSpeedPresent) { // Lgagstminspeed frame.
 				StrafeState.LgagstMinSpeed = f.GetLgagstMinSpeed();
 			} else if (f.ResetFrame) { // Reset frame.

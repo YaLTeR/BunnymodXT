@@ -2301,7 +2301,47 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 	if (mode != TASEditorMode::DISABLED)
 		SetFreeCam(true);
 
+	if (mode == TASEditorMode::DISABLED)
+		rs_drop_tas_editor();
+
 	if (tas_editor_mode == TASEditorMode::DISABLED && mode != TASEditorMode::DISABLED) {
+		if (runningFrames) {
+			unsigned rs_mode;
+			if (mode == TASEditorMode::APPEND)
+				rs_mode = 1;
+			else if (mode == TASEditorMode::EDIT)
+				rs_mode = 2;
+			else
+				assert(false);
+
+			// Due to the difference between the C++ and the Rust API of HLTAS,
+			// currentFramebulk does not include comments as separate lines,
+			// while first_line that we pass to rs_create_tas_editor should.
+			unsigned first_line = 0;
+			for (size_t i = 0; i <= currentFramebulk; ++i) {
+				auto frame = input.GetFrames()[i];
+				if (!frame.Comments.empty()) {
+					std::istringstream comments(frame.Comments);
+					std::string line;
+					while (std::getline(comments, line))
+						++first_line;
+				}
+
+				if (i != currentFramebulk)
+					++first_line;
+			}
+
+			rs_create_tas_editor(
+				hltas_filename.c_str(),
+				first_line,
+				GetPlayerData(),
+				PrevStrafeState,
+				GetMovementVars(),
+				hlstrafe_version,
+				rs_mode
+			);
+		}
+
 		tas_editor_input = EditedInput();
 		tas_editor_input.initialize();
 

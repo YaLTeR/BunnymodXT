@@ -277,6 +277,62 @@ impl<'a> Input<'a> {
     }
 }
 
+/// Initializes the TAS editor.
+///
+/// # Safety
+///
+/// `path` must be a valid pointer. This function must be called from the main game thread.
+#[no_mangle]
+pub unsafe extern "C" fn rs_create_tas_editor(
+    path: *const c_char,
+    first_line: c_uint,
+    player: PlayerData,
+    state: CurrentState,
+    movement_vars: MovementVars,
+    hlstrafe_version: c_uint,
+    mode: c_uint,
+) {
+    let closure = move || {
+        let marker = MainThreadMarker::new();
+        let path = std::ffi::CStr::from_ptr(path).to_str().unwrap();
+        let mode = match mode {
+            1 => Mode::Append,
+            2 => Mode::Edit,
+            _ => panic!("invalid mode: {}", mode),
+        };
+        marker.globals_mut().tas_editor = Some(TasEditor::new(
+            path,
+            first_line as _,
+            player,
+            state,
+            movement_vars,
+            NonZeroU32::new(hlstrafe_version).unwrap(),
+            mode,
+        ));
+    };
+
+    if catch_unwind(closure).is_err() {
+        abort();
+    }
+}
+
+/// Drops the TAS editor.
+///
+/// # Safety
+///
+/// This function must be called from the main game thread.
+#[no_mangle]
+pub unsafe extern "C" fn rs_drop_tas_editor() {
+    let closure = move || {
+        let marker = MainThreadMarker::new();
+        marker.globals_mut().tas_editor = None;
+    };
+
+    if catch_unwind(closure).is_err() {
+        abort();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use hltas::types::FrameBulk;

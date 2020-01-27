@@ -856,7 +856,7 @@ namespace TriangleDrawing
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);
 
-		DrawTASEditor(pTriAPI);
+		// DrawTASEditor(pTriAPI);
 		ResetTASEditorCommands();
 
 		rs_tri_draw(pTriAPI);

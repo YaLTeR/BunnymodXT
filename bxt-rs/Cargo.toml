@@ -12,3 +12,4 @@ ultraviolet = "0.4.5"
 bitflags = "1.2.1"
 hltas = { path = "../hlstrafe/hltas/" }
 hltas-cpp-bridge = { path = "../hlstrafe/hltas/hltas-cpp-bridge" }
+rental = "0.5.5"

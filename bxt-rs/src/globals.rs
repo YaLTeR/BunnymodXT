@@ -1,6 +1,6 @@
 //! Global variables.
 
-use crate::utils::RacyRefCell;
+use crate::{tas_editor::OwnedTasEditor, utils::RacyRefCell};
 
 // If access is needed to multiple globals simultaneously, and the issue can't be solved with
 // partial borrows, these globals can be split into their own RacyRefCells with corresponding
@@ -12,11 +12,13 @@ use crate::utils::RacyRefCell;
 pub static GLOBALS: RacyRefCell<MainThreadGlobals> = RacyRefCell::new(MainThreadGlobals::new());
 
 /// Global variables accessible from the main game thread.
-pub struct MainThreadGlobals {}
+pub struct MainThreadGlobals {
+    pub tas_editor: Option<OwnedTasEditor>,
+}
 
 impl MainThreadGlobals {
     #[inline]
     pub const fn new() -> Self {
-        Self {}
+        Self { tas_editor: None }
     }
 }

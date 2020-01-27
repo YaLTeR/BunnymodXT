@@ -32,6 +32,7 @@ pub struct cvar_s {
     pub next: *mut cvar_s,
 }
 
+#[cfg(target_arch = "x86")]
 #[test]
 fn bindgen_test_layout_cvar_s() {
     assert_eq!(

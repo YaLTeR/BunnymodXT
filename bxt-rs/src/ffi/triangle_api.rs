@@ -58,6 +58,7 @@ pub struct triangleapi_s {
     pub FogParams: unsafe extern "C" fn(flDensity: f32, iFogSkybox: c_int),
 }
 
+#[cfg(target_arch = "x86")]
 #[test]
 fn bindgen_test_layout_triangleapi_s() {
     assert_eq!(

@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate rental;
+
 mod cvar;
 pub use cvar::rs_init_cvar;
 

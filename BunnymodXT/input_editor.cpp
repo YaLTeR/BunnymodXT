@@ -82,8 +82,7 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 				movement_vars,
 				frame_bulk,
 				strafe_state,
-				trace_func,
-				hw.hlstrafe_version
+				trace_func
 			);
 
 			// printf(

@@ -413,7 +413,6 @@ protected:
 public:
 	std::string hltas_filename;
 	HLTAS::Input input;
-	unsigned hlstrafe_version;
 	size_t totalFrames;
 protected:
 	std::string demoName;

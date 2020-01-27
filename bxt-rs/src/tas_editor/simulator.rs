@@ -1,6 +1,6 @@
 //! Player movement simulation.
 
-use std::{marker::PhantomData, mem::ManuallyDrop, num::NonZeroU32};
+use std::{marker::PhantomData, mem::ManuallyDrop};
 
 use hltas::types::Line;
 use hltas_cpp_bridge::hltas_frame_from_non_comment_line;
@@ -65,7 +65,6 @@ impl Simulator {
         vars: &ffi::MovementVars,
         line: &Line,
         cur_state: &mut ffi::CurrentState,
-        version: NonZeroU32,
     ) -> ffi::ProcessedFrame {
         match line {
             Line::FrameBulk(_) => (),
@@ -74,7 +73,7 @@ impl Simulator {
 
         unsafe {
             let (frame, mut strings) = hltas_frame_from_non_comment_line(line);
-            let processed_frame = ffi::bxt_simulate(player, vars, &frame, cur_state, version.get());
+            let processed_frame = ffi::bxt_simulate(player, vars, &frame, cur_state);
             ManuallyDrop::drop(&mut strings);
             processed_frame
         }

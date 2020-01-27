@@ -10,7 +10,6 @@ extern "C" {
 		HLStrafe::PlayerData player,
 		HLStrafe::CurrentState state,
 		HLStrafe::MovementVars movement_vars,
-		unsigned hlstrafe_version,
 		unsigned mode
 	);
 	void rs_drop_tas_editor();

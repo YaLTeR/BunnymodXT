@@ -448,7 +448,6 @@ void HwDLL::Clear()
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
-		hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
 		demoName.clear();
 		saveName.clear();
 		frametime0ms.clear();
@@ -1288,7 +1287,6 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		hw.demoName.clear();
 		hw.saveName.clear();
 		hw.frametime0ms.clear();
-		hw.hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
 		hw.SharedRNGSeedPresent = false;
 		hw.SetNonSharedRNGSeed = false;
 		hw.thisFrameIs0ms = false;
@@ -1322,12 +1320,12 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 			} else if (prop.first == "frametime0ms")
 				hw.frametime0ms = prop.second;
 			else if (prop.first == "hlstrafe_version") {
-				hw.hlstrafe_version = std::strtoul(prop.second.c_str(), nullptr, 10);
+				hw.StrafeState.Version = std::strtoul(prop.second.c_str(), nullptr, 10);
 
 				saw_hlstrafe_version = true;
 
-				if (hw.hlstrafe_version > HLStrafe::MAX_SUPPORTED_VERSION) {
-					hw.ORIG_Con_Printf("Error loading the script: hlstrafe_version %u is too high (maximum supported version: %u)\n", hw.hlstrafe_version, HLStrafe::MAX_SUPPORTED_VERSION);
+				if (hw.StrafeState.Version > HLStrafe::MAX_SUPPORTED_VERSION) {
+					hw.ORIG_Con_Printf("Error loading the script: hlstrafe_version %u is too high (maximum supported version: %u)\n", hw.StrafeState.Version, HLStrafe::MAX_SUPPORTED_VERSION);
 					return;
 				}
 			}
@@ -1337,10 +1335,10 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		}
 
 		if (saw_hlstrafe_version) {
-			if (hw.hlstrafe_version < HLStrafe::MAX_SUPPORTED_VERSION)
-				hw.ORIG_Con_Printf("The script's hlstrafe_version is %u, but the latest version is %u. If this is an old script, keep it as is. For new scripts, please add a \"hlstrafe_version %u\" property to get the most accurate TAS prediction.\n", hw.hlstrafe_version, HLStrafe::MAX_SUPPORTED_VERSION, HLStrafe::MAX_SUPPORTED_VERSION);
+			if (hw.StrafeState.Version < HLStrafe::MAX_SUPPORTED_VERSION)
+				hw.ORIG_Con_Printf("The script's hlstrafe_version is %u, but the latest version is %u. If this is an old script, keep it as is. For new scripts, please add a \"hlstrafe_version %u\" property to get the most accurate TAS prediction.\n", hw.StrafeState.Version, HLStrafe::MAX_SUPPORTED_VERSION, HLStrafe::MAX_SUPPORTED_VERSION);
 		} else {
-			hw.hlstrafe_version = 1;
+			hw.StrafeState.Version = 1;
 			hw.ORIG_Con_Printf("No hlstrafe_version property found in the script. If this is an old script, keep it as is, or add a \"hlstrafe_version 1\" property explicitly. For new scripts, please add a \"hlstrafe_version %u\" property to get the most accurate TAS prediction.\n", HLStrafe::MAX_SUPPORTED_VERSION);
 		}
 
@@ -2337,7 +2335,6 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 				GetPlayerData(),
 				PrevStrafeState,
 				GetMovementVars(),
-				hlstrafe_version,
 				rs_mode
 			);
 		}
@@ -2357,7 +2354,7 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 			ORIG_Cbuf_InsertText("host_framerate 0;_bxt_norefresh 0;_bxt_min_frametime 0\n");
 		} else {
 			// If invoked outside of a script, make sure the hlstrafe version is latest.
-			hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
+			tas_editor_input.strafe_states[0].Version = HLStrafe::MAX_SUPPORTED_VERSION;
 		}
 	}
 
@@ -2616,7 +2613,7 @@ void HwDLL::InsertCommands()
 				StrafeState.Jump = currentKeys.Jump.IsDown();
 				StrafeState.Duck = currentKeys.Duck.IsDown();
 				PrevStrafeState = StrafeState;
-				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), hlstrafe_version);
+				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false));
 
 				f.ResetAutofuncs();
 
@@ -3632,16 +3629,14 @@ extern "C" {
 		const HLStrafe::PlayerData& player,
 		const HLStrafe::MovementVars& vars,
 		const hltas_frame& frame,
-		HLStrafe::CurrentState& curState,
-		unsigned version
+		HLStrafe::CurrentState& curState
 	) {
 		return HLStrafe::MainFunc(
 			player,
 			vars,
 			HLTAS::Frame(frame),
 			curState,
-			simulation_trace_func,
-			version
+			simulation_trace_func
 		);
 	}
 

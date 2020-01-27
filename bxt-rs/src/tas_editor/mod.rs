@@ -1,8 +1,7 @@
 //! An interactive editor for TAS scripts.
 
 use std::{
-    fs::read_to_string, iter::once, num::NonZeroU32, os::raw::*, panic::catch_unwind,
-    process::abort, str::FromStr,
+    fs::read_to_string, iter::once, os::raw::*, panic::catch_unwind, process::abort, str::FromStr,
 };
 
 use hltas::{types::Line, HLTAS};
@@ -70,8 +69,6 @@ pub struct Input<'a> {
     frames: Vec<Frame>,
     /// The initial movement variables.
     initial_movement_vars: MovementVars,
-    /// The HLStrafe version property.
-    hlstrafe_version: NonZeroU32,
 }
 
 /// Per-frame data.
@@ -115,12 +112,17 @@ impl<'a> TasEditor<'a> {
         player: PlayerData,
         state: CurrentState,
         movement_vars: MovementVars,
-        hlstrafe_version: NonZeroU32,
         mode: Mode,
     ) -> OwnedTasEditor {
         let contents = read_to_string(path).unwrap(); // TODO: report error.
         OwnedTasEditor::new(contents, |input| {
             let hltas = HLTAS::from_str(input).unwrap();
+
+            // Sanity check.
+            if let Some(hlstrafe_version) = hltas.properties.hlstrafe_version {
+                assert_eq!(hlstrafe_version.get(), state.Version);
+            }
+
             let input = Input {
                 lines: hltas.lines[first_line..].into(),
                 frame_bulk_starts: vec![0],
@@ -132,7 +134,6 @@ impl<'a> TasEditor<'a> {
                     next_frame_is_0_ms: false, // TODO: set this properly?
                 }],
                 initial_movement_vars: movement_vars,
-                hlstrafe_version,
             };
 
             TasEditor { hltas, input, mode }
@@ -198,13 +199,8 @@ impl<'a> Input<'a> {
                                 movement_vars.Frametime = frame_time;
                             }
 
-                            let processed_frame = simulator.simulate(
-                                &player,
-                                &movement_vars,
-                                line,
-                                &mut state,
-                                self.hlstrafe_version,
-                            );
+                            let processed_frame =
+                                simulator.simulate(&player, &movement_vars, line, &mut state);
 
                             player = processed_frame.NewPlayerData;
                             next_frame_is_0_ms = processed_frame.NextFrameIs0ms;
@@ -289,7 +285,6 @@ pub unsafe extern "C" fn rs_create_tas_editor(
     player: PlayerData,
     state: CurrentState,
     movement_vars: MovementVars,
-    hlstrafe_version: c_uint,
     mode: c_uint,
 ) {
     let closure = move || {
@@ -306,7 +301,6 @@ pub unsafe extern "C" fn rs_create_tas_editor(
             player,
             state,
             movement_vars,
-            NonZeroU32::new(hlstrafe_version).unwrap(),
             mode,
         ));
     };
@@ -368,7 +362,6 @@ mod tests {
             frame_bulk_starts: vec![0],
             frames: vec![Frame::default()],
             initial_movement_vars: default_movement_vars(),
-            hlstrafe_version: NonZeroU32::new(1).unwrap(),
         };
 
         assert_eq!(input.first_line_index(), 1);
@@ -383,7 +376,6 @@ mod tests {
             frame_bulk_starts: vec![0],
             frames: vec![Frame::default()],
             initial_movement_vars: default_movement_vars(),
-            hlstrafe_version: NonZeroU32::new(1).unwrap(),
         };
 
         assert_eq!(input.first_line_index(), 2);
@@ -403,7 +395,6 @@ mod tests {
             frame_bulk_starts: vec![0, 1, 2],
             frames: vec![Frame::default(); 3],
             initial_movement_vars: default_movement_vars(),
-            hlstrafe_version: NonZeroU32::new(1).unwrap(),
         };
 
         assert_eq!(input.first_line_index(), 2);
@@ -423,7 +414,6 @@ mod tests {
             frame_bulk_starts: vec![0, 1, 2, 3, 4],
             frames: vec![Frame::default(); 5],
             initial_movement_vars: default_movement_vars(),
-            hlstrafe_version: NonZeroU32::new(1).unwrap(),
         };
 
         assert_eq!(input.first_line_index(), 4);

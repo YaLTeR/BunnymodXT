@@ -407,6 +407,7 @@ protected:
 	bool tasLogging;
 	std::string loggedCbuf;
 	FILE *tasLogFile = nullptr;
+	void SetTASLogging(bool enabled);
 
 	bool isOverridingCamera = false;
 	float cameraOverrideOrigin[3];

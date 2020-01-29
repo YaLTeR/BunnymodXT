@@ -2086,29 +2086,7 @@ struct HwDLL::Cmd_BXT_TASLog
 			return;
 		}
 
-		bool enabled_ = enabled;
-		if (enabled_ == hw.tasLogging)
-			return;
-
-		if (hw.tasLogging) {
-			hw.logWriter.EndLog();
-			std::fclose(hw.tasLogFile);
-			hw.logWriter.Clear();
-			hw.tasLogging = false;
-			hw.ORIG_Con_Printf("Stopped TAS logging.\n");
-		} else {
-			const auto filename = CVars::bxt_taslog_filename.GetString();
-			hw.tasLogFile = std::fopen(filename.c_str(), "wb");
-			if (!hw.tasLogFile) {
-				hw.ORIG_Con_Printf("Unable to create log file %s: %s\n", filename.c_str(), std::strerror(errno));
-				return;
-			}
-			const int buildNumber = hw.ORIG_build_number ? hw.ORIG_build_number() : -1;
-			const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
-			hw.logWriter.StartLog(hw.tasLogFile, BUNNYMODXT_VERSION, buildNumber, gameDir);
-			hw.tasLogging = true;
-			hw.ORIG_Con_Printf("Started TAS logging into %s\n", filename.c_str());
-		}
+		hw.SetTASLogging(enabled);
 	}
 };
 
@@ -2480,6 +2458,32 @@ void HwDLL::SaveEditedInput()
 
 	tas_editor_input.save();
 	SetTASEditorMode(TASEditorMode::DISABLED);
+}
+
+void HwDLL::SetTASLogging(bool enabled)
+{
+	if (enabled == tasLogging)
+		return;
+
+	if (tasLogging) {
+		logWriter.EndLog();
+		std::fclose(tasLogFile);
+		logWriter.Clear();
+		tasLogging = false;
+		ORIG_Con_Printf("Stopped TAS logging.\n");
+	} else {
+		const auto filename = CVars::bxt_taslog_filename.GetString();
+		tasLogFile = std::fopen(filename.c_str(), "wb");
+		if (!tasLogFile) {
+			ORIG_Con_Printf("Unable to create log file %s: %s\n", filename.c_str(), std::strerror(errno));
+			return;
+		}
+		const int buildNumber = ORIG_build_number ? ORIG_build_number() : -1;
+		const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+		logWriter.StartLog(tasLogFile, BUNNYMODXT_VERSION, buildNumber, gameDir);
+		tasLogging = true;
+		ORIG_Con_Printf("Started TAS logging into %s\n", filename.c_str());
+	}
 }
 
 void HwDLL::RegisterCVarsAndCommandsIfNeeded()

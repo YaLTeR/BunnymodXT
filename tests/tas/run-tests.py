@@ -109,8 +109,8 @@ def main():
 
         run([
             launcher, '-game', game_dir, '+bxt_taslog_filename',
-            taslogger_path, '+map', map_name, '+bxt_tas_loadscript',
-            script_path
+            taslogger_path, '+bxt_tas_write_log', '1', '+map', map_name,
+            '+bxt_tas_loadscript', script_path
         ])
 
         print('Processing the log')

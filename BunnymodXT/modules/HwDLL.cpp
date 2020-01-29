@@ -1353,6 +1353,7 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 
 		if (!hw.input.GetFrames().empty()) {
 			hw.runningFrames = true;
+			hw.wasRunningFrames = false; // So that ResetButtons() and others run in InsertCommands().
 			hw.totalFramebulks = hw.input.GetFrames().size();
 			HLTAS::Frame f;
 			if (hw.GetNextMovementFrame(f)) {
@@ -1382,6 +1383,9 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 			// current implementation it just uses the viewangles from the strafing and so isn't
 			// really useful.
 			hw.SetFreeCam(false);
+
+			// It will be enabled by bxt_tas_write_log if needed.
+			hw.SetTASLogging(false);
 		}
 	}
 };
@@ -2501,6 +2505,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
 	RegisterCVar(CVars::bxt_tas_norefresh_until_last_frames);
+	RegisterCVar(CVars::bxt_tas_write_log);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
 	RegisterCVar(CVars::bxt_wallhack_alpha);
@@ -2592,6 +2597,11 @@ void HwDLL::InsertCommands()
 	bool runningFramesBackup = runningFrames;
 
 	if (runningFrames && resetState == ResetState::NORMAL) {
+		if (!wasRunningFrames) {
+			if (CVars::bxt_tas_write_log.GetBool())
+				SetTASLogging(true);
+		}
+
 		while (currentFramebulk < totalFramebulks) {
 			preExecFramebulk = currentFramebulk;
 			auto& f = input.GetFrame(currentFramebulk);

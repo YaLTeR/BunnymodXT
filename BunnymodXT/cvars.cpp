@@ -17,6 +17,7 @@ namespace CVars
 	CVarWrapper bxt_stop_demo_on_changelevel("bxt_stop_demo_on_changelevel", "0");
 	CVarWrapper bxt_tas_editor_simulate_for_ms("bxt_tas_editor_simulate_for_ms", "40");
 	CVarWrapper bxt_tas_norefresh_until_last_frames("bxt_tas_norefresh_until_last_frames", "0");
+	CVarWrapper bxt_tas_write_log("bxt_tas_write_log", "0");
 
 	CVarWrapper con_color;
 	CVarWrapper sv_cheats;
@@ -117,6 +118,7 @@ namespace CVars
 		&bxt_stop_demo_on_changelevel,
 		&bxt_tas_editor_simulate_for_ms,
 		&bxt_tas_norefresh_until_last_frames,
+		&bxt_tas_write_log,
 		&con_color,
 		&sv_cheats,
 		&sv_maxvelocity,

@@ -2822,7 +2822,8 @@ void HwDLL::InsertCommands()
 
 				--totalFrames;
 				auto norefresh_until_frames = CVars::bxt_tas_norefresh_until_last_frames.GetInt();
-				if (norefresh_until_frames > 0 && totalFrames <= static_cast<size_t>(norefresh_until_frames))
+				if (norefresh_until_frames > 0 && totalFrames <= static_cast<size_t>(norefresh_until_frames)
+						&& CVars::_bxt_norefresh.GetBool())
 					ORIG_Cbuf_InsertText("_bxt_norefresh 0\n");
 
 				if (p.NextFrameIs0ms) {

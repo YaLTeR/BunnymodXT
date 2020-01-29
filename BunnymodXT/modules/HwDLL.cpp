@@ -2095,16 +2095,19 @@ struct HwDLL::Cmd_BXT_TASLog
 			std::fclose(hw.tasLogFile);
 			hw.logWriter.Clear();
 			hw.tasLogging = false;
+			hw.ORIG_Con_Printf("Stopped TAS logging.\n");
 		} else {
-			hw.tasLogFile = std::fopen(CVars::bxt_taslog_filename.GetString().c_str(), "wb");
+			const auto filename = CVars::bxt_taslog_filename.GetString();
+			hw.tasLogFile = std::fopen(filename.c_str(), "wb");
 			if (!hw.tasLogFile) {
-				hw.ORIG_Con_Printf("Unable to create log file: %s\n", std::strerror(errno));
+				hw.ORIG_Con_Printf("Unable to create log file %s: %s\n", filename.c_str(), std::strerror(errno));
 				return;
 			}
 			const int buildNumber = hw.ORIG_build_number ? hw.ORIG_build_number() : -1;
 			const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
 			hw.logWriter.StartLog(hw.tasLogFile, BUNNYMODXT_VERSION, buildNumber, gameDir);
 			hw.tasLogging = true;
+			hw.ORIG_Con_Printf("Started TAS logging into %s\n", filename.c_str());
 		}
 	}
 };

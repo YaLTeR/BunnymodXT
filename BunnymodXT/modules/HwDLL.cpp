@@ -3767,7 +3767,7 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 	if (runningFrames) {
 		auto playbackSpeed = CVars::bxt_tas_playback_speed.GetFloat();
 		if (playbackSpeed != 0 && host_frametime)
-			minFrametime = *host_frametime / playbackSpeed;
+			minFrametime = static_cast<float>(*host_frametime) / playbackSpeed;
 	}
 
 	if (minFrametime == 0.0f || CVars::_bxt_norefresh.GetBool()) {

@@ -2902,6 +2902,24 @@ void HwDLL::InsertCommands()
 				StrafeState.Algorithm = f.GetAlgorithm();
 			} else if (f.AlgorithmParametersPresent) {
 				StrafeState.Parameters = f.GetAlgorithmParameters();
+			} else if (f.ChangePresent) {
+				switch (f.GetChangeTarget()) {
+				case HLTAS::ChangeTarget::YAW:
+					StrafeState.ChangeYawFinalValue = f.GetChangeFinalValue();
+					StrafeState.ChangeYawOver = f.GetChangeOver();
+					break;
+				case HLTAS::ChangeTarget::PITCH:
+					StrafeState.ChangePitchFinalValue = f.GetChangeFinalValue();
+					StrafeState.ChangePitchOver = f.GetChangeOver();
+					break;
+				case HLTAS::ChangeTarget::TARGET_YAW:
+					StrafeState.ChangeTargetYawFinalValue = f.GetChangeFinalValue();
+					StrafeState.ChangeTargetYawOver = f.GetChangeOver();
+					break;
+				default:
+					assert(false);
+					break;
+				}
 			}
 
 			currentFramebulk++;

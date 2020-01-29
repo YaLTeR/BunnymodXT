@@ -445,6 +445,8 @@ void HwDLL::Clear()
 	tas_editor_set_yaw = false;
 	tas_editor_set_pitch = false;
 	tas_editor_set_repeats = false;
+	tas_editor_unset_yaw = false;
+	tas_editor_unset_pitch = false;
 	tas_editor_set_run_point_and_save = false;
 	free_cam_active = false;
 	extendPlayerTraceDistanceLimit = false;
@@ -2341,6 +2343,28 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Repeats
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Unset_Yaw
+{
+	USAGE("Usage: bxt_tas_editor_unset_yaw <yaw>\n Unsets the yaw angle on the currently selected point.\n");
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+		hw.tas_editor_unset_yaw = true;
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_Editor_Unset_Pitch
+{
+	USAGE("Usage: bxt_tas_editor_unset_pitch <pitch>\n Unsets the pitch angle on the currently selected point.\n");
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+		hw.tas_editor_unset_pitch = true;
+	}
+};
+
 void HwDLL::SetTASEditorMode(TASEditorMode mode)
 {
 	auto& cl = ClientDLL::GetInstance();
@@ -2538,6 +2562,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 
+	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Pitch, Handler<>>("bxt_tas_editor_unset_pitch");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Yaw, Handler<>>("bxt_tas_editor_unset_yaw");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Repeats, Handler<int>>("bxt_tas_editor_set_repeats");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Pitch, Handler<float>>("bxt_tas_editor_set_pitch");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Yaw, Handler<float>>("bxt_tas_editor_set_yaw");

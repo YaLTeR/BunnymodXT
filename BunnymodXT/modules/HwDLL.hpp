@@ -246,6 +246,8 @@ public:
 	float tas_editor_set_pitch_pitch;
 	bool tas_editor_set_repeats;
 	unsigned tas_editor_set_repeats_repeats;
+	bool tas_editor_unset_yaw;
+	bool tas_editor_unset_pitch;
 	void SetTASEditorMode(TASEditorMode mode);
 	void SaveEditedInput();
 
@@ -342,6 +344,8 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Set_Yaw;
 	struct Cmd_BXT_TAS_Editor_Set_Pitch;
 	struct Cmd_BXT_TAS_Editor_Set_Repeats;
+	struct Cmd_BXT_TAS_Editor_Unset_Yaw;
+	struct Cmd_BXT_TAS_Editor_Unset_Pitch;
 	struct Cmd_BXT_FreeCam;
 
 	void RegisterCVarsAndCommandsIfNeeded();

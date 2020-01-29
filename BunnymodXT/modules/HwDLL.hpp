@@ -240,6 +240,12 @@ public:
 	bool tas_editor_toggle_attack2;
 	bool tas_editor_toggle_reload;
 	bool tas_editor_set_run_point_and_save;
+	bool tas_editor_set_yaw;
+	float tas_editor_set_yaw_yaw;
+	bool tas_editor_set_pitch;
+	float tas_editor_set_pitch_pitch;
+	bool tas_editor_set_repeats;
+	unsigned tas_editor_set_repeats_repeats;
 	void SetTASEditorMode(TASEditorMode mode);
 	void SaveEditedInput();
 
@@ -333,6 +339,9 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Insert_Point;
 	struct Cmd_BXT_TAS_Editor_Toggle;
 	struct Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save;
+	struct Cmd_BXT_TAS_Editor_Set_Yaw;
+	struct Cmd_BXT_TAS_Editor_Set_Pitch;
+	struct Cmd_BXT_TAS_Editor_Set_Repeats;
 	struct Cmd_BXT_FreeCam;
 
 	void RegisterCVarsAndCommandsIfNeeded();

@@ -442,6 +442,9 @@ void HwDLL::Clear()
 	tas_editor_toggle_attack1 = false;
 	tas_editor_toggle_attack2 = false;
 	tas_editor_toggle_reload = false;
+	tas_editor_set_yaw = false;
+	tas_editor_set_pitch = false;
+	tas_editor_set_repeats = false;
 	tas_editor_set_run_point_and_save = false;
 	free_cam_active = false;
 	extendPlayerTraceDistanceLimit = false;
@@ -2296,6 +2299,48 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Set_Yaw
+{
+	USAGE("Usage: bxt_tas_editor_set_yaw <yaw>\n Sets the yaw angle on the currently selected point.\n");
+
+	static void handler(float value)
+	{
+		auto& hw = HwDLL::GetInstance();
+		hw.tas_editor_set_yaw = true;
+		hw.tas_editor_set_yaw_yaw = value;
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_Editor_Set_Pitch
+{
+	USAGE("Usage: bxt_tas_editor_set_pitch <pitch>\n Sets the pitch angle on the currently selected point.\n");
+
+	static void handler(float value)
+	{
+		auto& hw = HwDLL::GetInstance();
+		hw.tas_editor_set_pitch = true;
+		hw.tas_editor_set_pitch_pitch = value;
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_Editor_Set_Repeats
+{
+	USAGE("Usage: bxt_tas_editor_set_repeats <repeats>\n Sets the repeats on the currently selected point.\n");
+
+	static void handler(int value)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		if (value <= 0) {
+			hw.ORIG_Con_Printf("Repeats must be > 0.\n");
+			return;
+		}
+
+		hw.tas_editor_set_repeats = true;
+		hw.tas_editor_set_repeats_repeats = value;
+	}
+};
+
 void HwDLL::SetTASEditorMode(TASEditorMode mode)
 {
 	auto& cl = ClientDLL::GetInstance();
@@ -2493,6 +2538,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 
+	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Repeats, Handler<int>>("bxt_tas_editor_set_repeats");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Pitch, Handler<float>>("bxt_tas_editor_set_pitch");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Yaw, Handler<float>>("bxt_tas_editor_set_yaw");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle, Handler<const char*>>("bxt_tas_editor_toggle");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save, Handler<>>("bxt_tas_editor_set_run_point_and_save");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Last_Point, Handler<>>("bxt_tas_editor_delete_last_point");

@@ -769,6 +769,24 @@ namespace TriangleDrawing
 					frame_bulk.Reload = !frame_bulk.Reload;
 					stale_index = closest_edge_prev_frame_bulk_index;
 				}
+
+				if (hw.tas_editor_set_yaw
+						// If we're strafing, then if we can set the yaw it should already be present.
+						// If we're not strafing, then we can set the yaw.
+						&& (frame_bulk.GetYawPresent() || !frame_bulk.Strafe)) {
+					frame_bulk.SetYaw(hw.tas_editor_set_yaw_yaw);
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_set_pitch) {
+					frame_bulk.SetPitch(hw.tas_editor_set_pitch_pitch);
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_set_repeats) {
+					frame_bulk.SetRepeats(hw.tas_editor_set_repeats_repeats);
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
 			}
 
 			if (closest_edge_frame != 0
@@ -845,6 +863,9 @@ namespace TriangleDrawing
 		hw.tas_editor_toggle_attack1 = false;
 		hw.tas_editor_toggle_attack2 = false;
 		hw.tas_editor_toggle_reload = false;
+		hw.tas_editor_set_yaw = false;
+		hw.tas_editor_set_pitch = false;
+		hw.tas_editor_set_repeats = false;
 		hw.tas_editor_set_run_point_and_save = false;
 	}
 

@@ -2506,6 +2506,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
 	RegisterCVar(CVars::bxt_tas_norefresh_until_last_frames);
 	RegisterCVar(CVars::bxt_tas_write_log);
+	RegisterCVar(CVars::bxt_tas_playback_speed);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
 	RegisterCVar(CVars::bxt_wallhack_alpha);
@@ -3744,6 +3745,13 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 	static bool usePassedTime = false;
 
 	auto minFrametime = CVars::_bxt_min_frametime.GetFloat();
+
+	if (runningFrames) {
+		auto playbackSpeed = CVars::bxt_tas_playback_speed.GetFloat();
+		if (playbackSpeed != 0 && host_frametime)
+			minFrametime = *host_frametime / playbackSpeed;
+	}
+
 	if (minFrametime == 0.0f || CVars::_bxt_norefresh.GetBool()) {
 		timeCounter = 0.0;
 		usePassedTime = false;

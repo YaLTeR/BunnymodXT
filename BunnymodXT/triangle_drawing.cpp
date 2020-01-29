@@ -647,11 +647,12 @@ namespace TriangleDrawing
 
 				if (hw.tas_editor_toggle_s22) {
 					if (!frame_bulk.Strafe
-							|| frame_bulk.GetDir() != HLTAS::StrafeDir::YAW
+							|| frame_bulk.GetDir() != HLTAS::StrafeDir::BEST
 							|| frame_bulk.GetType() != HLTAS::StrafeType::MAXDECCEL) {
 						frame_bulk.Strafe = true;
-						frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
+						frame_bulk.SetDir(HLTAS::StrafeDir::BEST);
 						frame_bulk.SetType(HLTAS::StrafeType::MAXDECCEL);
+						frame_bulk.SetYawPresent(false);
 					} else {
 						frame_bulk.Strafe = false;
 					}

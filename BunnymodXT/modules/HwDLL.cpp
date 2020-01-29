@@ -2076,15 +2076,19 @@ struct HwDLL::Cmd_BXT_Load
 
 struct HwDLL::Cmd_BXT_TASLog
 {
-	NO_USAGE();
+	USAGE("Usage: bxt_taslog <0|1>\n Enables or disables TAS logging into the file at bxt_taslog_filename.\n");
 
-	static void handler()
+	static void handler(int enabled)
 	{
 		auto &hw = HwDLL::GetInstance();
 		if (!hw.ORIG_SV_Frame) {
 			hw.ORIG_Con_Printf("TAS logging is unavailable.\n");
 			return;
 		}
+
+		bool enabled_ = enabled;
+		if (enabled_ == hw.tasLogging)
+			return;
 
 		if (hw.tasLogging) {
 			hw.logWriter.EndLog();
@@ -2558,7 +2562,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Load, Handler<const char *>>("_bxt_load");
 	wrapper::Add<Cmd_BXT_Interprocess_Reset, Handler<>>("_bxt_interprocess_reset");
 	wrapper::Add<Cmd_BXT_Reset_Frametime_Remainder, Handler<>>("_bxt_reset_frametime_remainder");
-	wrapper::Add<Cmd_BXT_TASLog, Handler<>>("bxt_taslog");
+	wrapper::Add<Cmd_BXT_TASLog, Handler<int>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 

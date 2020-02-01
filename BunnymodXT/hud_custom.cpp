@@ -62,6 +62,11 @@ namespace CustomHud
 		bool attack1;
 		bool attack2;
 		bool reload;
+
+		double pitch;
+		double yaw;
+		bool pitch_present;
+		bool yaw_present;
 	};
 	static FrameBulkStatus frame_bulk_status;
 	static bool frame_bulk_selected;
@@ -1018,6 +1023,13 @@ namespace CustomHud
 
 				out << "  " << action.first << '\n';
 			}
+
+			if (frame_bulk_status.pitch_present) {
+				out << "Pitch: " << frame_bulk_status.pitch << "\n";
+			}
+			if (frame_bulk_status.yaw_present) {
+				out << "Yaw: " << frame_bulk_status.yaw << "\n";
+			}
 		} else {
 			out << " no frame bulk selected";
 		}
@@ -1254,5 +1266,15 @@ namespace CustomHud
 		frame_bulk_status.attack1 = frame_bulk.Attack1;
 		frame_bulk_status.attack2 = frame_bulk.Attack2;
 		frame_bulk_status.reload = frame_bulk.Reload;
+
+		frame_bulk_status.pitch_present = frame_bulk.PitchPresent;
+		if (frame_bulk_status.pitch_present) {
+			frame_bulk_status.pitch = frame_bulk.GetPitch();
+		}
+
+		frame_bulk_status.yaw_present = frame_bulk.GetYawPresent();
+		if (frame_bulk_status.yaw_present) {
+			frame_bulk_status.yaw = frame_bulk.GetYaw();
+		}
 	}
 }

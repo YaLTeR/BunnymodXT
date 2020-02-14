@@ -606,18 +606,20 @@ namespace CustomHud
 
 	static void SetupTraceVectors(float start[3], float end[3])
 	{
-		ClientDLL::GetInstance().pEngfuncs->pEventAPI->EV_LocalPlayerViewheight(start);
-		start[0] += player.origin[0];
-		start[1] += player.origin[1];
-		start[2] += player.origin[2];
+		const auto& cl = ClientDLL::GetInstance();
 
-		float forward[3], right[3], up[3];
-		ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player.viewangles, forward, right, up);
+		auto view = cl.last_vieworg;
+		Vector forward, right, up;
+		cl.pEngfuncs->pfnAngleVectors(cl.last_viewangles, forward, right, up);
 
-		vecCopy(start, end);
-		end[0] += forward[0] * 8192;
-		end[1] += forward[1] * 8192;
-		end[2] += forward[2] * 8192;
+		Vector end_ = view + forward * 8192;
+
+		start[0] = view[0];
+		start[1] = view[1];
+		start[2] = view[2];
+		end[0] = end_[0];
+		end[1] = end_[1];
+		end[2] = end_[2];
 	}
 
 	void DrawDistance(float flTime)

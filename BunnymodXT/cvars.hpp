@@ -181,9 +181,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_distance;
 	extern CVarWrapper bxt_hud_distance_offset;
 	extern CVarWrapper bxt_hud_distance_anchor;
-	extern CVarWrapper bxt_hud_entity_hp;
-	extern CVarWrapper bxt_hud_entity_hp_offset;
-	extern CVarWrapper bxt_hud_entity_hp_anchor;
+	extern CVarWrapper bxt_hud_entity_info;
+	extern CVarWrapper bxt_hud_entity_info_offset;
+	extern CVarWrapper bxt_hud_entity_info_anchor;
 	extern CVarWrapper bxt_hud_selfgauss;
 	extern CVarWrapper bxt_hud_selfgauss_offset;
 	extern CVarWrapper bxt_hud_selfgauss_anchor;

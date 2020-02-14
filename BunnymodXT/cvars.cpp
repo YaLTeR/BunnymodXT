@@ -74,9 +74,9 @@ namespace CVars
 	CVarWrapper bxt_hud_distance("bxt_hud_distance", "0");
 	CVarWrapper bxt_hud_distance_offset("bxt_hud_distance_offset", "");
 	CVarWrapper bxt_hud_distance_anchor("bxt_hud_distance_anchor", "1 0");
-	CVarWrapper bxt_hud_entity_hp("bxt_hud_entity_hp", "0");
-	CVarWrapper bxt_hud_entity_hp_offset("bxt_hud_entity_hp_offset", "");
-	CVarWrapper bxt_hud_entity_hp_anchor("bxt_hud_entity_hp_anchor", "1 0");
+	CVarWrapper bxt_hud_entity_info("bxt_hud_entity_info", "0");
+	CVarWrapper bxt_hud_entity_info_offset("bxt_hud_entity_info_offset", "");
+	CVarWrapper bxt_hud_entity_info_anchor("bxt_hud_entity_info_anchor", "1 0");
 	CVarWrapper bxt_hud_selfgauss("bxt_hud_selfgauss", "0");
 	CVarWrapper bxt_hud_selfgauss_offset("bxt_hud_selfgauss_offset", "");
 	CVarWrapper bxt_hud_selfgauss_anchor("bxt_hud_selfgauss_anchor", "1 0");
@@ -174,9 +174,9 @@ namespace CVars
 		&bxt_hud_distance,
 		&bxt_hud_distance_offset,
 		&bxt_hud_distance_anchor,
-		&bxt_hud_entity_hp,
-		&bxt_hud_entity_hp_offset,
-		&bxt_hud_entity_hp_anchor,
+		&bxt_hud_entity_info,
+		&bxt_hud_entity_info_offset,
+		&bxt_hud_entity_info_anchor,
 		&bxt_hud_selfgauss,
 		&bxt_hud_selfgauss_offset,
 		&bxt_hud_selfgauss_anchor,

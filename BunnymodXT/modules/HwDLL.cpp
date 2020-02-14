@@ -3618,7 +3618,7 @@ void HwDLL::SaveInitialDataToDemo()
 		"bxt_collision_depth_map",
 		"bxt_fade_remove",
 		"bxt_hud_distance",
-		"bxt_hud_entity_hp",
+		"bxt_hud_entity_info",
 		"bxt_hud_entities",
 		"bxt_hud_health",
 		"bxt_hud_origin",

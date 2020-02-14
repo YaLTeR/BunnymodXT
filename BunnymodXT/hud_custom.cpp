@@ -649,31 +649,51 @@ namespace CustomHud
 		}
 	}
 
-	void DrawEntityHP(float flTime)
+	void DrawEntityInfo(float flTime)
 	{
-		if (CVars::bxt_hud_entity_hp.GetBool())
+		if (CVars::bxt_hud_entity_info.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_entity_hp_offset, CVars::bxt_hud_entity_hp_anchor, &x, &y, -200, (si.iCharHeight * 16) + 3);
+			GetPosition(CVars::bxt_hud_entity_info_offset, CVars::bxt_hud_entity_info_anchor, &x, &y, -250, (si.iCharHeight * 16) + 3);
+
+			const auto& hw = HwDLL::GetInstance();
+			const auto& sv = ServerDLL::GetInstance();
 
 			float view[3], end[3];
 			SetupTraceVectors(view, end);
 
 			TraceResult tr;
-			ServerDLL::GetInstance().pEngfuncs->pfnTraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict(), &tr);
+			sv.pEngfuncs->pfnTraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict(), &tr);
 
 			std::ostringstream out;
 			if (tr.pHit)
 			{
 				out.setf(std::ios::fixed);
 				out.precision(precision);
-				out << "Entity HP: " << tr.pHit->v.health;
+
+				const auto ent = tr.pHit;
+
+				edict_t *edicts;
+				const auto numEdicts = hw.GetEdicts(&edicts);
+				const auto index = ent - edicts;
+				out << "Entity: " << index << '\n';
+
+				const char *classname = sv.GetString(ent->v.classname);
+				out << classname << '\n';
+
+				if (ent->v.targetname != 0) {
+					const char *targetname = sv.GetString(ent->v.targetname);
+					out << targetname << '\n';
+				}
+
+				out << "HP: " << ent->v.health;
 			}
 			else
 			{
-				out << "Entity HP: N/A";
+				out << "Entity: N/A";
 			}
-			DrawString(x, y, out.str().c_str());
+
+			DrawMultilineString(x, y, out.str().c_str());
 		}
 	}
 
@@ -728,7 +748,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_selfgauss.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 17) + 3);
+			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 20) + 3);
 
 			bool selfgaussable;
 			int hitGroup = 0; // It's always initialized if selfgaussable is set to true, but GCC issues a warning anyway.
@@ -788,7 +808,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_nihilanth.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 20) + 3);
+			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 23) + 3);
 
 			std::ostringstream out;
 			out << "Nihilanth:\n";
@@ -970,7 +990,7 @@ namespace CustomHud
 			return;
 
 		int x, y;
-		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 26) + 3);
+		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 29) + 3);
 
 		std::ostringstream out;
 		out.setf(std::ios::fixed);
@@ -1177,7 +1197,7 @@ namespace CustomHud
 		DrawJumpspeed(flTime);
 		DrawTimer(flTime);
 		DrawDistance(flTime);
-		DrawEntityHP(flTime);
+		DrawEntityInfo(flTime);
 		DrawSelfgaussInfo(flTime);
 		DrawVisibleLandmarks(flTime);
 		DrawNihilanthInfo(flTime);

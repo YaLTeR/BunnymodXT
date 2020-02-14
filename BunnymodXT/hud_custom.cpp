@@ -1047,6 +1047,50 @@ namespace CustomHud
 		DrawMultilineString(x, y, out.str());
 	}
 
+	static void DrawEntities(float flTime)
+	{
+		if (!CVars::bxt_hud_entities.GetBool())
+			return;
+
+		int x, y;
+		GetPosition(CVars::bxt_hud_entities_offset, CVars::bxt_hud_entities_anchor, &x, &y, 0, (4 * si.iCharHeight) + 8);
+
+		const auto max_lines = std::max(1, (si.iHeight - y - si.iCharHeight) / si.iCharHeight);
+		int current_line = 0;
+
+		std::ostringstream out;
+
+		const auto& hw = HwDLL::GetInstance();
+		const auto& sv = ServerDLL::GetInstance();
+
+		edict_t *edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+		for (int e = 0; e < numEdicts; ++e) {
+			const edict_t *ent = edicts + e;
+			if (!hw.IsValidEdict(ent))
+				continue;
+
+			const char *classname = sv.GetString(ent->v.classname);
+			out << e << ": " << classname;
+
+			if (ent->v.targetname != 0) {
+				const char *targetname = sv.GetString(ent->v.targetname);
+				out << " - " << targetname;
+			}
+
+			out << '\n';
+
+			if (++current_line == max_lines) {
+				x = DrawMultilineString(x, y, out.str()) + 10;
+				out.str(std::string());
+				current_line = 0;
+			}
+		}
+
+		if (current_line > 0)
+			DrawMultilineString(x, y, out.str());
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -1140,6 +1184,7 @@ namespace CustomHud
 		DrawIncorrectFPSIndicator(flTime);
 		DrawCollisionDepthMap(flTime);
 		DrawTASEditorStatus();
+		DrawEntities(flTime);
 
 		receivedAccurateInfo = false;
 		frame_bulk_selected = false;

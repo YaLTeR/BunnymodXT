@@ -211,6 +211,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_tas_editor_status;
 	extern CVarWrapper bxt_hud_tas_editor_status_offset;
 	extern CVarWrapper bxt_hud_tas_editor_status_anchor;
+	extern CVarWrapper bxt_hud_entities;
+	extern CVarWrapper bxt_hud_entities_offset;
+	extern CVarWrapper bxt_hud_entities_anchor;
 
 	extern const std::vector<CVarWrapper*> allCVars;
 }

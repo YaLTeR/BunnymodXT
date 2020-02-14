@@ -3619,6 +3619,7 @@ void HwDLL::SaveInitialDataToDemo()
 		"bxt_fade_remove",
 		"bxt_hud_distance",
 		"bxt_hud_entity_hp",
+		"bxt_hud_entities",
 		"bxt_hud_health",
 		"bxt_hud_origin",
 		"bxt_hud_selfgauss",

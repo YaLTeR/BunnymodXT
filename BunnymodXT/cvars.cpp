@@ -104,6 +104,9 @@ namespace CVars
 	CVarWrapper bxt_hud_tas_editor_status("bxt_hud_tas_editor_status", "0");
 	CVarWrapper bxt_hud_tas_editor_status_offset("bxt_hud_tas_editor_status_offset", "");
 	CVarWrapper bxt_hud_tas_editor_status_anchor("bxt_hud_tas_editor_status_anchor", "1 0");
+	CVarWrapper bxt_hud_entities("bxt_hud_entities", "0");
+	CVarWrapper bxt_hud_entities_offset("bxt_hud_entities_offset", "");
+	CVarWrapper bxt_hud_entities_anchor("bxt_hud_entities_anchor", "0 0");
 
 	const std::vector<CVarWrapper*> allCVars =
 	{
@@ -200,6 +203,9 @@ namespace CVars
 		&bxt_hud_useables_radius,
 		&bxt_hud_tas_editor_status,
 		&bxt_hud_tas_editor_status_offset,
-		&bxt_hud_tas_editor_status_anchor
+		&bxt_hud_tas_editor_status_anchor,
+		&bxt_hud_entities,
+		&bxt_hud_entities_offset,
+		&bxt_hud_entities_anchor
 	};
 }

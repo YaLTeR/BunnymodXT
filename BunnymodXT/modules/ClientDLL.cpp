@@ -470,6 +470,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_tas_editor_status);
 		REG(bxt_hud_tas_editor_status_offset);
 		REG(bxt_hud_tas_editor_status_anchor);
+		REG(bxt_hud_entities);
+		REG(bxt_hud_entities_offset);
+		REG(bxt_hud_entities_anchor);
 	}
 	#undef REG
 }

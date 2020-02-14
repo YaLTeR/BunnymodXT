@@ -347,6 +347,7 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Unset_Yaw;
 	struct Cmd_BXT_TAS_Editor_Unset_Pitch;
 	struct Cmd_BXT_FreeCam;
+	struct Cmd_BXT_Print_Entities;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

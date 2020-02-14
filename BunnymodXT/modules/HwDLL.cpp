@@ -2280,6 +2280,40 @@ struct HwDLL::Cmd_BXT_FreeCam
 	}
 };
 
+struct HwDLL::Cmd_BXT_Print_Entities
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		const auto& hw = HwDLL::GetInstance();
+		const auto& sv = ServerDLL::GetInstance();
+
+		std::ostringstream out;
+
+		edict_t *edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+		for (int e = 0; e < numEdicts; ++e) {
+			const edict_t *ent = edicts + e;
+			if (!hw.IsValidEdict(ent))
+				continue;
+
+			const char *classname = sv.GetString(ent->v.classname);
+			out << e << ": " << classname;
+
+			if (ent->v.targetname != 0) {
+				const char *targetname = sv.GetString(ent->v.targetname);
+				out << " - " << targetname;
+			}
+
+			out << '\n';
+		}
+
+		auto str = out.str();
+		hw.ORIG_Con_Printf("%s", str.c_str());
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save
 {
 	USAGE("Usage: bxt_tas_editor_set_run_point_and_save\n Makes the script execute up to the selected point and resume editing from it.\n");
@@ -2578,6 +2612,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TASLog, Handler<int>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
+	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>>("bxt_print_entities");
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Pitch, Handler<>>("bxt_tas_editor_unset_pitch");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Yaw, Handler<>>("bxt_tas_editor_unset_yaw");

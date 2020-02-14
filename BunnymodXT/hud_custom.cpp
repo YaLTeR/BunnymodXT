@@ -99,24 +99,27 @@ namespace CustomHud
 		ClientDLL::GetInstance().pEngfuncs->pfnGetScreenInfo(&si);
 	}
 
-	static void DrawString(int x, int y, const char* s, float r, float g, float b)
+	static int DrawString(int x, int y, const char* s, float r, float g, float b)
 	{
 		ClientDLL::GetInstance().pEngfuncs->pfnDrawSetTextColor(r, g, b);
-		ClientDLL::GetInstance().pEngfuncs->pfnDrawConsoleString(x, y, const_cast<char*>(s));
+		return ClientDLL::GetInstance().pEngfuncs->pfnDrawConsoleString(x, y, const_cast<char*>(s));
 	}
 
-	static inline void DrawString(int x, int y, const char* s)
+	static inline int DrawString(int x, int y, const char* s)
 	{
-		DrawString(x, y, s, consoleColor[0], consoleColor[1], consoleColor[2]);
+		return DrawString(x, y, s, consoleColor[0], consoleColor[1], consoleColor[2]);
 	}
 
-	static void DrawMultilineString(int x, int y, std::string s, float r, float g, float b)
+	static int DrawMultilineString(int x, int y, std::string s, float r, float g, float b)
 	{
+		int max_new_x = 0;
+
 		while (s.size() > 0)
 		{
 			auto pos = s.find('\n');
 
-			DrawString(x, y, const_cast<char*>(s.substr(0, pos).c_str()), r, g, b);
+			int new_x = DrawString(x, y, const_cast<char*>(s.substr(0, pos).c_str()), r, g, b);
+			max_new_x = std::max(new_x, max_new_x);
 			y += si.iCharHeight;
 
 			if (pos != std::string::npos)
@@ -124,15 +127,20 @@ namespace CustomHud
 			else
 				s.erase();
 		};
+
+		return max_new_x;
 	}
 
-	static void DrawMultilineString(int x, int y, std::string s)
+	static int DrawMultilineString(int x, int y, std::string s)
 	{
+		int max_new_x = 0;
+
 		while (s.size() > 0)
 		{
 			auto pos = s.find('\n');
 
-			DrawString(x, y, const_cast<char*>(s.substr(0, pos).c_str()));
+			int new_x = DrawString(x, y, const_cast<char*>(s.substr(0, pos).c_str()));
+			max_new_x = std::max(new_x, max_new_x);
 			y += si.iCharHeight;
 
 			if (pos != std::string::npos)
@@ -140,6 +148,8 @@ namespace CustomHud
 			else
 				s.erase();
 		};
+
+		return max_new_x;
 	}
 
 	static void DrawDigit(int digit, int x, int y, int r, int g, int b)

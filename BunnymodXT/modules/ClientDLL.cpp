@@ -58,6 +58,11 @@ extern "C" int __cdecl HUD_Key_Event(int down, int keynum, const char* pszCurren
 {
 	return ClientDLL::HOOKED_HUD_Key_Event(down, keynum, pszCurrentBinding);
 }
+
+extern "C" int __cdecl HUD_UpdateClientData(client_data_t* pcldata, float flTime)
+{
+	return ClientDLL::HOOKED_HUD_UpdateClientData(pcldata, flTime);
+}
 #endif
 
 void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -81,6 +86,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Frame), reinterpret_cast<void*>(HOOKED_HUD_Frame));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_DrawTransparentTriangles), reinterpret_cast<void*>(HOOKED_HUD_DrawTransparentTriangles));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Key_Event), reinterpret_cast<void*>(HOOKED_HUD_Key_Event));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_UpdateClientData), reinterpret_cast<void*>(HOOKED_HUD_UpdateClientData));
 
 	if (needToIntercept)
 	{
@@ -95,7 +101,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_HUD_PostRunCmd, HOOKED_HUD_PostRunCmd,
 			ORIG_HUD_Frame, HOOKED_HUD_Frame,
 			ORIG_HUD_DrawTransparentTriangles, HOOKED_HUD_DrawTransparentTriangles,
-			ORIG_HUD_Key_Event, HOOKED_HUD_Key_Event);
+			ORIG_HUD_Key_Event, HOOKED_HUD_Key_Event,
+			ORIG_HUD_UpdateClientData, HOOKED_HUD_UpdateClientData);
 	}
 
 	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
@@ -118,7 +125,8 @@ void ClientDLL::Unhook()
 			ORIG_HUD_PostRunCmd,
 			ORIG_HUD_Frame,
 			ORIG_HUD_DrawTransparentTriangles,
-			ORIG_HUD_Key_Event);
+			ORIG_HUD_Key_Event,
+			ORIG_HUD_UpdateClientData);
 	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -129,6 +137,7 @@ void ClientDLL::Unhook()
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Frame));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_DrawTransparentTriangles));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Key_Event));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_UpdateClientData));
 
 	Clear();
 }
@@ -151,6 +160,7 @@ void ClientDLL::Clear()
 	ORIG_HUD_Frame = nullptr;
 	ORIG_HUD_DrawTransparentTriangles = nullptr;
 	ORIG_HUD_Key_Event = nullptr;
+	ORIG_HUD_UpdateClientData = nullptr;
 	ORIG_IN_ActivateMouse = nullptr;
 	ORIG_IN_DeactivateMouse = nullptr;
 	ppmove = nullptr;
@@ -316,6 +326,13 @@ void ClientDLL::FindStuff()
 		EngineDevMsg("[client dll] Found HUD_Key_Event at %p.\n", ORIG_HUD_Key_Event);
 	} else {
 		EngineDevWarning("[client dll] Could not find HUD_Key_Event.\n");
+	}
+
+	ORIG_HUD_UpdateClientData = reinterpret_cast<_HUD_UpdateClientData>(MemUtils::GetSymbolAddress(m_Handle, "HUD_UpdateClientData"));
+	if (ORIG_HUD_UpdateClientData) {
+		EngineDevMsg("[client dll] Found HUD_UpdateClientData at %p.\n", ORIG_HUD_UpdateClientData);
+	} else {
+		EngineDevWarning("[client dll] Could not find HUD_UpdateClientData.\n");
 	}
 
 	ORIG_IN_ActivateMouse = reinterpret_cast<_IN_ActivateMouse>(MemUtils::GetSymbolAddress(m_Handle, "IN_ActivateMouse"));
@@ -717,6 +734,25 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_Key_Event, int, down, int, keynum, const
 	auto rv = ORIG_HUD_Key_Event(down, keynum, pszCurrentBinding);
 
 	insideKeyEvent = false;
+
+	return rv;
+}
+
+HOOK_DEF_2(ClientDLL, int, __cdecl, HUD_UpdateClientData, client_data_t*, pcldata, float, flTime)
+{
+	const auto norefresh = CVars::_bxt_norefresh.GetBool();
+	int (*ORIG_GetScreenInfo)(SCREENINFO *pscrinfo) = nullptr;
+
+	if (norefresh && pEngfuncs) {
+		ORIG_GetScreenInfo = pEngfuncs->pfnGetScreenInfo;
+		pEngfuncs->pfnGetScreenInfo = [](SCREENINFO *pscrinfo) { return 0; };
+	}
+
+	const auto rv = ORIG_HUD_UpdateClientData(pcldata, flTime);
+
+	if (norefresh && pEngfuncs) {
+		pEngfuncs->pfnGetScreenInfo = ORIG_GetScreenInfo;
+	}
 
 	return rv;
 }

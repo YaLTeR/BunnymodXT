@@ -12,6 +12,8 @@ enum class TASEditorMode {
 	EDIT
 };
 
+struct client_t;
+
 class HwDLL : public IHookableNameFilterOrdered
 {
 	HOOK_DECL(void, __cdecl, LoadAndDecryptHwDLL, int a, void* b, void* c)
@@ -42,6 +44,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, R_Clear)
 	HOOK_DECL(byte *, __cdecl, Mod_LeafPVS, mleaf_t *leaf, model_t *model)
 	HOOK_DECL(void, __cdecl, SV_AddLinksToPM_, void *node, float *pmove_mins, float *pmove_maxs)
+	HOOK_DECL(void, __cdecl, SV_WriteEntitiesToClient, client_t* client, void* msg)
 
 	struct cmdbuf_t
 	{
@@ -59,7 +62,6 @@ class HwDLL : public IHookableNameFilterOrdered
 		char* value;
 	};
 
-	struct client_t;
 	struct svs_t
 	{
 		char unk[4];

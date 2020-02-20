@@ -152,6 +152,11 @@ extern "C" void __cdecl SV_AddLinksToPM_(void *node, float *pmove_mins, float *p
 {
 	HwDLL::HOOKED_SV_AddLinksToPM_(node, pmove_mins, pmove_maxs);
 }
+
+extern "C" void __cdecl SV_WriteEntitiesToClient(client_t* client, void* msg)
+{
+	HwDLL::HOOKED_SV_WriteEntitiesToClient(client, msg);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -234,6 +239,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_Clear);
 			MemUtils::MarkAsExecutable(ORIG_Mod_LeafPVS);
 			MemUtils::MarkAsExecutable(ORIG_SV_AddLinksToPM_);
+			MemUtils::MarkAsExecutable(ORIG_SV_WriteEntitiesToClient);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -264,7 +270,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_DrawSequentialPoly, HOOKED_R_DrawSequentialPoly,
 			ORIG_R_Clear, HOOKED_R_Clear,
 			ORIG_Mod_LeafPVS, HOOKED_Mod_LeafPVS,
-			ORIG_SV_AddLinksToPM_, HOOKED_SV_AddLinksToPM_);
+			ORIG_SV_AddLinksToPM_, HOOKED_SV_AddLinksToPM_,
+			ORIG_SV_WriteEntitiesToClient, HOOKED_SV_WriteEntitiesToClient);
 	}
 }
 
@@ -301,7 +308,8 @@ void HwDLL::Unhook()
 			ORIG_R_DrawSequentialPoly,
 			ORIG_R_Clear,
 			ORIG_Mod_LeafPVS,
-			ORIG_SV_AddLinksToPM_);
+			ORIG_SV_AddLinksToPM_,
+			ORIG_SV_WriteEntitiesToClient);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -356,6 +364,7 @@ void HwDLL::Clear()
 	ORIG_R_Clear = nullptr;
 	ORIG_Mod_LeafPVS = nullptr;
 	ORIG_SV_AddLinksToPM_ = nullptr;
+	ORIG_SV_WriteEntitiesToClient = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -570,6 +579,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find SV_AddLinksToPM_.\n");
 
+		ORIG_SV_WriteEntitiesToClient = reinterpret_cast<_SV_WriteEntitiesToClient>(MemUtils::GetSymbolAddress(m_Handle, "SV_WriteEntitiesToClient"));
+		if (ORIG_SV_WriteEntitiesToClient)
+			EngineDevMsg("[hw dll] Found SV_WriteEntitiesToClient at %p.\n", ORIG_SV_WriteEntitiesToClient);
+		else
+			EngineDevWarning("[hw dll] Could not find SV_WriteEntitiesToClient.\n");
+
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -721,6 +736,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(CL_Record_f)
 		DEF_FUTURE(Key_Event)
 		DEF_FUTURE(SV_AddLinksToPM_)
+		DEF_FUTURE(SV_WriteEntitiesToClient)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1234,6 +1250,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Mod_LeafPVS);
 		GET_FUTURE(PF_GetPhysicsKeyValue);
 		GET_FUTURE(SV_AddLinksToPM_);
+		GET_FUTURE(SV_WriteEntitiesToClient);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -4075,4 +4092,17 @@ HOOK_DEF_3(HwDLL, void, __cdecl, SV_AddLinksToPM_, void *, node, float *, pmove_
 	}
 
 	ORIG_SV_AddLinksToPM_(node, pmove_mins, pmove_maxs);
+}
+
+HOOK_DEF_2(HwDLL, void, __cdecl, SV_WriteEntitiesToClient, client_t*, client, void*, msg)
+{
+	auto num_edicts = reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(sv) + offNumEdicts);
+	const auto orig_num_edicts = *num_edicts;
+	if (CVars::_bxt_norefresh.GetBool())
+		*num_edicts = 0;
+
+	ORIG_SV_WriteEntitiesToClient(client, msg);
+
+	if (CVars::_bxt_norefresh.GetBool())
+		*num_edicts = orig_num_edicts;
 }

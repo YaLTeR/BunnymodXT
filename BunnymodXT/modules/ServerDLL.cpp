@@ -55,6 +55,11 @@ extern "C" void __cdecl _ZN6CGraph9InitGraphEv(void* thisptr)
 {
 	return ServerDLL::HOOKED_CGraph__InitGraph_Linux(thisptr);
 }
+
+extern "C" void __cdecl _ZN11CBasePlayer20CheatImpulseCommandsEi(void* thisptr, int iImpulse)
+{
+	return ServerDLL::HOOKED_CBasePlayer__CheatImpulseCommands_Linux(thisptr, iImpulse);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -93,7 +98,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_ClientCommand, HOOKED_ClientCommand,
 			ORIG_CPushable__Move, HOOKED_CPushable__Move,
 			ORIG_CBasePlayer__TakeDamage, HOOKED_CBasePlayer__TakeDamage,
-			ORIG_CGraph__InitGraph, HOOKED_CGraph__InitGraph);
+			ORIG_CGraph__InitGraph, HOOKED_CGraph__InitGraph,
+			ORIG_CBasePlayer__CheatImpulseCommands, HOOKED_CBasePlayer__CheatImpulseCommands);
 	}
 }
 
@@ -122,7 +128,8 @@ void ServerDLL::Unhook()
 			ORIG_ClientCommand,
 			ORIG_CPushable__Move,
 			ORIG_CBasePlayer__TakeDamage,
-			ORIG_CGraph__InitGraph);
+			ORIG_CGraph__InitGraph,
+			ORIG_CBasePlayer__CheatImpulseCommands);
 	}
 
 	Clear();
@@ -161,6 +168,8 @@ void ServerDLL::Clear()
 	ORIG_GetEntityAPI = nullptr;
 	ORIG_CGraph__InitGraph = nullptr;
 	ORIG_CGraph__InitGraph_Linux = nullptr;
+	ORIG_CBasePlayer__CheatImpulseCommands = nullptr;
+	ORIG_CBasePlayer__CheatImpulseCommands_Linux = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -341,6 +350,7 @@ void ServerDLL::FindStuff()
 	auto fPM_Ladder = FindFunctionAsync(ORIG_PM_Ladder, "PM_Ladder", patterns::shared::PM_Ladder);
 	auto fCPushable__Move = FindAsync(ORIG_CPushable__Move, patterns::server::CPushable__Move);
 	auto fCBasePlayer__TakeDamage = FindAsync(ORIG_CBasePlayer__TakeDamage, patterns::server::CBasePlayer__TakeDamage);
+	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -549,6 +559,20 @@ void ServerDLL::FindStuff()
 		} else {
 			EngineDevWarning("[server dll] Could not find CNihilanth::EmitSphere.\n");
 			EngineWarning("bxt_hud_nihilanth is not available.\n");
+		}
+	}
+
+	{
+		auto pattern = fCBasePlayer__CheatImpulseCommands.get();
+		if (ORIG_CBasePlayer__CheatImpulseCommands) {
+			EngineDevMsg("[server dll] Found CBasePlayer::CheatImpulseCommands at %p (using the %s pattern).\n", ORIG_CBasePlayer__CheatImpulseCommands, pattern->name());
+		} else {
+			ORIG_CBasePlayer__CheatImpulseCommands_Linux = reinterpret_cast<_CBasePlayer__CheatImpulseCommands_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer20CheatImpulseCommandsEi"));
+			if (ORIG_CBasePlayer__CheatImpulseCommands_Linux) {
+				EngineDevMsg("[server dll] Found CBasePlayer::CheatImpulseCommands [Linux] at %p.\n", ORIG_CBasePlayer__CheatImpulseCommands);
+			} else {
+				EngineDevWarning("[server dll] Could not find CBasePlayer::CheatImpulseCommands.\n");
+			}
 		}
 	}
 
@@ -1628,4 +1652,41 @@ bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, boo
 	}
 
 	return true;
+}
+
+static float (*ORIG_CVarGetFloat) (const char* szVarName);
+float fast_cvar_get_float(const char* name)
+{
+	if (!strcmp(name, "sv_cheats"))
+		return CVars::sv_cheats.GetFloat();
+
+	return ORIG_CVarGetFloat(name);
+}
+
+HOOK_DEF_3(ServerDLL, void, __fastcall, CBasePlayer__CheatImpulseCommands, void*, thisptr, int, edx, int, iImpulse)
+{
+	if (pEngfuncs) {
+		ORIG_CVarGetFloat = pEngfuncs->pfnCVarGetFloat;
+		pEngfuncs->pfnCVarGetFloat = fast_cvar_get_float;
+	}
+
+	ORIG_CBasePlayer__CheatImpulseCommands(thisptr, edx, iImpulse);
+
+	if (pEngfuncs) {
+		pEngfuncs->pfnCVarGetFloat = ORIG_CVarGetFloat;
+	}
+}
+
+HOOK_DEF_2(ServerDLL, void, __cdecl, CBasePlayer__CheatImpulseCommands_Linux, void*, thisptr, int, iImpulse)
+{
+	if (pEngfuncs) {
+		ORIG_CVarGetFloat = pEngfuncs->pfnCVarGetFloat;
+		pEngfuncs->pfnCVarGetFloat = fast_cvar_get_float;
+	}
+
+	ORIG_CBasePlayer__CheatImpulseCommands_Linux(thisptr, iImpulse);
+
+	if (pEngfuncs) {
+		pEngfuncs->pfnCVarGetFloat = ORIG_CVarGetFloat;
+	}
 }

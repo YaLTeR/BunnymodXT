@@ -33,6 +33,8 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(int, __fastcall, CBasePlayer__TakeDamage, void* thisptr, int edx, entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType)
 	HOOK_DECL(void, __fastcall, CGraph__InitGraph, void* thisptr)
 	HOOK_DECL(void, __cdecl, CGraph__InitGraph_Linux, void* thisptr)
+	HOOK_DECL(void, __fastcall, CBasePlayer__CheatImpulseCommands, void* thisptr, int edx, int iImpulse)
+	HOOK_DECL(void, __cdecl, CBasePlayer__CheatImpulseCommands_Linux, void* thisptr, int iImpulse)
 
 public:
 	static ServerDLL& GetInstance()

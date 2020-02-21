@@ -2726,7 +2726,10 @@ void HwDLL::InsertCommands()
 				StrafeState.Jump = currentKeys.Jump.IsDown();
 				StrafeState.Duck = currentKeys.Duck.IsDown();
 				PrevStrafeState = StrafeState;
-				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), hlstrafe_version);
+
+				StartTracing();
+				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::UnsafePlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), hlstrafe_version);
+				StopTracing();
 
 				f.ResetAutofuncs();
 

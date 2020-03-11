@@ -26,6 +26,7 @@ namespace CustomTriggers
 		std::pair<Vector, Vector> get_corner_positions() const;
 		const std::string& get_command() const;
 		void set_command(std::string new_command);
+		void set_corner_positions(Vector a, Vector b);
 
 		void update(const Vector& player_position, bool ducking);
 
@@ -37,6 +38,11 @@ namespace CustomTriggers
 	};
 
 	extern std::vector<Trigger> triggers;
+
+	// We need to keep track of the placement start because the Trigger.normalize()
+	// can cause the start and end points to be swapped.
+	extern Vector place_start;
+	extern bool placing;
 
 	void Update(const Vector& player_position, bool ducking);
 	void Update(const Vector& player_position_start, const Vector& player_position_end, bool ducking);

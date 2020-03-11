@@ -7,6 +7,8 @@
 namespace CustomTriggers
 {
 	std::vector<Trigger> triggers;
+	Vector place_start;
+	bool placing = false;
 
 	void Trigger::normalize()
 	{
@@ -72,6 +74,13 @@ namespace CustomTriggers
 			if (last_char != '\n' && last_char != ';')
 				command += '\n';
 		}
+	}
+
+	void Trigger::set_corner_positions(Vector corner1, Vector corner2)
+	{
+		corner_min = corner1;
+		corner_max = corner2;
+		normalize();
 	}
 
 	void Trigger::update(const Vector& player_position, bool ducking)
@@ -171,6 +180,20 @@ namespace CustomTriggers
 	{
 		for (auto& trigger : triggers)
 			trigger.update(player_position, ducking);
+
+		if (placing) {
+			if (!triggers.empty())
+			{
+				auto trace = HwDLL::GetInstance().CameraTrace();
+				Vector place_end(trace.EndPos);
+
+				triggers.back().set_corner_positions(place_start, place_end);
+			}
+			else
+			{
+				placing = false;
+			}
+		}
 	}
 
 	void Update(const Vector& player_position_start, const Vector& player_position_end, bool ducking)

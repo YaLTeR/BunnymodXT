@@ -199,6 +199,7 @@ public:
 	}
 
 	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull, bool extendDistanceLimit = false);
+	HLStrafe::TraceResult CameraTrace(float max_distance = 8192);
 
 	// Don't call StartTrace() or StopTracing() twice in a row.
 	// The sequence must always be StartTracing() => StopTracing().
@@ -328,6 +329,8 @@ protected:
 	struct Cmd_BXT_Triggers_Export;
 	struct Cmd_BXT_Triggers_List;
 	struct Cmd_BXT_Triggers_SetCommand;
+	struct Cmd_BXT_Triggers_Place_Up;
+	struct Cmd_BXT_Triggers_Place_Down;
 	struct Cmd_BXT_Record;
 	struct Cmd_BXT_AutoRecord;
 	struct Cmd_BXT_Interprocess_Reset;

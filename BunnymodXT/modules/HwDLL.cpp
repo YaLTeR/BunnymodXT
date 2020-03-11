@@ -1879,6 +1879,41 @@ struct HwDLL::Cmd_BXT_Triggers_Add
 	}
 };
 
+struct HwDLL::Cmd_BXT_Triggers_Place_Down
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto trace = HwDLL::GetInstance().CameraTrace();
+
+		CustomTriggers::placing = true;
+		Vector start = trace.EndPos;
+		CustomTriggers::place_start = start;
+		CustomTriggers::triggers.emplace_back(start, start);
+	}
+
+	static void handler(const char*)
+	{
+		handler();
+	}
+};
+
+struct HwDLL::Cmd_BXT_Triggers_Place_Up
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		CustomTriggers::placing = false;
+	}
+
+	static void handler(const char *)
+	{
+		handler();
+	}
+};
+
 struct HwDLL::Cmd_BXT_Triggers_Clear
 {
 	NO_USAGE();
@@ -2620,6 +2655,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Cmd_BXT_Triggers_SetCommand,
 		Handler<const char*>,
 		Handler<unsigned long, const char*>>("bxt_triggers_setcommand");
+	wrapper::Add<Cmd_BXT_Triggers_Place_Down, Handler<>, Handler<const char*>>("+bxt_triggers_place");
+	wrapper::Add<Cmd_BXT_Triggers_Place_Up, Handler<>, Handler<const char*>>("-bxt_triggers_place");
 	wrapper::Add<Cmd_BXT_Record, Handler<const char *>>("bxt_record");
 	wrapper::Add<Cmd_BXT_AutoRecord, Handler<const char *>>("bxt_autorecord");
 	wrapper::Add<Cmd_BXT_Map, Handler<const char *>>("_bxt_map");
@@ -3541,6 +3578,18 @@ HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3
 	StopTracing();
 
 	return rv;
+}
+
+HLStrafe::TraceResult HwDLL::CameraTrace(float max_distance)
+{
+	const auto& cl = ClientDLL::GetInstance();
+
+	const auto start = cl.last_vieworg;
+	Vector forward, right, up;
+	cl.pEngfuncs->pfnAngleVectors(cl.last_viewangles, forward, right, up);
+	Vector end = start + forward * max_distance;
+
+	return PlayerTrace(start, end, HLStrafe::HullType::POINT);
 }
 
 void HwDLL::StartTracing(bool extendDistanceLimit) {

@@ -70,7 +70,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -A Win32 -DRapidJSON_ROOT="../../rapidjson-1.1.0" ..
+        cmake -A Win32 -DRapidJSON_ROOT="../../rapidjson-1.1.0" -DBOOST_ROOT="$env:BOOST_ROOT_1_72_0" ..
 
     - name: Build
       run: cmake --build build

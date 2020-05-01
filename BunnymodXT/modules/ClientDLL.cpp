@@ -108,6 +108,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
 	// we never see it loaded. Try loading it here.
 	Hooks::HookModule(L"SDL2.dll");
+	// Similar story on Linux. Not present during the initial BXT scan and no dlopen.
+	Hooks::HookModule(L"libSDL2-2.0.so.0");
 }
 
 void ClientDLL::Unhook()

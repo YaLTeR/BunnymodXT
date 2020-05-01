@@ -28,7 +28,7 @@ public:
 	uint32_t GetMouseState(int *x, int *y) const;
 
 private:
-	SDL() : IHookableNameFilter({ L"SDL2.dll", L"libSDL2.so" }) {};
+	SDL() : IHookableNameFilter({ L"SDL2.dll", L"libSDL2.so", L"libSDL2-2.0.so.0" }) {};
 	SDL(const SDL&);
 	void operator=(const SDL&);
 

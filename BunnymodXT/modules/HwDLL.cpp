@@ -6,6 +6,7 @@
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
+#include <util.hpp>
 #include "HwDLL.hpp"
 #include "ClientDLL.hpp"
 #include "ServerDLL.hpp"
@@ -424,6 +425,7 @@ void HwDLL::Clear()
 	newTASStartingCommand.clear();
 	newTASFilename.clear();
 	newTASResult.Clear();
+	libTASExportFile.close();
 
 	tas_editor_mode = TASEditorMode::DISABLED;
 	tas_editor_input = EditedInput();
@@ -478,6 +480,7 @@ void HwDLL::Clear()
 		ButtonsPresent = false;
 		exportFilename.clear();
 		exportResult.Clear();
+		libTASExportFile.close();
 	}
 }
 
@@ -1425,6 +1428,24 @@ struct HwDLL::Cmd_BXT_TAS_ExportScript
 				hw.exportResult.SetProperty(prop.first, prop.second);
 
 		hw.ORIG_Con_Printf("Started exporting .hltas frames.\n");
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_ExportLibTASInput
+{
+	USAGE("Usage: bxt_tas_export_libtas_input <filename>\n Starts exporting the currently running HLTAS script into libTAS input, outputting it into a file with the given filename. You will need to open the file, copy its contents and paste them into the libTAS input editor.\n");
+
+	static void handler(const char *fileName)
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.libTASExportFile.open(fileName);
+
+		if (!hw.libTASExportFile.is_open()) {
+			hw.ORIG_Con_Printf("Error opening %s\n", fileName);
+			return;
+		}
+
+		hw.ORIG_Con_Printf("Started exporting libTAS input.\n");
 	}
 };
 
@@ -2619,6 +2640,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 
 	wrapper::Add<Cmd_BXT_TAS_LoadScript, Handler<const char *>>("bxt_tas_loadscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportScript, Handler<const char *>>("bxt_tas_exportscript");
+	wrapper::Add<Cmd_BXT_TAS_ExportLibTASInput, Handler<const char *>>("bxt_tas_export_libtas_input");
 	wrapper::Add<Cmd_BXT_TAS_Split, Handler<const char *>>("bxt_tas_split");
 	wrapper::Add<Cmd_BXT_TAS_New, Handler<const char *, const char *, int>>("bxt_tas_new");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Health, Handler<float>>("bxt_ch_set_health");
@@ -2943,6 +2965,94 @@ void HwDLL::InsertCommands()
 				if (!exportFilename.empty())
 					exportResult.InsertFrame(exportResult.GetFrames().size(), resulting_frame);
 
+				if (libTASExportFile.is_open()) {
+					// Keyboard inputs.
+					libTASExportFile << '|';
+
+					std::string keyboard;
+					if (p.Jump)
+						keyboard += "20:";
+					if (p.Duck)
+						keyboard += "ffe3:";
+					if (p.Use)
+						keyboard += "65:";
+					if (p.Reload)
+						keyboard += "72:";
+
+					if (!keyboard.empty())
+						// Write, chopping off the trailing ':'.
+						libTASExportFile << keyboard.substr(0, keyboard.size() - 1);
+
+					// Mouse inputs.
+					//
+					// Assumes sensitivity 0.2, m_yaw and m_pitch 0.022 (the default).
+					libTASExportFile << '|';
+
+					const double SENSITIVITY = 0.2 * 0.022;
+
+					int x_delta = 0, y_delta = 0;
+
+					// Angle changes are only input when the state is 5.
+					if (*reinterpret_cast<int*>(cls) == 5) {
+						if (player.Viewangles[0] != p.Pitch) {
+							auto angleDifference = HLStrafe::GetAngleDifference(player.Viewangles[0], p.Pitch);
+							y_delta = -std::lround(angleDifference / SENSITIVITY);
+						}
+						if (player.Viewangles[1] != p.Yaw) {
+							auto angleDifference = HLStrafe::GetAngleDifference(player.Viewangles[1], p.Yaw);
+							auto newyawIsNegative = (player.Viewangles[1] + angleDifference < 0.0);
+							auto yawDifference = angleDifference + (newyawIsNegative ? -HLStrafe::M_U_DEG_HALF : HLStrafe::M_U_DEG_HALF);
+							x_delta = -std::lround(yawDifference / SENSITIVITY);
+
+							// ORIG_Con_Printf("Yaw %.6f => %.6f, angleDifference = %.8f, yawDifference = %.8f, x_delta = %.8f\n", player.Viewangles[1], p.Yaw, angleDifference, yawDifference, yawDifference / SENSITIVITY);
+						}
+					}
+
+					libTASExportFile << x_delta << ':' << y_delta << ":R:";
+
+					if (p.Attack1)
+						libTASExportFile << "1.";
+					else
+						libTASExportFile << "..";
+
+					if (p.Attack2)
+						libTASExportFile << "3..";
+					else
+						libTASExportFile << "...";
+
+					// Controller inputs.
+					//
+					// Assumes the following settings:
+					//
+					// joyforwardsensitivity -40.96
+					// joyforwardthreshold 0
+					// joysidesensitivity 40.96
+					// joysidethreshold 0
+					// joyadvanced 1
+					// joyadvaxisx 3
+					// joyadvaxisy 1
+					libTASExportFile << '|';
+
+					int x_axis = 0, y_axis = 0;
+					if (p.Forward)
+						y_axis -= p.Forwardspeed;
+					if (p.Back)
+						y_axis += p.Backspeed;
+					if (p.Right)
+						x_axis += p.Sidespeed;
+					if (p.Left)
+						x_axis -= p.Sidespeed;
+
+					if (x_axis != 0)
+						x_axis = x_axis * 2 + (x_axis >= 0 ? 1 : -1);
+					if (y_axis != 0)
+						y_axis = y_axis * 2 + (y_axis >= 0 ? 1 : -1);
+
+					libTASExportFile << x_axis << ':' << y_axis << ":0:0:0:0:................";
+
+					libTASExportFile << "|\n";
+				}
+
 				break;
 			} else if (!f.SaveName.empty()) { // Saveload frame.
 				std::ostringstream ss;
@@ -3030,6 +3140,11 @@ void HwDLL::InsertCommands()
 
 				exportFilename.clear();
 				exportResult.Clear();
+			}
+
+			if (libTASExportFile.is_open()) {
+				libTASExportFile.close();
+				ORIG_Con_Printf("Exporting finished successfully.\n");
 			}
 		}
 	} else {
@@ -3359,8 +3474,15 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		}
 	}
 
-	if (!executing)
+	if (!executing) {
 		QueuedSharedRNGSeeds = 0;
+
+		if (libTASExportFile.is_open()) {
+			// Add an empty frame.
+			libTASExportFile << "||0:0:R:.....|0:0:0:0:0:0:................|\n";
+		}
+	}
+
 	// Insert our commands after any commands that might have been on this frame
 	// and call Cbuf_Execute again to execute them.
 	if (executing)

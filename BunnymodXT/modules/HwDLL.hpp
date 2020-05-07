@@ -302,6 +302,7 @@ protected:
 
 	struct Cmd_BXT_TAS_LoadScript;
 	struct Cmd_BXT_TAS_ExportScript;
+	struct Cmd_BXT_TAS_ExportLibTASInput;
 	struct Cmd_BXT_TAS_Split;
 	struct Cmd_BXT_TAS_New;
 	struct Cmd_BXT_CH_Set_Health;
@@ -466,6 +467,7 @@ protected:
 	std::string newTASStartingCommand;
 	std::string newTASFilename;
 	HLTAS::Input newTASResult;
+	std::ofstream libTASExportFile;
 
 public:
 	struct KeyStates

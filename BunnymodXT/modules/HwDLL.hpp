@@ -533,6 +533,8 @@ public:
 	} currentKeys;
 protected:
 
+	bool clearedImpulsesForTheFirstTime;
+
 	// Do not clear these inside Clear().
 	bool SetNonSharedRNGSeed = false;
 	std::time_t NonSharedRNGSeed;

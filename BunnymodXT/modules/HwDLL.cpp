@@ -1320,6 +1320,7 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		hw.SetNonSharedRNGSeed = false;
 		hw.thisFrameIs0ms = false;
 		hw.hltas_filename = fileName;
+		hw.clearedImpulsesForTheFirstTime = false;
 
 		auto err = hw.input.Open(fileName);
 		if (err.Code != HLTAS::ErrorCode::OK) {
@@ -2883,6 +2884,11 @@ void HwDLL::InsertCommands()
 				std::ostringstream speeds_ss;
 				speeds_ss.setf(std::ios::fixed, std::ios::floatfield);
 				speeds_ss.precision(std::numeric_limits<float>::digits10);
+
+				// Save for the libTAS input export code below.
+				const double left_state_multiplier = currentKeys.Left.StateMultiplier();
+				const double right_state_multiplier = currentKeys.Right.StateMultiplier();
+
 				if (currentKeys.Forward.IsDown()) {
 					double forwardspeed = p.Forwardspeed / currentKeys.Forward.StateMultiplier();
 					speeds_ss << "cl_forwardspeed " << forwardspeed << '\n';
@@ -2893,7 +2899,7 @@ void HwDLL::InsertCommands()
 				}
 				if (currentKeys.Left.IsDown() || currentKeys.Right.IsDown()) {
 					// Kind of a collision here.
-					double sidespeed = p.Sidespeed / std::min(currentKeys.Left.StateMultiplier(), currentKeys.Right.StateMultiplier());
+					double sidespeed = p.Sidespeed / std::min(left_state_multiplier, right_state_multiplier);
 					speeds_ss << "cl_sidespeed " << sidespeed << '\n';
 				}
 				if (currentKeys.Up.IsDown() || currentKeys.Down.IsDown()) {
@@ -2979,6 +2985,22 @@ void HwDLL::InsertCommands()
 					if (p.Reload)
 						keyboard += "72:";
 
+					// Movement is input with both buttons and joystick. Using just joystick is
+					// possible, but breaks a number of things in the game which expect directional
+					// buttons themselves to be pressed and not just forward/sidemove.
+					//
+					// Thankfully, CL_CreateMove automatically presses forward and back buttons for
+					// us according to forwardmove. Unfortunately, it doesn't do the same for the
+					// left and right buttons.
+					//
+					// Thus, left/right input works by pressing the directional buttons, then
+					// computing the difference between the resulting sidemove and the desired one
+					// and inputting that difference via joystick inputs.
+					if (p.Left)
+						keyboard += "61:";
+					if (p.Right)
+						keyboard += "64:";
+
 					if (!keyboard.empty())
 						// Write, chopping off the trailing ':'.
 						libTASExportFile << keyboard.substr(0, keyboard.size() - 1);
@@ -3033,24 +3055,49 @@ void HwDLL::InsertCommands()
 					// joyadvaxisy 1
 					libTASExportFile << '|';
 
+					// The default value for cl_forward/side/back/upspeed (400) is assumed.
+					const double CL_SPEED = 400;
+
 					int x_axis = 0, y_axis = 0;
+					double target_sidemove = 0;
 					if (p.Forward)
 						y_axis -= p.Forwardspeed;
 					if (p.Back)
 						y_axis += p.Backspeed;
-					if (p.Right)
-						x_axis += p.Sidespeed;
-					if (p.Left)
-						x_axis -= p.Sidespeed;
+					if (p.Right) {
+						// BXT issues -moveleft, -moveright and the rest of the keys on the first
+						// frame of running a .hltas script, which means that on the first input
+						// frame the state of the pressed buttons will be 0.75. However, in libTAS
+						// this is obviously not done (we always start from un-pressed buttons), so
+						// there the state for the first input frame is 0.5.
+						//
+						// This clearedImpulsesForTheFirstTime bool is false during the period when
+						// the button states are equal to 0.75 due to this BXT particularity.
+						const double multiplier = clearedImpulsesForTheFirstTime ? right_state_multiplier : 0.5;
+						x_axis += (p.Sidespeed - CL_SPEED * multiplier);
+						target_sidemove += p.Sidespeed;
+					}
+					if (p.Left) {
+						const double multiplier = clearedImpulsesForTheFirstTime ? left_state_multiplier : 0.5;
+						x_axis -= (p.Sidespeed - CL_SPEED * multiplier);
+						target_sidemove -= p.Sidespeed;
+					}
 
 					if (x_axis != 0)
-						x_axis = x_axis * 2 + (x_axis >= 0 ? 1 : -1);
+						x_axis = x_axis * 2 + (target_sidemove >= 0 ? 1 : -1);
 					if (y_axis != 0)
 						y_axis = y_axis * 2 + (y_axis >= 0 ? 1 : -1);
 
 					libTASExportFile << x_axis << ':' << y_axis << ":0:0:0:0:................";
 
 					libTASExportFile << "|\n";
+				}
+
+				if (*reinterpret_cast<int*>(cls) == 5) {
+					// Set this here, after the libTAS exporting code, and not above where the
+					// impulses are actually cleared because the libTAS exporting code relies on
+					// this value.
+					clearedImpulsesForTheFirstTime = true;
 				}
 
 				break;

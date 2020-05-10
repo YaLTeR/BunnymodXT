@@ -2996,7 +2996,7 @@ void HwDLL::InsertCommands()
 					if (*reinterpret_cast<int*>(cls) == 5) {
 						if (player.Viewangles[0] != p.Pitch) {
 							auto angleDifference = HLStrafe::GetAngleDifference(player.Viewangles[0], p.Pitch);
-							y_delta = -std::lround(angleDifference / SENSITIVITY);
+							y_delta = std::lround(angleDifference / SENSITIVITY);
 						}
 						if (player.Viewangles[1] != p.Yaw) {
 							auto angleDifference = HLStrafe::GetAngleDifference(player.Viewangles[1], p.Yaw);

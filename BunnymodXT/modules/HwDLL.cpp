@@ -2973,7 +2973,7 @@ void HwDLL::InsertCommands()
 
 				if (libTASExportFile.is_open()) {
 					// Keyboard inputs.
-					libTASExportFile << '|';
+					libTASExportFile << "|K";
 
 					std::string keyboard;
 					if (p.Jump)
@@ -3008,7 +3008,7 @@ void HwDLL::InsertCommands()
 					// Mouse inputs.
 					//
 					// Assumes sensitivity 0.2, m_yaw and m_pitch 0.022 (the default).
-					libTASExportFile << '|';
+					libTASExportFile << "|M";
 
 					const double SENSITIVITY = 0.2 * 0.022;
 
@@ -3053,7 +3053,7 @@ void HwDLL::InsertCommands()
 					// joyadvanced 1
 					// joyadvaxisx 3
 					// joyadvaxisy 1
-					libTASExportFile << '|';
+					libTASExportFile << "|C1";
 
 					// The default value for cl_forward/side/back/upspeed (400) is assumed.
 					const double CL_SPEED = 400;
@@ -3088,7 +3088,7 @@ void HwDLL::InsertCommands()
 					if (y_axis != 0)
 						y_axis = y_axis * 2 + (y_axis >= 0 ? 1 : -1);
 
-					libTASExportFile << x_axis << ':' << y_axis << ":0:0:0:0:................";
+					libTASExportFile << x_axis << ':' << y_axis << ":0:0:0:0:...............";
 
 					libTASExportFile << "|\n";
 				}
@@ -3526,7 +3526,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 		if (libTASExportFile.is_open()) {
 			// Add an empty frame.
-			libTASExportFile << "||0:0:R:.....|0:0:0:0:0:0:................|\n";
+			libTASExportFile << "|K|\n";
 		}
 	}
 

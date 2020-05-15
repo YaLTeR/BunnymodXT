@@ -3090,6 +3090,21 @@ void HwDLL::InsertCommands()
 
 					libTASExportFile << x_axis << ':' << y_axis << ":0:0:0:0:...............";
 
+					// FPS.
+					libTASExportFile << "|T";
+
+					// Assume that frametime looks like "0.<some digits>".
+					// We want to convert it to numerator = 1<number of digits zeros> and
+					// denominator = <digits themselves>. For example, 0.004 becomes 1000/4 and
+					// 0.010000001 becomes 1000000000/10000001.
+					//
+					// First, get rid of the leading "0.".
+					auto fractional = resulting_frame.Frametime.substr(2);
+					auto numerator = std::string("1") + std::string(fractional.size(), '0');
+					auto denominator = fractional; // libTAS can deal with leading zeros.
+
+					libTASExportFile << numerator << ':' << denominator;
+
 					libTASExportFile << "|\n";
 				}
 

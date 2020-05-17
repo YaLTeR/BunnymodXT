@@ -2951,11 +2951,10 @@ void HwDLL::InsertCommands()
 						&& CVars::_bxt_norefresh.GetBool())
 					ORIG_Cbuf_InsertText("_bxt_norefresh 0\n");
 
+				std::string newFrametime;
 				if (p.NextFrameIs0ms) {
 					if (!thisFrameIs0ms) {
-						std::ostringstream ss;
-						ss << "host_framerate " << frametime0ms << "\n";
-						ORIG_Cbuf_InsertText(ss.str().c_str());
+						newFrametime = frametime0ms;
 					}
 				} else if (currentRepeat == 0 || thisFrameIs0ms) {
 					// This will get the current framebulk and return the framerate back from 0ms
@@ -2963,11 +2962,15 @@ void HwDLL::InsertCommands()
 					HLTAS::Frame next;
 					if (GetNextMovementFrame(next)) {
 						if (next.Frametime != f.Frametime || thisFrameIs0ms) {
-							std::ostringstream ss;
-							ss << "host_framerate " << next.Frametime.c_str() << "\n";
-							ORIG_Cbuf_InsertText(ss.str().c_str());
+							newFrametime = next.Frametime.c_str();
 						}
 					}
+				}
+
+				if (!newFrametime.empty()) {
+					std::ostringstream ss;
+					ss << "host_framerate " << newFrametime << "\n";
+					ORIG_Cbuf_InsertText(ss.str().c_str());
 				}
 
 				thisFrameIs0ms = p.NextFrameIs0ms;
@@ -3097,8 +3100,13 @@ void HwDLL::InsertCommands()
 
 					libTASExportFile << x_axis << ':' << y_axis << ":0:0:0:0:...............";
 
-					// FPS.
+					// Next frame's FPS.
 					libTASExportFile << "|T";
+
+					// If there's new frametime use that, otherwise use current frame's frametime.
+					std::string frametime = resulting_frame.Frametime;
+					if (!newFrametime.empty())
+						frametime = newFrametime;
 
 					// Assume that frametime looks like "0.<some digits>".
 					// We want to convert it to numerator = 1<number of digits zeros> and
@@ -3106,7 +3114,7 @@ void HwDLL::InsertCommands()
 					// 0.010000001 becomes 1000000000/10000001.
 					//
 					// First, get rid of the leading "0.".
-					auto fractional = resulting_frame.Frametime.substr(2);
+					auto fractional = frametime.substr(2);
 					auto numerator = std::string("1") + std::string(fractional.size(), '0');
 					auto denominator = fractional; // libTAS can deal with leading zeros.
 

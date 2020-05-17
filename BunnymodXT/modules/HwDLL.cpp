@@ -1447,6 +1447,10 @@ struct HwDLL::Cmd_BXT_TAS_ExportLibTASInput
 		}
 
 		hw.ORIG_Con_Printf("Started exporting libTAS input.\n");
+
+		// Seems to be the consistent number of blank frames required after "map something<Return>".
+		for (size_t i = 0; i < 13; ++i)
+			hw.libTASExportFile << "|K|\n";
 	}
 };
 
@@ -4043,6 +4047,13 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 HOOK_DEF_0(HwDLL, void, __cdecl, SCR_BeginLoadingPlaque)
 {
 	executing = false;
+
+	if (libTASExportFile.is_open()) {
+		// Seems to be the consistent number of blank frames required for changelevels.
+		for (size_t i = 0; i < 2; ++i)
+			libTASExportFile << "|K|\n";
+	}
+
 	return ORIG_SCR_BeginLoadingPlaque();
 }
 

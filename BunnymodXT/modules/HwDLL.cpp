@@ -3024,13 +3024,16 @@ void HwDLL::InsertCommands()
 							auto angleDifference = HLStrafe::GetAngleDifference(player.Viewangles[0], p.Pitch);
 							y_delta = std::lround(angleDifference / SENSITIVITY);
 						}
-						if (player.Viewangles[1] != p.Yaw) {
-							auto angleDifference = HLStrafe::GetAngleDifference(player.Viewangles[1], p.Yaw);
-							auto newyawIsNegative = (player.Viewangles[1] + angleDifference < 0.0);
+
+						// anglemod is applied after +left/+right adjustment, but before the mouse input.
+						auto oldYaw = HLStrafe::AngleModDeg(player.Viewangles[1]);
+						if (oldYaw != p.Yaw) {
+							auto angleDifference = HLStrafe::GetAngleDifference(oldYaw, p.Yaw);
+							auto newyawIsNegative = (oldYaw + angleDifference < 0.0);
 							auto yawDifference = angleDifference + (newyawIsNegative ? -HLStrafe::M_U_DEG_HALF : HLStrafe::M_U_DEG_HALF);
 							x_delta = -std::lround(yawDifference / SENSITIVITY);
 
-							// ORIG_Con_Printf("Yaw %.6f => %.6f, angleDifference = %.8f, yawDifference = %.8f, x_delta = %.8f\n", player.Viewangles[1], p.Yaw, angleDifference, yawDifference, yawDifference / SENSITIVITY);
+							// ORIG_Con_Printf("Yaw (pre-anglemod %.6f) %.6f => %.6f, angleDifference = %.8f, yawDifference = %.8f, x_delta = %.8f\n", player.Viewangles[1], oldYaw, p.Yaw, angleDifference, yawDifference, yawDifference / SENSITIVITY);
 						}
 					}
 

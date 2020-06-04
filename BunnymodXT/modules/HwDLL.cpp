@@ -1561,20 +1561,15 @@ struct HwDLL::Cmd_BXT_TAS_New
 
 		HLTAS::Frame frame;
 		frame.SetAlgorithm(HLTAS::StrafingAlgorithm::VECTORIAL);
-		frame.Comments = " Enable vectorial strafing.\n"
-		                 " This makes the camera movement very smooth, but reduces the FPS of the TAS editor.\n"
-		                 " To improve the TAS editor FPS, you can increase the 0.1 parameter\n"
-		                 " on the target_yaw line below (for example, to 1).\n"
-		                 " This will also increase the camera flickering, though.\n"
-		                 " You can also disable the vectorial strafing by removing this line.";
+		frame.Comments = " Enable vectorial strafing. This makes the camera movement very smooth.";
 		hw.newTASResult.PushFrame(frame);
 
 		frame = HLTAS::Frame();
 		HLTAS::AlgorithmParameters parameters;
-		parameters.Type = HLTAS::ConstraintsType::VELOCITY_AVG;
-		parameters.Parameters.VelocityAvg.Constraints = 0.1;
+		parameters.Type = HLTAS::ConstraintsType::VELOCITY_LOCK;
+		parameters.Parameters.VelocityAvg.Constraints = 0;
 		frame.SetAlgorithmParameters(parameters);
-		frame.Comments = " Vectorial strafing will make the player look towards where he's moving +- 0.1 degrees.";
+		frame.Comments = " Vectorial strafing will make the player look towards where he's moving.";
 		hw.newTASResult.PushFrame(frame);
 
 		// The frame bulk for waiting for the load.
@@ -1586,7 +1581,7 @@ struct HwDLL::Cmd_BXT_TAS_New
 		// The actual first frame bulk with some reasonable defaults.
 		frame = HLTAS::Frame();
 		frame.Frametime = frametime;
-		frame.SetRepeats(1);
+		frame.SetRepeats(static_cast<unsigned>(0.1 / std::atof(frametime.c_str())));
 		frame.Strafe = true;
 		frame.SetDir(HLTAS::StrafeDir::YAW);
 		frame.SetType(HLTAS::StrafeType::MAXACCEL);
@@ -1612,6 +1607,13 @@ struct HwDLL::Cmd_BXT_TAS_New
 		frame.Dbc = true;
 		frame.Comments += " - automatic duck before collision.";
 		frame.Commands = "pause;bxt_tas_editor 1";
+		hw.newTASResult.PushFrame(frame);
+
+		// A blank frame bulk in the end since currently it's dropped in the TAS editor.
+		// TODO: remove when TAS editor is better.
+		frame.Comments.clear();
+		frame.Commands.clear();
+		frame.SetRepeats(1);
 		hw.newTASResult.PushFrame(frame);
 	}
 };

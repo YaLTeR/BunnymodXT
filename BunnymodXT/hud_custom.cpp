@@ -46,6 +46,7 @@ namespace CustomHud
 		bool ducktap;
 		bool jumpbug;
 		bool dbc;
+		bool dbc_ceilings;
 		bool dbg;
 		bool dwj;
 
@@ -1034,6 +1035,7 @@ namespace CustomHud
 				{ "duck tap", frame_bulk_status.ducktap },
 				{ "jump bug", frame_bulk_status.jumpbug },
 				{ "duck before collision", frame_bulk_status.dbc },
+				{ "  (incl. ceilings)", frame_bulk_status.dbc_ceilings },
 				{ "duck before ground", frame_bulk_status.dbg },
 				{ "duck when jump", frame_bulk_status.dwj },
 				{ "forward", frame_bulk_status.forward },
@@ -1327,6 +1329,7 @@ namespace CustomHud
 		frame_bulk_status.ducktap = frame_bulk.Ducktap;
 		frame_bulk_status.jumpbug = frame_bulk.Jumpbug;
 		frame_bulk_status.dbc = frame_bulk.Dbc;
+		frame_bulk_status.dbc_ceilings = frame_bulk.GetDbcCeilings();
 		frame_bulk_status.dbg = frame_bulk.Dbg;
 		frame_bulk_status.dwj = frame_bulk.Dwj;
 

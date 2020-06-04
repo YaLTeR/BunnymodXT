@@ -697,7 +697,14 @@ namespace TriangleDrawing
 				}
 
 				if (hw.tas_editor_toggle_dbc) {
+					if (frame_bulk.Dbc)
+						frame_bulk.SetDbcCeilings(false);
 					frame_bulk.Dbc = !frame_bulk.Dbc;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_dbc_ceilings) {
+					frame_bulk.SetDbcCeilings(!frame_bulk.GetDbcCeilings());
 					stale_index = closest_edge_prev_frame_bulk_index;
 				}
 
@@ -864,6 +871,7 @@ namespace TriangleDrawing
 		hw.tas_editor_toggle_ducktap = false;
 		hw.tas_editor_toggle_jumpbug = false;
 		hw.tas_editor_toggle_dbc = false;
+		hw.tas_editor_toggle_dbc_ceilings = false;
 		hw.tas_editor_toggle_dbg = false;
 		hw.tas_editor_toggle_dwj = false;
 		hw.tas_editor_toggle_forward = false;

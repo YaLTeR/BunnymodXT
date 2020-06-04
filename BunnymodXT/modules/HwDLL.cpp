@@ -439,6 +439,7 @@ void HwDLL::Clear()
 	tas_editor_toggle_ducktap = false;
 	tas_editor_toggle_jumpbug = false;
 	tas_editor_toggle_dbc = false;
+	tas_editor_toggle_dbc_ceilings = false;
 	tas_editor_toggle_dbg = false;
 	tas_editor_toggle_dwj = false;
 	tas_editor_toggle_forward = false;
@@ -2318,6 +2319,7 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 	      " - ducktap,\n"
 	      " - jumpbug,\n"
 	      " - dbc - duck before collision,\n"
+	      " - dbcceilings - duck before collision (including ceilings),\n"
 	      " - dbg - duck before ground,\n"
 	      " - dwj - duck when jump (useful for the long-jump module),\n"
 	      " - forward - +forward,\n"
@@ -2352,6 +2354,8 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 			HwDLL::GetInstance().tas_editor_toggle_jumpbug = true;
 		} else if (!strcmp(what, "dbc")) {
 			HwDLL::GetInstance().tas_editor_toggle_dbc = true;
+		} else if (!strcmp(what, "dbcceilings")) {
+			HwDLL::GetInstance().tas_editor_toggle_dbc_ceilings = true;
 		} else if (!strcmp(what, "dbg")) {
 			HwDLL::GetInstance().tas_editor_toggle_dbg = true;
 		} else if (!strcmp(what, "dwj")) {

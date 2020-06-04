@@ -228,6 +228,7 @@ public:
 	bool tas_editor_toggle_ducktap;
 	bool tas_editor_toggle_jumpbug;
 	bool tas_editor_toggle_dbc;
+	bool tas_editor_toggle_dbc_ceilings;
 	bool tas_editor_toggle_dbg;
 	bool tas_editor_toggle_dwj;
 	bool tas_editor_toggle_forward;

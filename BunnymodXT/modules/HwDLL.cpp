@@ -2200,7 +2200,7 @@ struct HwDLL::Cmd_BXT_Append
 
 struct HwDLL::Cmd_BXT_TAS_Editor
 {
-	USAGE("Usage: bxt_tas_editor <0|1|2>\n Controls the TAS editor. 0: disable, 1: append mode, 2: edit mode.\n");
+	USAGE("Usage: bxt_tas_editor <0|1>\n Enables the TAS editor.\n");
 
 	static void handler(int mode)
 	{
@@ -2208,13 +2208,47 @@ struct HwDLL::Cmd_BXT_TAS_Editor
 		if (mode == 0)
 			tas_editor_mode = TASEditorMode::DISABLED;
 		else if (mode == 1)
-			tas_editor_mode = TASEditorMode::APPEND;
-		else if (mode == 2)
 			tas_editor_mode = TASEditorMode::EDIT;
 		else
 			return;
 
 		HwDLL::GetInstance().SetTASEditorMode(tas_editor_mode);
+	}
+};
+
+struct HwDLL::Cmd_Plus_BXT_TAS_Editor_Append
+{
+	USAGE("Usage: +bxt_tas_editor_append\n Switches the TAS editor to append mode.\n");
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		if (hw.tas_editor_mode == TASEditorMode::EDIT)
+			hw.SetTASEditorMode(TASEditorMode::APPEND);
+	}
+
+	static void handler(int)
+	{
+		handler();
+	}
+};
+
+struct HwDLL::Cmd_Minus_BXT_TAS_Editor_Append
+{
+	USAGE("Usage: -bxt_tas_editor_append\n Switches the TAS editor back to edit mode.\n");
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		if (hw.tas_editor_mode == TASEditorMode::APPEND)
+			hw.SetTASEditorMode(TASEditorMode::EDIT);
+	}
+
+	static void handler(int)
+	{
+		handler();
 	}
 };
 
@@ -2708,6 +2742,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Point, Handler<>>("bxt_tas_editor_delete_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Insert_Point, Handler<>>("bxt_tas_editor_insert_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Save, Handler<>>("bxt_tas_editor_save");
+	wrapper::Add<Cmd_Plus_BXT_TAS_Editor_Append, Handler<>, Handler<int>>("+bxt_tas_editor_append");
+	wrapper::Add<Cmd_Minus_BXT_TAS_Editor_Append, Handler<>, Handler<int>>("-bxt_tas_editor_append");
 	wrapper::Add<Cmd_BXT_TAS_Editor, Handler<int>>("bxt_tas_editor");
 }
 

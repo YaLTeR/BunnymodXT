@@ -8,8 +8,11 @@ on:
 
 jobs:
   build-linux:
-    name: Build on Linux
+    name: Build on Linux (${{ matrix.configuration }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        configuration: [Release, Debug]
 
     steps:
     - uses: actions/checkout@v1
@@ -34,7 +37,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake ..
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} ..
 
     - name: Build
       run: cmake --build build
@@ -42,12 +45,15 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: BunnymodXT-Linux
+        name: BunnymodXT-Linux-${{ matrix.configuration }}
         path: build/libBunnymodXT.so
 
   build-windows:
-    name: Build on Windows
+    name: Build on Windows (${{ matrix.configuration }})
     runs-on: windows-latest
+    strategy:
+      matrix:
+        configuration: [Release, Debug]
 
     steps:
     - uses: actions/checkout@v1
@@ -79,10 +85,10 @@ jobs:
         cmake -A Win32 -DRapidJSON_ROOT="../../rapidjson-1.1.0" -DBOOST_ROOT="$env:BOOST_ROOT_1_72_0" ..
 
     - name: Build
-      run: cmake --build build
+      run: cmake --build build --config ${{ matrix.configuration }}
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: BunnymodXT-Windows
-        path: build/BunnymodXT.dll
+        name: BunnymodXT-Windows-${{ matrix.configuration }}
+        path: build/${{ matrix.configuration }}/BunnymodXT.dll

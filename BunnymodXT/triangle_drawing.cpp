@@ -371,12 +371,6 @@ namespace TriangleDrawing
 			}
 
 			if (left_got_pressed) {
-				hw.SetTASEditorMode(TASEditorMode::DISABLED);
-				hw.SetFreeCam(false);
-
-				last_frame_bulk.SetRepeats(frames_until_mouse - last_frame_bulk_start);
-				input.save();
-			} else if (right_got_pressed) {
 				auto new_frame_bulk = last_frame_bulk;
 				input.set_repeats(last_frame_bulk_index, frames_until_mouse - last_frame_bulk_start);
 				input.frame_bulks.push_back(new_frame_bulk);

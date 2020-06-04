@@ -39,6 +39,12 @@ jobs:
     - name: Build
       run: cmake --build build
 
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: BunnymodXT-Linux
+        path: build/libBunnymodXT.so
+
   build-windows:
     name: Build on Windows
     runs-on: windows-latest
@@ -74,3 +80,9 @@ jobs:
 
     - name: Build
       run: cmake --build build
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: BunnymodXT-Windows
+        path: build/BunnymodXT.dll

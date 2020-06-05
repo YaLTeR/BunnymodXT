@@ -11,20 +11,18 @@ jobs:
     name: Build on Linux (${{ matrix.configuration }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         configuration: [Release, Debug]
-
     steps:
-    - uses: actions/checkout@v1
-
-    - name: Fetch submodules
-      run: git submodule update --init --recursive
-
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install g++-multilib libboost-dev rapidjson-dev mesa-common-dev
-
+        mkdir -v build
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
@@ -32,35 +30,31 @@ jobs:
         toolchain: stable
         target: i686-unknown-linux-gnu
         override: true
-
     - name: Generate the build system
-      run: |
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} ..
-
+      working-directory: build
+      run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} ..
     - name: Build
-      run: cmake --build build
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      working-directory: build
+      run: cmake --build . -j $(nproc --all)
+    - uses: actions/upload-artifact@v2
       with:
-        name: BunnymodXT-Linux-${{ matrix.configuration }}
+        name: BunnymodXT-${{ runner.os }}-${{ matrix.configuration }}
         path: build/libBunnymodXT.so
 
   build-windows:
     name: Build on Windows (${{ matrix.configuration }})
     runs-on: windows-latest
+    env:
+      POWERSHELL_TELEMETRY_OPTOUT: 1
+      rapidjson_ver: 1.1.0
     strategy:
+      fail-fast: false
       matrix:
         configuration: [Release, Debug]
-
     steps:
-    - uses: actions/checkout@v1
-
-    - name: Fetch submodules
-      run: git submodule update --init --recursive
-
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
@@ -68,27 +62,18 @@ jobs:
         toolchain: stable
         target: i686-pc-windows-msvc
         override: true
-
     - name: Download RapidJSON
       run: |
-        $client = New-Object System.Net.WebClient
-        $client.DownloadFile("https://github.com/Tencent/rapidjson/archive/v1.1.0.zip", "../rapidjson.zip")
-        # The output path in DownloadFile seems to be relative to the powershell starting directory,
-        # not the current directory. So cd .. afterwards to avoid confusion.
-        cd ..
-        7z x rapidjson.zip
-
+        curl -LJO https://github.com/Tencent/rapidjson/archive/v$env:rapidjson_ver.zip
+        7z x "rapidjson-$env:rapidjson_ver.zip"
+        mkdir -vb build
     - name: Generate the build system
-      run: |
-        mkdir build
-        cd build
-        cmake -A Win32 -DRapidJSON_ROOT="../../rapidjson-1.1.0" -DBOOST_ROOT="$env:BOOST_ROOT_1_72_0" ..
-
+      working-directory: build
+      run: cmake -A Win32 -DRapidJSON_ROOT="..\rapidjson-$env:rapidjson_ver" -DBOOST_ROOT="$env:BOOST_ROOT_1_72_0" ..
     - name: Build
-      run: cmake --build build --config ${{ matrix.configuration }}
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      working-directory: build
+      run: cmake --build . --config ${{ matrix.configuration }} -j $env:NUMBER_OF_PROCESSORS
+    - uses: actions/upload-artifact@v2
       with:
-        name: BunnymodXT-Windows-${{ matrix.configuration }}
-        path: build/${{ matrix.configuration }}/BunnymodXT.dll
+        name: BunnymodXT-${{ runner.os }}-${{ matrix.configuration }}
+        path: build\${{ matrix.configuration }}\BunnymodXT.dll

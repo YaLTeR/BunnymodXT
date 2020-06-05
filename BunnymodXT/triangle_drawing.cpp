@@ -811,7 +811,7 @@ namespace TriangleDrawing
 					&& hw.tas_editor_set_run_point_and_save) {
 				auto commands = input.frame_bulks[0].Commands;
 				if (commands.empty())
-					commands = "pause;bxt_tas_editor 2;bxt_freecam 1";
+					commands = "pause;bxt_tas_editor 1";
 				input.frame_bulks[closest_edge_prev_frame_bulk_index + 1].Commands = commands;
 				input.frame_bulks[0].Commands.clear();
 				hw.SaveEditedInput();

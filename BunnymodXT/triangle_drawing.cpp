@@ -246,6 +246,16 @@ namespace TriangleDrawing
 		}
 		left_was_pressed = left_pressed;
 
+		static bool middle_was_pressed = false;
+		static Vector2D middle_pressed_at = Vector2D(0, 0);
+		auto middle_pressed = (mouse_state & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
+		bool middle_got_pressed = false;
+		if (middle_pressed && !middle_was_pressed) {
+			middle_got_pressed = true;
+			middle_pressed_at = mouse;
+		}
+		middle_was_pressed = middle_pressed;
+
 		static bool right_was_pressed = false;
 		static Vector2D right_pressed_at = Vector2D(0, 0);
 		auto right_pressed = (mouse_state & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
@@ -404,7 +414,7 @@ namespace TriangleDrawing
 
 			size_t frame_limit = player_datas.size() - 1;
 
-			if (left_pressed || right_pressed) {
+			if (left_pressed || middle_pressed || right_pressed) {
 				// Don't change the selected frame bulk while dragging.
 				if (closest_edge_prev_frame_bulk_index + 1 < frame_bulk_starts.size()) {
 					closest_edge_frame = frame_bulk_starts[closest_edge_prev_frame_bulk_index + 1];
@@ -436,8 +446,12 @@ namespace TriangleDrawing
 			}
 
 			static int saved_repeats = 0;
-			if (left_got_pressed && closest_edge_frame != 0)
+			static int saved_repeats_next = 0;
+			if ((left_got_pressed || middle_got_pressed) && closest_edge_frame != 0) {
 				saved_repeats = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetRepeats();
+				if (closest_edge_prev_frame_bulk_index + 1 < input.frame_bulks.size())
+					saved_repeats_next = input.frame_bulks[closest_edge_prev_frame_bulk_index + 1].GetRepeats();
+			}
 
 			static double saved_yaw = 0;
 			if (right_got_pressed && closest_edge_frame != 0
@@ -462,6 +476,7 @@ namespace TriangleDrawing
 			float closest_frame_px_dist = 0;
 
 			static Vector2D saved_lmb_diff;
+			static Vector2D saved_mmb_diff;
 			static Vector2D saved_rmb_diff;
 
 			pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
@@ -561,6 +576,18 @@ namespace TriangleDrawing
 							saved_lmb_diff = (screen_point_px - prev_screen_point_px).Normalize();
 						}
 
+						if (middle_got_pressed) {
+							Vector origin_ = origin;
+							Vector screen_point;
+							pTriAPI->WorldToScreen(origin_, screen_point);
+							auto screen_point_px = stw_to_pixels(screen_point.Make2D());
+							Vector prev_origin_ = prev_origin;
+							Vector prev_screen_point;
+							pTriAPI->WorldToScreen(prev_origin_, prev_screen_point);
+							auto prev_screen_point_px = stw_to_pixels(prev_screen_point.Make2D());
+							saved_mmb_diff = (screen_point_px - prev_screen_point_px).Normalize();
+						}
+
 						if (right_got_pressed) {
 							Vector a_screen_point;
 							pTriAPI->WorldToScreen(a, a_screen_point);
@@ -590,6 +617,24 @@ namespace TriangleDrawing
 					auto amount = DotProduct(mouse_diff, saved_lmb_diff) * 0.1f;
 					auto new_repeats = static_cast<unsigned>(std::max(1, saved_repeats + static_cast<int>(amount)));
 					input.set_repeats(closest_edge_prev_frame_bulk_index, new_repeats);
+				}
+
+				if (middle_pressed) {
+					auto mouse_diff = mouse - middle_pressed_at;
+
+					auto amount = DotProduct(mouse_diff, saved_mmb_diff) * 0.1f;
+					auto new_repeats = std::max(1, saved_repeats + static_cast<int>(amount));
+
+					if (closest_edge_prev_frame_bulk_index + 1 < input.frame_bulks.size()) {
+						auto new_repeats_next = std::max(1, saved_repeats_next - static_cast<int>(amount));
+						auto change = std::min(std::abs(new_repeats - saved_repeats), std::abs(new_repeats_next - saved_repeats_next));
+						new_repeats = saved_repeats + change * (amount < 0 ? -1 : 1);
+						new_repeats_next = saved_repeats_next + change * (amount < 0 ? 1 : -1);
+						input.set_repeats(closest_edge_prev_frame_bulk_index, static_cast<unsigned>(new_repeats));
+						input.set_repeats(closest_edge_prev_frame_bulk_index + 1, static_cast<unsigned>(new_repeats_next));
+					} else {
+						input.set_repeats(closest_edge_prev_frame_bulk_index, static_cast<unsigned>(new_repeats));
+					}
 				}
 
 				if (right_pressed && frame_bulk.GetYawPresent()) {

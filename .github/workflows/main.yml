@@ -11,19 +11,19 @@ jobs:
     name: Build on Linux (${{ matrix.configuration }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         configuration: [Release, Debug]
 
     steps:
-    - uses: actions/checkout@v1
-
-    - name: Fetch submodules
-      run: git submodule update --init --recursive
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
 
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install g++-multilib libboost-dev rapidjson-dev mesa-common-dev
+        sudo apt-get install g++-multilib libboost-dev rapidjson-dev mesa-common-dev ninja-build
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1
@@ -34,32 +34,29 @@ jobs:
         override: true
 
     - name: Generate the build system
-      run: |
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} ..
+      run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.configuration }}
 
     - name: Build
       run: cmake --build build
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v2
       with:
-        name: BunnymodXT-Linux-${{ matrix.configuration }}
+        name: BunnymodXT-${{ runner.os }}-${{ matrix.configuration }}
         path: build/libBunnymodXT.so
 
   build-windows:
     name: Build on Windows (${{ matrix.configuration }})
     runs-on: windows-latest
+
     strategy:
+      fail-fast: false
       matrix:
         configuration: [Release, Debug]
 
     steps:
-    - uses: actions/checkout@v1
-
-    - name: Fetch submodules
-      run: git submodule update --init --recursive
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1
@@ -79,16 +76,12 @@ jobs:
         7z x rapidjson.zip
 
     - name: Generate the build system
-      run: |
-        mkdir build
-        cd build
-        cmake -A Win32 -DRapidJSON_ROOT="../../rapidjson-1.1.0" -DBOOST_ROOT="$env:BOOST_ROOT_1_72_0" ..
+      run: cmake -B build -A Win32 -DRapidJSON_ROOT="..\..\rapidjson-1.1.0" -DBOOST_ROOT="$env:BOOST_ROOT_1_72_0"
 
     - name: Build
-      run: cmake --build build --config ${{ matrix.configuration }}
+      run: cmake --build build --config ${{ matrix.configuration }} -j $env:NUMBER_OF_PROCESSORS
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v2
       with:
-        name: BunnymodXT-Windows-${{ matrix.configuration }}
-        path: build/${{ matrix.configuration }}/BunnymodXT.dll
+        name: BunnymodXT-${{ runner.os }}-${{ matrix.configuration }}
+        path: build\${{ matrix.configuration }}\BunnymodXT.dll

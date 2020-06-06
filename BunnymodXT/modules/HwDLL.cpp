@@ -3073,7 +3073,7 @@ void HwDLL::InsertCommands()
 						// anglemod is applied after +left/+right adjustment, but before the mouse input.
 						auto oldYaw = HLStrafe::AngleModDeg(player.Viewangles[1]);
 						if (oldYaw != p.Yaw) {
-							auto angleDifference = HLStrafe::GetAngleDifference(oldYaw, p.Yaw);
+							auto angleDifference = HLStrafe::GetAngleDifference(static_cast<float>(oldYaw), p.Yaw);
 							auto newyawIsNegative = (oldYaw + angleDifference < 0.0);
 							auto yawDifference = angleDifference + (newyawIsNegative ? -HLStrafe::M_U_DEG_HALF : HLStrafe::M_U_DEG_HALF);
 							x_delta = -std::lround(yawDifference / SENSITIVITY);
@@ -3113,9 +3113,9 @@ void HwDLL::InsertCommands()
 					int x_axis = 0, y_axis = 0;
 					double target_sidemove = 0;
 					if (p.Forward)
-						y_axis -= p.Forwardspeed;
+						y_axis -= static_cast<int>(p.Forwardspeed);
 					if (p.Back)
-						y_axis += p.Backspeed;
+						y_axis += static_cast<int>(p.Backspeed);
 					if (p.Right) {
 						// BXT issues -moveleft, -moveright and the rest of the keys on the first
 						// frame of running a .hltas script, which means that on the first input
@@ -3126,12 +3126,12 @@ void HwDLL::InsertCommands()
 						// This clearedImpulsesForTheFirstTime bool is false during the period when
 						// the button states are equal to 0.75 due to this BXT particularity.
 						const double multiplier = clearedImpulsesForTheFirstTime ? right_state_multiplier : 0.5;
-						x_axis += (p.Sidespeed - CL_SPEED * multiplier);
+						x_axis += static_cast<int>(p.Sidespeed - CL_SPEED * multiplier);
 						target_sidemove += p.Sidespeed;
 					}
 					if (p.Left) {
 						const double multiplier = clearedImpulsesForTheFirstTime ? left_state_multiplier : 0.5;
-						x_axis -= (p.Sidespeed - CL_SPEED * multiplier);
+						x_axis -= static_cast<int>(p.Sidespeed - CL_SPEED * multiplier);
 						target_sidemove -= p.Sidespeed;
 					}
 

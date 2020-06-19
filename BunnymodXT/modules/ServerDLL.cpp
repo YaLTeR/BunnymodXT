@@ -1277,7 +1277,10 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 				|| (!std::strcmp(targetname, "endbox_mm0") && !std::strcmp(gameDir, "echoes")) // Echoes
 				|| (!std::strcmp(targetname, "sendmm") && !std::strcmp(gameDir, "MINIMICUS"))  // Minimicus
 				|| (!std::strcmp(targetname, "kill2") && !std::strcmp(gameDir, "before")) // Before
-				|| (!std::strcmp(targetname, "tele_in") && !std::strcmp(gameDir, "plague"))) { // Plague
+				|| (!std::strcmp(targetname, "tele_in") && !std::strcmp(gameDir, "plague")) // Plague
+				|| (!std::strcmp(targetname, "exit_seq") && !std::strcmp(gameDir, "timeline2")) // Timeline 2
+				|| (!std::strcmp(targetname, "spawn_garg_sci_mm") && !std::strcmp(gameDir, "SteamLink")) // Uplink
+				|| (!std::strcmp(targetname, "medicosprey") && !std::strcmp(gameDir, "visitors"))) { // Visitors
 				if (CVars::bxt_timer_autostop.GetBool())
 					CustomHud::SetCountingTime(false);
 				Interprocess::WriteGameEnd(CustomHud::GetTime());

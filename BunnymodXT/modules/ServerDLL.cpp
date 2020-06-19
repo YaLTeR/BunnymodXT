@@ -1263,14 +1263,16 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
-			const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+			const char *gameDir = "";
+			if (ClientDLL::GetInstance().pEngfuncs)
+				gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
 			if (!std::strcmp(targetname, "roll_the_credits")
 				|| !std::strcmp(targetname, "youwinmulti")
 				|| !std::strcmp(targetname, "previctory_mm")
 				|| !std::strcmp(targetname, "stairscene_mngr")
 				|| (!std::strcmp(targetname, "telmm") && !std::strcmp(gameDir, "biglolly")) // Big Lolly
 				|| (!std::strcmp(targetname, "mm_player_camera1") && !std::strcmp(gameDir, "htc")) // HTC
-				|| (!std::strcmp(targetname, "multimanager_1") && !std::strcmp(gameDir, "construction")) // Construction  
+				|| (!std::strcmp(targetname, "multimanager_1") && !std::strcmp(gameDir, "construction")) // Construction
 				|| (!std::strcmp(targetname, "the_endgame_mm") && !std::strcmp(gameDir, "gloom")) // The Gloom
 				|| (!std::strcmp(targetname, "endbox_mm0") && !std::strcmp(gameDir, "echoes"))) { // Echoes
 				if (CVars::bxt_timer_autostop.GetBool())

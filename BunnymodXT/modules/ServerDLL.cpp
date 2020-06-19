@@ -1266,7 +1266,12 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 			if (!std::strcmp(targetname, "roll_the_credits")
 				|| !std::strcmp(targetname, "youwinmulti")
 				|| !std::strcmp(targetname, "previctory_mm")
-				|| !std::strcmp(targetname, "stairscene_mngr")) {
+				|| !std::strcmp(targetname, "stairscene_mngr")
+				|| !std::strcmp(targetname, "telmm") // Big Lolly
+				|| !std::strcmp(targetname, "mm_player_camera1") // HTC
+				|| !std::strcmp(targetname, "multimanager_1") // Construction  
+				|| !std::strcmp(targetname, "the_endgame_mm") // The Gloom
+				|| !std::strcmp(targetname, "endbox_mm0")) { // Echoes
 				if (CVars::bxt_timer_autostop.GetBool())
 					CustomHud::SetCountingTime(false);
 				Interprocess::WriteGameEnd(CustomHud::GetTime());

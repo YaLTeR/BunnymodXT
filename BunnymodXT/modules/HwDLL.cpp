@@ -1568,7 +1568,7 @@ struct HwDLL::Cmd_BXT_TAS_New
 		frame = HLTAS::Frame();
 		HLTAS::AlgorithmParameters parameters;
 		parameters.Type = HLTAS::ConstraintsType::VELOCITY_LOCK;
-		parameters.Parameters.VelocityAvg.Constraints = 0;
+		parameters.Parameters.VelocityLock.Constraints = 0;
 		frame.SetAlgorithmParameters(parameters);
 		frame.Comments = " Vectorial strafing will make the player look towards where he's moving.";
 		hw.newTASResult.PushFrame(frame);

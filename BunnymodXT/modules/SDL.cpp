@@ -4,6 +4,13 @@
 #include <SPTLib/MemUtils.hpp>
 #include "SDL.hpp"
 
+#ifndef _WIN32
+extern "C" int __cdecl SDL_WaitEventTimeout(void *event, int time)
+{
+	return SDL::HOOKED_SDL_WaitEventTimeout(event, time);
+}
+#endif
+
 void SDL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
 {
 	Clear(); // Just in case.
@@ -27,6 +34,13 @@ void SDL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleB
 	} else {
 		EngineDevWarning("[sdl] Could not find SDL_GetMouseState.\n");
 	}
+
+	ORIG_SDL_WaitEventTimeout = reinterpret_cast<_SDL_WaitEventTimeout>(MemUtils::GetSymbolAddress(m_Handle, "SDL_WaitEventTimeout"));
+	if (ORIG_SDL_WaitEventTimeout) {
+		EngineDevMsg("[sdl] Found SDL_WaitEventTimeout at %p.\n", ORIG_SDL_WaitEventTimeout);
+	} else {
+		EngineDevWarning("[sdl] Could not find SDL_WaitEventTimeout.\n");
+	}
 }
 
 void SDL::Unhook()
@@ -39,6 +53,7 @@ void SDL::Clear()
 	IHookableNameFilter::Clear();
 	ORIG_SDL_SetRelativeMouseMode = nullptr;
 	ORIG_SDL_GetMouseState = nullptr;
+	ORIG_SDL_WaitEventTimeout = nullptr;
 }
 
 bool SDL::Found() const
@@ -60,4 +75,9 @@ uint32_t SDL::GetMouseState(int *x, int *y) const
 	*x = 0;
 	*y = 0;
 	return 0;
+}
+
+HOOK_DEF_2(SDL, int, __cdecl, SDL_WaitEventTimeout, void*, event, int, time)
+{
+	return ORIG_SDL_WaitEventTimeout(event, 0);
 }

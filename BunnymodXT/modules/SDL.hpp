@@ -12,6 +12,8 @@
 
 class SDL : public IHookableNameFilter
 {
+	HOOK_DECL(int, __cdecl, SDL_WaitEventTimeout, void *event, int time)
+
 public:
 	static SDL& GetInstance()
 	{

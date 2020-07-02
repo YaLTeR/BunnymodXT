@@ -2253,6 +2253,46 @@ struct HwDLL::Cmd_Minus_BXT_TAS_Editor_Append
 	}
 };
 
+struct HwDLL::Cmd_Plus_BXT_TAS_Editor_Look_Around
+{
+	USAGE("Usage: +bxt_tas_editor_look_around\n Allows to look around while in the TAS editor.\n");
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		if (hw.tas_editor_mode == TASEditorMode::EDIT) {
+			ClientDLL::GetInstance().SetMouseState(true);
+			SDL::GetInstance().SetRelativeMouseMode(true);
+		}
+	}
+
+	static void handler(int)
+	{
+		handler();
+	}
+};
+
+struct HwDLL::Cmd_Minus_BXT_TAS_Editor_Look_Around
+{
+	USAGE("Usage: -bxt_tas_editor_look_around\n Disables looking around while in the TAS editor.\n");
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		if (hw.tas_editor_mode == TASEditorMode::EDIT) {
+			ClientDLL::GetInstance().SetMouseState(false);
+			SDL::GetInstance().SetRelativeMouseMode(false);
+		}
+	}
+
+	static void handler(int)
+	{
+		handler();
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Editor_Save
 {
 	USAGE("Usage: bxt_tas_editor_save\n Saves the currently edited input into the script.\n");
@@ -2748,6 +2788,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor_Save, Handler<>>("bxt_tas_editor_save");
 	wrapper::Add<Cmd_Plus_BXT_TAS_Editor_Append, Handler<>, Handler<int>>("+bxt_tas_editor_append");
 	wrapper::Add<Cmd_Minus_BXT_TAS_Editor_Append, Handler<>, Handler<int>>("-bxt_tas_editor_append");
+	wrapper::Add<Cmd_Plus_BXT_TAS_Editor_Look_Around, Handler<>, Handler<int>>("+bxt_tas_editor_look_around");
+	wrapper::Add<Cmd_Minus_BXT_TAS_Editor_Look_Around, Handler<>, Handler<int>>("-bxt_tas_editor_look_around");
 	wrapper::Add<Cmd_BXT_TAS_Editor, Handler<int>>("bxt_tas_editor");
 }
 

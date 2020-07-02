@@ -344,6 +344,8 @@ protected:
 	struct Cmd_BXT_TAS_Editor;
 	struct Cmd_Plus_BXT_TAS_Editor_Append;
 	struct Cmd_Minus_BXT_TAS_Editor_Append;
+	struct Cmd_Plus_BXT_TAS_Editor_Look_Around;
+	struct Cmd_Minus_BXT_TAS_Editor_Look_Around;
 	struct Cmd_BXT_TAS_Editor_Save;
 	struct Cmd_BXT_TAS_Editor_Delete_Last_Point;
 	struct Cmd_BXT_TAS_Editor_Delete_Point;

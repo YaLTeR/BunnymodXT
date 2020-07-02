@@ -1304,8 +1304,8 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		if (hw.resetState != ResetState::NORMAL)
 			return;
 
-		// Save the input and disable the input editor.
-		hw.SaveEditedInput();
+		// Disable the input editor.
+		hw.SetTASEditorMode(TASEditorMode::DISABLED);
 
 		hw.runningFrames = false;
 		hw.currentFramebulk = 0;

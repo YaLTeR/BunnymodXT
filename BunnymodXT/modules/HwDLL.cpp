@@ -1533,7 +1533,7 @@ struct HwDLL::Cmd_BXT_TAS_New
 				break;
 
 			default:
-				hw.ORIG_Con_Printf("You specified FPS = %d, however only FPS = 1000, 500, 250 or 100 are currently supported. If you need another FPS value, use one of the supported FPS values, and then change the frametime manually in the script");
+				hw.ORIG_Con_Printf("You specified FPS = %d, however only FPS = 1000, 500, 250 or 100 are currently supported. If you need another FPS value, use one of the supported FPS values, and then change the frametime manually in the script", fps);
 				if (fps > 0)
 					hw.ORIG_Con_Printf(" (you will want something around %f)", 1.f / fps);
 				hw.ORIG_Con_Printf(".\n");

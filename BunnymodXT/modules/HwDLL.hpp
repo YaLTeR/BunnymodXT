@@ -177,7 +177,12 @@ public:
 	inline double GetTime() const {
 		return *reinterpret_cast<double *>(reinterpret_cast<uintptr_t>(sv) + offTime);
 	}
-	inline edict_t* GetPlayerEdict() const { return *sv_player; }
+	inline edict_t* GetPlayerEdict() const {
+		if (!svs || svs->num_clients == 0)
+			return nullptr;
+
+		return *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	}
 	inline bool IsTASLogging() const { return tasLogging; }
 	inline size_t GetPreExecFramebulk() const { return preExecFramebulk; }
 

@@ -60,6 +60,9 @@ namespace TriangleDrawing
 
 		const auto searchRadius = CVars::bxt_hud_useables_radius.GetFloat();
 		const auto player = HwDLL::GetInstance().GetPlayerEdict();
+		if (!player)
+			return;
+
 		const auto playerOrigin = player->v.origin;
 		Vector forward, right, up;
 		ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player->v.v_angle, forward, right, up);

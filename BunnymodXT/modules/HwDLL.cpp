@@ -2824,7 +2824,7 @@ void HwDLL::InsertCommands()
 				}
 
 				if (svs->num_clients >= 1) {
-					edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+					edict_t *pl = GetPlayerEdict();
 					if (pl) {
 						player.Origin[0] = pl->v.origin[0];
 						player.Origin[1] = pl->v.origin[1];
@@ -3329,7 +3329,7 @@ void HwDLL::InsertCommands()
 		// Manual autofuncs.
 		if (autojump || ducktap || jumpbug) {
 			if (svs->num_clients >= 1) {
-				edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+				edict_t *pl = GetPlayerEdict();
 				if (pl) {
 					player.Origin[0] = pl->v.origin[0];
 					player.Origin[1] = pl->v.origin[1];
@@ -3459,7 +3459,7 @@ HLStrafe::PlayerData HwDLL::GetPlayerData()
 {
 	HLStrafe::PlayerData player{};
 
-	edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	edict_t *pl = GetPlayerEdict();
 	player.Origin[0] = pl->v.origin[0];
 	player.Origin[1] = pl->v.origin[1];
 	player.Origin[2] = pl->v.origin[2];
@@ -3537,7 +3537,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
 
 	if (svs->num_clients >= 1) {
-		edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+		edict_t *pl = GetPlayerEdict();
 		if (pl) {
 			vars.EntFriction = pl->v.friction;
 			vars.EntGravity = pl->v.gravity;
@@ -3828,7 +3828,7 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	if (!svs || svs->num_clients < 1)
 		return false;
 
-	edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	edict_t *pl = GetPlayerEdict();
 	if (!pl)
 		return false;
 
@@ -3883,7 +3883,7 @@ void HwDLL::StartTracing(bool extendDistanceLimit) {
 	trace_oldclient = *host_client;
 	*host_client = svs->clients;
 	trace_oldplayer = *sv_player;
-	*sv_player = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	*sv_player = GetPlayerEdict();
 	trace_oldmove = *ppmove;
 	*ppmove = svmove;
 
@@ -4028,7 +4028,7 @@ void HwDLL::UpdateCustomTriggers()
 	if (!svs || svs->num_clients < 1)
 		return;
 
-	edict_t *pl = *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
+	edict_t *pl = GetPlayerEdict();
 	if (!pl)
 		return;
 

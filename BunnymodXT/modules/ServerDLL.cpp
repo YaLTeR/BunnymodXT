@@ -1668,6 +1668,16 @@ bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, boo
 	return true;
 }
 
+TraceResult ServerDLL::TraceLine(const float v1[3], const float v2[3], int fNoMonsters, edict_t *pentToSkip) const
+{
+	TraceResult tr{};
+
+	if (pEngfuncs)
+		pEngfuncs->pfnTraceLine(v1, v2, fNoMonsters, pentToSkip, &tr);
+
+	return tr;
+}
+
 static float (*ORIG_CVarGetFloat) (const char* szVarName);
 float fast_cvar_get_float(const char* name)
 {

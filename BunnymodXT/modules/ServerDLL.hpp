@@ -61,6 +61,8 @@ public:
 
 	static void GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a);
 
+	TraceResult TraceLine(const float v1[3], const float v2[3], int fNoMonsters, edict_t *pentToSkip) const;
+
 	enginefuncs_t *pEngfuncs;
 
 private:

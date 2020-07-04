@@ -633,8 +633,7 @@ namespace CustomHud
 			float view[3], end[3];
 			SetupTraceVectors(view, end);
 
-			TraceResult tr;
-			ServerDLL::GetInstance().pEngfuncs->pfnTraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict(), &tr);
+			const auto tr = ServerDLL::GetInstance().TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
 			double hdist = std::hypot(tr.vecEndPos[0] - view[0], tr.vecEndPos[1] - view[1]);
 			double vdist = tr.vecEndPos[2] - view[2];
 			double hvdist = std::sqrt((tr.vecEndPos[0] - view[0]) * (tr.vecEndPos[0] - view[0])
@@ -665,8 +664,7 @@ namespace CustomHud
 			float view[3], end[3];
 			SetupTraceVectors(view, end);
 
-			TraceResult tr;
-			sv.pEngfuncs->pfnTraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict(), &tr);
+			const auto tr = sv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
 
 			std::ostringstream out;
 			if (tr.pHit)
@@ -707,8 +705,7 @@ namespace CustomHud
 		float start[3], end[3];
 		SetupTraceVectors(start, end);
 
-		TraceResult tr;
-		ServerDLL::GetInstance().pEngfuncs->pfnTraceLine(start, end, 0, HwDLL::GetInstance().GetPlayerEdict(), &tr);
+		auto tr = ServerDLL::GetInstance().TraceLine(start, end, 0, HwDLL::GetInstance().GetPlayerEdict());
 
 		if (!tr.pHit || !tr.pHit->pvPrivateData || tr.pHit->v.solid != SOLID_BSP || tr.pHit->v.takedamage)
 			return;
@@ -720,18 +717,17 @@ namespace CustomHud
 		if (n < 0.5)
 			return;
 
-		TraceResult beamTr;
-		ServerDLL::GetInstance().pEngfuncs->pfnTraceLine(tr.vecEndPos + 8 * forward, end, 0, nullptr, &beamTr);
+		auto beamTr = ServerDLL::GetInstance().TraceLine(tr.vecEndPos + 8 * forward, end, 0, nullptr);
 
 		if (beamTr.fAllSolid)
 			return;
 
 		selfgaussable = true;
 
-		ServerDLL::GetInstance().pEngfuncs->pfnTraceLine(beamTr.vecEndPos, tr.vecEndPos, 0, nullptr, &beamTr);
+		beamTr = ServerDLL::GetInstance().TraceLine(beamTr.vecEndPos, tr.vecEndPos, 0, nullptr);
 		length = (beamTr.vecEndPos - tr.vecEndPos).Length();
 
-		ServerDLL::GetInstance().pEngfuncs->pfnTraceLine(start, end, 0, nullptr, &tr);
+		tr = ServerDLL::GetInstance().TraceLine(start, end, 0, nullptr);
 		hitGroup = tr.iHitgroup;
 	}
 

@@ -1672,7 +1672,7 @@ TraceResult ServerDLL::TraceLine(const float v1[3], const float v2[3], int fNoMo
 {
 	TraceResult tr{};
 
-	if (pEngfuncs)
+	if (pEngfuncs && pentToSkip)
 		pEngfuncs->pfnTraceLine(v1, v2, fNoMonsters, pentToSkip, &tr);
 
 	return tr;

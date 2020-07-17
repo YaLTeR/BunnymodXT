@@ -269,6 +269,15 @@ namespace TriangleDrawing
 		}
 		right_was_pressed = right_pressed;
 
+		float adjustment_speed = 1;
+
+		// Like in HwDLL::FreeCamTick().
+		auto buttons = cl.last_buttons;
+		if (buttons & IN_ALT1)
+			adjustment_speed *= 20;
+		if (buttons & IN_DUCK)
+			adjustment_speed /= 20;
+
 		auto view = cl.last_vieworg;
 		Vector forward, right, up;
 		cl.pEngfuncs->pfnAngleVectors(cl.last_viewangles, forward, right, up);
@@ -617,7 +626,7 @@ namespace TriangleDrawing
 				if (left_pressed) {
 					auto mouse_diff = mouse - left_pressed_at;
 
-					auto amount = DotProduct(mouse_diff, saved_lmb_diff) * 0.1f;
+					auto amount = DotProduct(mouse_diff, saved_lmb_diff) * 0.1f * adjustment_speed;
 					auto new_repeats = static_cast<unsigned>(std::max(1, saved_repeats + static_cast<int>(amount)));
 					input.set_repeats(closest_edge_prev_frame_bulk_index, new_repeats);
 				}
@@ -625,7 +634,7 @@ namespace TriangleDrawing
 				if (middle_pressed) {
 					auto mouse_diff = mouse - middle_pressed_at;
 
-					auto amount = DotProduct(mouse_diff, saved_mmb_diff) * 0.1f;
+					auto amount = DotProduct(mouse_diff, saved_mmb_diff) * 0.1f * adjustment_speed;
 					auto new_repeats = std::max(1, saved_repeats + static_cast<int>(amount));
 
 					if (closest_edge_prev_frame_bulk_index + 1 < input.frame_bulks.size()) {
@@ -643,7 +652,7 @@ namespace TriangleDrawing
 				if (right_pressed && frame_bulk.GetYawPresent()) {
 					auto mouse_diff = mouse - right_pressed_at;
 
-					auto amount = DotProduct(mouse_diff, saved_rmb_diff) * 0.1f;
+					auto amount = DotProduct(mouse_diff, saved_rmb_diff) * 0.1f * adjustment_speed;
 					auto new_yaw = saved_yaw + amount;
 					if (frame_bulk.GetYaw() != new_yaw) {
 						stale_index = closest_edge_prev_frame_bulk_index;

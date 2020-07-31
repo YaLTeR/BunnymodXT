@@ -134,6 +134,7 @@ protected:
 	ptrdiff_t offm_vecOrigin;
 
 	ptrdiff_t offBhopcap;
+	ptrdiff_t pCZDS_Velocity_Byte;
 	byte originalBhopcapInsn[6];
 
 	bool callerIsWalkMove;

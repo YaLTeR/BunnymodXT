@@ -344,6 +344,20 @@ void ServerDLL::FindStuff()
 			}
 		});
 
+	auto fPM_Jump_CZDS_Velocity_Byte = FindAsync(
+		pCZDS_Velocity_Byte,
+		patterns::server::CZDS_Velocity_Byte,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CZDS_Velocity_Byte.cbegin()) {
+			case 0: // HL-SteamPipe
+				// the actual byte inside the pattern that needs changing
+				pCZDS_Velocity_Byte += 6;
+				break;
+			default:
+				assert(false);
+			}
+		});
+
 	auto fPM_WalkMove = FindFunctionAsync(ORIG_PM_WalkMove, "PM_WalkMove", patterns::shared::PM_WalkMove);
 	auto fPM_FlyMove = FindFunctionAsync(ORIG_PM_FlyMove, "PM_FlyMove", patterns::shared::PM_FlyMove);
 	auto fPM_AddToTouched = FindFunctionAsync(ORIG_PM_AddToTouched, "PM_AddToTouched", patterns::shared::PM_AddToTouched);
@@ -431,6 +445,19 @@ void ServerDLL::FindStuff()
 			EngineDevWarning("[server dll] Could not find PM_PreventMegaBunnyJumping.\n");
 			EngineWarning("Bhopcap disabling is not available.\n");
 			noBhopcap = true;
+		}
+	}
+
+	{
+		auto pattern = fPM_Jump_CZDS_Velocity_Byte.get();
+		if (pCZDS_Velocity_Byte) {
+			if (pattern == patterns::server::CZDS_Velocity_Byte.cend())
+				EngineDevMsg("[server dll] Found CZDS Velocity Reset Byte at %p.\n", pCZDS_Velocity_Byte);
+			else
+				EngineDevMsg("[server dll] Found CZDS Velocity Reset Byte at %p (using the %s pattern).\n", pCZDS_Velocity_Byte, pattern->name());
+		}
+		else {
+			EngineDevWarning("[server dll] Could not find CZDS Velocity Reset Byte.\n");
 		}
 	}
 
@@ -911,6 +938,12 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
 		else if (*reinterpret_cast<byte*>(pPMJump + offBhopcap) == 0x0F
 				&& *reinterpret_cast<byte*>(pPMJump + offBhopcap + 1) == 0x82)
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pPMJump + offBhopcap), 6, reinterpret_cast<const byte*>("\x90\x90\x90\x90\x90\x90"));
+	}
+
+	if (pCZDS_Velocity_Byte)
+	{
+		if (*reinterpret_cast<byte*>(pCZDS_Velocity_Byte) == !CVars::bxt_bhopcap.GetBool())
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCZDS_Velocity_Byte), 1, reinterpret_cast<const byte*>(CVars::bxt_bhopcap.GetBool() ? "\x01" : "\x00"));
 	}
 
 	ORIG_PM_Jump();

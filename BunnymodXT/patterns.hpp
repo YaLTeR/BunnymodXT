@@ -398,7 +398,7 @@ namespace patterns
 			"AG-Client",
 			"51 8B 0D ?? ?? ?? ?? 8B 81 D0 00 00 00 85 C0 74 09 83 89 C8 00 00 00 02 59 C3 D9 05 ?? ?? ?? ?? D9 81 CC 00 00 00 DA E9",
 			"BigLolly",
-			"55 8B EC 83 EC 14 C7 45 F4 00 00 00 00 C7 45 FC 00 00 00 00 A1 ?? ?? ?? ?? 83 B8 D0 00 00 00 00 74 1F 8B 0D ?? ?? ?? ?? 8B 91 C8 00 00 00 83 CA 02 A1"
+			"55 8B EC 83 EC ?? C7 45 F4 00 00 00 00 C7 45 FC 00 00 00 00 A1 ?? ?? ?? ?? 83 B8 D0 00 00 00 00 74 1F 8B 0D ?? ?? ?? ?? 8B 91 C8 00 00 00 83 CA 02 A1"
 		);
 
 		PATTERNS(PM_PreventMegaBunnyJumping,

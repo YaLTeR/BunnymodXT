@@ -1582,7 +1582,7 @@ struct HwDLL::Cmd_BXT_TAS_New
 		// The actual first frame bulk with some reasonable defaults.
 		frame = HLTAS::Frame();
 		frame.Frametime = frametime;
-		frame.SetRepeats(static_cast<unsigned>(0.1 / std::atof(frametime.c_str())));
+		frame.SetRepeats(static_cast<unsigned>(1 / std::atof(frametime.c_str())));
 		frame.Strafe = true;
 		frame.SetDir(HLTAS::StrafeDir::YAW);
 		frame.SetType(HLTAS::StrafeType::MAXACCEL);

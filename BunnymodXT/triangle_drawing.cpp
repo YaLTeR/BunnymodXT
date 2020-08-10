@@ -894,7 +894,8 @@ namespace TriangleDrawing
 					auto new_frame_bulk_repeats = frame_bulk.GetRepeats() - split_at_frames;
 					input.set_repeats(frame_bulk_index, split_at_frames);
 					auto new_frame_bulk = frame_bulk;
-					new_frame_bulk.Commands.clear();
+					new_frame_bulk.Commands.clear(); // So pause;bxt_tas_editor 1 doesn't copy over.
+					new_frame_bulk.Comments.clear();
 					new_frame_bulk.SetRepeats(new_frame_bulk_repeats);
 					input.frame_bulks.insert(input.frame_bulks.begin() + frame_bulk_index + 1, new_frame_bulk);
 				}

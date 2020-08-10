@@ -68,6 +68,8 @@ namespace CustomHud
 		double yaw;
 		bool pitch_present;
 		bool yaw_present;
+
+		std::string commands;
 	};
 	static FrameBulkStatus frame_bulk_status;
 	static bool frame_bulk_selected;
@@ -1060,6 +1062,9 @@ namespace CustomHud
 			if (frame_bulk_status.yaw_present) {
 				out << "Yaw: " << frame_bulk_status.yaw << "\n";
 			}
+			if (!frame_bulk_status.commands.empty()) {
+				out << "Commands:\n  " << frame_bulk_status.commands << '\n';
+			}
 		} else {
 			out << " no frame bulk selected";
 		}
@@ -1352,5 +1357,7 @@ namespace CustomHud
 		if (frame_bulk_status.yaw_present) {
 			frame_bulk_status.yaw = frame_bulk.GetYaw();
 		}
+
+		frame_bulk_status.commands = frame_bulk.Commands;
 	}
 }

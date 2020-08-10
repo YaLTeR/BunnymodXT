@@ -457,6 +457,7 @@ void HwDLL::Clear()
 	tas_editor_set_yaw = false;
 	tas_editor_set_pitch = false;
 	tas_editor_set_repeats = false;
+	tas_editor_set_commands = false;
 	tas_editor_unset_yaw = false;
 	tas_editor_unset_pitch = false;
 	tas_editor_set_run_point_and_save = false;
@@ -2547,6 +2548,19 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Repeats
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Set_Commands
+{
+	USAGE("Usage: bxt_tas_editor_set_commands <commands>\n Sets the commands on the currently selected point.\n");
+
+	static void handler(const char* value)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		hw.tas_editor_set_commands = true;
+		hw.tas_editor_set_commands_commands = value;
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Editor_Unset_Yaw
 {
 	USAGE("Usage: bxt_tas_editor_unset_yaw <yaw>\n Unsets the yaw angle on the currently selected point.\n");
@@ -2802,6 +2816,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Pitch, Handler<>>("bxt_tas_editor_unset_pitch");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Yaw, Handler<>>("bxt_tas_editor_unset_yaw");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Commands, Handler<const char*>>("bxt_tas_editor_set_commands");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Repeats, Handler<int>>("bxt_tas_editor_set_repeats");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Pitch, Handler<float>>("bxt_tas_editor_set_pitch");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Yaw, Handler<float>>("bxt_tas_editor_set_yaw");

@@ -1576,7 +1576,30 @@ struct HwDLL::Cmd_BXT_TAS_New
 		// The frame bulk for waiting for the load.
 		frame = HLTAS::Frame();
 		frame.Frametime = frametime;
-		frame.Comments = " Wait for the game to fully load.";
+		frame.Comments = " Wait for the game to fully load.\n On the first frame, ";
+
+		// Automatically check and put in some of the more common custom cvar settings.
+		if (!bhopcap)
+			frame.Commands += "bxt_bhopcap 0;bxt_bhopcap_prediction 0";
+
+		if (CVars::sv_maxspeed.GetFloat() != 320) // HLKZ uses 300.
+		{
+			// TODO: this check would malfunction for mods with custom sv_maxspeed when TASing with
+			// sv_maxspeed = 320. Is there any way to query the default sv_maxspeed instead?
+
+			if (!frame.Commands.empty())
+				frame.Commands += ';';
+			frame.Commands += "sv_maxspeed " + std::to_string(CVars::sv_maxspeed.GetFloat());
+		}
+
+		if (!frame.Commands.empty()) {
+			frame.Commands += ';';
+			frame.Comments += "set up custom console variable values, and ";
+		}
+
+		frame.Commands += "bxt_timer_reset";
+		frame.Comments += "reset the timer.";
+
 		hw.newTASResult.PushFrame(frame);
 
 		// The actual first frame bulk with some reasonable defaults.
@@ -2717,6 +2740,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	CVars::fps_max.Assign(FindCVar("fps_max"));
 	CVars::default_fov.Assign(FindCVar("default_fov"));
 
+	FindCVarsIfNeeded();
+
 	if (!ORIG_Cmd_AddMallocCommand)
 		return;
 
@@ -3757,7 +3782,20 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 			}
 
 			if (!newTASFilename.empty()) {
-				if (newTASResult.GetFrame(2).GetRepeats() == 0)
+				auto& waitingFrame = newTASResult.GetFrame(2);
+				if (waitingFrame.GetRepeats() > 1) {
+					// Since the first frame contains commands, make it have 1 repeat and add
+					// a separate frame for the rest of the waiting.
+					auto newFrame = waitingFrame;
+					newFrame.Commands.clear();
+					newFrame.Comments.clear();
+					newFrame.SetRepeats(waitingFrame.GetRepeats() - 1);
+					waitingFrame.SetRepeats(1);
+					newTASResult.InsertFrame(3, newFrame);
+				}
+
+				// Does this ever happen? If it does, handle by moving the commands to the next frame.
+				if (waitingFrame.GetRepeats() == 0)
 					newTASResult.RemoveFrame(2);
 
 				std::ifstream file(newTASFilename);

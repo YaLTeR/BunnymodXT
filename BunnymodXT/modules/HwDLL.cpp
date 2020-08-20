@@ -4037,58 +4037,10 @@ void HwDLL::SaveInitialDataToDemo()
 		Git::GetRevision()
 	});
 
-	constexpr const char* cvars_to_save[] = {
-		"bxt_autojump",
-		"bxt_bhopcap",
-		"bxt_collision_depth_map",
-		"bxt_fade_remove",
-		"bxt_hud_distance",
-		"bxt_hud_entity_info",
-		"bxt_hud_entities",
-		"bxt_hud_health",
-		"bxt_hud_origin",
-		"bxt_hud_selfgauss",
-		"bxt_hud_useables",
-		"bxt_hud_nihilanth",
-		"bxt_hud_velocity",
-		"bxt_hud_visible_landmarks",
-		"bxt_novis",
-		"bxt_show_hidden_entities",
-		"bxt_show_triggers",
-		"bxt_show_triggers_legacy",
-		"bxt_wallhack",
-		"bxt_wallhack_additive",
-		"bxt_wallhack_alpha",
-		"chase_active",
-		"cl_anglespeedkey",
-		"cl_backspeed",
-		"cl_forwardspeed",
-		"cl_pitchdown",
-		"cl_pitchspeed",
-		"cl_pitchup",
-		"cl_sidespeed",
-		"cl_upspeed",
-		"cl_yawspeed",
-		"fps_max",
-		"fps_override",
-		"gl_monolights",
-		"host_framerate",
-		"host_speeds",
-		"r_drawentities",
-		"r_fullbright",
-		"s_show",
-		"snd_show",
-		"sv_cheats"
-	};
-
 	std::unordered_map<std::string, std::string> cvar_values;
 
-	for (const auto cvar_name : cvars_to_save) {
-		const auto cvar = FindCVar(cvar_name);
-
-		if (cvar)
-			cvar_values.emplace(cvar_name, cvar->string);
-	}
+	for (auto cvar = *cvar_vars; cvar != nullptr; cvar = cvar->next)
+		cvar_values.emplace(cvar->name, cvar->string);
 
 	RuntimeData::Add(std::move(cvar_values));
 

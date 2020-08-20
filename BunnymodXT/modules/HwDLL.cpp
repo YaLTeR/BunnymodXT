@@ -4007,16 +4007,6 @@ void HwDLL::SaveInitialDataToDemo()
 		Git::GetRevision()
 	});
 
-	auto modules = MemUtils::GetLoadedModules();
-
-	std::vector<std::string> filenames;
-	for (auto module : modules) {
-		auto path = MemUtils::GetModulePath(module);
-		filenames.emplace_back(Convert(GetFileName(path)));
-	}
-
-	RuntimeData::Add(RuntimeData::LoadedModules { std::move(filenames) });
-
 	constexpr const char* cvars_to_save[] = {
 		"bxt_autojump",
 		"bxt_bhopcap",

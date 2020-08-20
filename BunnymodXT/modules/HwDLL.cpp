@@ -394,6 +394,7 @@ void HwDLL::Clear()
 	sv_areanodes = nullptr;
 	cmd_text = nullptr;
 	host_frametime = nullptr;
+	cvar_vars = nullptr;
 	frametime_remainder = nullptr;
 	framesTillExecuting = 0;
 	executing = false;
@@ -566,6 +567,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find host_frametime.\n");
 
+		cvar_vars = reinterpret_cast<cvar_t**>(MemUtils::GetSymbolAddress(m_Handle, "cvar_vars"));
+		if (cvar_vars)
+			EngineDevMsg("[hw dll] Found cvar_vars at %p.\n", sv);
+		else
+			EngineDevWarning("[hw dll] Could not find cvar_vars.\n");
+
 		ORIG_hudGetViewAngles = reinterpret_cast<_hudGetViewAngles>(MemUtils::GetSymbolAddress(m_Handle, "hudGetViewAngles"));
 		if (ORIG_hudGetViewAngles)
 			EngineDevMsg("[hw dll] Found hudGetViewAngles at %p.\n", ORIG_hudGetViewAngles);
@@ -590,7 +597,7 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find SV_WriteEntitiesToClient.\n");
 
-		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM)
+		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM)
 			ORIG_Cbuf_Execute = nullptr;
 
 		#define FIND(f) \
@@ -714,7 +721,6 @@ void HwDLL::FindStuff()
 	else
 	{
 		#define DEF_FUTURE(name) auto f##name = FindAsync(ORIG_##name, patterns::engine::name);
-		DEF_FUTURE(Cvar_RegisterVariable)
 		DEF_FUTURE(Cvar_DirectSet)
 		DEF_FUTURE(Cvar_FindVar)
 		DEF_FUTURE(Cbuf_InsertText)
@@ -775,6 +781,21 @@ void HwDLL::FindStuff()
 					break;
 				case 3: // HL-SteamPipe-8308
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
+					break;
+				}
+			});
+
+		auto fCvar_RegisterVariable = FindAsync(
+			ORIG_Cvar_RegisterVariable,
+			patterns::engine::Cvar_RegisterVariable,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::Cvar_RegisterVariable.cbegin())
+				{
+				case 0: // HL-SteamPipe
+					cvar_vars = reinterpret_cast<cvar_t**>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cvar_RegisterVariable) + 124));
+					break;
+				case 1: // HL-NGHL
+					cvar_vars = reinterpret_cast<cvar_t**>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cvar_RegisterVariable) + 122));
 					break;
 				}
 			});
@@ -1061,6 +1082,16 @@ void HwDLL::FindStuff()
 		}
 
 		{
+			auto pattern = fCvar_RegisterVariable.get();
+			if (ORIG_Cvar_RegisterVariable) {
+				EngineDevMsg("[hw dll] Found Cvar_RegisterVariable at %p (using the %s pattern).\n", ORIG_Cvar_RegisterVariable, pattern->name());
+				EngineDevMsg("[hw dll] Found cvar_vars at %p.\n", cvar_vars);
+			} else {
+				EngineDevWarning("[hw dll] Could not find Cvar_RegisterVariable.\n");
+			}
+		}
+
+		{
 			auto pattern = fHost_AutoSave_f.get();
 			if (Host_AutoSave_f) {
 				EngineDevMsg("[hw dll] Found Host_AutoSave_f at %p (using the %s pattern).\n", Host_AutoSave_f, pattern->name());
@@ -1204,7 +1235,6 @@ void HwDLL::FindStuff()
 					ORIG_Cbuf_Execute = nullptr; \
 				} \
 			}
-		GET_FUTURE(Cvar_RegisterVariable)
 		GET_FUTURE(Cvar_DirectSet)
 		GET_FUTURE(Cvar_FindVar)
 		GET_FUTURE(Cbuf_InsertText)

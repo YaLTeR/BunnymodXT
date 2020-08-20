@@ -414,6 +414,7 @@ protected:
 	double *host_frametime;
 	int *demorecording;
 	cmdalias_t* cmd_alias;
+	cvar_t **cvar_vars;
 
 	int framesTillExecuting;
 	bool executing;

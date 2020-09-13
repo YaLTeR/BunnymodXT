@@ -41,6 +41,7 @@ namespace CVars
 	CVarWrapper bxt_timer_autostop("bxt_timer_autostop", "1");
 	CVarWrapper bxt_show_hidden_entities("bxt_show_hidden_entities", "0");
 	CVarWrapper bxt_show_triggers_legacy("bxt_show_triggers_legacy", "0");
+	CVarWrapper bxt_show_pickup_bbox("bxt_show_pickup_bbox", "0");
 
 	// Clientside CVars
 	CVarWrapper bxt_autojump_prediction("bxt_autojump_prediction", "0");
@@ -145,6 +146,7 @@ namespace CVars
 		&bxt_autojump_prediction,
 		&bxt_bhopcap_prediction,
 		&bxt_show_nodes,
+		&bxt_show_pickup_bbox,
 		&bxt_show_custom_triggers,
 		&bxt_wallhack,
 		&bxt_wallhack_additive,

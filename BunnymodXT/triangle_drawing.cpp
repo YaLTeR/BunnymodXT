@@ -4,6 +4,7 @@
 #include "triangle_drawing.hpp"
 #include "triangle_utils.hpp"
 #include "modules.hpp"
+#include <gl/GL.h>
 
 #include "hud_custom.hpp"
 
@@ -288,6 +289,26 @@ namespace TriangleDrawing
 			pTriAPI->Color4f(1.0f, 0.6f, 0.0f, 0.3f);
 			TriangleUtils::DrawAACuboid(pTriAPI, ent->v.absmin, ent->v.absmax);
 		}
+	}
+
+	static void DrawMonsterRoutes(triangleapi_s* pTriAPI)
+	{
+		if (!CVars::bxt_show_routes.GetBool())
+			return;
+
+		const auto& sv = ServerDLL::GetInstance();
+		const auto routes = sv.GetMonsterRoutes();
+
+		glLineWidth(4);
+		pTriAPI->CullFace(TRI_NONE);
+		pTriAPI->RenderMode(kRenderTransAdd);
+		pTriAPI->Color4f(1.0f, 0.0f, 1.0f, 1.0f);
+		for (const auto& route : routes) {
+			for (size_t i = 0; i + 1 < route.size(); ++i) {
+				TriangleUtils::DrawLine(pTriAPI, route[i], route[i + 1]);
+			}
+		}
+		glLineWidth(1);
 	}
 
 	static void DrawTASEditor(triangleapi_s *pTriAPI)
@@ -1050,6 +1071,7 @@ namespace TriangleDrawing
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);
 		DrawAbsMinMax(pTriAPI);
+		DrawMonsterRoutes(pTriAPI);
 
 		DrawTASEditor(pTriAPI);
 		ResetTASEditorCommands();

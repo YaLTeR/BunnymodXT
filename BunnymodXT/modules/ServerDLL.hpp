@@ -5,6 +5,16 @@
 #include <SPTLib/IHookableDirFilter.hpp>
 #include "taslogger/writer.hpp"
 
+// Copied from HLSDK basemonster.h
+struct WayPoint_t
+{
+	Vector	vecLocation;
+	int		iType;
+};
+
+const int ROUTE_SIZE = 8;
+const unsigned int ROUTE_BITS_MF_IS_GOAL = 1 << 7;
+
 class ServerDLL : public IHookableDirFilter
 {
 	HOOK_DECL(void, __cdecl, PM_Jump)
@@ -54,7 +64,8 @@ public:
 	std::vector<const edict_t *> GetUseableEntities(const Vector &origin, float radius) const;
 	std::vector<const Vector *> GetNodePositions() const;
 	bool GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres, int &sequence, float &frame) const;
-	std::vector<const Vector *> GetCineMonsters() const;
+	std::vector<const Vector*> GetCineMonsters() const;
+	std::vector<std::vector<Vector>> GetMonsterRoutes() const;
 
 	inline const char *GetString(int string) const {
 		assert(ppGlobals);
@@ -124,6 +135,9 @@ protected:
 	ptrdiff_t offNihilanthIrritation;
 	ptrdiff_t offNihilanthRecharger;
 	ptrdiff_t offNihilanthSpheres;
+
+	ptrdiff_t offm_Route = 0;
+	ptrdiff_t offm_iRouteIndex = 0;
 
 	ptrdiff_t offm_iClientFOV;
 	ptrdiff_t offm_rgAmmoLast;

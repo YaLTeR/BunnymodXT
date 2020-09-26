@@ -325,26 +325,35 @@ void ServerDLL::FindStuff()
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x554;
 				offm_iClientFOV = 0x4AC;
+				offm_Route = 0x180;
+				offm_iRouteIndex = 0x204;
 				break;
 			case 1:  // OpposingForce
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x604;
 				offm_iClientFOV = 0x4E0;
+				// Don't set offm_Route or offm_iRouteIndex here because I couldn't find this function
 				break;
 			case 2:  // HazardousCourse2
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x540;
 				offm_iClientFOV = 0x498;
+				offm_Route = 0x180;
+				offm_iRouteIndex = 0x204;
 				break;
 			case 3:  // Gunman
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x53C;
 				offm_iClientFOV = 0x47C;
+				offm_Route = 0x154;
+				offm_iRouteIndex = 0x1d8;
 				break;
 			case 4:  // HL-SteamPipe-8308
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x558;
 				offm_iClientFOV = 0x4B0;
+				offm_Route = 0x180;
+				offm_iRouteIndex = 0x204;
 				break;
 			case 5: // TWHL-Tower-2
 				maxAmmoSlots = MAX_AMMO_SLOTS;
@@ -375,7 +384,20 @@ void ServerDLL::FindStuff()
 	auto fPM_AddToTouched = FindFunctionAsync(ORIG_PM_AddToTouched, "PM_AddToTouched", patterns::shared::PM_AddToTouched);
 	auto fPM_Ladder = FindFunctionAsync(ORIG_PM_Ladder, "PM_Ladder", patterns::shared::PM_Ladder);
 	auto fCPushable__Move = FindAsync(ORIG_CPushable__Move, patterns::server::CPushable__Move);
-	auto fCBasePlayer__TakeDamage = FindAsync(ORIG_CBasePlayer__TakeDamage, patterns::server::CBasePlayer__TakeDamage);
+	auto fCBasePlayer__TakeDamage = FindAsync(
+		ORIG_CBasePlayer__TakeDamage,
+		patterns::server::CBasePlayer__TakeDamage,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CBasePlayer__TakeDamage.cbegin()) {
+			case 0: // HL-SteamPipe
+				// Set elsewhere
+				break;
+			case 1: // OpposingForce
+				offm_Route = 0x18C;
+				offm_iRouteIndex = 0x210;
+				break;
+			}
+		});
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
 	auto fCTriggerSave__SaveTouch = FindAsync(ORIG_CTriggerSave__SaveTouch, patterns::server::CTriggerSave__SaveTouch);
 
@@ -1746,20 +1768,61 @@ bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, boo
 std::vector<const Vector *> ServerDLL::GetCineMonsters() const
 {
 	std::vector<const Vector*> result;
+	if (!pEngfuncs) {
+		return result;
+	}
+
 	edict_t* pent = nullptr;
 	for (;;) {
 		pent = pEngfuncs->pfnFindEntityByString(pent, "classname", "scripted_sequence");
-		if (!pent) {
+		if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent)) {
 			break;
 		}
-
-		if (!pEngfuncs->pfnEntOffsetOfPEntity(pent)) {
-			break;
-		}
-
 		result.emplace_back(&pent->v.origin);
 	}
 	return result;
+}
+
+std::vector<std::vector<Vector>> ServerDLL::GetMonsterRoutes() const
+{
+	std::vector<std::vector<Vector>> routes;
+	if (!pEngfuncs) {
+		return routes;
+	}
+
+	const auto& hw = HwDLL::GetInstance();
+	edict_t* edicts = nullptr;
+	const int numEdicts = hw.GetEdicts(&edicts);
+	for (int e = 0; e < numEdicts; ++e) {
+		const edict_t* ent = edicts + e;
+		if (!ent || !pEngfuncs->pfnEntOffsetOfPEntity(ent) || !ent->pvPrivateData) {
+			continue;
+		}
+
+		const char* classname = GetString(ent->v.classname);
+		if (strncmp(classname, "monster_", 8) != 0) {
+			continue;
+		}
+
+		const uintptr_t thisAddr = reinterpret_cast<uintptr_t>(ent->pvPrivateData);
+		const WayPoint_t* route = reinterpret_cast<WayPoint_t*>(thisAddr + offm_Route);
+		const int routeIndex = *reinterpret_cast<int*>(thisAddr + offm_iRouteIndex);
+		if (!route) {
+			continue;
+		}
+
+		std::vector<Vector> points;
+		points.emplace_back(ent->v.origin);
+		for (int i = routeIndex; i < ROUTE_SIZE && route[i].iType; ++i) {
+			points.emplace_back(route[i].vecLocation);
+			if (route[i].iType & ROUTE_BITS_MF_IS_GOAL) {
+				break;
+			}
+		}
+		routes.emplace_back(points);
+	}
+
+	return routes;
 }
 
 TraceResult ServerDLL::TraceLine(const float v1[3], const float v2[3], int fNoMonsters, edict_t *pentToSkip) const

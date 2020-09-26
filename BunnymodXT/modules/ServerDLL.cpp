@@ -1743,6 +1743,25 @@ bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, boo
 	return true;
 }
 
+std::vector<const Vector *> ServerDLL::GetCineMonsters() const
+{
+	std::vector<const Vector*> result;
+	edict_t* pent = nullptr;
+	for (;;) {
+		pent = pEngfuncs->pfnFindEntityByString(pent, "classname", "scripted_sequence");
+		if (!pent) {
+			break;
+		}
+
+		if (!pEngfuncs->pfnEntOffsetOfPEntity(pent)) {
+			break;
+		}
+
+		result.emplace_back(&pent->v.origin);
+	}
+	return result;
+}
+
 TraceResult ServerDLL::TraceLine(const float v1[3], const float v2[3], int fNoMonsters, edict_t *pentToSkip) const
 {
 	TraceResult tr{};

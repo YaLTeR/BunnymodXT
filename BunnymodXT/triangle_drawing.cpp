@@ -24,6 +24,23 @@ namespace TriangleDrawing
 		}
 	}
 
+	static void DrawCineMonsters(triangleapi_s* pTriAPI)
+	{
+		if (!CVars::bxt_show_cine_monsters.GetBool())
+			return;
+
+		const float svTime = static_cast<float>(HwDLL::GetInstance().GetTime());
+		const float offsetAxis = 1.0f * std::sinf(10.0f * svTime) + 4.0f;
+		const Vector offset(offsetAxis, offsetAxis, offsetAxis);
+
+		pTriAPI->RenderMode(kRenderTransAdd);
+		pTriAPI->CullFace(TRI_NONE);
+		pTriAPI->Color4f(0.7f, 0.0f, 0.2f, 1.0f);
+		for (const Vector* position : ServerDLL::GetInstance().GetCineMonsters()) {
+			TriangleUtils::DrawAACuboid(pTriAPI, *position - offset, *position + offset);
+		}
+	}
+
 	// From util.cpp of HLSDK.
 	static Vector UTIL_ClampVectorToBox(const Vector &input, const Vector &clampSize)
 	{
@@ -1028,6 +1045,7 @@ namespace TriangleDrawing
 			return;
 
 		DrawNodes(pTriAPI);
+		DrawCineMonsters(pTriAPI);
 		DrawUseableEntities(pTriAPI);
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);

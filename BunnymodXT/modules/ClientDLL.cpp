@@ -443,6 +443,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_triggers);
 		REG(bxt_show_custom_triggers);
 		REG(bxt_show_nodes);
+		REG(bxt_show_cine_monsters);
 		REG(bxt_show_pickup_bbox);
 		REG(bxt_hud_useables);
 		REG(bxt_hud_useables_radius);

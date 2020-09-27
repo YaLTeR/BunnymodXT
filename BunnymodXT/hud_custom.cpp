@@ -6,6 +6,7 @@
 #include "hud_custom.hpp"
 #include "interprocess.hpp"
 #include "runtime_data.hpp"
+#include "common.hpp"
 
 #include <GL/gl.h>
 
@@ -100,6 +101,15 @@ namespace CustomHud
 	{
 		si.iSize = sizeof(si);
 		ClientDLL::GetInstance().pEngfuncs->pfnGetScreenInfo(&si);
+	}
+
+	static int WorldToHUDScreen(float* world, int* screen)
+	{
+		float fscreen[3];
+		const int clipped = ClientDLL::GetInstance().pEngfuncs->pTriAPI->WorldToScreen(world, fscreen);
+		screen[0] = static_cast<int>(0.5f * (1.0f + fscreen[0]) * si.iWidth);
+		screen[1] = static_cast<int>(0.5f * (1.0f - fscreen[1]) * si.iHeight);
+		return clipped;
 	}
 
 	static int DrawString(int x, int y, const char* s, float r, float g, float b)
@@ -1117,6 +1127,45 @@ namespace CustomHud
 			DrawMultilineString(x, y, out.str());
 	}
 
+	void DrawSounds()
+	{
+		const auto& cl = ClientDLL::GetInstance();
+		const auto& sv = ServerDLL::GetInstance();
+		const auto pTriAPI = cl.pEngfuncs->pTriAPI;
+		const auto sounds = sv.GetSounds();
+		for (const auto& sound : sounds) {
+			int screen[3];
+			const int clipped = WorldToHUDScreen(Vector(sound.origin), screen);
+			if (clipped) {
+				continue;
+			}
+			std::vector<const char*> tokens;
+			if (sound.type & SOUND_BITS_COMBAT) {
+				tokens.emplace_back("combat");
+			}
+			if (sound.type & SOUND_BITS_WORLD) {
+				tokens.emplace_back("world");
+			}
+			if (sound.type & SOUND_BITS_PLAYER) {
+				tokens.emplace_back("player");
+			}
+			if (sound.type & SOUND_BITS_CARCASS) {
+				tokens.emplace_back("carcass");
+			}
+			if (sound.type & SOUND_BITS_MEAT) {
+				tokens.emplace_back("meat");
+			}
+			if (sound.type & SOUND_BITS_DANGER) {
+				tokens.emplace_back("danger");
+			}
+			if (sound.type & SOUND_BITS_GARBAGE) {
+				tokens.emplace_back("garbage");
+			}
+			const std::string infoText = CommonUtils::joinStrings(tokens, ",");
+			DrawString(screen[0], screen[1], infoText.c_str(), 1.0f, 1.0f, 0.0f);
+		}
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -1211,6 +1260,7 @@ namespace CustomHud
 		DrawCollisionDepthMap(flTime);
 		DrawTASEditorStatus();
 		DrawEntities(flTime);
+		DrawSounds();
 
 		receivedAccurateInfo = false;
 		frame_bulk_selected = false;

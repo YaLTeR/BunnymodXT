@@ -122,6 +122,7 @@ set (HEADER_FILES
 	BunnymodXT/modules/SDL.hpp
 	BunnymodXT/bunnymodxt.hpp
 	BunnymodXT/cmd_wrapper.hpp
+	BunnymodXT/common.hpp
 	BunnymodXT/custom_triggers.hpp
 	BunnymodXT/cvars.hpp
 	BunnymodXT/hud_custom.hpp

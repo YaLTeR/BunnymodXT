@@ -311,6 +311,18 @@ namespace TriangleDrawing
 		glLineWidth(1);
 	}
 
+	static void DrawSounds(triangleapi_s* pTriAPI) {
+		const auto& sv = ServerDLL::GetInstance();
+		const auto sounds = sv.GetSounds();
+
+		pTriAPI->CullFace(TRI_NONE);
+		pTriAPI->RenderMode(kRenderTransAdd);
+		pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 1.0f);
+		for (const auto& sound : sounds) {
+			TriangleUtils::DrawPyramid(pTriAPI, sound.origin, 10, 10);
+		}
+	}
+
 	static void DrawTASEditor(triangleapi_s *pTriAPI)
 	{
 		using HLStrafe::HullType;
@@ -1072,6 +1084,7 @@ namespace TriangleDrawing
 		DrawCustomTriggers(pTriAPI);
 		DrawAbsMinMax(pTriAPI);
 		DrawMonsterRoutes(pTriAPI);
+		DrawSounds(pTriAPI);
 
 		DrawTASEditor(pTriAPI);
 		ResetTASEditorCommands();

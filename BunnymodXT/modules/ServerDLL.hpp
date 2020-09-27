@@ -12,8 +12,26 @@ struct WayPoint_t
 	int		iType;
 };
 
-const int ROUTE_SIZE = 8;
-const unsigned int ROUTE_BITS_MF_IS_GOAL = 1 << 7;
+constexpr const int ROUTE_SIZE = 8;
+constexpr const unsigned int ROUTE_BITS_MF_IS_GOAL = 1 << 7;
+
+constexpr const int SOUND_BITS_NONE = 0;
+constexpr const int SOUND_BITS_COMBAT = 1 << 0;
+constexpr const int SOUND_BITS_WORLD = 1 << 1;
+constexpr const int SOUND_BITS_PLAYER = 1 << 2;
+constexpr const int SOUND_BITS_CARCASS = 1 << 3;
+constexpr const int SOUND_BITS_MEAT = 1 << 4;
+constexpr const int SOUND_BITS_DANGER = 1 << 5;
+constexpr const int SOUND_BITS_GARBAGE = 1 << 6;
+
+// For internal BXT use, not compatible with SDK's CSound
+struct SoundItem
+{
+	Vector origin;
+	int type;
+	int volume;
+	float expireTime;
+};
 
 class ServerDLL : public IHookableDirFilter
 {
@@ -66,6 +84,7 @@ public:
 	bool GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres, int &sequence, float &frame) const;
 	std::vector<const Vector*> GetCineMonsters() const;
 	std::vector<std::vector<Vector>> GetMonsterRoutes() const;
+	std::vector<SoundItem> GetSounds() const;
 
 	inline const char *GetString(int string) const {
 		assert(ppGlobals);
@@ -93,6 +112,11 @@ protected:
 	_CBasePlayer__ForceClientDllUpdate_Linux ORIG_CBasePlayer__ForceClientDllUpdate_Linux;
 	typedef void*(__cdecl *_PM_Ladder)();
 	_PM_Ladder ORIG_PM_Ladder;
+
+	typedef int(__cdecl* _CSoundEnt__ActiveList)();
+	_CSoundEnt__ActiveList ORIG_CSoundEnt__ActiveList;
+	typedef void* (__cdecl* _CSoundEnt__SoundPointerForIndex)(int);
+	_CSoundEnt__SoundPointerForIndex ORIG_CSoundEnt__SoundPointerForIndex;
 
 	typedef bool (__fastcall *_IsPlayer)(void *thisptr);
 	typedef void (__fastcall *_Center)(void *thisptr, int edx, Vector *center);

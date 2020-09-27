@@ -416,6 +416,16 @@ namespace patterns
 			"TWHL-Tower-2",
 			"56 57 8B 7C 24 0C 8B F1 57 FF B6 78 01 00 00 E8 C1 C6 00 00 85 C0"
 		);
+
+		PATTERNS(CSoundEnt__ActiveList,
+			"HL-SteamPipe",
+			"A1 ?? ?? ?? ?? 85 C0 75 04 83 C8 FF C3 8B 40 58 C3"
+		);
+
+		PATTERNS(CSoundEnt__SoundPointerForIndex,
+			"HL-SteamPipe",
+			"8B 0D ?? ?? ?? ?? 85 C9 75 03 33 C0 C3 8B 44 24 04 83 F8 3F 7E 13 68 ?? ?? ?? ?? 6A 01 FF 15 ?? ?? ?? ??"
+		);
 	}
 
 	namespace shared

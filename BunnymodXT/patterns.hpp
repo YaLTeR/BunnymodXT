@@ -419,7 +419,9 @@ namespace patterns
 
 		PATTERNS(CSoundEnt__ActiveList,
 			"HL-SteamPipe",
-			"A1 ?? ?? ?? ?? 85 C0 75 04 83 C8 FF C3 8B 40 58 C3"
+			"A1 ?? ?? ?? ?? 85 C0 75 04 83 C8 FF C3 8B 40 58 C3",
+			"OpposingForce",
+			"A1 ?? ?? ?? ?? 85 C0 75 04 83 C8 FF C3 8B 40 64 C3"
 		);
 
 		PATTERNS(CSoundEnt__SoundPointerForIndex,

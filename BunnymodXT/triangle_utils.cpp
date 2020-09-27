@@ -202,4 +202,28 @@ namespace TriangleUtils
 		pTriAPI->Vertex3f(end.x, end.y, end.z);
 		pTriAPI->End();
 	}
+
+	void DrawSphere(triangleapi_s* pTriAPI, Vector origin, float r, int nlat, int nlong) {
+		for (int i = 0; i <= nlat; i++) {
+			const float lat0 = (-0.5f + static_cast<float>(i - 1) / nlat) * static_cast<float>(M_PI);
+			const float z0 = sinf(lat0);
+			const float zr0 = cosf(lat0);
+
+			const float lat1 = (-0.5f + static_cast<float>(i) / nlat) * static_cast<float>(M_PI);
+			const float z1 = sinf(lat1);
+			const float zr1 = cosf(lat1);
+
+			pTriAPI->Begin(TRI_QUAD_STRIP);
+			for (int j = 0; j <= nlong; j++) {
+				const float lng = static_cast<float>(j - 1) / nlong * 2.0f * static_cast<float>(M_PI);
+				const float x = cosf(lng);
+				const float y = sinf(lng);
+
+				pTriAPI->Vertex3f(r * x * zr0 + origin.x, r * y * zr0 + origin.y, r * z0 + origin.z);
+				pTriAPI->Vertex3f(r * x * zr1 + origin.x, r * y * zr1 + origin.y, r * z1 + origin.z);
+			}
+			pTriAPI->End();
+		}
+	}
+
 };

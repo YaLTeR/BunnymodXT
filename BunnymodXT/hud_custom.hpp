@@ -1,9 +1,20 @@
 #pragma once
 
 #include "interprocess.hpp"
+#include "modules/ServerDLL.hpp"
 
 namespace CustomHud
 {
+	constexpr std::array<std::pair<int, const char*>, 7> SOUNDENT_STRINGS{ {
+		{SOUND_BITS_COMBAT, "combat"},
+		{SOUND_BITS_WORLD, "world"},
+		{SOUND_BITS_PLAYER, "player"},
+		{SOUND_BITS_CARCASS, "carcass"},
+		{SOUND_BITS_MEAT, "meat"},
+		{SOUND_BITS_DANGER, "danger"},
+		{SOUND_BITS_GARBAGE, "garbage"},
+	} };
+
 	typedef struct
 	{
 		float origin[3];
@@ -30,4 +41,6 @@ namespace CustomHud
 	const SCREENINFO& GetScreenInfo();
 
 	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk);
+
+	bool IgnoreSound(int soundType, const std::vector<std::string_view>& ignores);
 };

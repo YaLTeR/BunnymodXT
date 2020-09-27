@@ -5,7 +5,7 @@
 namespace CommonUtils
 {
 	template<typename T>
-	std::string joinStrings(const std::vector<T>& tokens, const char* delimiter)
+	std::string joinStrings(const std::vector<T>& tokens, std::string_view delimiter)
 	{
 		std::string out;
 		auto it = tokens.cbegin();
@@ -18,4 +18,6 @@ namespace CommonUtils
 		}
 		return out;
 	}
+
+	std::vector<std::string_view> splitString(std::string_view input, std::string_view delimiter);
 }

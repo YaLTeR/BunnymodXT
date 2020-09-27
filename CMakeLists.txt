@@ -151,6 +151,7 @@ set (SOURCE_FILES
 	BunnymodXT/modules/ClientDLL.cpp
 	BunnymodXT/modules/ServerDLL.cpp
 	BunnymodXT/modules/SDL.cpp
+	BunnymodXT/common.cpp
 	BunnymodXT/custom_triggers.cpp
 	BunnymodXT/cvars.cpp
 	BunnymodXT/hud_custom.cpp

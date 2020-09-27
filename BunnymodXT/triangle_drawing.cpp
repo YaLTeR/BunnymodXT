@@ -4,6 +4,7 @@
 #include "triangle_drawing.hpp"
 #include "triangle_utils.hpp"
 #include "modules.hpp"
+#include "common.hpp"
 #include <gl/GL.h>
 
 #include "hud_custom.hpp"
@@ -311,15 +312,29 @@ namespace TriangleDrawing
 		glLineWidth(1);
 	}
 
-	static void DrawSounds(triangleapi_s* pTriAPI) {
+	static void DrawSounds(triangleapi_s* pTriAPI)
+	{
+		if (!CVars::bxt_show_sounds.GetBool())
+			return;
+
 		const auto& sv = ServerDLL::GetInstance();
 		const auto sounds = sv.GetSounds();
+		const std::string ignoreStr = CVars::bxt_show_sounds_ignore.GetString();
+		const auto ignores = CommonUtils::splitString(ignoreStr, ",");
 
 		pTriAPI->CullFace(TRI_NONE);
 		pTriAPI->RenderMode(kRenderTransAdd);
-		pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 1.0f);
 		for (const auto& sound : sounds) {
+			if (CustomHud::IgnoreSound(sound.type, ignores)) {
+				continue;
+			}
+
+			pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 1.0f);
 			TriangleUtils::DrawPyramid(pTriAPI, sound.origin, 10, 10);
+			if (CVars::bxt_show_sounds_sphere.GetBool()) {
+				pTriAPI->Color4f(0.0f, 1.0f, 1.0f, 0.1f);
+				TriangleUtils::DrawSphere(pTriAPI, sound.origin, static_cast<float>(sound.volume), 20, 20);
+			}
 		}
 	}
 

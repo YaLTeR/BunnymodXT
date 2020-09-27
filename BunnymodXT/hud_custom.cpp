@@ -1129,41 +1129,56 @@ namespace CustomHud
 
 	void DrawSounds()
 	{
+		if (!CVars::bxt_show_sounds.GetBool())
+			return;
+
 		const auto& cl = ClientDLL::GetInstance();
 		const auto& sv = ServerDLL::GetInstance();
 		const auto pTriAPI = cl.pEngfuncs->pTriAPI;
 		const auto sounds = sv.GetSounds();
+		const std::string ignoreStr = CVars::bxt_show_sounds_ignore.GetString();
+		const auto ignores = CommonUtils::splitString(ignoreStr, ",");
+
 		for (const auto& sound : sounds) {
+			if (IgnoreSound(sound.type, ignores)) {
+				continue;
+			}
+
 			int screen[3];
 			const int clipped = WorldToHUDScreen(Vector(sound.origin), screen);
 			if (clipped) {
 				continue;
 			}
+
 			std::vector<const char*> tokens;
-			if (sound.type & SOUND_BITS_COMBAT) {
-				tokens.emplace_back("combat");
-			}
-			if (sound.type & SOUND_BITS_WORLD) {
-				tokens.emplace_back("world");
-			}
-			if (sound.type & SOUND_BITS_PLAYER) {
-				tokens.emplace_back("player");
-			}
-			if (sound.type & SOUND_BITS_CARCASS) {
-				tokens.emplace_back("carcass");
-			}
-			if (sound.type & SOUND_BITS_MEAT) {
-				tokens.emplace_back("meat");
-			}
-			if (sound.type & SOUND_BITS_DANGER) {
-				tokens.emplace_back("danger");
-			}
-			if (sound.type & SOUND_BITS_GARBAGE) {
-				tokens.emplace_back("garbage");
+			for (const auto& pair : SOUNDENT_STRINGS) {
+				if (sound.type & pair.first) {
+					tokens.push_back(pair.second);
+				}
 			}
 			const std::string infoText = CommonUtils::joinStrings(tokens, ",");
 			DrawString(screen[0], screen[1], infoText.c_str(), 1.0f, 1.0f, 0.0f);
 		}
+	}
+
+	bool IgnoreSound(int soundType, const std::vector<std::string_view>& ignores)
+	{
+		for (const auto& entry : CustomHud::SOUNDENT_STRINGS) {
+			if (!(soundType & entry.first)) {
+				continue;
+			}
+			const auto ignoreIt = std::find_if(
+				ignores.cbegin(),
+				ignores.cend(),
+				[&entry](const auto& v) {
+					return v == entry.second;
+				});
+			if (ignoreIt != ignores.cend()) {
+				continue;
+			}
+			return false;
+		}
+		return true;
 	}
 
 	void Init()

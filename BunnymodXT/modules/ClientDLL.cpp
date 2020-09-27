@@ -446,6 +446,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_cine_monsters);
 		REG(bxt_show_routes);
 		REG(bxt_show_pickup_bbox);
+		REG(bxt_show_sounds);
+		REG(bxt_show_sounds_ignore);
+		REG(bxt_show_sounds_sphere);
 		REG(bxt_hud_useables);
 		REG(bxt_hud_useables_radius);
 	}

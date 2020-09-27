@@ -16,4 +16,5 @@ namespace TriangleUtils
 	void DrawAACuboidWireframe(triangleapi_s *pTriAPI, Vector corner1, Vector corner2);
 
 	void DrawLine(triangleapi_s *pTriAPI, Vector start, Vector end);
+	void DrawSphere(triangleapi_s* pTriAPI, Vector origin, float r, int nlat, int nlong);
 };

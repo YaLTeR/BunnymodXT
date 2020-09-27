@@ -158,6 +158,9 @@ namespace CVars
 	extern CVarWrapper bxt_show_cine_monsters;
 	extern CVarWrapper bxt_show_custom_triggers;
 	extern CVarWrapper bxt_show_routes;
+	extern CVarWrapper bxt_show_sounds;
+	extern CVarWrapper bxt_show_sounds_ignore;
+	extern CVarWrapper bxt_show_sounds_sphere;
 	extern CVarWrapper bxt_wallhack;
 	extern CVarWrapper bxt_wallhack_additive;
 	extern CVarWrapper bxt_wallhack_alpha;

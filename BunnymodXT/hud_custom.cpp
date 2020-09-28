@@ -814,10 +814,10 @@ namespace CustomHud
 			std::ostringstream out;
 			out << "Nihilanth:\n";
 
-			float health;
-			int level, irritation, nspheres;
+			float health, frame;
+			int level, irritation, nspheres, sequence;
 			bool recharger;
-			if (ServerDLL::GetInstance().GetNihilanthInfo(health, level, irritation, recharger, nspheres)) {
+			if (ServerDLL::GetInstance().GetNihilanthInfo(health, level, irritation, recharger, nspheres, sequence, frame)) {
 				// This check is in case the offset for m_irritation is wrong
 				// and so some weird values are obtained.
 				const char *irritation_str = "INVALID";
@@ -828,7 +828,8 @@ namespace CustomHud
 					<< "Level: " << level << "/10\n"
 					<< "Irritation: " << irritation << " (" << irritation_str << ")\n"
 					<< "Recharger: " << (recharger ? "Found" : "Not found") << '\n'
-					<< "Spheres: " << nspheres << "/20";
+					<< "Spheres: " << nspheres << "/20\n"
+					<< "Sequence: " << sequence << " (" << std::fixed << std::setprecision(1) << frame << ")\n";
 			} else {
 				out << "Not found";
 			}

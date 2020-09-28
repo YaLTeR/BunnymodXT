@@ -1668,7 +1668,7 @@ std::vector<const Vector *> ServerDLL::GetNodePositions() const
 	return positions;
 }
 
-bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres) const
+bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres, int &sequence, float &frame) const
 {
 	if (offNihilanthLevel == 0
 		|| offNihilanthIrritation == 0
@@ -1683,6 +1683,8 @@ bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, boo
 	}
 
 	health = pent->v.health;
+	sequence = pent->v.sequence;
+	frame = pent->v.frame;
 	const auto pobj = reinterpret_cast<uintptr_t>(pent->pvPrivateData);
 	level = *reinterpret_cast<int *>(pobj + offNihilanthLevel);
 	irritation = *reinterpret_cast<int *>(pobj + offNihilanthIrritation);

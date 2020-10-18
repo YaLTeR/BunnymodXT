@@ -992,7 +992,7 @@ namespace CustomHud
 			return;
 
 		int x, y;
-		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 29) + 3);
+		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 30) + 3);
 
 		std::ostringstream out;
 		out.setf(std::ios::fixed);

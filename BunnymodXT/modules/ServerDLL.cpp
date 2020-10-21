@@ -1303,6 +1303,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 				|| !std::strcmp(targetname, "youwinmulti")
 				|| !std::strcmp(targetname, "previctory_mm")
 				|| !std::strcmp(targetname, "stairscene_mngr")
+				|| !std::strcmp(targetname, "boot_radio_seq")
 				|| (!std::strcmp(targetname, "telmm") && !std::strcmp(gameDir, "biglolly")) // Big Lolly
 				|| (!std::strcmp(targetname, "mm_player_camera1") && !std::strcmp(gameDir, "htc")) // HTC
 				|| (!std::strcmp(targetname, "multimanager_1") && !std::strcmp(gameDir, "construction")) // Construction

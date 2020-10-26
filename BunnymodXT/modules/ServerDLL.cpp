@@ -370,7 +370,6 @@ void ServerDLL::FindStuff()
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
 	auto fCTriggerSave__SaveTouch = FindAsync(ORIG_CTriggerSave__SaveTouch, patterns::server::CTriggerSave__SaveTouch);
 
-
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
 		patterns::server::CGraph__InitGraph,
@@ -611,7 +610,7 @@ void ServerDLL::FindStuff()
 	{
 		auto pattern = fCTriggerSave__SaveTouch.get();
 		if (ORIG_CTriggerSave__SaveTouch) {
-			EngineDevMsg("[server dll] Found CTriggerSave::SaveTouch at %p (using the %s pattern). \n", ORIG_CTriggerSave__SaveTouch, pattern->name());
+			EngineDevMsg("[server dll] Found CTriggerSave::SaveTouch at %p (using the %s pattern).\n", ORIG_CTriggerSave__SaveTouch, pattern->name());
 		}
 		else {
 			EngineDevWarning("[server dll] Could not find CTriggerSave::SaveTouch.\n");
@@ -1773,6 +1772,6 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CTriggerSave__SaveTouch, void*, thisptr,
 {
 	if (CVars::bxt_disable_autosave.GetBool())
 		return;
-	else
-		return ORIG_CTriggerSave__SaveTouch(thisptr, edx, pOther);
+
+	return ORIG_CTriggerSave__SaveTouch(thisptr, edx, pOther);
 }

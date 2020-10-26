@@ -35,6 +35,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, CGraph__InitGraph_Linux, void* thisptr)
 	HOOK_DECL(void, __fastcall, CBasePlayer__CheatImpulseCommands, void* thisptr, int edx, int iImpulse)
 	HOOK_DECL(void, __cdecl, CBasePlayer__CheatImpulseCommands_Linux, void* thisptr, int iImpulse)
+	HOOK_DECL(void, __fastcall, CTriggerSave__SaveTouch, void* thisptr, int edx, void* pOther)
 
 public:
 	static ServerDLL& GetInstance()

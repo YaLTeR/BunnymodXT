@@ -389,6 +389,13 @@ namespace patterns
 			"HL-SteamPipe",
 			"C7 05 ?? ?? ?? ?? 01 00 00 00 5E 5B"
 		);
+
+		PATTERNS(CTriggerSave__SaveTouch,
+			"HL-SteamPipe",
+			"56 8B F1 57 8B 7C 24 ?? 8B 86 ?? ?? ?? ?? 57",
+			"Gunman",
+			"55 8B E9 57 8B 7C 24 ?? 8B 85 ?? ?? ?? ?? 57"
+		);
 	}
 
 	namespace shared

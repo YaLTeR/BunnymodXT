@@ -99,7 +99,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CPushable__Move, HOOKED_CPushable__Move,
 			ORIG_CBasePlayer__TakeDamage, HOOKED_CBasePlayer__TakeDamage,
 			ORIG_CGraph__InitGraph, HOOKED_CGraph__InitGraph,
-			ORIG_CBasePlayer__CheatImpulseCommands, HOOKED_CBasePlayer__CheatImpulseCommands);
+			ORIG_CBasePlayer__CheatImpulseCommands, HOOKED_CBasePlayer__CheatImpulseCommands,
+			ORIG_CTriggerSave__SaveTouch, HOOKED_CTriggerSave__SaveTouch);
 	}
 }
 
@@ -129,7 +130,8 @@ void ServerDLL::Unhook()
 			ORIG_CPushable__Move,
 			ORIG_CBasePlayer__TakeDamage,
 			ORIG_CGraph__InitGraph,
-			ORIG_CBasePlayer__CheatImpulseCommands);
+			ORIG_CBasePlayer__CheatImpulseCommands,
+			ORIG_CTriggerSave__SaveTouch);
 	}
 
 	Clear();
@@ -170,6 +172,7 @@ void ServerDLL::Clear()
 	ORIG_CGraph__InitGraph_Linux = nullptr;
 	ORIG_CBasePlayer__CheatImpulseCommands = nullptr;
 	ORIG_CBasePlayer__CheatImpulseCommands_Linux = nullptr;
+	ORIG_CTriggerSave__SaveTouch = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -365,6 +368,7 @@ void ServerDLL::FindStuff()
 	auto fCPushable__Move = FindAsync(ORIG_CPushable__Move, patterns::server::CPushable__Move);
 	auto fCBasePlayer__TakeDamage = FindAsync(ORIG_CBasePlayer__TakeDamage, patterns::server::CBasePlayer__TakeDamage);
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
+	auto fCTriggerSave__SaveTouch = FindAsync(ORIG_CTriggerSave__SaveTouch, patterns::server::CTriggerSave__SaveTouch);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -600,6 +604,17 @@ void ServerDLL::FindStuff()
 			} else {
 				EngineDevWarning("[server dll] Could not find CBasePlayer::CheatImpulseCommands.\n");
 			}
+		}
+	}
+
+	{
+		auto pattern = fCTriggerSave__SaveTouch.get();
+		if (ORIG_CTriggerSave__SaveTouch) {
+			EngineDevMsg("[server dll] Found CTriggerSave::SaveTouch at %p (using the %s pattern).\n", ORIG_CTriggerSave__SaveTouch, pattern->name());
+		}
+		else {
+			EngineDevWarning("[server dll] Could not find CTriggerSave::SaveTouch.\n");
+			EngineWarning("bxt_disable_autosave is not available.\n");
 		}
 	}
 
@@ -883,6 +898,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_hidden_entities);
 		REG(bxt_show_triggers_legacy);
 	}
+	if (ORIG_CTriggerSave__SaveTouch)
+		REG(bxt_disable_autosave);
 	#undef REG
 }
 
@@ -1749,4 +1766,12 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, CBasePlayer__CheatImpulseCommands_Linux, vo
 	if (pEngfuncs) {
 		pEngfuncs->pfnCVarGetFloat = ORIG_CVarGetFloat;
 	}
+}
+
+HOOK_DEF_3(ServerDLL, void, __fastcall, CTriggerSave__SaveTouch, void*, thisptr, int, edx, void*, pOther)
+{
+	if (CVars::bxt_disable_autosave.GetBool())
+		return;
+
+	return ORIG_CTriggerSave__SaveTouch(thisptr, edx, pOther);
 }

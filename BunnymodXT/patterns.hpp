@@ -317,7 +317,11 @@ namespace patterns
 
 		PATTERNS(SV_AddLinksToPM_,
 			"HL-SteamPipe",
-			"55 8B EC 83 EC 14 8B 4D 08 53 8B 5D 10 56 57 8B 79 1C 8D 41 18 3B F8 0F 84 ?? ?? ?? ?? 8B 47 04 83 C7 F8 89 45 EC 8B 87 ?? ?? ?? ?? 85 C0 74 35 8B 0D ?? ?? ?? ?? 85 C9 75 14 8B 0D"
+			"55 8B EC 83 EC 14 8B 4D 08 53 8B 5D 10 56 57 8B 79 1C 8D 41 18 3B F8 0F 84 ?? ?? ?? ?? 8B 47 04 83 C7 F8 89 45 EC 8B 87 ?? ?? ?? ?? 85 C0 74 35 8B 0D ?? ?? ?? ?? 85 C9 75 14 8B 0D",
+			"HL-4554",
+			"83 EC 10 53 55 56 57 8B 5C 24",
+			"HL-NGHL",
+			"83 EC 10 53 8B 5C 24 ?? 55 56 57"
 		);
 
 		PATTERNS(SV_WriteEntitiesToClient,

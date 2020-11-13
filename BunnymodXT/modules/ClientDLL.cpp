@@ -261,6 +261,11 @@ void ClientDLL::FindStuff()
 				static constexpr auto p = PATTERN("B9 ?? ?? ?? ?? 8B 54 24 10");
 				addr = MemUtils::find_pattern(pInitialize, 40, p);
 			}
+			if (!addr) {
+				// client.dll that comes with TWHL Tower 2
+				static constexpr auto p = PATTERN("B8 ?? ?? ?? ?? 8B F8 F3 A5");
+				addr = MemUtils::find_pattern(pInitialize, 40, p);
+			}
 
 			if (addr)
 			{

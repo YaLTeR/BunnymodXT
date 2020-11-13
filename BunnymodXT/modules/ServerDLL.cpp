@@ -817,6 +817,7 @@ void ServerDLL::FindStuff()
 			auto blolly = false;
 			auto svencoop = false;
 			bool twhltower = false;
+			bool twhltower2 = false;
 			if (!addr)
 			{
 				// Big Lolly version: push eax; push offset dword; call memcpy
@@ -834,8 +835,14 @@ void ServerDLL::FindStuff()
 						// TWHL Tower (Spirit) and Decay version: mov to eax instead of ecx.
 						static constexpr auto p = PATTERN("50 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 0C 8B 45 0C A3");
 						addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-						if (addr)
+						if (addr) {
 							twhltower = true;
+						} else {
+							// TWHL Tower 2
+							static constexpr auto p = PATTERN("68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 44 24 14 83 C4 0C A3");
+							addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
+							twhltower2 = true;
+						}
 					}
 				}
 			}
@@ -855,6 +862,11 @@ void ServerDLL::FindStuff()
 				else if (twhltower)
 				{
 					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 2);
+					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 18);
+				}
+				else if (twhltower2)
+				{
+					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
 					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 18);
 				}
 				else

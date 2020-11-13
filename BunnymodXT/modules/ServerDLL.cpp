@@ -304,6 +304,10 @@ void ServerDLL::FindStuff()
 				case 4:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 21);
 					break;
+
+				case 5:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 5);
+					break;
 				}
 			}
 		});
@@ -342,6 +346,11 @@ void ServerDLL::FindStuff()
 				offm_rgAmmoLast = 0x558;
 				offm_iClientFOV = 0x4B0;
 				break;
+			case 5: // TWHL-Tower-2
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x5F4;
+				offm_iClientFOV = 0x548;
+				break;
 			default:
 				assert(false);
 			}
@@ -376,6 +385,7 @@ void ServerDLL::FindStuff()
 		[&](auto pattern) {
 			switch (pattern - patterns::server::CGraph__InitGraph.cbegin()) {
 			case 0:  // HL-SteamPipe
+			case 1:
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;

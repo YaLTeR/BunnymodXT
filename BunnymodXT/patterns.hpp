@@ -347,17 +347,23 @@ namespace patterns
 			"Gunman",
 			"8B 91 48 04 00 00 83 C8 FF 89 81 68 04 00 00 89 81 6C 04 00 00 33 C0 80 CA C0 88 81 79 02 00 00 89 81 4C 04 00 00 89 81 D0 02 00 00 8B 01",
 			"HL-SteamPipe-8308",
-			"83 C8 FF C7 81 70 04 00 00 01 00 00 00 89 81 9C 04 00 00 89 81 A0 04 00 00 8B 81 78 04 00 00 0C C0 89 81 78 04 00 00 33 C0 89 81 7C 04 00 00"
+			"83 C8 FF C7 81 70 04 00 00 01 00 00 00 89 81 9C 04 00 00 89 81 A0 04 00 00 8B 81 78 04 00 00 0C C0 89 81 78 04 00 00 33 C0 89 81 7C 04 00 00",
+			"TWHL-Tower-2",
+			"83 89 34 05 00 00 FF 83 89 38 05 00 00 FF 80 89 10 05 00 00 C0 83 A1 14 05 00 00 00 83 A1 98 03 00 00 00"
 		);
 
 		PATTERNS(CBasePlayer__TakeDamage,
 			"HL-SteamPipe",
-			"83 EC 08 53 8B 5C 24 1C 55 56 8B F1 57 F6 C3 40 8B 46 04 BF 01 00 00 00 C7 44 24 14 00 00 00 3F 8B 88 60 01 00 00"
+			"83 EC 08 53 8B 5C 24 1C 55 56 8B F1 57 F6 C3 40 8B 46 04 BF 01 00 00 00 C7 44 24 14 00 00 00 3F 8B 88 60 01 00 00",
+			"TWHL-Tower-2",
+			"55 8B EC 83 EC 14 8B 45 14 56 8B F1 8B 4E 04 8B 89 60 01 00 00 57 33 FF 47 A8 40"
 		);
 
 		PATTERNS(CPushable__Move,
 			"HL-SteamPipe",
-			"53 56 8B F1 8B 4C 24 0C 57 33 DB 8B 79 04 8B 87 A4 01 00 00 F6 C4 02 74 3A 8B 87 9C 01 00 00 85 C0 74 30 8D 90 80 00 00 00 8B 46 04"
+			"53 56 8B F1 8B 4C 24 0C 57 33 DB 8B 79 04 8B 87 A4 01 00 00 F6 C4 02 74 3A 8B 87 9C 01 00 00 85 C0 74 30 8D 90 80 00 00 00 8B 46 04",
+			"TWHL-Tower-2",
+			"55 8B EC 83 EC 10 83 65 FC 00 53 56 8B F1 8B 4D 08 57 8B 79 04 BB 00 02 00 00 85 9F A4 01 00 00 74 45"
 		);
 
 		PATTERNS(DispatchRestore,
@@ -367,7 +373,9 @@ namespace patterns
 
 		PATTERNS(CGraph__InitGraph,
 			"HL-SteamPipe",
-			"56 8B F1 57 33 FF 8B 46 10 89 3E 3B C7 89 7E 04 89 7E 08 74 0C 50 E8 ?? ?? ?? ?? 83 C4 04 89 7E 10 8B 46 0C"
+			"56 8B F1 57 33 FF 8B 46 10 89 3E 3B C7 89 7E 04 89 7E 08 74 0C 50 E8 ?? ?? ?? ?? 83 C4 04 89 7E 10 8B 46 0C",
+			"TWHL-Tower-2",
+			"53 56 8B F1 8B 46 10 33 DB 3B C3 57 89 1E 89 5E 04 89 5E 08 74 0A 50 E8 ?? ?? ?? ?? 59"
 		);
 
 		PATTERNS(MiddleOfCNihilanth__NextActivity,
@@ -388,7 +396,9 @@ namespace patterns
 
 		PATTERNS(CBasePlayer__CheatImpulseCommands,
 			"HL-SteamPipe",
-			"81 EC ?? ?? ?? ?? 56 57 68 ?? ?? ?? ?? 8B F1 FF 15 ?? ?? ?? ?? DC 1D ?? ?? ?? ?? 83 C4 04 DF E0 F6 C4 44 0F 8B ?? ?? ?? ?? 8B 84 24"
+			"81 EC ?? ?? ?? ?? 56 57 68 ?? ?? ?? ?? 8B F1 FF 15 ?? ?? ?? ?? DC 1D ?? ?? ?? ?? 83 C4 04 DF E0 F6 C4 44 0F 8B ?? ?? ?? ?? 8B 84 24",
+			"TWHL-Tower-2",
+			"55 8D 6C 24 8C 81 EC C4 00 00 00 D9 05 ?? ?? ?? ?? 56 DD 05 ?? ?? ?? ?? 57 DA E9 8B F1 DF E0 F6 C4 44 0F 8B AD 07 00 00"
 		);
 
 		PATTERNS(CZDS_Velocity_Byte,
@@ -400,7 +410,9 @@ namespace patterns
 			"HL-SteamPipe",
 			"56 8B F1 57 8B 7C 24 ?? 8B 86 ?? ?? ?? ?? 57",
 			"Gunman",
-			"55 8B E9 57 8B 7C 24 ?? 8B 85 ?? ?? ?? ?? 57"
+			"55 8B E9 57 8B 7C 24 ?? 8B 85 ?? ?? ?? ?? 57",
+			"TWHL-Tower-2",
+			"56 57 8B 7C 24 0C 8B F1 57 FF B6 78 01 00 00 E8 C1 C6 00 00 85 C0"
 		);
 	}
 
@@ -416,7 +428,9 @@ namespace patterns
 			"AG-Client",
 			"51 8B 0D ?? ?? ?? ?? 8B 81 D0 00 00 00 85 C0 74 09 83 89 C8 00 00 00 02 59 C3 D9 05 ?? ?? ?? ?? D9 81 CC 00 00 00 DA E9",
 			"BigLolly",
-			"55 8B EC 83 EC ?? C7 45 F4 00 00 00 00 C7 45 FC 00 00 00 00 A1 ?? ?? ?? ?? 83 B8 D0 00 00 00 00 74 1F 8B 0D ?? ?? ?? ?? 8B 91 C8 00 00 00 83 CA 02 A1"
+			"55 8B EC 83 EC ?? C7 45 F4 00 00 00 00 C7 45 FC 00 00 00 00 A1 ?? ?? ?? ?? 83 B8 D0 00 00 00 00 74 1F 8B 0D ?? ?? ?? ?? 8B 91 C8 00 00 00 83 CA 02 A1",
+			"TWHL-Tower-2",
+			"55 8B EC 51 A1 ?? ?? ?? ?? 57 33 FF 39 B8 D0 00 00 00 74 0C 83 88 C8 00 00 00 02 E9 FC 02 00 00 56 8D 88 F0 F3 04 00 68"
 		);
 
 		PATTERNS(PM_PreventMegaBunnyJumping,
@@ -435,7 +449,9 @@ namespace patterns
 			"HL-SteamPipe",
 			"A1 ?? ?? ?? ?? 8B 4C 24 04 55 57 33 FF 89 48 04 E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 33 C9 89 BA 8C 54 04 00 A1 ?? ?? ?? ?? 8A 88 5A 54 04 00 89",
 			"BigLolly",
-			"55 8B EC 83 EC 0C C7 45 FC 00 00 00 00 A1 ?? ?? ?? ?? 8B 4D 08 89 48 04 E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? C7 82 8C 54 04 00 00 00 00 00 A1"
+			"55 8B EC 83 EC 0C C7 45 FC 00 00 00 00 A1 ?? ?? ?? ?? 8B 4D 08 89 48 04 E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? C7 82 8C 54 04 00 00 00 00 00 A1",
+			"TWHL-Tower-2",
+			"55 8B EC 51 A1 ?? ?? ?? ?? 8B 4D 08 53 56 57 33 FF 89 7D FC 89 48 04 E8 D8 FC FF FF A1 ?? ?? ?? ?? 89 B8 8C 54 04 00 A1 ?? ?? ?? ?? 0F B6 88 5A 54 04 00"
 		);
 
 		PATTERNS(PM_ClipVelocity,
@@ -444,7 +460,9 @@ namespace patterns
 			"HL-WON",
 			"8B 4C 24 08 53 33 DB 56 D9 41 08 D8 15 ?? ?? ?? ?? 57 DF E0 F6 C4 41 75 05 BB 01 00 00 00 D8 1D ?? ?? ?? ?? DF E0 F6 C4 40 74 03 83 CB 02 8B 44",
 			"BigLolly",
-			"55 8B EC 83 EC 14 8B 45 0C 8B 48 08 89 4D F8 C7 45 F0 00 00 00 00 D9 45 F8 D8 1D ?? ?? ?? ?? DF E0 F6 C4 41 75 09 8B 55 F0 83 CA 01 89 55 F0 D9 45 F8 D8 1D"
+			"55 8B EC 83 EC 14 8B 45 0C 8B 48 08 89 4D F8 C7 45 F0 00 00 00 00 D9 45 F8 D8 1D ?? ?? ?? ?? DF E0 F6 C4 41 75 09 8B 55 F0 83 CA 01 89 55 F0 D9 45 F8 D8 1D",
+			"TWHL-Tower-2",
+			"55 8B EC 8B 4D 0C D9 41 08 53 D8 15 ?? ?? ?? ?? 56 33 DB 57 DF E0 F6 C4 41 75 01 43 D9 05 ?? ?? ?? ?? D9 C1 DA E9"
 		);
 
 		PATTERNS(PM_WaterMove,
@@ -453,29 +471,39 @@ namespace patterns
 			"HL-WON",
 			"8B 0D ?? ?? ?? ?? 81 EC 88 00 00 00 8D 54 24 08 56 8D 41 20 BE 03 00 00 00 D9 40 F4 D8 89 68 54 04 00 D9 00 D8 89",
 			"BigLolly",
-			"55 8B EC 81 EC DC 00 00 00 56 57 C7 45 88 00 00 00 00 EB 09 8B 45 88 83 C0 01 89 45 88 83 7D 88 03 7D 3B 8B 4D 88 8B 15"
+			"55 8B EC 81 EC DC 00 00 00 56 57 C7 45 88 00 00 00 00 EB 09 8B 45 88 83 C0 01 89 45 88 83 7D 88 03 7D 3B 8B 4D 88 8B 15",
+			"TWHL-Tower-2",
+			"55 8D 6C 24 88 81 EC CC 00 00 00 8B 0D ?? ?? ?? ?? 33 D2 8D 41 20 D9 40 F4 42 D8 89 68 54 04 00 D9 81 6C 54 04 00"
 		);
 
 		PATTERNS(PM_Ladder,
 			"HL-SteamPipe",
-			"8B 0D ?? ?? ?? ?? 83 EC 0C 8B 81 50 0F 02 00 53 55 33 DB 56 57 85 C0 0F 8E 94 00 00 00 33 FF 8B 84 0F 84 0F 02 00"
+			"8B 0D ?? ?? ?? ?? 83 EC 0C 8B 81 50 0F 02 00 53 55 33 DB 56 57 85 C0 0F 8E 94 00 00 00 33 FF 8B 84 0F 84 0F 02 00",
+			"TWHL-Tower-2",
+			"55 8B EC 83 EC 10 A1 ?? ?? ?? ?? 53 56 57 33 FF 39 B8 50 0F 02 00 89 7D FC 0F 8E 85 00 00 00"
 		);
 
 		PATTERNS(PM_WalkMove,
 			"HL-SteamPipe",
-			"81 EC E4 00 00 00 A1 ?? ?? ?? ?? 53 55 33 ED 8B 88 68 54 04 00 8B 90 6C 54 04 00 89 68 1C A1 ?? ?? ?? ?? 89 4C 24 54 56 89 68 28 8B 0D ?? ?? ?? ?? 83 C1 14"
+			"81 EC E4 00 00 00 A1 ?? ?? ?? ?? 53 55 33 ED 8B 88 68 54 04 00 8B 90 6C 54 04 00 89 68 1C A1 ?? ?? ?? ?? 89 4C 24 54 56 89 68 28 8B 0D ?? ?? ?? ?? 83 C1 14",
+			"TWHL-Tower-2",
+			"55 8B EC 83 EC 20 A1 ?? ?? ?? ?? D9 EE 8B 88 68 54 04 00 89 4D F8 8B 88 6C 54 04 00 D9 58 1C A1"
 		);
 
 		PATTERNS(PM_FlyMove,
 			"HL-SteamPipe",
 			"81 EC 10 01 00 00 53 55 56 8B 35 ?? ?? ?? ?? 33 DB 57 8B 46 5C 8B 4E 60 8B 56 64 89 44 24 18 89 44 24 38 8B 46 10 89 5C 24 10 89 4C 24 1C 89 54 24 20",
 			"HL-WON",
-			"81 EC 10 01 00 00 8B 0D ?? ?? ?? ?? 53 55 33 DB 8B 41 5C 56 89 44 24 14 8B 51 60 89 54 24 18 8B"
+			"81 EC 10 01 00 00 8B 0D ?? ?? ?? ?? 53 55 33 DB 8B 41 5C 56 89 44 24 14 8B 51 60 89 54 24 18 8B",
+			"TWHL-Tower-2",
+			"55 8D 6C 24 88 81 EC 14 01 00 00 53 D9 EE 56 D9 5D 5C 8B 35 ?? ?? ?? ?? 8B 46 5C 89 45 60"
 		);
 
 		PATTERNS(PM_AddToTouched,
 			"HL-SteamPipe",
-			"56 8B 35 ?? ?? ?? ?? 33 C0 57 8B 8E 8C 54 04 00 85 C9 7E 16 8B 7C 24 3C 8D 96 C0 54 04 00 39 3A 74 08 40 83 C2 44"
+			"56 8B 35 ?? ?? ?? ?? 33 C0 57 8B 8E 8C 54 04 00 85 C9 7E 16 8B 7C 24 3C 8D 96 C0 54 04 00 39 3A 74 08 40 83 C2 44",
+			"TWHL-Tower-2",
+			"55 8B EC A1 ?? ?? ?? ?? 8B 90 8C 54 04 00 56 33 F6 85 D2 57 7E 15 8D 88 C0 54 04 00"
 		);
 	}
 }

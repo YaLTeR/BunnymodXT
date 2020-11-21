@@ -658,7 +658,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_entity_info.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_entity_info_offset, CVars::bxt_hud_entity_info_anchor, &x, &y, -250, (si.iCharHeight * 16) + 3);
+			GetPosition(CVars::bxt_hud_entity_info_offset, CVars::bxt_hud_entity_info_anchor, &x, &y, -200, (si.iCharHeight * 16) + 3);
 
 			const auto& hw = HwDLL::GetInstance();
 			const auto& sv = ServerDLL::GetInstance();

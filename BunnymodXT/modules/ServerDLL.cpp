@@ -913,7 +913,6 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_autojump);
 	if (!ORIG_PM_PreventMegaBunnyJumping)
 		CVars::bxt_bhopcap.Set("0");
-	REG(bxt_bhopcap);
 	if (ORIG_CNihilanth__DyingThink || ORIG_CNihilanth__DyingThink_Linux || ORIG_COFGeneWorm__DyingThink || ORIG_COFGeneWorm__DyingThink_Linux)
 		REG(bxt_timer_autostop);
 	if (ORIG_AddToFullPack) {

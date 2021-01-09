@@ -81,6 +81,8 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/BunnymodXT/git_revision.cpp.in" "${C
 find_package (Boost 1.57.0 REQUIRED)
 include_directories (SYSTEM ${Boost_INCLUDE_DIR})
 
+set (RapidJSON_ROOT "${CMAKE_SOURCE_DIR}/rapidjson")
+
 # hltas is already included as part of hlstrafe.
 add_subdirectory (hlstrafe)
 add_subdirectory (taslogger)

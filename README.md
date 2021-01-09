@@ -42,18 +42,17 @@ Building on Windows requires
 
 - Visual Studio 2017 or 2019
 - [Boost](http://www.boost.org/)
-- [RapidJSON v1.1.0](https://github.com/miloyip/rapidjson/releases/tag/v1.1.0)
 - [Rust](https://rustup.rs/)
   - The `i686-pc-windows-msvc` target must be installed. You can do that using `rustup target add i686-pc-windows-msvc`.
 
-Run the following commands, replacing `path\to\boost\base\dir` and `\path\to\rapidjson\base\dir` with paths to Boost and RapidJSON base directories respectively:
+Run the following commands, replacing `path\to\boost\base\dir` with path to the Boost base directory:
 
     git clone https://github.com/YaLTeR/BunnymodXT
     cd BunnymodXT
     git submodule update --init --recursive
     mkdir build
     cd build
-    cmake -A Win32 -DBOOST_ROOT=path\to\boost\base\dir -DRapidJSON_ROOT=path\to\rapidjson\base\dir -Wno-dev ..
+    cmake -A Win32 -DBOOST_ROOT=path\to\boost\base\dir -Wno-dev ..
 
 Then compile the `ALL_BUILD` project from the generated VS solution.
 
@@ -65,7 +64,6 @@ Building on Linux requires
 
 - A recent GCC or Clang toolchain
 - Boost
-- [RapidJSON v1.1.0](https://github.com/miloyip/rapidjson/releases/tag/v1.1.0)
 - Rust: either from your distribution's packages, or from [rustup](https://rustup.rs/).
   - The `i686-unknown-linux-gnu` target must be installed. You can do that using `rustup target add i686-unknown-linux-gnu`.
 
@@ -79,4 +77,4 @@ Many of these dependencies can be installed from a package manager.
     cmake -Wno-dev ..
     make
 
-Note that `-DBOOST_ROOT` and `-DRapidJSON_ROOT` are not required as CMake should be able to find the location of these libraries in your system. In case it couldn't, you need to specify them manually like the case on Windows.
+Note that `-DBOOST_ROOT` is not required as CMake should be able to find its location in your system. In case it couldn't, you need to specify it manually like the case on Windows.

@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install g++-multilib libboost-dev rapidjson-dev mesa-common-dev ninja-build
+        sudo apt-get install g++-multilib libboost-dev mesa-common-dev ninja-build
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1
@@ -66,17 +66,8 @@ jobs:
         target: i686-pc-windows-msvc
         override: true
 
-    - name: Download RapidJSON
-      run: |
-        $client = New-Object System.Net.WebClient
-        $client.DownloadFile("https://github.com/Tencent/rapidjson/archive/v1.1.0.zip", "../rapidjson.zip")
-        # The output path in DownloadFile seems to be relative to the powershell starting directory,
-        # not the current directory. So cd .. afterwards to avoid confusion.
-        cd ..
-        7z x rapidjson.zip
-
     - name: Generate the build system
-      run: cmake -B build -A Win32 -DRapidJSON_ROOT="..\..\rapidjson-1.1.0" -DBOOST_ROOT="$env:BOOST_ROOT_1_72_0"
+      run: cmake -B build -A Win32 -DBOOST_ROOT="$env:BOOST_ROOT_1_72_0"
 
     - name: Build
       run: cmake --build build --config ${{ matrix.configuration }} -j $env:NUMBER_OF_PROCESSORS

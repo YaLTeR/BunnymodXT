@@ -1661,7 +1661,7 @@ struct HwDLL::Cmd_BXT_TAS_New
 		}
 		frame.Dbc = true;
 		frame.Comments += " - automatic duck before collision.";
-		frame.Commands = "pause;bxt_tas_editor 1";
+		frame.Commands = "stop;bxt_timer_stop;pause;bxt_tas_editor 1";
 		hw.newTASResult.PushFrame(frame);
 
 		// A blank frame bulk in the end since currently it's dropped in the TAS editor.

@@ -909,12 +909,11 @@ void ServerDLL::RegisterCVarsAndCommands()
 	EngineDevMsg("[server dll] Registering CVars.\n");
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
+	REG(bxt_timer_autostop);
 	if (ORIG_PM_Jump)
 		REG(bxt_autojump);
 	if (!ORIG_PM_PreventMegaBunnyJumping)
 		CVars::bxt_bhopcap.Set("0");
-	if (ORIG_CNihilanth__DyingThink || ORIG_CNihilanth__DyingThink_Linux || ORIG_COFGeneWorm__DyingThink || ORIG_COFGeneWorm__DyingThink_Linux)
-		REG(bxt_timer_autostop);
 	if (ORIG_AddToFullPack) {
 		REG(bxt_show_hidden_entities);
 		REG(bxt_show_triggers_legacy);

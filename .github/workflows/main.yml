@@ -46,12 +46,15 @@ jobs:
 
   build-windows:
     name: Build on Windows (${{ matrix.configuration }})
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     strategy:
       fail-fast: false
       matrix:
         configuration: [Release, Debug]
+
+    env:
+      BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
 
     steps:
     - uses: actions/checkout@v2
@@ -66,8 +69,18 @@ jobs:
         target: i686-pc-windows-msvc
         override: true
 
+    - name: Install Boost
+      run: |
+        # https://github.com/actions/virtual-environments/issues/2667#issuecomment-800317643
+        mkdir -p ${env:BOOST_ROOT}
+        (New-Object System.Net.WebClient).DownloadFile("https://sourceforge.net/projects/boost/files/boost/1.72.0/boost_1_72_0.zip/download", "${env:BOOST_ROOT}\download.zip")
+        Add-Type -Assembly "System.IO.Compression.Filesystem"
+        [System.IO.Compression.ZipFile]::ExtractToDirectory("${env:BOOST_ROOT}\download.zip", "${env:BOOST_ROOT}")
+        cd ${env:BOOST_ROOT} 
+        cp -r boost_*/* .
+
     - name: Generate the build system
-      run: cmake -B build -A Win32 -DBOOST_ROOT="$env:BOOST_ROOT_1_72_0"
+      run: cmake -B build -A Win32
 
     - name: Build
       run: cmake --build build --config ${{ matrix.configuration }} -j $env:NUMBER_OF_PROCESSORS

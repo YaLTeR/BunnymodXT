@@ -200,3 +200,5 @@ else()
 	add_dependencies (BunnymodXT MinHook)
 	target_link_libraries (BunnymodXT opengl32)
 endif ()
+
+install (TARGETS BunnymodXT)

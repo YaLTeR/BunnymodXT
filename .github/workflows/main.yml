@@ -44,6 +44,24 @@ jobs:
         name: BunnymodXT-${{ runner.os }}-${{ matrix.configuration }}
         path: build/libBunnymodXT.so
 
+  build-flatpak:
+    name: Build under Flatpak
+    runs-on: ubuntu-latest
+
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-20.08
+      options: --privileged
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v3
+      with:
+        manifest-path: build-aux/flatpak/rs.bxt.BunnymodXT.json
+        cache-key: flatpak-builder-${{ github.sha }}
+
   build-windows:
     name: Build on Windows (${{ matrix.configuration }})
     runs-on: windows-2019

@@ -60,6 +60,20 @@ If you want to make a release build, you need to specify `-DCMAKE_BUILD_TYPE=Rel
 
 ### Linux
 
+#### GNOME Builder
+1. Set up Flathub by following the [guide](https://flatpak.org/setup/) for your distribution.
+1. Install [GNOME Builder](https://flathub.org/apps/details/org.gnome.Builder).
+1. Open GNOME Builder.
+1. Press the Clone Repository button, enter `https://github.com/YaLTeR/BunnymodXT.git` and press Clone Project. Wait until it finishes.
+
+   The cloning window should close, and a new window with the BunnymodXT project should open.
+1. If Builder prompts you to install missing SDKs, press Install and wait for the process to finish. It will take a while. You can monitor the progress by pressing the circle in the top-right.
+1. Click on the bar at the top-center which says BunnymodXT, and click the Build button.
+1. Once the build finishes, in the same bar menu click the Export Bundle button. The file manager will open in a path that looks like `gnome-builder/projects/BunnymodXT/flatpak/staging/x86_64-master`. Navigate up to the `BunnymodXT` folder, then down to `builds/rs.bxt.BunnymodXT.json-...` where you will find the built `libBunnymodXT.so`.
+1. Now you can make some changes to the code and press Build, then grab `libBunnymodXT.so` from the same folder.
+
+#### Manually
+
 Building on Linux requires
 
 - A recent GCC or Clang toolchain

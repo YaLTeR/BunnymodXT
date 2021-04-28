@@ -45,8 +45,8 @@
             "builddir": true,
             "sources": [
                 {
-                    "type": "git",
-                    "url": "https://github.com/YaLTeR/BunnymodXT.git"
+                    "type": "dir",
+                    "path": "../.."
                 }
             ]
         }

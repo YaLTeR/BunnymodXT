@@ -329,6 +329,16 @@ namespace TriangleDrawing
 		}
 		right_was_pressed = right_pressed;
 
+		static bool mouse4_was_pressed = false;
+		static Vector2D mouse4_pressed_at = Vector2D(0, 0);
+		auto mouse4_pressed = (mouse_state & SDL_BUTTON(SDL_BUTTON_X1)) != 0;
+		bool mouse4_got_pressed = false;
+		if (mouse4_pressed && !mouse4_was_pressed) {
+			mouse4_got_pressed = true;
+			mouse4_pressed_at = mouse;
+		}
+		mouse4_was_pressed = mouse4_pressed;
+
 		float adjustment_speed = 1;
 
 		// Like in HwDLL::FreeCamTick().
@@ -486,7 +496,7 @@ namespace TriangleDrawing
 
 			size_t frame_limit = player_datas.size() - 1;
 
-			if (left_pressed || middle_pressed || right_pressed) {
+			if (left_pressed || middle_pressed || right_pressed || mouse4_pressed) {
 				// Don't change the selected frame bulk while dragging.
 				if (closest_edge_prev_frame_bulk_index + 1 < frame_bulk_starts.size()) {
 					closest_edge_frame = frame_bulk_starts[closest_edge_prev_frame_bulk_index + 1];
@@ -526,7 +536,7 @@ namespace TriangleDrawing
 			}
 
 			static double saved_yaw = 0;
-			if (right_got_pressed && closest_edge_frame != 0
+			if ((right_got_pressed || mouse4_got_pressed ) && closest_edge_frame != 0
 					&& input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYawPresent())
 				saved_yaw = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYaw();
 
@@ -550,6 +560,7 @@ namespace TriangleDrawing
 			static Vector2D saved_lmb_diff;
 			static Vector2D saved_mmb_diff;
 			static Vector2D saved_rmb_diff;
+			static Vector2D saved_ms4_diff;
 
 			pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
 			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
@@ -669,6 +680,16 @@ namespace TriangleDrawing
 							auto b_screen_point_px = stw_to_pixels(b_screen_point.Make2D());
 							saved_rmb_diff = (a_screen_point_px - b_screen_point_px).Normalize();
 						}
+
+						if (mouse4_got_pressed) {
+							Vector a_screen_point;
+							pTriAPI->WorldToScreen(a, a_screen_point);
+							auto a_screen_point_px = stw_to_pixels(a_screen_point.Make2D());
+							Vector b_screen_point;
+							pTriAPI->WorldToScreen(b, b_screen_point);
+							auto b_screen_point_px = stw_to_pixels(b_screen_point.Make2D());
+							saved_ms4_diff = (a_screen_point_px - b_screen_point_px).Normalize();
+						}
 					} else {
 						pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
 					}
@@ -717,6 +738,51 @@ namespace TriangleDrawing
 					if (frame_bulk.GetYaw() != new_yaw) {
 						stale_index = closest_edge_prev_frame_bulk_index;
 						frame_bulk.SetYaw(new_yaw);
+					}
+				}
+
+				if (mouse4_pressed && frame_bulk.GetYawPresent()) {
+					auto mouse_diff = mouse - mouse4_pressed_at;
+
+					auto amount = DotProduct(mouse_diff, saved_ms4_diff) * 0.1f * adjustment_speed;
+					auto new_yaw = saved_yaw + amount;
+
+					if (frame_bulk.GetYaw() != new_yaw) {
+						auto old_yaw = frame_bulk.GetYaw();
+
+						stale_index = closest_edge_prev_frame_bulk_index;
+						frame_bulk.SetYaw(new_yaw);
+
+						// SetYaw towards previous framebulks
+						if (closest_edge_prev_frame_bulk_index != 0) {
+							for (size_t i = closest_edge_prev_frame_bulk_index; i > 0; i--)
+							{
+								auto real_index = i - 1;
+
+								HLTAS::Frame* prev_framebulk = &(input.frame_bulks[real_index]);
+
+								if (prev_framebulk->GetYawPresent() && prev_framebulk->GetYaw() == old_yaw) {
+									stale_index = real_index;
+									prev_framebulk->SetYaw(new_yaw);
+								}
+								else {
+									break;
+								}
+							}
+						}
+
+						// SetYaw towards end of all frame bulks
+						for (size_t i = closest_edge_prev_frame_bulk_index + 1; i < input.frame_bulks.size(); i++)
+						{
+							HLTAS::Frame* next_framebulk = &(input.frame_bulks[i]);
+
+							if (next_framebulk->GetYawPresent() && next_framebulk->GetYaw() == old_yaw) {
+								next_framebulk->SetYaw(new_yaw);
+							}
+							else {
+								break;
+							}
+						}
 					}
 				}
 

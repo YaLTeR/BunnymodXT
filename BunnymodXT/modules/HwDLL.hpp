@@ -140,6 +140,7 @@ public:
 	void SetPlayerVelocity(float velocity[3]);
 	bool TryGettingAccurateInfo(float origin[3], float velocity[3], float& health);
 	void GetViewangles(float* va);
+	void SetViewangles(float* va);
 
 	inline bool GetIsOverridingCamera() const { return isOverridingCamera; }
 	inline void GetCameraOverrideOrigin(float origin[3]) const
@@ -295,6 +296,8 @@ protected:
 	_Cmd_Argv ORIG_Cmd_Argv;
 	typedef void(__cdecl *_hudGetViewAngles) (float* va);
 	_hudGetViewAngles ORIG_hudGetViewAngles;
+	typedef void(__cdecl *_hudSetViewAngles) (float* va);
+	_hudSetViewAngles ORIG_hudSetViewAngles;
 	typedef pmtrace_t(__cdecl *_PM_PlayerTrace) (const float* start, const float* end, int traceFlags, int ignore_pe);
 	_PM_PlayerTrace ORIG_PM_PlayerTrace;
 	typedef void(__cdecl *_SV_AddLinksToPM) (char* node, float* origin);
@@ -319,6 +322,7 @@ protected:
 	struct Cmd_BXT_CH_Set_Origin_Offset;
 	struct Cmd_BXT_CH_Set_Velocity;
 	struct Cmd_BXT_CH_Set_Velocity_Angles;
+	struct Cmd_BXT_CH_Set_Angles;
 	struct Cmd_Multiwait;
 	struct Cmd_BXT_Camera_Fixed;
 	struct Cmd_BXT_Camera_Clear;

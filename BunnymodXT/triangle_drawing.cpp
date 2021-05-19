@@ -701,8 +701,10 @@ namespace TriangleDrawing
 			if (closest_edge_frame != 0) {
 				auto& frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
 
+				auto& last_player_data_vel = input.player_datas[input.player_datas.size() - 1].Velocity;
+
 				// Update the HUD status before any changes, since that's the state that was visualized earlier.
-				CustomHud::UpdateTASEditorStatus(frame_bulk);
+				CustomHud::UpdateTASEditorStatus(frame_bulk, std::hypot(last_player_data_vel[0], last_player_data_vel[1]));
 
 				if (left_pressed) {
 					auto mouse_diff = mouse - left_pressed_at;

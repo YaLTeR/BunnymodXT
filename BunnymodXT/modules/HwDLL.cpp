@@ -579,6 +579,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find hudGetViewAngles.\n");
 
+		ORIG_hudSetViewAngles = reinterpret_cast<_hudSetViewAngles>(MemUtils::GetSymbolAddress(m_Handle, "hudSetViewAngles"));
+		if (ORIG_hudSetViewAngles)
+			EngineDevMsg("[hw dll] Found hudSetViewAngles at %p.\n", ORIG_hudSetViewAngles);
+		else
+			EngineDevWarning("[hw dll] Could not find hudSetViewAngles.\n");
+
 		ORIG_SV_AddLinksToPM = reinterpret_cast<_SV_AddLinksToPM>(MemUtils::GetSymbolAddress(m_Handle, "SV_AddLinksToPM"));
 		if (ORIG_SV_AddLinksToPM)
 			EngineDevMsg("[hw dll] Found SV_AddLinksToPM at %p.\n", ORIG_SV_AddLinksToPM);
@@ -1755,6 +1761,31 @@ struct HwDLL::Cmd_BXT_CH_Set_Origin_Offset
 	}
 };
 
+struct HwDLL::Cmd_BXT_CH_Set_Angles
+{
+	USAGE("Usage: bxt_ch_set_angles <pitch> <yaw> [roll]\n");
+
+	static void handler(float x, float y)
+	{
+		auto &hw = HwDLL::GetInstance();
+		float vec[3];
+		vec[0] = x;
+		vec[1] = y;
+		vec[2] = 0.0f;
+		hw.SetViewangles(vec);
+	}
+
+	static void handler(float x, float y, float z)
+	{
+		auto &hw = HwDLL::GetInstance();
+		float vec[3];
+		vec[0] = x;
+		vec[1] = y;
+		vec[2] = z;
+		hw.SetViewangles(vec);
+	}
+};
+
 struct HwDLL::Cmd_Multiwait
 {
 	USAGE("Usage: w [number of waits]\n");
@@ -2807,6 +2838,10 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Cmd_BXT_CH_Set_Velocity_Angles,
 		Handler<float>,
 		Handler<float, float, float>>("bxt_ch_set_vel_angles");
+	wrapper::AddCheat<
+		Cmd_BXT_CH_Set_Angles,
+		Handler<float, float>,
+		Handler<float, float, float>>("bxt_ch_set_angles");
 	wrapper::Add<
 		Cmd_Multiwait,
 		Handler<>,
@@ -3937,6 +3972,15 @@ void HwDLL::GetViewangles(float* va)
 	} else
 		ORIG_hudGetViewAngles(va);
 }
+
+void HwDLL::SetViewangles(float* va)
+{
+	if (!ORIG_hudSetViewAngles) {
+	    ClientDLL::GetInstance().pEngfuncs->SetViewAngles(va);
+	} else
+		ORIG_hudSetViewAngles(va);
+}
+
 
 HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull, bool extendDistanceLimit)
 {

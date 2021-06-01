@@ -73,6 +73,7 @@ namespace CustomHud
 	};
 	static FrameBulkStatus frame_bulk_status;
 	static float player_vel_status;
+	static float player_zvel_status;
 	static bool frame_bulk_selected;
 
 	template<typename T, size_t size = 3>
@@ -1077,6 +1078,7 @@ namespace CustomHud
 			}
 
 			out << "Vel: " << player_vel_status << '\n';
+			out << "ZVel: " << player_zvel_status << '\n';
 		} else {
 			out << " no frame bulk selected";
 		}
@@ -1326,9 +1328,10 @@ namespace CustomHud
 		return si;
 	}
 
-	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel)
+	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel)
 	{
 		player_vel_status = player_vel;
+		player_zvel_status = player_zvel;
 
 		frame_bulk_selected = true;
 		frame_bulk_status = FrameBulkStatus{};

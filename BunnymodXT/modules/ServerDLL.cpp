@@ -1367,7 +1367,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 
 HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
-	if(ppGlobals && targetName != NULL) {
+	if(ppGlobals && targetName != NULL && pCaller) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
 		if(pev && pev->targetname)
 		{
@@ -1379,8 +1379,7 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 				if (ClientDLL::GetInstance().pEngfuncs)
 					gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
 				if (!std::strcmp(targetname, "roll_the_credits")
-					|| !std::strcmp(targetName, "youwinmulti2")
-					|| !std::strcmp(targetname, "sink2")
+					|| !std::strcmp(targetName, "youwinmulti")
 					|| !std::strcmp(targetname, "previctory_mm")
 					|| !std::strcmp(targetname, "stairscene_mngr")
 					|| !std::strcmp(targetname, "boot_radio_seq")
@@ -1407,7 +1406,7 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 		}
 	}
 
-	ORIG_FireTargets_Linux(targetName, pActivator, pCaller, useType, value);
+	return ORIG_FireTargets_Linux(targetName, pActivator, pCaller, useType, value);
 }
 
 void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a)

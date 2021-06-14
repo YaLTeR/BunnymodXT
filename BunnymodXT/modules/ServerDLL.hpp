@@ -24,7 +24,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CApache__DyingThink, void* thisptr)
 	HOOK_DECL(void, __fastcall, CBaseDoor__DoorGoUp, void* thisptr)
 	HOOK_DECL(void, __fastcall, CMultiManager__ManagerThink, void* thisptr, int edx)
-	HOOK_DECL(void, __cdecl, CMultiManager__ManagerUse_Linux, void* thisptr, void* pActivator, void* pCaller, int useType, float value)
+	HOOK_DECL(void, __cdecl, FireTargets_Linux, char* targetName, void* pActivator, void* pCaller, int useType, float value)
 	HOOK_DECL(int, __cdecl, AddToFullPack, struct entity_state_s* state, int e, edict_t* ent, edict_t* host, int hostflags, int player, unsigned char* pSet)
 	HOOK_DECL(void, __fastcall, CTriggerVolume__Spawn, void* thisptr)
 	HOOK_DECL(void, __cdecl, CTriggerVolume__Spawn_Linux, void* thisptr)
@@ -59,6 +59,8 @@ public:
 		assert(ppGlobals);
 		return (*ppGlobals)->pStringBase + string;
 	}
+
+	static void DoMultiManagerAutoStop(const char *classname);
 
 	static void GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a);
 

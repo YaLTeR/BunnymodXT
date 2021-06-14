@@ -30,11 +30,10 @@ extern "C" void __cdecl _ZN11COFGeneWorm10DyingThinkEv(void* thisptr)
 	return ServerDLL::HOOKED_COFGeneWorm__DyingThink_Linux(thisptr);
 }
 
-// https://github.com/YaLTeR/BunnymodXT/issues/63
-// extern "C" void __cdecl _ZN13CMultiManager10ManagerUseEP11CBaseEntityS1_8USE_TYPEf(void* thisptr, void* pActivator, void* pCaller, int useType, float value)
-// {
-//         return ServerDLL::HOOKED_CMultiManager__ManagerUse_Linux(thisptr, pActivator, pCaller, useType, value);
-// }
+extern "C" void __cdecl _Z11FireTargetsPKcP11CBaseEntityS2_8USE_TYPEf(char* targetName, void* pActivator, void* pCaller, int useType, float value)
+{
+     return ServerDLL::HOOKED_FireTargets_Linux(targetName, pActivator, pCaller, useType, value);
+}
 
 extern "C" int __cdecl _Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh(struct entity_state_s* state, int e, edict_t* ent, edict_t* host, int hostflags, int player, unsigned char* pSet)
 {
@@ -158,7 +157,7 @@ void ServerDLL::Clear()
 	ORIG_CApache__DyingThink = nullptr;
 	ORIG_CBaseDoor__DoorGoUp = nullptr;
 	ORIG_CMultiManager__ManagerThink = nullptr;
-	ORIG_CMultiManager__ManagerUse_Linux = nullptr;
+	ORIG_FireTargets_Linux = nullptr;
 	ORIG_AddToFullPack = nullptr;
 	ORIG_CTriggerVolume__Spawn = nullptr;
 	ORIG_CTriggerVolume__Spawn_Linux = nullptr;
@@ -709,12 +708,12 @@ void ServerDLL::FindStuff()
 	if (ORIG_CMultiManager__ManagerThink) {
 		EngineDevMsg("[server dll] Found CMultiManager::ManagerThink at %p.\n", ORIG_CMultiManager__ManagerThink);
 	} else {
-		// https://github.com/YaLTeR/BunnymodXT/issues/63
-		// ORIG_CMultiManager__ManagerUse_Linux = reinterpret_cast<_CMultiManager__ManagerUse_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN13CMultiManager10ManagerUseEP11CBaseEntityS1_8USE_TYPEf"));
-		if (ORIG_CMultiManager__ManagerUse_Linux)
-			EngineDevMsg("[server dll] Found CMultiManager::ManagerUse [Linux] at %p.\n", ORIG_CMultiManager__ManagerUse_Linux);
+		// https://github.com/YaLTeR/BunnymodXT/issues/63 <- because of this issue FireTargets is hooked on Linux instead, which is what MM::Think calls anyway
+		ORIG_FireTargets_Linux = reinterpret_cast<_FireTargets_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_Z11FireTargetsPKcP11CBaseEntityS2_8USE_TYPEf"));
+		if (ORIG_FireTargets_Linux)
+			EngineDevMsg("[server dll] Found FireTargets [Linux] at %p.\n", ORIG_FireTargets_Linux);
 		else {
-			EngineDevWarning("[server dll] Could not find CMultiManager::ManagerThink or CMultiManager::ManagerUse.\n");
+			EngineDevWarning("[server dll] Could not find FireTargets or CMultiManager::ManagerUse.\n");
 			EngineWarning("Blue Shift and Gunman Chronicles automatic timer stopping is not available.\n");
 		}
 	}
@@ -1333,61 +1332,60 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
-			const char *gameDir = "";
-			if (ClientDLL::GetInstance().pEngfuncs)
-				gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
-			if (!std::strcmp(targetname, "roll_the_credits")
-				|| !std::strcmp(targetname, "youwinmulti")
-				|| !std::strcmp(targetname, "previctory_mm")
-				|| !std::strcmp(targetname, "stairscene_mngr")
-				|| !std::strcmp(targetname, "boot_radio_seq")
-				|| !std::strcmp(targetname, "BLOOOM") // CSCZDS
-				|| (!std::strcmp(targetname, "telmm") && !std::strcmp(gameDir, "biglolly")) // Big Lolly
-				|| (!std::strcmp(targetname, "mm_player_camera1") && !std::strcmp(gameDir, "htc")) // HTC
-				|| (!std::strcmp(targetname, "multimanager_1") && !std::strcmp(gameDir, "construction")) // Construction
-				|| (!std::strcmp(targetname, "the_endgame_mm") && !std::strcmp(gameDir, "gloom")) // The Gloom
-				|| (!std::strcmp(targetname, "endbox_mm0") && !std::strcmp(gameDir, "echoes")) // Echoes
-				|| (!std::strcmp(targetname, "sendmm") && !std::strcmp(gameDir, "MINIMICUS"))  // Minimicus
-				|| (!std::strcmp(targetname, "kill2") && !std::strcmp(gameDir, "before")) // Before
-				|| (!std::strcmp(targetname, "tele_in") && !std::strcmp(gameDir, "plague")) // Plague
-				|| (!std::strcmp(targetname, "exit_seq") && !std::strcmp(gameDir, "timeline2")) // Timeline 2
-				|| (!std::strcmp(targetname, "spawn_garg_sci_mm") && !std::strcmp(gameDir, "SteamLink")) // Uplink
-				|| (!std::strcmp(targetname, "medicosprey") && !std::strcmp(gameDir, "visitors"))) { // Visitors
-				if (CVars::bxt_timer_autostop.GetBool())
-					CustomHud::SetCountingTime(false);
-				Interprocess::WriteGameEnd(CustomHud::GetTime());
-				CustomHud::SaveTimeToDemo();
-				RuntimeData::Add(RuntimeData::GameEndMarker {});
-			}
+			DoMultiManagerAutoStop(targetname);
 		}
 	}
 
 	return ORIG_CMultiManager__ManagerThink(thisptr, edx);
 }
 
-HOOK_DEF_5(ServerDLL, void, __cdecl, CMultiManager__ManagerUse_Linux, void*, thisptr, void*, pActivator, void*, pCaller, int, useType, float, value)
+HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
-	if (ppGlobals && pCaller) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
-		if (pev && pev->targetname) {
+	if(ppGlobals && targetName != NULL && pCaller) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
+		if(pev && pev->targetname)
+		{
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
-			if (!std::strcmp(targetname, "roll_the_credits") || !std::strcmp(targetname, "youwinmulti")) {
-				entvars_t *callerPev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
-				if (callerPev && callerPev->targetname) {
-					const char *callerTargetname = (*ppGlobals)->pStringBase + callerPev->targetname;
-					if (!std::strcmp(callerTargetname, "mgr_take_over") || !std::strcmp(callerTargetname, "endbot")) {
-						if (CVars::bxt_timer_autostop.GetBool())
-							CustomHud::SetCountingTime(false);
-						Interprocess::WriteGameEnd(CustomHud::GetTime());
-						CustomHud::SaveTimeToDemo();
-						RuntimeData::Add(RuntimeData::GameEndMarker {});
-					}
-				}
+			const char *classname = (*ppGlobals)->pStringBase + pev->classname;
+			// We first need to check if the pCaller is a multi_manager since FireTargets can be called by anyone
+			if (!std::strcmp(classname, "multi_manager")) {
+				DoMultiManagerAutoStop(targetname);
 			}
 		}
 	}
 
-	return ORIG_CMultiManager__ManagerUse_Linux(thisptr, pActivator, pCaller, useType, value);
+	return ORIG_FireTargets_Linux(targetName, pActivator, pCaller, useType, value);
+}
+
+void ServerDLL::DoMultiManagerAutoStop(const char *targetname)
+{
+	const char *gameDir = "";
+	if (ClientDLL::GetInstance().pEngfuncs)
+		gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+
+	if(!std::strcmp(targetname, "roll_the_credits")
+		|| !std::strcmp(targetname, "youwinmulti")
+		|| !std::strcmp(targetname, "previctory_mm")
+		|| !std::strcmp(targetname, "stairscene_mngr")
+		|| !std::strcmp(targetname, "boot_radio_seq")
+		|| !std::strcmp(targetname, "BLOOOM") // CSCZDS
+		|| (!std::strcmp(targetname, "telmm") && !std::strcmp(gameDir, "biglolly")) // Big Lolly
+		|| (!std::strcmp(targetname, "mm_player_camera1") && !std::strcmp(gameDir, "htc")) // HTC
+		|| (!std::strcmp(targetname, "multimanager_1") && !std::strcmp(gameDir, "construction")) // Construction
+		|| (!std::strcmp(targetname, "the_endgame_mm") && !std::strcmp(gameDir, "gloom")) // The Gloom
+		|| (!std::strcmp(targetname, "endbox_mm0") && !std::strcmp(gameDir, "echoes")) // Echoes
+		|| (!std::strcmp(targetname, "sendmm") && !std::strcmp(gameDir, "MINIMICUS"))  // Minimicus
+		|| (!std::strcmp(targetname, "kill2") && !std::strcmp(gameDir, "before")) // Before
+		|| (!std::strcmp(targetname, "tele_in") && !std::strcmp(gameDir, "plague")) // Plague
+		|| (!std::strcmp(targetname, "exit_seq") && !std::strcmp(gameDir, "timeline2")) // Timeline 2
+		|| (!std::strcmp(targetname, "spawn_garg_sci_mm") && !std::strcmp(gameDir, "SteamLink")) // Uplink
+		|| (!std::strcmp(targetname, "medicosprey") && !std::strcmp(gameDir, "visitors"))) { // Visitors
+		if (CVars::bxt_timer_autostop.GetBool())
+			CustomHud::SetCountingTime(false);
+		Interprocess::WriteGameEnd(CustomHud::GetTime());
+		CustomHud::SaveTimeToDemo();
+		RuntimeData::Add(RuntimeData::GameEndMarker{});
+	}
 }
 
 void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a)

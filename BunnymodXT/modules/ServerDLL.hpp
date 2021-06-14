@@ -7,7 +7,6 @@
 
 class ServerDLL : public IHookableDirFilter
 {
-
 	HOOK_DECL(void, __cdecl, PM_Jump)
 	HOOK_DECL(void, __cdecl, PM_PreventMegaBunnyJumping)
 	HOOK_DECL(void, __cdecl, PM_PlayerMove, qboolean server)
@@ -60,6 +59,8 @@ public:
 		assert(ppGlobals);
 		return (*ppGlobals)->pStringBase + string;
 	}
+
+	static bool IsMultiManagerAutoStopTargetName(const char *classname);
 
 	static void GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a);
 

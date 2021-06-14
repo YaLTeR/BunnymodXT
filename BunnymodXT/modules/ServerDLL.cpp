@@ -1332,13 +1332,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
-			if(IsMultiManagerAutoStopTargetName(targetname)) {
-				if (CVars::bxt_timer_autostop.GetBool())
-					CustomHud::SetCountingTime(false);
-				Interprocess::WriteGameEnd(CustomHud::GetTime());
-				CustomHud::SaveTimeToDemo();
-				RuntimeData::Add(RuntimeData::GameEndMarker {});
-			}
+			DoMultiManagerAutoStop(targetname);
 		}
 	}
 
@@ -1356,13 +1350,7 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 			const char *gameDir = "";
 			// We first need to check if the pCaller is a multi_manager since FireTargets can be called by anyone
 			if (!std::strcmp(classname, "multi_manager")) {
-				if(IsMultiManagerAutoStopTargetName(targetname)) {
-					if (CVars::bxt_timer_autostop.GetBool())
-						CustomHud::SetCountingTime(false);
-					Interprocess::WriteGameEnd(CustomHud::GetTime());
-					CustomHud::SaveTimeToDemo();
-					RuntimeData::Add(RuntimeData::GameEndMarker{});
-				}
+				DoMultiManagerAutoStop(targetname);
 			}
 		}
 	}
@@ -1370,30 +1358,35 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 	return ORIG_FireTargets_Linux(targetName, pActivator, pCaller, useType, value);
 }
 
-bool ServerDLL::IsMultiManagerAutoStopTargetName(const char *targetname)
+void ServerDLL::DoMultiManagerAutoStop(const char *targetname)
 {
 	const char *gameDir = "";
 	if (ClientDLL::GetInstance().pEngfuncs)
 		gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
 
-	return (!std::strcmp(targetname, "roll_the_credits")
-	    || !std::strcmp(targetname, "youwinmulti")
-	    || !std::strcmp(targetname, "previctory_mm")
-	    || !std::strcmp(targetname, "stairscene_mngr")
-	    || !std::strcmp(targetname, "boot_radio_seq")
-	    || !std::strcmp(targetname, "BLOOOM") // CSCZDS
-	    || (!std::strcmp(targetname, "telmm") && !std::strcmp(gameDir, "biglolly")) // Big Lolly
-	    || (!std::strcmp(targetname, "mm_player_camera1") && !std::strcmp(gameDir, "htc")) // HTC
-	    || (!std::strcmp(targetname, "multimanager_1") && !std::strcmp(gameDir, "construction")) // Construction
-	    || (!std::strcmp(targetname, "the_endgame_mm") && !std::strcmp(gameDir, "gloom")) // The Gloom
-	    || (!std::strcmp(targetname, "endbox_mm0") && !std::strcmp(gameDir, "echoes")) // Echoes
-	    || (!std::strcmp(targetname, "sendmm") && !std::strcmp(gameDir, "MINIMICUS"))  // Minimicus
-	    || (!std::strcmp(targetname, "kill2") && !std::strcmp(gameDir, "before")) // Before
-	    || (!std::strcmp(targetname, "tele_in") && !std::strcmp(gameDir, "plague")) // Plague
-	    || (!std::strcmp(targetname, "exit_seq") && !std::strcmp(gameDir, "timeline2")) // Timeline 2
-	    || (!std::strcmp(targetname, "spawn_garg_sci_mm") && !std::strcmp(gameDir, "SteamLink")) // Uplink
-	    || (!std::strcmp(targetname, "medicosprey") && !std::strcmp(gameDir, "visitors"))); // Visitors
-
+	if(!std::strcmp(targetname, "roll_the_credits")
+		|| !std::strcmp(targetname, "youwinmulti")
+		|| !std::strcmp(targetname, "previctory_mm")
+		|| !std::strcmp(targetname, "stairscene_mngr")
+		|| !std::strcmp(targetname, "boot_radio_seq")
+		|| !std::strcmp(targetname, "BLOOOM") // CSCZDS
+		|| (!std::strcmp(targetname, "telmm") && !std::strcmp(gameDir, "biglolly")) // Big Lolly
+		|| (!std::strcmp(targetname, "mm_player_camera1") && !std::strcmp(gameDir, "htc")) // HTC
+		|| (!std::strcmp(targetname, "multimanager_1") && !std::strcmp(gameDir, "construction")) // Construction
+		|| (!std::strcmp(targetname, "the_endgame_mm") && !std::strcmp(gameDir, "gloom")) // The Gloom
+		|| (!std::strcmp(targetname, "endbox_mm0") && !std::strcmp(gameDir, "echoes")) // Echoes
+		|| (!std::strcmp(targetname, "sendmm") && !std::strcmp(gameDir, "MINIMICUS"))  // Minimicus
+		|| (!std::strcmp(targetname, "kill2") && !std::strcmp(gameDir, "before")) // Before
+		|| (!std::strcmp(targetname, "tele_in") && !std::strcmp(gameDir, "plague")) // Plague
+		|| (!std::strcmp(targetname, "exit_seq") && !std::strcmp(gameDir, "timeline2")) // Timeline 2
+		|| (!std::strcmp(targetname, "spawn_garg_sci_mm") && !std::strcmp(gameDir, "SteamLink")) // Uplink
+		|| (!std::strcmp(targetname, "medicosprey") && !std::strcmp(gameDir, "visitors"))) { // Visitors
+		if (CVars::bxt_timer_autostop.GetBool())
+			CustomHud::SetCountingTime(false);
+		Interprocess::WriteGameEnd(CustomHud::GetTime());
+		CustomHud::SaveTimeToDemo();
+		RuntimeData::Add(RuntimeData::GameEndMarker{});
+	}
 }
 
 void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a)

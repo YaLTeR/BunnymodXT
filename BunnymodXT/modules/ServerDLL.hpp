@@ -60,7 +60,7 @@ public:
 		return (*ppGlobals)->pStringBase + string;
 	}
 
-	static bool IsMultiManagerAutoStopTargetName(const char *classname);
+	static void DoMultiManagerAutoStop(const char *classname);
 
 	static void GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a);
 

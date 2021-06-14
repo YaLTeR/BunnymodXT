@@ -1347,7 +1347,6 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 		{
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
 			const char *classname = (*ppGlobals)->pStringBase + pev->classname;
-			const char *gameDir = "";
 			// We first need to check if the pCaller is a multi_manager since FireTargets can be called by anyone
 			if (!std::strcmp(classname, "multi_manager")) {
 				DoMultiManagerAutoStop(targetname);

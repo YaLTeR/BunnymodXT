@@ -316,6 +316,12 @@ void ServerDLL::FindStuff()
 				case 5:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 5);
 					break;
+				case 6:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 24);
+					break;
+				case 7:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 6);
+					break;
 				}
 			}
 		});
@@ -355,9 +361,33 @@ void ServerDLL::FindStuff()
 				offm_iClientFOV = 0x4B0;
 				break;
 			case 5: // TWHL-Tower-2
+			case 6: // Halfquake Trilogy
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x5F4;
 				offm_iClientFOV = 0x548;
+				offFuncObjectCaps = 0x44;
+				break;
+			case 7: // Echoes
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x5F4;
+				offm_iClientFOV = 0x548;
+				offFuncObjectCaps = 0x3C;
+				break;
+			case 8: // Decay
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x544;
+				offm_iClientFOV = 0x49C;
+				break;
+			case 9: // AoMDC
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x578;
+				offm_iClientFOV = 0x4D0;
+				break;
+			case 10: // PARANOIA
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x62C;
+				offm_iClientFOV = 0x584;
+				offFuncObjectCaps = 0x40;
 				break;
 			default:
 				assert(false);
@@ -382,8 +412,55 @@ void ServerDLL::FindStuff()
 	auto fPM_FlyMove = FindFunctionAsync(ORIG_PM_FlyMove, "PM_FlyMove", patterns::shared::PM_FlyMove);
 	auto fPM_AddToTouched = FindFunctionAsync(ORIG_PM_AddToTouched, "PM_AddToTouched", patterns::shared::PM_AddToTouched);
 	auto fPM_Ladder = FindFunctionAsync(ORIG_PM_Ladder, "PM_Ladder", patterns::shared::PM_Ladder);
-	auto fCPushable__Move = FindAsync(ORIG_CPushable__Move, patterns::server::CPushable__Move);
-	auto fCBasePlayer__TakeDamage = FindAsync(ORIG_CBasePlayer__TakeDamage, patterns::server::CBasePlayer__TakeDamage);
+
+	auto fCPushable__Move = FindAsync(
+		ORIG_CPushable__Move,
+		patterns::server::CPushable__Move,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CPushable__Move.cbegin()) {
+			case 0: // HL-SteamPipe
+			case 1: // AoMDC
+				offFuncIsPlayer = 0x9C;
+				break;
+			case 2: // TWHL-Tower-2
+			case 3: // Halfquake Trilogy
+				offFuncIsPlayer = 0xD4;
+				break;
+			case 4: // Echoes
+				offFuncIsPlayer = 0xCC;
+				break;
+			case 5: // PARANOIA
+				offFuncIsPlayer = 0xD0;
+				break;
+			default:
+				assert(false);
+			}
+		});
+
+	auto fCBasePlayer__TakeDamage = FindAsync(
+		ORIG_CBasePlayer__TakeDamage,
+		patterns::server::CBasePlayer__TakeDamage,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CBasePlayer__TakeDamage.cbegin()) {
+			case 0: // HL-SteamPipe
+			case 1: // AoMDC
+				offFuncCenter = 0xC8;
+				break;
+			case 2:
+			case 3:
+				offFuncCenter = 0x100;
+				break;
+			case 4:
+				offFuncCenter = 0xF8;
+				break;
+			case 5:
+				offFuncCenter = 0xFC;
+				break;
+			default:
+				assert(false);
+			}
+		});
+
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
 	auto fCBaseMonster__Killed = FindAsync(ORIG_CBaseMonster__Killed, patterns::server::CBaseMonster__Killed);
 
@@ -394,6 +471,9 @@ void ServerDLL::FindStuff()
 			switch (pattern - patterns::server::CGraph__InitGraph.cbegin()) {
 			case 0:  // HL-SteamPipe
 			case 1:
+			case 2:
+			case 3:
+			case 4:
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;
@@ -477,6 +557,7 @@ void ServerDLL::FindStuff()
 				EngineDevMsg("[server dll] Found CZDS Velocity Reset Byte at %p.\n", pCZDS_Velocity_Byte);
 			else
 				EngineDevMsg("[server dll] Found CZDS Velocity Reset Byte at %p (using the %s pattern).\n", pCZDS_Velocity_Byte, pattern->name());
+				offFuncObjectCaps = 0x18;
 		}
 		else {
 			EngineDevWarning("[server dll] Could not find CZDS Velocity Reset Byte.\n");
@@ -850,6 +931,8 @@ void ServerDLL::FindStuff()
 			auto svencoop = false;
 			bool twhltower = false;
 			bool twhltower2 = false;
+			bool hqtrilogy = false;
+			bool paranoia = false;
 			if (!addr)
 			{
 				// Big Lolly version: push eax; push offset dword; call memcpy
@@ -873,7 +956,21 @@ void ServerDLL::FindStuff()
 							// TWHL Tower 2
 							static constexpr auto p = PATTERN("68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 44 24 14 83 C4 0C A3");
 							addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-							twhltower2 = true;
+							if (addr) {
+								twhltower2 = true;
+							} else {
+								// Halfquake Trilogy
+								static constexpr auto p = PATTERN("68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 45 0C 83 C4 0C A3");
+								addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
+								if (addr) {
+									hqtrilogy = true;
+								} else {
+									// PARANOIA
+									static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 8B 45 0C A3");
+									addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
+									paranoia = true;
+								}
+							}
 						}
 					}
 				}
@@ -900,6 +997,16 @@ void ServerDLL::FindStuff()
 				{
 					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
 					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 18);
+				}
+				else if (hqtrilogy)
+				{
+					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
+					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 17);
+				}
+				else if (paranoia)
+				{
+					pEngfuncs = *reinterpret_cast<enginefuncs_t **>(addr + 1);
+					ppGlobals = *reinterpret_cast<globalvars_t ***>(addr + 11);
 				}
 				else
 				{

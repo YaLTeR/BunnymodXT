@@ -59,6 +59,11 @@ extern "C" void __cdecl _ZN11CBasePlayer20CheatImpulseCommandsEi(void* thisptr, 
 {
 	return ServerDLL::HOOKED_CBasePlayer__CheatImpulseCommands_Linux(thisptr, iImpulse);
 }
+
+extern "C" void __cdecl _ZN12CTriggerSave9SaveTouchEP11CBaseEntity(void* thisptr, void* pOther)
+{
+	return ServerDLL::HOOKED_CTriggerSave__SaveTouch_Linux(thisptr, pOther);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -172,6 +177,7 @@ void ServerDLL::Clear()
 	ORIG_CBasePlayer__CheatImpulseCommands = nullptr;
 	ORIG_CBasePlayer__CheatImpulseCommands_Linux = nullptr;
 	ORIG_CTriggerSave__SaveTouch = nullptr;
+	ORIG_CTriggerSave__SaveTouch_Linux = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -376,7 +382,6 @@ void ServerDLL::FindStuff()
 	auto fCPushable__Move = FindAsync(ORIG_CPushable__Move, patterns::server::CPushable__Move);
 	auto fCBasePlayer__TakeDamage = FindAsync(ORIG_CBasePlayer__TakeDamage, patterns::server::CBasePlayer__TakeDamage);
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
-	auto fCTriggerSave__SaveTouch = FindAsync(ORIG_CTriggerSave__SaveTouch, patterns::server::CTriggerSave__SaveTouch);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -616,16 +621,6 @@ void ServerDLL::FindStuff()
 		}
 	}
 
-	{
-		auto pattern = fCTriggerSave__SaveTouch.get();
-		if (ORIG_CTriggerSave__SaveTouch) {
-			EngineDevMsg("[server dll] Found CTriggerSave::SaveTouch at %p (using the %s pattern).\n", ORIG_CTriggerSave__SaveTouch, pattern->name());
-		}
-		else {
-			EngineDevWarning("[server dll] Could not find CTriggerSave::SaveTouch.\n");
-			EngineWarning("bxt_disable_autosave is not available.\n");
-		}
-	}
 
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
 	ORIG_AddToFullPack = reinterpret_cast<_AddToFullPack>(MemUtils::GetSymbolAddress(m_Handle, "_Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh"));
@@ -702,6 +697,20 @@ void ServerDLL::FindStuff()
 	} else {
 		EngineDevWarning("[server dll] Could not find CBaseDoor::DoorGoUp.\n");
 		EngineWarning("They Hunger Episode 2 automatic timer stopping is not available.\n");
+	}
+
+	ORIG_CTriggerSave__SaveTouch = reinterpret_cast<_CTriggerSave__SaveTouch>(MemUtils::GetSymbolAddress(m_Handle, "?SaveTouch@CTriggerSave@@QAEXPAVCBaseEntity@@@Z"));
+	if (ORIG_CTriggerSave__SaveTouch) {
+		EngineDevMsg("[server dll] Found CTriggerSave::SaveTouch at %p.\n", ORIG_CTriggerSave__SaveTouch);
+	}
+	else {
+		ORIG_CTriggerSave__SaveTouch_Linux = reinterpret_cast<_CTriggerSave__SaveTouch_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN12CTriggerSave9SaveTouchEP11CBaseEntity"));
+		if (ORIG_CTriggerSave__SaveTouch_Linux)
+			EngineDevMsg("[server dll] Found CTriggerSave::SaveTouch [Linux] at %p.\n", ORIG_CTriggerSave__SaveTouch_Linux);
+		else {
+			EngineDevWarning("[server dll] Could not find CTriggerSave::SaveTouch.\n");
+			EngineWarning("bxt_disable_autosave is not available.\n");
+		}
 	}
 
 	ORIG_CMultiManager__ManagerThink = reinterpret_cast<_CMultiManager__ManagerThink>(MemUtils::GetSymbolAddress(m_Handle, "?ManagerThink@CMultiManager@@QAEXXZ"));
@@ -1793,4 +1802,12 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CTriggerSave__SaveTouch, void*, thisptr,
 		return;
 
 	return ORIG_CTriggerSave__SaveTouch(thisptr, edx, pOther);
+}
+
+HOOK_DEF_2(ServerDLL, void, __cdecl, CTriggerSave__SaveTouch_Linux, void*, thisptr, void*, pOther)
+{
+	if (CVars::bxt_disable_autosave.GetBool())
+		return;
+
+	return ORIG_CTriggerSave__SaveTouch_Linux(thisptr, pOther);
 }

@@ -228,6 +228,12 @@ void ClientDLL::FindStuff()
 				case 5:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 5);
 					break;
+				case 6:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 24);
+					break;
+				case 7:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 6);
+					break;
 				}
 			}
 		});
@@ -267,6 +273,11 @@ void ClientDLL::FindStuff()
 			if (!addr) {
 				// client.dll that comes with TWHL Tower 2
 				static constexpr auto p = PATTERN("B8 ?? ?? ?? ?? 8B F8 F3 A5");
+				addr = MemUtils::find_pattern(pInitialize, 40, p);
+			}
+			if (!addr) {
+				// Halfquake Trilogy
+				static constexpr auto p = PATTERN("B8 ?? ?? ?? ?? 56 8B 75 08");
 				addr = MemUtils::find_pattern(pInitialize, 40, p);
 			}
 

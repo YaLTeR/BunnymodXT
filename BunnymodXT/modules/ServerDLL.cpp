@@ -104,7 +104,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CBasePlayer__TakeDamage, HOOKED_CBasePlayer__TakeDamage,
 			ORIG_CGraph__InitGraph, HOOKED_CGraph__InitGraph,
 			ORIG_CBasePlayer__CheatImpulseCommands, HOOKED_CBasePlayer__CheatImpulseCommands,
-			ORIG_CTriggerSave__SaveTouch, HOOKED_CTriggerSave__SaveTouch);
+			ORIG_CTriggerSave__SaveTouch, HOOKED_CTriggerSave__SaveTouch,
+			ORIG_CBaseMonster__Killed, HOOKED_CBaseMonster__Killed);
 	}
 }
 
@@ -135,7 +136,8 @@ void ServerDLL::Unhook()
 			ORIG_CBasePlayer__TakeDamage,
 			ORIG_CGraph__InitGraph,
 			ORIG_CBasePlayer__CheatImpulseCommands,
-			ORIG_CTriggerSave__SaveTouch);
+			ORIG_CTriggerSave__SaveTouch,
+			ORIG_CBaseMonster__Killed);
 	}
 
 	Clear();
@@ -161,6 +163,7 @@ void ServerDLL::Clear()
 	ORIG_COFGeneWorm__DyingThink_Linux = nullptr;
 	ORIG_CApache__DyingThink = nullptr;
 	ORIG_CBaseDoor__DoorGoUp = nullptr;
+	ORIG_CBaseMonster__Killed = nullptr;
 	ORIG_CMultiManager__ManagerThink = nullptr;
 	ORIG_FireTargets_Linux = nullptr;
 	ORIG_AddToFullPack = nullptr;
@@ -382,6 +385,7 @@ void ServerDLL::FindStuff()
 	auto fCPushable__Move = FindAsync(ORIG_CPushable__Move, patterns::server::CPushable__Move);
 	auto fCBasePlayer__TakeDamage = FindAsync(ORIG_CBasePlayer__TakeDamage, patterns::server::CBasePlayer__TakeDamage);
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
+	auto fCBaseMonster__Killed = FindAsync(ORIG_CBaseMonster__Killed, patterns::server::CBaseMonster__Killed);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -621,6 +625,16 @@ void ServerDLL::FindStuff()
 		}
 	}
 
+	{
+		auto pattern = fCBaseMonster__Killed.get();
+		if (ORIG_CBaseMonster__Killed) {
+			EngineDevMsg("[server dll] Found CBaseMonster::Killed at %p (using the %s pattern).\n", ORIG_CBaseMonster__Killed, pattern->name());
+		}
+		else {
+			EngineDevWarning("[server dll] Could not find CBaseMonster::Killed.\n");
+			EngineWarning("Wanted! and Crowbar of Time automatic timer stopping is not available.\n");
+		}
+	}
 
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
 	ORIG_AddToFullPack = reinterpret_cast<_AddToFullPack>(MemUtils::GetSymbolAddress(m_Handle, "_Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh"));
@@ -1311,6 +1325,25 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 	return ORIG_CBaseDoor__DoorGoUp(thisptr);
 }
 
+HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, int, edx, entvars_t*, pevAttacker, int, iGib)
+{
+	if (ppGlobals) {
+		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->classname) {
+			const char* classname = (*ppGlobals)->pStringBase + pev->classname;
+			const char* gameDir = "";
+			if (ClientDLL::GetInstance().pEngfuncs)
+				gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+			if ((!std::strcmp(classname, "monster_ramone") && !std::strcmp(gameDir, "wantedsp"))
+				|| (!std::strcmp(classname, "monster_gargantua") && !std::strcmp(gameDir, "tetsu0_cot"))) {
+				DoAutoStopTasks();
+			}
+		}
+	}
+
+	return ORIG_CBaseMonster__Killed(thisptr, edx, pevAttacker, iGib);
+}
+
 HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, thisptr, int, edx)
 {
 	if (ppGlobals) {
@@ -1364,6 +1397,7 @@ void ServerDLL::DoMultiManagerAutoStop(const char *targetname)
 		|| (!std::strcmp(targetname, "tele_in") && !std::strcmp(gameDir, "plague")) // Plague
 		|| (!std::strcmp(targetname, "exit_seq") && !std::strcmp(gameDir, "timeline2")) // Timeline 2
 		|| (!std::strcmp(targetname, "spawn_garg_sci_mm") && !std::strcmp(gameDir, "SteamLink")) // Uplink
+		|| (!std::strcmp(targetname, "fc_mm1") && !std::strcmp(gameDir, "hc")) // Hazardous Course 2
 		|| (!std::strcmp(targetname, "medicosprey") && !std::strcmp(gameDir, "visitors"))) { // Visitors
 		DoAutoStopTasks();
 	}

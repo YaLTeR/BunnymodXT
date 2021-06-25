@@ -1255,44 +1255,28 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 
 HOOK_DEF_2(ServerDLL, void, __fastcall, CNihilanth__DyingThink, void*, thisptr, int, edx)
 {
-	if (CVars::bxt_timer_autostop.GetBool())
-		CustomHud::SetCountingTime(false);
-	Interprocess::WriteGameEnd(CustomHud::GetTime());
-	CustomHud::SaveTimeToDemo();
-	RuntimeData::Add(RuntimeData::GameEndMarker {});
+	DoAutoStopTasks();
 
 	return ORIG_CNihilanth__DyingThink(thisptr, edx);
 }
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, CNihilanth__DyingThink_Linux, void*, thisptr)
 {
-	if (CVars::bxt_timer_autostop.GetBool())
-		CustomHud::SetCountingTime(false);
-	Interprocess::WriteGameEnd(CustomHud::GetTime());
-	CustomHud::SaveTimeToDemo();
-	RuntimeData::Add(RuntimeData::GameEndMarker {});
+	DoAutoStopTasks();
 
 	return ORIG_CNihilanth__DyingThink_Linux(thisptr);
 }
 
 HOOK_DEF_2(ServerDLL, void, __fastcall, COFGeneWorm__DyingThink, void*, thisptr, int, edx)
 {
-	if (CVars::bxt_timer_autostop.GetBool())
-		CustomHud::SetCountingTime(false);
-	Interprocess::WriteGameEnd(CustomHud::GetTime());
-	CustomHud::SaveTimeToDemo();
-	RuntimeData::Add(RuntimeData::GameEndMarker {});
+	DoAutoStopTasks();
 
 	return ORIG_COFGeneWorm__DyingThink(thisptr, edx);
 }
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, COFGeneWorm__DyingThink_Linux, void*, thisptr)
 {
-	if (CVars::bxt_timer_autostop.GetBool())
-		CustomHud::SetCountingTime(false);
-	Interprocess::WriteGameEnd(CustomHud::GetTime());
-	CustomHud::SaveTimeToDemo();
-	RuntimeData::Add(RuntimeData::GameEndMarker {});
+	DoAutoStopTasks();
 
 	return ORIG_COFGeneWorm__DyingThink_Linux(thisptr);
 }
@@ -1304,11 +1288,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 		if (pev && pev->targetname) {
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
 			if (!std::strcmp(targetname, "sheriffs_chppr")) {
-				if (CVars::bxt_timer_autostop.GetBool())
-					CustomHud::SetCountingTime(false);
-				Interprocess::WriteGameEnd(CustomHud::GetTime());
-				CustomHud::SaveTimeToDemo();
-				RuntimeData::Add(RuntimeData::GameEndMarker {});
+				DoAutoStopTasks();
 			}
 		}
 	}
@@ -1323,11 +1303,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 		if (pev && pev->target) {
 			const char *target= (*ppGlobals)->pStringBase + pev->target;
 			if (!std::strcmp(target, "oil_spouts1_mm")) {
-				if (CVars::bxt_timer_autostop.GetBool())
-					CustomHud::SetCountingTime(false);
-				Interprocess::WriteGameEnd(CustomHud::GetTime());
-				CustomHud::SaveTimeToDemo();
-				RuntimeData::Add(RuntimeData::GameEndMarker {});
+				DoAutoStopTasks();
 			}
 		}
 	}
@@ -1389,12 +1365,17 @@ void ServerDLL::DoMultiManagerAutoStop(const char *targetname)
 		|| (!std::strcmp(targetname, "exit_seq") && !std::strcmp(gameDir, "timeline2")) // Timeline 2
 		|| (!std::strcmp(targetname, "spawn_garg_sci_mm") && !std::strcmp(gameDir, "SteamLink")) // Uplink
 		|| (!std::strcmp(targetname, "medicosprey") && !std::strcmp(gameDir, "visitors"))) { // Visitors
-		if (CVars::bxt_timer_autostop.GetBool())
-			CustomHud::SetCountingTime(false);
-		Interprocess::WriteGameEnd(CustomHud::GetTime());
-		CustomHud::SaveTimeToDemo();
-		RuntimeData::Add(RuntimeData::GameEndMarker{});
+		DoAutoStopTasks();
 	}
+}
+
+void ServerDLL::DoAutoStopTasks()
+{
+	if (CVars::bxt_timer_autostop.GetBool())
+		CustomHud::SetCountingTime(false);
+	Interprocess::WriteGameEnd(CustomHud::GetTime());
+	CustomHud::SaveTimeToDemo();
+	RuntimeData::Add(RuntimeData::GameEndMarker{});
 }
 
 void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a)

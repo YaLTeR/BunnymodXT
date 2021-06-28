@@ -155,6 +155,7 @@ namespace CVars
 	extern CVarWrapper bxt_autojump_prediction;
 	extern CVarWrapper bxt_bhopcap_prediction;
 	extern CVarWrapper bxt_show_nodes;
+	extern CVarWrapper bxt_show_displacer_earth_targets;
 	extern CVarWrapper bxt_show_custom_triggers;
 	extern CVarWrapper bxt_wallhack;
 	extern CVarWrapper bxt_wallhack_additive;

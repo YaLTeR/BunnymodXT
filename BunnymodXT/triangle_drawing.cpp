@@ -24,6 +24,19 @@ namespace TriangleDrawing
 		}
 	}
 
+	static void DrawDisplacerTargets(triangleapi_s* pTriAPI)
+	{
+		if (!CVars::bxt_show_displacer_earth_targets.GetBool())
+			return;
+
+		pTriAPI->RenderMode(kRenderTransAdd);
+		pTriAPI->CullFace(TRI_NONE);
+		pTriAPI->Color4f(0.0f, 0.627f, 0.0f, 1.0f);
+		for (const Vector* position : ServerDLL::GetInstance().GetDisplacerTargets()) {
+			TriangleUtils::DrawPyramid(pTriAPI, *position, 5, 15);
+		}
+	}
+
 	// From util.cpp of HLSDK.
 	static Vector UTIL_ClampVectorToBox(const Vector &input, const Vector &clampSize)
 	{
@@ -1094,6 +1107,7 @@ namespace TriangleDrawing
 			return;
 
 		DrawNodes(pTriAPI);
+		DrawDisplacerTargets(pTriAPI);
 		DrawUseableEntities(pTriAPI);
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);

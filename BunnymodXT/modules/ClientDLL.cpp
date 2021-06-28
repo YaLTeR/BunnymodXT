@@ -450,7 +450,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (ORIG_PM_PreventMegaBunnyJumping)
 		REG(bxt_bhopcap_prediction);
 
-	if (ORIG_HUD_DrawTransparentTriangles) {
+	if (ORIG_HUD_DrawTransparentTriangles && pEngfuncs) {
 		REG(bxt_show_triggers);
 		REG(bxt_show_custom_triggers);
 		REG(bxt_show_nodes);
@@ -739,14 +739,16 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_DrawTransparentTriangles)
 {
 	ORIG_HUD_DrawTransparentTriangles();
 
-	glDisable(GL_TEXTURE_2D);
+	if (pEngfuncs) {
+		glDisable(GL_TEXTURE_2D);
 
-	TriangleDrawing::Draw();
+		TriangleDrawing::Draw();
 
-	glEnable(GL_TEXTURE_2D);
+		glEnable(GL_TEXTURE_2D);
 
-	// This is required for the WON DLLs.
-	pEngfuncs->pTriAPI->RenderMode(kRenderNormal);
+		// This is required for the WON DLLs.
+		pEngfuncs->pTriAPI->RenderMode(kRenderNormal);
+	}
 }
 
 HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_Key_Event, int, down, int, keynum, const char*, pszCurrentBinding)

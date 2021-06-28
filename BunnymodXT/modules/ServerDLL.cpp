@@ -1836,6 +1836,22 @@ std::vector<const Vector *> ServerDLL::GetNodePositions() const
 	return positions;
 }
 
+std::vector<const Vector *> ServerDLL::GetDisplacerTargets() const
+{
+	std::vector<const Vector *> targets;
+	edict_t *pent = nullptr;
+
+	for (;;) {
+		pent = pEngfuncs->pfnFindEntityByString(pent, "classname", "info_displacer_earth_target");
+		if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent))
+			break;
+
+		targets.push_back(&pent->v.origin);
+	}
+
+	return targets;
+}
+
 bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres, int &sequence, float &frame) const
 {
 	if (offNihilanthLevel == 0

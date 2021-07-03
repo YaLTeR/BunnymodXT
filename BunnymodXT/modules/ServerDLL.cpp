@@ -344,6 +344,8 @@ void ServerDLL::FindStuff()
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x604;
 				offm_iClientFOV = 0x4E0;
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
 				break;
 			case 2:  // HazardousCourse2
 				maxAmmoSlots = MAX_AMMO_SLOTS;
@@ -354,6 +356,7 @@ void ServerDLL::FindStuff()
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x53C;
 				offm_iClientFOV = 0x47C;
+				offFuncCenter = 0xCC;
 				break;
 			case 4:  // HL-SteamPipe-8308
 				maxAmmoSlots = MAX_AMMO_SLOTS;
@@ -365,12 +368,16 @@ void ServerDLL::FindStuff()
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x5F4;
 				offm_iClientFOV = 0x548;
+				offFuncIsPlayer = 0xD4;
+				offFuncCenter = 0x100;
 				offFuncObjectCaps = 0x44;
 				break;
 			case 7: // Echoes
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x5F4;
 				offm_iClientFOV = 0x548;
+				offFuncIsPlayer = 0xCC;
+				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
 				break;
 			case 8: // Decay
@@ -387,7 +394,28 @@ void ServerDLL::FindStuff()
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x62C;
 				offm_iClientFOV = 0x584;
+				offFuncIsPlayer = 0xD0;
+				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				break;
+			case 11: // OP4-8684
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x608;
+				offm_iClientFOV = 0x4E4;
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
+				break;
+			case 12: // HL-WON
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x50C;
+				offm_iClientFOV = 0x464;
+				break;
+			case 13: // OP4-WON
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x5C0;
+				offm_iClientFOV = 0x4A4;
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
 				break;
 			default:
 				assert(false);
@@ -412,55 +440,8 @@ void ServerDLL::FindStuff()
 	auto fPM_FlyMove = FindFunctionAsync(ORIG_PM_FlyMove, "PM_FlyMove", patterns::shared::PM_FlyMove);
 	auto fPM_AddToTouched = FindFunctionAsync(ORIG_PM_AddToTouched, "PM_AddToTouched", patterns::shared::PM_AddToTouched);
 	auto fPM_Ladder = FindFunctionAsync(ORIG_PM_Ladder, "PM_Ladder", patterns::shared::PM_Ladder);
-
-	auto fCPushable__Move = FindAsync(
-		ORIG_CPushable__Move,
-		patterns::server::CPushable__Move,
-		[&](auto pattern) {
-			switch (pattern - patterns::server::CPushable__Move.cbegin()) {
-			case 0: // HL-SteamPipe
-			case 1: // AoMDC
-				offFuncIsPlayer = 0x9C;
-				break;
-			case 2: // TWHL-Tower-2
-			case 3: // Halfquake Trilogy
-				offFuncIsPlayer = 0xD4;
-				break;
-			case 4: // Echoes
-				offFuncIsPlayer = 0xCC;
-				break;
-			case 5: // PARANOIA
-				offFuncIsPlayer = 0xD0;
-				break;
-			default:
-				assert(false);
-			}
-		});
-
-	auto fCBasePlayer__TakeDamage = FindAsync(
-		ORIG_CBasePlayer__TakeDamage,
-		patterns::server::CBasePlayer__TakeDamage,
-		[&](auto pattern) {
-			switch (pattern - patterns::server::CBasePlayer__TakeDamage.cbegin()) {
-			case 0: // HL-SteamPipe
-			case 1: // AoMDC
-				offFuncCenter = 0xC8;
-				break;
-			case 2:
-			case 3:
-				offFuncCenter = 0x100;
-				break;
-			case 4:
-				offFuncCenter = 0xF8;
-				break;
-			case 5:
-				offFuncCenter = 0xFC;
-				break;
-			default:
-				assert(false);
-			}
-		});
-
+	auto fCPushable__Move = FindAsync(ORIG_CPushable__Move, patterns::server::CPushable__Move);
+	auto fCBasePlayer__TakeDamage = FindAsync(ORIG_CBasePlayer__TakeDamage, patterns::server::CBasePlayer__TakeDamage);
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
 	auto fCBaseMonster__Killed = FindAsync(ORIG_CBaseMonster__Killed, patterns::server::CBaseMonster__Killed);
 

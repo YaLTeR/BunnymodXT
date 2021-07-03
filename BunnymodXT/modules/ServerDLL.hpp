@@ -122,8 +122,8 @@ protected:
 	void *pGlobalState;
 	globalvars_t **ppGlobals;
 
-	ptrdiff_t offFuncIsPlayer;
-	ptrdiff_t offFuncCenter;
+	ptrdiff_t offFuncIsPlayer = 0x9C;
+	ptrdiff_t offFuncCenter = 0xC8;
 	ptrdiff_t offFuncObjectCaps = 0x14;
 
 	ptrdiff_t offNihilanthLevel;

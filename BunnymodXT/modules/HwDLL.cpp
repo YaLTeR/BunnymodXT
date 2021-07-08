@@ -2175,6 +2175,16 @@ struct HwDLL::Cmd_BXT_Interprocess_Reset
 	}
 };
 
+struct HwDLL::Cmd_BXT_Interprocess_Stop
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		Interprocess::Shutdown();
+	}
+};
+
 struct HwDLL::Cmd_BXT_Map
 {
 	USAGE("Usage: _bxt_map <mapname>\n");
@@ -2839,6 +2849,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Map, Handler<const char *>>("_bxt_map");
 	wrapper::Add<Cmd_BXT_Load, Handler<const char *>>("_bxt_load");
 	wrapper::Add<Cmd_BXT_Interprocess_Reset, Handler<>>("_bxt_interprocess_reset");
+	wrapper::Add<Cmd_BXT_Interprocess_Stop, Handler<>>("_bxt_interprocess_stop");
 	wrapper::Add<Cmd_BXT_Reset_Frametime_Remainder, Handler<>>("_bxt_reset_frametime_remainder");
 	wrapper::Add<Cmd_BXT_TASLog, Handler<int>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");

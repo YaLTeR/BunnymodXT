@@ -343,6 +343,7 @@ protected:
 	struct Cmd_BXT_Record;
 	struct Cmd_BXT_AutoRecord;
 	struct Cmd_BXT_Interprocess_Reset;
+	struct Cmd_BXT_Interprocess_Stop;
 	struct Cmd_BXT_Map;
 	struct Cmd_BXT_Load;
 	struct Cmd_BXT_Reset_Frametime_Remainder;

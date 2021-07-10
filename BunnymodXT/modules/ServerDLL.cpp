@@ -190,6 +190,8 @@ void ServerDLL::Clear()
 	offAngles = 0;
 	offCmd = 0;
 	offBhopcap = 0;
+	pBhopcapWindows = 0;
+	pCZDS_Velocity_Byte = 0;
 	offm_iClientFOV = 0;
 	offm_rgAmmoLast = 0;
 	maxAmmoSlots = 0;
@@ -440,6 +442,19 @@ void ServerDLL::FindStuff()
 			}
 		});
 
+	auto fPM_Jump_Bhopcap_Windows = FindAsync(
+		pBhopcapWindows,
+		patterns::shared::Bhopcap_Windows,
+		[&](auto pattern) {
+			switch (pattern - patterns::shared::Bhopcap_Windows.cbegin()) {
+			case 0: // DSM-Demo-1
+				pBhopcapWindows += 36;
+				break;
+			default:
+				assert(false);
+			}
+		});
+
 	auto fPM_WalkMove = FindFunctionAsync(ORIG_PM_WalkMove, "PM_WalkMove", patterns::shared::PM_WalkMove);
 	auto fPM_FlyMove = FindFunctionAsync(ORIG_PM_FlyMove, "PM_FlyMove", patterns::shared::PM_FlyMove);
 	auto fPM_AddToTouched = FindFunctionAsync(ORIG_PM_AddToTouched, "PM_AddToTouched", patterns::shared::PM_AddToTouched);
@@ -571,6 +586,7 @@ void ServerDLL::FindStuff()
 
 	{
 		auto pattern = fPM_Jump.get();
+		auto pattern2 = fPM_Jump_Bhopcap_Windows.get();
 		if (ORIG_PM_Jump) {
 			if (pattern == patterns::shared::PM_Jump.cend())
 				EngineDevMsg("[server dll] Found PM_Jump at %p.\n", ORIG_PM_Jump);
@@ -578,6 +594,8 @@ void ServerDLL::FindStuff()
 				EngineDevMsg("[server dll] Found PM_Jump at %p (using the %s pattern).\n", ORIG_PM_Jump, pattern->name());
 			if (offBhopcap)
 				EngineDevMsg("[server dll] Found the bhopcap pattern at %p.\n", reinterpret_cast<void*>(offBhopcap + reinterpret_cast<uintptr_t>(ORIG_PM_Jump) - 27));
+			if (pBhopcapWindows)
+				EngineDevMsg("[server dll] Found bhopcap jump instruction at %p (using the %s pattern).\n", pBhopcapWindows, pattern2->name());
 		} else {
 			EngineDevWarning("[server dll] Could not find PM_Jump.\n");
 			EngineWarning("Autojump is not available.\n");
@@ -1047,7 +1065,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	REG(bxt_timer_autostop);
 	if (ORIG_PM_Jump)
 		REG(bxt_autojump);
-	if (!ORIG_PM_PreventMegaBunnyJumping)
+	if (!ORIG_PM_PreventMegaBunnyJumping && !pBhopcapWindows)
 		CVars::bxt_bhopcap.Set("0");
 	if (ORIG_AddToFullPack) {
 		REG(bxt_show_hidden_entities);
@@ -1117,6 +1135,9 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
 		if (*reinterpret_cast<byte*>(pCZDS_Velocity_Byte) == !CVars::bxt_bhopcap.GetBool())
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCZDS_Velocity_Byte), 1, reinterpret_cast<const byte*>(CVars::bxt_bhopcap.GetBool() ? "\x01" : "\x00"));
 	}
+
+	if (pBhopcapWindows)
+		MemUtils::ReplaceBytes(reinterpret_cast<void*>(pBhopcapWindows), 1, reinterpret_cast<const byte*>(CVars::bxt_bhopcap.GetBool() ? "\x83" : "\x82"));
 
 	ORIG_PM_Jump();
 

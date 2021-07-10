@@ -169,6 +169,7 @@ void ClientDLL::Clear()
 	offOldbuttons = 0;
 	offOnground = 0;
 	offBhopcap = 0;
+	pBhopcapWindows = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	pEngfuncs = nullptr;
 	cantJumpNextTime = false;
@@ -239,6 +240,19 @@ void ClientDLL::FindStuff()
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 8);
 					break;
 				}
+			}
+		});
+
+	auto fPM_Jump_Bhopcap_Windows = FindAsync(
+		pBhopcapWindows,
+		patterns::shared::Bhopcap_Windows,
+		[&](auto pattern) {
+			switch (pattern - patterns::shared::Bhopcap_Windows.cbegin()) {
+			case 0: // DSM-Demo-1
+				pBhopcapWindows += 36;
+				break;
+			default:
+				assert(false);
 			}
 		});
 
@@ -396,6 +410,7 @@ void ClientDLL::FindStuff()
 
 	{
 		auto pattern = fPM_Jump.get();
+		auto pattern2 = fPM_Jump_Bhopcap_Windows.get();
 		if (ORIG_PM_Jump) {
 			if (pattern == patterns::shared::PM_Jump.cend())
 				EngineDevMsg("[client dll] Found PM_Jump at %p.\n", ORIG_PM_Jump);
@@ -403,6 +418,8 @@ void ClientDLL::FindStuff()
 				EngineDevMsg("[client dll] Found PM_Jump at %p (using the %s pattern).\n", ORIG_PM_Jump, pattern->name());
 			if (offBhopcap)
 				EngineDevMsg("[client dll] Found the bhopcap pattern at %p.\n", reinterpret_cast<void*>(offBhopcap + reinterpret_cast<uintptr_t>(ORIG_PM_Jump)-27));
+			if (pBhopcapWindows)
+				EngineDevMsg("[client dll] Found bhopcap jump instruction at %p (using the %s pattern).\n", pBhopcapWindows, pattern2->name());
 		} else {
 			EngineDevWarning("[client dll] Could not find PM_Jump.\n");
 			EngineWarning("Autojump prediction is not available.\n");
@@ -456,7 +473,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (ORIG_PM_Jump)
 		REG(bxt_autojump_prediction);
 
-	if (ORIG_PM_PreventMegaBunnyJumping)
+	if (ORIG_PM_PreventMegaBunnyJumping || pBhopcapWindows)
 		REG(bxt_bhopcap_prediction);
 
 	if (ORIG_HUD_DrawTransparentTriangles && pEngfuncs) {
@@ -566,6 +583,9 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
 				&& *reinterpret_cast<byte*>(pPMJump + offBhopcap + 1) == 0x82)
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pPMJump + offBhopcap), 6, reinterpret_cast<const byte*>("\x90\x90\x90\x90\x90\x90"));
 	}
+
+	if (pBhopcapWindows)
+		MemUtils::ReplaceBytes(reinterpret_cast<void*>(pBhopcapWindows), 1, reinterpret_cast<const byte*>(CVars::bxt_bhopcap_prediction.GetBool() ? "\x83" : "\x82"));
 
 	ORIG_PM_Jump();
 

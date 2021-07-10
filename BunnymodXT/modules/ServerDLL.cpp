@@ -322,6 +322,10 @@ void ServerDLL::FindStuff()
 				case 7:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 6);
 					break;
+				case 8:
+				case 9:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 8);
+					break;
 				}
 			}
 		});
@@ -494,6 +498,11 @@ void ServerDLL::FindStuff()
 				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t*>(pMiddleOfCNihilanth__NextActivity - 0x1ab);
 				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t*>(pMiddleOfCNihilanth__NextActivity + 0x2b);
 				break;
+			case 3: // Half-Payne
+				offNihilanthLevel = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity + 0x44);
+				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity - 0x1a1);
+				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity + 0x2b);
+				break;
 			default:
 				assert(false);
 			}
@@ -510,6 +519,9 @@ void ServerDLL::FindStuff()
 				break;
 			case 1: // HL-SteamPipe
 				offNihilanthSpheres = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__EmitSphere + 0x15);
+				break;
+			case 2: // Half-Payne
+				offNihilanthSpheres = *reinterpret_cast<ptrdiff_t *>(pCNihilanth__EmitSphere + 0x1a);
 				break;
 			default:
 				assert(false);
@@ -914,6 +926,7 @@ void ServerDLL::FindStuff()
 			bool twhltower2 = false;
 			bool hqtrilogy = false;
 			bool paranoia = false;
+			bool halfpayne = false;
 			if (!addr)
 			{
 				// Big Lolly version: push eax; push offset dword; call memcpy
@@ -949,7 +962,14 @@ void ServerDLL::FindStuff()
 									// PARANOIA
 									static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 8B 45 0C A3");
 									addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-									paranoia = true;
+									if (addr) {
+										paranoia = true;
+									} else {
+										// Half-Payne
+										static constexpr auto p = PATTERN("BF ?? ?? ?? ?? A3 ?? ?? ?? ?? F3 A5 5F");
+										addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
+										halfpayne = true;
+									}
 								}
 							}
 						}
@@ -988,6 +1008,11 @@ void ServerDLL::FindStuff()
 				{
 					pEngfuncs = *reinterpret_cast<enginefuncs_t **>(addr + 1);
 					ppGlobals = *reinterpret_cast<globalvars_t ***>(addr + 11);
+				}
+				else if (halfpayne)
+				{
+					pEngfuncs = *reinterpret_cast<enginefuncs_t **>(addr + 1);
+					ppGlobals = *reinterpret_cast<globalvars_t ***>(addr + 6);
 				}
 				else
 				{

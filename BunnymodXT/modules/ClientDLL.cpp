@@ -234,6 +234,10 @@ void ClientDLL::FindStuff()
 				case 7:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 6);
 					break;
+				case 8:
+				case 9:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 8);
+					break;
 				}
 			}
 		});
@@ -279,6 +283,11 @@ void ClientDLL::FindStuff()
 				// Halfquake Trilogy
 				static constexpr auto p = PATTERN("B8 ?? ?? ?? ?? 56 8B 75 08");
 				addr = MemUtils::find_pattern(pInitialize, 40, p);
+			}
+			if (!addr) {
+				// Half-Payne
+				static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 74 12");
+				addr = MemUtils::find_pattern(pInitialize, 50, p);
 			}
 
 			if (addr)

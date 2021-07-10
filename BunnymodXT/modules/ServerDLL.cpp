@@ -1066,7 +1066,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_PM_Jump)
 		REG(bxt_autojump);
 	if (!ORIG_PM_PreventMegaBunnyJumping && !pBhopcapWindows)
-		CVars::bxt_bhopcap.Set("0");
+		HwDLL::GetInstance().SetCVarValue(CVars::bxt_bhopcap, "0");
 	if (ORIG_AddToFullPack) {
 		REG(bxt_show_hidden_entities);
 		REG(bxt_show_triggers_legacy);

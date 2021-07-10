@@ -135,6 +135,7 @@ public:
 
 	void RegisterCVar(CVarWrapper& cvar);
 	cvar_t* FindCVar(const char* name);
+	void SetCVarValue(CVarWrapper& cvar, const char *value);
 
 	void SetPlayerOrigin(float origin[3]);
 	void SetPlayerVelocity(float velocity[3]);

@@ -1317,6 +1317,17 @@ void HwDLL::RegisterCVar(CVarWrapper& cvar)
 	cvar.MarkAsStale();
 }
 
+void HwDLL::SetCVarValue(CVarWrapper& cvar, const char *value)
+{
+	if (!ORIG_Cvar_FindVar || !ORIG_Cvar_DirectSet)
+		return;
+
+	if (ORIG_Cvar_FindVar(cvar.GetPointer()->name)) {
+		ORIG_Cvar_DirectSet(cvar.GetPointer(), value);
+		cvar.MarkAsStale();
+	}
+}
+
 cvar_t* HwDLL::FindCVar(const char* name)
 {
 	if (!ORIG_Cvar_FindVar)

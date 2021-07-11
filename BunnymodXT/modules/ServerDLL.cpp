@@ -96,6 +96,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_COFGeneWorm__DyingThink, HOOKED_COFGeneWorm__DyingThink,
 			ORIG_CApache__DyingThink, HOOKED_CApache__DyingThink,
 			ORIG_CBaseDoor__DoorGoUp, HOOKED_CBaseDoor__DoorGoUp,
+			ORIG_CBaseDoor__DoorHitTop, HOOKED_CBaseDoor__DoorHitTop,
 			ORIG_CMultiManager__ManagerThink, HOOKED_CMultiManager__ManagerThink,
 			ORIG_AddToFullPack, HOOKED_AddToFullPack,
 			ORIG_CTriggerVolume__Spawn, HOOKED_CTriggerVolume__Spawn,
@@ -128,6 +129,7 @@ void ServerDLL::Unhook()
 			ORIG_COFGeneWorm__DyingThink,
 			ORIG_CApache__DyingThink,
 			ORIG_CBaseDoor__DoorGoUp,
+			ORIG_CBaseDoor__DoorHitTop,
 			ORIG_CMultiManager__ManagerThink,
 			ORIG_AddToFullPack,
 			ORIG_CTriggerVolume__Spawn,
@@ -163,6 +165,7 @@ void ServerDLL::Clear()
 	ORIG_COFGeneWorm__DyingThink_Linux = nullptr;
 	ORIG_CApache__DyingThink = nullptr;
 	ORIG_CBaseDoor__DoorGoUp = nullptr;
+	ORIG_CBaseDoor__DoorHitTop = nullptr;
 	ORIG_CBaseMonster__Killed = nullptr;
 	ORIG_CMultiManager__ManagerThink = nullptr;
 	ORIG_FireTargets_Linux = nullptr;
@@ -181,6 +184,7 @@ void ServerDLL::Clear()
 	ORIG_CBasePlayer__CheatImpulseCommands_Linux = nullptr;
 	ORIG_CTriggerSave__SaveTouch = nullptr;
 	ORIG_CTriggerSave__SaveTouch_Linux = nullptr;
+	ORIG_CChangeLevel__InTransitionVolume = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -444,6 +448,7 @@ void ServerDLL::FindStuff()
 	auto fCBasePlayer__TakeDamage = FindAsync(ORIG_CBasePlayer__TakeDamage, patterns::server::CBasePlayer__TakeDamage);
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
 	auto fCBaseMonster__Killed = FindAsync(ORIG_CBaseMonster__Killed, patterns::server::CBaseMonster__Killed);
+	auto fCChangeLevel__InTransitionVolume = FindAsync(ORIG_CChangeLevel__InTransitionVolume, patterns::server::CChangeLevel__InTransitionVolume);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -695,6 +700,18 @@ void ServerDLL::FindStuff()
 		else {
 			EngineDevWarning("[server dll] Could not find CBaseMonster::Killed.\n");
 			EngineWarning("Wanted! and Crowbar of Time automatic timer stopping is not available.\n");
+		}
+	}
+
+	ORIG_CBaseDoor__DoorHitTop = reinterpret_cast<_CBaseDoor__DoorHitTop>(MemUtils::GetSymbolAddress(m_Handle, "?DoorHitTop@CBaseDoor@@QAEXXZ"));
+	{
+		auto pattern = fCChangeLevel__InTransitionVolume.get();
+		if (ORIG_CBaseDoor__DoorHitTop && ORIG_CChangeLevel__InTransitionVolume) {
+			EngineDevMsg("[server dll] Found CBaseDoor::DoorHitTop at %p.\n", ORIG_CBaseDoor__DoorHitTop);
+			EngineDevMsg("[server dll] Found CChangeLevel::InTransitionVolume at %p (using the %s pattern).\n", ORIG_CChangeLevel__InTransitionVolume, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find CBaseDoor::DoorHitTop and CChangeLevel::InTransitionVolume.\n");
+			EngineWarning("The Xeno Project automatic timer stopping is not available.\n");
 		}
 	}
 
@@ -1411,6 +1428,29 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 	}
 
 	return ORIG_CBaseDoor__DoorGoUp(thisptr);
+}
+
+HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
+{
+	if (ppGlobals && pEngfuncs) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		edict_t *pPlayer = pEngfuncs->pfnPEntityOfEntIndex(1);
+		if (pev && pev->targetname && pPlayer) {
+			void *classPtr = pPlayer->pvPrivateData;
+			char *pVolumeName = "lm15";
+			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
+			const char *gameDir = "";
+			
+			if (ClientDLL::GetInstance().pEngfuncs)
+				gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+
+			if (!std::strcmp(targetname, "rocket_dr") && !std::strcmp(gameDir, "lm_txp")
+				&& ORIG_CChangeLevel__InTransitionVolume(classPtr, pVolumeName))
+				DoAutoStopTasks();
+		}
+	}
+
+	return ORIG_CBaseDoor__DoorHitTop(thisptr);
 }
 
 HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, int, edx, entvars_t*, pevAttacker, int, iGib)

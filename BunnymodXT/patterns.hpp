@@ -470,6 +470,11 @@ namespace patterns
 			"Crowbar of Time",
 			"56 8B F1 8B 86 ?? ?? ?? ?? 84 C0 79 1B 8B 44 24 0C 50 E8 ?? ?? ?? ?? 85 C0"
 		);
+
+		PATTERNS(CChangeLevel__InTransitionVolume,
+			"HL-SteamPipe",
+			"53 55 56 8B 74 24 ?? 57 8B CE 8B 06 FF 50"
+		);
 	}
 
 	namespace shared

@@ -23,6 +23,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, COFGeneWorm__DyingThink_Linux, void* thisptr)
 	HOOK_DECL(void, __fastcall, CApache__DyingThink, void* thisptr)
 	HOOK_DECL(void, __fastcall, CBaseDoor__DoorGoUp, void* thisptr)
+	HOOK_DECL(void, __fastcall, CBaseDoor__DoorHitTop, void* thisptr)
 	HOOK_DECL(void, __fastcall, CBaseMonster__Killed, void* thisptr, int edx, entvars_t* pevAttacker, int iGib)
 	HOOK_DECL(void, __fastcall, CMultiManager__ManagerThink, void* thisptr, int edx)
 	HOOK_DECL(void, __cdecl, FireTargets_Linux, char* targetName, void* pActivator, void* pCaller, int useType, float value)
@@ -88,6 +89,8 @@ protected:
 	_CBasePlayer__ForceClientDllUpdate_Linux ORIG_CBasePlayer__ForceClientDllUpdate_Linux;
 	typedef void*(__cdecl *_PM_Ladder)();
 	_PM_Ladder ORIG_PM_Ladder;
+	typedef int(__cdecl *_CChangeLevel__InTransitionVolume)(void *pEntity, char *pVolumeName);
+	_CChangeLevel__InTransitionVolume ORIG_CChangeLevel__InTransitionVolume;
 
 	typedef bool (__fastcall *_IsPlayer)(void *thisptr);
 	typedef void (__fastcall *_Center)(void *thisptr, int edx, Vector *center);

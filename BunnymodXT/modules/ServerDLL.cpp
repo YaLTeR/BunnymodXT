@@ -742,6 +742,8 @@ void ServerDLL::FindStuff()
 		} else {
 			EngineDevWarning("[server dll] Could not find CBaseDoor::DoorHitTop and CChangeLevel::InTransitionVolume.\n");
 			EngineWarning("The Xeno Project automatic timer stopping is not available.\n");
+			ORIG_CBaseDoor__DoorHitTop = nullptr;
+			ORIG_CChangeLevel__InTransitionVolume = nullptr;
 		}
 	}
 

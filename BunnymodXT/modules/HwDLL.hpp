@@ -404,6 +404,7 @@ protected:
 	ptrdiff_t offWorldmodel;
 	ptrdiff_t offModels;
 	ptrdiff_t offNumEdicts;
+	ptrdiff_t offMaxEdicts;
 	ptrdiff_t offEdicts;
 	svs_t *svs;
 	ptrdiff_t offEdict;

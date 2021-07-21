@@ -384,6 +384,7 @@ void HwDLL::Clear()
 	offWorldmodel = 0;
 	offModels = 0;
 	offNumEdicts = 0;
+	offMaxEdicts = 0;
 	offEdicts = 0;
 	svs = nullptr;
 	offEdict = 0;
@@ -508,6 +509,7 @@ void HwDLL::FindStuff()
 			offWorldmodel = 296;
 			offModels = 0x30948;
 			offNumEdicts = 0x3bc50;
+			offMaxEdicts = 0x3bc54;
 			offEdicts = 0x3bc58;
 		} else
 			EngineDevWarning("[hw dll] Could not find sv.\n");
@@ -902,6 +904,7 @@ void HwDLL::FindStuff()
 				offWorldmodel = 304;
 				offModels = 0x30950;
 				offNumEdicts = 0x3bc58;
+				offMaxEdicts = 0x3bc5c;
 				offEdicts = 0x3bc60;
 				ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
 					*reinterpret_cast<ptrdiff_t*>(f + 33)
@@ -4066,6 +4069,11 @@ void HwDLL::SaveInitialDataToDemo()
 		cvar_values.emplace(cvar->name, cvar->string);
 
 	RuntimeData::Add(std::move(cvar_values));
+
+	if (sv && offMaxEdicts) {
+		const int maxEdicts = *reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(sv) + offMaxEdicts);
+		RuntimeData::Add(RuntimeData::Edicts{ maxEdicts });
+	}
 
 	// Initial BXT timer value.
 	CustomHud::SaveTimeToDemo();

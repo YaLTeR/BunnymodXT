@@ -48,6 +48,10 @@ namespace RuntimeData
 		std::string command;
 	};
 
+	struct Edicts {
+		int edicts;
+	};
+
 	using Data = boost::variant<VersionInfo,
 	                            CVarValues,
 	                            Time,
@@ -57,7 +61,8 @@ namespace RuntimeData
 	                            CommandExecution,
 	                            GameEndMarker,
 	                            LoadedModules,
-				    CustomTriggerCommand>;
+	                            CustomTriggerCommand,
+	                            Edicts>;
 
 	void Add(Data data);
 	void Clear();

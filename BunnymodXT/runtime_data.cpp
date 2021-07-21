@@ -39,6 +39,7 @@ namespace RuntimeData
 			GAME_END_MARKER,
 			LOADED_MODULES,
 			CUSTOM_TRIGGER_COMMAND,
+			EDICTS,
 		};
 
 		// Encrypting filter.
@@ -285,6 +286,12 @@ namespace RuntimeData
 				archive(c.corner_max.y);
 				archive(c.corner_max.z);
 				archive(c.command);
+			}
+
+			void operator()(const Edicts& e) const {
+				archive(RuntimeDataType::EDICTS);
+
+				archive(e.edicts);
 			}
 
 		private:

@@ -680,7 +680,7 @@ void ServerDLL::FindStuff()
 				offm_cNodes = 0x18;
 				size_CNode = 0x58;
 
-				EngineDevMsg("[server dll] Found CGraph::InitGraph [Linux] at %p.\n", ORIG_CGraph__InitGraph);
+				EngineDevMsg("[server dll] Found CGraph::InitGraph [Linux] at %p.\n", ORIG_CGraph__InitGraph_Linux);
 			} else {
 				EngineDevWarning("[server dll] Could not find CGraph::InitGraph.\n");
 				EngineWarning("AI node display is not available.\n");
@@ -715,7 +715,7 @@ void ServerDLL::FindStuff()
 		} else {
 			ORIG_CBasePlayer__CheatImpulseCommands_Linux = reinterpret_cast<_CBasePlayer__CheatImpulseCommands_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer20CheatImpulseCommandsEi"));
 			if (ORIG_CBasePlayer__CheatImpulseCommands_Linux) {
-				EngineDevMsg("[server dll] Found CBasePlayer::CheatImpulseCommands [Linux] at %p.\n", ORIG_CBasePlayer__CheatImpulseCommands);
+				EngineDevMsg("[server dll] Found CBasePlayer::CheatImpulseCommands [Linux] at %p.\n", ORIG_CBasePlayer__CheatImpulseCommands_Linux);
 			} else {
 				EngineDevWarning("[server dll] Could not find CBasePlayer::CheatImpulseCommands.\n");
 			}
@@ -761,7 +761,7 @@ void ServerDLL::FindStuff()
 		if (ORIG_GetEntityAPI) {
 			DLL_FUNCTIONS funcs;
 			if (ORIG_GetEntityAPI(&funcs, 140)) {
-				// Gets our hooked addresses on Linux.
+				// Gets our hooked addresses on Windows.
 				ORIG_CmdStart = funcs.pfnCmdStart;
 				ORIG_AddToFullPack = funcs.pfnAddToFullPack;
 				ORIG_ClientCommand = funcs.pfnClientCommand;

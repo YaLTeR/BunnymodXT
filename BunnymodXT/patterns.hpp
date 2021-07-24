@@ -489,8 +489,10 @@ namespace patterns
 		);
 
 		PATTERNS(CChangeLevel__ChangeLevelNow,
-    		"HL-SteamPipe",
-    		"53 55 56 8B F1 8B 0D ?? ?? ?? ?? 8B 01 FF 50"
+    			"HL-SteamPipe",
+    			"53 55 56 8B F1 8B 0D ?? ?? ?? ?? 8B 01 FF 50",
+			"gunman",
+			"53 8B D9 8B 0D ?? ?? ?? ?? 55 57 8B 01 FF 50"
 		);
 	}
 

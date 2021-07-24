@@ -64,6 +64,11 @@ extern "C" void __cdecl _ZN12CTriggerSave9SaveTouchEP11CBaseEntity(void* thisptr
 {
 	return ServerDLL::HOOKED_CTriggerSave__SaveTouch_Linux(thisptr, pOther);
 }
+
+extern "C" void __cdecl _ZN12CChangeLevel14ChangeLevelNowEP11CBaseEntity(void* thisptr, void* pActivator)
+{
+	return ServerDLL::HOOKED_CChangeLevel__ChangeLevelNow_Linux(thisptr, pActivator);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -106,6 +111,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CGraph__InitGraph, HOOKED_CGraph__InitGraph,
 			ORIG_CBasePlayer__CheatImpulseCommands, HOOKED_CBasePlayer__CheatImpulseCommands,
 			ORIG_CTriggerSave__SaveTouch, HOOKED_CTriggerSave__SaveTouch,
+			ORIG_CChangeLevel__ChangeLevelNow, HOOKED_CChangeLevel__ChangeLevelNow,
 			ORIG_CBaseMonster__Killed, HOOKED_CBaseMonster__Killed);
 	}
 }
@@ -139,6 +145,7 @@ void ServerDLL::Unhook()
 			ORIG_CGraph__InitGraph,
 			ORIG_CBasePlayer__CheatImpulseCommands,
 			ORIG_CTriggerSave__SaveTouch,
+			ORIG_CChangeLevel__ChangeLevelNow,
 			ORIG_CBaseMonster__Killed);
 	}
 
@@ -184,6 +191,8 @@ void ServerDLL::Clear()
 	ORIG_CBasePlayer__CheatImpulseCommands_Linux = nullptr;
 	ORIG_CTriggerSave__SaveTouch = nullptr;
 	ORIG_CTriggerSave__SaveTouch_Linux = nullptr;
+	ORIG_CChangeLevel__ChangeLevelNow = nullptr;
+	ORIG_CChangeLevel__ChangeLevelNow_Linux = nullptr;
 	ORIG_CChangeLevel__InTransitionVolume = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -468,6 +477,7 @@ void ServerDLL::FindStuff()
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
 	auto fCBaseMonster__Killed = FindAsync(ORIG_CBaseMonster__Killed, patterns::server::CBaseMonster__Killed);
 	auto fCChangeLevel__InTransitionVolume = FindAsync(ORIG_CChangeLevel__InTransitionVolume, patterns::server::CChangeLevel__InTransitionVolume);
+	auto fCChangeLevel__ChangeLevelNow = FindAsync(ORIG_CChangeLevel__ChangeLevelNow, patterns::server::CChangeLevel__ChangeLevelNow);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -731,6 +741,21 @@ void ServerDLL::FindStuff()
 		else {
 			EngineDevWarning("[server dll] Could not find CBaseMonster::Killed.\n");
 			EngineWarning("Wanted! and Crowbar of Time automatic timer stopping is not available.\n");
+		}
+	}
+
+	{
+		auto pattern = fCChangeLevel__ChangeLevelNow.get();
+		if (ORIG_CChangeLevel__ChangeLevelNow) {
+			EngineDevMsg("[server dll] Found CChangeLevel__ChangeLevelNow at %p (using the %s pattern).\n", ORIG_CChangeLevel__ChangeLevelNow, pattern->name());
+		} else {
+			ORIG_CChangeLevel__ChangeLevelNow_Linux = reinterpret_cast<_CChangeLevel__ChangeLevelNow_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN12CChangeLevel14ChangeLevelNowEP11CBaseEntity"));
+			if (ORIG_CChangeLevel__ChangeLevelNow_Linux) {
+				EngineDevMsg("[server dll] Found CChangeLevel__ChangeLevelNow [Linux] at %p.\n", ORIG_CChangeLevel__ChangeLevelNow_Linux);
+			} else {
+				EngineDevWarning("[server dll] Could not find CChangeLevel__ChangeLevelNow.\n");
+				EngineWarning("bxt_disable_changelevel is not available.\n");
+			}
 		}
 	}
 
@@ -1093,6 +1118,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 	}
 	if (ORIG_CTriggerSave__SaveTouch)
 		REG(bxt_disable_autosave);
+	if (ORIG_CChangeLevel__ChangeLevelNow)
+		REG(bxt_disable_changelevel);
 	#undef REG
 }
 
@@ -2018,4 +2045,20 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, CTriggerSave__SaveTouch_Linux, void*, thisp
 		return;
 
 	return ORIG_CTriggerSave__SaveTouch_Linux(thisptr, pOther);
+}
+
+HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__ChangeLevelNow, void*, thisptr, int, edx, void*, pActivator)
+{
+	if (CVars::bxt_disable_changelevel.GetBool())
+		return;
+
+	return ORIG_CChangeLevel__ChangeLevelNow(thisptr, edx, pActivator);
+}
+
+HOOK_DEF_2(ServerDLL, void, __cdecl, CChangeLevel__ChangeLevelNow_Linux, void*, thisptr, void*, pActivator)
+{
+	if (CVars::bxt_disable_changelevel.GetBool())
+		return;
+
+	return ORIG_CChangeLevel__ChangeLevelNow_Linux(thisptr, pActivator);
 }

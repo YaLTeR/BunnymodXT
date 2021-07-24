@@ -1116,7 +1116,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_hidden_entities);
 		REG(bxt_show_triggers_legacy);
 	}
-	if (ORIG_CTriggerSave__SaveTouch)
+	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
 	if (ORIG_CChangeLevel__ChangeLevelNow || ORIG_CChangeLevel__ChangeLevelNow_Linux)
 		REG(bxt_disable_changelevel);

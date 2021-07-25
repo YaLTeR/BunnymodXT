@@ -1485,7 +1485,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 		edict_t *pPlayer = pEngfuncs->pfnPEntityOfEntIndex(1);
 		if (pev && pev->targetname && pPlayer) {
 			void *classPtr = pPlayer->pvPrivateData;
-			char *pVolumeName = "lm15";
+			char pVolumeName[] = "lm15";
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
 			const char *gameDir = "";
 			

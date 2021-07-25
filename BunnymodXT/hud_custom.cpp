@@ -677,7 +677,7 @@ namespace CustomHud
 				const auto ent = tr.pHit;
 
 				edict_t *edicts;
-				const auto numEdicts = hw.GetEdicts(&edicts);
+				hw.GetEdicts(&edicts);
 				const auto index = ent - edicts;
 				out << "Entity: " << index << '\n';
 
@@ -906,7 +906,6 @@ namespace CustomHud
 		if (CVars::bxt_collision_depth_map.GetBool())
 		{
 			constexpr float M_DEG2RAD = float(M_PI) / 180.f;
-			constexpr float M_RAD2DEG = 180.f / float(M_PI);
 
 			const auto hull_type = static_cast<HLStrafe::HullType>(std::clamp(CVars::bxt_collision_depth_map_hull.GetInt(), 0, 2));
 

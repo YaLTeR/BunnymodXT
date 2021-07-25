@@ -75,7 +75,8 @@ static void PrintDevWarning(const char* format, ...)
 	Log("DevWarning", temp);
 }
 
-static __attribute__((constructor)) void Construct()
+// Constructor priority must be higher than that of `modules` in SPTLib/Hooks.cpp
+static __attribute__((constructor(1337))) void Construct()
 {
 	puts("Bunnymod XT version " BUNNYMODXT_VERSION ".");
 
@@ -101,7 +102,8 @@ static __attribute__((constructor)) void Construct()
 	Hooks::Init(false);
 }
 
-static __attribute__((destructor)) void Destruct()
+// Destructor priority must be the same as constructor.
+static __attribute__((destructor(1337))) void Destruct()
 {
 	Hooks::Free();
 

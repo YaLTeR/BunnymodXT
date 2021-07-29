@@ -579,12 +579,6 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find hudGetViewAngles.\n");
 
-		ORIG_hudSetViewAngles = reinterpret_cast<_hudSetViewAngles>(MemUtils::GetSymbolAddress(m_Handle, "hudSetViewAngles"));
-		if (ORIG_hudSetViewAngles)
-			EngineDevMsg("[hw dll] Found hudSetViewAngles at %p.\n", ORIG_hudSetViewAngles);
-		else
-			EngineDevWarning("[hw dll] Could not find hudSetViewAngles.\n");
-
 		ORIG_SV_AddLinksToPM = reinterpret_cast<_SV_AddLinksToPM>(MemUtils::GetSymbolAddress(m_Handle, "SV_AddLinksToPM"));
 		if (ORIG_SV_AddLinksToPM)
 			EngineDevMsg("[hw dll] Found SV_AddLinksToPM at %p.\n", ORIG_SV_AddLinksToPM);
@@ -3975,12 +3969,10 @@ void HwDLL::GetViewangles(float* va)
 
 void HwDLL::SetViewangles(float* va)
 {
-	if (!ORIG_hudSetViewAngles) {
-	    ClientDLL::GetInstance().pEngfuncs->SetViewAngles(va);
-	} else
-		ORIG_hudSetViewAngles(va);
+	if (ClientDLL::GetInstance().pEngfuncs) {
+		ClientDLL::GetInstance().pEngfuncs->SetViewAngles(va);
+	}
 }
-
 
 HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull, bool extendDistanceLimit)
 {

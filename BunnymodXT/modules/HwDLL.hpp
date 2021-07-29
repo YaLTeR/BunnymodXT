@@ -296,8 +296,6 @@ protected:
 	_Cmd_Argv ORIG_Cmd_Argv;
 	typedef void(__cdecl *_hudGetViewAngles) (float* va);
 	_hudGetViewAngles ORIG_hudGetViewAngles;
-	typedef void(__cdecl *_hudSetViewAngles) (float* va);
-	_hudSetViewAngles ORIG_hudSetViewAngles;
 	typedef pmtrace_t(__cdecl *_PM_PlayerTrace) (const float* start, const float* end, int traceFlags, int ignore_pe);
 	_PM_PlayerTrace ORIG_PM_PlayerTrace;
 	typedef void(__cdecl *_SV_AddLinksToPM) (char* node, float* origin);

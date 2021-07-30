@@ -64,11 +64,6 @@ extern "C" void __cdecl _ZN12CTriggerSave9SaveTouchEP11CBaseEntity(void* thisptr
 {
 	return ServerDLL::HOOKED_CTriggerSave__SaveTouch_Linux(thisptr, pOther);
 }
-
-extern "C" void __cdecl _ZN12CChangeLevel14ChangeLevelNowEP11CBaseEntity(void* thisptr, void* pActivator)
-{
-	return ServerDLL::HOOKED_CChangeLevel__ChangeLevelNow_Linux(thisptr, pActivator);
-}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -111,7 +106,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CGraph__InitGraph, HOOKED_CGraph__InitGraph,
 			ORIG_CBasePlayer__CheatImpulseCommands, HOOKED_CBasePlayer__CheatImpulseCommands,
 			ORIG_CTriggerSave__SaveTouch, HOOKED_CTriggerSave__SaveTouch,
-			ORIG_CChangeLevel__ChangeLevelNow, HOOKED_CChangeLevel__ChangeLevelNow,
+			ORIG_CChangeLevel__UseChangeLevel, HOOKED_CChangeLevel__UseChangeLevel,
+			ORIG_CChangeLevel__TouchChangeLevel, HOOKED_CChangeLevel__TouchChangeLevel,
 			ORIG_CBaseMonster__Killed, HOOKED_CBaseMonster__Killed);
 	}
 }
@@ -145,7 +141,8 @@ void ServerDLL::Unhook()
 			ORIG_CGraph__InitGraph,
 			ORIG_CBasePlayer__CheatImpulseCommands,
 			ORIG_CTriggerSave__SaveTouch,
-			ORIG_CChangeLevel__ChangeLevelNow,
+			ORIG_CChangeLevel__UseChangeLevel,
+			ORIG_CChangeLevel__TouchChangeLevel,
 			ORIG_CBaseMonster__Killed);
 	}
 
@@ -191,8 +188,8 @@ void ServerDLL::Clear()
 	ORIG_CBasePlayer__CheatImpulseCommands_Linux = nullptr;
 	ORIG_CTriggerSave__SaveTouch = nullptr;
 	ORIG_CTriggerSave__SaveTouch_Linux = nullptr;
-	ORIG_CChangeLevel__ChangeLevelNow = nullptr;
-	ORIG_CChangeLevel__ChangeLevelNow_Linux = nullptr;
+	ORIG_CChangeLevel__UseChangeLevel = nullptr;
+	ORIG_CChangeLevel__TouchChangeLevel = nullptr;
 	ORIG_CChangeLevel__InTransitionVolume = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -477,7 +474,6 @@ void ServerDLL::FindStuff()
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
 	auto fCBaseMonster__Killed = FindAsync(ORIG_CBaseMonster__Killed, patterns::server::CBaseMonster__Killed);
 	auto fCChangeLevel__InTransitionVolume = FindAsync(ORIG_CChangeLevel__InTransitionVolume, patterns::server::CChangeLevel__InTransitionVolume);
-	auto fCChangeLevel__ChangeLevelNow = FindAsync(ORIG_CChangeLevel__ChangeLevelNow, patterns::server::CChangeLevel__ChangeLevelNow);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -744,21 +740,6 @@ void ServerDLL::FindStuff()
 		}
 	}
 
-	{
-		auto pattern = fCChangeLevel__ChangeLevelNow.get();
-		if (ORIG_CChangeLevel__ChangeLevelNow) {
-			EngineDevMsg("[server dll] Found CChangeLevel__ChangeLevelNow at %p (using the %s pattern).\n", ORIG_CChangeLevel__ChangeLevelNow, pattern->name());
-		} else {
-			ORIG_CChangeLevel__ChangeLevelNow_Linux = reinterpret_cast<_CChangeLevel__ChangeLevelNow_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN12CChangeLevel14ChangeLevelNowEP11CBaseEntity"));
-			if (ORIG_CChangeLevel__ChangeLevelNow_Linux) {
-				EngineDevMsg("[server dll] Found CChangeLevel__ChangeLevelNow [Linux] at %p.\n", ORIG_CChangeLevel__ChangeLevelNow_Linux);
-			} else {
-				EngineDevWarning("[server dll] Could not find CChangeLevel__ChangeLevelNow.\n");
-				EngineWarning("bxt_disable_changelevel is not available.\n");
-			}
-		}
-	}
-
 	ORIG_CBaseDoor__DoorHitTop = reinterpret_cast<_CBaseDoor__DoorHitTop>(MemUtils::GetSymbolAddress(m_Handle, "?DoorHitTop@CBaseDoor@@QAEXXZ"));
 	{
 		auto pattern = fCChangeLevel__InTransitionVolume.get();
@@ -770,6 +751,18 @@ void ServerDLL::FindStuff()
 			EngineWarning("The Xeno Project automatic timer stopping is not available.\n");
 			ORIG_CBaseDoor__DoorHitTop = nullptr;
 			ORIG_CChangeLevel__InTransitionVolume = nullptr;
+		}
+	}
+
+	ORIG_CChangeLevel__UseChangeLevel = reinterpret_cast<_CChangeLevel__UseChangeLevel>(MemUtils::GetSymbolAddress(m_Handle, "?UseChangeLevel@CChangeLevel@@QAEXPAVCBaseEntity@@0W4USE_TYPE@@M@Z"));
+	ORIG_CChangeLevel__TouchChangeLevel = reinterpret_cast<_CChangeLevel__TouchChangeLevel>(MemUtils::GetSymbolAddress(m_Handle, "?TouchChangeLevel@CChangeLevel@@QAEXPAVCBaseEntity@@@Z"));
+	{
+		if (ORIG_CChangeLevel__UseChangeLevel && ORIG_CChangeLevel__TouchChangeLevel) {
+			EngineDevMsg("[server dll] Found CChangeLevel__UseChangeLevel at %p.\n", ORIG_CChangeLevel__UseChangeLevel);
+			EngineDevMsg("[server dll] Found CChangeLevel__TouchChangeLevel at %p.\n", ORIG_CChangeLevel__TouchChangeLevel);
+		} else {
+			EngineDevWarning("[server dll] Could not find CChangeLevel__UseChangeLevel and CChangeLevel__TouchChangeLevel.\n");
+			EngineWarning("bxt_disable_changelevel is not available.\n");
 		}
 	}
 
@@ -1118,7 +1111,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	}
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
-	if (ORIG_CChangeLevel__ChangeLevelNow || ORIG_CChangeLevel__ChangeLevelNow_Linux)
+	if (ORIG_CChangeLevel__UseChangeLevel && ORIG_CChangeLevel__TouchChangeLevel)
 		REG(bxt_disable_changelevel);
 	#undef REG
 }
@@ -2047,18 +2040,18 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, CTriggerSave__SaveTouch_Linux, void*, thisp
 	return ORIG_CTriggerSave__SaveTouch_Linux(thisptr, pOther);
 }
 
-HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__ChangeLevelNow, void*, thisptr, int, edx, void*, pActivator)
+HOOK_DEF_6(ServerDLL, void, __fastcall, CChangeLevel__UseChangeLevel, void*, thisptr, int, edx, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
 	if (CVars::bxt_disable_changelevel.GetBool())
 		return;
 
-	return ORIG_CChangeLevel__ChangeLevelNow(thisptr, edx, pActivator);
+	return ORIG_CChangeLevel__UseChangeLevel(thisptr, edx, pActivator, pCaller, useType, value);
 }
 
-HOOK_DEF_2(ServerDLL, void, __cdecl, CChangeLevel__ChangeLevelNow_Linux, void*, thisptr, void*, pActivator)
+HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, thisptr, int, edx, void*, pOther)
 {
 	if (CVars::bxt_disable_changelevel.GetBool())
 		return;
 
-	return ORIG_CChangeLevel__ChangeLevelNow_Linux(thisptr, pActivator);
+	return ORIG_CChangeLevel__TouchChangeLevel(thisptr, edx, pOther);
 }

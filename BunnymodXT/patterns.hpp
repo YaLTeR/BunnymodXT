@@ -487,13 +487,6 @@ namespace patterns
 			"HL-SteamPipe",
 			"53 55 56 8B 74 24 ?? 57 8B CE 8B 06 FF 50"
 		);
-
-		PATTERNS(CChangeLevel__ChangeLevelNow,
-			"HL-SteamPipe",
-			"53 55 56 8B F1 8B 0D ?? ?? ?? ?? 8B 01 FF 50",
-			"gunman",
-			"53 8B D9 8B 0D ?? ?? ?? ?? 55 57 8B 01 FF 50"
-		);
 	}
 
 	namespace shared

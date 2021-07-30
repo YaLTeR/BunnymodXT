@@ -39,8 +39,8 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, CBasePlayer__CheatImpulseCommands_Linux, void* thisptr, int iImpulse)
 	HOOK_DECL(void, __fastcall, CTriggerSave__SaveTouch, void* thisptr, int edx, void* pOther)
 	HOOK_DECL(void, __cdecl, CTriggerSave__SaveTouch_Linux, void* thisptr, void* pOther)
-	HOOK_DECL(void, __fastcall, CChangeLevel__ChangeLevelNow, void* thisptr, int edx, void* pActivator)
-	HOOK_DECL(void, __cdecl, CChangeLevel__ChangeLevelNow_Linux, void* thisptr, void* pActivator)
+	HOOK_DECL(void, __fastcall, CChangeLevel__UseChangeLevel, void* thisptr, int edx, void* pActivator, void* pCaller, int useType, float value)
+	HOOK_DECL(void, __fastcall, CChangeLevel__TouchChangeLevel, void* thisptr, int edx, void* pOther)
 
 public:
 	static ServerDLL& GetInstance()

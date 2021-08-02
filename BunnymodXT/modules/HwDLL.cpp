@@ -84,6 +84,11 @@ extern "C" void __cdecl CL_Stop_f()
 	HwDLL::HOOKED_CL_Stop_f();
 }
 
+extern "C" void __cdecl Host_Savegame_f()
+{
+	HwDLL::HOOKED_Host_Savegame_f();
+}
+
 extern "C" void __cdecl Host_Loadgame_f()
 {
 	HwDLL::HOOKED_Host_Loadgame_f();
@@ -230,6 +235,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SV_Frame);
 			MemUtils::MarkAsExecutable(ORIG_CL_Stop_f);
 			MemUtils::MarkAsExecutable(ORIG_Host_Loadgame_f);
+			MemUtils::MarkAsExecutable(ORIG_Host_Savegame_f);
 			MemUtils::MarkAsExecutable(ORIG_Host_Reload_f);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConDPrintf);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConPrintf);
@@ -262,6 +268,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_SV_Frame, HOOKED_SV_Frame,
 			ORIG_CL_Stop_f, HOOKED_CL_Stop_f,
 			ORIG_Host_Loadgame_f, HOOKED_Host_Loadgame_f,
+			ORIG_Host_Savegame_f, HOOKED_Host_Savegame_f,
 			ORIG_Host_Reload_f, HOOKED_Host_Reload_f,
 			ORIG_VGuiWrap2_ConDPrintf, HOOKED_VGuiWrap2_ConDPrintf,
 			ORIG_VGuiWrap2_ConPrintf, HOOKED_VGuiWrap2_ConPrintf,
@@ -300,6 +307,7 @@ void HwDLL::Unhook()
 			ORIG_SV_Frame,
 			ORIG_CL_Stop_f,
 			ORIG_Host_Loadgame_f,
+			ORIG_Host_Savegame_f,
 			ORIG_Host_Reload_f,
 			ORIG_VGuiWrap2_ConDPrintf,
 			ORIG_VGuiWrap2_ConPrintf,
@@ -337,6 +345,7 @@ void HwDLL::Clear()
 	ORIG_SV_SpawnServer = nullptr;
 	ORIG_CL_Stop_f = nullptr;
 	ORIG_Host_Loadgame_f = nullptr;
+	ORIG_Host_Savegame_f = nullptr;
 	ORIG_Host_Reload_f = nullptr;
 	ORIG_VGuiWrap2_ConDPrintf = nullptr;
 	ORIG_VGuiWrap2_ConPrintf = nullptr;
@@ -631,6 +640,7 @@ void HwDLL::FindStuff()
 		FIND(PM_PlayerTrace)
 		FIND(CL_Stop_f)
 		FIND(Host_Loadgame_f)
+		FIND(Host_Savegame_f)
 		FIND(Host_Reload_f)
 		FIND(SV_SpawnServer)
 		FIND(CL_RecordHUDCommand)
@@ -2830,6 +2840,10 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_collision_depth_map_pixel_scale);
 	RegisterCVar(CVars::bxt_collision_depth_map_remove_distance_limit);
 
+	if(ORIG_Host_Savegame_f) {
+		RegisterCVar(CVars::bxt_disable_bshift_outro_save);
+	}
+
 	CVars::sv_cheats.Assign(FindCVar("sv_cheats"));
 	CVars::fps_max.Assign(FindCVar("fps_max"));
 	CVars::default_fov.Assign(FindCVar("default_fov"));
@@ -4344,6 +4358,14 @@ HOOK_DEF_0(HwDLL, void, __cdecl, CL_Stop_f)
 	RuntimeData::SaveStored();
 
 	ORIG_CL_Stop_f();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, Host_Savegame_f)
+{
+	if (lastLoadedMap == "ba_outro" && CVars::bxt_disable_bshift_outro_save.GetBool())
+		return;
+
+	ORIG_Host_Savegame_f();
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Host_Loadgame_f)

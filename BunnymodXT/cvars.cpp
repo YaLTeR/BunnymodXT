@@ -43,6 +43,7 @@ namespace CVars
 	CVarWrapper bxt_show_triggers_legacy("bxt_show_triggers_legacy", "0");
 	CVarWrapper bxt_show_pickup_bbox("bxt_show_pickup_bbox", "0");
 	CVarWrapper bxt_disable_autosave("bxt_disable_autosave", "0");
+	CVarWrapper bxt_disable_bshift_outro_save("bxt_disable_bshift_outro_save", "0");
 	CVarWrapper bxt_disable_changelevel("bxt_disable_changelevel", "0");
 
 	// Clientside CVars
@@ -152,6 +153,7 @@ namespace CVars
 		&bxt_show_displacer_earth_targets,
 		&bxt_show_pickup_bbox,
 		&bxt_disable_autosave,
+		&bxt_disable_bshift_outro_save,
 		&bxt_disable_changelevel,
 		&bxt_show_custom_triggers,
 		&bxt_wallhack,

@@ -34,6 +34,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(int, __cdecl, SV_SpawnServer, int bIsDemo, char* server, char* startspot)
 	HOOK_DECL(void, __cdecl, CL_Stop_f)
 	HOOK_DECL(void, __cdecl, Host_Loadgame_f)
+	HOOK_DECL(void, __cdecl, Host_Savegame_f)
 	HOOK_DECL(void, __cdecl, Host_Reload_f)
 	HOOK_DECL(void, __cdecl, VGuiWrap2_ConDPrintf, const char* msg)
 	HOOK_DECL(void, __cdecl, VGuiWrap2_ConPrintf, const char* msg)

@@ -150,6 +150,7 @@ namespace CVars
 	extern CVarWrapper bxt_show_triggers_legacy;
 	extern CVarWrapper bxt_show_pickup_bbox;
 	extern CVarWrapper bxt_disable_autosave;
+	extern CVarWrapper bxt_disable_bshift_outro_save;
 	extern CVarWrapper bxt_disable_changelevel;
 
 	// Clientside CVars

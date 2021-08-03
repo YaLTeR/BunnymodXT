@@ -753,10 +753,10 @@ void ServerDLL::FindStuff()
 	ORIG_CChangeLevel__TouchChangeLevel = reinterpret_cast<_CChangeLevel__TouchChangeLevel>(MemUtils::GetSymbolAddress(m_Handle, "?TouchChangeLevel@CChangeLevel@@QAEXPAVCBaseEntity@@@Z"));
 	{
 		if (ORIG_CChangeLevel__UseChangeLevel && ORIG_CChangeLevel__TouchChangeLevel) {
-			EngineDevMsg("[server dll] Found CChangeLevel__UseChangeLevel at %p.\n", ORIG_CChangeLevel__UseChangeLevel);
-			EngineDevMsg("[server dll] Found CChangeLevel__TouchChangeLevel at %p.\n", ORIG_CChangeLevel__TouchChangeLevel);
+			EngineDevMsg("[server dll] Found CChangeLevel::UseChangeLevel at %p.\n", ORIG_CChangeLevel__UseChangeLevel);
+			EngineDevMsg("[server dll] Found CChangeLevel::TouchChangeLevel at %p.\n", ORIG_CChangeLevel__TouchChangeLevel);
 		} else {
-			EngineDevWarning("[server dll] Could not find CChangeLevel__UseChangeLevel and CChangeLevel__TouchChangeLevel.\n");
+			EngineDevWarning("[server dll] Could not find CChangeLevel::UseChangeLevel and CChangeLevel::TouchChangeLevel.\n");
 			EngineWarning("bxt_disable_changelevel is not available.\n");
 		}
 	}

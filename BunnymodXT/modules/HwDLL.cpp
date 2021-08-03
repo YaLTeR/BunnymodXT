@@ -149,6 +149,11 @@ extern "C" void __cdecl R_Clear()
 	HwDLL::HOOKED_R_Clear();
 }
 
+extern "C" void __cdecl R_DrawViewModel()
+{
+	HwDLL::HOOKED_R_DrawViewModel();
+}
+
 extern "C" byte *__cdecl Mod_LeafPVS(mleaf_t *leaf, model_t *model)
 {
 	return HwDLL::HOOKED_Mod_LeafPVS(leaf, model);
@@ -177,6 +182,16 @@ extern "C" int __cdecl DispatchDirectUserMsg(char* pszName, int iSize, void* pBu
 extern "C" void __cdecl SV_SetMoveVars()
 {
 	HwDLL::HOOKED_SV_SetMoveVars();
+}
+
+extern "C" void __cdecl R_StudioCalcAttachments()
+{
+	HwDLL::HOOKED_R_StudioCalcAttachments();
+}
+
+extern "C" void __cdecl VectorTransform(float *in1, float *in2, float *out)
+{
+	HwDLL::HOOKED_VectorTransform(in1, in2, out);
 }
 
 extern "C" qboolean __cdecl BIsValveGame()
@@ -264,12 +279,15 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Cmd_Exec_f);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawSequentialPoly);
 			MemUtils::MarkAsExecutable(ORIG_R_Clear);
+			MemUtils::MarkAsExecutable(ORIG_R_DrawViewModel);
 			MemUtils::MarkAsExecutable(ORIG_Mod_LeafPVS);
 			MemUtils::MarkAsExecutable(ORIG_SV_AddLinksToPM_);
 			MemUtils::MarkAsExecutable(ORIG_SV_WriteEntitiesToClient);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap_Paint);
 			MemUtils::MarkAsExecutable(ORIG_DispatchDirectUserMsg);
 			MemUtils::MarkAsExecutable(ORIG_SV_SetMoveVars);
+			MemUtils::MarkAsExecutable(ORIG_R_StudioCalcAttachments);
+			MemUtils::MarkAsExecutable(ORIG_VectorTransform);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -300,12 +318,15 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Cmd_Exec_f, HOOKED_Cmd_Exec_f,
 			ORIG_R_DrawSequentialPoly, HOOKED_R_DrawSequentialPoly,
 			ORIG_R_Clear, HOOKED_R_Clear,
+			ORIG_R_DrawViewModel, HOOKED_R_DrawViewModel,
 			ORIG_Mod_LeafPVS, HOOKED_Mod_LeafPVS,
 			ORIG_SV_AddLinksToPM_, HOOKED_SV_AddLinksToPM_,
 			ORIG_SV_WriteEntitiesToClient, HOOKED_SV_WriteEntitiesToClient,
 			ORIG_VGuiWrap_Paint, HOOKED_VGuiWrap_Paint,
 			ORIG_DispatchDirectUserMsg, HOOKED_DispatchDirectUserMsg,
-			ORIG_SV_SetMoveVars, HOOKED_SV_SetMoveVars);
+			ORIG_SV_SetMoveVars, HOOKED_SV_SetMoveVars,
+			ORIG_VectorTransform, HOOKED_VectorTransform,
+			ORIG_R_StudioCalcAttachments, HOOKED_R_StudioCalcAttachments);
 	}
 }
 
@@ -342,12 +363,15 @@ void HwDLL::Unhook()
 			ORIG_Cmd_Exec_f,
 			ORIG_R_DrawSequentialPoly,
 			ORIG_R_Clear,
+			ORIG_R_DrawViewModel,
 			ORIG_Mod_LeafPVS,
 			ORIG_SV_AddLinksToPM_,
 			ORIG_SV_WriteEntitiesToClient,
 			ORIG_VGuiWrap_Paint,
 			ORIG_DispatchDirectUserMsg,
-			ORIG_SV_SetMoveVars);
+			ORIG_SV_SetMoveVars,
+			ORIG_VectorTransform,
+			ORIG_R_StudioCalcAttachments);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -401,12 +425,16 @@ void HwDLL::Clear()
 	ORIG_Cmd_Exec_f = nullptr;
 	ORIG_R_DrawSequentialPoly = nullptr;
 	ORIG_R_Clear = nullptr;
+	ORIG_R_DrawViewModel = nullptr;
 	ORIG_Mod_LeafPVS = nullptr;
 	ORIG_SV_AddLinksToPM_ = nullptr;
 	ORIG_SV_WriteEntitiesToClient = nullptr;
 	ORIG_VGuiWrap_Paint = nullptr;
 	ORIG_DispatchDirectUserMsg = nullptr;
 	ORIG_SV_SetMoveVars = nullptr;
+	ORIG_studioapi_GetCurrentEntity = nullptr;
+	ORIG_R_StudioCalcAttachments = nullptr;
+	ORIG_VectorTransform = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -466,6 +494,7 @@ void HwDLL::Clear()
 	execScript.clear();
 	insideHost_Changelevel2_f = false;
 	dontStopAutorecord = false;
+	insideRStudioCalcAttachmentsViewmodel = false;
 	hltas_filename.clear();
 	newTASStartingCommand.clear();
 	newTASFilename.clear();
@@ -655,6 +684,33 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find SV_SetMoveVars.\n");
 
+		ORIG_R_StudioCalcAttachments = reinterpret_cast<_R_StudioCalcAttachments>(MemUtils::GetSymbolAddress(m_Handle, "R_StudioCalcAttachments"));
+		if (ORIG_R_StudioCalcAttachments)
+			EngineDevMsg("[hw dll] Found R_StudioCalcAttachments at %p.\n", ORIG_R_StudioCalcAttachments);
+		else
+		{
+			EngineDevWarning("[hw dll] Could not find R_StudioCalcAttachments.\n");
+			EngineWarning("[hw dll] Weapon special effects will be misplaced when using bxt_viewmodel_fov.\n");
+		}
+
+		ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(MemUtils::GetSymbolAddress(m_Handle, "VectorTransform"));
+		if (ORIG_VectorTransform)
+			EngineDevMsg("[hw dll] Found VectorTransform at %p.\n", ORIG_VectorTransform);
+		else
+		{
+			EngineDevWarning("[hw dll] Could not find VectorTransform.\n");
+			EngineWarning("[hw dll] Weapon special effects will be misplaced when using bxt_viewmodel_fov.\n");
+		}
+
+		ORIG_studioapi_GetCurrentEntity = reinterpret_cast<_studioapi_GetCurrentEntity>(MemUtils::GetSymbolAddress(m_Handle, "studioapi_GetCurrentEntity"));
+		if (ORIG_studioapi_GetCurrentEntity)
+			EngineDevMsg("[hw dll] Found studioapi_GetCurrentEntity at %p.\n", ORIG_studioapi_GetCurrentEntity);
+		else
+		{
+			EngineDevWarning("[hw dll] Could not find studioapi_GetCurrentEntity.\n");
+			EngineWarning("[hw dll] Weapon special effects will be misplaced when using bxt_viewmodel_fov.\n");
+		}
+
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -765,6 +821,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find R_Clear.\n");
 
+		ORIG_R_DrawViewModel = reinterpret_cast<_R_DrawViewModel>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawViewModel"));
+		if (ORIG_R_DrawViewModel)
+			EngineDevMsg("[hw dll] Found R_DrawViewModel at %p.\n", ORIG_R_DrawViewModel);
+		else
+			EngineDevWarning("[hw dll] Could not find R_DrawViewModel.\n");
+
 		ORIG_Mod_LeafPVS = reinterpret_cast<_Mod_LeafPVS>(MemUtils::GetSymbolAddress(m_Handle, "Mod_LeafPVS"));
 		if (ORIG_Mod_LeafPVS) {
 			EngineDevMsg("[hw dll] Found Mod_LeafPVS at %p.\n", ORIG_Mod_LeafPVS);
@@ -825,12 +887,14 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(VGuiWrap2_ConPrintf)
 		DEF_FUTURE(R_DrawSequentialPoly)
 		DEF_FUTURE(R_Clear)
+		DEF_FUTURE(R_DrawViewModel)
 		DEF_FUTURE(Mod_LeafPVS)
 		DEF_FUTURE(CL_RecordHUDCommand)
 		DEF_FUTURE(CL_Record_f)
 		DEF_FUTURE(Key_Event)
 		DEF_FUTURE(SV_AddLinksToPM_)
 		DEF_FUTURE(SV_WriteEntitiesToClient)
+		DEF_FUTURE(studioapi_GetCurrentEntity)
 		DEF_FUTURE(VGuiWrap_Paint)
 		DEF_FUTURE(DispatchDirectUserMsg)
 		#undef DEF_FUTURE
@@ -1166,6 +1230,15 @@ void HwDLL::FindStuff()
 			}
 		);
 
+		auto fR_StudioCalcAttachments = FindAsync(
+			ORIG_R_StudioCalcAttachments,
+			patterns::engine::R_StudioCalcAttachments,
+			[&](auto pattern) {
+				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 106)
+					+ reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 110);
+			});
+
 		{
 			auto pattern = fCbuf_Execute.get();
 			if (ORIG_Cbuf_Execute) {
@@ -1330,6 +1403,17 @@ void HwDLL::FindStuff()
 			}
 		}
 
+		{
+			auto pattern = fR_StudioCalcAttachments.get();
+			if (ORIG_R_StudioCalcAttachments) {
+				EngineDevMsg("[hw dll] Found R_StudioCalcAttachments at %p (using the %s pattern).\n", ORIG_R_StudioCalcAttachments, pattern->name());
+				EngineDevMsg("[hw dll] Found VectorTransform at %p.\n", ORIG_VectorTransform);
+			} else {
+				EngineDevWarning("[hw dll] Could not find R_StudioCalcAttachments.\n");
+				EngineWarning("[hw dll] Special effects of weapons will be misplaced when bxt_viewmodel_fov is used.\n");
+			}
+		}
+
 		#define GET_FUTURE(future_name) \
 			{ \
 				auto pattern = f##future_name.get(); \
@@ -1388,12 +1472,14 @@ void HwDLL::FindStuff()
 		GET_FUTURE(SCR_UpdateScreen);
 		GET_FUTURE(R_DrawSequentialPoly);
 		GET_FUTURE(R_Clear);
+		GET_FUTURE(R_DrawViewModel);
 		GET_FUTURE(Mod_LeafPVS);
 		GET_FUTURE(PF_GetPhysicsKeyValue);
 		GET_FUTURE(SV_AddLinksToPM_);
 		GET_FUTURE(SV_WriteEntitiesToClient);
 		GET_FUTURE(VGuiWrap_Paint);
 		GET_FUTURE(DispatchDirectUserMsg);
+		GET_FUTURE(studioapi_GetCurrentEntity);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -2937,6 +3023,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_collision_depth_map_pixel_scale);
 	RegisterCVar(CVars::bxt_collision_depth_map_remove_distance_limit);
 	RegisterCVar(CVars::bxt_force_zmax);
+
+	if (ORIG_R_DrawViewModel)
+		RegisterCVar(CVars::bxt_viewmodel_fov);
 
 	CVars::sv_cheats.Assign(FindCVar("sv_cheats"));
 	CVars::fps_max.Assign(FindCVar("fps_max"));
@@ -4614,6 +4703,31 @@ HOOK_DEF_2(HwDLL, void, __cdecl, R_DrawSequentialPoly, msurface_t *, surf, int, 
 	glDisable(GL_BLEND);
 }
 
+HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawViewModel)
+{
+	// If the current's frame FOV is not default_fov, we are zoomed in, in that case don't override frustum
+	if (NeedViewmodelAdjustments())
+	{
+		glMatrixMode (GL_PROJECTION);
+		glLoadIdentity();
+		GLdouble w, h;
+		GLdouble _near = 3.0;
+		GLdouble _far = 4096.0;
+		int ScreenWidth = CustomHud::GetScreenInfo().iWidth;
+		int ScreenHeight = CustomHud::GetScreenInfo().iHeight;
+		float fovY = CVars::bxt_viewmodel_fov.GetFloat();
+		float aspect = (float)ScreenWidth / (float)ScreenHeight;
+
+		h = tan (fovY / 360 * M_PI) * _near * ((float)ScreenHeight / (float)ScreenWidth);
+		w = h * aspect;
+
+		glFrustum (-w, w, -h, h, _near, _far);
+		glMatrixMode (GL_MODELVIEW);
+	}
+
+	ORIG_R_DrawViewModel();
+}
+
 HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
@@ -4686,5 +4800,36 @@ HOOK_DEF_0(HwDLL, void, __cdecl, SV_SetMoveVars)
 			auto movevars_zmax = reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(movevars) + offZmax);
 			*movevars_zmax = CVars::bxt_force_zmax.GetFloat();
 		}
+	}
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioCalcAttachments)
+{
+	const auto &cl = ClientDLL::GetInstance();
+
+	if (cl.pEngfuncs && ORIG_studioapi_GetCurrentEntity) {
+		auto currententity = ORIG_studioapi_GetCurrentEntity();
+		if (currententity == cl.pEngfuncs->GetViewModel() && NeedViewmodelAdjustments())
+			insideRStudioCalcAttachmentsViewmodel = true;
+	}
+
+	ORIG_R_StudioCalcAttachments();
+	insideRStudioCalcAttachmentsViewmodel = false;
+}
+
+HOOK_DEF_3(HwDLL, void, __cdecl, VectorTransform, float*, in1, float*, in2, float*, out)
+{
+	// No need for a NeedViewmodelAdjustments() here since insideStudioCalcAttachmentsViewmodel is
+	// always FALSE from StudioCalcAttachments if we do NOT need the adjustments
+	if (insideRStudioCalcAttachmentsViewmodel == false)
+		ORIG_VectorTransform(in1, in2, out);
+	else
+	{
+		ORIG_VectorTransform(in1, in2, out);
+		Vector vOrigin(out);
+		ClientDLL::GetInstance().StudioAdjustViewmodelAttachments(vOrigin);
+		out[0] = vOrigin[0];
+		out[1] = vOrigin[1];
+		out[2] = vOrigin[2];
 	}
 }

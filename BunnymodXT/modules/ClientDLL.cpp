@@ -63,6 +63,22 @@ extern "C" int __cdecl HUD_UpdateClientData(client_data_t* pcldata, float flTime
 {
 	return ClientDLL::HOOKED_HUD_UpdateClientData(pcldata, flTime);
 }
+
+extern "C" void __cdecl _ZN20CStudioModelRenderer21StudioCalcAttachmentsEv(void *thisptr)
+{
+	return ClientDLL::HOOKED_StudioCalcAttachments_Linux(thisptr);
+}
+
+extern "C" void __cdecl _Z15VectorTransformPKfPA4_fPf(float *in1, float *in2, float *out)
+{
+	return ClientDLL::HOOKED_VectorTransform(in1, in2, out);
+}
+
+extern "C" void __cdecl _Z22EV_GetDefaultShellInfoP12event_args_sPfS1_S1_S1_S1_S1_S1_fff(event_args_t *args, float *origin, float *velocity, float *ShellVelocity, float *ShellOrigin,
+																						 float *forward, float *right, float *up, float forwardScale, float upScale, float rightScale)
+{
+	return ClientDLL::HOOKED_EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, forwardScale, upScale, rightScale);
+}
 #endif
 
 void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -102,7 +118,10 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_HUD_Frame, HOOKED_HUD_Frame,
 			ORIG_HUD_DrawTransparentTriangles, HOOKED_HUD_DrawTransparentTriangles,
 			ORIG_HUD_Key_Event, HOOKED_HUD_Key_Event,
-			ORIG_HUD_UpdateClientData, HOOKED_HUD_UpdateClientData);
+			ORIG_HUD_UpdateClientData, HOOKED_HUD_UpdateClientData,
+			ORIG_EV_GetDefaultShellInfo, HOOKED_EV_GetDefaultShellInfo,
+			ORIG_StudioCalcAttachments, HOOKED_StudioCalcAttachments,
+			ORIG_VectorTransform, HOOKED_VectorTransform);
 	}
 
 	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
@@ -128,7 +147,10 @@ void ClientDLL::Unhook()
 			ORIG_HUD_Frame,
 			ORIG_HUD_DrawTransparentTriangles,
 			ORIG_HUD_Key_Event,
-			ORIG_HUD_UpdateClientData);
+			ORIG_HUD_UpdateClientData,
+			ORIG_EV_GetDefaultShellInfo,
+			ORIG_StudioCalcAttachments,
+			ORIG_VectorTransform);
 	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -153,6 +175,10 @@ void ClientDLL::Clear()
 	ORIG_PM_ClipVelocity = nullptr;
 	ORIG_PM_WaterMove = nullptr;
 	ORIG_PM_Move = nullptr;
+	ORIG_VectorTransform = nullptr;
+	ORIG_EV_GetDefaultShellInfo = nullptr;
+	ORIG_StudioCalcAttachments = nullptr;
+	ORIG_StudioCalcAttachments_Linux = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
 	ORIG_HUD_Init = nullptr;
 	ORIG_HUD_VidInit = nullptr;
@@ -177,6 +203,9 @@ void ClientDLL::Clear()
 	m_Intercepted = false;
 	last_vieworg = Vector();
 	last_viewangles = Vector();
+	last_viewforward = Vector();
+	last_viewup = Vector();
+	last_viewright = Vector();
 	last_buttons = 0;
 }
 
@@ -255,6 +284,28 @@ void ClientDLL::FindStuff()
 				assert(false);
 			}
 		});
+
+	auto fStudioCalcAttachments = FindAsync(
+		ORIG_StudioCalcAttachments,
+		patterns::client::StudioCalcAttachments,
+		[&](auto pattern) {
+			switch (pattern - patterns::client::StudioCalcAttachments.cbegin()) {
+			case 0: // HL-WON-1712
+				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 101)
+					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 105);
+				break;
+			case 1: // Echoes
+				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 187)
+					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 191);
+				break;
+			default:
+				assert(false);
+			}
+		});
+
+	auto fEV_GetDefaultShellInfo = FindAsync(ORIG_EV_GetDefaultShellInfo, patterns::client::EV_GetDefaultShellInfo);
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
@@ -430,6 +481,41 @@ void ClientDLL::FindStuff()
 		if (!ppmove)
 			ppmove = reinterpret_cast<void**>(MemUtils::GetSymbolAddress(m_Handle, "pmove"));
 	}
+
+	{
+		auto pattern = fEV_GetDefaultShellInfo.get();
+		if (ORIG_EV_GetDefaultShellInfo) {
+			EngineDevMsg("[client dll] Found EV_GetDefaultShellInfo at %p (using the %s pattern).\n", ORIG_EV_GetDefaultShellInfo, pattern->name());
+		} else {
+			ORIG_EV_GetDefaultShellInfo = reinterpret_cast<_EV_GetDefaultShellInfo>(MemUtils::GetSymbolAddress(m_Handle, "_Z22EV_GetDefaultShellInfoP12event_args_sPfS1_S1_S1_S1_S1_S1_fff"));
+			if (ORIG_EV_GetDefaultShellInfo) {
+				EngineDevMsg("[client dll] Found EV_GetDefaultShellInfo at %p.\n", ORIG_EV_GetDefaultShellInfo);
+			} else {
+				EngineDevWarning("[client dll] Could not find EV_GetDefaultShellInfo.\n");
+				EngineWarning("[client dll] Special effects of weapons will be misplaced when bxt_viewmodel_fov is used.\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fStudioCalcAttachments.get();
+		if (ORIG_StudioCalcAttachments) {
+			EngineDevMsg("[client dll] Found StudioCalcAttachment at %p (using the %s pattern).\n", ORIG_StudioCalcAttachments, pattern->name());
+			if (ORIG_VectorTransform)
+				EngineDevMsg("[client dll] Found VectorTransform at %p.\n", ORIG_VectorTransform);
+		} else {
+			ORIG_StudioCalcAttachments_Linux = reinterpret_cast<_StudioCalcAttachments_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN20CStudioModelRenderer21StudioCalcAttachmentsEv"));
+			ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(MemUtils::GetSymbolAddress(m_Handle, "_Z15VectorTransformPKfPA4_fPf"));
+			if (ORIG_StudioCalcAttachments_Linux && ORIG_VectorTransform) {
+				EngineDevMsg("[client dll] Found StudioCalcAttachments_Linux at %p.\n", ORIG_StudioCalcAttachments_Linux);
+				EngineDevMsg("[client dll] Found VectorTransform at %p.\n", ORIG_VectorTransform);
+			} else {
+				EngineDevWarning("[client dll] Could not find StudioCalcAttachments.\n");
+				EngineDevWarning("[client dll] Could not find VectorTransform.\n");
+				EngineWarning("[client dll] Special effects of weapons will be misplaced when bxt_viewmodel_fov is used.\n");
+			}
+		}
+	}
 }
 
 bool ClientDLL::FindHUDFunctions()
@@ -573,6 +659,35 @@ void ClientDLL::SetMouseState(bool active)
 	}
 }
 
+void ClientDLL::StudioAdjustViewmodelAttachments(Vector &vOrigin)
+{
+	// V_CalcRefDef didn't give us info, let's bail out since we'd just make the attachments be somewhere in the world
+	// and nowhere near the player's viewmodel
+	if (last_vieworg.x == 0.0f && last_vieworg.y == 0.0f && last_vieworg.z == 0.0f)
+		return;
+
+	double worldx = tan(HwDLL::GetInstance().currentRenderFOV  * M_PI / 360.0);
+	double viewx = tan(CVars::bxt_viewmodel_fov.GetFloat() * M_PI / 360.0);
+
+	// aspect ratio cancels out, so only need one factor
+	// the difference between the screen coordinates of the 2 systems is the ratio
+	// of the coefficients of the projection matrices (tan (fov/2) is that coefficient)
+	float factor = (float)worldx / (float)viewx;
+
+	// Get the coordinates in the viewer's space.
+	Vector tmp = vOrigin - last_vieworg;
+
+	Vector vTransformed(DotProduct(last_viewright, tmp), DotProduct(last_viewup, tmp), DotProduct(last_viewforward, tmp));
+
+	// Now squash X and Y.
+	vTransformed.x *= factor;
+	vTransformed.y *= factor;
+
+	// Transform back to world space.
+	Vector vOut = (last_viewright * vTransformed.x) + (last_viewup * vTransformed.y) + (last_viewforward * vTransformed.z);
+	vOrigin = last_vieworg + vOut;
+}
+
 HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
 {
 	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
@@ -705,6 +820,9 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 
 	last_vieworg = pparams->vieworg;
 	last_viewangles = pparams->viewangles;
+	last_viewforward = pparams->forward;
+	last_viewright = pparams->right;
+	last_viewup = pparams->up;
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Init)
@@ -825,9 +943,70 @@ HOOK_DEF_2(ClientDLL, int, __cdecl, HUD_UpdateClientData, client_data_t*, pcldat
 
 	const auto rv = ORIG_HUD_UpdateClientData(pcldata, flTime);
 
+	HwDLL::GetInstance().currentRenderFOV = pcldata->fov;
+
 	if (norefresh && pEngfuncs) {
 		pEngfuncs->pfnGetScreenInfo = ORIG_GetScreenInfo;
 	}
 
 	return rv;
+}
+
+HOOK_DEF_3(ClientDLL, void, __cdecl, VectorTransform, float*, in1, float*, in2, float*, out)
+{
+	// No need for a NeedViewmodelAdjustments() here since insideStudioCalcAttachmentsViewmodel is
+	// always FALSE from StudioCalcAttachments if we do NOT need the adjustments
+	if (insideStudioCalcAttachmentsViewmodel == false)
+		ORIG_VectorTransform(in1, in2, out);
+	else
+	{
+		ORIG_VectorTransform(in1, in2, out);
+		Vector vOrigin(out);
+		StudioAdjustViewmodelAttachments(vOrigin);
+		out[0] = vOrigin[0];
+		out[1] = vOrigin[1];
+		out[2] = vOrigin[2];
+	}
+}
+
+HOOK_DEF_1(ClientDLL, void, __fastcall, StudioCalcAttachments, void*, thisptr)
+{
+	if (pEngfuncs && HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity)
+	{
+		auto currententity = HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity();
+		if (currententity == pEngfuncs->GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
+			insideStudioCalcAttachmentsViewmodel = true;
+	}
+	ORIG_StudioCalcAttachments(thisptr);
+	insideStudioCalcAttachmentsViewmodel = false;
+}
+
+HOOK_DEF_1(ClientDLL, void, __cdecl, StudioCalcAttachments_Linux, void*, thisptr)
+{
+	if (pEngfuncs && HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity)
+	{
+		auto currententity = HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity();
+		if (currententity == pEngfuncs->GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
+			insideStudioCalcAttachmentsViewmodel = true;
+	}
+	ORIG_StudioCalcAttachments_Linux(thisptr);
+	insideStudioCalcAttachmentsViewmodel = false;
+}
+
+HOOK_DEF_11(ClientDLL, void, __cdecl, EV_GetDefaultShellInfo, event_args_t*, args, float*, origin, float*, velocity, float*, ShellVelocity, float*, ShellOrigin,
+            float*, forward, float*, right, float*, up, float, forwardScale, float, upScale, float, rightScale)
+{
+	ORIG_EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, forwardScale, upScale, rightScale);
+	if (pEngfuncs)
+	{
+		// Are we overriding viewmodel fov && is the entity that the shell info is for the local player?
+		if (HwDLL::GetInstance().NeedViewmodelAdjustments() && pEngfuncs->pEventAPI->EV_IsLocal(args->entindex - 1))
+		{
+			Vector ShellOriginVec(ShellOrigin);
+			StudioAdjustViewmodelAttachments(ShellOriginVec);
+			ShellOrigin[0] = ShellOriginVec.x;
+			ShellOrigin[1] = ShellOriginVec.y;
+			ShellOrigin[2] = ShellOriginVec.z;
+		}
+	}
 }

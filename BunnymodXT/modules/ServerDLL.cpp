@@ -572,14 +572,9 @@ void ServerDLL::FindStuff()
 	{
 		auto pattern = fPM_Jump_CZDS_Velocity_Byte.get();
 		if (pCZDS_Velocity_Byte) {
-			if (pattern == patterns::server::CZDS_Velocity_Byte.cend())
-				EngineDevMsg("[server dll] Found CZDS Velocity Reset Byte at %p.\n", pCZDS_Velocity_Byte);
-			else {
-				EngineDevMsg("[server dll] Found CZDS Velocity Reset Byte at %p (using the %s pattern).\n", pCZDS_Velocity_Byte, pattern->name());
-				offFuncObjectCaps = 0x18;
-			}
-		}
-		else {
+			EngineDevMsg("[server dll] Found CZDS Velocity Reset Byte at %p (using the %s pattern).\n", pCZDS_Velocity_Byte, pattern->name());
+			offFuncObjectCaps = 0x18;
+		} else {
 			EngineDevWarning("[server dll] Could not find CZDS Velocity Reset Byte.\n");
 		}
 	}

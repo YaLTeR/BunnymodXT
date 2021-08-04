@@ -51,6 +51,7 @@ namespace CVars
 	CVarWrapper bxt_show_nodes("bxt_show_nodes", "0");
 	CVarWrapper bxt_show_displacer_earth_targets("bxt_show_displacer_earth_targets", "0");
 	CVarWrapper bxt_show_custom_triggers("bxt_show_custom_triggers", "1");
+	CVarWrapper bxt_triggers_color("bxt_triggers_color", "");
 	CVarWrapper bxt_wallhack("bxt_wallhack", "0");
 	CVarWrapper bxt_wallhack_additive("bxt_wallhack_additive", "0");
 	CVarWrapper bxt_wallhack_alpha("bxt_wallhack_alpha", "0.6");
@@ -154,6 +155,7 @@ namespace CVars
 		&bxt_disable_autosave,
 		&bxt_disable_changelevel,
 		&bxt_show_custom_triggers,
+		&bxt_triggers_color,
 		&bxt_wallhack,
 		&bxt_wallhack_additive,
 		&bxt_wallhack_alpha,

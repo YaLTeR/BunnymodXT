@@ -217,7 +217,26 @@ namespace TriangleDrawing
 			auto corner_positions = trigger.get_corner_positions();
 
 			pTriAPI->RenderMode(kRenderTransAdd);
-			pTriAPI->Color4f(1.0f, 0.5f, 0.0f, 0.3f);
+			
+			if (!CVars::bxt_triggers_color.IsEmpty())
+			{
+				unsigned r = 0, g = 0, b = 0, a = 0;
+    			std::istringstream ss(CVars::bxt_triggers_color.GetString());
+    			ss >> r >> g >> b >> a;
+    
+    			static float triggerColor[3];
+    			triggerColor[0] = r / 255.0f;
+    			triggerColor[1] = g / 255.0f;
+    			triggerColor[2] = b / 255.0f;
+    			triggerColor[3] = a / 255.0f;
+
+    			pTriAPI->Color4f(triggerColor[0], triggerColor[1], triggerColor[2], triggerColor[3]);
+			}
+			else
+			{
+				pTriAPI->Color4f(1.0f, 0.5f, 0.0f, 0.3f);
+			}
+
 			TriangleUtils::DrawAACuboid(pTriAPI, corner_positions.first, corner_positions.second);
 
 			pTriAPI->RenderMode(kRenderTransColor);

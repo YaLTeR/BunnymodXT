@@ -158,6 +158,7 @@ namespace CVars
 	extern CVarWrapper bxt_show_nodes;
 	extern CVarWrapper bxt_show_displacer_earth_targets;
 	extern CVarWrapper bxt_show_custom_triggers;
+	extern CVarWrapper bxt_triggers_color;
 	extern CVarWrapper bxt_wallhack;
 	extern CVarWrapper bxt_wallhack_additive;
 	extern CVarWrapper bxt_wallhack_alpha;

@@ -479,6 +479,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (ORIG_HUD_DrawTransparentTriangles && pEngfuncs) {
 		REG(bxt_show_triggers);
 		REG(bxt_show_custom_triggers);
+		REG(bxt_triggers_color);
 		REG(bxt_show_nodes);
 		REG(bxt_show_pickup_bbox);
 		REG(bxt_show_displacer_earth_targets);

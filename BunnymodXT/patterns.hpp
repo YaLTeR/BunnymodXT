@@ -340,6 +340,11 @@ namespace patterns
 			"HL-NGHL",
 			"B8 28 54 01 00 E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 53 8B 9C 24 30 54 01 00"
 		);
+
+		PATTERNS(R_DrawSkyBox,
+			"HL-SteamPipe",
+			"55 8B EC 83 EC 1C A1 ?? ?? ?? ?? 53 56 BB 00 00 80 3F 57 C7 45 F8 00 00 00 00 85 C0"
+		);
 	}
 
 	namespace server

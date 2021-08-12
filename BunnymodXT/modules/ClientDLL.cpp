@@ -541,6 +541,10 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_entities_offset);
 		REG(bxt_hud_entities_anchor);
 	}
+
+	if (ORIG_HUD_Redraw) {
+		REG(bxt_disable_hud);
+	}
 	#undef REG
 }
 

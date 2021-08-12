@@ -102,6 +102,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_HUD_Frame, HOOKED_HUD_Frame,
 			ORIG_HUD_DrawTransparentTriangles, HOOKED_HUD_DrawTransparentTriangles,
 			ORIG_HUD_Key_Event, HOOKED_HUD_Key_Event,
+			ORIG_CWeaponStatusPanel__AddToHistory, HOOKED_CWeaponStatusPanel__AddToHistory,
 			ORIG_HUD_UpdateClientData, HOOKED_HUD_UpdateClientData);
 	}
 
@@ -128,6 +129,7 @@ void ClientDLL::Unhook()
 			ORIG_HUD_Frame,
 			ORIG_HUD_DrawTransparentTriangles,
 			ORIG_HUD_Key_Event,
+			ORIG_CWeaponStatusPanel__AddToHistory,
 			ORIG_HUD_UpdateClientData);
 	}
 
@@ -165,6 +167,7 @@ void ClientDLL::Clear()
 	ORIG_HUD_UpdateClientData = nullptr;
 	ORIG_IN_ActivateMouse = nullptr;
 	ORIG_IN_DeactivateMouse = nullptr;
+	ORIG_CWeaponStatusPanel__AddToHistory = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -255,6 +258,8 @@ void ClientDLL::FindStuff()
 				assert(false);
 			}
 		});
+
+	auto fCWeaponStatusPanel__AddToHistory = FindAsync(ORIG_CWeaponStatusPanel__AddToHistory, patterns::client::CWeaponStatusPanel__AddToHistory);
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
@@ -430,6 +435,15 @@ void ClientDLL::FindStuff()
 		if (!ppmove)
 			ppmove = reinterpret_cast<void**>(MemUtils::GetSymbolAddress(m_Handle, "pmove"));
 	}
+
+	{
+		auto pattern = fCWeaponStatusPanel__AddToHistory.get();
+		if (ORIG_CWeaponStatusPanel__AddToHistory) {
+			EngineDevMsg("[client dll] Found CWeaponStatusPanel::AddToHistory at %p (using the %s pattern).\n", ORIG_CWeaponStatusPanel__AddToHistory, pattern->name());
+		} else {
+			EngineDevWarning("[client dll] Could not find CWeaponStatusPanel::AddToHistory.\n");
+		}
+	}
 }
 
 bool ClientDLL::FindHUDFunctions()
@@ -542,7 +556,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_entities_anchor);
 	}
 
-	if (ORIG_HUD_Redraw) {
+	if (ORIG_HUD_Redraw || ORIG_CWeaponStatusPanel__AddToHistory) {
 		REG(bxt_disable_hud);
 	}
 	#undef REG
@@ -719,8 +733,13 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Reset)
 
 HOOK_DEF_2(ClientDLL, void, __cdecl, HUD_Redraw, float, time, int, intermission)
 {
-	if (!CVars::bxt_disable_hud.GetBool())
-		ORIG_HUD_Redraw(time, intermission);
+	switch (CVars::bxt_disable_hud.GetInt())
+	{
+		case 1:
+			break;
+		default:
+			ORIG_HUD_Redraw(time, intermission);
+	}
 
 	CustomHud::Draw(time);
 }
@@ -815,4 +834,17 @@ HOOK_DEF_2(ClientDLL, int, __cdecl, HUD_UpdateClientData, client_data_t*, pcldat
 	}
 
 	return rv;
+}
+
+HOOK_DEF_4(ClientDLL, void, __fastcall, CWeaponStatusPanel__AddToHistory, void*, thisptr, int, edx, int, param1, int, param2)
+{
+	switch (CVars::bxt_disable_hud.GetInt())
+	{
+		case 1:
+			break;
+		case 2:
+			break;
+		default:
+			ORIG_CWeaponStatusPanel__AddToHistory(thisptr, edx, param1, param2);
+	}
 }

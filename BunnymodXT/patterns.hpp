@@ -342,6 +342,14 @@ namespace patterns
 		);
 	}
 
+	namespace client
+	{
+		PATTERNS(CWeaponStatusPanel__AddToHistory,
+			"gunman",
+			"8B 44 24 ?? 53 8B 5C 24 ?? 56 57 8B ?? 85 DB 8D ?? ?? 74"
+		);
+	}
+
 	namespace server
 	{
 		PATTERNS(CTriggerVolume__Spawn,

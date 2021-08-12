@@ -4528,7 +4528,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_wallhack.GetBool()) {
+	if (CVars::sv_cheats.GetBool() && CVars::bxt_wallhack.GetBool() || CVars::bxt_disable_skybox.GetBool()) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}

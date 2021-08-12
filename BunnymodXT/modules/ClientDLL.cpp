@@ -715,7 +715,8 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Reset)
 
 HOOK_DEF_2(ClientDLL, void, __cdecl, HUD_Redraw, float, time, int, intermission)
 {
-	ORIG_HUD_Redraw(time, intermission);
+	if (!CVars::bxt_disable_hud.GetBool())
+		ORIG_HUD_Redraw(time, intermission);
 
 	CustomHud::Draw(time);
 }

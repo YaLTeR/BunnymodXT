@@ -153,6 +153,7 @@ namespace CVars
 	extern CVarWrapper bxt_disable_changelevel;
 
 	// Clientside CVars
+	extern CVarWrapper bxt_disable_hud;
 	extern CVarWrapper bxt_autojump_prediction;
 	extern CVarWrapper bxt_bhopcap_prediction;
 	extern CVarWrapper bxt_show_nodes;

@@ -618,6 +618,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud);
 		REG(bxt_hud_color);
 		REG(bxt_hud_precision);
+		REG(bxt_hud_quickgauss);
+		REG(bxt_hud_quickgauss_offset);
+		REG(bxt_hud_quickgauss_anchor);
 		REG(bxt_hud_velocity);
 		REG(bxt_hud_velocity_offset);
 		REG(bxt_hud_velocity_anchor);

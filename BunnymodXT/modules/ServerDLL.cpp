@@ -1965,6 +1965,22 @@ bool ServerDLL::GetGlobalState(const std::string& name, int& state)
 	return false;
 }
 
+float ServerDLL::GetTime()
+{
+	if (ppGlobals)
+		return (*ppGlobals)->time;
+
+	return 0.0f;
+}
+
+Vector ServerDLL::GetVForward()
+{
+	if (ppGlobals)
+		return (*ppGlobals)->v_forward;
+
+	return {};
+}
+
 std::vector<const Vector *> ServerDLL::GetNodePositions() const
 {
 	std::vector<const Vector *> positions;

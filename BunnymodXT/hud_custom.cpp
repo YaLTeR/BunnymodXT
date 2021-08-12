@@ -463,6 +463,34 @@ namespace CustomHud
 		}
 	}
 
+	static void DrawClientTime(float flTime)
+	{
+		if (CVars::bxt_hud_quickgauss.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_quickgauss_offset, CVars::bxt_hud_quickgauss_anchor, &x, &y, 160, 0);
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+
+			auto &sv = ServerDLL::GetInstance();
+			auto time = sv.GetTime();
+			auto v_forward = sv.GetVForward();
+			auto flDamage = 200;
+			if (time < 4.0f)
+				flDamage = 200 * time / 4;
+			auto vel_gain = v_forward * flDamage * 5;
+			auto ups = static_cast<int>(trunc(length(vel_gain[0], vel_gain[1])));
+
+			out << "Server time: " << time << "\n"
+				<< "Potential qgauss dmg: " << flDamage << "\n"
+				<< "Potential qgauss boost: " << ups;
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
 	static void DrawOrigin(float flTime)
 	{
 		if (CVars::bxt_hud_origin.GetBool())
@@ -1373,6 +1401,7 @@ namespace CustomHud
 		UpdateColors();
 		GetAccurateInfo();
 
+		DrawClientTime(flTime);
 		DrawHealth(flTime);
 		DrawVelocity(flTime);
 		DrawOrigin(flTime);

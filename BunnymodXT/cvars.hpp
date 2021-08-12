@@ -189,6 +189,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud;
 	extern CVarWrapper bxt_hud_color;
 	extern CVarWrapper bxt_hud_precision;
+	extern CVarWrapper bxt_hud_quickgauss;
+	extern CVarWrapper bxt_hud_quickgauss_offset;
+	extern CVarWrapper bxt_hud_quickgauss_anchor;
 	extern CVarWrapper bxt_hud_velocity;
 	extern CVarWrapper bxt_hud_velocity_offset;
 	extern CVarWrapper bxt_hud_velocity_anchor;

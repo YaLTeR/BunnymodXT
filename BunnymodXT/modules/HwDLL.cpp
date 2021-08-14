@@ -661,10 +661,12 @@ void HwDLL::FindStuff()
 			EngineDevWarning("[hw dll] Could not find V_FadeAlpha.\n");
 
 		ORIG_R_DrawSkyBox = reinterpret_cast<_R_DrawSkyBox>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawSkyBox"));
-		if (ORIG_R_DrawSkyBox)
+		if (ORIG_R_DrawSkyBox) {
 			EngineDevMsg("[hw dll] Found R_DrawSkyBox at %p.\n", ORIG_R_DrawSkyBox);
-		else
+		} else {
 			EngineDevWarning("[hw dll] Could not find R_DrawSkyBox.\n");
+			EngineWarning("bxt_disable_skybox is not available.\n");
+		}
 
 		ORIG_SCR_UpdateScreen = reinterpret_cast<_SCR_UpdateScreen>(MemUtils::GetSymbolAddress(m_Handle, "SCR_UpdateScreen"));
 		if (ORIG_SCR_UpdateScreen)

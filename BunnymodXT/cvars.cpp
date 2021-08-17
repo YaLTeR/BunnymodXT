@@ -47,6 +47,7 @@ namespace CVars
 
 	// Clientside CVars
 	CVarWrapper bxt_disable_hud("bxt_disable_hud", "0");
+	CVarWrapper bxt_disable_gmc_hud("bxt_disable_gmc_hud", "0");
 	CVarWrapper bxt_autojump_prediction("bxt_autojump_prediction", "0");
 	CVarWrapper bxt_bhopcap_prediction("bxt_bhopcap_prediction", "1");
 	CVarWrapper bxt_show_nodes("bxt_show_nodes", "0");
@@ -156,6 +157,7 @@ namespace CVars
 		&bxt_disable_autosave,
 		&bxt_disable_changelevel,
 		&bxt_disable_hud,
+		&bxt_disable_gmc_hud,
 		&bxt_show_custom_triggers,
 		&bxt_triggers_color,
 		&bxt_wallhack,

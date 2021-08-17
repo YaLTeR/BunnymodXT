@@ -23,6 +23,7 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(int, __cdecl, HUD_Key_Event, int down, int keynum, const char* pszCurrentBinding)
 	HOOK_DECL(int, __cdecl, HUD_UpdateClientData, client_data_t* pcldata, float flTime)
 	HOOK_DECL(void, __fastcall, CWeaponStatusPanel__AddToHistory, void* thisptr, int edx, int param1, int param2)
+	HOOK_DECL(void, __fastcall, VGUI_Label_Paint, int param1)
 
 public:
 	static ClientDLL& GetInstance()
@@ -67,7 +68,7 @@ protected:
 	void **ppmove;
 	ptrdiff_t offOldbuttons;
 	ptrdiff_t offOnground;
-	
+
 	ptrdiff_t offBhopcap;
 	ptrdiff_t pBhopcapWindows;
 	byte originalBhopcapInsn[6];

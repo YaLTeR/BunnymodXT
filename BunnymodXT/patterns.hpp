@@ -348,6 +348,11 @@ namespace patterns
 			"gunman",
 			"8B 44 24 ?? 53 8B 5C 24 ?? 56 57 8B ?? 85 DB 8D ?? ?? 74"
 		);
+
+		PATTERNS(VGUI_Label_Paint,
+			"gunman",
+			"8B C1 50 8B 88 D0 00 00 00 8B 11 FF 52 5C C3 90"
+		);
 	}
 
 	namespace server

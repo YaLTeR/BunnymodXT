@@ -121,6 +121,7 @@ namespace CVars
 	extern CVarWrapper bxt_autopause;
 	extern CVarWrapper bxt_interprocess_enable;
 	extern CVarWrapper bxt_fade_remove;
+	extern CVarWrapper bxt_disable_skybox;
 	extern CVarWrapper bxt_stop_demo_on_changelevel;
 	extern CVarWrapper bxt_tas_editor_simulate_for_ms;
 	extern CVarWrapper bxt_tas_norefresh_until_last_frames;

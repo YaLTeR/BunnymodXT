@@ -57,6 +57,11 @@ extern "C" int __cdecl V_FadeAlpha()
 	return HwDLL::HOOKED_V_FadeAlpha();
 }
 
+extern "C" void __cdecl R_DrawSkyBox()
+{
+	return HwDLL::HOOKED_R_DrawSkyBox();
+}
+
 extern "C" void __cdecl SCR_UpdateScreen()
 {
 	return HwDLL::HOOKED_SCR_UpdateScreen();
@@ -225,6 +230,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SCR_BeginLoadingPlaque);
 			MemUtils::MarkAsExecutable(ORIG_Host_FilterTime);
 			MemUtils::MarkAsExecutable(ORIG_V_FadeAlpha);
+			MemUtils::MarkAsExecutable(ORIG_R_DrawSkyBox);
 			MemUtils::MarkAsExecutable(ORIG_SCR_UpdateScreen);
 			MemUtils::MarkAsExecutable(ORIG_SV_SpawnServer);
 			MemUtils::MarkAsExecutable(ORIG_SV_Frame);
@@ -257,6 +263,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_SCR_BeginLoadingPlaque, HOOKED_SCR_BeginLoadingPlaque,
 			ORIG_Host_FilterTime, HOOKED_Host_FilterTime,
 			ORIG_V_FadeAlpha, HOOKED_V_FadeAlpha,
+			ORIG_R_DrawSkyBox, HOOKED_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen, HOOKED_SCR_UpdateScreen,
 			ORIG_SV_SpawnServer, HOOKED_SV_SpawnServer,
 			ORIG_SV_Frame, HOOKED_SV_Frame,
@@ -295,6 +302,7 @@ void HwDLL::Unhook()
 			ORIG_SCR_BeginLoadingPlaque,
 			ORIG_Host_FilterTime,
 			ORIG_V_FadeAlpha,
+			ORIG_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen,
 			ORIG_SV_SpawnServer,
 			ORIG_SV_Frame,
@@ -332,6 +340,7 @@ void HwDLL::Clear()
 	ORIG_SCR_BeginLoadingPlaque = nullptr;
 	ORIG_Host_FilterTime = nullptr;
 	ORIG_V_FadeAlpha = nullptr;
+	ORIG_R_DrawSkyBox = nullptr;
 	ORIG_SCR_UpdateScreen = nullptr;
 	ORIG_SV_Frame = nullptr;
 	ORIG_SV_SpawnServer = nullptr;
@@ -651,6 +660,14 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find V_FadeAlpha.\n");
 
+		ORIG_R_DrawSkyBox = reinterpret_cast<_R_DrawSkyBox>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawSkyBox"));
+		if (ORIG_R_DrawSkyBox) {
+			EngineDevMsg("[hw dll] Found R_DrawSkyBox at %p.\n", ORIG_R_DrawSkyBox);
+		} else {
+			EngineDevWarning("[hw dll] Could not find R_DrawSkyBox.\n");
+			EngineWarning("bxt_disable_skybox is not available.\n");
+		}
+
 		ORIG_SCR_UpdateScreen = reinterpret_cast<_SCR_UpdateScreen>(MemUtils::GetSymbolAddress(m_Handle, "SCR_UpdateScreen"));
 		if (ORIG_SCR_UpdateScreen)
 			EngineDevMsg("[hw dll] Found SCR_UpdateScreen at %p.\n", ORIG_SCR_UpdateScreen);
@@ -734,6 +751,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(PM_PlayerTrace)
 		DEF_FUTURE(Host_FilterTime)
 		DEF_FUTURE(V_FadeAlpha)
+		DEF_FUTURE(R_DrawSkyBox)
 		DEF_FUTURE(SCR_UpdateScreen)
 		DEF_FUTURE(PF_GetPhysicsKeyValue)
 		DEF_FUTURE(build_number)
@@ -1279,6 +1297,7 @@ void HwDLL::FindStuff()
 			}
 		GET_FUTURE(Host_FilterTime);
 		GET_FUTURE(V_FadeAlpha);
+		GET_FUTURE(R_DrawSkyBox)
 		GET_FUTURE(SV_Frame);
 		GET_FUTURE(VGuiWrap2_ConDPrintf);
 		GET_FUTURE(VGuiWrap2_ConPrintf);
@@ -2811,6 +2830,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_bhopcap);
 	RegisterCVar(CVars::bxt_interprocess_enable);
 	RegisterCVar(CVars::bxt_fade_remove);
+	RegisterCVar(CVars::bxt_disable_skybox);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
 	RegisterCVar(CVars::bxt_tas_norefresh_until_last_frames);
@@ -3646,7 +3666,7 @@ void HwDLL::FindCVarsIfNeeded()
 HLStrafe::MovementVars HwDLL::GetMovementVars()
 {
 	auto vars = HLStrafe::MovementVars();
-	
+
 	FindCVarsIfNeeded();
 	vars.Frametime = GetFrameTime();
 	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
@@ -4285,6 +4305,14 @@ HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 		return ORIG_V_FadeAlpha();
 }
 
+HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawSkyBox)
+{
+	if (CVars::sv_cheats.GetBool() && CVars::bxt_disable_skybox.GetBool())
+		return;
+
+	ORIG_R_DrawSkyBox();
+}
+
 HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, char*, startspot)
 {
 	auto ret = ORIG_SV_SpawnServer(bIsDemo, server, startspot);
@@ -4502,7 +4530,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_wallhack.GetBool()) {
+	if (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_disable_skybox.GetBool())) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}

@@ -576,7 +576,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_disable_hud);
 	}
 
-	if (ORIG_CWeaponStatusPanel__AddToHistory || ORIG_VGUI_Label_Paint) {
+	if (ORIG_CWeaponStatusPanel__AddToHistory && ORIG_VGUI_Label_Paint) {
 		REG(bxt_disable_gmc_hud);
 	}
 	#undef REG

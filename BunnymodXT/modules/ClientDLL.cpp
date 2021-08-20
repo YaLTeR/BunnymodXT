@@ -102,8 +102,6 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_HUD_Frame, HOOKED_HUD_Frame,
 			ORIG_HUD_DrawTransparentTriangles, HOOKED_HUD_DrawTransparentTriangles,
 			ORIG_HUD_Key_Event, HOOKED_HUD_Key_Event,
-			ORIG_CWeaponStatusPanel__AddToHistory, HOOKED_CWeaponStatusPanel__AddToHistory,
-			ORIG_VGUI_Label_Paint, HOOKED_VGUI_Label_Paint,
 			ORIG_HUD_UpdateClientData, HOOKED_HUD_UpdateClientData);
 	}
 
@@ -130,8 +128,6 @@ void ClientDLL::Unhook()
 			ORIG_HUD_Frame,
 			ORIG_HUD_DrawTransparentTriangles,
 			ORIG_HUD_Key_Event,
-			ORIG_CWeaponStatusPanel__AddToHistory,
-			ORIG_VGUI_Label_Paint,
 			ORIG_HUD_UpdateClientData);
 	}
 
@@ -169,8 +165,6 @@ void ClientDLL::Clear()
 	ORIG_HUD_UpdateClientData = nullptr;
 	ORIG_IN_ActivateMouse = nullptr;
 	ORIG_IN_DeactivateMouse = nullptr;
-	ORIG_CWeaponStatusPanel__AddToHistory = nullptr;
-	ORIG_VGUI_Label_Paint = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -261,9 +255,6 @@ void ClientDLL::FindStuff()
 				assert(false);
 			}
 		});
-
-	auto fCWeaponStatusPanel__AddToHistory = FindAsync(ORIG_CWeaponStatusPanel__AddToHistory, patterns::client::CWeaponStatusPanel__AddToHistory);
-	auto fVGUI_Label_Paint = FindAsync(ORIG_VGUI_Label_Paint, patterns::client::VGUI_Label_Paint);
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
@@ -439,26 +430,6 @@ void ClientDLL::FindStuff()
 		if (!ppmove)
 			ppmove = reinterpret_cast<void**>(MemUtils::GetSymbolAddress(m_Handle, "pmove"));
 	}
-
-	{
-		auto pattern = fCWeaponStatusPanel__AddToHistory.get();
-		if (ORIG_CWeaponStatusPanel__AddToHistory) {
-			EngineDevMsg("[client dll] Found CWeaponStatusPanel::AddToHistory at %p (using the %s pattern).\n", ORIG_CWeaponStatusPanel__AddToHistory, pattern->name());
-		} else {
-			EngineDevWarning("[client dll] Could not find CWeaponStatusPanel::AddToHistory.\n");
-			EngineWarning("Disabling history HUD in Gunman Chronicles is not available.\n");
-		}
-	}
-
-	{
-		auto pattern = fVGUI_Label_Paint.get();
-		if (ORIG_VGUI_Label_Paint) {
-			EngineDevMsg("[client dll] Found VGUI_Label_Paint at %p (using the %s pattern).\n", ORIG_VGUI_Label_Paint, pattern->name());
-		} else {
-			EngineDevWarning("[client dll] Could not find VGUI_Label_Paint.\n");
-			EngineWarning("Disabling .tga HUD is not available.\n");
-		}
-	}
 }
 
 bool ClientDLL::FindHUDFunctions()
@@ -574,10 +545,6 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_HUD_Redraw) {
 		REG(bxt_disable_hud);
-	}
-
-	if (ORIG_CWeaponStatusPanel__AddToHistory && ORIG_VGUI_Label_Paint) {
-		REG(bxt_disable_gmc_hud);
 	}
 	#undef REG
 }
@@ -849,20 +816,4 @@ HOOK_DEF_2(ClientDLL, int, __cdecl, HUD_UpdateClientData, client_data_t*, pcldat
 	}
 
 	return rv;
-}
-
-HOOK_DEF_4(ClientDLL, void, __fastcall, CWeaponStatusPanel__AddToHistory, void*, thisptr, int, edx, int, param1, int, param2)
-{
-	if (CVars::bxt_disable_gmc_hud.GetBool())
-		return;
-
-	ORIG_CWeaponStatusPanel__AddToHistory(thisptr, edx, param1, param2);
-}
-
-HOOK_DEF_1(ClientDLL, void, __fastcall, VGUI_Label_Paint, int, param1)
-{
-	if (CVars::bxt_disable_gmc_hud.GetBool())
-		return;
-
-	ORIG_VGUI_Label_Paint(param1);
 }

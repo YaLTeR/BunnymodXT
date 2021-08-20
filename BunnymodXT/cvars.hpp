@@ -126,6 +126,7 @@ namespace CVars
 	extern CVarWrapper bxt_tas_norefresh_until_last_frames;
 	extern CVarWrapper bxt_tas_write_log;
 	extern CVarWrapper bxt_tas_playback_speed;
+	extern CVarWrapper bxt_disable_vgui;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_cheats;
@@ -154,7 +155,6 @@ namespace CVars
 
 	// Clientside CVars
 	extern CVarWrapper bxt_disable_hud;
-	extern CVarWrapper bxt_disable_gmc_hud;
 	extern CVarWrapper bxt_autojump_prediction;
 	extern CVarWrapper bxt_bhopcap_prediction;
 	extern CVarWrapper bxt_show_nodes;

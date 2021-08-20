@@ -19,6 +19,7 @@ namespace CVars
 	CVarWrapper bxt_tas_norefresh_until_last_frames("bxt_tas_norefresh_until_last_frames", "0");
 	CVarWrapper bxt_tas_write_log("bxt_tas_write_log", "0");
 	CVarWrapper bxt_tas_playback_speed("bxt_tas_playback_speed", "1");
+	CVarWrapper bxt_disable_vgui("bxt_disable_vgui", "0");
 
 	CVarWrapper con_color;
 	CVarWrapper sv_cheats;
@@ -47,7 +48,6 @@ namespace CVars
 
 	// Clientside CVars
 	CVarWrapper bxt_disable_hud("bxt_disable_hud", "0");
-	CVarWrapper bxt_disable_gmc_hud("bxt_disable_gmc_hud", "0");
 	CVarWrapper bxt_autojump_prediction("bxt_autojump_prediction", "0");
 	CVarWrapper bxt_bhopcap_prediction("bxt_bhopcap_prediction", "1");
 	CVarWrapper bxt_show_nodes("bxt_show_nodes", "0");
@@ -131,6 +131,7 @@ namespace CVars
 		&bxt_tas_norefresh_until_last_frames,
 		&bxt_tas_write_log,
 		&bxt_tas_playback_speed,
+		&bxt_disable_vgui,
 		&con_color,
 		&sv_cheats,
 		&sv_maxvelocity,
@@ -157,7 +158,6 @@ namespace CVars
 		&bxt_disable_autosave,
 		&bxt_disable_changelevel,
 		&bxt_disable_hud,
-		&bxt_disable_gmc_hud,
 		&bxt_show_custom_triggers,
 		&bxt_triggers_color,
 		&bxt_wallhack,

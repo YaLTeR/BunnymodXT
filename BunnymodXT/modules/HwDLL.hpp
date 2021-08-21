@@ -46,6 +46,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(byte *, __cdecl, Mod_LeafPVS, mleaf_t *leaf, model_t *model)
 	HOOK_DECL(void, __cdecl, SV_AddLinksToPM_, void *node, float *pmove_mins, float *pmove_maxs)
 	HOOK_DECL(void, __cdecl, SV_WriteEntitiesToClient, client_t* client, void* msg)
+	HOOK_DECL(void, __cdecl, VGuiWrap_Paint, int paintAll)
 
 	struct cmdbuf_t
 	{

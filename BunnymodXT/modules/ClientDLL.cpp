@@ -437,28 +437,29 @@ bool ClientDLL::FindHUDFunctions()
 	if ((ORIG_HUD_Init = reinterpret_cast<_HUD_Init>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Init")))) {
 		EngineDevMsg("[client dll] Found HUD_Init at %p.\n", ORIG_HUD_Init);
 	} else {
-		EngineDevWarning("[client dll] Could not HUD_Init.\n");
+		EngineDevWarning("[client dll] Could not find HUD_Init.\n");
 		return false;
 	}
 
 	if ((ORIG_HUD_VidInit = reinterpret_cast<_HUD_VidInit>(MemUtils::GetSymbolAddress(m_Handle, "HUD_VidInit")))) {
 		EngineDevMsg("[client dll] Found HUD_VidInit at %p.\n", ORIG_HUD_VidInit);
 	} else {
-		EngineDevWarning("[client dll] Could not HUD_VidInit.\n");
+		EngineDevWarning("[client dll] Could not find HUD_VidInit.\n");
 		return false;
 	}
 
 	if ((ORIG_HUD_Reset = reinterpret_cast<_HUD_Reset>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Reset")))) {
 		EngineDevMsg("[client dll] Found HUD_Reset at %p.\n", ORIG_HUD_Reset);
 	} else {
-		EngineDevWarning("[client dll] Could not HUD_Reset.\n");
+		EngineDevWarning("[client dll] Could not find HUD_Reset.\n");
 		return false;
 	}
 
 	if ((ORIG_HUD_Redraw = reinterpret_cast<_HUD_Redraw>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Redraw")))) {
 		EngineDevMsg("[client dll] Found HUD_Redraw at %p.\n", ORIG_HUD_Redraw);
 	} else {
-		EngineDevWarning("[client dll] Could not HUD_Redraw.\n");
+		EngineDevWarning("[client dll] Could not find HUD_Redraw.\n");
+		EngineWarning("bxt_disable_hud is not available.\n");
 		return false;
 	}
 
@@ -540,6 +541,10 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_entities);
 		REG(bxt_hud_entities_offset);
 		REG(bxt_hud_entities_anchor);
+	}
+
+	if (ORIG_HUD_Redraw) {
+		REG(bxt_disable_hud);
 	}
 	#undef REG
 }
@@ -715,7 +720,8 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Reset)
 
 HOOK_DEF_2(ClientDLL, void, __cdecl, HUD_Redraw, float, time, int, intermission)
 {
-	ORIG_HUD_Redraw(time, intermission);
+	if (!CVars::bxt_disable_hud.GetBool())
+		ORIG_HUD_Redraw(time, intermission);
 
 	CustomHud::Draw(time);
 }

@@ -66,7 +66,7 @@ protected:
 	void **ppmove;
 	ptrdiff_t offOldbuttons;
 	ptrdiff_t offOnground;
-	
+
 	ptrdiff_t offBhopcap;
 	ptrdiff_t pBhopcapWindows;
 	byte originalBhopcapInsn[6];

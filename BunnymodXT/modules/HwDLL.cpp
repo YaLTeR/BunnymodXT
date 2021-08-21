@@ -163,6 +163,11 @@ extern "C" void __cdecl SV_WriteEntitiesToClient(client_t* client, void* msg)
 {
 	HwDLL::HOOKED_SV_WriteEntitiesToClient(client, msg);
 }
+
+extern "C" void __cdecl VGuiWrap_Paint(int paintAll)
+{
+	HwDLL::HOOKED_VGuiWrap_Paint(paintAll);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -247,6 +252,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Mod_LeafPVS);
 			MemUtils::MarkAsExecutable(ORIG_SV_AddLinksToPM_);
 			MemUtils::MarkAsExecutable(ORIG_SV_WriteEntitiesToClient);
+			MemUtils::MarkAsExecutable(ORIG_VGuiWrap_Paint);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -279,7 +285,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_Clear, HOOKED_R_Clear,
 			ORIG_Mod_LeafPVS, HOOKED_Mod_LeafPVS,
 			ORIG_SV_AddLinksToPM_, HOOKED_SV_AddLinksToPM_,
-			ORIG_SV_WriteEntitiesToClient, HOOKED_SV_WriteEntitiesToClient);
+			ORIG_SV_WriteEntitiesToClient, HOOKED_SV_WriteEntitiesToClient,
+			ORIG_VGuiWrap_Paint, HOOKED_VGuiWrap_Paint);
 	}
 }
 
@@ -318,7 +325,8 @@ void HwDLL::Unhook()
 			ORIG_R_Clear,
 			ORIG_Mod_LeafPVS,
 			ORIG_SV_AddLinksToPM_,
-			ORIG_SV_WriteEntitiesToClient);
+			ORIG_SV_WriteEntitiesToClient,
+			ORIG_VGuiWrap_Paint);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -375,6 +383,7 @@ void HwDLL::Clear()
 	ORIG_Mod_LeafPVS = nullptr;
 	ORIG_SV_AddLinksToPM_ = nullptr;
 	ORIG_SV_WriteEntitiesToClient = nullptr;
+	ORIG_VGuiWrap_Paint = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -726,6 +735,14 @@ void HwDLL::FindStuff()
 			EngineWarning("bxt_novis has no effect.\n");
 		}
 
+		ORIG_VGuiWrap_Paint = reinterpret_cast<_VGuiWrap_Paint>(MemUtils::GetSymbolAddress(m_Handle, "VGuiWrap_Paint"));
+		if (ORIG_VGuiWrap_Paint) {
+			EngineDevMsg("[hw dll] Found VGuiWrap_Paint at %p.\n", ORIG_VGuiWrap_Paint);
+		} else {
+			EngineDevWarning("[hw dll] Could not find VGuiWrap_Paint.\n");
+			EngineWarning("bxt_disable_vgui has no effect.\n");
+		}
+
 		const auto CL_Move = reinterpret_cast<uintptr_t>(MemUtils::GetSymbolAddress(m_Handle, "CL_Move"));
 		if (CL_Move)
 		{
@@ -768,6 +785,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Key_Event)
 		DEF_FUTURE(SV_AddLinksToPM_)
 		DEF_FUTURE(SV_WriteEntitiesToClient)
+		DEF_FUTURE(VGuiWrap_Paint)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1308,6 +1326,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(PF_GetPhysicsKeyValue);
 		GET_FUTURE(SV_AddLinksToPM_);
 		GET_FUTURE(SV_WriteEntitiesToClient);
+		GET_FUTURE(VGuiWrap_Paint);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -2836,6 +2855,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_tas_norefresh_until_last_frames);
 	RegisterCVar(CVars::bxt_tas_write_log);
 	RegisterCVar(CVars::bxt_tas_playback_speed);
+	RegisterCVar(CVars::bxt_disable_vgui);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
 	RegisterCVar(CVars::bxt_wallhack_alpha);
@@ -4567,4 +4587,14 @@ HOOK_DEF_2(HwDLL, void, __cdecl, SV_WriteEntitiesToClient, client_t*, client, vo
 
 	if (CVars::_bxt_norefresh.GetBool())
 		*num_edicts = orig_num_edicts;
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap_Paint, int, paintAll)
+{
+	if (CVars::bxt_disable_vgui.GetBool()) {
+		ORIG_VGuiWrap_Paint(0);
+		return;
+	}
+
+	ORIG_VGuiWrap_Paint(paintAll);
 }

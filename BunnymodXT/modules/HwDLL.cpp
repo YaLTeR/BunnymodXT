@@ -168,6 +168,11 @@ extern "C" void __cdecl VGuiWrap_Paint(int paintAll)
 {
 	HwDLL::HOOKED_VGuiWrap_Paint(paintAll);
 }
+
+extern "C" void __cdecl SV_SetMoveVars()
+{
+	HwDLL::HOOKED_SV_SetMoveVars();
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -253,6 +258,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SV_AddLinksToPM_);
 			MemUtils::MarkAsExecutable(ORIG_SV_WriteEntitiesToClient);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap_Paint);
+			MemUtils::MarkAsExecutable(ORIG_SV_SetMoveVars);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -286,7 +292,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Mod_LeafPVS, HOOKED_Mod_LeafPVS,
 			ORIG_SV_AddLinksToPM_, HOOKED_SV_AddLinksToPM_,
 			ORIG_SV_WriteEntitiesToClient, HOOKED_SV_WriteEntitiesToClient,
-			ORIG_VGuiWrap_Paint, HOOKED_VGuiWrap_Paint);
+			ORIG_VGuiWrap_Paint, HOOKED_VGuiWrap_Paint,
+			ORIG_SV_SetMoveVars, HOOKED_SV_SetMoveVars);
 	}
 }
 
@@ -326,7 +333,8 @@ void HwDLL::Unhook()
 			ORIG_Mod_LeafPVS,
 			ORIG_SV_AddLinksToPM_,
 			ORIG_SV_WriteEntitiesToClient,
-			ORIG_VGuiWrap_Paint);
+			ORIG_VGuiWrap_Paint,
+			ORIG_SV_SetMoveVars);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -384,6 +392,7 @@ void HwDLL::Clear()
 	ORIG_SV_AddLinksToPM_ = nullptr;
 	ORIG_SV_WriteEntitiesToClient = nullptr;
 	ORIG_VGuiWrap_Paint = nullptr;
+	ORIG_SV_SetMoveVars = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -414,6 +423,8 @@ void HwDLL::Clear()
 	cmd_text = nullptr;
 	host_frametime = nullptr;
 	cvar_vars = nullptr;
+	movevars = nullptr;
+	offZmax = 0;
 	frametime_remainder = nullptr;
 	framesTillExecuting = 0;
 	executing = false;
@@ -593,6 +604,13 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find cvar_vars.\n");
 
+		movevars = MemUtils::GetSymbolAddress(m_Handle, "movevars");
+		if (movevars) {
+			EngineDevMsg("[hw dll] Found movevars at %p.\n", movevars);
+			offZmax = 0x38;
+		} else
+			EngineDevWarning("[hw dll] Could not find movevars.\n");
+
 		ORIG_hudGetViewAngles = reinterpret_cast<_hudGetViewAngles>(MemUtils::GetSymbolAddress(m_Handle, "hudGetViewAngles"));
 		if (ORIG_hudGetViewAngles)
 			EngineDevMsg("[hw dll] Found hudGetViewAngles at %p.\n", ORIG_hudGetViewAngles);
@@ -617,7 +635,13 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find SV_WriteEntitiesToClient.\n");
 
-		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM)
+		ORIG_SV_SetMoveVars = reinterpret_cast<_SV_SetMoveVars>(MemUtils::GetSymbolAddress(m_Handle, "SV_SetMoveVars"));
+		if (ORIG_SV_SetMoveVars)
+			EngineDevMsg("[hw dll] Found SV_SetMoveVars at %p.\n", ORIG_SV_SetMoveVars);
+		else
+			EngineDevWarning("[hw dll] Could not find SV_SetMoveVars.\n");
+
+		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
 		#define FIND(f) \
@@ -1110,6 +1134,15 @@ void HwDLL::FindStuff()
 				}
 			});
 
+		auto fSV_SetMoveVars = FindAsync(
+			ORIG_SV_SetMoveVars,
+			patterns::engine::SV_SetMoveVars,
+			[&](auto pattern) {
+				movevars = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(ORIG_SV_SetMoveVars) + 18);
+				offZmax = 0x38;
+			}
+		);
+
 		{
 			auto pattern = fCbuf_Execute.get();
 			if (ORIG_Cbuf_Execute) {
@@ -1261,6 +1294,16 @@ void HwDLL::FindStuff()
 			} else {
 				EngineDevWarning("[hw dll] Could not find Cmd_ExecuteString or Cmd_ExecuteStringWithPrivilegeCheck.\n");
 				ORIG_Cbuf_Execute = nullptr;
+			}
+		}
+
+		{
+			auto pattern = fSV_SetMoveVars.get();
+			if (ORIG_SV_SetMoveVars) {
+				EngineDevMsg("[hw dll] Found SV_SetMoveVars at %p (using the %s pattern).\n", ORIG_SV_SetMoveVars, pattern->name());
+				EngineDevMsg("[hw dll] Found movevars at %p.\n", movevars);
+			} else {
+				EngineDevWarning("[hw dll] Could not find SV_SetMoveVars.\n");
 			}
 		}
 
@@ -2869,6 +2912,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_collision_depth_map_max_depth);
 	RegisterCVar(CVars::bxt_collision_depth_map_pixel_scale);
 	RegisterCVar(CVars::bxt_collision_depth_map_remove_distance_limit);
+	RegisterCVar(CVars::bxt_force_zmax);
 
 	CVars::sv_cheats.Assign(FindCVar("sv_cheats"));
 	CVars::fps_max.Assign(FindCVar("fps_max"));
@@ -4597,4 +4641,16 @@ HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap_Paint, int, paintAll)
 	}
 
 	ORIG_VGuiWrap_Paint(paintAll);
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, SV_SetMoveVars)
+{
+	ORIG_SV_SetMoveVars();
+
+	if (CVars::bxt_force_zmax.GetBool()) {
+		if (movevars && offZmax) {
+			auto movevars_zmax = reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(movevars) + offZmax);
+			*movevars_zmax = CVars::bxt_force_zmax.GetFloat();
+		}
+	}
 }

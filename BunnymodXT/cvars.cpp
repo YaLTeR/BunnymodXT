@@ -116,6 +116,20 @@ namespace CVars
 	CVarWrapper bxt_hud_entities("bxt_hud_entities", "0");
 	CVarWrapper bxt_hud_entities_offset("bxt_hud_entities_offset", "");
 	CVarWrapper bxt_hud_entities_anchor("bxt_hud_entities_anchor", "0 0");
+	CVarWrapper bxt_cross("bxt_cross", "0");
+	CVarWrapper bxt_cross_color("bxt_cross_color", "");
+	CVarWrapper bxt_cross_alpha("bxt_cross_alpha", "255");
+	CVarWrapper bxt_cross_thickness("bxt_cross_thickness", "2");
+	CVarWrapper bxt_cross_size("bxt_cross_size", "10");
+	CVarWrapper bxt_cross_gap("bxt_cross_gap", "3");
+	CVarWrapper bxt_cross_outline("bxt_cross_outline", "0");
+	CVarWrapper bxt_cross_circle_radius("bxt_cross_circle_radius", "0");
+	CVarWrapper bxt_cross_dot_color("bxt_cross_dot_color", "");
+	CVarWrapper bxt_cross_dot_size("bxt_cross_dot_size", "0");
+	CVarWrapper bxt_cross_top_line("bxt_cross_top_line", "1");
+	CVarWrapper bxt_cross_bottom_line("bxt_cross_bottom_line", "1");
+	CVarWrapper bxt_cross_left_line("bxt_cross_left_line", "1");
+	CVarWrapper bxt_cross_right_line("bxt_cross_right_line", "1");
 
 	const std::vector<CVarWrapper*> allCVars =
 	{
@@ -224,6 +238,20 @@ namespace CVars
 		&bxt_hud_tas_editor_status_anchor,
 		&bxt_hud_entities,
 		&bxt_hud_entities_offset,
-		&bxt_hud_entities_anchor
+		&bxt_hud_entities_anchor,
+		&bxt_cross,
+		&bxt_cross_color,
+		&bxt_cross_alpha,
+		&bxt_cross_thickness,
+		&bxt_cross_size,
+		&bxt_cross_gap,
+		&bxt_cross_outline,
+		&bxt_cross_circle_radius,
+		&bxt_cross_dot_color,
+		&bxt_cross_dot_size,
+		&bxt_cross_top_line,
+		&bxt_cross_bottom_line,
+		&bxt_cross_left_line,
+		&bxt_cross_right_line
 	};
 }

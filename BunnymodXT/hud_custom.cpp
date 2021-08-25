@@ -1141,7 +1141,7 @@ namespace CustomHud
 		GLUtils gl;
 
 		// Draw the outline.
-		if (CVars::bxt_cross_outline.GetFloat() > 0.0f) {
+		if (CVars::bxt_cross_outline.GetBool()) {
 			gl.color(0, 0, 0, alpha);
 			gl.line_width(CVars::bxt_cross_outline.GetFloat());
 
@@ -1152,7 +1152,7 @@ namespace CustomHud
 			auto offset = half_thickness + half_width;
 
 			// Top line
-			if (CVars::bxt_cross_top_line.GetFloat()) {
+			if (CVars::bxt_cross_top_line.GetBool()) {
 				gl.line(Vector2D(center.x - offset, center.y - gap - size), Vector2D(center.x + offset, center.y - gap - size));
 				gl.line(Vector2D(center.x + half_thickness, center.y - gap - size + half_width), Vector2D(center.x + half_thickness, center.y - gap - half_width));
 				gl.line(Vector2D(center.x + offset, center.y - gap), Vector2D(center.x - offset, center.y - gap));
@@ -1160,7 +1160,7 @@ namespace CustomHud
 			}
 
 			// Bottom line
-			if (CVars::bxt_cross_bottom_line.GetFloat()) {
+			if (CVars::bxt_cross_bottom_line.GetBool()) {
 				gl.line(Vector2D(center.x - offset, center.y + gap + size), Vector2D(center.x + offset, center.y + gap + size));
 				gl.line(Vector2D(center.x + half_thickness, center.y + gap + size - half_width), Vector2D(center.x + half_thickness, center.y + gap + half_width));
 				gl.line(Vector2D(center.x + offset, center.y + gap), Vector2D(center.x - offset, center.y + gap));
@@ -1168,7 +1168,7 @@ namespace CustomHud
 			}
 
 			// Left line
-			if (CVars::bxt_cross_left_line.GetFloat()) {
+			if (CVars::bxt_cross_left_line.GetBool()) {
 				gl.line(Vector2D(center.x - gap - size, center.y - offset), Vector2D(center.x - gap - size, center.y + offset));
 				gl.line(Vector2D(center.x - gap - size + half_width, center.y + half_thickness), Vector2D(center.x - gap - half_width, center.y + half_thickness));
 				gl.line(Vector2D(center.x - gap, center.y + offset), Vector2D(center.x - gap, center.y - offset));
@@ -1176,7 +1176,7 @@ namespace CustomHud
 			}
 
 			// Right line
-			if (CVars::bxt_cross_right_line.GetFloat()) {
+			if (CVars::bxt_cross_right_line.GetBool()) {
 				gl.line(Vector2D(center.x + gap + size, center.y - offset), Vector2D(center.x + gap + size, center.y + offset));
 				gl.line(Vector2D(center.x + gap + size - half_width, center.y + half_thickness), Vector2D(center.x + gap + half_width, center.y + half_thickness));
 				gl.line(Vector2D(center.x + gap, center.y + offset), Vector2D(center.x + gap, center.y - offset));
@@ -1184,7 +1184,7 @@ namespace CustomHud
 			}
 
 			// Dot
-			if (CVars::bxt_cross_dot_size.GetFloat() > 0.0f) {
+			if (CVars::bxt_cross_dot_size.GetBool()) {
 				auto size = CVars::bxt_cross_dot_size.GetFloat();
 				auto offset = Vector2D(size / 2.0f, size / 2.0f);
 
@@ -1198,24 +1198,24 @@ namespace CustomHud
 		gl.color(r, g, b, alpha);
 
 		// Draw the crosshairs.
-		if (CVars::bxt_cross_thickness.GetFloat() > 0.0f) {
+		if (CVars::bxt_cross_thickness.GetBool()) {
 			gl.line_width(CVars::bxt_cross_thickness.GetFloat());
 
 			auto size = CVars::bxt_cross_size.GetFloat();
 			auto gap = CVars::bxt_cross_gap.GetFloat();
 
-			if (CVars::bxt_cross_top_line.GetFloat())
+			if (CVars::bxt_cross_top_line.GetBool())
 				gl.line(Vector2D(center.x, center.y - gap - size), Vector2D(center.x, center.y - gap));
-			if (CVars::bxt_cross_bottom_line.GetFloat())
+			if (CVars::bxt_cross_bottom_line.GetBool())
 				gl.line(Vector2D(center.x, center.y + gap + size), Vector2D(center.x, center.y + gap));
-			if (CVars::bxt_cross_left_line.GetFloat())
+			if (CVars::bxt_cross_left_line.GetBool())
 				gl.line(Vector2D(center.x - gap - size, center.y), Vector2D(center.x - gap, center.y));
-			if (CVars::bxt_cross_right_line.GetFloat())
+			if (CVars::bxt_cross_right_line.GetBool())
 				gl.line(Vector2D(center.x + gap + size, center.y), Vector2D(center.x + gap, center.y));
 		}
 
 		// Draw the circle.
-		if (CVars::bxt_cross_circle_radius.GetFloat() > 0.0f) {
+		if (CVars::bxt_cross_circle_radius.GetBool()) {
 			gl.line_width(1.0f);
 
 			static float old_circle_radius = 0;
@@ -1232,7 +1232,7 @@ namespace CustomHud
 		}
 
 		// Draw the dot.
-		if (CVars::bxt_cross_dot_size.GetFloat() > 0.0f) {
+		if (CVars::bxt_cross_dot_size.GetBool()) {
 			unsigned char r, g, b;
 			if (sscanf(CVars::bxt_cross_dot_color.GetString().c_str(), "%hhu %hhu %hhu", &r, &g, &b) == 3)
 				gl.color(r, g, b, alpha);

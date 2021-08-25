@@ -1122,9 +1122,6 @@ namespace CustomHud
 		if (!CVars::bxt_cross.GetBool())
 			return;
 
-		static float old_circle_radius = 0;
-		static std::vector<Vector2D> circle_points;
-
 		unsigned char alpha;
 		if (sscanf(CVars::bxt_cross_alpha.GetString().c_str(), "%hhu", &alpha) != 1)
 			alpha = 255;
@@ -1221,6 +1218,9 @@ namespace CustomHud
 		if (CVars::bxt_cross_circle_radius.GetFloat() > 0.0f) {
 			gl.line_width(1.0f);
 
+			static float old_circle_radius = 0;
+			static std::vector<Vector2D> circle_points;
+
 			auto radius = CVars::bxt_cross_circle_radius.GetFloat();
 			if (old_circle_radius != radius) {
 				// Recompute the circle points.
@@ -1234,13 +1234,8 @@ namespace CustomHud
 		// Draw the dot.
 		if (CVars::bxt_cross_dot_size.GetFloat() > 0.0f) {
 			unsigned char r, g, b;
-			if (sscanf(CVars::bxt_cross_dot_color.GetString().c_str(), "%hhu %hhu %hhu", &r, &g, &b) != 3) {
-				r = 255;
-				g = 0;
-				b = 0;
-			}
-
-			gl.color(r, g, b, alpha);
+			if (sscanf(CVars::bxt_cross_dot_color.GetString().c_str(), "%hhu %hhu %hhu", &r, &g, &b) == 3)
+				gl.color(r, g, b, alpha);
 
 			auto size = CVars::bxt_cross_dot_size.GetFloat();
 			auto offset = Vector2D(size / 2.0f, size / 2.0f);

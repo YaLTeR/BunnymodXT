@@ -217,12 +217,12 @@ namespace TriangleDrawing
 			auto corner_positions = trigger.get_corner_positions();
 
 			pTriAPI->RenderMode(kRenderTransAdd);
-			
+
 			if (!CVars::bxt_triggers_color.IsEmpty()) {
 				unsigned r = 0, g = 0, b = 0, a = 0;
 				std::istringstream ss(CVars::bxt_triggers_color.GetString());
 				ss >> r >> g >> b >> a;
-    
+
 				static float triggerColor[4];
 				triggerColor[0] = r / 255.0f;
 				triggerColor[1] = g / 255.0f;

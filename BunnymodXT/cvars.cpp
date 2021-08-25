@@ -21,6 +21,7 @@ namespace CVars
 	CVarWrapper bxt_tas_write_log("bxt_tas_write_log", "0");
 	CVarWrapper bxt_tas_playback_speed("bxt_tas_playback_speed", "1");
 	CVarWrapper bxt_disable_vgui("bxt_disable_vgui", "0");
+	CVarWrapper bxt_disable_usermsg("bxt_disable_usermsg", "0");
 	CVarWrapper bxt_force_zmax("bxt_force_zmax", "0");
 
 	CVarWrapper con_color;
@@ -135,6 +136,7 @@ namespace CVars
 		&bxt_tas_write_log,
 		&bxt_tas_playback_speed,
 		&bxt_disable_vgui,
+		&bxt_disable_usermsg,
 		&bxt_force_zmax,
 		&con_color,
 		&sv_cheats,

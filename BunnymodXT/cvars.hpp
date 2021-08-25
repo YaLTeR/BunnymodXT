@@ -128,6 +128,7 @@ namespace CVars
 	extern CVarWrapper bxt_tas_write_log;
 	extern CVarWrapper bxt_tas_playback_speed;
 	extern CVarWrapper bxt_disable_vgui;
+	extern CVarWrapper bxt_disable_usermsg;
 	extern CVarWrapper bxt_force_zmax;
 
 	extern CVarWrapper con_color;

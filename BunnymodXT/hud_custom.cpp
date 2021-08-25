@@ -1122,19 +1122,22 @@ namespace CustomHud
 		if (!CVars::bxt_cross.GetBool())
 			return;
 
-		float old_circle_radius = 0;
-		std::vector<Vector2D> circle_points;
+		static float old_circle_radius = 0;
+		static std::vector<Vector2D> circle_points;
 
-		float r = 0.0f, g = 0.0f, b = 0.0f;
-		std::istringstream ss(CVars::bxt_cross_color.GetString());
-		ss >> r >> g >> b;
+		unsigned char alpha;
+		if (sscanf(CVars::bxt_cross_alpha.GetString().c_str(), "%hhu", &alpha) != 1)
+			alpha = 255;
 
-		static float crosshairColor[2];
-		crosshairColor[0] = r;
-		crosshairColor[1] = g;
-		crosshairColor[2] = b;
+		if (alpha == 0)
+			return;
 
-		float alpha = CVars::bxt_cross_alpha.GetFloat() / 255;
+		unsigned char r, g, b;
+		if (sscanf(CVars::bxt_cross_color.GetString().c_str(), "%hhu %hhu %hhu", &r, &g, &b) != 3) {
+			r = 0;
+			g = 255;
+			b = 0;
+		}
 
 		Vector2D center(si.iWidth / 2.0f, si.iHeight / 2.0f);
 
@@ -1142,7 +1145,7 @@ namespace CustomHud
 
 		// Draw the outline.
 		if (CVars::bxt_cross_outline.GetFloat() > 0.0f) {
-			gl.color(0.0f, 0.0f, 0.0f, alpha);
+			gl.color(0, 0, 0, alpha);
 			gl.line_width(CVars::bxt_cross_outline.GetFloat());
 
 			auto size = CVars::bxt_cross_size.GetFloat();
@@ -1195,11 +1198,7 @@ namespace CustomHud
 			}
 		}
 
-		if (!CVars::bxt_cross_color.IsEmpty()) {
-			gl.color(crosshairColor[0], crosshairColor[1], crosshairColor[2], alpha);
-		} else {
-			gl.color(0.0f, 255.0f, 0.0f, alpha);
-		}
+		gl.color(r, g, b, alpha);
 
 		// Draw the crosshairs.
 		if (CVars::bxt_cross_thickness.GetFloat() > 0.0f) {
@@ -1234,25 +1233,19 @@ namespace CustomHud
 
 		// Draw the dot.
 		if (CVars::bxt_cross_dot_size.GetFloat() > 0.0f) {
-				float r = 0.0f, g = 0.0f, b = 0.0f;
-				std::istringstream ss(CVars::bxt_cross_dot_color.GetString());
-				ss >> r >> g >> b;
+			unsigned char r, g, b;
+			if (sscanf(CVars::bxt_cross_dot_color.GetString().c_str(), "%hhu %hhu %hhu", &r, &g, &b) != 3) {
+				r = 255;
+				g = 0;
+				b = 0;
+			}
 
-				static float crosshairDotColor[2];
-				crosshairDotColor[0] = r;
-				crosshairDotColor[1] = g;
-				crosshairDotColor[2] = b;
+			gl.color(r, g, b, alpha);
 
-				if (!CVars::bxt_cross_dot_color.IsEmpty()) {
-					gl.color(crosshairDotColor[0], crosshairDotColor[1], crosshairDotColor[2], alpha);
-				} else {
-					gl.color(255.0f, 0.0f, 0.0f, alpha);
-				}
+			auto size = CVars::bxt_cross_dot_size.GetFloat();
+			auto offset = Vector2D(size / 2.0f, size / 2.0f);
 
-				auto size = CVars::bxt_cross_dot_size.GetFloat();
-				auto offset = Vector2D(size / 2.0f, size / 2.0f);
-
-				gl.rectangle(center - offset, center + offset);
+			gl.rectangle(center - offset, center + offset);
 		}
 	}
 

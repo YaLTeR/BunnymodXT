@@ -118,7 +118,7 @@ namespace CVars
 	CVarWrapper bxt_hud_entities_anchor("bxt_hud_entities_anchor", "0 0");
 	CVarWrapper bxt_cross("bxt_cross", "0");
 	CVarWrapper bxt_cross_color("bxt_cross_color", "");
-	CVarWrapper bxt_cross_alpha("bxt_cross_alpha", "255");
+	CVarWrapper bxt_cross_alpha("bxt_cross_alpha", "");
 	CVarWrapper bxt_cross_thickness("bxt_cross_thickness", "2");
 	CVarWrapper bxt_cross_size("bxt_cross_size", "10");
 	CVarWrapper bxt_cross_gap("bxt_cross_gap", "3");

@@ -80,7 +80,7 @@ namespace TriangleDrawing
 		Vector forward, right, up;
 		ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player->v.v_angle, forward, right, up);
 
-		const auto si = CustomHud::GetScreenInfo();
+		const auto& si = CustomHud::GetScreenInfo();
 		const auto min_resolution = std::min(si.iHeight, si.iWidth);
 		const auto half_size_pixels = min_resolution / 30.0f;
 		const Vector2D half_size(TriangleUtils::PixelWidthToProportion(half_size_pixels), TriangleUtils::PixelHeightToProportion(half_size_pixels));
@@ -224,7 +224,7 @@ namespace TriangleDrawing
     			std::istringstream ss(CVars::bxt_triggers_color.GetString());
     			ss >> r >> g >> b >> a;
     
-    			static float triggerColor[3];
+    			static float triggerColor[4];
     			triggerColor[0] = r / 255.0f;
     			triggerColor[1] = g / 255.0f;
     			triggerColor[2] = b / 255.0f;

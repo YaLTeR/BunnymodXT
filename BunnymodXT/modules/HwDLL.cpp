@@ -781,7 +781,7 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found DispatchDirectUserMsg at %p.\n", ORIG_DispatchDirectUserMsg);
 		} else {
 			EngineDevWarning("[hw dll] Could not find DispatchDirectUserMsg.\n");
-			EngineWarning("bxt_disable_usermsg has no effect.\n");
+			EngineWarning("Demo crash fix in Counter-Strike: Condition Zero Deleted Scenes is not available.\n");
 		}
 
 		const auto CL_Move = reinterpret_cast<uintptr_t>(MemUtils::GetSymbolAddress(m_Handle, "CL_Move"));

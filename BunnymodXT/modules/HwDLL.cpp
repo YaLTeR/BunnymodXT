@@ -2918,7 +2918,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_tas_write_log);
 	RegisterCVar(CVars::bxt_tas_playback_speed);
 	RegisterCVar(CVars::bxt_disable_vgui);
-	RegisterCVar(CVars::bxt_disable_usermsg);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
 	RegisterCVar(CVars::bxt_wallhack_alpha);
@@ -4665,8 +4664,10 @@ HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap_Paint, int, paintAll)
 
 HOOK_DEF_3(HwDLL, int, __cdecl, DispatchDirectUserMsg, char*, pszName, int, iSize, void*, pBuf)
 {
-	if (CVars::bxt_disable_usermsg.GetBool())
-		return 0;
+	const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+
+	if (!std::strcmp(gameDir, "czeror") && !std::strcmp(pszName, "InitHUD"))
+		return ORIG_DispatchDirectUserMsg(0, iSize, pBuf);
 	else
 		return ORIG_DispatchDirectUserMsg(pszName, iSize, pBuf);
 }

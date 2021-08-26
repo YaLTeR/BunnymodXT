@@ -541,6 +541,20 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_entities);
 		REG(bxt_hud_entities_offset);
 		REG(bxt_hud_entities_anchor);
+		REG(bxt_cross);
+		REG(bxt_cross_color);
+		REG(bxt_cross_alpha);
+		REG(bxt_cross_thickness);
+		REG(bxt_cross_size);
+		REG(bxt_cross_gap);
+		REG(bxt_cross_outline);
+		REG(bxt_cross_circle_radius);
+		REG(bxt_cross_dot_color);
+		REG(bxt_cross_dot_size);
+		REG(bxt_cross_top_line);
+		REG(bxt_cross_bottom_line);
+		REG(bxt_cross_left_line);
+		REG(bxt_cross_right_line);
 	}
 
 	if (ORIG_HUD_Redraw) {

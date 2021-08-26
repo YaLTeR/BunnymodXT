@@ -223,6 +223,20 @@ namespace CVars
 	extern CVarWrapper bxt_hud_entities;
 	extern CVarWrapper bxt_hud_entities_offset;
 	extern CVarWrapper bxt_hud_entities_anchor;
+	extern CVarWrapper bxt_cross;
+	extern CVarWrapper bxt_cross_color;
+	extern CVarWrapper bxt_cross_alpha;
+	extern CVarWrapper bxt_cross_thickness;
+	extern CVarWrapper bxt_cross_size;
+	extern CVarWrapper bxt_cross_gap;
+	extern CVarWrapper bxt_cross_outline;
+	extern CVarWrapper bxt_cross_circle_radius;
+	extern CVarWrapper bxt_cross_dot_color;
+	extern CVarWrapper bxt_cross_dot_size;
+	extern CVarWrapper bxt_cross_top_line;
+	extern CVarWrapper bxt_cross_bottom_line;
+	extern CVarWrapper bxt_cross_left_line;
+	extern CVarWrapper bxt_cross_right_line;
 
 	extern const std::vector<CVarWrapper*> allCVars;
 }

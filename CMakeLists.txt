@@ -135,6 +135,7 @@ set (HEADER_FILES
 	BunnymodXT/stdafx.hpp
 	BunnymodXT/triangle_drawing.hpp
 	BunnymodXT/triangle_utils.hpp
+	BunnymodXT/opengl_utils.hpp
 	BunnymodXT/TEA.hpp
 	BunnymodXT/runtime_data.hpp
 	BunnymodXT/input_editor.hpp
@@ -157,6 +158,7 @@ set (SOURCE_FILES
 	BunnymodXT/hud_custom.cpp
 	BunnymodXT/triangle_drawing.cpp
 	BunnymodXT/triangle_utils.cpp
+	BunnymodXT/opengl_utils.cpp
 	BunnymodXT/TEA.cpp
 	BunnymodXT/runtime_data.cpp
 	BunnymodXT/input_editor.cpp

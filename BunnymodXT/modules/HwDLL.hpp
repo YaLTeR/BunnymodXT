@@ -47,6 +47,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, SV_AddLinksToPM_, void *node, float *pmove_mins, float *pmove_maxs)
 	HOOK_DECL(void, __cdecl, SV_WriteEntitiesToClient, client_t* client, void* msg)
 	HOOK_DECL(void, __cdecl, VGuiWrap_Paint, int paintAll)
+	HOOK_DECL(int, __cdecl, DispatchDirectUserMsg, char* pszName, int iSize, void* pBuf)
 	HOOK_DECL(void, __cdecl, SV_SetMoveVars)
 
 	struct cmdbuf_t

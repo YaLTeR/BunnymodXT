@@ -169,6 +169,11 @@ extern "C" void __cdecl VGuiWrap_Paint(int paintAll)
 	HwDLL::HOOKED_VGuiWrap_Paint(paintAll);
 }
 
+extern "C" int __cdecl DispatchDirectUserMsg(char* pszName, int iSize, void* pBuf)
+{
+	return HwDLL::HOOKED_DispatchDirectUserMsg(pszName, iSize, pBuf);
+}
+
 extern "C" void __cdecl SV_SetMoveVars()
 {
 	HwDLL::HOOKED_SV_SetMoveVars();
@@ -258,6 +263,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SV_AddLinksToPM_);
 			MemUtils::MarkAsExecutable(ORIG_SV_WriteEntitiesToClient);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap_Paint);
+			MemUtils::MarkAsExecutable(ORIG_DispatchDirectUserMsg);
 			MemUtils::MarkAsExecutable(ORIG_SV_SetMoveVars);
 		}
 
@@ -293,6 +299,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_SV_AddLinksToPM_, HOOKED_SV_AddLinksToPM_,
 			ORIG_SV_WriteEntitiesToClient, HOOKED_SV_WriteEntitiesToClient,
 			ORIG_VGuiWrap_Paint, HOOKED_VGuiWrap_Paint,
+			ORIG_DispatchDirectUserMsg, HOOKED_DispatchDirectUserMsg,
 			ORIG_SV_SetMoveVars, HOOKED_SV_SetMoveVars);
 	}
 }
@@ -334,6 +341,7 @@ void HwDLL::Unhook()
 			ORIG_SV_AddLinksToPM_,
 			ORIG_SV_WriteEntitiesToClient,
 			ORIG_VGuiWrap_Paint,
+			ORIG_DispatchDirectUserMsg,
 			ORIG_SV_SetMoveVars);
 	}
 
@@ -392,6 +400,7 @@ void HwDLL::Clear()
 	ORIG_SV_AddLinksToPM_ = nullptr;
 	ORIG_SV_WriteEntitiesToClient = nullptr;
 	ORIG_VGuiWrap_Paint = nullptr;
+	ORIG_DispatchDirectUserMsg = nullptr;
 	ORIG_SV_SetMoveVars = nullptr;
 
 	registeredVarsAndCmds = false;
@@ -767,6 +776,14 @@ void HwDLL::FindStuff()
 			EngineWarning("bxt_disable_vgui has no effect.\n");
 		}
 
+		ORIG_DispatchDirectUserMsg = reinterpret_cast<_DispatchDirectUserMsg>(MemUtils::GetSymbolAddress(m_Handle, "DispatchDirectUserMsg"));
+		if (ORIG_DispatchDirectUserMsg) {
+			EngineDevMsg("[hw dll] Found DispatchDirectUserMsg at %p.\n", ORIG_DispatchDirectUserMsg);
+		} else {
+			EngineDevWarning("[hw dll] Could not find DispatchDirectUserMsg.\n");
+			EngineWarning("Demo crash fix in Counter-Strike: Condition Zero Deleted Scenes is not available.\n");
+		}
+
 		const auto CL_Move = reinterpret_cast<uintptr_t>(MemUtils::GetSymbolAddress(m_Handle, "CL_Move"));
 		if (CL_Move)
 		{
@@ -810,6 +827,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SV_AddLinksToPM_)
 		DEF_FUTURE(SV_WriteEntitiesToClient)
 		DEF_FUTURE(VGuiWrap_Paint)
+		DEF_FUTURE(DispatchDirectUserMsg)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1370,6 +1388,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(SV_AddLinksToPM_);
 		GET_FUTURE(SV_WriteEntitiesToClient);
 		GET_FUTURE(VGuiWrap_Paint);
+		GET_FUTURE(DispatchDirectUserMsg);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -4641,6 +4660,16 @@ HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap_Paint, int, paintAll)
 	}
 
 	ORIG_VGuiWrap_Paint(paintAll);
+}
+
+HOOK_DEF_3(HwDLL, int, __cdecl, DispatchDirectUserMsg, char*, pszName, int, iSize, void*, pBuf)
+{
+	const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+
+	if (!std::strcmp(gameDir, "czeror") && !std::strcmp(pszName, "InitHUD"))
+		return ORIG_DispatchDirectUserMsg(0, iSize, pBuf);
+	else
+		return ORIG_DispatchDirectUserMsg(pszName, iSize, pBuf);
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SV_SetMoveVars)

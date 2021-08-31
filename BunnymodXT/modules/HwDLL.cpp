@@ -178,6 +178,11 @@ extern "C" void __cdecl SV_SetMoveVars()
 {
 	HwDLL::HOOKED_SV_SetMoveVars();
 }
+
+extern "C" qboolean __cdecl BIsValveGame()
+{
+	return true;
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)

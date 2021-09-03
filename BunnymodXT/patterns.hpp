@@ -436,7 +436,9 @@ namespace patterns
 			"HL-WON",
 			"83 C8 FF 89 81 50 04 00 00 89 81 54 04 00 00 8B 81 2C 04 00 00 0C C0 89 81 2C 04 00 00 33 C0 89 81 30 04 00 00 89 81 B4 02 00 00 8B 01 FF A0 04 02 00 00",
 			"OpposingForce-WON",
-			"83 C8 FF 89 81 90 04 00 00 89 81 94 04 00 00 8B 81 6C 04 00 00 0C C0 89 81 6C 04 00 00 33 C0 89 81 70 04 00 00 89 81 F4 02 00 00 8B 01 FF A0 08 02 00 00"
+			"83 C8 FF 89 81 90 04 00 00 89 81 94 04 00 00 8B 81 6C 04 00 00 0C C0 89 81 6C 04 00 00 33 C0 89 81 70 04 00 00 89 81 F4 02 00 00 8B 01 FF A0 08 02 00 00",
+			"CSCZDS",
+			"8B D1 83 C9 FF 57 8B 82 CC 05 00 00 89 8A 64 06 00 00 0C C0 89 8A 68 06 00 00 89 82 CC 05 00 00 33 C0 89 8A 6C 06 00 00"
 		);
 
 		PATTERNS(CBasePlayer__TakeDamage,
@@ -451,7 +453,9 @@ namespace patterns
 			"Echoes",
 			"55 8B EC 83 EC 44 89 4D C8 8B 45 14 89 45 F4 C7 45 F8 01 00 00 00 8B 4D C8 8B 51 04 8B 82 60 01 00 00",
 			"PARANOIA",
-			"55 8B EC 81 EC C4 00 00 00 89 8D 4C FF FF FF 8B 45 14 89 45 F4 C7 45 F8 01 00 00 00 8B 8D 4C FF FF FF 8B 51 04 8B 82 60 01 00 00"
+			"55 8B EC 81 EC C4 00 00 00 89 8D 4C FF FF FF 8B 45 14 89 45 F4 C7 45 F8 01 00 00 00 8B 8D 4C FF FF FF 8B 51 04 8B 82 60 01 00 00",
+			"CSCZDS",
+			"83 EC 4C 53 8B 5C 24 60 55 8B E9 8B D3 56 8B 45 04 81 E2 00 00 00 80 83 FA 01 57 8B 88 60 01 00 00"
 		);
 
 		PATTERNS(CPushable__Move,
@@ -466,7 +470,9 @@ namespace patterns
 			"Echoes",
 			"55 8B EC 83 EC 14 56 89 4D EC 8B 45 08 8B 48 04 89 4D F8 C7 45 F4 00 00 00 00 8B 55 F8 8B 82 A4 01 00 00 25 00 02 00 00",
 			"PARANOIA",
-			"55 8B EC 83 EC 38 89 4D C8 8B 45 08 8B 48 04 89 4D F8 C7 45 F4 00 00 00 00 8B 55 F8 8B 82 A4 01 00 00 25 00 02 00 00"
+			"55 8B EC 83 EC 38 89 4D C8 8B 45 08 8B 48 04 89 4D F8 C7 45 F4 00 00 00 00 8B 55 F8 8B 82 A4 01 00 00 25 00 02 00 00",
+			"CSCZDS",
+			"83 EC 1C 53 56 8B F1 8B 4C 24 28 57 33 DB 8B 79 04 8B 87 A4 01 00 00 F6 C4 02 74 3D 8B 87 9C 01 00 00 85 C0 74 33 8D 90 80 00 00 00 8B 46 04"
 		);
 
 		PATTERNS(DispatchRestore,
@@ -519,7 +525,9 @@ namespace patterns
 			"Half-Payne",
 			"53 8B DC 83 EC 08 83 E4 F8 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC A1",
 			"HL-SteamPipe-6153",
-			"D9 05 ?? ?? ?? ?? DC 1D ?? ?? ?? ?? 81 EC ?? ?? ?? ?? 56 57 DF E0 8B F1 F6 C4 ?? 0F ?? ?? ?? ?? ?? 8B 84 24"
+			"D9 05 ?? ?? ?? ?? DC 1D ?? ?? ?? ?? 81 EC ?? ?? ?? ?? 56 57 DF E0 8B F1 F6 C4 ?? 0F ?? ?? ?? ?? ?? 8B 84 24",
+			"Gunman",
+			"D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? 81 EC E4 01 00 00"
 		);
 
 		PATTERNS(CZDS_Velocity_Byte,
@@ -531,7 +539,9 @@ namespace patterns
 			"Wanted!",
 			"56 8B F1 8B 86 ?? ?? ?? ?? A8 80 74 1D 8B 44 24 0C 50 E8 ?? ?? ?? ?? 85 C0",
 			"Crowbar of Time",
-			"56 8B F1 8B 86 ?? ?? ?? ?? 84 C0 79 1B 8B 44 24 0C 50 E8 ?? ?? ?? ?? 85 C0"
+			"56 8B F1 8B 86 ?? ?? ?? ?? 84 C0 79 1B 8B 44 24 0C 50 E8 ?? ?? ?? ?? 85 C0",
+			"OpposingForce",
+			"56 8B F1 57 8B 86 ?? ?? ?? ?? 84 C0"
 		);
 
 		PATTERNS(CChangeLevel__InTransitionVolume,
@@ -553,7 +563,9 @@ namespace patterns
 			"HL-WON",
 			"83 EC 10 53 55 56 57 8B 7C 24",
 			"Echoes",
-			"55 8B EC 83 EC 1C 56 8D 4D ?? E8 ?? ?? ?? ?? 8B 45"
+			"55 8B EC 83 EC 1C 56 8D 4D ?? E8 ?? ?? ?? ?? 8B 45",
+			"AoMDC",
+			"55 8B EC 83 EC 5C 53 56 57 8D 4D ?? E8 ?? ?? ?? ?? 8B 45"
 		);
 	}
 
@@ -613,7 +625,9 @@ namespace patterns
 			"TWHL-Tower-2",
 			"55 8B EC 51 A1 ?? ?? ?? ?? 8B 4D 08 53 56 57 33 FF 89 7D FC 89 48 04 E8 D8 FC FF FF A1 ?? ?? ?? ?? 89 B8 8C 54 04 00 A1 ?? ?? ?? ?? 0F B6 88 5A 54 04 00",
 			"Halfquake-Trilogy",
-			"55 8B EC 8B 0D ?? ?? ?? ?? 8B 45 08 56 57 33 F6 89 41 04 8B FE E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 89 B0 8C 54 04 00 8B 0D ?? ?? ?? ?? 0F B6 81 5A 54 04 00"
+			"55 8B EC 8B 0D ?? ?? ?? ?? 8B 45 08 56 57 33 F6 89 41 04 8B FE E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 89 B0 8C 54 04 00 8B 0D ?? ?? ?? ?? 0F B6 81 5A 54 04 00",
+			"CSCZDS",
+			"A1 ?? ?? ?? ?? 8B 4C 24 04 55 56 57 33 ED 33 FF 89 48 04 E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 33 C9 89 AA 8C 54 04 00 A1 ?? ?? ?? ?? 8A 88 5A 54 04 00 89"
 		);
 
 		PATTERNS(PM_ClipVelocity,

@@ -435,7 +435,7 @@ void ServerDLL::FindStuff()
 				break;
 			case 14: // CSCZDS
 				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x6EC;
+				offm_rgAmmoLast = 0x540;
 				offm_iClientFOV = 0x89C;
 				offFuncIsPlayer = 0xA8;
 				offFuncCenter = 0xDC;

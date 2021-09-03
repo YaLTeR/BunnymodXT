@@ -64,6 +64,11 @@ extern "C" void __cdecl _ZN12CTriggerSave9SaveTouchEP11CBaseEntity(void* thisptr
 {
 	return ServerDLL::HOOKED_CTriggerSave__SaveTouch_Linux(thisptr, pOther);
 }
+
+extern "C" int __cdecl _ZN11CBasePlayer10TakeDamageEP9entvars_sS1_fi(void* thisptr, entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType)
+{
+	return ServerDLL::HOOKED_CBasePlayer__TakeDamage_Linux(thisptr, pevInflictor, pevAttacker, flDamage, bitsDamageType);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -181,6 +186,7 @@ void ServerDLL::Clear()
 	ORIG_ClientCommand = nullptr;
 	ORIG_CPushable__Move = nullptr;
 	ORIG_CBasePlayer__TakeDamage = nullptr;
+	ORIG_CBasePlayer__TakeDamage_Linux = nullptr;
 	ORIG_GetEntityAPI = nullptr;
 	ORIG_CGraph__InitGraph = nullptr;
 	ORIG_CGraph__InitGraph_Linux = nullptr;
@@ -665,8 +671,13 @@ void ServerDLL::FindStuff()
 		if (ORIG_CBasePlayer__TakeDamage) {
 			EngineDevMsg("[server dll] Found CBasePlayer::TakeDamage at %p (using the %s pattern).\n", ORIG_CBasePlayer__TakeDamage, pattern->name());
 		} else {
-			EngineDevWarning("[server dll] Could not find CBasePlayer::TakeDamage.\n");
-			EngineWarning("Damage logging is not available.\n");
+			ORIG_CBasePlayer__TakeDamage_Linux = reinterpret_cast<_CBasePlayer__TakeDamage_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer10TakeDamageEP9entvars_sS1_fi"));
+			if (ORIG_CBasePlayer__TakeDamage_Linux) {
+				EngineDevMsg("[server dll] Found CBasePlayer::TakeDamage_Linux at %p.\n", ORIG_CBasePlayer__TakeDamage_Linux);
+			} else {
+				EngineDevWarning("[server dll] Could not find CBasePlayer::TakeDamage.\n");
+				EngineWarning("Damage logging is not available.\n");
+			}
 		}
 	}
 
@@ -1825,6 +1836,23 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CPushable__Move, void*, thisptr, int, ed
 	ORIG_CPushable__Move(thisptr, edx, pOther, push);
 }
 
+void ServerDLL::DoWouldCrashMessage()
+{
+	// We send a user message from the ServerDLL so that we have the notice in the demo.
+	int gmsgTextMsg = pEngfuncs->pfnRegUserMsg( "TextMsg", -1 );
+
+	pEngfuncs->pfnMessageBegin(MSG_ALL, gmsgTextMsg, NULL, NULL);
+	pEngfuncs->pfnWriteByte(HUD_PRINTTALK );
+	pEngfuncs->pfnWriteString("The game would have crashed. BXT prevented the crash and the timer was stopped. This run is no longer valid.\n");
+	pEngfuncs->pfnMessageEnd();
+
+	// Console
+	pEngfuncs->pfnServerPrint("[BXT] The game would have crashed. BXT prevented the crash and the timer was stopped. This run is no longer valid.\n");
+
+	CustomHud::SaveTimeToDemo();
+	CustomHud::SetCountingTime(false);
+}
+
 HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, int, edx, entvars_t*, pevInflictor, entvars_t*, pevAttacker, float, flDamage, int, bitsDamageType)
 {
 	if (HwDLL::GetInstance().IsTASLogging()) {
@@ -1855,7 +1883,29 @@ HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, 
 		HwDLL::GetInstance().logWriter.PushDamage(damage);
 	}
 
-	return ORIG_CBasePlayer__TakeDamage(thisptr, edx, pevInflictor, pevAttacker, flDamage, bitsDamageType);
+	if (pevAttacker == nullptr)
+	{
+		DoWouldCrashMessage();
+		return 0;
+	}
+	else
+	{
+		return ORIG_CBasePlayer__TakeDamage(thisptr, edx, pevInflictor, pevAttacker, flDamage, bitsDamageType);
+	}
+}
+
+HOOK_DEF_5(ServerDLL, int, __cdecl, CBasePlayer__TakeDamage_Linux, void*, thisptr, entvars_t*, pevInflictor, entvars_t*, pevAttacker, float, flDamage, int, bitsDamageType)
+{
+	if (pevAttacker == nullptr)
+	{
+		DoWouldCrashMessage();
+		return 0;
+	}
+	else
+	{
+		return ORIG_CBasePlayer__TakeDamage_Linux(thisptr, pevInflictor, pevAttacker, flDamage, bitsDamageType);
+	}
+
 }
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CGraph__InitGraph, void*, thisptr)

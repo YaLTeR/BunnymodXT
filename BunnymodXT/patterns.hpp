@@ -556,7 +556,9 @@ namespace patterns
 			"HL-WON",
 			"55 57 8B F9 8B 4F ?? 8B 91",
 			"Echoes",
-			"55 8B EC 83 EC 0C 89 4D ?? 8B 45 ?? 8B 48 ?? 83 B9 ?? ?? ?? ?? 04"
+			"55 8B EC 83 EC 0C 89 4D ?? 8B 45 ?? 8B 48 ?? 83 B9 ?? ?? ?? ?? 04",
+			"CSCZDS",
+			"57 8B F9 8B 4F ?? 8B 91"
 		);
 
 		PATTERNS(EV_GetDefaultShellInfo,

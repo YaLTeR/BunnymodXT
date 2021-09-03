@@ -433,6 +433,14 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xA0;
 				offFuncCenter = 0xCC;
 				break;
+			case 14: // CSCZDS
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x6EC;
+				offm_iClientFOV = 0x89C;
+				offFuncIsPlayer = 0xA8;
+				offFuncCenter = 0xDC;
+				offFuncObjectCaps = 0x18;
+				break;
 			default:
 				assert(false);
 			}
@@ -573,7 +581,6 @@ void ServerDLL::FindStuff()
 		auto pattern = fPM_Jump_CZDS_Velocity_Byte.get();
 		if (pCZDS_Velocity_Byte) {
 			EngineDevMsg("[server dll] Found CZDS Velocity Reset Byte at %p (using the %s pattern).\n", pCZDS_Velocity_Byte, pattern->name());
-			offFuncObjectCaps = 0x18;
 		} else {
 			EngineDevWarning("[server dll] Could not find CZDS Velocity Reset Byte.\n");
 		}
@@ -1504,7 +1511,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 			char pVolumeName[] = "lm15";
 			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
 			const char *gameDir = "";
-			
+
 			if (ClientDLL::GetInstance().pEngfuncs)
 				gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
 

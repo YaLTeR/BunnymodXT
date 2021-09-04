@@ -291,19 +291,15 @@ void ClientDLL::FindStuff()
 		[&](auto pattern) {
 			switch (pattern - patterns::client::StudioCalcAttachments.cbegin()) {
 			case 0: // HL-WON-1712
+			case 1: // CSCZDS
 				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 101)
 					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 105);
 				break;
-			case 1: // Echoes
+			case 2: // Echoes
 				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 187)
 					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 191);
-				break;
-			case 2: // CSCZDS
-				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 101)
-					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 105);
 				break;
 			default:
 				assert(false);

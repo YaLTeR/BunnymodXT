@@ -1838,14 +1838,9 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CPushable__Move, void*, thisptr, int, ed
 
 void ServerDLL::DoWouldCrashMessage()
 {
-	// We send a user message from the ServerDLL so that we have the notice in the demo.
-	int gmsgTextMsg = pEngfuncs->pfnRegUserMsg( "TextMsg", -1 );
-
-	pEngfuncs->pfnMessageBegin(MSG_ALL, gmsgTextMsg, NULL, NULL);
-	pEngfuncs->pfnWriteByte(HUD_PRINTTALK );
-	pEngfuncs->pfnWriteString("The game would have crashed. BXT prevented the crash and the timer was stopped. This run is no longer valid.\n");
-	pEngfuncs->pfnMessageEnd();
-
+	char command[] = "say The game would have crashed. BXT prevented the crash and the timer was stopped. This run is no longer valid.\n";
+	// We send a say message from the ServerDLL so that we have the notice in the demo.
+	pEngfuncs->pfnServerCommand(command);
 	// Console
 	pEngfuncs->pfnServerPrint("[BXT] The game would have crashed. BXT prevented the crash and the timer was stopped. This run is no longer valid.\n");
 
@@ -1905,7 +1900,6 @@ HOOK_DEF_5(ServerDLL, int, __cdecl, CBasePlayer__TakeDamage_Linux, void*, thispt
 	{
 		return ORIG_CBasePlayer__TakeDamage_Linux(thisptr, pevInflictor, pevAttacker, flDamage, bitsDamageType);
 	}
-
 }
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CGraph__InitGraph, void*, thisptr)

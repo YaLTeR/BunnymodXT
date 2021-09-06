@@ -33,6 +33,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, ClientCommand, edict_t* pEntity)
 	HOOK_DECL(void, __fastcall, CPushable__Move, void* thisptr, int edx, void* pOther, int push)
 	HOOK_DECL(int, __fastcall, CBasePlayer__TakeDamage, void* thisptr, int edx, entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType)
+	HOOK_DECL(int, __cdecl, CBasePlayer__TakeDamage_Linux, void* thisptr, entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType)
 	HOOK_DECL(void, __fastcall, CGraph__InitGraph, void* thisptr)
 	HOOK_DECL(void, __cdecl, CGraph__InitGraph_Linux, void* thisptr)
 	HOOK_DECL(void, __fastcall, CBasePlayer__CheatImpulseCommands, void* thisptr, int edx, int iImpulse)
@@ -107,6 +108,8 @@ protected:
 	void RegisterCVarsAndCommands();
 	void LogPlayerMove(bool pre, uintptr_t pmove) const;
 	bool IsPlayerMovingPushable(const entvars_t *pevPushable, const entvars_t *pevToucher, int push) const;
+
+	void DoWouldCrashMessage();
 
 	void **ppmove;
 	ptrdiff_t offPlayerIndex;

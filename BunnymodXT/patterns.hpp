@@ -391,6 +391,13 @@ namespace patterns
 			"HL-SteamPipe",
 			"8B 0D ?? ?? ?? ?? 83 B9 ?? ?? ?? ?? 04"
 		);
+
+		PATTERNS(EmitWaterPolys,
+			"HL-SteamPipe",
+			"55 8B EC 83 EC 20 56 8B 75 ?? 33 D2",
+			"HL-4554",
+			"83 EC 1C 33 D2 55 56 8B 74 24 28 57 8B 46 2C 8B 48 24 8B 41 44 33 C9 8A 50 0C 8A 48 0B 52 51 33 D2"
+		);
 	}
 
 	namespace server

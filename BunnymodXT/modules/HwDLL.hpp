@@ -52,6 +52,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, SV_SetMoveVars)
 	HOOK_DECL(void, __cdecl, VectorTransform, float *in1, float *in2, float *out)
 	HOOK_DECL(void, __cdecl, R_StudioCalcAttachments)
+	HOOK_DECL(void, __cdecl, EmitWaterPolys, msurface_t *fa, int direction)
 
 	struct cmdbuf_t
 	{

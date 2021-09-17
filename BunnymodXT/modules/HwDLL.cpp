@@ -198,6 +198,11 @@ extern "C" qboolean __cdecl BIsValveGame()
 {
 	return true;
 }
+
+extern "C" void __cdecl EmitWaterPolys(msurface_t *fa, int direction)
+{
+	return HwDLL::HOOKED_EmitWaterPolys(fa, direction);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -288,6 +293,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SV_SetMoveVars);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioCalcAttachments);
 			MemUtils::MarkAsExecutable(ORIG_VectorTransform);
+			MemUtils::MarkAsExecutable(ORIG_EmitWaterPolys);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -326,7 +332,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_DispatchDirectUserMsg, HOOKED_DispatchDirectUserMsg,
 			ORIG_SV_SetMoveVars, HOOKED_SV_SetMoveVars,
 			ORIG_VectorTransform, HOOKED_VectorTransform,
-			ORIG_R_StudioCalcAttachments, HOOKED_R_StudioCalcAttachments);
+			ORIG_R_StudioCalcAttachments, HOOKED_R_StudioCalcAttachments,
+			ORIG_EmitWaterPolys, HOOKED_EmitWaterPolys);
 	}
 }
 
@@ -371,7 +378,8 @@ void HwDLL::Unhook()
 			ORIG_DispatchDirectUserMsg,
 			ORIG_SV_SetMoveVars,
 			ORIG_VectorTransform,
-			ORIG_R_StudioCalcAttachments);
+			ORIG_R_StudioCalcAttachments,
+			ORIG_EmitWaterPolys);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -435,6 +443,7 @@ void HwDLL::Clear()
 	ORIG_studioapi_GetCurrentEntity = nullptr;
 	ORIG_R_StudioCalcAttachments = nullptr;
 	ORIG_VectorTransform = nullptr;
+	ORIG_EmitWaterPolys = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -851,6 +860,14 @@ void HwDLL::FindStuff()
 			EngineWarning("Demo crash fix in Counter-Strike: Condition Zero Deleted Scenes is not available.\n");
 		}
 
+		ORIG_EmitWaterPolys = reinterpret_cast<_EmitWaterPolys>(MemUtils::GetSymbolAddress(m_Handle, "EmitWaterPolys"));
+		if (ORIG_EmitWaterPolys) {
+			EngineDevMsg("[hw dll] Found EmitWaterPolys at %p.\n", ORIG_EmitWaterPolys);
+		} else {
+			EngineDevWarning("[hw dll] Could not find EmitWaterPolys.\n");
+			EngineWarning("bxt_water_remove has no effect.\n");
+		}
+
 		const auto CL_Move = reinterpret_cast<uintptr_t>(MemUtils::GetSymbolAddress(m_Handle, "CL_Move"));
 		if (CL_Move)
 		{
@@ -897,6 +914,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(studioapi_GetCurrentEntity)
 		DEF_FUTURE(VGuiWrap_Paint)
 		DEF_FUTURE(DispatchDirectUserMsg)
+		DEF_FUTURE(EmitWaterPolys)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1480,6 +1498,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(VGuiWrap_Paint);
 		GET_FUTURE(DispatchDirectUserMsg);
 		GET_FUTURE(studioapi_GetCurrentEntity);
+		GET_FUTURE(EmitWaterPolys);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -3003,6 +3022,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_interprocess_enable);
 	RegisterCVar(CVars::bxt_fade_remove);
 	RegisterCVar(CVars::bxt_skybox_remove);
+	RegisterCVar(CVars::bxt_water_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
 	RegisterCVar(CVars::bxt_tas_norefresh_until_last_frames);
@@ -4732,7 +4752,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool())) {
+	if (CVars::bxt_water_remove.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool()))) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
@@ -4832,4 +4852,12 @@ HOOK_DEF_3(HwDLL, void, __cdecl, VectorTransform, float*, in1, float*, in2, floa
 		out[1] = vOrigin[1];
 		out[2] = vOrigin[2];
 	}
+}
+
+HOOK_DEF_2(HwDLL, void, __cdecl, EmitWaterPolys, msurface_t *, fa, int, direction)
+{
+	if (CVars::bxt_water_remove.GetBool())
+		return;
+
+	ORIG_EmitWaterPolys(fa, direction);
 }

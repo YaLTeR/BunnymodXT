@@ -74,6 +74,8 @@ namespace CustomHud
 	static FrameBulkStatus frame_bulk_status;
 	static float player_vel_status;
 	static float player_zvel_status;
+	static float player_zpos_status;
+	static float player_realyaw_status;
 	static bool frame_bulk_selected;
 
 	template<typename T, size_t size = 3>
@@ -693,6 +695,8 @@ namespace CustomHud
 
 				out << "HP: " << ent->v.health << "\n\n";
 
+				out << "Yaw: " << ent->v.angles[1] << "\n\n";
+
 				out << "X: " << ent->v.origin.x << '\n';
 				out << "Y: " << ent->v.origin.y << '\n';
 				out << "Z: " << ent->v.origin.z << "\n\n";
@@ -841,6 +845,31 @@ namespace CustomHud
 					<< "Spheres: " << nspheres << "/20\n"
 					<< "Sequence: " << sequence << " (" << std::fixed << std::setprecision(1) << frame << ")\n";
 			} else {
+				out << "Not found";
+			}
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
+	void DrawGonarchInfo(float flTime)
+	{
+		if (CVars::bxt_hud_gonarch.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 23) + 3);
+
+			std::ostringstream out;
+			out << "Gonarch:\n";
+
+			float health, frame;
+			int sequence;
+
+			if (ServerDLL::GetInstance().GetGonarchInfo(health, sequence, frame)) {
+				out << "Health: " << health << '\n'
+					<< "Sequence: " << sequence << " (" << std::fixed << std::setprecision(1) << frame << ")\n";
+			}
+			else {
 				out << "Not found";
 			}
 
@@ -1077,8 +1106,15 @@ namespace CustomHud
 				out << "Commands:\n  " << frame_bulk_status.commands << '\n';
 			}
 
+			out << '\n';
+
+			out << "Real Yaw: " << player_realyaw_status << '\n';
+
+			out << '\n';
+
 			out << "Vel: " << player_vel_status << '\n';
-			out << "ZVel: " << player_zvel_status << '\n';
+			out << "Z Vel: " << player_zvel_status << '\n';
+			out << "Z Pos: " << player_zpos_status << '\n';
 		} else {
 			out << " no frame bulk selected";
 		}
@@ -1220,6 +1256,7 @@ namespace CustomHud
 		DrawSelfgaussInfo(flTime);
 		DrawVisibleLandmarks(flTime);
 		DrawNihilanthInfo(flTime);
+		DrawGonarchInfo(flTime);
 		DrawIncorrectFPSIndicator(flTime);
 		DrawCollisionDepthMap(flTime);
 		DrawTASEditorStatus();
@@ -1328,10 +1365,12 @@ namespace CustomHud
 		return si;
 	}
 
-	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel)
+	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw)
 	{
 		player_vel_status = player_vel;
 		player_zvel_status = player_zvel;
+		player_zpos_status = player_zpos;
+		player_realyaw_status = player_realyaw;
 
 		frame_bulk_selected = true;
 		frame_bulk_status = FrameBulkStatus{};

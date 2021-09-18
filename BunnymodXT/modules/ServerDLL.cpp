@@ -1742,6 +1742,23 @@ bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, boo
 	return true;
 }
 
+bool ServerDLL::GetGonarchInfo(float &health, int& sequence, float& frame) const {
+	// TODO: figure out what infos are needed
+	// needed: m_nodeTime
+
+	// There should be only 1 big momma
+	edict_t* pent = pEngfuncs->pfnFindEntityByString(nullptr, "classname", "monster_bigmomma");
+	if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent)) {
+		return false;
+	}
+
+	health = pent->v.health;
+	sequence = pent->v.sequence;
+	frame = pent->v.frame;
+
+	return true;
+}
+
 TraceResult ServerDLL::TraceLine(const float v1[3], const float v2[3], int fNoMonsters, edict_t *pentToSkip) const
 {
 	TraceResult tr{};

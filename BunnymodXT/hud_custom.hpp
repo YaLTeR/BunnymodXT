@@ -29,5 +29,5 @@ namespace CustomHud
 
 	const SCREENINFO& GetScreenInfo();
 
-	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel);
+	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw);
 };

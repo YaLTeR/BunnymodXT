@@ -94,6 +94,9 @@ namespace CVars
 	CVarWrapper bxt_hud_nihilanth("bxt_hud_nihilanth", "0");
 	CVarWrapper bxt_hud_nihilanth_offset("bxt_hud_nihilanth_offset", "");
 	CVarWrapper bxt_hud_nihilanth_anchor("bxt_hud_nihilanth_anchor", "1 0");
+	CVarWrapper bxt_hud_gonarch("bxt_hud_gonarch", "0");
+	CVarWrapper bxt_hud_gonarch_offset("bxt_hud_gonarch_offset", "");
+	CVarWrapper bxt_hud_gonarch_anchor("bxt_hud_gonarch_anchor", "1 0");
 	CVarWrapper bxt_hud_timer("bxt_hud_timer", "0");
 	CVarWrapper bxt_hud_timer_offset("bxt_hud_timer_offset", "");
 	CVarWrapper bxt_hud_timer_anchor("bxt_hud_timer_anchor", "0 0.5");
@@ -196,6 +199,9 @@ namespace CVars
 		&bxt_hud_nihilanth,
 		&bxt_hud_nihilanth_offset,
 		&bxt_hud_nihilanth_anchor,
+		&bxt_hud_gonarch,
+		&bxt_hud_gonarch_offset,
+		&bxt_hud_gonarch_anchor,
 		&bxt_hud_timer,
 		&bxt_hud_timer_offset,
 		&bxt_hud_timer_anchor,

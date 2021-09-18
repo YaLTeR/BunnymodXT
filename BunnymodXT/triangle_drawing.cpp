@@ -706,6 +706,11 @@ namespace TriangleDrawing
 					current_frame += input.frame_bulks[i].GetRepeats();
 				}
 
+				// TODO: fix lazy hack that prevents crash
+				if (current_frame > input.player_datas.size() - 1) {
+					current_frame = input.player_datas.size() - 1;
+				}
+
 				auto& current_player_data = input.player_datas[current_frame];
 
 				auto& current_player_vels = current_player_data.Velocity;
@@ -713,8 +718,12 @@ namespace TriangleDrawing
 
 				auto& current_player_zvel = current_player_vels[2];
 
+				auto& current_player_zpos = current_player_data.Origin[2];
+
+				auto& current_player_realyaw = current_player_data.Viewangles[1];
+
 				// Update the HUD status before any changes, since that's the state that was visualized earlier.
-				CustomHud::UpdateTASEditorStatus(frame_bulk, current_player_vel, current_player_zvel);
+				CustomHud::UpdateTASEditorStatus(frame_bulk, current_player_vel, current_player_zvel, current_player_zpos, current_player_realyaw);
 
 				if (left_pressed) {
 					auto mouse_diff = mouse - left_pressed_at;

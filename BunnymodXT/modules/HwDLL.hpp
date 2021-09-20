@@ -367,6 +367,7 @@ protected:
 	struct Cmd_BXT_Interprocess_Stop;
 	struct Cmd_BXT_Map;
 	struct Cmd_BXT_Load;
+	struct Cmd_BXT_Set_Frametime_Remainder;
 	struct Cmd_BXT_Reset_Frametime_Remainder;
 	struct Cmd_BXT_TASLog;
 	struct Cmd_BXT_Append;

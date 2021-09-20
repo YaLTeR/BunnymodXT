@@ -2488,6 +2488,17 @@ struct HwDLL::Cmd_BXT_TASLog
 	}
 };
 
+struct HwDLL::Cmd_BXT_Set_Frametime_Remainder
+{
+	NO_USAGE();
+
+	static void handler(double value)
+	{
+		if (HwDLL::GetInstance().frametime_remainder)
+			*HwDLL::GetInstance().frametime_remainder = value;
+	}
+};
+
 struct HwDLL::Cmd_BXT_Reset_Frametime_Remainder
 {
 	NO_USAGE();
@@ -3110,6 +3121,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Load, Handler<const char *>>("_bxt_load");
 	wrapper::Add<Cmd_BXT_Interprocess_Reset, Handler<>>("_bxt_interprocess_reset");
 	wrapper::Add<Cmd_BXT_Interprocess_Stop, Handler<>>("_bxt_interprocess_stop");
+	wrapper::Add<Cmd_BXT_Set_Frametime_Remainder, Handler<double>>("_bxt_set_frametime_remainder");
 	wrapper::Add<Cmd_BXT_Reset_Frametime_Remainder, Handler<>>("_bxt_reset_frametime_remainder");
 	wrapper::Add<Cmd_BXT_TASLog, Handler<int>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");

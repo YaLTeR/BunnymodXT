@@ -22,8 +22,9 @@ jobs:
 
     - name: Install dependencies
       run: |
+        sudo dpkg --add-architecture i386
         sudo apt-get update
-        sudo apt-get install g++-multilib libboost-dev mesa-common-dev ninja-build
+        sudo apt-get install g++-multilib libboost-dev mesa-common-dev ninja-build libgl-dev:i386
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1

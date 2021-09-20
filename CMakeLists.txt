@@ -197,7 +197,7 @@ endif ()
 
 target_link_libraries (BunnymodXT hltas-cpp hlstrafe taslogger)
 if (NOT MSVC)
-	target_link_libraries (BunnymodXT pthread rt)
+	target_link_libraries (BunnymodXT pthread rt GL)
 else()
 	add_dependencies (BunnymodXT MinHook)
 	target_link_libraries (BunnymodXT opengl32)

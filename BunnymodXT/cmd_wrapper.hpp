@@ -46,6 +46,15 @@ namespace CmdWrapper
 	};
 
 	template<>
+	struct Parser<double>
+	{
+		inline static double Parse(const char *s)
+		{
+			return std::strtod(s, nullptr);
+		}
+	};
+
+	template<>
 	struct Parser<const char *>
 	{
 		inline static const char *Parse(const char *s)

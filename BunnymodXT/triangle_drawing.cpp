@@ -706,15 +706,19 @@ namespace TriangleDrawing
 					current_frame += input.frame_bulks[i].GetRepeats();
 				}
 
+				auto current_frame2 = current_frame;
+				auto data_size = input.player_datas.size();
+
+
 				// TODO: fix lazy hack that prevents crash
-				if (current_frame > input.player_datas.size() - 1) {
-					current_frame = input.player_datas.size() - 1;
-				}
+				//if (current_frame > input.player_datas.size() - 1) {
+				//	current_frame = input.player_datas.size() - 1;
+				//}
 
 				auto& current_player_data = input.player_datas[current_frame];
 
 				auto& current_player_vels = current_player_data.Velocity;
-				auto current_player_vel = std::hypot(current_player_vels[0], current_player_vels[1]);
+				auto current_player_vel = std::hypotf(current_player_vels[0], current_player_vels[1]);
 
 				auto& current_player_zvel = current_player_vels[2];
 

@@ -210,6 +210,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_nihilanth;
 	extern CVarWrapper bxt_hud_nihilanth_offset;
 	extern CVarWrapper bxt_hud_nihilanth_anchor;
+	extern CVarWrapper bxt_hud_gonarch;
+	extern CVarWrapper bxt_hud_gonarch_offset;
+	extern CVarWrapper bxt_hud_gonarch_anchor;
 	extern CVarWrapper bxt_hud_timer;
 	extern CVarWrapper bxt_hud_timer_offset;
 	extern CVarWrapper bxt_hud_timer_anchor;

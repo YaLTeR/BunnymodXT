@@ -436,6 +436,7 @@ protected:
 	char *sv_areanodes;
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
+	double *realtime;
 	int *demorecording;
 	cmdalias_t* cmd_alias;
 	cvar_t **cvar_vars;

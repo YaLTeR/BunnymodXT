@@ -473,6 +473,7 @@ void HwDLL::Clear()
 	sv_areanodes = nullptr;
 	cmd_text = nullptr;
 	host_frametime = nullptr;
+	realtime = nullptr;
 	cvar_vars = nullptr;
 	movevars = nullptr;
 	offZmax = 0;
@@ -649,6 +650,12 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found host_frametime at %p.\n", sv);
 		else
 			EngineDevWarning("[hw dll] Could not find host_frametime.\n");
+
+		realtime = reinterpret_cast<double*>(MemUtils::GetSymbolAddress(m_Handle, "realtime"));
+		if (realtime)
+			EngineDevMsg("[hw dll] Found realtime at %p.\n", sv);
+		else
+			EngineDevWarning("[hw dll] Could not find realtime.\n");
 
 		cvar_vars = reinterpret_cast<cvar_t**>(MemUtils::GetSymbolAddress(m_Handle, "cvar_vars"));
 		if (cvar_vars)
@@ -891,7 +898,6 @@ void HwDLL::FindStuff()
 		//DEF_FUTURE(RandomLong)
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		DEF_FUTURE(PM_PlayerTrace)
-		DEF_FUTURE(Host_FilterTime)
 		DEF_FUTURE(V_FadeAlpha)
 		DEF_FUTURE(R_DrawSkyBox)
 		DEF_FUTURE(SCR_UpdateScreen)
@@ -995,6 +1001,24 @@ void HwDLL::FindStuff()
 				}
 
 				demorecording = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_CL_Stop_f) + offset);
+			});
+
+		void *Host_FilterTime;
+		auto fHost_FilterTime = FindAsync(
+			Host_FilterTime,
+			patterns::engine::Host_FilterTime,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::Host_FilterTime.cbegin())
+				{
+				case 0: // SteamPipe.
+					host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(Host_FilterTime) + 64);
+					realtime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(Host_FilterTime) + 70);
+					break;
+				case 1: // 4554.
+					host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(Host_FilterTime) + 65);
+					realtime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(Host_FilterTime) + 71);
+					break;
+				}
 			});
 
 		void *SCR_DrawFPS;
@@ -4489,12 +4513,43 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 	if (minFrametime == 0.0f || CVars::_bxt_norefresh.GetBool()) {
 		timeCounter = 0.0;
 		usePassedTime = false;
+
+		// TODO: hlstrafe_version gate.
+		if (host_frametime && realtime && runningFrames) {
+			auto& f = input.GetFrame(currentFramebulk);
+			if (f.IsMovement()) {
+				if (thisFrameIs0ms) {
+					*host_frametime = strtod(frametime0ms.c_str(), NULL);
+				} else {
+					*host_frametime = strtod(f.Frametime.c_str(), NULL);
+				}
+				*realtime += *host_frametime;
+				return 1;
+			}
+		}
+
 		return ORIG_Host_FilterTime(passedTime);
 	}
 
 	timeCounter += passedTime;
 	if (timeCounter < minFrametime)
 		return 0;
+
+	// TODO: hlstrafe_version gate.
+	if (host_frametime && realtime && runningFrames) {
+		auto& f = input.GetFrame(currentFramebulk);
+		if (f.IsMovement()) {
+			if (thisFrameIs0ms) {
+				*host_frametime = strtod(frametime0ms.c_str(), NULL);
+			} else {
+				*host_frametime = strtod(f.Frametime.c_str(), NULL);
+			}
+			*realtime += *host_frametime;
+			usePassedTime = false;
+			timeCounter = std::fmod(timeCounter, minFrametime);
+			return 1;
+		}
+	}
 
 	if (ORIG_Host_FilterTime(usePassedTime ? passedTime : static_cast<float>(timeCounter))) {
 		usePassedTime = false;

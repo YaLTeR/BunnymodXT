@@ -13,6 +13,7 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(void, __cdecl, PM_WaterMove)
 	HOOK_DECL(void, __cdecl, PM_Move, struct playermove_s* ppmove, int server)
 	HOOK_DECL(void, __cdecl, V_CalcRefdef, ref_params_t* pparams)
+	HOOK_DECL(void, __cdecl, CL_CreateMove, float frametime, usercmd_s* cmd, int active)
 	HOOK_DECL(void, __cdecl, HUD_Init)
 	HOOK_DECL(void, __cdecl, HUD_VidInit)
 	HOOK_DECL(void, __cdecl, HUD_Reset)

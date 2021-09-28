@@ -482,8 +482,8 @@ protected:
 	std::string saveName;
 public:
 	std::string frametime0ms;
-protected:
 	bool runningFrames;
+protected:
 	bool wasRunningFrames;
 	size_t currentFramebulk;
 	size_t preExecFramebulk = 0;

@@ -14,6 +14,11 @@
 
 // Linux hooks.
 #ifndef _WIN32
+extern "C" void __cdecl CL_CreateMove(float frametime, usercmd_s* cmd, int active)
+{
+	return ClientDLL::HOOKED_CL_CreateMove(frametime, cmd, active);
+}
+
 extern "C" void __cdecl HUD_Init()
 {
 	return ClientDLL::HOOKED_HUD_Init();
@@ -94,6 +99,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	FindStuff();
 	RegisterCVarsAndCommands();
 
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_CL_CreateMove), reinterpret_cast<void*>(HOOKED_CL_CreateMove));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Init), reinterpret_cast<void*>(HOOKED_HUD_Init));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_VidInit), reinterpret_cast<void*>(HOOKED_HUD_VidInit));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Reset), reinterpret_cast<void*>(HOOKED_HUD_Reset));
@@ -110,6 +116,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_PM_Jump, HOOKED_PM_Jump,
 			ORIG_PM_PreventMegaBunnyJumping, HOOKED_PM_PreventMegaBunnyJumping,
 			ORIG_V_CalcRefdef, HOOKED_V_CalcRefdef,
+			ORIG_CL_CreateMove, HOOKED_CL_CreateMove,
 			ORIG_HUD_Init, HOOKED_HUD_Init,
 			ORIG_HUD_VidInit, HOOKED_HUD_VidInit,
 			ORIG_HUD_Reset, HOOKED_HUD_Reset,
@@ -139,6 +146,7 @@ void ClientDLL::Unhook()
 			ORIG_PM_Jump,
 			ORIG_PM_PreventMegaBunnyJumping,
 			ORIG_V_CalcRefdef,
+			ORIG_CL_CreateMove,
 			ORIG_HUD_Init,
 			ORIG_HUD_VidInit,
 			ORIG_HUD_Reset,
@@ -153,6 +161,7 @@ void ClientDLL::Unhook()
 			ORIG_VectorTransform);
 	}
 
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_CL_CreateMove));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_VidInit));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Reset));
@@ -180,6 +189,7 @@ void ClientDLL::Clear()
 	ORIG_StudioCalcAttachments = nullptr;
 	ORIG_StudioCalcAttachments_Linux = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
+	ORIG_CL_CreateMove = nullptr;
 	ORIG_HUD_Init = nullptr;
 	ORIG_HUD_VidInit = nullptr;
 	ORIG_HUD_Reset = nullptr;
@@ -386,6 +396,12 @@ void ClientDLL::FindStuff()
 			EngineWarning("Custom HUD is not available.\n");
 		}
 	}
+
+	ORIG_CL_CreateMove = reinterpret_cast<_CL_CreateMove>(MemUtils::GetSymbolAddress(m_Handle, "CL_CreateMove"));
+	if (ORIG_CL_CreateMove)
+		EngineDevMsg("[client dll] Found CL_CreateMove at %p.\n", ORIG_CL_CreateMove);
+	else
+		EngineDevWarning("[client dll] Could not find CL_CreateMove.\n");
 
 	ORIG_V_CalcRefdef = reinterpret_cast<_V_CalcRefdef>(MemUtils::GetSymbolAddress(m_Handle, "V_CalcRefdef"));
 	if (ORIG_V_CalcRefdef) {
@@ -824,6 +840,15 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 	last_viewforward = pparams->forward;
 	last_viewright = pparams->right;
 	last_viewup = pparams->up;
+}
+
+HOOK_DEF_3(ClientDLL, void, __cdecl, CL_CreateMove, float, frametime, usercmd_s*, cmd, int, active)
+{
+	ORIG_CL_CreateMove(frametime, cmd, active);
+
+	// TODO: hlstrafe_version gate.
+	if (HwDLL::GetInstance().runningFrames)
+		cmd->buttons &= ~(IN_LEFT | IN_RIGHT);
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Init)

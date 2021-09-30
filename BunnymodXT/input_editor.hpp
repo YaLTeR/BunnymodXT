@@ -33,12 +33,6 @@ struct EditedInput {
 	// Invalidates the cached positions in an optimal way to reduce unnecessary simulations.
 	void set_repeats(size_t frame_bulk_index, unsigned repeats);
 
-	// Returns true if all frames until the last frame bulk were simulated.
-	//
-	// This means that frame_bulk_starts and other arrays contain entries corresponding to the state
-	// right before the last frame bulk.
-	bool simulated_until_last_frame_bulk() const;
-
 	// Returns true if all frames were simulated.
 	bool simulated_all_frames() const;
 };

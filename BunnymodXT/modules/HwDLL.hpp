@@ -8,7 +8,6 @@
 
 enum class TASEditorMode {
 	DISABLED,
-	APPEND,
 	EDIT
 };
 

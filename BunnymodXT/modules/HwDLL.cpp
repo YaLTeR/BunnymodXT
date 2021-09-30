@@ -2541,42 +2541,6 @@ struct HwDLL::Cmd_BXT_TAS_Editor
 	}
 };
 
-struct HwDLL::Cmd_Plus_BXT_TAS_Editor_Append
-{
-	USAGE("Usage: +bxt_tas_editor_append\n Switches the TAS editor to append mode.\n");
-
-	static void handler()
-	{
-		auto& hw = HwDLL::GetInstance();
-
-		if (hw.tas_editor_mode == TASEditorMode::EDIT)
-			hw.SetTASEditorMode(TASEditorMode::APPEND);
-	}
-
-	static void handler(int)
-	{
-		handler();
-	}
-};
-
-struct HwDLL::Cmd_Minus_BXT_TAS_Editor_Append
-{
-	USAGE("Usage: -bxt_tas_editor_append\n Switches the TAS editor back to edit mode.\n");
-
-	static void handler()
-	{
-		auto& hw = HwDLL::GetInstance();
-
-		if (hw.tas_editor_mode == TASEditorMode::APPEND)
-			hw.SetTASEditorMode(TASEditorMode::EDIT);
-	}
-
-	static void handler(int)
-	{
-		handler();
-	}
-};
-
 struct HwDLL::Cmd_Plus_BXT_TAS_Editor_Look_Around
 {
 	USAGE("Usage: +bxt_tas_editor_look_around\n Allows to look around while in the TAS editor.\n");
@@ -2638,12 +2602,7 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Delete_Last_Point
 		auto& hw = HwDLL::GetInstance();
 		auto& frame_bulks = hw.tas_editor_input.frame_bulks;
 
-		if (hw.tas_editor_mode == TASEditorMode::APPEND) {
-			if (frame_bulks.size() > 1) {
-				hw.tas_editor_input.mark_as_stale(frame_bulks.size() - 2);
-				frame_bulks.erase(frame_bulks.end() - 2);
-			}
-		} else if (hw.tas_editor_mode == TASEditorMode::EDIT) {
+		if (hw.tas_editor_mode == TASEditorMode::EDIT) {
 			if (frame_bulks.size() > 0) {
 				hw.tas_editor_input.mark_as_stale(frame_bulks.size() - 1);
 				frame_bulks.erase(frame_bulks.end() - 1);
@@ -2913,42 +2872,9 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 	if (mode == TASEditorMode::EDIT) {
 		cl.SetMouseState(false);
 		SDL::GetInstance().SetRelativeMouseMode(false);
-
-		if (tas_editor_mode == TASEditorMode::APPEND) {
-			tas_editor_input.mark_as_stale(tas_editor_input.frame_bulks.size() - 1);
-			tas_editor_input.frame_bulks.erase(tas_editor_input.frame_bulks.end() - 1);
-		}
 	} else {
 		cl.SetMouseState(true);
 		SDL::GetInstance().SetRelativeMouseMode(true);
-	}
-
-	if (tas_editor_mode != TASEditorMode::APPEND && mode == TASEditorMode::APPEND) {
-		auto frame_bulk = HLTAS::Frame();
-		auto frame_count = input.GetFrames().size();
-		if (frame_count > 0) {
-			// Copy the last frame.
-			frame_bulk = input.GetFrames()[frame_count - 1];
-			frame_bulk.Comments.clear();
-			frame_bulk.Commands.clear();
-
-			// Make sure the strafe direction is Yaw.
-			frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
-		} else {
-			// If there's no input just make a s03lj frame bulk.
-			frame_bulk.Strafe = true;
-			frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
-			frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
-			frame_bulk.Lgagst = true;
-			frame_bulk.Autojump = true;
-
-			std::ostringstream oss;
-			oss << GetFrameTime();
-			frame_bulk.Frametime = oss.str();
-		}
-
-		frame_bulk.SetRepeats(1);
-		tas_editor_input.frame_bulks.push_back(frame_bulk);
 	}
 
 	tas_editor_mode = mode;
@@ -2982,12 +2908,6 @@ void HwDLL::SaveEditedInput()
 {
 	if (tas_editor_mode == TASEditorMode::DISABLED)
 		return;
-
-	if (tas_editor_mode == TASEditorMode::APPEND) {
-		// Append mode always has the last frame bulk that we're currently editing.
-		// We don't want it to be saved.
-		tas_editor_input.frame_bulks.erase(tas_editor_input.frame_bulks.end() - 1);
-	}
 
 	tas_editor_input.save();
 	SetTASEditorMode(TASEditorMode::DISABLED);
@@ -3140,8 +3060,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Point, Handler<>>("bxt_tas_editor_delete_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Insert_Point, Handler<>>("bxt_tas_editor_insert_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Save, Handler<>>("bxt_tas_editor_save");
-	wrapper::Add<Cmd_Plus_BXT_TAS_Editor_Append, Handler<>, Handler<int>>("+bxt_tas_editor_append");
-	wrapper::Add<Cmd_Minus_BXT_TAS_Editor_Append, Handler<>, Handler<int>>("-bxt_tas_editor_append");
 	wrapper::Add<Cmd_Plus_BXT_TAS_Editor_Look_Around, Handler<>, Handler<int>>("+bxt_tas_editor_look_around");
 	wrapper::Add<Cmd_Minus_BXT_TAS_Editor_Look_Around, Handler<>, Handler<int>>("-bxt_tas_editor_look_around");
 	wrapper::Add<Cmd_BXT_TAS_Editor, Handler<int>>("bxt_tas_editor");

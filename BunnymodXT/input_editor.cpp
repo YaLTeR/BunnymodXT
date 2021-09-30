@@ -2,6 +2,10 @@
 
 #include "input_editor.hpp"
 #include "modules.hpp"
+#include "cvars.hpp"
+#include "simulation_ipc.hpp"
+
+using namespace std::chrono_literals;
 
 void EditedInput::initialize() {
 	auto& hw = HwDLL::GetInstance();
@@ -19,9 +23,21 @@ void EditedInput::initialize() {
 	strafe_states.push_back(strafe_state);
 
 	initial_movement_vars = hw.GetMovementVars();
+
+	first_predicted_frame = 1;
+	current_generation = 0;
+	first_frame_counter_value = 0;
 }
 
 void EditedInput::simulate() {
+	auto start = std::chrono::steady_clock::now();
+	if (run_in_second_game_at.time_since_epoch().count() > 0) {
+		run_in_second_game_at = std::chrono::steady_clock::time_point();
+		run_script_in_second_game();
+	}
+
+	simulation_ipc::receive_messages_from_client();
+
 	auto first_frame_bulk = frame_bulk_starts.size() - 1;
 
 	// Return early if we don't need to simulate anything.
@@ -46,8 +62,6 @@ void EditedInput::simulate() {
 	auto player = *(player_datas.cend() - 1);
 	auto strafe_state = *(strafe_states.cend() - 1);
 	auto next_frame_is_0ms = *(next_frame_is_0mss.cend() - 1);
-
-	auto start = std::chrono::steady_clock::now();
 
 	for (size_t index = first_frame_bulk; index < frame_bulks.size(); ++index) {
 		const auto& frame_bulk = frame_bulks[index];
@@ -126,26 +140,25 @@ void EditedInput::simulate() {
 	hw.StopTracing();
 }
 
-void EditedInput::save() {
+HLTAS::ErrorDescription EditedInput::save(const std::string &filename) const {
 	auto& hw = HwDLL::GetInstance();
 
-	const auto frame_count = hw.input.GetFrames().size();
-	if (frame_count == 0)
-		return;
+	auto input = hw.input; // Make a copy to mess with.
+	const auto frame_count = input.GetFrames().size();
+	if (frame_count != 0) {
+		const auto last_frame = input.GetFrames()[frame_count - 1];
+		input.RemoveFrame(frame_count - 1);
 
-	const auto last_frame = hw.input.GetFrames()[frame_count - 1];
-	hw.input.RemoveFrame(frame_count - 1);
-
-	for (const auto& frame_bulk : frame_bulks) {
-		hw.input.PushFrame(frame_bulk);
+		for (const auto& frame_bulk : frame_bulks) {
+			input.PushFrame(frame_bulk);
+		}
+		input.PushFrame(last_frame);
 	}
-	hw.input.PushFrame(last_frame);
 
-	auto err = hw.input.Save(hw.hltas_filename);
-	if (err.Code == HLTAS::ErrorCode::OK)
-		hw.ORIG_Con_Printf("Saved the script: %s\n", hw.hltas_filename.c_str());
-	else
-		hw.ORIG_Con_Printf("Error saving the script: %s\n", HLTAS::GetErrorMessage(err).c_str());
+	simulation_ipc::maybe_lock_mutex();
+	auto err = input.Save(filename);
+	simulation_ipc::maybe_unlock_mutex();
+	return err;
 }
 
 void EditedInput::mark_as_stale(size_t frame_bulk_index) {
@@ -160,6 +173,9 @@ void EditedInput::mark_as_stale(size_t frame_bulk_index) {
 	fractions.erase(fractions.begin() + first_frame + 1, fractions.end());
 	normalzs.erase(normalzs.begin() + first_frame + 1, normalzs.end());
 	next_frame_is_0mss.erase(next_frame_is_0mss.begin() + first_frame + 1, next_frame_is_0mss.end());
+	first_predicted_frame = std::min(first_predicted_frame, first_frame + 1);
+
+	schedule_run_in_second_game();
 }
 
 void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
@@ -186,8 +202,12 @@ void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
 			frame_bulk_starts.erase(frame_bulk_starts.begin() + frame_bulk_index + 2, frame_bulk_starts.end());
 	}
 
-	// Invalidate all later frames, if they exist.
 	auto last_frame = frame_bulk_starts[frame_bulk_index] + std::min(repeats, old_repeats);
+
+	first_predicted_frame = std::min(first_predicted_frame, last_frame + 1);
+	schedule_run_in_second_game();
+
+	// Invalidate all later frames, if they exist.
 	if (last_frame >= player_datas.size() - 2)
 		return;
 
@@ -205,4 +225,66 @@ void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
 bool EditedInput::simulated_all_frames() const {
 	// If we have the total frame count, then we simulated all frames.
 	return frame_bulk_starts.size() == frame_bulks.size() + 1;
+}
+
+void EditedInput::run_script_in_second_game() {
+	auto& hw = HwDLL::GetInstance();
+
+	if (!simulation_ipc::is_server_initialized())
+		return;
+
+	if (frame_bulks.empty())
+		return;
+
+	const auto& properties = hw.input.GetProperties();
+	if (properties.find(std::string("load_command")) == properties.cend())
+		return;
+
+	assert(frame_bulks[0].IsMovement());
+	auto tas_editor_command = frame_bulks[0].Commands;
+	frame_bulks[0].Commands.clear();
+
+	HLTAS::Frame final_frame;
+	final_frame.Commands = "toggleconsole";
+	final_frame.SetRepeats(1);
+	final_frame.Frametime = frame_bulks[0].Frametime;
+	frame_bulks.push_back(final_frame);
+
+	std::string filename("_bxt-tas-server-script-to-run.hltas");
+	auto err = save(filename);
+	if (err.Code != HLTAS::ErrorCode::OK) {
+		hw.ORIG_Con_Printf("Error saving the script: %s\n", HLTAS::GetErrorMessage(err).c_str());
+		return;
+	}
+
+	frame_bulks.pop_back();
+	frame_bulks[0].Commands = tas_editor_command;
+
+	std::ostringstream oss;
+	oss << "_bxt_tas_script_generation " << ++current_generation
+	    << ";sensitivity 0;volume 0;bxt_tas_norefresh_until_last_frames 1;bxt_tas_loadscript " << filename << '\n';
+	simulation_ipc::send_command_to_client(oss.str());
+}
+
+void EditedInput::schedule_run_in_second_game() {
+	run_in_second_game_at = std::chrono::steady_clock::now() + 100ms;
+}
+
+void EditedInput::received_simulated_frame(const simulation_ipc::SimulatedFrame &frame) {
+	if (frame.generation != current_generation)
+		return;
+
+	if (frame.number <= first_frame_counter_value)
+		return;
+
+	auto frame_number = frame.number - first_frame_counter_value;
+	if (frame_number >= player_datas.size())
+		return;
+
+	player_datas[frame_number] = frame.player_data;
+	strafe_states[frame_number] = frame.strafe_state;
+	fractions[frame_number] = frame.fraction;
+	normalzs[frame_number] = frame.normalz;
+	next_frame_is_0mss[frame_number] = frame.next_frame_is_0ms;
+	first_predicted_frame = std::max(first_predicted_frame, frame_number + 1);
 }

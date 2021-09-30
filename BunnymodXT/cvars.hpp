@@ -14,6 +14,7 @@ public:
 	bool IsEmpty() const;
 	bool GetBool() const;
 	int GetInt() const;
+	unsigned GetUint() const;
 	float GetFloat() const;
 	std::string GetString() const;
 
@@ -88,6 +89,11 @@ inline int CVarWrapper::GetInt() const
 	return m_CVar ? atoi(m_CVar->string) : 0;
 }
 
+inline unsigned CVarWrapper::GetUint() const
+{
+	return m_CVar ? std::strtoul(m_CVar->string, NULL, 10) : 0;
+}
+
 inline float CVarWrapper::GetFloat() const
 {
 	return m_CVar ? m_CVar->value : 0.0f;
@@ -117,6 +123,7 @@ namespace CVars
 	extern CVarWrapper _bxt_norefresh;
 	extern CVarWrapper _bxt_bunnysplit_time_update_frequency;
 	extern CVarWrapper _bxt_save_runtime_data_in_demos;
+	extern CVarWrapper _bxt_tas_script_generation;
 	extern CVarWrapper bxt_taslog_filename;
 	extern CVarWrapper bxt_autopause;
 	extern CVarWrapper bxt_interprocess_enable;

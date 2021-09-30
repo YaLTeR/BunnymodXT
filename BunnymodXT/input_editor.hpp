@@ -1,5 +1,7 @@
 #pragma once
 
+#include "BunnymodXT/simulation_ipc.hpp"
+
 struct EditedInput {
 	// Per-frame-bulk data.
 
@@ -17,10 +19,15 @@ struct EditedInput {
 
 	HLStrafe::MovementVars initial_movement_vars;
 
+	size_t first_predicted_frame;
+	unsigned current_generation;
+	size_t first_frame_counter_value;
+	std::chrono::steady_clock::time_point run_in_second_game_at;
+
 	// Clears and initializes EditedInput with the current player data.
 	void initialize();
 	void simulate();
-	void save();
+	HLTAS::ErrorDescription save(const std::string &filename) const;
 	void mark_as_stale(size_t frame_bulk_index);
 
 	// Sets the repeats for the frame bulk at the given index.
@@ -30,4 +37,8 @@ struct EditedInput {
 
 	// Returns true if all frames were simulated.
 	bool simulated_all_frames() const;
+
+	void schedule_run_in_second_game();
+	void run_script_in_second_game();
+	void received_simulated_frame(const simulation_ipc::SimulatedFrame &frame);
 };

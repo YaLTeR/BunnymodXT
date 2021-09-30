@@ -20,6 +20,7 @@
 #include "../runtime_data.hpp"
 #include "../git_revision.hpp"
 #include "../custom_triggers.hpp"
+#include "../simulation_ipc.hpp"
 
 using namespace std::literals;
 
@@ -489,6 +490,7 @@ void HwDLL::Clear()
 	LastRandomSeed = 0;
 	player = HLStrafe::PlayerData();
 	currentRepeat = 0;
+	movementFrameCounter = 0;
 	thisFrameIs0ms = false;
 	currentKeys.ResetStates();
 	CountingSharedRNGSeed = false;
@@ -560,6 +562,8 @@ void HwDLL::Clear()
 		totalFrames = 0;
 		StrafeState = HLStrafe::CurrentState();
 		PrevStrafeState = HLStrafe::CurrentState();
+		PrevFraction = 1;
+		PrevNormalz = 0;
 		SharedRNGSeedPresent = false;
 		SharedRNGSeed = 0;
 		ButtonsPresent = false;
@@ -1565,8 +1569,11 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		hw.runningFrames = false;
 		hw.currentFramebulk = 0;
 		hw.currentRepeat = 0;
+		hw.movementFrameCounter = 0;
 		hw.StrafeState = HLStrafe::CurrentState();
 		hw.PrevStrafeState = HLStrafe::CurrentState();
+		hw.PrevFraction = 1;
+		hw.PrevNormalz = 0;
 		hw.ButtonsPresent = false;
 		hw.demoName.clear();
 		hw.saveName.clear();
@@ -1578,7 +1585,10 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		hw.hltas_filename = fileName;
 		hw.clearedImpulsesForTheFirstTime = false;
 
+		simulation_ipc::maybe_lock_mutex();
 		auto err = hw.input.Open(fileName);
+		simulation_ipc::maybe_unlock_mutex();
+
 		if (err.Code != HLTAS::ErrorCode::OK) {
 			const auto& message = hw.input.GetErrorMessage();
 			if (message.empty()) {
@@ -2842,12 +2852,36 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Unset_Pitch
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Become_Simulator_Client
+{
+	NO_USAGE()
+
+	static void handler()
+	{
+		auto err = simulation_ipc::initialize_client();
+		if (!err.empty())
+			HwDLL::GetInstance().ORIG_Con_Printf("Couldn't become simulator client: %s\n", err.c_str());
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_Server_Send_Command
+{
+	USAGE("Usage: _bxt_tas_server_send_command <command>\n Sends a console command to the client.\n");
+
+	static void handler(const char *command)
+	{
+		simulation_ipc::send_command_to_client(std::string(command) + '\n');
+	}
+};
+
 void HwDLL::SetTASEditorMode(TASEditorMode mode)
 {
 	auto& cl = ClientDLL::GetInstance();
 
-	if (mode != TASEditorMode::DISABLED)
+	if (mode != TASEditorMode::DISABLED) {
 		SetFreeCam(true);
+		simulation_ipc::initialize_server_if_needed();
+	}
 
 	if (tas_editor_mode == TASEditorMode::DISABLED && mode != TASEditorMode::DISABLED) {
 		tas_editor_input = EditedInput();
@@ -2863,6 +2897,11 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 
 			runningFrames = false;
 			ORIG_Cbuf_InsertText("host_framerate 0;_bxt_norefresh 0;_bxt_min_frametime 0;bxt_taslog 0\n");
+
+			assert(movementFrameCounter >= 1);
+			tas_editor_input.first_frame_counter_value = movementFrameCounter - 1;
+
+			tas_editor_input.run_script_in_second_game();
 		} else {
 			// If invoked outside of a script, make sure the hlstrafe version is latest.
 			hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
@@ -2909,7 +2948,12 @@ void HwDLL::SaveEditedInput()
 	if (tas_editor_mode == TASEditorMode::DISABLED)
 		return;
 
-	tas_editor_input.save();
+	auto err = tas_editor_input.save(hltas_filename);
+	if (err.Code == HLTAS::ErrorCode::OK)
+		ORIG_Con_Printf("Saved the script: %s\n", hltas_filename.c_str());
+	else
+		ORIG_Con_Printf("Error saving the script: %s\n", HLTAS::GetErrorMessage(err).c_str());
+
 	SetTASEditorMode(TASEditorMode::DISABLED);
 }
 
@@ -2947,6 +2991,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	registeredVarsAndCmds = true;
 	RegisterCVar(CVars::_bxt_taslog);
 	RegisterCVar(CVars::_bxt_min_frametime);
+	RegisterCVar(CVars::_bxt_tas_script_generation);
 	RegisterCVar(CVars::bxt_taslog_filename);
 	RegisterCVar(CVars::bxt_autopause);
 	RegisterCVar(CVars::bxt_bhopcap);
@@ -3063,6 +3108,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_Plus_BXT_TAS_Editor_Look_Around, Handler<>, Handler<int>>("+bxt_tas_editor_look_around");
 	wrapper::Add<Cmd_Minus_BXT_TAS_Editor_Look_Around, Handler<>, Handler<int>>("-bxt_tas_editor_look_around");
 	wrapper::Add<Cmd_BXT_TAS_Editor, Handler<int>>("bxt_tas_editor");
+
+	wrapper::Add<Cmd_BXT_TAS_Become_Simulator_Client, Handler<>>("bxt_tas_become_simulator_client");
+	wrapper::Add<Cmd_BXT_TAS_Server_Send_Command, Handler<const char*>>("_bxt_tas_server_send_command");
 }
 
 void HwDLL::InsertCommands()
@@ -3147,9 +3195,22 @@ void HwDLL::InsertCommands()
 				StrafeState.Duck = currentKeys.Duck.IsDown();
 				PrevStrafeState = StrafeState;
 
+				simulation_ipc::send_simulated_frame_to_server(simulation_ipc::SimulatedFrame {
+					CVars::_bxt_tas_script_generation.GetUint(),
+					movementFrameCounter++,
+					player,
+					StrafeState,
+					PrevFraction,
+					PrevNormalz,
+					thisFrameIs0ms,
+				});
+
 				StartTracing();
 				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::UnsafePlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), hlstrafe_version);
 				StopTracing();
+
+				PrevFraction = p.fractions[0];
+				PrevNormalz = p.normalzs[0];
 
 				f.ResetAutofuncs();
 
@@ -3867,6 +3928,15 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		}
 
 		return;
+	}
+
+	simulation_ipc::receive_messages_from_server();
+	if (!simulation_ipc::command_to_run.empty()
+			&& IsActive() // Don't run "map" while loading—this crashes the game.
+			&& *state == 5 // Don't start a TAS in state = 4—this sometimes results in desyncs.
+			) {
+		ORIG_Cbuf_AddText(simulation_ipc::command_to_run.c_str());
+		simulation_ipc::command_to_run.clear();
 	}
 
 	if (!finishingLoad && *state == 4 && !executing)

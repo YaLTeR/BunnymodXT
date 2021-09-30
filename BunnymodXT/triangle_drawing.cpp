@@ -478,9 +478,13 @@ namespace TriangleDrawing
 		static Vector2D saved_rmb_diff;
 		static Vector2D saved_ms4_diff;
 
-		pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
 		for (size_t frame = 1; frame < player_datas.size(); ++frame) {
 			const auto origin = Vector(player_datas[frame].Origin);
+
+			if (frame >= input.first_predicted_frame)
+				pTriAPI->Color4f(0.5f, 0.5f, 0.5f, 1);
+			else
+				pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
 
 			if (frame > color_from && frame <= color_to) {
 				// If we bumped into something along the way
@@ -492,9 +496,15 @@ namespace TriangleDrawing
 				}
 
 				if (frame > frames_until_non_ground_collision) {
-					pTriAPI->Color4f(1, 0, 0, 1);
+					if (frame >= input.first_predicted_frame)
+						pTriAPI->Color4f(0.6f, 0, 0, 1);
+					else
+						pTriAPI->Color4f(1, 0, 0, 1);
 				} else {
-					pTriAPI->Color4f(0, 1, 0, 1);
+					if (frame >= input.first_predicted_frame)
+						pTriAPI->Color4f(0, 0.6f, 0, 1);
+					else
+						pTriAPI->Color4f(0, 1, 0, 1);
 				}
 			}
 

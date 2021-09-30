@@ -21,7 +21,7 @@ void EditedInput::initialize() {
 	initial_movement_vars = hw.GetMovementVars();
 }
 
-void EditedInput::simulate(SimulateFrameBulks what) {
+void EditedInput::simulate() {
 	auto first_frame_bulk = frame_bulk_starts.size() - 1;
 
 	// Return early if we don't need to simulate anything.
@@ -50,9 +50,6 @@ void EditedInput::simulate(SimulateFrameBulks what) {
 	auto start = std::chrono::steady_clock::now();
 
 	for (size_t index = first_frame_bulk; index < frame_bulks.size(); ++index) {
-		if (what == SimulateFrameBulks::ALL_EXCEPT_LAST && index == frame_bulks.size() - 1)
-			break;
-
 		const auto& frame_bulk = frame_bulks[index];
 
 		const auto host_frametime = std::strtof(frame_bulk.Frametime.c_str(), nullptr);

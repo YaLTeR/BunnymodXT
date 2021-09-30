@@ -391,12 +391,10 @@ namespace TriangleDrawing
 		const auto& normalzs = input.normalzs;
 		const auto& frame_bulk_starts = input.frame_bulk_starts;
 
-		input.simulate(SimulateFrameBulks::ALL_EXCEPT_LAST);
-
 		if (input.frame_bulks.size() == 0)
 			return;
 
-		input.simulate(SimulateFrameBulks::ALL);
+		input.simulate();
 
 		size_t next_frame_bulk_start_index = 1;
 

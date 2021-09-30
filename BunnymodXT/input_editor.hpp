@@ -1,10 +1,5 @@
 #pragma once
 
-enum class SimulateFrameBulks {
-	ALL,
-	ALL_EXCEPT_LAST
-};
-
 struct EditedInput {
 	// Per-frame-bulk data.
 
@@ -24,7 +19,7 @@ struct EditedInput {
 
 	// Clears and initializes EditedInput with the current player data.
 	void initialize();
-	void simulate(SimulateFrameBulks what);
+	void simulate();
 	void save();
 	void mark_as_stale(size_t frame_bulk_index);
 

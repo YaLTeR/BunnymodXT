@@ -1603,6 +1603,7 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 			hw.exportResult.ClearProperties();
 
 		bool saw_hlstrafe_version = false;
+		std::string load_command;
 		for (auto prop : hw.input.GetProperties()) {
 			if (prop.first == "demo")
 				hw.demoName = prop.second;
@@ -1624,7 +1625,8 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 					hw.ORIG_Con_Printf("Error loading the script: hlstrafe_version %u is too high (maximum supported version: %u)\n", hw.hlstrafe_version, HLStrafe::MAX_SUPPORTED_VERSION);
 					return;
 				}
-			}
+			} else if (prop.first == "load_command")
+				load_command = prop.second;
 
 			if (!hw.exportFilename.empty())
 				hw.exportResult.SetProperty(prop.first, prop.second);
@@ -1673,6 +1675,11 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 
 			// It will be enabled by bxt_tas_write_log if needed.
 			hw.SetTASLogging(false);
+		}
+
+		if (!load_command.empty()) {
+			load_command += '\n';
+			hw.ORIG_Cbuf_InsertText(load_command.c_str());
 		}
 	}
 };

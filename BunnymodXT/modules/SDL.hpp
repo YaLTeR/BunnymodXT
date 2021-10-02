@@ -13,6 +13,7 @@
 class SDL : public IHookableNameFilter
 {
 	HOOK_DECL(int, __cdecl, SDL_WaitEventTimeout, void *event, int time)
+	HOOK_DECL(void, __cdecl, SDL_WarpMouseInWindow, void *window, int x, int y)
 
 public:
 	static SDL& GetInstance()

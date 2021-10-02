@@ -481,6 +481,9 @@ namespace TriangleDrawing
 		static Vector2D saved_rmb_diff;
 		static Vector2D saved_ms4_diff;
 
+		Vector last_shown_view_angle;
+		Vector last_shown_view_angle_origin;
+
 		for (size_t frame = 1; frame < player_datas.size(); ++frame) {
 			const auto origin = Vector(player_datas[frame].Origin);
 
@@ -513,6 +516,23 @@ namespace TriangleDrawing
 
 			const auto prev_origin = Vector(player_datas[frame - 1].Origin);
 			TriangleUtils::DrawLine(pTriAPI, prev_origin, origin);
+
+			// Draw the view angle.
+			{
+				Vector forward, right, up;
+				cl.pEngfuncs->pfnAngleVectors(player_datas[frame].Viewangles, forward, right, up);
+
+				if (last_shown_view_angle == Vector()
+						// Angle differs by more than ~11.5 degrees.
+						|| DotProduct(forward, last_shown_view_angle) < 0.98f
+						|| (last_shown_view_angle_origin - origin).Length() > 50.f) {
+					last_shown_view_angle = forward;
+					last_shown_view_angle_origin = origin;
+					forward = origin + forward * 5;
+					pTriAPI->Color4f(0.4f, 0.4f, 1, 1);
+					TriangleUtils::DrawLine(pTriAPI, origin, forward);
+				}
+			}
 
 			// If we're inserting, we need to find the closest frame.
 			if (hw.tas_editor_insert_point) {

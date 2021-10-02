@@ -41,10 +41,22 @@ void SDL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleB
 	} else {
 		EngineDevWarning("[sdl] Could not find SDL_WaitEventTimeout.\n");
 	}
+
+	if (needToIntercept) {
+		MemUtils::Intercept(
+			moduleName,
+			ORIG_SDL_WaitEventTimeout, HOOKED_SDL_WaitEventTimeout);
+	}
 }
 
 void SDL::Unhook()
 {
+	if (m_Intercepted) {
+		MemUtils::RemoveInterception(
+			m_Name,
+			ORIG_SDL_WaitEventTimeout);
+	}
+
 	Clear();
 }
 

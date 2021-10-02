@@ -63,8 +63,48 @@ void EditedInput::simulate() {
 	auto strafe_state = *(strafe_states.cend() - 1);
 	auto next_frame_is_0ms = *(next_frame_is_0mss.cend() - 1);
 
+	// This check is needed because simulating non-movement frame bulks
+	// advances the simulated frame bulk counter, but doesn't save any state
+	// changes. The state changes only save after a movement frame. Therefore,
+	// we don't want to early-exit after simulating a non-movement frame bulk
+	// and before simulating the next movement frame.
+	bool safe_to_exit_early = false;
+
 	for (size_t index = first_frame_bulk; index < frame_bulks.size(); ++index) {
 		const auto& frame_bulk = frame_bulks[index];
+
+		if (!frame_bulk.IsMovement()) {
+			// TODO: Buttons frame.
+			if (frame_bulk.LgagstMinSpeedPresent) {
+				strafe_state.LgagstMinSpeed = frame_bulk.GetLgagstMinSpeed();
+			} else if (frame_bulk.StrafingAlgorithmPresent) {
+				strafe_state.Algorithm = frame_bulk.GetAlgorithm();
+			} else if (frame_bulk.AlgorithmParametersPresent) {
+				strafe_state.Parameters = frame_bulk.GetAlgorithmParameters();
+			} else if (frame_bulk.ChangePresent) {
+				switch (frame_bulk.GetChangeTarget()) {
+				case HLTAS::ChangeTarget::YAW:
+					strafe_state.ChangeYawFinalValue = frame_bulk.GetChangeFinalValue();
+					strafe_state.ChangeYawOver = frame_bulk.GetChangeOver();
+					break;
+				case HLTAS::ChangeTarget::PITCH:
+					strafe_state.ChangePitchFinalValue = frame_bulk.GetChangeFinalValue();
+					strafe_state.ChangePitchOver = frame_bulk.GetChangeOver();
+					break;
+				case HLTAS::ChangeTarget::TARGET_YAW:
+					strafe_state.ChangeTargetYawFinalValue = frame_bulk.GetChangeFinalValue();
+					strafe_state.ChangeTargetYawOver = frame_bulk.GetChangeOver();
+					break;
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			safe_to_exit_early = false;
+			frame_bulk_starts.push_back(total_frames);
+			continue;
+		}
 
 		const auto host_frametime = std::strtof(frame_bulk.Frametime.c_str(), nullptr);
 		const auto frametime = static_cast<float>(static_cast<float>(std::floor(host_frametime * 1000)) * 0.001);
@@ -76,7 +116,7 @@ void EditedInput::simulate() {
 			// to keep the FPS high.
 			auto now = std::chrono::steady_clock::now();
 			auto simulating_for = now - start;
-			if (std::chrono::duration_cast<std::chrono::milliseconds>(simulating_for).count()
+			if (safe_to_exit_early && std::chrono::duration_cast<std::chrono::milliseconds>(simulating_for).count()
 					> CVars::bxt_tas_editor_simulate_for_ms.GetInt())
 				break;
 
@@ -127,6 +167,8 @@ void EditedInput::simulate() {
 			fractions.push_back(processed_frame.fractions[0]);
 			normalzs.push_back(processed_frame.normalzs[0]);
 			next_frame_is_0mss.push_back(next_frame_is_0ms);
+
+			safe_to_exit_early = true;
 		}
 
 		// If we broke out early.

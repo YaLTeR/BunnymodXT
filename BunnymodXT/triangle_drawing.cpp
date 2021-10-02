@@ -433,11 +433,14 @@ namespace TriangleDrawing
 					auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 					auto dist = (screen_point_px - mouse).Length();
 
-					if (closest_edge_frame == 0 || dist < closest_edge_px_dist) {
+					if (closest_edge_frame == 0 || dist <= closest_edge_px_dist) {
 						closest_edge_frame = frame;
 						closest_edge_px_dist = dist;
 						closest_edge_px = screen_point_px;
 						closest_edge_prev_frame_bulk_index = i - 1;
+						while (closest_edge_prev_frame_bulk_index > 0
+								&& !input.frame_bulks[closest_edge_prev_frame_bulk_index].IsMovement())
+							closest_edge_prev_frame_bulk_index--;
 					}
 				}
 			}
@@ -533,7 +536,8 @@ namespace TriangleDrawing
 				frames_until_non_ground_collision = frame_limit;
 
 			if (frame == frame_bulk_starts[next_frame_bulk_start_index]) {
-				if (next_frame_bulk_start_index + 1 != frame_bulk_starts.size())
+				while (next_frame_bulk_start_index + 1 != frame_bulk_starts.size()
+						&& frame == frame_bulk_starts[next_frame_bulk_start_index])
 					++next_frame_bulk_start_index;
 
 				auto line = (origin - prev_origin).Normalize();

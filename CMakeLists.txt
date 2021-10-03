@@ -139,6 +139,7 @@ set (HEADER_FILES
 	BunnymodXT/TEA.hpp
 	BunnymodXT/runtime_data.hpp
 	BunnymodXT/input_editor.hpp
+	BunnymodXT/simulation_ipc.hpp
 	BunnymodXT/git_revision.hpp)
 
 set (SOURCE_FILES
@@ -162,6 +163,7 @@ set (SOURCE_FILES
 	BunnymodXT/TEA.cpp
 	BunnymodXT/runtime_data.cpp
 	BunnymodXT/input_editor.cpp
+	BunnymodXT/simulation_ipc.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/BunnymodXT/git_revision.cpp)
 
 if (MSVC)

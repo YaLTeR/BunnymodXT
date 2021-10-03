@@ -72,9 +72,6 @@ jobs:
       matrix:
         configuration: [Release, Debug]
 
-    env:
-      BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
-
     steps:
     - uses: actions/checkout@v2
       with:
@@ -89,17 +86,15 @@ jobs:
         override: true
 
     - name: Install Boost
-      run: |
-        # https://github.com/actions/virtual-environments/issues/2667#issuecomment-800317643
-        mkdir -p ${env:BOOST_ROOT}
-        (New-Object System.Net.WebClient).DownloadFile("https://sourceforge.net/projects/boost/files/boost/1.72.0/boost_1_72_0.zip/download", "${env:BOOST_ROOT}\download.zip")
-        Add-Type -Assembly "System.IO.Compression.Filesystem"
-        [System.IO.Compression.ZipFile]::ExtractToDirectory("${env:BOOST_ROOT}\download.zip", "${env:BOOST_ROOT}")
-        cd ${env:BOOST_ROOT} 
-        cp -r boost_*/* .
+      id: install-boost
+      uses: MarkusJx/install-boost@v2.0.0
+      with:
+        boost_version: 1.77.0
 
     - name: Generate the build system
       run: cmake -B build -A Win32
+      env:
+        BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
     - name: Build
       run: cmake --build build --config ${{ matrix.configuration }} -j $env:NUMBER_OF_PROCESSORS

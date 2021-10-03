@@ -10,6 +10,7 @@ namespace CVars
 	CVarWrapper _bxt_norefresh("_bxt_norefresh", "0");
 	CVarWrapper _bxt_bunnysplit_time_update_frequency("_bxt_bunnysplit_time_update_frequency", "41");
 	CVarWrapper _bxt_save_runtime_data_in_demos("_bxt_save_runtime_data_in_demos", "1");
+	CVarWrapper _bxt_tas_script_generation("_bxt_tas_script_generation", "1337");
 	CVarWrapper bxt_taslog_filename("bxt_taslog_filename", "taslogger.log");
 	CVarWrapper bxt_autopause("bxt_autopause", "0");
 	CVarWrapper bxt_interprocess_enable("bxt_interprocess_enable", "0");
@@ -143,6 +144,7 @@ namespace CVars
 		&_bxt_min_frametime,
 		&_bxt_norefresh,
 		&_bxt_save_runtime_data_in_demos,
+		&_bxt_tas_script_generation,
 		&bxt_taslog_filename,
 		&bxt_autopause,
 		&bxt_interprocess_enable,

@@ -8,7 +8,6 @@
 
 enum class TASEditorMode {
 	DISABLED,
-	APPEND,
 	EDIT
 };
 
@@ -186,6 +185,7 @@ public:
 	inline unsigned GetSharedRNGSeedCounter() { return SharedRNGSeedCounter; }
 
 	inline bool IsPaused() { return (sv && *(reinterpret_cast<int*>(sv) + 1)); }
+	inline bool IsActive() { return (sv && *reinterpret_cast<int*>(sv)); }
 
 	inline bool IsRecordingDemo() const { return demorecording && *demorecording == 1; }
 	void StoreCommand(const char* command);
@@ -390,6 +390,8 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Unset_Pitch;
 	struct Cmd_BXT_FreeCam;
 	struct Cmd_BXT_Print_Entities;
+	struct Cmd_BXT_TAS_Become_Simulator_Client;
+	struct Cmd_BXT_TAS_Server_Send_Command;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();
@@ -488,6 +490,7 @@ protected:
 	size_t preExecFramebulk = 0;
 	size_t totalFramebulks;
 	size_t currentRepeat;
+	size_t movementFrameCounter;
 	bool thisFrameIs0ms;
 	bool SharedRNGSeedPresent;
 	unsigned SharedRNGSeed;
@@ -499,6 +502,8 @@ public:
 	HLTAS::StrafeButtons Buttons;
 	HLStrafe::CurrentState StrafeState;
 	HLStrafe::CurrentState PrevStrafeState;
+	float PrevFraction;
+	float PrevNormalz;
 protected:
 	std::string exportFilename;
 	HLTAS::Input exportResult;

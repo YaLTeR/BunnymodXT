@@ -9,6 +9,7 @@
         "org.freedesktop.Sdk.Extension.toolchain-i386",
         "org.freedesktop.Sdk.Extension.rust-stable"
     ],
+    "finish-args": [],
     "build-options": {
         "append-path": "/usr/lib/sdk/toolchain-i386/bin:/usr/lib/sdk/rust-stable/bin",
         "build-args" : [

@@ -1,9 +1,6 @@
 #pragma once
 
-enum class SimulateFrameBulks {
-	ALL,
-	ALL_EXCEPT_LAST
-};
+#include "BunnymodXT/simulation_ipc.hpp"
 
 struct EditedInput {
 	// Per-frame-bulk data.
@@ -22,10 +19,15 @@ struct EditedInput {
 
 	HLStrafe::MovementVars initial_movement_vars;
 
+	size_t first_predicted_frame;
+	unsigned current_generation;
+	size_t first_frame_counter_value;
+	std::chrono::steady_clock::time_point run_in_second_game_at;
+
 	// Clears and initializes EditedInput with the current player data.
 	void initialize();
-	void simulate(SimulateFrameBulks what);
-	void save();
+	void simulate();
+	HLTAS::ErrorDescription save(const std::string &filename) const;
 	void mark_as_stale(size_t frame_bulk_index);
 
 	// Sets the repeats for the frame bulk at the given index.
@@ -33,12 +35,10 @@ struct EditedInput {
 	// Invalidates the cached positions in an optimal way to reduce unnecessary simulations.
 	void set_repeats(size_t frame_bulk_index, unsigned repeats);
 
-	// Returns true if all frames until the last frame bulk were simulated.
-	//
-	// This means that frame_bulk_starts and other arrays contain entries corresponding to the state
-	// right before the last frame bulk.
-	bool simulated_until_last_frame_bulk() const;
-
 	// Returns true if all frames were simulated.
 	bool simulated_all_frames() const;
+
+	void schedule_run_in_second_game();
+	void run_script_in_second_game();
+	void received_simulated_frame(const simulation_ipc::SimulatedFrame &frame);
 };

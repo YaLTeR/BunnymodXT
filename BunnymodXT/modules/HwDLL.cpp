@@ -3215,7 +3215,7 @@ void HwDLL::InsertCommands()
 				float health = 0;
 				float armor = 0;
 				edict_t* pl = GetPlayerEdict();
-				if (!pl) {
+				if (pl) {
 					health = pl->v.health;
 					armor = pl->v.armorvalue;
 				}

@@ -328,5 +328,9 @@ void EditedInput::received_simulated_frame(const simulation_ipc::SimulatedFrame 
 	fractions[frame_number] = frame.fraction;
 	normalzs[frame_number] = frame.normalz;
 	next_frame_is_0mss[frame_number] = frame.next_frame_is_0ms;
+
+	player_health_datas[frame_number] = frame.health;
+	player_armor_datas[frame_number] = frame.armor;
+
 	first_predicted_frame = std::max(first_predicted_frame, frame_number + 1);
 }

@@ -3212,6 +3212,14 @@ void HwDLL::InsertCommands()
 				StrafeState.Duck = currentKeys.Duck.IsDown();
 				PrevStrafeState = StrafeState;
 
+				float health = 0;
+				float armor = 0;
+				edict_t* pl = GetPlayerEdict();
+				if (!pl) {
+					health = pl->v.health;
+					armor = pl->v.armorvalue;
+				}
+
 				simulation_ipc::send_simulated_frame_to_server(simulation_ipc::SimulatedFrame {
 					CVars::_bxt_tas_script_generation.GetUint(),
 					movementFrameCounter++,
@@ -3220,6 +3228,8 @@ void HwDLL::InsertCommands()
 					PrevFraction,
 					PrevNormalz,
 					thisFrameIs0ms,
+					health,
+					armor
 				});
 
 				StartTracing();

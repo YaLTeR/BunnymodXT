@@ -12,6 +12,8 @@ struct EditedInput {
 	// Per-frame data.
 
 	std::vector<HLStrafe::PlayerData> player_datas;
+	std::vector<float> player_health_datas;
+	std::vector<float> player_armor_datas;
 	std::vector<HLStrafe::CurrentState> strafe_states;
 	std::vector<float> fractions;
 	std::vector<float> normalzs;

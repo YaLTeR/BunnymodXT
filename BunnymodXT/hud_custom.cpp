@@ -78,6 +78,8 @@ namespace CustomHud
 	static float player_zpos_status;
 	static float player_realyaw_status;
 	static bool frame_bulk_selected;
+	static float player_health_status;
+	static float player_armor_status;
 
 	template<typename T, size_t size = 3>
 	static inline void vecCopy(const T src[], T dest[])
@@ -1115,6 +1117,11 @@ namespace CustomHud
 			out << "Vel: " << player_vel_status << '\n';
 			out << "Z Vel: " << player_zvel_status << '\n';
 			out << "Z Pos: " << player_zpos_status << '\n';
+
+			out << '\n';
+
+			out << "Health: " << player_health_status << '\n';
+			out << "Armor: " << player_armor_status << '\n';
 		} else {
 			out << " no frame bulk selected";
 		}
@@ -1493,7 +1500,7 @@ namespace CustomHud
 		return si;
 	}
 
-	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw)
+	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor)
 	{
 		player_vel_status = player_vel;
 		player_zvel_status = player_zvel;
@@ -1543,5 +1550,8 @@ namespace CustomHud
 		}
 
 		frame_bulk_status.commands = frame_bulk.Commands;
+
+		player_health_status = player_health;
+		player_armor_status = player_armor;
 	}
 }

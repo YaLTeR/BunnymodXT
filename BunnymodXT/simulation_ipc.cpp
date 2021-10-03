@@ -40,7 +40,7 @@ namespace simulation_ipc {
 	};
 
 	enum ClientToServerMessageType {
-		SIMULATED_FRAME = 0,
+		SIMULATED_FRAME = 0
 	};
 
 	struct ClientToServerMessage {
@@ -280,7 +280,7 @@ namespace simulation_ipc {
 
 		ClientToServerMessage message {
 			ClientToServerMessageType::SIMULATED_FRAME,
-			frame,
+			frame
 		};
 
 		try {

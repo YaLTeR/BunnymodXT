@@ -668,8 +668,15 @@ namespace TriangleDrawing
 
 				auto& current_player_realyaw = current_player_data.Viewangles[1];
 
-				auto& current_player_health = input.player_health_datas[current_frame];
-				auto& current_player_armor = input.player_armor_datas[current_frame];
+				float current_player_health = 0;
+				float current_player_armor = 0;
+
+				if (input.player_health_datas.size() > current_frame) {
+					current_player_health = input.player_health_datas[current_frame];
+				}
+				if (input.player_armor_datas.size() > current_frame) {
+					current_player_armor = input.player_armor_datas[current_frame];
+				}
 
 				// Update the HUD status before any changes, since that's the state that was visualized earlier.
 				CustomHud::UpdateTASEditorStatus(

@@ -257,8 +257,6 @@ void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
 
 	if (player_health_datas.size() > last_frame + 1) {
 		player_health_datas.erase(player_health_datas.begin() + last_frame + 1, player_health_datas.end());
-	}
-	if (player_armor_datas.size() > last_frame + 1) {
 		player_armor_datas.erase(player_armor_datas.begin() + last_frame + 1, player_armor_datas.end());
 	}
 	player_datas.erase(player_datas.begin() + last_frame + 1, player_datas.end());
@@ -348,14 +346,10 @@ void EditedInput::received_simulated_frame(const simulation_ipc::SimulatedFrame 
 	// if it does, overwrite it
 	if (frame_number < player_health_datas.size()) {
 		player_health_datas[frame_number] = frame.health;
-	}
-	else {
-		player_health_datas.push_back(frame.health);
-	}
-	if (frame_number < player_armor_datas.size()) {
 		player_armor_datas[frame_number] = frame.armor;
 	}
 	else {
+		player_health_datas.push_back(frame.health);
 		player_armor_datas.push_back(frame.armor);
 	}
 

@@ -673,8 +673,6 @@ namespace TriangleDrawing
 
 			if (input.player_health_datas.size() > closest_edge_frame) {
 				current_player_health = input.player_health_datas[closest_edge_frame];
-			}
-			if (input.player_armor_datas.size() > closest_edge_frame) {
 				current_player_armor = input.player_armor_datas[closest_edge_frame];
 			}
 

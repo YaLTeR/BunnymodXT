@@ -696,13 +696,13 @@ namespace CustomHud
 					out << targetname << '\n';
 				}
 
-				out << "HP: " << ent->v.health << "\n\n";
+				out << "HP: " << ent->v.health << '\n';
 
-				out << "Yaw: " << ent->v.angles[1] << "\n\n";
+				out << "Yaw: " << ent->v.angles[1] << '\n';
 
 				out << "X: " << ent->v.origin.x << '\n';
 				out << "Y: " << ent->v.origin.y << '\n';
-				out << "Z: " << ent->v.origin.z << "\n\n";
+				out << "Z: " << ent->v.origin.z << '\n';
 
 				out << "X Vel: " << ent->v.velocity.x << '\n';
 				out << "Y Vel: " << ent->v.velocity.y << '\n';

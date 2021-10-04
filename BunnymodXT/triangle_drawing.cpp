@@ -651,14 +651,12 @@ namespace TriangleDrawing
 		if (closest_edge_frame != 0) {
 			auto& frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
 
-			auto data_size = input.player_datas.size();
-
 			float current_player_vel = 0;
 			float current_player_zvel = 0;
 			float current_player_zpos = 0;
 			float current_player_realyaw = 0;
 
-			if (data_size >= closest_edge_frame) {
+			if (input.player_datas.size() > closest_edge_frame) {
 				auto& current_player_data = input.player_datas[closest_edge_frame];
 				auto& current_player_vels = current_player_data.Velocity;
 

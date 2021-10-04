@@ -71,15 +71,16 @@ namespace CustomHud
 		bool yaw_present;
 
 		std::string commands;
+
+		float vel;
+		float zvel;
+		float zpos;
+		float realyaw;
+		float health;
+		float armor;
 	};
 	static FrameBulkStatus frame_bulk_status;
-	static float player_vel_status;
-	static float player_zvel_status;
-	static float player_zpos_status;
-	static float player_realyaw_status;
 	static bool frame_bulk_selected;
-	static float player_health_status;
-	static float player_armor_status;
 
 	template<typename T, size_t size = 3>
 	static inline void vecCopy(const T src[], T dest[])
@@ -1110,18 +1111,18 @@ namespace CustomHud
 
 			out << '\n';
 
-			out << "Camera Yaw: " << player_realyaw_status << '\n';
+			out << "Camera Yaw: " << frame_bulk_status.realyaw << '\n';
 
 			out << '\n';
 
-			out << "Vel: " << player_vel_status << '\n';
-			out << "Z Vel: " << player_zvel_status << '\n';
-			out << "Z Pos: " << player_zpos_status << '\n';
+			out << "Vel: " << frame_bulk_status.vel << '\n';
+			out << "Z Vel: " << frame_bulk_status.zvel << '\n';
+			out << "Z Pos: " << frame_bulk_status.zpos << '\n';
 
 			out << '\n';
 
-			out << "Health: " << player_health_status << '\n';
-			out << "Armor: " << player_armor_status << '\n';
+			out << "Health: " << frame_bulk_status.health << '\n';
+			out << "Armor: " << frame_bulk_status.armor << '\n';
 		} else {
 			out << " no frame bulk selected";
 		}
@@ -1502,10 +1503,10 @@ namespace CustomHud
 
 	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor)
 	{
-		player_vel_status = player_vel;
-		player_zvel_status = player_zvel;
-		player_zpos_status = player_zpos;
-		player_realyaw_status = player_realyaw;
+		frame_bulk_status.vel = player_vel;
+		frame_bulk_status.zvel = player_zvel;
+		frame_bulk_status.zpos = player_zpos;
+		frame_bulk_status.realyaw = player_realyaw;
 
 		frame_bulk_selected = true;
 		frame_bulk_status = FrameBulkStatus{};

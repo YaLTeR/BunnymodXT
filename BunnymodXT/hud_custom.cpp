@@ -1109,17 +1109,11 @@ namespace CustomHud
 				out << "Commands:\n  " << frame_bulk_status.commands << '\n';
 			}
 
-			out << '\n';
-
 			out << "Camera Yaw: " << frame_bulk_status.realyaw << '\n';
-
-			out << '\n';
 
 			out << "Vel: " << frame_bulk_status.vel << '\n';
 			out << "Z Vel: " << frame_bulk_status.zvel << '\n';
 			out << "Z Pos: " << frame_bulk_status.zpos << '\n';
-
-			out << '\n';
 
 			out << "Health: " << frame_bulk_status.health << '\n';
 			out << "Armor: " << frame_bulk_status.armor << '\n';

@@ -280,7 +280,7 @@ namespace simulation_ipc {
 
 		ClientToServerMessage message {
 			ClientToServerMessageType::SIMULATED_FRAME,
-			frame
+			frame,
 		};
 
 		try {

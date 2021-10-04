@@ -210,12 +210,8 @@ void EditedInput::mark_as_stale(size_t frame_bulk_index) {
 	frame_bulk_starts.erase(frame_bulk_starts.begin() + frame_bulk_index + 1, frame_bulk_starts.end());
 
 	auto first_frame = std::min(*(frame_bulk_starts.cend() - 1), player_datas.size() - 1);
-	if (player_health_datas.size() > 1) {
-		player_health_datas.erase(player_health_datas.begin() + first_frame + 1, player_health_datas.end());
-	}
-	if (player_armor_datas.size() > 1) {
-		player_armor_datas.erase(player_armor_datas.begin() + first_frame + 1, player_armor_datas.end());
-	}
+	player_health_datas.erase(player_health_datas.begin() + first_frame + 1, player_health_datas.end());
+	player_armor_datas.erase(player_armor_datas.begin() + first_frame + 1, player_armor_datas.end());
 	player_datas.erase(player_datas.begin() + first_frame + 1, player_datas.end());
 	strafe_states.erase(strafe_states.begin() + first_frame + 1, strafe_states.end());
 	fractions.erase(fractions.begin() + first_frame + 1, fractions.end());

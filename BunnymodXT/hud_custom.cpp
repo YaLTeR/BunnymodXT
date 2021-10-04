@@ -1503,13 +1503,13 @@ namespace CustomHud
 
 	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor)
 	{
+		frame_bulk_selected = true;
+		frame_bulk_status = FrameBulkStatus{};
+
 		frame_bulk_status.vel = player_vel;
 		frame_bulk_status.zvel = player_zvel;
 		frame_bulk_status.zpos = player_zpos;
 		frame_bulk_status.realyaw = player_realyaw;
-
-		frame_bulk_selected = true;
-		frame_bulk_status = FrameBulkStatus{};
 
 		frame_bulk_status.strafe = frame_bulk.Strafe;
 		if (frame_bulk_status.strafe) {

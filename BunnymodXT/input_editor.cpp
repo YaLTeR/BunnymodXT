@@ -335,23 +335,14 @@ void EditedInput::received_simulated_frame(const simulation_ipc::SimulatedFrame 
 	normalzs[frame_number] = frame.normalz;
 	next_frame_is_0mss[frame_number] = frame.next_frame_is_0ms;
 
-	if (player_health_datas.size() == 0) {
+	// only push back if the simulated frame doesn't exist
+	if (frame_number >= player_health_datas.size()) {
 		player_health_datas.push_back(0);
-	}
-	if (player_armor_datas.size() == 0) {
 		player_armor_datas.push_back(0);
 	}
 
-	// only push back if the simulated frame doesn't exist
-	// if it does, overwrite it
-	if (frame_number < player_health_datas.size()) {
-		player_health_datas[frame_number] = frame.health;
-		player_armor_datas[frame_number] = frame.armor;
-	}
-	else {
-		player_health_datas.push_back(frame.health);
-		player_armor_datas.push_back(frame.armor);
-	}
+	player_health_datas[frame_number] = frame.health;
+	player_armor_datas[frame_number] = frame.armor;
 
 	first_predicted_frame = std::max(first_predicted_frame, frame_number + 1);
 }

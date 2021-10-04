@@ -3229,7 +3229,7 @@ void HwDLL::InsertCommands()
 					PrevNormalz,
 					thisFrameIs0ms,
 					health,
-					armor
+					armor,
 				});
 
 				StartTracing();

@@ -16,6 +16,8 @@ void EditedInput::initialize() {
 	normalzs.push_back(0);
 	frame_bulk_starts.push_back(0);
 	next_frame_is_0mss.push_back(0);
+	player_health_datas.push_back(0);
+	player_armor_datas.push_back(0);
 
 	// TODO: replace with hw.StrafeState when the
 	// one-frame-being-run-from-tas-editor-enable-frame-bulk issue is solved.
@@ -167,6 +169,10 @@ void EditedInput::simulate() {
 			fractions.push_back(processed_frame.fractions[0]);
 			normalzs.push_back(processed_frame.normalzs[0]);
 			next_frame_is_0mss.push_back(next_frame_is_0ms);
+
+			// push back 0s because there's no data
+			player_health_datas.push_back(0);
+			player_armor_datas.push_back(0);
 
 			safe_to_exit_early = true;
 		}
@@ -334,13 +340,6 @@ void EditedInput::received_simulated_frame(const simulation_ipc::SimulatedFrame 
 	fractions[frame_number] = frame.fraction;
 	normalzs[frame_number] = frame.normalz;
 	next_frame_is_0mss[frame_number] = frame.next_frame_is_0ms;
-
-	// only push back if the simulated frame doesn't exist
-	if (frame_number >= player_health_datas.size()) {
-		player_health_datas.push_back(0);
-		player_armor_datas.push_back(0);
-	}
-
 	player_health_datas[frame_number] = frame.health;
 	player_armor_datas[frame_number] = frame.armor;
 

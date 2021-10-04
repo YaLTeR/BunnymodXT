@@ -2024,9 +2024,6 @@ bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, boo
 }
 
 bool ServerDLL::GetGonarchInfo(float &health, int& sequence, float& frame) const {
-	// TODO: figure out what infos are needed
-	// needed: m_nodeTime
-
 	// There should be only 1 big momma
 	edict_t* pent = pEngfuncs->pfnFindEntityByString(nullptr, "classname", "monster_bigmomma");
 	if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent)) {

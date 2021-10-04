@@ -651,16 +651,11 @@ namespace TriangleDrawing
 		if (closest_edge_frame != 0) {
 			auto& frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
 
-				uint64_t current_frame = 0;
-				for (size_t i = 0; i < closest_edge_prev_frame_bulk_index + 1; i++) {
-					current_frame += input.frame_bulks[i].GetRepeats();
-				}
-
 				auto data_size = input.player_datas.size();
 
 				// TODO: fix some rare? crash that might still exist
 
-				auto& current_player_data = input.player_datas[current_frame];
+				auto& current_player_data = input.player_datas[closest_frame];
 				auto& current_player_vels = current_player_data.Velocity;
 				auto current_player_vel = std::hypotf(current_player_vels[0], current_player_vels[1]);
 				auto& current_player_zvel = current_player_vels[2];
@@ -671,11 +666,11 @@ namespace TriangleDrawing
 				float current_player_health = 0;
 				float current_player_armor = 0;
 
-				if (input.player_health_datas.size() > current_frame) {
-					current_player_health = input.player_health_datas[current_frame];
+				if (input.player_health_datas.size() > closest_frame) {
+					current_player_health = input.player_health_datas[closest_frame];
 				}
-				if (input.player_armor_datas.size() > current_frame) {
-					current_player_armor = input.player_armor_datas[current_frame];
+				if (input.player_armor_datas.size() > closest_frame) {
+					current_player_armor = input.player_armor_datas[closest_frame];
 				}
 
 				// Update the HUD status before any changes, since that's the state that was visualized earlier.

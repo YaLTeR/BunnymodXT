@@ -1552,7 +1552,7 @@ namespace CustomHud
 
 		frame_bulk_status.commands = frame_bulk.Commands;
 
-		player_health_status = player_health;
-		player_armor_status = player_armor;
+		frame_bulk_status.health = player_health;
+		frame_bulk_status.armor = player_armor;
 	}
 }

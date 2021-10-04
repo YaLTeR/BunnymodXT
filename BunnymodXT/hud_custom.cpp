@@ -767,7 +767,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_selfgauss.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 30) + 3);
+			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 26) + 3);
 
 			bool selfgaussable;
 			int hitGroup = 0; // It's always initialized if selfgaussable is set to true, but GCC issues a warning anyway.
@@ -827,7 +827,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_nihilanth.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 33) + 3);
+			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 29) + 3);
 
 			std::ostringstream out;
 			out << "Nihilanth:\n";
@@ -861,7 +861,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_gonarch.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 40) + 3);
+			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 36) + 3);
 
 			std::ostringstream out;
 			out << "Gonarch:\n";
@@ -1034,7 +1034,7 @@ namespace CustomHud
 			return;
 
 		int x, y;
-		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 43) + 3);
+		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 39) + 3);
 
 		std::ostringstream out;
 		out.setf(std::ios::fixed);

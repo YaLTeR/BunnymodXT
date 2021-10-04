@@ -1110,7 +1110,7 @@ namespace CustomHud
 
 			out << '\n';
 
-			out << "Real Yaw: " << player_realyaw_status << '\n';
+			out << "Camera Yaw: " << player_realyaw_status << '\n';
 
 			out << '\n';
 

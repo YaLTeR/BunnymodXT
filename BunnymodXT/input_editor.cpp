@@ -261,10 +261,8 @@ void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
 	if (last_frame >= player_datas.size() - 2)
 		return;
 
-	if (player_health_datas.size() > last_frame + 1) {
-		player_health_datas.erase(player_health_datas.begin() + last_frame + 1, player_health_datas.end());
-		player_armor_datas.erase(player_armor_datas.begin() + last_frame + 1, player_armor_datas.end());
-	}
+	player_health_datas.erase(player_health_datas.begin() + last_frame + 1, player_health_datas.end());
+	player_armor_datas.erase(player_armor_datas.begin() + last_frame + 1, player_armor_datas.end());
 	player_datas.erase(player_datas.begin() + last_frame + 1, player_datas.end());
 	strafe_states.erase(strafe_states.begin() + last_frame + 1, strafe_states.end());
 	fractions.erase(fractions.begin() + last_frame + 1, fractions.end());

@@ -656,6 +656,9 @@ namespace TriangleDrawing
 			float current_player_zpos = 0;
 			float current_player_realyaw = 0;
 
+			float current_player_health = 0;
+			float current_player_armor = 0;
+
 			if (input.player_datas.size() > closest_edge_frame) {
 				auto& current_player_data = input.player_datas[closest_edge_frame];
 				auto& current_player_vels = current_player_data.Velocity;
@@ -664,12 +667,7 @@ namespace TriangleDrawing
 				current_player_zvel = current_player_vels[2];
 				current_player_zpos = current_player_data.Origin[2];
 				current_player_realyaw = current_player_data.Viewangles[1];
-			}
 
-			float current_player_health = 0;
-			float current_player_armor = 0;
-
-			if (input.player_health_datas.size() > closest_edge_frame) {
 				current_player_health = input.player_health_datas[closest_edge_frame];
 				current_player_armor = input.player_armor_datas[closest_edge_frame];
 			}

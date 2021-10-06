@@ -13,6 +13,9 @@ namespace simulation_ipc {
 		float fraction;
 		float normalz;
 		bool next_frame_is_0ms;
+
+		float health;
+		float armor;
 	};
 
 	// Console command received from the server to be run.

@@ -16,6 +16,8 @@ void EditedInput::initialize() {
 	normalzs.push_back(0);
 	frame_bulk_starts.push_back(0);
 	next_frame_is_0mss.push_back(0);
+	player_health_datas.push_back(0);
+	player_armor_datas.push_back(0);
 
 	// TODO: replace with hw.StrafeState when the
 	// one-frame-being-run-from-tas-editor-enable-frame-bulk issue is solved.
@@ -168,6 +170,10 @@ void EditedInput::simulate() {
 			normalzs.push_back(processed_frame.normalzs[0]);
 			next_frame_is_0mss.push_back(next_frame_is_0ms);
 
+			// push back 0s because there's no data
+			player_health_datas.push_back(0);
+			player_armor_datas.push_back(0);
+
 			safe_to_exit_early = true;
 		}
 
@@ -210,6 +216,8 @@ void EditedInput::mark_as_stale(size_t frame_bulk_index) {
 	frame_bulk_starts.erase(frame_bulk_starts.begin() + frame_bulk_index + 1, frame_bulk_starts.end());
 
 	auto first_frame = std::min(*(frame_bulk_starts.cend() - 1), player_datas.size() - 1);
+	player_health_datas.erase(player_health_datas.begin() + first_frame + 1, player_health_datas.end());
+	player_armor_datas.erase(player_armor_datas.begin() + first_frame + 1, player_armor_datas.end());
 	player_datas.erase(player_datas.begin() + first_frame + 1, player_datas.end());
 	strafe_states.erase(strafe_states.begin() + first_frame + 1, strafe_states.end());
 	fractions.erase(fractions.begin() + first_frame + 1, fractions.end());
@@ -253,6 +261,8 @@ void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
 	if (last_frame >= player_datas.size() - 2)
 		return;
 
+	player_health_datas.erase(player_health_datas.begin() + last_frame + 1, player_health_datas.end());
+	player_armor_datas.erase(player_armor_datas.begin() + last_frame + 1, player_armor_datas.end());
 	player_datas.erase(player_datas.begin() + last_frame + 1, player_datas.end());
 	strafe_states.erase(strafe_states.begin() + last_frame + 1, strafe_states.end());
 	fractions.erase(fractions.begin() + last_frame + 1, fractions.end());
@@ -328,5 +338,8 @@ void EditedInput::received_simulated_frame(const simulation_ipc::SimulatedFrame 
 	fractions[frame_number] = frame.fraction;
 	normalzs[frame_number] = frame.normalz;
 	next_frame_is_0mss[frame_number] = frame.next_frame_is_0ms;
+	player_health_datas[frame_number] = frame.health;
+	player_armor_datas[frame_number] = frame.armor;
+
 	first_predicted_frame = std::max(first_predicted_frame, frame_number + 1);
 }

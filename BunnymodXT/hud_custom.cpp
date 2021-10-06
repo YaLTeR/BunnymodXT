@@ -71,6 +71,13 @@ namespace CustomHud
 		bool yaw_present;
 
 		std::string commands;
+
+		float vel;
+		float zvel;
+		float zpos;
+		float realyaw;
+		float health;
+		float armor;
 	};
 	static FrameBulkStatus frame_bulk_status;
 	static bool frame_bulk_selected;
@@ -690,7 +697,17 @@ namespace CustomHud
 					out << targetname << '\n';
 				}
 
-				out << "HP: " << ent->v.health;
+				out << "HP: " << ent->v.health << '\n';
+
+				out << "Yaw: " << ent->v.angles[1] << '\n';
+
+				out << "X: " << ent->v.origin.x << '\n';
+				out << "Y: " << ent->v.origin.y << '\n';
+				out << "Z: " << ent->v.origin.z << '\n';
+
+				out << "X Vel: " << ent->v.velocity.x << '\n';
+				out << "Y Vel: " << ent->v.velocity.y << '\n';
+				out << "Z Vel: " << ent->v.velocity.z;
 			}
 			else
 			{
@@ -750,7 +767,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_selfgauss.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 20) + 3);
+			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 27) + 3);
 
 			bool selfgaussable;
 			int hitGroup = 0; // It's always initialized if selfgaussable is set to true, but GCC issues a warning anyway.
@@ -810,7 +827,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_nihilanth.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 23) + 3);
+			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 30) + 3);
 
 			std::ostringstream out;
 			out << "Nihilanth:\n";
@@ -832,6 +849,31 @@ namespace CustomHud
 					<< "Spheres: " << nspheres << "/20\n"
 					<< "Sequence: " << sequence << " (" << std::fixed << std::setprecision(1) << frame << ")\n";
 			} else {
+				out << "Not found";
+			}
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
+	void DrawGonarchInfo(float flTime)
+	{
+		if (CVars::bxt_hud_gonarch.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 37) + 3);
+
+			std::ostringstream out;
+			out << "Gonarch:\n";
+
+			float health, frame;
+			int sequence;
+
+			if (ServerDLL::GetInstance().GetGonarchInfo(health, sequence, frame)) {
+				out << "Health: " << health << '\n'
+					<< "Sequence: " << sequence << " (" << std::fixed << std::setprecision(1) << frame << ")\n";
+			}
+			else {
 				out << "Not found";
 			}
 
@@ -992,7 +1034,7 @@ namespace CustomHud
 			return;
 
 		int x, y;
-		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 30) + 3);
+		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 40) + 3);
 
 		std::ostringstream out;
 		out.setf(std::ios::fixed);
@@ -1066,6 +1108,15 @@ namespace CustomHud
 			if (!frame_bulk_status.commands.empty()) {
 				out << "Commands:\n  " << frame_bulk_status.commands << '\n';
 			}
+
+			out << "Camera Yaw: " << frame_bulk_status.realyaw << '\n';
+
+			out << "Vel: " << frame_bulk_status.vel << '\n';
+			out << "Z Vel: " << frame_bulk_status.zvel << '\n';
+			out << "Z Pos: " << frame_bulk_status.zpos << '\n';
+
+			out << "Health: " << frame_bulk_status.health << '\n';
+			out << "Armor: " << frame_bulk_status.armor << '\n';
 		} else {
 			out << " no frame bulk selected";
 		}
@@ -1334,6 +1385,7 @@ namespace CustomHud
 		DrawSelfgaussInfo(flTime);
 		DrawVisibleLandmarks(flTime);
 		DrawNihilanthInfo(flTime);
+		DrawGonarchInfo(flTime);
 		DrawIncorrectFPSIndicator(flTime);
 		DrawCollisionDepthMap(flTime);
 		DrawTASEditorStatus();
@@ -1443,10 +1495,15 @@ namespace CustomHud
 		return si;
 	}
 
-	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk)
+	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor)
 	{
 		frame_bulk_selected = true;
 		frame_bulk_status = FrameBulkStatus{};
+
+		frame_bulk_status.vel = player_vel;
+		frame_bulk_status.zvel = player_zvel;
+		frame_bulk_status.zpos = player_zpos;
+		frame_bulk_status.realyaw = player_realyaw;
 
 		frame_bulk_status.strafe = frame_bulk.Strafe;
 		if (frame_bulk_status.strafe) {
@@ -1488,5 +1545,8 @@ namespace CustomHud
 		}
 
 		frame_bulk_status.commands = frame_bulk.Commands;
+
+		frame_bulk_status.health = player_health;
+		frame_bulk_status.armor = player_armor;
 	}
 }

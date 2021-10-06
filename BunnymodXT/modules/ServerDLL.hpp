@@ -62,6 +62,8 @@ public:
 	std::vector<const Vector *> GetDisplacerTargets() const;
 	bool GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres, int &sequence, float &frame) const;
 	
+	bool GetGonarchInfo(float& health, int& sequence, float& frame) const;
+
 	inline const char *GetString(int string) const {
 		assert(ppGlobals);
 		return (*ppGlobals)->pStringBase + string;

@@ -2897,7 +2897,10 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 
 	if (mode != TASEditorMode::DISABLED) {
 		SetFreeCam(true);
-		simulation_ipc::initialize_server_if_needed();
+
+		auto err = simulation_ipc::initialize_server_if_needed();
+		if (!err.empty() && ORIG_Con_Printf)
+			ORIG_Con_Printf("Couldn't initialize simulator server: %s\n", err.c_str());
 	}
 
 	if (tas_editor_mode == TASEditorMode::DISABLED && mode != TASEditorMode::DISABLED) {

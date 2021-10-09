@@ -70,12 +70,12 @@ namespace simulation_ipc {
 		mutex.reset();
 	}
 
-	void initialize_server_if_needed() {
+	std::string initialize_server_if_needed() {
 		if (is_client_initialized())
-			close_client();
+			return "already initialized as client"s;
 
 		if (is_server_initialized())
-			return;
+			return {};
 
 		remove();
 
@@ -87,8 +87,7 @@ namespace simulation_ipc {
 				sizeof(ServerToClientMessage));
 		} catch (interprocess_exception &ex) {
 			remove();
-			cerr << "error creating server-to-client message queue: " << ex.what() << endl;
-			return;
+			return "error creating server-to-client message queue: "s + ex.what();
 		}
 
 		try {
@@ -99,8 +98,7 @@ namespace simulation_ipc {
 				sizeof(ClientToServerMessage));
 		} catch (interprocess_exception &ex) {
 			remove();
-			cerr << "error creating client-to-server message queue: " << ex.what() << endl;
-			return;
+			return "error creating client-to-server message queue: "s + ex.what();
 		}
 
 		try {
@@ -109,9 +107,10 @@ namespace simulation_ipc {
 				MUTEX_NAME);
 		} catch (interprocess_exception &ex) {
 			remove();
-			cerr << "error creating mutex: " << ex.what() << endl;
-			return;
+			return "error creating mutex: "s + ex.what();
 		}
+
+		return {};
 	}
 
 	bool is_server_initialized() {

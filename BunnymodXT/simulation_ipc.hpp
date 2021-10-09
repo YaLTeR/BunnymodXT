@@ -22,9 +22,10 @@ namespace simulation_ipc {
 	extern std::string command_to_run;
 
 	// Initializes this game as the server if not already initialized.
+	// Returns a non-empty error message on error.
 	//
-	// If already initialized as client, closes the client connection first.
-	void initialize_server_if_needed();
+	// If already initialized as client, returns an error and does nothing.
+	std::string initialize_server_if_needed();
 	// Returns `true` if the server part was initialized.
 	bool is_server_initialized();
 	// Sends a console command to the connected client.

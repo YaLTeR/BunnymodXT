@@ -289,8 +289,10 @@ void EditedInput::run_script_in_second_game() {
 		return;
 
 	const auto& properties = hw.input.GetProperties();
-	if (properties.find(std::string("load_command")) == properties.cend())
+	if (properties.find(std::string("load_command")) == properties.cend()) {
+		simulation_ipc::send_command_to_client("echo Cannot run the TAS because it is missing the load_command property.\n");
 		return;
+	}
 
 	assert(frame_bulks[0].IsMovement());
 	auto tas_editor_command = frame_bulks[0].Commands;

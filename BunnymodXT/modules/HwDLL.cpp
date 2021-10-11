@@ -3962,9 +3962,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 	simulation_ipc::receive_messages_from_server();
 	if (!simulation_ipc::command_to_run.empty()
-			&& IsActive() // Don't run "map" while loading—this crashes the game.
-			&& *state == 5 // Don't start a TAS in state = 4—this sometimes results in desyncs.
-			) {
+			// Starting a TAS in states 2, 3, 4 (loading) leads to crashes or desyncs.
+			&& (*state == 5 || *state == 1)) {
 		ORIG_Cbuf_AddText(simulation_ipc::command_to_run.c_str());
 		simulation_ipc::command_to_run.clear();
 	}

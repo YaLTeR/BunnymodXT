@@ -79,6 +79,11 @@ extern "C" void __cdecl _Z22EV_GetDefaultShellInfoP12event_args_sPfS1_S1_S1_S1_S
 {
 	return ClientDLL::HOOKED_EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, forwardScale, upScale, rightScale);
 }
+
+extern "C" void __cdecl _ZN20CStudioModelRenderer16StudioSetupBonesEv(void *thisptr)
+{
+	return ClientDLL::HOOKED_CStudioModelRenderer__StudioSetupBones_Linux(thisptr);
+}
 #endif
 
 void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -121,7 +126,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_HUD_UpdateClientData, HOOKED_HUD_UpdateClientData,
 			ORIG_EV_GetDefaultShellInfo, HOOKED_EV_GetDefaultShellInfo,
 			ORIG_StudioCalcAttachments, HOOKED_StudioCalcAttachments,
-			ORIG_VectorTransform, HOOKED_VectorTransform);
+			ORIG_VectorTransform, HOOKED_VectorTransform,
+			ORIG_CStudioModelRenderer__StudioSetupBones, HOOKED_CStudioModelRenderer__StudioSetupBones);
 	}
 
 	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
@@ -150,7 +156,8 @@ void ClientDLL::Unhook()
 			ORIG_HUD_UpdateClientData,
 			ORIG_EV_GetDefaultShellInfo,
 			ORIG_StudioCalcAttachments,
-			ORIG_VectorTransform);
+			ORIG_VectorTransform,
+			ORIG_CStudioModelRenderer__StudioSetupBones);
 	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -179,6 +186,8 @@ void ClientDLL::Clear()
 	ORIG_EV_GetDefaultShellInfo = nullptr;
 	ORIG_StudioCalcAttachments = nullptr;
 	ORIG_StudioCalcAttachments_Linux = nullptr;
+	ORIG_CStudioModelRenderer__StudioSetupBones = nullptr;
+	ORIG_CStudioModelRenderer__StudioSetupBones_Linux = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
 	ORIG_HUD_Init = nullptr;
 	ORIG_HUD_VidInit = nullptr;
@@ -313,6 +322,9 @@ void ClientDLL::FindStuff()
 		});
 
 	auto fEV_GetDefaultShellInfo = FindAsync(ORIG_EV_GetDefaultShellInfo, patterns::client::EV_GetDefaultShellInfo);
+	auto fCStudioModelRenderer__StudioSetupBones = FindAsync(
+		ORIG_CStudioModelRenderer__StudioSetupBones,
+		patterns::client::CStudioModelRenderer__StudioSetupBones);
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
@@ -520,6 +532,21 @@ void ClientDLL::FindStuff()
 				EngineDevWarning("[client dll] Could not find StudioCalcAttachments.\n");
 				EngineDevWarning("[client dll] Could not find VectorTransform.\n");
 				EngineWarning("[client dll] Special effects of weapons will be misplaced when bxt_viewmodel_fov is used.\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fCStudioModelRenderer__StudioSetupBones.get();
+		if (ORIG_CStudioModelRenderer__StudioSetupBones) {
+			EngineDevMsg("[client dll] Found CStudioModelRenderer::StudioSetupBones at %p (using the %s pattern).\n", ORIG_CStudioModelRenderer__StudioSetupBones, pattern->name());
+		} else {
+			ORIG_CStudioModelRenderer__StudioSetupBones_Linux = reinterpret_cast<_CStudioModelRenderer__StudioSetupBones_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN20CStudioModelRenderer16StudioSetupBonesEv"));
+			if (ORIG_CStudioModelRenderer__StudioSetupBones_Linux) {
+				EngineDevMsg("[client dll] Found CStudioModelRenderer::StudioSetupBones [Linux] at %p.\n", ORIG_CStudioModelRenderer__StudioSetupBones_Linux);
+			} else {
+				EngineDevWarning("[client dll] Could not find CStudioModelRenderer::StudioSetupBones.\n");
+				EngineWarning("[client dll] Disabling weapon viewmodel idle or equip sequences is not available.\n");
 			}
 		}
 	}
@@ -1019,4 +1046,68 @@ HOOK_DEF_11(ClientDLL, void, __cdecl, EV_GetDefaultShellInfo, event_args_t*, arg
 			ShellOrigin[2] = ShellOriginVec.z;
 		}
 	}
+}
+
+HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioSetupBones, void*, thisptr)
+{
+	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + 48);
+	auto pStudioHeader = *reinterpret_cast<studiohdr_t**>(reinterpret_cast<uintptr_t>(thisptr) + 68);
+	auto pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(pStudioHeader) +
+		pStudioHeader->seqindex) + pCurrentEntity->curstate.sequence;
+
+	if (pEngfuncs) {
+		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+			if (CVars::bxt_viewmodel_disable_idle.GetBool()) {
+				if (strstr(pseqdesc->label, "idle") != NULL || strstr(pseqdesc->label, "fidget") != NULL) {
+					pCurrentEntity->curstate.framerate = 0; // don't animate at all
+				}
+			}
+
+			if (CVars::bxt_viewmodel_disable_equip.GetBool()) {
+				if (strstr(pseqdesc->label, "holster") != NULL || strstr(pseqdesc->label, "draw") != NULL ||
+					strstr(pseqdesc->label, "deploy") != NULL || strstr(pseqdesc->label, "up") != NULL ||
+					strstr(pseqdesc->label, "down") != NULL) {
+					pCurrentEntity->curstate.sequence = 0; // instead set to idle sequence
+					pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(pStudioHeader) +
+						pStudioHeader->seqindex) + pCurrentEntity->curstate.sequence;
+					pseqdesc->numframes = 1;
+					pseqdesc->fps = 1;
+				}
+			}
+		}
+	}
+
+	ORIG_CStudioModelRenderer__StudioSetupBones(thisptr);
+}
+
+HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linux, void*, thisptr)
+{
+	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + 44);
+	auto pStudioHeader = *reinterpret_cast<studiohdr_t**>(reinterpret_cast<uintptr_t>(thisptr) + 64);
+	auto pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(pStudioHeader) +
+		pStudioHeader->seqindex) + pCurrentEntity->curstate.sequence;
+
+	if (pEngfuncs) {
+		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+			if (CVars::bxt_viewmodel_disable_idle.GetBool()) {
+				if (strstr(pseqdesc->label, "idle") != NULL || strstr(pseqdesc->label, "fidget") != NULL) {
+					pCurrentEntity->curstate.framerate = 0; // don't animate at all
+				}
+			}
+
+			if (CVars::bxt_viewmodel_disable_equip.GetBool()) {
+				if (strstr(pseqdesc->label, "holster") != NULL || strstr(pseqdesc->label, "draw") != NULL ||
+					strstr(pseqdesc->label, "deploy") != NULL || strstr(pseqdesc->label, "up") != NULL ||
+					strstr(pseqdesc->label, "down") != NULL) {
+					pCurrentEntity->curstate.sequence = 0; // instead set to idle sequence
+					pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(pStudioHeader) +
+						pStudioHeader->seqindex) + pCurrentEntity->curstate.sequence;
+					pseqdesc->numframes = 1;
+					pseqdesc->fps = 1;
+				}
+			}
+		}
+	}
+
+	ORIG_CStudioModelRenderer__StudioSetupBones_Linux(thisptr);
 }

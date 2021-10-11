@@ -414,6 +414,13 @@ namespace patterns
 			"HL-NGHL",
 			"8B 0D ?? ?? ?? ?? 33 C0 3B C8 74 2E A3 ?? ?? ?? ?? A2"
 		);
+
+		PATTERNS(R_StudioSetupBones,
+			"HL-SteamPipe",
+			"55 8B EC 83 EC 48 A1 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 53 56 8B 90",
+			"HL-4554",
+			"A1 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 83 EC 48 8B 90"
+		);
 	}
 
 	namespace server
@@ -595,6 +602,25 @@ namespace patterns
 			"55 8B EC 83 EC 1C 56 8D 4D ?? E8 ?? ?? ?? ?? 8B 45",
 			"AoMDC",
 			"55 8B EC 83 EC 5C 53 56 57 8D 4D ?? E8 ?? ?? ?? ?? 8B 45"
+		);
+
+		PATTERNS(CStudioModelRenderer__StudioSetupBones,
+			"HL-SteamPipe",
+			"83 EC 48 53 8B D9 55 56 8B 43 30 8B 4B 44",
+			"HL-WON",
+			"83 EC 48 53 55 56 8B F1 57 8B 46 30 8B 4E 44",
+			"CSCZDS",
+			"83 EC 4C 53 55 8B E9 56 57 8B 45 44",
+			"HL-Restored",
+			"55 8B EC 83 E4 F8 83 EC 54 53",
+			"Echoes",
+			"55 8B EC 81 EC 90 00 00 00 89 4D",
+			"They Hunger Trilogy",
+			"55 8B EC 81 EC 94 00 00 00 89 4D",
+			"PARANOIA",
+			"55 8B EC 81 EC A4 00 00 00 89 4D",
+			"AoMDC",
+			"55 8B EC 81 EC D0 00 00 00 53 56 57 89 4D"
 		);
 	}
 

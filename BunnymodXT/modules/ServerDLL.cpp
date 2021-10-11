@@ -832,9 +832,12 @@ void ServerDLL::FindStuff()
 		EngineDevMsg("[server dll] Found COFGeneWorm::DyingThink at %p.\n", ORIG_COFGeneWorm__DyingThink);
 	} else {
 		ORIG_COFGeneWorm__DyingThink_Linux = reinterpret_cast<_COFGeneWorm__DyingThink_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11COFGeneWorm10DyingThinkEv"));
-		if (ORIG_COFGeneWorm__DyingThink_Linux)
+		if (ORIG_COFGeneWorm__DyingThink_Linux) {
 			EngineDevMsg("[server dll] Found COFGeneWorm::DyingThink [Linux] at %p.\n", ORIG_COFGeneWorm__DyingThink_Linux);
-		else {
+			maxAmmoSlots = MAX_AMMO_SLOTS;
+			offm_rgAmmoLast = 0x61c; // 6153: 0x618
+			offm_iClientFOV = 0x4f8; // 6153: 0x4f4
+		} else {
 			EngineDevWarning("[server dll] Could not find COFGeneWorm::DyingThink.\n");
 			EngineWarning("Gene Worm automatic timer stopping is not available.\n");
 		}

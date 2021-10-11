@@ -407,6 +407,13 @@ namespace patterns
 			"HL-4554",
 			"83 EC 48 A1 ?? ?? ?? ?? 53 55 56 85 C0 57"
 		);
+
+		PATTERNS(VGuiWrap2_NotifyOfServerConnect,
+			"HL-SteamPipe",
+			"55 8B EC 8B 0D ?? ?? ?? ?? 33 C0",
+			"HL-NGHL",
+			"8B 0D ?? ?? ?? ?? 33 C0 3B C8 74 2E A3 ?? ?? ?? ?? A2"
+		);
 	}
 
 	namespace server

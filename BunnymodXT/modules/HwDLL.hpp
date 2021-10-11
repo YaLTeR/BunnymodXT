@@ -54,6 +54,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, EmitWaterPolys, msurface_t *fa, int direction)
 	HOOK_DECL(void, __cdecl, S_StartDynamicSound, int entnum, int entchannel, void *sfx, vec_t *origin,
 	                                              float fvol, float attenuation, int flags, int pitch)
+	HOOK_DECL(void, __cdecl, VGuiWrap2_NotifyOfServerConnect, const char *game, int IP, int port)
 
 	struct cmdbuf_t
 	{

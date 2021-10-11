@@ -215,6 +215,11 @@ extern "C" long __cdecl RandomLong(long low, long high)
 {
 	return HwDLL::HOOKED_RandomLong(low, high);
 }
+
+extern "C" void __cdecl VGuiWrap2_NotifyOfServerConnect(const char *game, int IP, int port)
+{
+	HwDLL::HOOKED_VGuiWrap2_NotifyOfServerConnect(game, IP, port);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -317,6 +322,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_VectorTransform);
 			MemUtils::MarkAsExecutable(ORIG_EmitWaterPolys);
 			MemUtils::MarkAsExecutable(ORIG_S_StartDynamicSound);
+			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_NotifyOfServerConnect);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -357,7 +363,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_VectorTransform, HOOKED_VectorTransform,
 			ORIG_R_StudioCalcAttachments, HOOKED_R_StudioCalcAttachments,
 			ORIG_EmitWaterPolys, HOOKED_EmitWaterPolys,
-			ORIG_S_StartDynamicSound, HOOKED_S_StartDynamicSound);
+			ORIG_S_StartDynamicSound, HOOKED_S_StartDynamicSound,
+			ORIG_VGuiWrap2_NotifyOfServerConnect, HOOKED_VGuiWrap2_NotifyOfServerConnect);
 	}
 }
 
@@ -403,7 +410,8 @@ void HwDLL::Unhook()
 			ORIG_VectorTransform,
 			ORIG_R_StudioCalcAttachments,
 			ORIG_EmitWaterPolys,
-			ORIG_S_StartDynamicSound);
+			ORIG_S_StartDynamicSound,
+			ORIG_VGuiWrap2_NotifyOfServerConnect);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -469,6 +477,7 @@ void HwDLL::Clear()
 	ORIG_VectorTransform = nullptr;
 	ORIG_EmitWaterPolys = nullptr;
 	ORIG_S_StartDynamicSound = nullptr;
+	ORIG_VGuiWrap2_NotifyOfServerConnect = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -913,6 +922,12 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found S_StartDynamicSound at %p.\n", ORIG_S_StartDynamicSound);
 		else
 			EngineDevWarning("[hw dll] Could not find S_StartDynamicSound.\n");
+
+		ORIG_VGuiWrap2_NotifyOfServerConnect = reinterpret_cast<_VGuiWrap2_NotifyOfServerConnect>(MemUtils::GetSymbolAddress(m_Handle, "VGuiWrap2_NotifyOfServerConnect"));
+		if (ORIG_VGuiWrap2_NotifyOfServerConnect)
+			EngineDevMsg("[hw dll] Found VGuiWrap2_NotifyOfServerConnect at %p.\n", ORIG_VGuiWrap2_NotifyOfServerConnect);
+		else
+			EngineDevWarning("[hw dll] Could not find VGuiWrap2_NotifyOfServerConnect.\n");
 	}
 	else
 	{
@@ -951,6 +966,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(DispatchDirectUserMsg)
 		DEF_FUTURE(EmitWaterPolys)
 		DEF_FUTURE(S_StartDynamicSound)
+		DEF_FUTURE(VGuiWrap2_NotifyOfServerConnect)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1536,6 +1552,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(studioapi_GetCurrentEntity);
 		GET_FUTURE(EmitWaterPolys);
 		GET_FUTURE(S_StartDynamicSound);
+		GET_FUTURE(VGuiWrap2_NotifyOfServerConnect);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -4925,4 +4942,14 @@ HOOK_DEF_8(HwDLL, void, __cdecl, S_StartDynamicSound, int, entnum, int, entchann
 	ORIG_S_StartDynamicSound(entnum, entchannel, sfx, origin, fvol, attenuation, flags, pitch);
 
 	insideSStartDynamicSound = false;
+}
+
+HOOK_DEF_3(HwDLL, void, __cdecl, VGuiWrap2_NotifyOfServerConnect, const char*, game, int, IP, int, port)
+{
+	// This function calls a function of interest in GameUI.dll and passes its
+	// arguments there, so it is hooked to avoid adding a separate module.
+	// This fixes MP3 sound stopping on level transitions in mods.
+	// https://github.com/ValveSoftware/halflife/issues/570#issuecomment-486069492
+
+	ORIG_VGuiWrap2_NotifyOfServerConnect("valve", IP, port);
 }

@@ -301,8 +301,14 @@ void ClientDLL::FindStuff()
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 187)
 					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 191);
 				break;
+			case 3: // AoMDC
+				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 190)
+					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 194);
+				break;
 			default:
 				assert(false);
+				break;
 			}
 		});
 

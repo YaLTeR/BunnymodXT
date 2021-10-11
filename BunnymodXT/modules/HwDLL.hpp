@@ -55,6 +55,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, S_StartDynamicSound, int entnum, int entchannel, void *sfx, vec_t *origin,
 	                                              float fvol, float attenuation, int flags, int pitch)
 	HOOK_DECL(void, __cdecl, VGuiWrap2_NotifyOfServerConnect, const char *game, int IP, int port)
+	HOOK_DECL(void, __cdecl, R_StudioSetupBones)
 
 	struct cmdbuf_t
 	{
@@ -446,6 +447,7 @@ protected:
 	cvar_t **cvar_vars;
 	void *movevars;
 	ptrdiff_t offZmax;
+	studiohdr_t **pstudiohdr;
 
 	int framesTillExecuting;
 	bool executing;

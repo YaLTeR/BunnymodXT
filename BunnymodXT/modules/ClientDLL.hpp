@@ -27,6 +27,8 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(void, __cdecl, VectorTransform, float *in1, float *in2, float *out)
 	HOOK_DECL(void, __cdecl, EV_GetDefaultShellInfo, event_args_t *args, float *origin, float *velocity, float *ShellVelocity, float *ShellOrigin,
 	          float *forward, float *right, float *up, float forwardScale, float upScale, float rightScale)
+	HOOK_DECL(void, __fastcall, CStudioModelRenderer__StudioSetupBones, void* thisptr)
+	HOOK_DECL(void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linux, void* thisptr)
 
 public:
 	static ClientDLL& GetInstance()

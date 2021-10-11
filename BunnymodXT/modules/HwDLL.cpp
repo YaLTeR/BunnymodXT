@@ -323,6 +323,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_EmitWaterPolys);
 			MemUtils::MarkAsExecutable(ORIG_S_StartDynamicSound);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_NotifyOfServerConnect);
+			MemUtils::MarkAsExecutable(ORIG_R_StudioSetupBones);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -364,7 +365,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_StudioCalcAttachments, HOOKED_R_StudioCalcAttachments,
 			ORIG_EmitWaterPolys, HOOKED_EmitWaterPolys,
 			ORIG_S_StartDynamicSound, HOOKED_S_StartDynamicSound,
-			ORIG_VGuiWrap2_NotifyOfServerConnect, HOOKED_VGuiWrap2_NotifyOfServerConnect);
+			ORIG_VGuiWrap2_NotifyOfServerConnect, HOOKED_VGuiWrap2_NotifyOfServerConnect,
+			ORIG_R_StudioSetupBones, HOOKED_R_StudioSetupBones);
 	}
 }
 
@@ -411,7 +413,8 @@ void HwDLL::Unhook()
 			ORIG_R_StudioCalcAttachments,
 			ORIG_EmitWaterPolys,
 			ORIG_S_StartDynamicSound,
-			ORIG_VGuiWrap2_NotifyOfServerConnect);
+			ORIG_VGuiWrap2_NotifyOfServerConnect,
+			ORIG_R_StudioSetupBones);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -478,6 +481,7 @@ void HwDLL::Clear()
 	ORIG_EmitWaterPolys = nullptr;
 	ORIG_S_StartDynamicSound = nullptr;
 	ORIG_VGuiWrap2_NotifyOfServerConnect = nullptr;
+	ORIG_R_StudioSetupBones = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -511,6 +515,7 @@ void HwDLL::Clear()
 	movevars = nullptr;
 	offZmax = 0;
 	frametime_remainder = nullptr;
+	pstudiohdr = nullptr;
 	framesTillExecuting = 0;
 	executing = false;
 	insideCbuf_Execute = false;
@@ -1309,6 +1314,24 @@ void HwDLL::FindStuff()
 					+ reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 110);
 			});
 
+		auto fR_StudioSetupBones = FindAsync(
+			ORIG_R_StudioSetupBones,
+			patterns::engine::R_StudioSetupBones,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::R_StudioSetupBones.cbegin())
+				{
+				case 0: // SteamPipe.
+					pstudiohdr = *reinterpret_cast<studiohdr_t***>(reinterpret_cast<uintptr_t>(ORIG_R_StudioSetupBones) + 13);
+					break;
+				case 1: // 4554.
+					pstudiohdr = *reinterpret_cast<studiohdr_t***>(reinterpret_cast<uintptr_t>(ORIG_R_StudioSetupBones) + 7);
+					break;
+				default:
+					assert(false);
+					break;
+				}
+			});
+
 		{
 			auto pattern = fCbuf_Execute.get();
 			if (ORIG_Cbuf_Execute) {
@@ -1481,6 +1504,17 @@ void HwDLL::FindStuff()
 			} else {
 				EngineDevWarning("[hw dll] Could not find R_StudioCalcAttachments.\n");
 				EngineWarning("[hw dll] Special effects of weapons will be misplaced when bxt_viewmodel_fov is used.\n");
+			}
+		}
+
+		{
+			auto pattern = fR_StudioSetupBones.get();
+			if (ORIG_R_StudioSetupBones) {
+				EngineDevMsg("[hw dll] Found R_StudioSetupBones at %p (using the %s pattern).\n", ORIG_R_StudioSetupBones, pattern->name());
+				EngineDevMsg("[hw dll] Found pstudiohdr at %p.\n", pstudiohdr);
+			} else {
+				EngineDevWarning("[hw dll] Could not find R_StudioSetupBones.\n");
+				EngineWarning("[hw dll] Disabling weapon viewmodel idle or equip sequences is not available.\n");
 			}
 		}
 
@@ -3079,6 +3113,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_collision_depth_map_pixel_scale);
 	RegisterCVar(CVars::bxt_collision_depth_map_remove_distance_limit);
 	RegisterCVar(CVars::bxt_force_zmax);
+	RegisterCVar(CVars::bxt_viewmodel_disable_idle);
+	RegisterCVar(CVars::bxt_viewmodel_disable_equip);
 
 	if (ORIG_R_DrawViewModel)
 		RegisterCVar(CVars::bxt_viewmodel_fov);
@@ -4952,4 +4988,38 @@ HOOK_DEF_3(HwDLL, void, __cdecl, VGuiWrap2_NotifyOfServerConnect, const char*, g
 	// https://github.com/ValveSoftware/halflife/issues/570#issuecomment-486069492
 
 	ORIG_VGuiWrap2_NotifyOfServerConnect("valve", IP, port);
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioSetupBones)
+{
+	if (pstudiohdr && ORIG_studioapi_GetCurrentEntity) {
+		auto& cl = ClientDLL::GetInstance();
+		auto currententity = ORIG_studioapi_GetCurrentEntity();
+		auto pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(*pstudiohdr) +
+			(*pstudiohdr)->seqindex) + currententity->curstate.sequence;
+
+		if (cl.pEngfuncs) {
+			if (currententity == cl.pEngfuncs->GetViewModel()) {
+				if (CVars::bxt_viewmodel_disable_idle.GetBool()) {
+					if (strstr(pseqdesc->label, "idle") != NULL || strstr(pseqdesc->label, "fidget") != NULL) {
+						currententity->curstate.framerate = 0; // don't animate at all
+					}
+				}
+
+				if (CVars::bxt_viewmodel_disable_equip.GetBool()) {
+					if (strstr(pseqdesc->label, "holster") != NULL || strstr(pseqdesc->label, "draw") != NULL ||
+						strstr(pseqdesc->label, "deploy") != NULL || strstr(pseqdesc->label, "up") != NULL ||
+						strstr(pseqdesc->label, "down") != NULL) {
+						currententity->curstate.sequence = 0; // instead set to idle sequence
+						pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(*pstudiohdr) +
+							(*pstudiohdr)->seqindex) + currententity->curstate.sequence;
+						pseqdesc->numframes = 1;
+						pseqdesc->fps = 1;
+					}
+				}
+			}
+		}
+	}
+
+	ORIG_R_StudioSetupBones();
 }

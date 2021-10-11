@@ -650,8 +650,8 @@ void ServerDLL::FindStuff()
 			ORIG_CBasePlayer__ForceClientDllUpdate_Linux = reinterpret_cast<_CBasePlayer__ForceClientDllUpdate_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer20ForceClientDllUpdateEv"));
 			if (ORIG_CBasePlayer__ForceClientDllUpdate_Linux) {
 				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x568;
-				offm_iClientFOV = 0x4C0;
+				offm_rgAmmoLast = 0x56C; // 6153: 0x568
+				offm_iClientFOV = 0x4C4; // 6153: 0x4C0
 				EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate [Linux] at %p.\n", ORIG_CBasePlayer__ForceClientDllUpdate_Linux);
 			} else {
 				EngineDevWarning("[server dll] Could not find CBasePlayer::ForceClientDllUpdate.\n");

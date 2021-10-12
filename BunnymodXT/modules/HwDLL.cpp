@@ -204,6 +204,17 @@ extern "C" void __cdecl EmitWaterPolys(msurface_t *fa, int direction)
 {
 	return HwDLL::HOOKED_EmitWaterPolys(fa, direction);
 }
+
+extern "C" void __cdecl S_StartDynamicSound(int entnum, int entchannel, void *sfx, vec_t *origin,
+                                            float fvol, float attenuation, int flags, int pitch)
+{
+	HwDLL::HOOKED_S_StartDynamicSound(entnum, entchannel, sfx, origin, fvol, attenuation, flags, pitch);
+}
+
+extern "C" long __cdecl RandomLong(long low, long high)
+{
+	return HwDLL::HOOKED_RandomLong(low, high);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -305,6 +316,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_StudioCalcAttachments);
 			MemUtils::MarkAsExecutable(ORIG_VectorTransform);
 			MemUtils::MarkAsExecutable(ORIG_EmitWaterPolys);
+			MemUtils::MarkAsExecutable(ORIG_S_StartDynamicSound);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -344,7 +356,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_SV_SetMoveVars, HOOKED_SV_SetMoveVars,
 			ORIG_VectorTransform, HOOKED_VectorTransform,
 			ORIG_R_StudioCalcAttachments, HOOKED_R_StudioCalcAttachments,
-			ORIG_EmitWaterPolys, HOOKED_EmitWaterPolys);
+			ORIG_EmitWaterPolys, HOOKED_EmitWaterPolys,
+			ORIG_S_StartDynamicSound, HOOKED_S_StartDynamicSound);
 	}
 }
 
@@ -361,7 +374,6 @@ void HwDLL::Unhook()
 			ORIG_SeedRandomNumberGenerator,
 			ORIG_time,
 			ORIG_RandomFloat,
-			ORIG_RandomLong,
 			ORIG_RandomLong,
 			ORIG_Host_Changelevel2_f,
 			ORIG_SCR_BeginLoadingPlaque,
@@ -390,7 +402,8 @@ void HwDLL::Unhook()
 			ORIG_SV_SetMoveVars,
 			ORIG_VectorTransform,
 			ORIG_R_StudioCalcAttachments,
-			ORIG_EmitWaterPolys);
+			ORIG_EmitWaterPolys,
+			ORIG_S_StartDynamicSound);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -455,6 +468,7 @@ void HwDLL::Clear()
 	ORIG_R_StudioCalcAttachments = nullptr;
 	ORIG_VectorTransform = nullptr;
 	ORIG_EmitWaterPolys = nullptr;
+	ORIG_S_StartDynamicSound = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -497,6 +511,7 @@ void HwDLL::Clear()
 	recording = false;
 	pauseOnTheFirstFrame = false;
 	insideSeedRNG = false;
+	insideSStartDynamicSound = false;
 	LastRandomSeed = 0;
 	player = HLStrafe::PlayerData();
 	currentRepeat = 0;
@@ -760,7 +775,7 @@ void HwDLL::FindStuff()
 		FIND(Cmd_Argv)
 		FIND(SeedRandomNumberGenerator)
 		//FIND(RandomFloat)
-		//FIND(RandomLong)
+		FIND(RandomLong)
 		FIND(Host_Changelevel2_f)
 		FIND(SCR_BeginLoadingPlaque)
 		FIND(PM_PlayerTrace)
@@ -892,6 +907,12 @@ void HwDLL::FindStuff()
 			EngineDevWarning("[hw dll] Could not find CL_Move.\n");
 			EngineWarning("_bxt_reset_frametime_remainder has no effect.\n");
 		}
+
+		ORIG_S_StartDynamicSound = reinterpret_cast<_S_StartDynamicSound>(MemUtils::GetSymbolAddress(m_Handle, "S_StartDynamicSound"));
+		if (ORIG_S_StartDynamicSound)
+			EngineDevMsg("[hw dll] Found S_StartDynamicSound at %p.\n", ORIG_S_StartDynamicSound);
+		else
+			EngineDevWarning("[hw dll] Could not find S_StartDynamicSound.\n");
 	}
 	else
 	{
@@ -902,7 +923,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cbuf_AddText)
 		DEF_FUTURE(Cmd_AddMallocCommand)
 		//DEF_FUTURE(RandomFloat)
-		//DEF_FUTURE(RandomLong)
+		DEF_FUTURE(RandomLong)
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		DEF_FUTURE(PM_PlayerTrace)
 		DEF_FUTURE(Host_FilterTime)
@@ -929,6 +950,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(VGuiWrap_Paint)
 		DEF_FUTURE(DispatchDirectUserMsg)
 		DEF_FUTURE(EmitWaterPolys)
+		DEF_FUTURE(S_StartDynamicSound)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1462,7 +1484,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Cbuf_AddText)
 		GET_FUTURE(Cmd_AddMallocCommand)
 		//GET_FUTURE(RandomFloat)
-		//GET_FUTURE(RandomLong)
+		GET_FUTURE(RandomLong)
 		GET_FUTURE(SCR_BeginLoadingPlaque)
 		GET_FUTURE(PM_PlayerTrace)
 		GET_FUTURE(Host_Loadgame_f)
@@ -1513,6 +1535,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(DispatchDirectUserMsg);
 		GET_FUTURE(studioapi_GetCurrentEntity);
 		GET_FUTURE(EmitWaterPolys);
+		GET_FUTURE(S_StartDynamicSound);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -4441,10 +4464,13 @@ HOOK_DEF_2(HwDLL, long double, __cdecl, RandomFloat, float, a1, float, a2)
 	return ret;
 }
 
-HOOK_DEF_2(HwDLL, long, __cdecl, RandomLong, long, a1, long, a2)
+HOOK_DEF_2(HwDLL, long, __cdecl, RandomLong, long, low, long, high)
 {
-	auto ret = ORIG_RandomLong(a1, a2);
-	ORIG_Con_Printf("RandomLong(%ld, %ld) => %ld.\n", a1, a2, ret);
+	if (insideSStartDynamicSound)
+		return low;
+
+	auto ret = ORIG_RandomLong(low, high);
+	//ORIG_Con_Printf("RandomLong(%ld, %ld) => %ld.\n", low, high, ret);
 	return ret;
 }
 
@@ -4889,4 +4915,14 @@ HOOK_DEF_2(HwDLL, void, __cdecl, EmitWaterPolys, msurface_t *, fa, int, directio
 		return;
 
 	ORIG_EmitWaterPolys(fa, direction);
+}
+
+HOOK_DEF_8(HwDLL, void, __cdecl, S_StartDynamicSound, int, entnum, int, entchannel, void*, sfx, vec_t*, origin,
+                                                      float, fvol, float, attenuation, int, flags, int, pitch)
+{
+	insideSStartDynamicSound = true;
+
+	ORIG_S_StartDynamicSound(entnum, entchannel, sfx, origin, fvol, attenuation, flags, pitch);
+
+	insideSStartDynamicSound = false;
 }

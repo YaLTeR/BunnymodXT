@@ -23,7 +23,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, SeedRandomNumberGenerator)
 	HOOK_DECL(time_t, __cdecl, time, time_t *Time)
 	HOOK_DECL(long double, __cdecl, RandomFloat, float a1, float a2)
-	HOOK_DECL(long, __cdecl, RandomLong, long a1, long a2)
+	HOOK_DECL(long, __cdecl, RandomLong, long low, long high)
 	HOOK_DECL(void, __cdecl, Host_Changelevel2_f)
 	HOOK_DECL(void, __cdecl, SCR_BeginLoadingPlaque)
 	HOOK_DECL(int, __cdecl, Host_FilterTime, float timePassed)
@@ -52,6 +52,8 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, VectorTransform, float *in1, float *in2, float *out)
 	HOOK_DECL(void, __cdecl, R_StudioCalcAttachments)
 	HOOK_DECL(void, __cdecl, EmitWaterPolys, msurface_t *fa, int direction)
+	HOOK_DECL(void, __cdecl, S_StartDynamicSound, int entnum, int entchannel, void *sfx, vec_t *origin,
+	                                              float fvol, float attenuation, int flags, int pitch)
 
 	struct cmdbuf_t
 	{
@@ -466,6 +468,7 @@ protected:
 	float cameraOffsetAngles[3];
 
 	bool insideSeedRNG;
+	bool insideSStartDynamicSound;
 	unsigned LastRandomSeed;
 
 	client_t* trace_oldclient;

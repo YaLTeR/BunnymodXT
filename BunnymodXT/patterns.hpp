@@ -148,7 +148,9 @@ namespace patterns
 			"HL-SteamPipe",
 			"55 8B EC 53 8D 45 0C 56 8D 4D 08 50 51 FF 15 ?? ?? ?? ?? 8B 75 0C",
 			"HL-NGHL",
-			"53 8D 44 24 0C 56 8D 4C 24 0C 50 51 FF 15 ?? ?? ?? ?? 8B 74 24 18"
+			"53 8D 44 24 0C 56 8D 4C 24 0C 50 51 FF 15 ?? ?? ?? ?? 8B 74 24 18",
+			"HL-4554",
+			"8D 44 24 ?? 57 8D 4C 24 ?? 50 51 FF 15 ?? ?? ?? ?? 8B 7C 24"
 		);
 
 		PATTERNS(SCR_DrawFPS,
@@ -397,6 +399,13 @@ namespace patterns
 			"55 8B EC 83 EC 20 56 8B 75 ?? 33 D2",
 			"HL-4554",
 			"83 EC 1C 33 D2 55 56 8B 74 24 28 57 8B 46 2C 8B 48 24 8B 41 44 33 C9 8A 50 0C 8A 48 0B 52 51 33 D2"
+		);
+
+		PATTERNS(S_StartDynamicSound,
+			"HL-SteamPipe",
+			"55 8B EC 83 EC 48 A1 ?? ?? ?? ?? 53",
+			"HL-4554",
+			"83 EC 48 A1 ?? ?? ?? ?? 53 55 56 85 C0 57"
 		);
 	}
 

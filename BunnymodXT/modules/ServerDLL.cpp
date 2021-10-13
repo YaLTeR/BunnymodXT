@@ -447,6 +447,13 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xDC;
 				offFuncObjectCaps = 0x18;
 				break;
+			case 15: // Black-Ops
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x554;
+				offm_iClientFOV = 0x4AC;
+				offFuncIsPlayer = 0xA4;
+				offFuncCenter = 0xD0;
+				break;
 			default:
 				assert(false);
 			}

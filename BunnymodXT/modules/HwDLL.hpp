@@ -56,6 +56,12 @@ class HwDLL : public IHookableNameFilterOrdered
 	                                              float fvol, float attenuation, int flags, int pitch)
 	HOOK_DECL(void, __cdecl, VGuiWrap2_NotifyOfServerConnect, const char *game, int IP, int port)
 	HOOK_DECL(void, __cdecl, R_StudioSetupBones)
+	HOOK_DECL(void, __cdecl, MD5Init, MD5Context_t *context)
+	HOOK_DECL(void, __cdecl, MD5Update, MD5Context_t *context, unsigned char const *buf, unsigned int len)
+	HOOK_DECL(void, __cdecl, MD5Final, unsigned char digest[16], MD5Context_t *context)
+	HOOK_DECL(void, __cdecl, MD5Transform, unsigned int buf[4], unsigned int const in[16])
+	HOOK_DECL(int, __cdecl, MD5_Hash_File, unsigned char digest[16], char *pszFileName, int bUsefopen, int bSeed, unsigned int seed[4])
+	HOOK_DECL(char*, __cdecl, MD5_Print, unsigned char hash[16])
 
 	struct cmdbuf_t
 	{

@@ -220,6 +220,42 @@ extern "C" void __cdecl VGuiWrap2_NotifyOfServerConnect(const char *game, int IP
 {
 	HwDLL::HOOKED_VGuiWrap2_NotifyOfServerConnect(game, IP, port);
 }
+
+// BunnymodXT has a few library dependencies which are loaded before `hw.so`.
+// The dependency chain leads to `libbsd.so.0` on certain systems (e.g. Ubuntu 21.04),
+// which happens to contain functions (`MD5Init()` and such) clashing with the ones in `hw.so`.
+// `hw.so` then unintentionally links to those wrong functions which causes HL to hang.
+// Since BXT is the first in the chain, it can provide those functions and forward them to `hw.so`
+// so it uses the expected implementations, thus fixing the hang.
+extern "C" void __cdecl MD5Init(MD5Context_t *context)
+{
+	HwDLL::HOOKED_MD5Init(context);
+}
+
+extern "C" void __cdecl MD5Update(MD5Context_t *context, unsigned char const *buf, unsigned int len)
+{
+	HwDLL::HOOKED_MD5Update(context, buf, len);
+}
+
+extern "C" void __cdecl MD5Final(unsigned char digest[16], MD5Context_t *context)
+{
+	HwDLL::HOOKED_MD5Final(digest, context);
+}
+
+extern "C" void __cdecl MD5Transform(unsigned int buf[4], unsigned int const in[16])
+{
+	HwDLL::HOOKED_MD5Transform(buf, in);
+}
+
+extern "C" int __cdecl MD5_Hash_File(unsigned char digest[16], char *pszFileName, int bUsefopen, int bSeed, unsigned int seed[4])
+{
+	return HwDLL::HOOKED_MD5_Hash_File(digest, pszFileName, bUsefopen, bSeed, seed);
+}
+
+extern "C" char* __cdecl MD5_Print(unsigned char hash[16])
+{
+	return HwDLL::HOOKED_MD5_Print(hash);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -482,6 +518,12 @@ void HwDLL::Clear()
 	ORIG_S_StartDynamicSound = nullptr;
 	ORIG_VGuiWrap2_NotifyOfServerConnect = nullptr;
 	ORIG_R_StudioSetupBones = nullptr;
+	ORIG_MD5Init = nullptr;
+	ORIG_MD5Update = nullptr;
+	ORIG_MD5Final = nullptr;
+	ORIG_MD5Transform = nullptr;
+	ORIG_MD5_Hash_File = nullptr;
+	ORIG_MD5_Print = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -801,6 +843,12 @@ void HwDLL::FindStuff()
 		FIND(CL_Record_f)
 		FIND(Key_Event)
 		FIND(Cmd_Exec_f)
+		FIND(MD5Init)
+		FIND(MD5Update)
+		FIND(MD5Final)
+		FIND(MD5Transform)
+		FIND(MD5_Hash_File)
+		FIND(MD5_Print)
 		#undef FIND
 
 		ORIG_Host_FilterTime = reinterpret_cast<_Host_FilterTime>(MemUtils::GetSymbolAddress(m_Handle, "Host_FilterTime"));
@@ -5023,3 +5071,34 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioSetupBones)
 
 	ORIG_R_StudioSetupBones();
 }
+
+HOOK_DEF_1(HwDLL, void, __cdecl, MD5Init, MD5Context_t*, context)
+{
+	ORIG_MD5Init(context);
+}
+
+HOOK_DEF_3(HwDLL, void, __cdecl, MD5Update, MD5Context_t*, context, unsigned char const*, buf, unsigned int, len)
+{
+	ORIG_MD5Update(context, buf, len);
+}
+
+HOOK_DEF_2(HwDLL, void, __cdecl, MD5Final, unsigned char*, digest, MD5Context_t*, context)
+{
+	ORIG_MD5Final(digest, context);
+}
+
+HOOK_DEF_2(HwDLL, void, __cdecl, MD5Transform, unsigned int*, buf, unsigned int const*, in)
+{
+	ORIG_MD5Transform(buf, in);
+}
+
+HOOK_DEF_5(HwDLL, int, __cdecl, MD5_Hash_File, unsigned char*, digest, char*, pszFileName, int, bUsefopen, int, bSeed, unsigned int*, seed)
+{
+	return ORIG_MD5_Hash_File(digest, pszFileName, bUsefopen, bSeed, seed);
+}
+
+HOOK_DEF_1(HwDLL, char*, __cdecl, MD5_Print, unsigned char*, hash)
+{
+	return ORIG_MD5_Print(hash);
+}
+

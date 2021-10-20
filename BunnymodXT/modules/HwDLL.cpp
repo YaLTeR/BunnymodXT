@@ -3023,6 +3023,13 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 		return;
 	}
 
+	if (tas_editor_mode != TASEditorMode::DISABLED && mode == TASEditorMode::DISABLED) {
+		// Save the script into a backup file in case the editor was disabled by accident.
+		auto err = tas_editor_input.save(hltas_filename + ".backup");
+		if (err.Code != HLTAS::ErrorCode::OK)
+			ORIG_Con_Printf("Error saving a backup script: %s\n", HLTAS::GetErrorMessage(err).c_str());
+	}
+
 	if (mode != TASEditorMode::DISABLED) {
 		SetFreeCam(true);
 

@@ -3016,6 +3016,13 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 {
 	auto& cl = ClientDLL::GetInstance();
 
+	// Don't enable unless we're in-game, otherwise the game can crash.
+	int *state = reinterpret_cast<int*>(cls);
+	if (state && *state != 5 && mode != TASEditorMode::DISABLED) {
+		ORIG_Con_Printf("You must be in-game to enable the TAS editor.\n");
+		return;
+	}
+
 	if (mode != TASEditorMode::DISABLED) {
 		SetFreeCam(true);
 

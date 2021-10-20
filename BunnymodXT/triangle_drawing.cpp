@@ -399,7 +399,6 @@ namespace TriangleDrawing
 		if (input.frame_bulk_starts.size() == 1)
 			next_frame_bulk_start_index = 0;
 
-		Vector2D closest_edge_px;
 		float closest_edge_px_dist;
 		size_t closest_edge_frame = 0;
 
@@ -431,7 +430,6 @@ namespace TriangleDrawing
 					if (closest_edge_frame == 0 || dist <= closest_edge_px_dist) {
 						closest_edge_frame = frame;
 						closest_edge_px_dist = dist;
-						closest_edge_px = screen_point_px;
 						closest_edge_prev_frame_bulk_index = i - 1;
 						while (closest_edge_prev_frame_bulk_index > 0
 								&& !input.frame_bulks[closest_edge_prev_frame_bulk_index].IsMovement())

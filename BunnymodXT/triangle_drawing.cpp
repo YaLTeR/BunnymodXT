@@ -380,11 +380,6 @@ namespace TriangleDrawing
 		Vector forward, right, up;
 		cl.pEngfuncs->pfnAngleVectors(cl.last_viewangles, forward, right, up);
 
-		// Trace to find the world point we're interested in.
-		Vector end = view + forward * 8192;
-		auto tr = hw.PlayerTrace(view, end, HullType::POINT, true);
-		Vector mouse_world(tr.EndPos);
-
 		auto& input = hw.tas_editor_input;
 		const auto& player_datas = input.player_datas;
 		const auto& fractions = input.fractions;

@@ -588,7 +588,6 @@ void HwDLL::Clear()
 	dontStopAutorecord = false;
 	insideRStudioCalcAttachmentsViewmodel = false;
 	hltas_filename.clear();
-	newTASStartingCommand.clear();
 	newTASFilename.clear();
 	newTASResult.Clear();
 	libTASExportFile.close();
@@ -1948,18 +1947,18 @@ struct HwDLL::Cmd_BXT_TAS_New
 		// Assumption: FPS below 1000 is a hard limit, which means we definitely can't set it higher than 1000.
 		const auto zero_ms_ducktap = (fps == 1000);
 
-		std::string cmd(command);
-		hw.newTASStartingCommand = cmd;
-
-		cmd += "\n";
-		hw.ORIG_Cbuf_InsertText(cmd.c_str());
-
 		hw.newTASFilename = std::string(filename) + ".hltas";
 		hw.newTASResult.Clear();
 
 		std::ostringstream oss;
 		oss << HLStrafe::MAX_SUPPORTED_VERSION;
 		hw.newTASResult.SetProperty("hlstrafe_version", oss.str());
+
+		std::string cmd(command);
+		hw.newTASResult.SetProperty("load_command", cmd);
+
+		cmd += "\n";
+		hw.ORIG_Cbuf_InsertText(cmd.c_str());
 
 		if (zero_ms_ducktap)
 			hw.newTASResult.SetProperty("frametime0ms", "0.0000000001");
@@ -4274,12 +4273,11 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 				} else {
 					auto error = newTASResult.Save(newTASFilename);
 					if (error.Code == HLTAS::ErrorCode::OK)
-						ORIG_Con_Printf("New TAS has been created successfully. Use this bind for launching it:\n bind / \"%s;bxt_tas_loadscript %s\"\n", newTASStartingCommand.c_str(), newTASFilename.c_str());
+						ORIG_Con_Printf("New TAS has been created successfully. Use this bind for launching it:\n bind / \"bxt_tas_loadscript %s\"\n", newTASFilename.c_str());
 					else
 						ORIG_Con_Printf("Error saving the new TAS: %s\n", HLTAS::GetErrorMessage(error).c_str());
 				}
 
-				newTASStartingCommand.clear();
 				newTASFilename.clear();
 				newTASResult.Clear();
 			}

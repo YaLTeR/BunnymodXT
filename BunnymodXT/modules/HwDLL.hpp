@@ -521,7 +521,6 @@ protected:
 	HLTAS::Input exportResult;
 	std::string splitFilename;
 	HLTAS::Input splitResult;
-	std::string newTASStartingCommand;
 	std::string newTASFilename;
 	HLTAS::Input newTASResult;
 	std::ofstream libTASExportFile;

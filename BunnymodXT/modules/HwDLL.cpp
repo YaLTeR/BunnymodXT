@@ -3030,6 +3030,13 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 
 		// If invoked while running a script, put all frame bulks up until the last one for editing.
 		if (runningFrames) {
+			if (currentRepeat == 0) {
+				// The TAS editor was enabled on a 1-long frame bulk, and the execution
+				// has already jumped to the next one. So, move the frame bulk back by one.
+				if (currentFramebulk > 0) // Sanity check.
+					currentFramebulk--;
+			}
+
 			auto limit = input.GetFrames().size() - 1;
 			for (size_t i = currentFramebulk; i < limit; ++i) {
 				tas_editor_input.frame_bulks.push_back(input.GetFrames()[currentFramebulk]);

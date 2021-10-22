@@ -274,11 +274,6 @@ void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
 		frame_bulk_starts[frame_bulk_index + 1] = last_frame;
 }
 
-bool EditedInput::simulated_all_frames() const {
-	// If we have the total frame count, then we simulated all frames.
-	return frame_bulk_starts.size() == frame_bulks.size() + 1;
-}
-
 void EditedInput::run_script_in_second_game() {
 	auto& hw = HwDLL::GetInstance();
 

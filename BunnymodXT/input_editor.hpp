@@ -37,9 +37,6 @@ struct EditedInput {
 	// Invalidates the cached positions in an optimal way to reduce unnecessary simulations.
 	void set_repeats(size_t frame_bulk_index, unsigned repeats);
 
-	// Returns true if all frames were simulated.
-	bool simulated_all_frames() const;
-
 	void schedule_run_in_second_game();
 	void run_script_in_second_game();
 	void received_simulated_frame(const simulation_ipc::SimulatedFrame &frame);

@@ -470,7 +470,7 @@ namespace TriangleDrawing
 		}
 
 		static double saved_yaw = 0;
-		if ((right_got_pressed || mouse4_got_pressed ) && closest_edge_frame != 0
+		if ((right_got_pressed || mouse4_got_pressed) && closest_edge_frame != 0
 				&& input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYawPresent())
 			saved_yaw = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYaw();
 
@@ -725,31 +725,27 @@ namespace TriangleDrawing
 
 					// SetYaw towards previous framebulks
 					if (closest_edge_prev_frame_bulk_index != 0) {
-						for (size_t i = closest_edge_prev_frame_bulk_index; i > 0; i--)
-						{
+						for (size_t i = closest_edge_prev_frame_bulk_index; i > 0; i--) {
 							auto real_index = i - 1;
 
-							HLTAS::Frame* prev_framebulk = &(input.frame_bulks[real_index]);
+							HLTAS::Frame *prev_framebulk = &(input.frame_bulks[real_index]);
 
 							if (prev_framebulk->GetYawPresent() && prev_framebulk->GetYaw() == old_yaw) {
 								stale_index = real_index;
 								prev_framebulk->SetYaw(new_yaw);
-							}
-							else {
+							} else {
 								break;
 							}
 						}
 					}
 
 					// SetYaw towards end of all frame bulks
-					for (size_t i = closest_edge_prev_frame_bulk_index + 1; i < input.frame_bulks.size(); i++)
-					{
-						HLTAS::Frame* next_framebulk = &(input.frame_bulks[i]);
+					for (size_t i = closest_edge_prev_frame_bulk_index + 1; i < input.frame_bulks.size(); i++) {
+						HLTAS::Frame *next_framebulk = &(input.frame_bulks[i]);
 
 						if (next_framebulk->GetYawPresent() && next_framebulk->GetYaw() == old_yaw) {
 							next_framebulk->SetYaw(new_yaw);
-						}
-						else {
+						} else {
 							break;
 						}
 					}

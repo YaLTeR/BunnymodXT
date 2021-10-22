@@ -301,6 +301,30 @@ namespace TriangleDrawing
 		}
 	}
 
+	static Vector perpendicular(const Vector &prev, const Vector &next) {
+		Vector perpendicular;
+
+		auto line = (next - prev).Normalize();
+		if (line.x == 0 && line.y == 0)
+			perpendicular = Vector(1, 0, 0);
+		else if (line.x == 0)
+			perpendicular = Vector(1, 0, 0);
+		else if (line.y == 0)
+			perpendicular = Vector(0, 1, 0);
+		else
+			perpendicular = Vector(1, -line.x / line.y, 0).Normalize();
+
+		// Make sure it's oriented in a particular way: this makes right-drag to change
+		// yaw behave as expected (the yaw will change in the direction where you move
+		// the mouse).
+		if (perpendicular.x * line.y - perpendicular.y * line.x > 0) {
+			perpendicular.x = -perpendicular.x;
+			perpendicular.y = -perpendicular.y;
+		}
+
+		return perpendicular;
+	}
+
 	static void DrawTASEditor(triangleapi_s *pTriAPI)
 	{
 		using HLStrafe::HullType;
@@ -550,28 +574,9 @@ namespace TriangleDrawing
 						&& frame == frame_bulk_starts[next_frame_bulk_start_index])
 					++next_frame_bulk_start_index;
 
-				auto line = (origin - prev_origin).Normalize();
-
-				Vector perpendicular;
-				if (line.x == 0 && line.y == 0)
-					perpendicular = Vector(1, 0, 0);
-				else if (line.x == 0)
-					perpendicular = Vector(1, 0, 0);
-				else if (line.y == 0)
-					perpendicular = Vector(0, 1, 0);
-				else
-					perpendicular = Vector(1, -line.x / line.y, 0).Normalize();
-
-				// Make sure it's oriented in a particular way: this makes right-drag to change
-				// yaw behave as expected (the yaw will change in the direction where you move
-				// the mouse).
-				if (perpendicular.x * line.y - perpendicular.y * line.x > 0) {
-					perpendicular.x = -perpendicular.x;
-					perpendicular.y = -perpendicular.y;
-				}
-
-				perpendicular *= 5;
-				Vector a = origin + perpendicular, b = origin - perpendicular;
+				auto perp = perpendicular(prev_origin, origin);
+				perp *= 5;
+				Vector a = origin + perp, b = origin - perp;
 
 				if (frame == closest_edge_frame) {
 					auto& frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];

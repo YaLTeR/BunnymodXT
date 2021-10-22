@@ -60,6 +60,8 @@ public:
 	// When set to false, the mouse won't move the camera.
 	void SetMouseState(bool active);
 
+	Vector AnglesToForward(const Vector &angles);
+
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};
 	ClientDLL(const ClientDLL&);

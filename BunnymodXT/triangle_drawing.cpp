@@ -77,8 +77,7 @@ namespace TriangleDrawing
 			return;
 
 		const auto playerOrigin = player->v.origin;
-		Vector forward, right, up;
-		ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player->v.v_angle, forward, right, up);
+		auto forward = ClientDLL::GetInstance().AnglesToForward(player->v.v_angle);
 
 		const auto& si = CustomHud::GetScreenInfo();
 		const auto min_resolution = std::min(si.iHeight, si.iWidth);
@@ -377,8 +376,7 @@ namespace TriangleDrawing
 			adjustment_speed /= 20;
 
 		auto view = cl.last_vieworg;
-		Vector forward, right, up;
-		cl.pEngfuncs->pfnAngleVectors(cl.last_viewangles, forward, right, up);
+		auto forward = cl.AnglesToForward(cl.last_viewangles);
 
 		auto& input = hw.tas_editor_input;
 		const auto& player_datas = input.player_datas;
@@ -512,8 +510,7 @@ namespace TriangleDrawing
 
 			// Draw the view angle.
 			{
-				Vector forward, right, up;
-				cl.pEngfuncs->pfnAngleVectors(player_datas[frame].Viewangles, forward, right, up);
+				auto forward = cl.AnglesToForward(player_datas[frame].Viewangles);
 
 				if (last_shown_view_angle == Vector()
 						// Angle differs by more than ~11.5 degrees.

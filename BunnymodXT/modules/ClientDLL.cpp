@@ -696,6 +696,14 @@ void ClientDLL::SetMouseState(bool active)
 	}
 }
 
+Vector ClientDLL::AnglesToForward(const Vector &angles) {
+	assert(pEngfuncs);
+
+	Vector forward, right, up;
+	pEngfuncs->pfnAngleVectors(angles, forward, right, up);
+	return forward;
+}
+
 void ClientDLL::StudioAdjustViewmodelAttachments(Vector &vOrigin)
 {
 	// V_CalcRefDef didn't give us info, let's bail out since we'd just make the attachments be somewhere in the world

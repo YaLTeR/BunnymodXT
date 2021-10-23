@@ -468,7 +468,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_quickgauss.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_quickgauss_offset, CVars::bxt_hud_quickgauss_anchor, &x, &y, 160, 0);
+			GetPosition(CVars::bxt_hud_quickgauss_offset, CVars::bxt_hud_quickgauss_anchor, &x, &y, 150, 0);
 
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
@@ -484,8 +484,8 @@ namespace CustomHud
 			auto ups = static_cast<int>(trunc(length(vel_gain[0], vel_gain[1])));
 
 			out << "Server time: " << time << "\n"
-				<< "Potential qgauss dmg: " << flDamage << "\n"
-				<< "Potential qgauss boost: " << ups;
+				<< "Qgauss dmg: " << flDamage << "\n"
+				<< "Qgauss boost: " << ups;
 
 			DrawMultilineString(x, y, out.str());
 		}

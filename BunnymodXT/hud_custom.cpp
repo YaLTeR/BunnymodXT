@@ -463,7 +463,7 @@ namespace CustomHud
 		}
 	}
 
-	static void DrawClientTime(float flTime)
+	static void DrawQuickGauss(float flTime)
 	{
 		if (CVars::bxt_hud_quickgauss.GetBool())
 		{
@@ -474,12 +474,12 @@ namespace CustomHud
 			out.setf(std::ios::fixed);
 			out.precision(precision);
 
-			auto &sv = ServerDLL::GetInstance();
-			auto time = sv.GetTime();
-			auto v_forward = sv.GetVForward();
+			auto time = ServerDLL::GetInstance().GetTime();
+			auto v_forward = ClientDLL::GetInstance().AnglesToForward(player.viewangles);
 			auto flDamage = 200;
 			if (time < 4.0f)
 				flDamage = 200 * time / 4;
+
 			auto vel_gain = v_forward * flDamage * 5;
 			auto ups = static_cast<int>(trunc(length(vel_gain[0], vel_gain[1])));
 
@@ -1401,7 +1401,7 @@ namespace CustomHud
 		UpdateColors();
 		GetAccurateInfo();
 
-		DrawClientTime(flTime);
+		DrawQuickGauss(flTime);
 		DrawHealth(flTime);
 		DrawVelocity(flTime);
 		DrawOrigin(flTime);

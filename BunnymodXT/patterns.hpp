@@ -470,7 +470,11 @@ namespace patterns
 			"CSCZDS",
 			"8B D1 83 C9 FF 57 8B 82 CC 05 00 00 89 8A 64 06 00 00 0C C0 89 8A 68 06 00 00 89 82 CC 05 00 00 33 C0 89 8A 6C 06 00 00",
 			"Black-Ops",
-			"83 C8 FF 89 81 98 04 00 00 89 81 9C 04 00 00 8B 81 74 04 00 00 0C C0 89 81 74 04 00 00 33 C0 89 81 78 04 00 00 89 81 FC 02 00 00 8B 01 FF A0 0C 02 00 00"
+			"83 C8 FF 89 81 98 04 00 00 89 81 9C 04 00 00 8B 81 74 04 00 00 0C C0 89 81 74 04 00 00 33 C0 89 81 78 04 00 00 89 81 FC 02 00 00 8B 01 FF A0 0C 02 00 00",
+			"Invasion",
+			"8B 91 34 04 00 00 83 C8 FF 80 CA C0 89 81 58 04 00 00 89 91 34 04 00 00 33 D2 89 81 5C 04 00 00 89 81 1C 06 00 00 89 81 20 06 00 00 8B 01 89 91 38 04 00 00 89 91 BC 02 00 00 FF A0 08 02 00 00",
+			"Arctic-Incident",
+			"55 8B EC 51 89 4D FC 8B 45 FC C7 80 FC 04 00 00 FF FF FF FF 8B 4D FC C7 81 00 05 00 00 FF FF FF FF 8B 55 FC 8B 82 D8 04 00 00 0C C0"
 		);
 
 		PATTERNS(CBasePlayer__TakeDamage,
@@ -559,7 +563,9 @@ namespace patterns
 			"HL-SteamPipe-6153",
 			"D9 05 ?? ?? ?? ?? DC 1D ?? ?? ?? ?? 81 EC ?? ?? ?? ?? 56 57 DF E0 8B F1 F6 C4 ?? 0F ?? ?? ?? ?? ?? 8B 84 24",
 			"Gunman",
-			"D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? 81 EC E4 01 00 00"
+			"D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? 81 EC E4 01 00 00",
+			"Invasion",
+			"D9 05 ?? ?? ?? ?? DC 1D ?? ?? ?? ?? 81 EC ?? ?? ?? ?? 56 57 DF E0 8B F1 F6 C4 ?? 0F ?? ?? ?? ?? ?? A1 ?? ?? ?? ?? 85 C0 0F ?? ?? ?? ?? ?? 8B 84 24"
 		);
 
 		PATTERNS(CZDS_Velocity_Byte,
@@ -575,7 +581,11 @@ namespace patterns
 			"OpposingForce",
 			"56 8B F1 57 8B 86 ?? ?? ?? ?? 84 C0",
 			"OpposingForce-WON",
-			"56 8B F1 57 8B 86 ?? ?? ?? ?? A8 80"
+			"56 8B F1 57 8B 86 ?? ?? ?? ?? A8 80",
+			"TWHL-Tower-2",
+			"56 8B F1 8B 86 ?? ?? ?? ?? 84 C0 79 1B FF 74 24 0C E8 ?? ?? ?? ?? 85 C0",
+			"Invasion",
+			"56 8B F1 8B 46 04 83 B8 ?? ?? ?? ?? ?? 75 0A C7 80 ?? ?? ?? ?? 00 00 00 00 8B 86 ?? ?? ?? ?? A8 80 74 1F 8B 44 24 0C 8B CE 50 E8 ?? ?? ?? ?? 85 C0"
 		);
 
 		PATTERNS(CChangeLevel__InTransitionVolume,
@@ -594,7 +604,9 @@ namespace patterns
 			"Echoes",
 			"55 8B EC 83 EC 0C 89 4D ?? 8B 45 ?? 8B 48 ?? 83 B9 ?? ?? ?? ?? 04",
 			"AoMDC",
-			"55 8B EC 83 EC 4C 53 56 57 89 4D ?? 8B 45 ?? 8B 48 ?? 83 B9 ?? ?? ?? ?? 04"
+			"55 8B EC 83 EC 4C 53 56 57 89 4D ?? 8B 45 ?? 8B 48 ?? 83 B9 ?? ?? ?? ?? 04",
+			"TWHL-Tower-2",
+			"56 8B F1 8B 46 44 8B 90 D4 00 00 00 83 FA 04 7E 1D 8B 46 30 FF B0 94 0B 00 00 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 59 6A FF E8 ?? ?? ?? ?? 8B 4E 44 8B 81 D8 00 00 00 53"
 		);
 
 		PATTERNS(EV_GetDefaultShellInfo,
@@ -603,7 +615,9 @@ namespace patterns
 			"Echoes",
 			"55 8B EC 83 EC 1C 56 8D 4D ?? E8 ?? ?? ?? ?? 8B 45",
 			"AoMDC",
-			"55 8B EC 83 EC 5C 53 56 57 8D 4D ?? E8 ?? ?? ?? ?? 8B 45"
+			"55 8B EC 83 EC 5C 53 56 57 8D 4D ?? E8 ?? ?? ?? ?? 8B 45",
+			"TWHL-Tower-2",
+			"55 8B EC 83 EC 20 56 D9 EE"
 		);
 
 		PATTERNS(CStudioModelRenderer__StudioSetupBones,
@@ -622,7 +636,11 @@ namespace patterns
 			"PARANOIA",
 			"55 8B EC 81 EC A4 00 00 00 89 4D",
 			"AoMDC",
-			"55 8B EC 81 EC D0 00 00 00 53 56 57 89 4D"
+			"55 8B EC 81 EC D0 00 00 00 53 56 57 89 4D",
+			"TWHL-Tower-2",
+			"55 8B EC 83 EC 48 53 56 8B F1 8B 46 30 8B 4E 44",
+			"Invasion",
+			"83 EC 44 53 55 56 8B F1 57 8B 46 30 8B 4E 44"
 		);
 	}
 

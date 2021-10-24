@@ -315,6 +315,11 @@ void ClientDLL::FindStuff()
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 190)
 					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 194);
 				break;
+			case 4: // TWHL-Tower-2
+				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 100)
+					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 104);
+				break;
 			default:
 				assert(false);
 				break;

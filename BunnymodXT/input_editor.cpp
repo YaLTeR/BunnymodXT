@@ -212,7 +212,7 @@ HLTAS::ErrorDescription EditedInput::save(const std::string &filename) const {
 }
 
 void EditedInput::mark_as_stale(size_t frame_bulk_index) {
-	if (frame_bulk_index > frame_bulk_starts.size())
+	if (frame_bulk_index >= frame_bulk_starts.size())
 		return;
 
 	frame_bulk_starts.erase(frame_bulk_starts.begin() + frame_bulk_index + 1, frame_bulk_starts.end());

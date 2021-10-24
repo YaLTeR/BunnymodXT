@@ -454,6 +454,19 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xA4;
 				offFuncCenter = 0xD0;
 				break;
+			case 16: // Invasion
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x514;
+				offm_iClientFOV = 0x46C;
+				break;
+			case 17: // Arctic-Incident
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x5B8;
+				offm_iClientFOV = 0x510;
+				offFuncIsPlayer = 0xCC;
+				offFuncCenter = 0xF8;
+				offFuncObjectCaps = 0x3C;
+				break;
 			default:
 				assert(false);
 			}

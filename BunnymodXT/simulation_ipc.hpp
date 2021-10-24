@@ -13,6 +13,7 @@ namespace simulation_ipc {
 		float fraction;
 		float normalz;
 		bool next_frame_is_0ms;
+		float frametime;
 
 		float health;
 		float armor;

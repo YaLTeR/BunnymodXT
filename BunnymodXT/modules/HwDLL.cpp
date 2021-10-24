@@ -3367,6 +3367,8 @@ void HwDLL::InsertCommands()
 					armor = pl->v.armorvalue;
 				}
 
+				const auto movement_vars = GetMovementVars();
+
 				simulation_ipc::send_simulated_frame_to_server(simulation_ipc::SimulatedFrame {
 					CVars::_bxt_tas_script_generation.GetUint(),
 					movementFrameCounter++,
@@ -3375,12 +3377,13 @@ void HwDLL::InsertCommands()
 					PrevFraction,
 					PrevNormalz,
 					thisFrameIs0ms,
+					movement_vars.Frametime,
 					health,
 					armor,
 				});
 
 				StartTracing();
-				auto p = HLStrafe::MainFunc(player, GetMovementVars(), f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::UnsafePlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), hlstrafe_version);
+				auto p = HLStrafe::MainFunc(player, movement_vars, f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::UnsafePlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), hlstrafe_version);
 				StopTracing();
 
 				PrevFraction = p.fractions[0];

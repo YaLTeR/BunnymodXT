@@ -25,6 +25,7 @@ void EditedInput::initialize() {
 	strafe_states.push_back(strafe_state);
 
 	initial_movement_vars = hw.GetMovementVars();
+	frametimes.push_back(initial_movement_vars.Frametime);
 
 	first_predicted_frame = 1;
 	current_generation = 0;
@@ -169,6 +170,7 @@ void EditedInput::simulate() {
 			fractions.push_back(processed_frame.fractions[0]);
 			normalzs.push_back(processed_frame.normalzs[0]);
 			next_frame_is_0mss.push_back(next_frame_is_0ms);
+			frametimes.push_back(movement_vars.Frametime);
 
 			// push back 0s because there's no data
 			player_health_datas.push_back(0);
@@ -223,6 +225,7 @@ void EditedInput::mark_as_stale(size_t frame_bulk_index) {
 	fractions.erase(fractions.begin() + first_frame + 1, fractions.end());
 	normalzs.erase(normalzs.begin() + first_frame + 1, normalzs.end());
 	next_frame_is_0mss.erase(next_frame_is_0mss.begin() + first_frame + 1, next_frame_is_0mss.end());
+	frametimes.erase(frametimes.begin() + first_frame + 1, frametimes.end());
 	first_predicted_frame = std::min(first_predicted_frame, first_frame + 1);
 
 	schedule_run_in_second_game();
@@ -268,6 +271,7 @@ void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
 	fractions.erase(fractions.begin() + last_frame + 1, fractions.end());
 	normalzs.erase(normalzs.begin() + last_frame + 1, normalzs.end());
 	next_frame_is_0mss.erase(next_frame_is_0mss.begin() + last_frame + 1, next_frame_is_0mss.end());
+	frametimes.erase(frametimes.begin() + last_frame + 1, frametimes.end());
 
 	// Update the frame count.
 	if (frame_bulk_index + 1 < frame_bulk_starts.size())
@@ -337,6 +341,7 @@ void EditedInput::received_simulated_frame(const simulation_ipc::SimulatedFrame 
 	next_frame_is_0mss[frame_number] = frame.next_frame_is_0ms;
 	player_health_datas[frame_number] = frame.health;
 	player_armor_datas[frame_number] = frame.armor;
+	frametimes[frame_number] = frame.frametime;
 
 	first_predicted_frame = std::max(first_predicted_frame, frame_number + 1);
 }

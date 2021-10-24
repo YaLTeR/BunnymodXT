@@ -18,6 +18,7 @@ struct EditedInput {
 	std::vector<float> fractions;
 	std::vector<float> normalzs;
 	std::vector<char> next_frame_is_0mss; // char instead of bool because C++ vector bool bitset.
+	std::vector<float> frametimes;
 
 	HLStrafe::MovementVars initial_movement_vars;
 

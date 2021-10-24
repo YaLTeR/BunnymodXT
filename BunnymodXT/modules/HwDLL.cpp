@@ -606,6 +606,7 @@ void HwDLL::Clear()
 	tas_editor_input = EditedInput();
 	tas_editor_delete_point = false;
 	tas_editor_insert_point = false;
+	tas_editor_insert_point_held = false;
 	tas_editor_toggle_s03 = false;
 	tas_editor_toggle_s13 = false;
 	tas_editor_toggle_s22 = false;
@@ -2797,6 +2798,38 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Insert_Point
 	}
 };
 
+struct HwDLL::Cmd_Plus_BXT_TAS_Editor_Insert_Point
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		HwDLL::GetInstance().tas_editor_insert_point = true;
+		HwDLL::GetInstance().tas_editor_insert_point_held = true;
+	}
+
+	static void handler(int)
+	{
+		handler();
+	}
+};
+
+struct HwDLL::Cmd_Minus_BXT_TAS_Editor_Insert_Point
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		HwDLL::GetInstance().tas_editor_insert_point = false;
+		HwDLL::GetInstance().tas_editor_insert_point_held = false;
+	}
+
+	static void handler(int)
+	{
+		handler();
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 {
 	USAGE("Usage: bxt_tas_editor_toggle <what>\n Toggles a function on the currently selected point. You can toggle:\n"
@@ -3181,6 +3214,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_water_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
+	RegisterCVar(CVars::bxt_tas_editor_camera_editor);
 	RegisterCVar(CVars::bxt_tas_norefresh_until_last_frames);
 	RegisterCVar(CVars::bxt_tas_write_log);
 	RegisterCVar(CVars::bxt_tas_playback_speed);
@@ -3286,6 +3320,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Last_Point, Handler<>>("bxt_tas_editor_delete_last_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Point, Handler<>>("bxt_tas_editor_delete_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Insert_Point, Handler<>>("bxt_tas_editor_insert_point");
+	wrapper::Add<Cmd_Plus_BXT_TAS_Editor_Insert_Point, Handler<>, Handler<int>>("+bxt_tas_editor_insert_point");
+	wrapper::Add<Cmd_Minus_BXT_TAS_Editor_Insert_Point, Handler<>, Handler<int>>("-bxt_tas_editor_insert_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Save, Handler<>>("bxt_tas_editor_save");
 	wrapper::Add<Cmd_Plus_BXT_TAS_Editor_Look_Around, Handler<>, Handler<int>>("+bxt_tas_editor_look_around");
 	wrapper::Add<Cmd_Minus_BXT_TAS_Editor_Look_Around, Handler<>, Handler<int>>("-bxt_tas_editor_look_around");

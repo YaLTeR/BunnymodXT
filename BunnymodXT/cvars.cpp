@@ -19,6 +19,7 @@ namespace CVars
 	CVarWrapper bxt_water_remove("bxt_water_remove", "0");
 	CVarWrapper bxt_stop_demo_on_changelevel("bxt_stop_demo_on_changelevel", "0");
 	CVarWrapper bxt_tas_editor_simulate_for_ms("bxt_tas_editor_simulate_for_ms", "40");
+	CVarWrapper bxt_tas_editor_camera_editor("bxt_tas_editor_camera_editor", "0");
 	CVarWrapper bxt_tas_norefresh_until_last_frames("bxt_tas_norefresh_until_last_frames", "0");
 	CVarWrapper bxt_tas_write_log("bxt_tas_write_log", "0");
 	CVarWrapper bxt_tas_playback_speed("bxt_tas_playback_speed", "1");
@@ -158,6 +159,7 @@ namespace CVars
 		&bxt_water_remove,
 		&bxt_stop_demo_on_changelevel,
 		&bxt_tas_editor_simulate_for_ms,
+		&bxt_tas_editor_camera_editor,
 		&bxt_tas_norefresh_until_last_frames,
 		&bxt_tas_write_log,
 		&bxt_tas_playback_speed,

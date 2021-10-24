@@ -252,6 +252,7 @@ public:
 	EditedInput tas_editor_input;
 	bool tas_editor_delete_point;
 	bool tas_editor_insert_point;
+	bool tas_editor_insert_point_held;
 	bool tas_editor_toggle_s03;
 	bool tas_editor_toggle_s13;
 	bool tas_editor_toggle_s22;
@@ -389,6 +390,8 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Delete_Last_Point;
 	struct Cmd_BXT_TAS_Editor_Delete_Point;
 	struct Cmd_BXT_TAS_Editor_Insert_Point;
+	struct Cmd_Plus_BXT_TAS_Editor_Insert_Point;
+	struct Cmd_Minus_BXT_TAS_Editor_Insert_Point;
 	struct Cmd_BXT_TAS_Editor_Toggle;
 	struct Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save;
 	struct Cmd_BXT_TAS_Editor_Set_Yaw;

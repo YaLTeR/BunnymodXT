@@ -859,19 +859,45 @@ namespace TriangleDrawing
 
 			static Vector origin_before_rmb_adjustment;
 			static Vector angles_before_rmb_adjustment;
+			static size_t other_frame_bulk_index;
 
 			if (selection.frame_bulk_index > 0 && right_got_pressed) {
 				auto& frame_bulk = input.frame_bulks[selection.frame_bulk_index];
+
 				if (frame_bulk.ChangePresent && selection.type == KeyFrameType::CHANGE_END && selection.initial_frame < player_datas.size()) {
+					const auto target = frame_bulk.GetChangeTarget();
+
+					// If we're adjusting a change of yaw or pitch, try to find a pitch or yaw change on the same frame
+					// to adjust them simultaneously.
+					const auto it = std::find_if(key_frames.begin(), key_frames.end(), [&](const KeyFrame& item){
+						// It must be a change end on the same frame as this.
+						if (item.type != KeyFrameType::CHANGE_END || item.frame != selection.initial_frame)
+							return false;
+
+						const auto& other = input.frame_bulks[item.frame_bulk_index];
+						assert(other.ChangePresent);
+
+						// If our change end is pitch, the other change must not be pitch, and vice versa.
+						return (target == HLTAS::ChangeTarget::PITCH) != (other.GetChangeTarget() == HLTAS::ChangeTarget::PITCH);
+					});
+					if (it != key_frames.end())
+						other_frame_bulk_index = it->frame_bulk_index;
+
 					Vector viewangles;
-					switch (frame_bulk.GetChangeTarget()) {
+					switch (target) {
 						case HLTAS::ChangeTarget::YAW:
 						case HLTAS::ChangeTarget::TARGET_YAW:
 							viewangles[1] = frame_bulk.GetChangeFinalValue();
+
+							if (other_frame_bulk_index)
+								viewangles[0] = input.frame_bulks[other_frame_bulk_index].GetChangeFinalValue();
 							break;
 						case HLTAS::ChangeTarget::PITCH:
 							viewangles[0] = frame_bulk.GetChangeFinalValue();
 							viewangles[1] = player_datas[selection.initial_frame].Viewangles[1];
+
+							if (other_frame_bulk_index)
+								viewangles[1] = input.frame_bulks[other_frame_bulk_index].GetChangeFinalValue();
 							break;
 					}
 
@@ -910,21 +936,28 @@ namespace TriangleDrawing
 			if (selection.frame_bulk_index > 0 && right_pressed && !right_got_pressed) {
 				auto& frame_bulk = input.frame_bulks[selection.frame_bulk_index];
 				if (frame_bulk.ChangePresent) {
-					float new_target = 0;
+					float new_target = 0, new_other_target = 0;
 
 					switch (frame_bulk.GetChangeTarget()) {
 						case HLTAS::ChangeTarget::YAW:
 						case HLTAS::ChangeTarget::TARGET_YAW:
 							new_target = cl.last_viewangles[1];
+							new_other_target = cl.last_viewangles[0];
 							break;
 						case HLTAS::ChangeTarget::PITCH:
 							new_target = cl.last_viewangles[0];
+							new_other_target = cl.last_viewangles[1];
 							break;
 					}
 
 					if (frame_bulk.GetChangeFinalValue() != new_target) {
 						frame_bulk.SetChangeFinalValue(new_target);
 						stale_index = selection.frame_bulk_index;
+					}
+
+					if (other_frame_bulk_index && input.frame_bulks[other_frame_bulk_index].GetChangeFinalValue() != new_other_target) {
+						input.frame_bulks[other_frame_bulk_index].SetChangeFinalValue(new_other_target);
+						stale_index = std::min(stale_index, other_frame_bulk_index);
 					}
 				} else if (frame_bulk.AlgorithmParametersPresent) {
 					auto parameters = frame_bulk.GetAlgorithmParameters();
@@ -946,6 +979,7 @@ namespace TriangleDrawing
 				}
 				origin_before_rmb_adjustment = Vector();
 				angles_before_rmb_adjustment = Vector();
+				other_frame_bulk_index = 0;
 
 				ClientDLL::GetInstance().SetMouseState(false);
 				SDL::GetInstance().SetRelativeMouseMode(false);

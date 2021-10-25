@@ -56,6 +56,7 @@ public:
 	virtual bool CanHook(const std::wstring& moduleFullName);
 
 	bool GetGlobalState(const std::string& name, int& state);
+	float GetTime();
 
 	std::vector<const edict_t *> GetUseableEntities(const Vector &origin, float radius) const;
 	std::vector<const Vector *> GetNodePositions() const;

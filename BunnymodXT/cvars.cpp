@@ -76,6 +76,9 @@ namespace CVars
 	CVarWrapper bxt_hud("bxt_hud", "1");
 	CVarWrapper bxt_hud_color("bxt_hud_color", "");
 	CVarWrapper bxt_hud_precision("bxt_hud_precision", "6");
+	CVarWrapper bxt_hud_quickgauss("bxt_hud_quickgauss", "0");
+	CVarWrapper bxt_hud_quickgauss_offset("bxt_hud_quickgauss_offset", "");
+	CVarWrapper bxt_hud_quickgauss_anchor("bxt_hud_quickgauss_anchor", "0.5 0");
 	CVarWrapper bxt_hud_velocity("bxt_hud_velocity", "0");
 	CVarWrapper bxt_hud_velocity_offset("bxt_hud_velocity_offset", "");
 	CVarWrapper bxt_hud_velocity_anchor("bxt_hud_velocity_anchor", "1 0");
@@ -207,6 +210,9 @@ namespace CVars
 		&bxt_hud,
 		&bxt_hud_color,
 		&bxt_hud_precision,
+		&bxt_hud_quickgauss,
+		&bxt_hud_quickgauss_offset,
+		&bxt_hud_quickgauss_anchor,
 		&bxt_hud_velocity,
 		&bxt_hud_velocity_offset,
 		&bxt_hud_velocity_anchor,

@@ -471,9 +471,11 @@ protected:
 	FILE *tasLogFile = nullptr;
 	void SetTASLogging(bool enabled);
 
+public:
 	bool isOverridingCamera = false;
 	Vector cameraOverrideOrigin;
 	float cameraOverrideAngles[3];
+protected:
 	bool isOffsettingCamera = false;
 	float cameraOffsetOrigin[3];
 	float cameraOffsetAngles[3];

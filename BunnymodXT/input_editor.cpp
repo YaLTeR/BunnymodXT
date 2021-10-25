@@ -212,6 +212,14 @@ HLTAS::ErrorDescription EditedInput::save(const std::string &filename) const {
 }
 
 void EditedInput::mark_as_stale(size_t frame_bulk_index) {
+	if (frame_bulk_index >= frame_bulks.size())
+		return;
+
+	// If there are non-movement frame bulks in front of the stale one, we should run them too,
+	// as their state modifications are not cached.
+	for (; frame_bulk_index > 0 && !frame_bulks[frame_bulk_index - 1].IsMovement(); --frame_bulk_index)
+		;
+
 	if (frame_bulk_index >= frame_bulk_starts.size())
 		return;
 

@@ -832,6 +832,100 @@ namespace TriangleDrawing
 				}
 			}
 
+			static Vector origin_before_rmb_adjustment;
+			static Vector angles_before_rmb_adjustment;
+
+			if (selection.frame_bulk_index > 0 && right_got_pressed) {
+				auto& frame_bulk = input.frame_bulks[selection.frame_bulk_index];
+				if (frame_bulk.ChangePresent && selection.type == KeyFrameType::CHANGE_END && selection.initial_frame < player_datas.size()) {
+					Vector viewangles;
+					switch (frame_bulk.GetChangeTarget()) {
+						case HLTAS::ChangeTarget::YAW:
+						case HLTAS::ChangeTarget::TARGET_YAW:
+							viewangles[1] = frame_bulk.GetChangeFinalValue();
+							break;
+						case HLTAS::ChangeTarget::PITCH:
+							viewangles[0] = frame_bulk.GetChangeFinalValue();
+							viewangles[1] = player_datas[selection.initial_frame].Viewangles[1];
+							break;
+					}
+
+					origin_before_rmb_adjustment = hw.cameraOverrideOrigin;
+					angles_before_rmb_adjustment = cl.last_viewangles;
+
+					hw.SetViewangles(viewangles);
+					hw.cameraOverrideOrigin = player_datas[selection.initial_frame].Origin;
+
+					ClientDLL::GetInstance().SetMouseState(true);
+					SDL::GetInstance().SetRelativeMouseMode(true);
+				} else if (frame_bulk.AlgorithmParametersPresent && selection.initial_frame + 1 < player_datas.size()) {
+					Vector viewangles;
+					viewangles[1] = player_datas[selection.initial_frame + 1].Viewangles[1];
+
+					auto parameters = HLTAS::AlgorithmParameters {};
+					parameters.Type = HLTAS::ConstraintsType::YAW;
+					parameters.Parameters.Yaw.Yaw = viewangles[1];
+					parameters.Parameters.Yaw.Constraints = 0;
+					frame_bulk.SetAlgorithmParameters(parameters);
+
+					origin_before_rmb_adjustment = hw.cameraOverrideOrigin;
+					angles_before_rmb_adjustment = cl.last_viewangles;
+
+					hw.SetViewangles(viewangles);
+					hw.cameraOverrideOrigin = player_datas[selection.initial_frame].Origin;
+
+					ClientDLL::GetInstance().SetMouseState(true);
+					SDL::GetInstance().SetRelativeMouseMode(true);
+				} else {
+					// Can't adjust that.
+					selection.frame_bulk_index = 0;
+				}
+			}
+
+			if (selection.frame_bulk_index > 0 && right_pressed && !right_got_pressed) {
+				auto& frame_bulk = input.frame_bulks[selection.frame_bulk_index];
+				if (frame_bulk.ChangePresent) {
+					float new_target = 0;
+
+					switch (frame_bulk.GetChangeTarget()) {
+						case HLTAS::ChangeTarget::YAW:
+						case HLTAS::ChangeTarget::TARGET_YAW:
+							new_target = cl.last_viewangles[1];
+							break;
+						case HLTAS::ChangeTarget::PITCH:
+							new_target = cl.last_viewangles[0];
+							break;
+					}
+
+					if (frame_bulk.GetChangeFinalValue() != new_target) {
+						frame_bulk.SetChangeFinalValue(new_target);
+						stale_index = selection.frame_bulk_index;
+					}
+				} else if (frame_bulk.AlgorithmParametersPresent) {
+					auto parameters = frame_bulk.GetAlgorithmParameters();
+					assert(parameters.Type == HLTAS::ConstraintsType::YAW);
+					if (parameters.Parameters.Yaw.Yaw != cl.last_viewangles[1]) {
+						parameters.Parameters.Yaw.Yaw = cl.last_viewangles[1];
+						frame_bulk.SetAlgorithmParameters(parameters);
+						stale_index = selection.frame_bulk_index;
+					}
+				} else {
+					assert(false);
+				}
+			}
+
+			if (right_got_released) {
+				if (origin_before_rmb_adjustment != Vector()) {
+					hw.cameraOverrideOrigin = origin_before_rmb_adjustment;
+					hw.SetViewangles(angles_before_rmb_adjustment);
+				}
+				origin_before_rmb_adjustment = Vector();
+				angles_before_rmb_adjustment = Vector();
+
+				ClientDLL::GetInstance().SetMouseState(false);
+				SDL::GetInstance().SetRelativeMouseMode(false);
+			}
+
 			if (closest_frame > 0 && closest_frame < player_datas.size() && hw.tas_editor_insert_point) {
 				// Figure out, before or in the middle of which frame bulk the line will go.
 				auto split_at = closest_frame;

@@ -472,7 +472,7 @@ protected:
 	void SetTASLogging(bool enabled);
 
 	bool isOverridingCamera = false;
-	float cameraOverrideOrigin[3];
+	Vector cameraOverrideOrigin;
 	float cameraOverrideAngles[3];
 	bool isOffsettingCamera = false;
 	float cameraOffsetOrigin[3];

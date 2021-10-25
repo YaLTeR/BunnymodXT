@@ -2910,6 +2910,22 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Set_Change_Type
+{
+	USAGE("Usage: bxt_tas_editor_set_change_type <type>\n Set type of change for a point in the camera editor. Valid types are target_yaw, yaw, pitch.\n");
+
+	static void handler(const char *what)
+	{
+		if (!strcmp(what, "target_yaw")) {
+			HwDLL::GetInstance().tas_editor_set_change_to_target_yaw = true;
+		} else if (!strcmp(what, "yaw")) {
+			HwDLL::GetInstance().tas_editor_set_change_to_yaw = true;
+		} else if (!strcmp(what, "pitch")) {
+			HwDLL::GetInstance().tas_editor_set_change_to_pitch = true;
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_FreeCam
 {
 	USAGE("Usage: bxt_freecam <0|1>\n Enables the freecam mode. Most useful when paused with bxt_unlock_camera_during_pause 1.\n");
@@ -3316,6 +3332,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Pitch, Handler<float>>("bxt_tas_editor_set_pitch");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Yaw, Handler<float>>("bxt_tas_editor_set_yaw");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle, Handler<const char*>>("bxt_tas_editor_toggle");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Change_Type, Handler<const char*>>("bxt_tas_editor_set_change_type");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save, Handler<>>("bxt_tas_editor_set_run_point_and_save");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Last_Point, Handler<>>("bxt_tas_editor_delete_last_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Point, Handler<>>("bxt_tas_editor_delete_point");

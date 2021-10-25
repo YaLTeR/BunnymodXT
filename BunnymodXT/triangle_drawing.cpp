@@ -926,6 +926,39 @@ namespace TriangleDrawing
 				SDL::GetInstance().SetRelativeMouseMode(false);
 			}
 
+			if (selection.frame_bulk_index > 0 && (hw.tas_editor_set_change_to_target_yaw || hw.tas_editor_set_change_to_yaw || hw.tas_editor_set_change_to_pitch)) {
+				auto& frame_bulk = input.frame_bulks[selection.frame_bulk_index];
+				if (frame_bulk.ChangePresent) {
+					const auto it = std::find_if(key_frames.begin(), key_frames.end(), [&](const KeyFrame& item){
+						return item.type == KeyFrameType::CHANGE_END && item.frame_bulk_index == selection.frame_bulk_index;
+					});
+					if (it != key_frames.end() && it->frame < player_datas.size()) {
+						const auto target = frame_bulk.GetChangeTarget();
+						if (hw.tas_editor_set_change_to_target_yaw && target != HLTAS::ChangeTarget::TARGET_YAW) {
+							if (target == HLTAS::ChangeTarget::PITCH)
+								frame_bulk.SetChangeFinalValue(player_datas[it->frame].Viewangles[1]);
+
+							frame_bulk.SetChangeTarget(HLTAS::ChangeTarget::TARGET_YAW);
+							stale_index = selection.frame_bulk_index;
+						}
+						if (hw.tas_editor_set_change_to_yaw && target != HLTAS::ChangeTarget::YAW) {
+							if (target == HLTAS::ChangeTarget::PITCH)
+								frame_bulk.SetChangeFinalValue(player_datas[it->frame].Viewangles[1]);
+
+							frame_bulk.SetChangeTarget(HLTAS::ChangeTarget::YAW);
+							stale_index = selection.frame_bulk_index;
+						}
+						if (hw.tas_editor_set_change_to_pitch && target != HLTAS::ChangeTarget::PITCH) {
+							if (target != HLTAS::ChangeTarget::PITCH)
+								frame_bulk.SetChangeFinalValue(player_datas[it->frame].Viewangles[0]);
+
+							frame_bulk.SetChangeTarget(HLTAS::ChangeTarget::PITCH);
+							stale_index = selection.frame_bulk_index;
+						}
+					}
+				}
+			}
+
 			if (closest_frame > 0 && closest_frame < player_datas.size() && hw.tas_editor_insert_point) {
 				// Figure out, before or in the middle of which frame bulk the line will go.
 				auto split_at = closest_frame;
@@ -1613,6 +1646,9 @@ namespace TriangleDrawing
 		hw.tas_editor_toggle_attack1 = false;
 		hw.tas_editor_toggle_attack2 = false;
 		hw.tas_editor_toggle_reload = false;
+		hw.tas_editor_set_change_to_target_yaw = false;
+		hw.tas_editor_set_change_to_yaw = false;
+		hw.tas_editor_set_change_to_pitch = false;
 		hw.tas_editor_set_yaw = false;
 		hw.tas_editor_set_pitch = false;
 		hw.tas_editor_set_repeats = false;

@@ -335,6 +335,9 @@ namespace TriangleDrawing
 		// For CHANGE_END this is the change line.
 		size_t frame_bulk_index;
 		size_t frame;
+		// For change start this is the end, for change end this is the start.
+		// If 0, it is invalid.
+		size_t other_frame;
 	};
 
 	struct Selection {
@@ -343,6 +346,9 @@ namespace TriangleDrawing
 		size_t frame_bulk_index;
 		size_t initial_frame;
 		size_t last_frame;
+		// For change start this is the end, for change end this is the start.
+		// If 0, it is invalid.
+		size_t other_frame;
 	};
 
 	static void DrawTASEditor(triangleapi_s *pTriAPI)
@@ -439,122 +445,26 @@ namespace TriangleDrawing
 		size_t stale_index = std::numeric_limits<size_t>::max();
 
 		if (CVars::bxt_tas_editor_camera_editor.GetBool()) {
-			// Draw the camera angles.
-			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
-				const auto origin = Vector(player_datas[frame].Origin);
-
-				if (frame >= input.first_predicted_frame)
-					pTriAPI->Color4f(0.1f, 0.1f, 1, 1);
-				else
-					pTriAPI->Color4f(0.4f, 0.4f, 1, 1);
-
-				auto forward = cl.AnglesToForward(player_datas[frame].Viewangles);
-				TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 5);
-			}
-
-			size_t closest_frame = 0;
-			float closest_frame_px_dist = INFINITY;
-
-			// Draw the path.
-			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
-				const auto origin = Vector(player_datas[frame].Origin);
-
-				if (frame >= input.first_predicted_frame)
-					pTriAPI->Color4f(0.5f, 0.5f, 0.5f, 1);
-				else
-					pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
-
-				const auto prev_origin = Vector(player_datas[frame - 1].Origin);
-				TriangleUtils::DrawLine(pTriAPI, prev_origin, origin);
-
-				// If we're inserting, we need to find the closest frame.
-				if (hw.tas_editor_insert_point_held) {
-					auto disp = origin - view;
-					if (DotProduct(forward, disp) > 0) {
-						Vector origin_ = origin;
-						Vector screen_point;
-						pTriAPI->WorldToScreen(origin_, screen_point);
-						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
-						auto dist = (screen_point_px - mouse).Length();
-
-						if (dist < closest_frame_px_dist) {
-							closest_frame = frame;
-							closest_frame_px_dist = dist;
-						}
-					}
-				}
-			}
-
 			vector<KeyFrame> key_frames;
 
-			// Draw the key frames.
+			// Find the key frames.
 			for (size_t i = 0; i < frame_bulk_starts.size() - 1; ++i) {
 				auto& line = input.frame_bulks[i];
 
 				const auto frame = frame_bulk_starts[i];
-				const auto& player = player_datas[frame];
 
-				pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
-
-				// TODO: we want the previous position to compute the perpendicular.
+				// We want the previous position to compute the perpendicular.
 				if (frame == 0)
 					continue;
 
-				// TODO: we want the next player data to get next angles and position.
+				// We want the next player data to get next angles and position.
 				if (frame + 1 >= player_datas.size())
 					continue;
 
-				Vector prev_origin = player_datas[frame - 1].Origin;
-				Vector origin = player.Origin;
-				Vector next_origin = player_datas[frame + 1].Origin;
-				auto perp = perpendicular(prev_origin, origin);
-				perp *= 5;
-				Vector a = origin - perp, b = origin + perp;
-
 				if (line.AlgorithmParametersPresent) {
-					TriangleUtils::DrawLine(pTriAPI, a, b);
-
-					switch (line.GetAlgorithmParameters().Type) {
-						case HLTAS::ConstraintsType::VELOCITY:
-						case HLTAS::ConstraintsType::VELOCITY_AVG:
-						case HLTAS::ConstraintsType::VELOCITY_LOCK:
-							pTriAPI->Color4f(0, 1, 0, 1);
-							break;
-						case HLTAS::ConstraintsType::YAW:
-						case HLTAS::ConstraintsType::YAW_RANGE:
-							pTriAPI->Color4f(0, 1, 1, 1);
-							break;
-					}
-
-					Vector next_angles = player_datas[frame + 1].Viewangles;
-					next_angles[0] = 0;
-					next_angles[2] = 0;
-					auto forward = cl.AnglesToForward(next_angles);
-					TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 20);
-
-					key_frames.emplace_back(KeyFrame { KeyFrameType::FRAME_BULK, i, frame });
+					key_frames.emplace_back(KeyFrame { KeyFrameType::FRAME_BULK, i, frame, frame });
 				} else if (line.ChangePresent) {
-					// Draw an arrow head facing back to mark the start of the change.
-					auto diff = (next_origin - origin).Normalize() * 5;
-					TriangleUtils::DrawLine(pTriAPI, a + diff, origin);
-					TriangleUtils::DrawLine(pTriAPI, origin, b + diff);
-
-					Vector next_angles = player_datas[frame + 1].Viewangles;
-					next_angles[2] = 0;
-					switch (line.GetChangeTarget()) {
-						case HLTAS::ChangeTarget::YAW:
-						case HLTAS::ChangeTarget::TARGET_YAW:
-							next_angles[0] = 0;
-							break;
-						default:
-							break;
-					}
-
-					auto forward = cl.AnglesToForward(next_angles);
-					pTriAPI->Color4f(1, 0, 0, 1);
-					TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 20);
-
-					key_frames.emplace_back(KeyFrame { KeyFrameType::FRAME_BULK, i, frame });
+					key_frames.emplace_back(KeyFrame{KeyFrameType::FRAME_BULK, i, frame, 0});
 
 					// Find the end of the change.
 					auto time_left = line.GetChangeOver();
@@ -590,42 +500,14 @@ namespace TriangleDrawing
 					}
 
 					if (time_left <= 0 && next_frame < player_datas.size()) {
-						Vector prev_origin = player_datas[next_frame - 1].Origin;
-						Vector origin = player_datas[next_frame].Origin;
-						auto perp = perpendicular(prev_origin, origin);
-						perp *= 5;
-						Vector a = origin - perp, b = origin + perp;
-
-						// Draw an arrow head facing forward to mark the end of the change.
-						auto diff = (prev_origin - origin).Normalize() * 5;
-						pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
-						TriangleUtils::DrawLine(pTriAPI, a + diff, origin);
-						TriangleUtils::DrawLine(pTriAPI, origin, b + diff);
-
-						Vector angles = player_datas[next_frame].Viewangles;
-						angles[2] = 0;
-						switch (line.GetChangeTarget()) {
-							case HLTAS::ChangeTarget::YAW:
-							case HLTAS::ChangeTarget::TARGET_YAW:
-								angles[0] = 0;
-								angles[1] = line.GetChangeFinalValue();
-								break;
-							case HLTAS::ChangeTarget::PITCH:
-								angles[0] = line.GetChangeFinalValue();
-								break;
-						}
-
-						auto forward = cl.AnglesToForward(angles);
-						pTriAPI->Color4f(1, 1, 0, 1);
-						TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 20);
-
-						key_frames.emplace_back(KeyFrame { KeyFrameType::CHANGE_END, i, next_frame });
+						key_frames.back().other_frame = next_frame;
+						key_frames.emplace_back(KeyFrame{KeyFrameType::CHANGE_END, i, next_frame, frame});
 					}
 				}
 			}
 
 			// Find the closest key frame.
-			static Selection selection { KeyFrameType::FRAME_BULK, 0, 0, 0 };
+			static Selection selection { KeyFrameType::FRAME_BULK, 0, 0, 0, 0 };
 
 			if (left_pressed || middle_pressed || right_pressed || mouse4_pressed || hw.tas_editor_insert_point_held) {
 				// Don't change the selected frame bulk while dragging.
@@ -649,7 +531,150 @@ namespace TriangleDrawing
 							selection.frame_bulk_index = key_frame.frame_bulk_index;
 							selection.initial_frame = key_frame.frame;
 							selection.last_frame = key_frame.frame;
+							selection.other_frame = key_frame.other_frame;
 						}
+					}
+				}
+			}
+
+			// Draw the camera angles.
+			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
+				const auto origin = Vector(player_datas[frame].Origin);
+
+				if (frame >= input.first_predicted_frame)
+					pTriAPI->Color4f(0.1f, 0.1f, 1, 1);
+				else
+					pTriAPI->Color4f(0.4f, 0.4f, 1, 1);
+
+				auto forward = cl.AnglesToForward(player_datas[frame].Viewangles);
+				TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 5);
+			}
+
+			size_t closest_frame = 0;
+			float closest_frame_px_dist = INFINITY;
+
+			// Draw the path.
+			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
+				const auto origin = Vector(player_datas[frame].Origin);
+
+				float brightness;
+				if (frame >= input.first_predicted_frame)
+					brightness = 0.5f;
+				else
+					brightness = 0.8f;
+
+				// Brighten up the area covered by selection.
+				if (selection.frame_bulk_index > 0 && selection.other_frame != 0 &&
+						// TODO: Dragging changes last_frame in a way not compatible with this check.
+						!left_pressed &&
+						frame > std::min(selection.last_frame, selection.other_frame) &&
+						frame <= std::max(selection.last_frame, selection.other_frame))
+					brightness = 1;
+
+				pTriAPI->Color4f(brightness, brightness, brightness, 1);
+
+				const auto prev_origin = Vector(player_datas[frame - 1].Origin);
+				TriangleUtils::DrawLine(pTriAPI, prev_origin, origin);
+
+				// If we're inserting, we need to find the closest frame.
+				if (hw.tas_editor_insert_point_held) {
+					auto disp = origin - view;
+					if (DotProduct(forward, disp) > 0) {
+						Vector origin_ = origin;
+						Vector screen_point;
+						pTriAPI->WorldToScreen(origin_, screen_point);
+						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
+						auto dist = (screen_point_px - mouse).Length();
+
+						if (dist < closest_frame_px_dist) {
+							closest_frame = frame;
+							closest_frame_px_dist = dist;
+						}
+					}
+				}
+			}
+
+			// Draw the key frames.
+			for (const auto& item : key_frames) {
+				const auto frame = item.frame;
+				const auto& line = input.frame_bulks[item.frame_bulk_index];
+
+				if (item.frame_bulk_index == selection.frame_bulk_index && item.frame == selection.last_frame)
+					pTriAPI->Color4f(1, 1, 1, 1);
+				else
+					pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
+
+				Vector prev_origin = player_datas[frame - 1].Origin;
+				Vector origin = player_datas[frame].Origin;
+				Vector next_origin = player_datas[frame + 1].Origin;
+
+				auto perp = perpendicular(prev_origin, origin);
+				perp *= 5;
+				Vector a = origin - perp, b = origin + perp;
+
+				if (line.AlgorithmParametersPresent) {
+					TriangleUtils::DrawLine(pTriAPI, a, b);
+
+					switch (line.GetAlgorithmParameters().Type) {
+						case HLTAS::ConstraintsType::VELOCITY:
+						case HLTAS::ConstraintsType::VELOCITY_AVG:
+						case HLTAS::ConstraintsType::VELOCITY_LOCK:
+							pTriAPI->Color4f(0, 1, 0, 1);
+							break;
+						case HLTAS::ConstraintsType::YAW:
+						case HLTAS::ConstraintsType::YAW_RANGE:
+							pTriAPI->Color4f(0, 1, 1, 1);
+							break;
+					}
+
+					Vector next_angles = player_datas[frame + 1].Viewangles;
+					next_angles[0] = 0;
+					next_angles[2] = 0;
+					auto forward = cl.AnglesToForward(next_angles);
+					TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 20);
+				} else if (line.ChangePresent) {
+					if (item.type == KeyFrameType::FRAME_BULK) {
+						// Draw an arrow head facing back to mark the start of the change.
+						auto diff = (next_origin - origin).Normalize() * 5;
+						TriangleUtils::DrawLine(pTriAPI, a + diff, origin);
+						TriangleUtils::DrawLine(pTriAPI, origin, b + diff);
+
+						Vector next_angles = player_datas[frame + 1].Viewangles;
+						next_angles[2] = 0;
+						switch (line.GetChangeTarget()) {
+							case HLTAS::ChangeTarget::YAW:
+							case HLTAS::ChangeTarget::TARGET_YAW:
+								next_angles[0] = 0;
+								break;
+							default:
+								break;
+						}
+
+						auto forward = cl.AnglesToForward(next_angles);
+						pTriAPI->Color4f(1, 0, 0, 1);
+						TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 20);
+					} else {
+						// Draw an arrow head facing forward to mark the end of the change.
+						auto diff = (prev_origin - origin).Normalize() * 5;
+						TriangleUtils::DrawLine(pTriAPI, a + diff, origin);
+						TriangleUtils::DrawLine(pTriAPI, origin, b + diff);
+
+						Vector angles = player_datas[frame].Viewangles;
+						angles[2] = 0;
+						switch (line.GetChangeTarget()) {
+							case HLTAS::ChangeTarget::YAW:
+							case HLTAS::ChangeTarget::TARGET_YAW:
+								angles[0] = 0;
+								angles[1] = line.GetChangeFinalValue();
+								break;
+							case HLTAS::ChangeTarget::PITCH:
+								angles[0] = line.GetChangeFinalValue();
+								break;
+						}
+
+						auto forward = cl.AnglesToForward(angles);
+						pTriAPI->Color4f(1, 1, 0, 1);
+						TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 20);
 					}
 				}
 			}

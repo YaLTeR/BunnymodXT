@@ -905,7 +905,13 @@ namespace TriangleDrawing
 					angles_before_rmb_adjustment = cl.last_viewangles;
 
 					hw.SetViewangles(viewangles);
-					hw.cameraOverrideOrigin = player_datas[selection.initial_frame].Origin;
+
+					const auto& player = player_datas[selection.initial_frame];
+					hw.cameraOverrideOrigin = player.Origin;
+					if (player.Ducking)
+						hw.cameraOverrideOrigin[2] += 12;
+					else
+						hw.cameraOverrideOrigin[2] += 28;
 
 					ClientDLL::GetInstance().SetMouseState(true);
 					SDL::GetInstance().SetRelativeMouseMode(true);
@@ -923,7 +929,13 @@ namespace TriangleDrawing
 					angles_before_rmb_adjustment = cl.last_viewangles;
 
 					hw.SetViewangles(viewangles);
-					hw.cameraOverrideOrigin = player_datas[selection.initial_frame].Origin;
+
+					const auto& player = player_datas[selection.initial_frame];
+					hw.cameraOverrideOrigin = player.Origin;
+					if (player.Ducking)
+						hw.cameraOverrideOrigin[2] += 12;
+					else
+						hw.cameraOverrideOrigin[2] += 28;
 
 					ClientDLL::GetInstance().SetMouseState(true);
 					SDL::GetInstance().SetRelativeMouseMode(true);

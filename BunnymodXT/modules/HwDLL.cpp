@@ -407,7 +407,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_EmitWaterPolys, HOOKED_EmitWaterPolys,
 			ORIG_S_StartDynamicSound, HOOKED_S_StartDynamicSound,
 			ORIG_VGuiWrap2_NotifyOfServerConnect, HOOKED_VGuiWrap2_NotifyOfServerConnect,
-			ORIG_R_StudioSetupBones, HOOKED_R_StudioSetupBones);
+			ORIG_R_StudioSetupBones, HOOKED_R_StudioSetupBones,
+			ORIG_CBaseUI__HideGameUI, HOOKED_CBaseUI__HideGameUI);
 	}
 }
 
@@ -455,7 +456,8 @@ void HwDLL::Unhook()
 			ORIG_EmitWaterPolys,
 			ORIG_S_StartDynamicSound,
 			ORIG_VGuiWrap2_NotifyOfServerConnect,
-			ORIG_R_StudioSetupBones);
+			ORIG_R_StudioSetupBones,
+			ORIG_CBaseUI__HideGameUI);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -1032,6 +1034,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(EmitWaterPolys)
 		DEF_FUTURE(S_StartDynamicSound)
 		DEF_FUTURE(VGuiWrap2_NotifyOfServerConnect)
+		DEF_FUTURE(CBaseUI__HideGameUI)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1647,6 +1650,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(EmitWaterPolys);
 		GET_FUTURE(S_StartDynamicSound);
 		GET_FUTURE(VGuiWrap2_NotifyOfServerConnect);
+		GET_FUTURE(CBaseUI__HideGameUI);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);

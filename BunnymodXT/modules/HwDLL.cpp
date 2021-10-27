@@ -587,6 +587,8 @@ void HwDLL::Clear()
 	SharedRNGSeedCounter = 0;
 	QueuedSharedRNGSeeds = 0;
 	LoadingSeedCounter = 0;
+	TargetYawOverrideIndex = 0;
+	TargetYawOverrides.clear();
 	lastLoadedMap.clear();
 	isOverridingCamera = false;
 	isOffsettingCamera = false;
@@ -1734,6 +1736,8 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		hw.thisFrameIs0ms = false;
 		hw.hltas_filename = fileName;
 		hw.clearedImpulsesForTheFirstTime = false;
+		hw.TargetYawOverrideIndex = 0;
+		hw.TargetYawOverrides.clear();
 
 		simulation_ipc::maybe_lock_mutex();
 		auto err = hw.input.Open(fileName);
@@ -3460,6 +3464,18 @@ void HwDLL::InsertCommands()
 				PrevFraction = p.fractions[0];
 				PrevNormalz = p.normalzs[0];
 
+				if (TargetYawOverrideIndex == TargetYawOverrides.size()) {
+					TargetYawOverrides.clear();
+					TargetYawOverrideIndex = 0;
+				}
+
+				if (TargetYawOverrides.empty()) {
+					StrafeState.TargetYawOverrideActive = false;
+				} else {
+					StrafeState.TargetYawOverride = TargetYawOverrides[TargetYawOverrideIndex++];
+					StrafeState.TargetYawOverrideActive = true;
+				}
+
 				f.ResetAutofuncs();
 
 				resulting_frame.SetPitch(p.Pitch);
@@ -3864,6 +3880,11 @@ void HwDLL::InsertCommands()
 					assert(false);
 					break;
 				}
+			} else if (!f.TargetYawOverride.empty()) {
+				TargetYawOverrides = f.TargetYawOverride;
+				StrafeState.TargetYawOverrideActive = true;
+				StrafeState.TargetYawOverride = TargetYawOverrides[0];
+				TargetYawOverrideIndex = 1;
 			}
 
 			currentFramebulk++;

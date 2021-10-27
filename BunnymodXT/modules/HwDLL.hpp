@@ -517,6 +517,8 @@ protected:
 	bool CountingSharedRNGSeed;
 	unsigned SharedRNGSeedCounter;
 	unsigned LoadingSeedCounter;
+	size_t TargetYawOverrideIndex;
+	std::vector<float> TargetYawOverrides;
 public:
 	bool ButtonsPresent;
 	HLTAS::StrafeButtons Buttons;

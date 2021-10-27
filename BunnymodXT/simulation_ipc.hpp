@@ -3,7 +3,7 @@
 #include <string>
 
 namespace simulation_ipc {
-	// Frame data sent from the simulator client to the server.
+	// Frame data sent from the simulator client to the server. Must be plain old data.
 	struct SimulatedFrame {
 		unsigned generation;
 		size_t number;

@@ -256,6 +256,11 @@ extern "C" char* __cdecl MD5_Print(unsigned char hash[16])
 {
 	return HwDLL::HOOKED_MD5_Print(hash);
 }
+
+extern "C" void __fastcall _ZN7CBaseUI10HideGameUIEv(void* thisptr)
+{
+	return HwDLL::HOOKED_CBaseUI__HideGameUI(thisptr);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -360,6 +365,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_S_StartDynamicSound);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_NotifyOfServerConnect);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioSetupBones);
+			MemUtils::MarkAsExecutable(ORIG_CBaseUI__HideGameUI);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -402,7 +408,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_EmitWaterPolys, HOOKED_EmitWaterPolys,
 			ORIG_S_StartDynamicSound, HOOKED_S_StartDynamicSound,
 			ORIG_VGuiWrap2_NotifyOfServerConnect, HOOKED_VGuiWrap2_NotifyOfServerConnect,
-			ORIG_R_StudioSetupBones, HOOKED_R_StudioSetupBones);
+			ORIG_R_StudioSetupBones, HOOKED_R_StudioSetupBones,
+			ORIG_CBaseUI__HideGameUI, HOOKED_CBaseUI__HideGameUI);
 	}
 }
 
@@ -450,7 +457,8 @@ void HwDLL::Unhook()
 			ORIG_EmitWaterPolys,
 			ORIG_S_StartDynamicSound,
 			ORIG_VGuiWrap2_NotifyOfServerConnect,
-			ORIG_R_StudioSetupBones);
+			ORIG_R_StudioSetupBones,
+			ORIG_CBaseUI__HideGameUI);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -524,6 +532,7 @@ void HwDLL::Clear()
 	ORIG_MD5Transform = nullptr;
 	ORIG_MD5_Hash_File = nullptr;
 	ORIG_MD5_Print = nullptr;
+	ORIG_CBaseUI__HideGameUI = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -587,6 +596,7 @@ void HwDLL::Clear()
 	insideHost_Changelevel2_f = false;
 	dontStopAutorecord = false;
 	insideRStudioCalcAttachmentsViewmodel = false;
+	insideHideGameUI = false;
 	hltas_filename.clear();
 	newTASFilename.clear();
 	newTASResult.Clear();
@@ -804,6 +814,12 @@ void HwDLL::FindStuff()
 			EngineWarning("[hw dll] Weapon special effects will be misplaced when using bxt_viewmodel_fov.\n");
 		}
 
+		ORIG_CBaseUI__HideGameUI = reinterpret_cast<_CBaseUI__HideGameUI>(MemUtils::GetSymbolAddress(m_Handle, "_ZN7CBaseUI10HideGameUIEv"));
+		if (ORIG_CBaseUI__HideGameUI)
+			EngineDevMsg("[hw dll] Found CBaseUI__HideGameUI at %p.\n", ORIG_CBaseUI__HideGameUI);
+		else
+			EngineDevWarning("[hw dll] Could not find CBaseUI__HideGameUI.\n");
+
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -1019,6 +1035,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(EmitWaterPolys)
 		DEF_FUTURE(S_StartDynamicSound)
 		DEF_FUTURE(VGuiWrap2_NotifyOfServerConnect)
+		DEF_FUTURE(CBaseUI__HideGameUI)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1634,6 +1651,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(EmitWaterPolys);
 		GET_FUTURE(S_StartDynamicSound);
 		GET_FUTURE(VGuiWrap2_NotifyOfServerConnect);
+		GET_FUTURE(CBaseUI__HideGameUI);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -4809,6 +4827,13 @@ HOOK_DEF_0(HwDLL, void, __cdecl, CL_Record_f)
 
 HOOK_DEF_1(HwDLL, void, __cdecl, Cbuf_AddText, const char*, text)
 {
+	// We are unpausing from the menu (pressing Esc, or console key while console is visible)
+	// and the TAS editor is in EDIT mode
+	// and HideGameUI wants to add unpause to buffer
+	// skip it
+	if (insideHideGameUI && strcmp("unpause", text) == 0 && tas_editor_mode == TASEditorMode::EDIT)
+		return;
+
 	// This isn't necessarily a bound command
 	// (because something might have been added in the VGUI handler)
 	// but until something like that comes up it should be fine.
@@ -5124,3 +5149,9 @@ HOOK_DEF_1(HwDLL, char*, __cdecl, MD5_Print, unsigned char*, hash)
 	return ORIG_MD5_Print(hash);
 }
 
+HOOK_DEF_1(HwDLL, void, __fastcall, CBaseUI__HideGameUI, void*, thisptr)
+{
+	insideHideGameUI = true;
+	ORIG_CBaseUI__HideGameUI(thisptr);
+	insideHideGameUI = false;
+}

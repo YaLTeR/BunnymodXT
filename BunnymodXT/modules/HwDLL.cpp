@@ -365,6 +365,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_S_StartDynamicSound);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_NotifyOfServerConnect);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioSetupBones);
+			MemUtils::MarkAsExecutable(ORIG_CBaseUI__HideGameUI);
 		}
 
 		MemUtils::Intercept(moduleName,

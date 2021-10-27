@@ -14,11 +14,14 @@ struct EditedInput {
 	std::vector<HLStrafe::PlayerData> player_datas;
 	std::vector<float> player_health_datas;
 	std::vector<float> player_armor_datas;
+	// Every strafe state must be good to go for simulating subsequent frame bulks without any changes.
 	std::vector<HLStrafe::CurrentState> strafe_states;
 	std::vector<float> fractions;
 	std::vector<float> normalzs;
 	std::vector<char> next_frame_is_0mss; // char instead of bool because C++ vector bool bitset.
 	std::vector<float> frametimes;
+	std::vector<std::vector<float>> target_yaw_overrides;
+	std::vector<size_t> active_target_yaw_override_indices; // 0 means none.
 
 	HLStrafe::MovementVars initial_movement_vars;
 

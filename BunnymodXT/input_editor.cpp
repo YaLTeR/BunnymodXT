@@ -18,6 +18,8 @@ void EditedInput::initialize() {
 	next_frame_is_0mss.push_back(0);
 	player_health_datas.push_back(0);
 	player_armor_datas.push_back(0);
+	target_yaw_overrides.emplace_back();
+	active_target_yaw_override_indices.push_back(0);
 
 	// TODO: replace with hw.StrafeState when the
 	// one-frame-being-run-from-tas-editor-enable-frame-bulk issue is solved.
@@ -73,6 +75,8 @@ void EditedInput::simulate() {
 	// and before simulating the next movement frame.
 	bool safe_to_exit_early = false;
 
+	std::vector<float> target_yaw_override_to_push;
+
 	for (size_t index = first_frame_bulk; index < frame_bulks.size(); ++index) {
 		const auto& frame_bulk = frame_bulks[index];
 
@@ -102,6 +106,10 @@ void EditedInput::simulate() {
 					assert(false);
 					break;
 				}
+			} else if (!frame_bulk.TargetYawOverride.empty()) {
+				target_yaw_override_to_push = frame_bulk.TargetYawOverride;
+				strafe_state.TargetYawOverride = target_yaw_override_to_push[0];
+				strafe_state.TargetYawOverrideActive = true;
 			}
 
 			safe_to_exit_early = false;
@@ -164,6 +172,45 @@ void EditedInput::simulate() {
 			// PredictThis is needed because 0ms frames are batched client-side. Since we're
 			// re-using the HLStrafe prediction, here they are already predicted.
 			strafe_state.PredictThis = HLStrafe::State0ms::NOTHING;
+
+			// Update the target yaw override state.
+			if (strafe_state.TargetYawOverrideActive) {
+				if (target_yaw_override_to_push.empty()) {
+					// This is an old override.
+					const auto override_index = active_target_yaw_override_indices.back();
+					const auto& override = target_yaw_overrides[override_index];
+					// The yaw advances every frame, so compute the yaw index using the number of frames since the override.
+					const auto yaw_index = player_datas.size() + 1 - override_index;
+					if (yaw_index >= override.size()) {
+						// The override has run out, or (the `>` case) the override was before the edited area.
+						strafe_state.TargetYawOverrideActive = false;
+						active_target_yaw_override_indices.push_back(0);
+					} else {
+						// Prepare the next yaw override.
+						strafe_state.TargetYawOverride = override[yaw_index];
+						active_target_yaw_override_indices.push_back(override_index);
+					}
+				} else {
+					// This is a new override.
+					if (target_yaw_override_to_push.size() == 1) {
+						// It had just 1 entry and we just used it.
+						strafe_state.TargetYawOverrideActive = false;
+					} else {
+						// There are more entries, prepare to use the next one.
+						strafe_state.TargetYawOverride = target_yaw_override_to_push[1];
+					}
+
+					// Push its index.
+					active_target_yaw_override_indices.push_back(target_yaw_overrides.size());
+				}
+			} else {
+				// Target yaw override is inactive.
+				active_target_yaw_override_indices.push_back(0);
+			}
+
+			// Push either new or empty target yaw override.
+			target_yaw_overrides.emplace_back(std::move(target_yaw_override_to_push));
+			target_yaw_override_to_push.clear();
 
 			player_datas.push_back(player);
 			strafe_states.push_back(strafe_state);
@@ -234,6 +281,8 @@ void EditedInput::mark_as_stale(size_t frame_bulk_index) {
 	normalzs.erase(normalzs.begin() + first_frame + 1, normalzs.end());
 	next_frame_is_0mss.erase(next_frame_is_0mss.begin() + first_frame + 1, next_frame_is_0mss.end());
 	frametimes.erase(frametimes.begin() + first_frame + 1, frametimes.end());
+	target_yaw_overrides.erase(target_yaw_overrides.begin() + first_frame + 1, target_yaw_overrides.end());
+	active_target_yaw_override_indices.erase(active_target_yaw_override_indices.begin() + first_frame + 1, active_target_yaw_override_indices.end());
 	first_predicted_frame = std::min(first_predicted_frame, first_frame + 1);
 
 	schedule_run_in_second_game();
@@ -280,6 +329,8 @@ void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
 	normalzs.erase(normalzs.begin() + last_frame + 1, normalzs.end());
 	next_frame_is_0mss.erase(next_frame_is_0mss.begin() + last_frame + 1, next_frame_is_0mss.end());
 	frametimes.erase(frametimes.begin() + last_frame + 1, frametimes.end());
+	target_yaw_overrides.erase(target_yaw_overrides.begin() + last_frame + 1, target_yaw_overrides.end());
+	active_target_yaw_override_indices.erase(active_target_yaw_override_indices.begin() + last_frame + 1, active_target_yaw_override_indices.end());
 
 	// Update the frame count.
 	if (frame_bulk_index + 1 < frame_bulk_starts.size())

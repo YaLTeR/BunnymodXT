@@ -461,7 +461,7 @@ namespace TriangleDrawing
 				if (frame + 1 >= player_datas.size())
 					continue;
 
-				if (line.AlgorithmParametersPresent) {
+				if (line.AlgorithmParametersPresent || !line.TargetYawOverride.empty()) {
 					key_frames.emplace_back(KeyFrame { KeyFrameType::FRAME_BULK, i, frame, frame });
 				} else if (line.ChangePresent) {
 					key_frames.emplace_back(KeyFrame{KeyFrameType::FRAME_BULK, i, frame, 0});
@@ -632,6 +632,9 @@ namespace TriangleDrawing
 					next_angles[2] = 0;
 					auto forward = cl.AnglesToForward(next_angles);
 					TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 20);
+				} else if (!line.TargetYawOverride.empty()) {
+					pTriAPI->Color4f(1, 1, 0, 1);
+					TriangleUtils::DrawLine(pTriAPI, a, b);
 				} else if (line.ChangePresent) {
 					if (item.type == KeyFrameType::FRAME_BULK) {
 						// Draw an arrow head facing back to mark the start of the change.

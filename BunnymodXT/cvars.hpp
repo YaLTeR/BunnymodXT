@@ -133,6 +133,7 @@ namespace CVars
 	extern CVarWrapper bxt_stop_demo_on_changelevel;
 	extern CVarWrapper bxt_tas_editor_simulate_for_ms;
 	extern CVarWrapper bxt_tas_editor_camera_editor;
+	extern CVarWrapper bxt_tas_editor_apply_smoothing_over_s;
 	extern CVarWrapper bxt_tas_norefresh_until_last_frames;
 	extern CVarWrapper bxt_tas_write_log;
 	extern CVarWrapper bxt_tas_playback_speed;

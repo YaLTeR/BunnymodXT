@@ -638,6 +638,7 @@ void HwDLL::Clear()
 	tas_editor_set_commands = false;
 	tas_editor_unset_yaw = false;
 	tas_editor_unset_pitch = false;
+	tas_editor_apply_smoothing = false;
 	tas_editor_set_run_point_and_save = false;
 	free_cam_active = false;
 	extendPlayerTraceDistanceLimit = false;
@@ -3061,6 +3062,17 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Unset_Pitch
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Apply_Smoothing
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+		hw.tas_editor_apply_smoothing = true;
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Become_Simulator_Client
 {
 	NO_USAGE()
@@ -3238,6 +3250,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_tas_norefresh_until_last_frames);
 	RegisterCVar(CVars::bxt_tas_write_log);
 	RegisterCVar(CVars::bxt_tas_playback_speed);
+	RegisterCVar(CVars::bxt_tas_editor_apply_smoothing_over_s);
 	RegisterCVar(CVars::bxt_disable_vgui);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
@@ -3329,6 +3342,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>>("bxt_print_entities");
 
+	wrapper::Add<Cmd_BXT_TAS_Editor_Apply_Smoothing, Handler<>>("bxt_tas_editor_apply_smoothing");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Pitch, Handler<>>("bxt_tas_editor_unset_pitch");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Yaw, Handler<>>("bxt_tas_editor_unset_yaw");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Commands, Handler<const char*>>("bxt_tas_editor_set_commands");

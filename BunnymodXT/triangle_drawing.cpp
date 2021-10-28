@@ -357,6 +357,8 @@ namespace TriangleDrawing
 		using HLTAS::StrafeDir;
 		using HLTAS::StrafeType;
 		using std::vector;
+		using std::pair;
+		using std::make_pair;
 		const double M_DEG2RAD = M_PI / 180;
 
 		auto& hw = HwDLL::GetInstance();
@@ -445,6 +447,32 @@ namespace TriangleDrawing
 		size_t stale_index = std::numeric_limits<size_t>::max();
 
 		if (CVars::bxt_tas_editor_camera_editor.GetBool()) {
+			// Find the regions where global smoothing can start and stop.
+			const auto apply_smoothing_over_s = CVars::bxt_tas_editor_apply_smoothing_over_s.GetFloat();
+			float last_yaw = player_datas[0].Viewangles[1];
+			float same_yaw_duration = input.frametimes[0];
+			size_t same_yaw_started_at = 0;
+			vector<pair<size_t, size_t>> large_enough_same_yaw_regions; // start and one-past-the-end frame
+			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
+				const auto yaw = player_datas[frame].Viewangles[1];
+				const auto time = input.frametimes[frame];
+
+				if (yaw != last_yaw) {
+					if (same_yaw_duration >= apply_smoothing_over_s)
+						large_enough_same_yaw_regions.emplace_back(same_yaw_started_at, frame);
+
+					last_yaw = yaw;
+					same_yaw_duration = time;
+					same_yaw_started_at = frame;
+					continue;
+				}
+
+				same_yaw_duration += time;
+			}
+
+			if (same_yaw_duration >= apply_smoothing_over_s)
+				large_enough_same_yaw_regions.emplace_back(same_yaw_started_at, player_datas.size());
+
 			vector<KeyFrame> key_frames;
 
 			// Find the key frames.
@@ -537,14 +565,26 @@ namespace TriangleDrawing
 				}
 			}
 
+			auto smoothing_region_it = large_enough_same_yaw_regions.cbegin();
+
 			// Draw the camera angles.
 			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
 				const auto origin = Vector(player_datas[frame].Origin);
 
+				float brightness = 0.4f;
 				if (frame >= input.first_predicted_frame)
-					pTriAPI->Color4f(0.1f, 0.1f, 1, 1);
-				else
-					pTriAPI->Color4f(0.4f, 0.4f, 1, 1);
+					brightness = 0.2f;
+
+				pTriAPI->Color4f(brightness, brightness, 1, 1);
+
+				if (smoothing_region_it != large_enough_same_yaw_regions.cend()) {
+					if (frame >= smoothing_region_it->first) {
+						if (frame < smoothing_region_it->second)
+							pTriAPI->Color4f(0, brightness / 0.4f, 0, 1);
+						else
+							smoothing_region_it++;
+					}
+				}
 
 				auto forward = cl.AnglesToForward(player_datas[frame].Viewangles);
 				TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 5);
@@ -576,8 +616,8 @@ namespace TriangleDrawing
 				const auto prev_origin = Vector(player_datas[frame - 1].Origin);
 				TriangleUtils::DrawLine(pTriAPI, prev_origin, origin);
 
-				// If we're inserting, we need to find the closest frame.
-				if (hw.tas_editor_insert_point_held) {
+				// If we want to insert or apply smoothing, we need to find the closest frame.
+				if (hw.tas_editor_insert_point_held || hw.tas_editor_apply_smoothing) {
 					auto disp = origin - view;
 					if (DotProduct(forward, disp) > 0) {
 						Vector origin_ = origin;
@@ -1099,6 +1139,177 @@ namespace TriangleDrawing
 			if (selection.frame_bulk_index > 0 && hw.tas_editor_delete_point) {
 				input.frame_bulks.erase(input.frame_bulks.begin() + selection.frame_bulk_index);
 				stale_index = selection.frame_bulk_index;
+			}
+
+			if (closest_frame > 0 && closest_frame < player_datas.size() && hw.tas_editor_apply_smoothing) {
+				// Check that we're not inside a stationary (green) region.
+				if (std::find_if(large_enough_same_yaw_regions.begin(), large_enough_same_yaw_regions.end(), [&](const pair<size_t, size_t>& region) {
+					return region.first <= closest_frame && region.second > closest_frame;
+				}) == large_enough_same_yaw_regions.end()) {
+					// Find the closest preceding stationary region.
+					const auto it = std::find_if(large_enough_same_yaw_regions.rbegin(), large_enough_same_yaw_regions.rend(), [&](const pair<size_t, size_t>& region) {
+						return region.second <= closest_frame;
+					});
+					if (it != large_enough_same_yaw_regions.rend()) {
+						const auto prec_region = *it;
+
+						// Find the closest subsequent stationary region.
+						const auto it = std::find_if(large_enough_same_yaw_regions.begin(), large_enough_same_yaw_regions.end(), [&](const pair<size_t, size_t>& region) {
+							return region.first > closest_frame;
+						});
+						if (it != large_enough_same_yaw_regions.end()) {
+							const auto subs_region = *it;
+
+							// Compute first and last frames.
+							size_t first_frame;
+							float time = 0;
+							for (first_frame = prec_region.second - 1; first_frame > prec_region.first; --first_frame) {
+								time += input.frametimes[first_frame];
+								if (time + 1e-4 >= apply_smoothing_over_s)
+									break;
+							}
+
+							size_t last_frame;
+							time = 0;
+							for (last_frame = subs_region.first; last_frame < subs_region.second; ++last_frame) {
+								time += input.frametimes[last_frame];
+								if (time + 1e-4 >= apply_smoothing_over_s)
+									break;
+							}
+
+							// First, unwrap the yaws to get rid of 359 <-> 1 changes.
+							vector<float> unwrapped_yaws;
+							unwrapped_yaws.push_back(player_datas[first_frame].Viewangles[1]);
+							float current_diff = 0;
+							for (size_t i = first_frame + 1; i < last_frame; ++i) {
+								const auto yaw = player_datas[i].Viewangles[1] + current_diff;
+								const auto prev_yaw = unwrapped_yaws.back();
+								auto diff = yaw - prev_yaw;
+								while (diff >= 180) {
+									diff -= 360;
+									current_diff -= 360;
+								}
+								while (diff <= -180) {
+									diff += 360;
+									current_diff += 360;
+								}
+								unwrapped_yaws.push_back(prev_yaw + diff);
+							}
+
+							vector<float> yaws;
+							size_t i;
+
+							// Fill the first half-kernel-size worth of yaws.
+							time = 0;
+							for (i = first_frame; i < last_frame; ++i) {
+								if (time + input.frametimes[i] + 1e-4 >= apply_smoothing_over_s / 2)
+									break;
+
+								yaws.push_back(unwrapped_yaws[i - first_frame]);
+								time += input.frametimes[i];
+							}
+
+							// Figure out how much to leave at the end.
+							time = 0;
+							size_t j;
+							for (j = last_frame - 1; j > first_frame; --j) {
+								time += input.frametimes[j];
+								if (time + input.frametimes[j - 1] + 1e-4 >= apply_smoothing_over_s / 2)
+									break;
+							}
+
+							// Fill the intermediate yaws.
+							for (; i < j; ++i) {
+								// Start with the current frame.
+								float final_yaw = unwrapped_yaws[i - first_frame] * input.frametimes[i];
+
+								// Walk back half an interval.
+								time = input.frametimes[i] / 2;
+								for (size_t k = i - 1; k >= first_frame; --k) {
+									float yaw = unwrapped_yaws[k - first_frame];
+									float dt = input.frametimes[k];
+									if (time + input.frametimes[k] >= apply_smoothing_over_s / 2) {
+										// Limit the contribution of the last frame so a single low FPS frame on the edge doesn't skew the results.
+										dt = apply_smoothing_over_s / 2 - time;
+										final_yaw += yaw * dt;
+										break;
+									} else {
+										final_yaw += yaw * dt;
+										time += dt;
+									}
+								}
+
+								// Walk forward half an interval.
+								time = input.frametimes[i] / 2;
+								for (size_t k = i + 1; k < last_frame; ++k) {
+									float yaw = unwrapped_yaws[k - first_frame];
+									float dt = input.frametimes[k];
+									if (time + input.frametimes[k] >= apply_smoothing_over_s / 2) {
+										// Limit the contribution of the last frame so a single low FPS frame on the edge doesn't skew the results.
+										dt = apply_smoothing_over_s / 2 - time;
+										final_yaw += yaw * dt;
+										break;
+									} else {
+										final_yaw += yaw * dt;
+										time += dt;
+									}
+								}
+
+								yaws.push_back(final_yaw / apply_smoothing_over_s);
+							}
+
+							// Fill the last half-kernel-size worth of yaws.
+							for (; j < last_frame; ++j)
+								yaws.push_back(unwrapped_yaws[j - first_frame]);
+
+							// Insert the target yaw override line.
+
+							// Figure out, before or in the middle of which frame bulk the line will go.
+							auto split_at = first_frame;
+							for (i = 0; i < input.frame_bulks.size(); ++i) {
+								if (!input.frame_bulks[i].IsMovement())
+									continue;
+
+								if (split_at < input.frame_bulks[i].GetRepeats())
+									break;
+
+								split_at -= input.frame_bulks[i].GetRepeats();
+							}
+
+							if (i < input.frame_bulks.size()) {
+								auto frame_bulk = HLTAS::Frame();
+								frame_bulk.TargetYawOverride = yaws;
+
+								if (split_at == 0) {
+									// Put it before the frame bulk.
+									input.frame_bulks.insert(input.frame_bulks.begin() + i, frame_bulk);
+									selection.frame_bulk_index = i;
+								} else {
+									// Split the frame bulk in two and insert in the middle.
+									auto new_frame_bulk_repeats = input.frame_bulks[i].GetRepeats() - split_at;
+									input.set_repeats(i, split_at);
+									auto new_frame_bulk = input.frame_bulks[i];
+									new_frame_bulk.Commands.clear(); // So pause;bxt_tas_editor 1 doesn't copy over.
+									new_frame_bulk.Comments.clear();
+									new_frame_bulk.SetRepeats(new_frame_bulk_repeats);
+									input.frame_bulks.insert(input.frame_bulks.begin() + i + 1, new_frame_bulk);
+
+									// Insert our frame bulk in the middle.
+									input.frame_bulks.insert(input.frame_bulks.begin() + i + 1, frame_bulk);
+									selection.frame_bulk_index = i + 1;
+								}
+
+								stale_index = i;
+							}
+						} else {
+							hw.ORIG_Con_Printf("Cannot apply smoothing: there's no large enough stationary yaw region (green) after selection.\n");
+						}
+					} else {
+						hw.ORIG_Con_Printf("Cannot apply smoothing: there's no large enough stationary yaw region (green) before selection.\n");
+					}
+				} else {
+					hw.ORIG_Con_Printf("To apply smoothing you must point at a region with changing yaw (blue).\n");
+				}
 			}
 		} else {
 			size_t next_frame_bulk_start_index = 1;
@@ -1730,6 +1941,7 @@ namespace TriangleDrawing
 		hw.tas_editor_unset_yaw = false;
 		hw.tas_editor_unset_pitch = false;
 		hw.tas_editor_set_run_point_and_save = false;
+		hw.tas_editor_apply_smoothing = false;
 	}
 
 	void VidInit()

@@ -20,6 +20,7 @@ namespace CVars
 	CVarWrapper bxt_stop_demo_on_changelevel("bxt_stop_demo_on_changelevel", "0");
 	CVarWrapper bxt_tas_editor_simulate_for_ms("bxt_tas_editor_simulate_for_ms", "40");
 	CVarWrapper bxt_tas_editor_camera_editor("bxt_tas_editor_camera_editor", "0");
+	CVarWrapper bxt_tas_editor_apply_smoothing_over_s("bxt_tas_editor_apply_smoothing_over_s", "0.1");
 	CVarWrapper bxt_tas_norefresh_until_last_frames("bxt_tas_norefresh_until_last_frames", "0");
 	CVarWrapper bxt_tas_write_log("bxt_tas_write_log", "0");
 	CVarWrapper bxt_tas_playback_speed("bxt_tas_playback_speed", "1");

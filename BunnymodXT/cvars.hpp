@@ -166,6 +166,7 @@ namespace CVars
 	extern CVarWrapper bxt_show_pickup_bbox;
 	extern CVarWrapper bxt_disable_autosave;
 	extern CVarWrapper bxt_disable_changelevel;
+	extern CVarWrapper bxt_force_duck;
 
 	// Clientside CVars
 	extern CVarWrapper bxt_disable_hud;

@@ -53,6 +53,7 @@ namespace CVars
 	CVarWrapper bxt_show_pickup_bbox("bxt_show_pickup_bbox", "0");
 	CVarWrapper bxt_disable_autosave("bxt_disable_autosave", "0");
 	CVarWrapper bxt_disable_changelevel("bxt_disable_changelevel", "0");
+	CVarWrapper bxt_force_duck("bxt_force_duck", "0");
 
 	// Clientside CVars
 	CVarWrapper bxt_disable_hud("bxt_disable_hud", "0");

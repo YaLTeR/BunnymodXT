@@ -1137,6 +1137,7 @@ namespace TriangleDrawing
 			}
 
 			if (selection.frame_bulk_index > 0 && hw.tas_editor_delete_point) {
+				input.mark_as_stale(selection.frame_bulk_index);
 				input.frame_bulks.erase(input.frame_bulks.begin() + selection.frame_bulk_index);
 				stale_index = selection.frame_bulk_index;
 			}
@@ -1895,6 +1896,7 @@ namespace TriangleDrawing
 			}
 
 			if (closest_edge_frame != 0 && hw.tas_editor_delete_point) {
+				input.mark_as_stale(closest_edge_prev_frame_bulk_index);
 				input.frame_bulks.erase(input.frame_bulks.begin() + closest_edge_prev_frame_bulk_index);
 				stale_index = closest_edge_prev_frame_bulk_index;
 			}

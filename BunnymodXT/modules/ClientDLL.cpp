@@ -84,6 +84,11 @@ extern "C" void __cdecl _ZN20CStudioModelRenderer16StudioSetupBonesEv(void *this
 {
 	return ClientDLL::HOOKED_CStudioModelRenderer__StudioSetupBones_Linux(thisptr);
 }
+
+extern "C" int __cdecl HUD_AddEntity(int type, cl_entity_s* ent, char* modelname)
+{
+	return ClientDLL::HOOKED_HUD_AddEntity(type, ent, modelname);
+}
 #endif
 
 void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -588,6 +593,14 @@ bool ClientDLL::FindHUDFunctions()
 		return false;
 	}
 
+	if ((ORIG_HUD_AddEntity = reinterpret_cast<_HUD_AddEntity>(MemUtils::GetSymbolAddress(m_Handle, "HUD_AddEntity")))) {
+		EngineDevMsg("[client dll] Found HUD_AddEntity at %p.\n", HUD_AddEntity);
+	} else {
+		EngineDevWarning("[client dll] Could not find HUD_AddEntity.\n");
+		EngineWarning("bxt_show_hidden_entities_clientside is not available.\n");
+		return false;
+	}
+
 	return true;
 }
 
@@ -690,6 +703,10 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_HUD_Redraw) {
 		REG(bxt_disable_hud);
+	}
+
+	if (ORIG_HUD_AddEntity) {
+		REG(bxt_show_hidden_entities_clientside);
 	}
 	#undef REG
 }
@@ -1126,4 +1143,14 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linu
 	}
 
 	ORIG_CStudioModelRenderer__StudioSetupBones_Linux(thisptr);
+}
+
+HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent, char*, modelname)
+{
+	if (CVars::bxt_show_hidden_entities_clientside.GetBool()) {
+		ent->curstate.effects &= ~EF_NODRAW;
+		ent->curstate.rendermode = kRenderNormal;
+	}
+
+	return ORIG_HUD_AddEntity(type, ent, modelname);
 }

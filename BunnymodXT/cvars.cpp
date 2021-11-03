@@ -50,6 +50,7 @@ namespace CVars
 	CVarWrapper bxt_bhopcap("bxt_bhopcap", "1");
 	CVarWrapper bxt_timer_autostop("bxt_timer_autostop", "1");
 	CVarWrapper bxt_show_hidden_entities("bxt_show_hidden_entities", "0");
+	CVarWrapper bxt_show_hidden_entities_clientside("bxt_show_hidden_entities_clientside", "0");
 	CVarWrapper bxt_show_triggers_legacy("bxt_show_triggers_legacy", "0");
 	CVarWrapper bxt_show_pickup_bbox("bxt_show_pickup_bbox", "0");
 	CVarWrapper bxt_disable_autosave("bxt_disable_autosave", "0");
@@ -187,6 +188,7 @@ namespace CVars
 		&bxt_bhopcap,
 		&bxt_timer_autostop,
 		&bxt_show_hidden_entities,
+		&bxt_show_hidden_entities_clientside,
 		&bxt_autojump_prediction,
 		&bxt_bhopcap_prediction,
 		&bxt_show_nodes,

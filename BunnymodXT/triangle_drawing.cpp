@@ -527,7 +527,8 @@ namespace TriangleDrawing
 							break;
 					}
 
-					if (time_left <= 0 && next_frame < player_datas.size()) {
+					// We want the next player data to get next angles and position.
+					if (time_left <= 0 && next_frame + 1 < player_datas.size()) {
 						key_frames.back().other_frame = next_frame;
 						key_frames.emplace_back(KeyFrame{KeyFrameType::CHANGE_END, i, next_frame, frame});
 					}

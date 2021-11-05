@@ -554,7 +554,7 @@ namespace TriangleDrawing
 						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 						auto dist = (screen_point_px - mouse).Length();
 
-						if (dist <= selected_px_dist) {
+						if (dist < selected_px_dist) {
 							selected_px_dist = dist;
 							selection.type = key_frame.type;
 							selection.frame_bulk_index = key_frame.frame_bulk_index;
@@ -1350,7 +1350,7 @@ namespace TriangleDrawing
 						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 						auto dist = (screen_point_px - mouse).Length();
 
-						if (closest_edge_frame == 0 || dist <= closest_edge_px_dist) {
+						if (closest_edge_frame == 0 || dist < closest_edge_px_dist) {
 							closest_edge_frame = frame;
 							closest_edge_px_dist = dist;
 							closest_edge_prev_frame_bulk_index = i - 1;

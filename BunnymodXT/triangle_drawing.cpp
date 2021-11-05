@@ -1379,7 +1379,7 @@ namespace TriangleDrawing
 			// Apply color to frame bulks right before and after the selected edge.
 			size_t color_from = frame_limit;
 			size_t color_to = frame_limit;
-			if (closest_edge_frame != 0) {
+			if (closest_edge_frame != 0 && closest_edge_prev_frame_bulk_index < frame_bulk_starts.size()) {
 				color_from = frame_bulk_starts[closest_edge_prev_frame_bulk_index];
 				if (closest_edge_prev_frame_bulk_index + 2 < frame_bulk_starts.size())
 					color_to = frame_bulk_starts[closest_edge_prev_frame_bulk_index + 2];

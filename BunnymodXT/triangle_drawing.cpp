@@ -527,7 +527,8 @@ namespace TriangleDrawing
 							break;
 					}
 
-					if (time_left <= 0 && next_frame < player_datas.size()) {
+					// We want the next player data to get next angles and position.
+					if (time_left <= 0 && next_frame + 1 < player_datas.size()) {
 						key_frames.back().other_frame = next_frame;
 						key_frames.emplace_back(KeyFrame{KeyFrameType::CHANGE_END, i, next_frame, frame});
 					}
@@ -553,7 +554,7 @@ namespace TriangleDrawing
 						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 						auto dist = (screen_point_px - mouse).Length();
 
-						if (dist <= selected_px_dist) {
+						if (dist < selected_px_dist) {
 							selected_px_dist = dist;
 							selection.type = key_frame.type;
 							selection.frame_bulk_index = key_frame.frame_bulk_index;
@@ -1349,7 +1350,7 @@ namespace TriangleDrawing
 						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 						auto dist = (screen_point_px - mouse).Length();
 
-						if (closest_edge_frame == 0 || dist <= closest_edge_px_dist) {
+						if (closest_edge_frame == 0 || dist < closest_edge_px_dist) {
 							closest_edge_frame = frame;
 							closest_edge_px_dist = dist;
 							closest_edge_prev_frame_bulk_index = i - 1;
@@ -1379,7 +1380,7 @@ namespace TriangleDrawing
 			// Apply color to frame bulks right before and after the selected edge.
 			size_t color_from = frame_limit;
 			size_t color_to = frame_limit;
-			if (closest_edge_frame != 0) {
+			if (closest_edge_frame != 0 && closest_edge_prev_frame_bulk_index < frame_bulk_starts.size()) {
 				color_from = frame_bulk_starts[closest_edge_prev_frame_bulk_index];
 				if (closest_edge_prev_frame_bulk_index + 2 < frame_bulk_starts.size())
 					color_to = frame_bulk_starts[closest_edge_prev_frame_bulk_index + 2];

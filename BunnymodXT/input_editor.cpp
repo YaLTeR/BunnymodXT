@@ -318,7 +318,7 @@ void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
 	schedule_run_in_second_game();
 
 	// Invalidate all later frames, if they exist.
-	if (last_frame >= player_datas.size() - 2)
+	if (last_frame >= player_datas.size() - 1)
 		return;
 
 	player_health_datas.erase(player_health_datas.begin() + last_frame + 1, player_health_datas.end());

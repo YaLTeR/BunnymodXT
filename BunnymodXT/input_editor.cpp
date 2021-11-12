@@ -373,12 +373,13 @@ void EditedInput::run_script_in_second_game() {
 	frame_bulks[0].Commands = tas_editor_command;
 
 	std::ostringstream oss;
-	oss << "_bxt_tas_script_generation " << ++current_generation
+	oss << "_bxt_tas_script_generation " << current_generation
 	    << ";sensitivity 0;volume 0;MP3Volume 0;bxt_tas_norefresh_until_last_frames 1;bxt_tas_loadscript " << filename << '\n';
 	simulation_ipc::send_command_to_client(oss.str());
 }
 
 void EditedInput::schedule_run_in_second_game() {
+	current_generation++;
 	run_in_second_game_at = std::chrono::steady_clock::now() + 100ms;
 }
 

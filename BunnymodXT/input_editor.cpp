@@ -36,7 +36,7 @@ void EditedInput::initialize() {
 
 void EditedInput::simulate() {
 	auto start = std::chrono::steady_clock::now();
-	if (run_in_second_game_at.time_since_epoch().count() > 0) {
+	if (run_in_second_game_at.time_since_epoch().count() > 0 && start > run_in_second_game_at) {
 		run_in_second_game_at = std::chrono::steady_clock::time_point();
 		run_script_in_second_game();
 	}

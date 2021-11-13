@@ -320,6 +320,11 @@ void ClientDLL::FindStuff()
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 100)
 					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 104);
 				break;
+			case 5: // Halfquake-Trilogy
+				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 70)
+					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 74);
+				break;
 			default:
 				assert(false);
 				break;

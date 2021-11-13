@@ -496,14 +496,16 @@ namespace patterns
 			"PARANOIA",
 			"55 8B EC 81 EC C4 00 00 00 89 8D 4C FF FF FF 8B 45 14 89 45 F4 C7 45 F8 01 00 00 00 8B 8D 4C FF FF FF 8B 51 04 8B 82 60 01 00 00",
 			"CSCZDS",
-			"83 EC 4C 53 8B 5C 24 60 55 8B E9 8B D3 56 8B 45 04 81 E2 00 00 00 80 83 FA 01 57 8B 88 60 01 00 00"
+			"83 EC 4C 53 8B 5C 24 60 55 8B E9 8B D3 56 8B 45 04 81 E2 00 00 00 80 83 FA 01 57 8B 88 60 01 00 00",
+			"Cthulhu",
+			"51 53 55 56 8B F1 8B 5C 24 20 57 8B 46 04 8B 16 BF 01 00 00 00 8B 88 60 01 00 00"
 		);
 
 		PATTERNS(CPushable__Move,
 			"HL-SteamPipe",
 			"53 56 8B F1 8B 4C 24 0C 57 33 DB 8B 79 04 8B 87 A4 01 00 00 F6 C4 02 74 3A 8B 87 9C 01 00 00 85 C0 74 30 8D 90 80 00 00 00 8B 46 04",
 			"HL-WON",
-			"53 56 8B F1 57 8B 4C 24 10 33 DB 8B 79 04 8B 87 A4 01 00 00 F6 C4 02 74 40 8B 87 9C 01 00 00 85 C0 74 36 75 04 33 D2 EB 06 8D 90 80 00 00 00 8B 46 04",
+			"53 56 8B F1 57 8B 4C 24 10 33 DB 8B 79 04 8B 87 A4 01 00 00 F6 C4 02 74 ?? 8B 87 9C 01 00 00 85 C0 74 ?? 75 04 33 D2 EB 06 8D 90 80 00 00 00 8B 46 04",
 			"TWHL-Tower-2",
 			"55 8B EC 83 EC 10 83 65 FC 00 53 56 8B F1 8B 4D 08 57 8B 79 04 BB 00 02 00 00 85 9F A4 01 00 00 74 45",
 			"Halfquake-Trilogy",
@@ -611,7 +613,9 @@ namespace patterns
 			"AoMDC",
 			"55 8B EC 83 EC 4C 53 56 57 89 4D ?? 8B 45 ?? 8B 48 ?? 83 B9 ?? ?? ?? ?? 04",
 			"TWHL-Tower-2",
-			"56 8B F1 8B 46 44 8B 90 D4 00 00 00 83 FA 04 7E 1D 8B 46 30 FF B0 94 0B 00 00 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 59 6A FF E8 ?? ?? ?? ?? 8B 4E 44 8B 81 D8 00 00 00 53"
+			"56 8B F1 8B 46 44 8B 90 D4 00 00 00 83 FA 04 7E 1D 8B 46 30 FF B0 94 0B 00 00 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 59 6A FF E8 ?? ?? ?? ?? 8B 4E 44 8B 81 D8 00 00 00 53",
+			"Halfquake-Trilogy",
+			"55 8B EC 51 56 8B F1 57 8B 46 44 8B 88 D4 00 00 00 83 F9 04 7F 54 8B 90 D8 00 00 00 33"
 		);
 
 		PATTERNS(EV_GetDefaultShellInfo,
@@ -622,7 +626,9 @@ namespace patterns
 			"AoMDC",
 			"55 8B EC 83 EC 5C 53 56 57 8D 4D ?? E8 ?? ?? ?? ?? 8B 45",
 			"TWHL-Tower-2",
-			"55 8B EC 83 EC 20 56 D9 EE"
+			"55 8B EC 83 EC 20 56 D9 EE",
+			"Halfquake-Trilogy",
+			"55 8B EC 83 EC 18 83 65 ?? 00"
 		);
 
 		PATTERNS(CStudioModelRenderer__StudioSetupBones,
@@ -645,7 +651,9 @@ namespace patterns
 			"TWHL-Tower-2",
 			"55 8B EC 83 EC 48 53 56 8B F1 8B 46 30 8B 4E 44",
 			"Invasion",
-			"83 EC 44 53 55 56 8B F1 57 8B 46 30 8B 4E 44"
+			"83 EC 44 53 55 56 8B F1 57 8B 46 30 8B 4E 44",
+			"Halfquake-Trilogy",
+			"55 8B EC 83 EC 50 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56"
 		);
 	}
 
@@ -707,7 +715,9 @@ namespace patterns
 			"Halfquake-Trilogy",
 			"55 8B EC 8B 0D ?? ?? ?? ?? 8B 45 08 56 57 33 F6 89 41 04 8B FE E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 89 B0 8C 54 04 00 8B 0D ?? ?? ?? ?? 0F B6 81 5A 54 04 00",
 			"CSCZDS",
-			"A1 ?? ?? ?? ?? 8B 4C 24 04 55 56 57 33 ED 33 ?? 89 48 04 E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 33 C9 89 AA 8C 54 04 00 A1 ?? ?? ?? ?? 8A 88 5A 54 04 00 89"
+			"A1 ?? ?? ?? ?? 8B 4C 24 04 55 56 57 33 ED 33 ?? 89 48 04 E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 33 C9 89 AA 8C 54 04 00 A1 ?? ?? ?? ?? 8A 88 5A 54 04 00 89",
+			"Cthulhu",
+			"A1 ?? ?? ?? ?? 8B 4C 24 04 53 55 57 33 DB 33 FF 89 48 04 E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 33 C9 89 9A 8C 54 04 00 A1 ?? ?? ?? ?? 8A 88 5A 54 04 00 89"
 		);
 
 		PATTERNS(PM_ClipVelocity,
@@ -753,7 +763,7 @@ namespace patterns
 			"TWHL-Tower-2",
 			"55 8B EC 83 EC 20 A1 ?? ?? ?? ?? D9 EE 8B 88 68 54 04 00 89 4D F8 8B 88 6C 54 04 00 D9 58 1C A1",
 			"Echoes",
-			"55 8B EC 81 EC 94 01 00 00 56 57 A1 ?? ?? ?? ?? 8B 88 68 54 04 00 89 4D 88 8B 15 ?? ?? ?? ?? 8B 82 6C 54 04 00",
+			"55 8B EC 81 EC ?? 01 00 00 56 57 A1 ?? ?? ?? ?? 8B 88 68 54 04 00 89 4D 88 8B 15 ?? ?? ?? ?? 8B 82 6C 54 04 00",
 			"Halfquake-Trilogy",
 			"55 8B EC 81 EC E0 00 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC A1 ?? ?? ?? ?? F3 0F 10 80 68 54 04 00 F3 0F 11 45 D4 F3 0F 10 80 6C 54 04 00 83 60 1C 00"
 		);

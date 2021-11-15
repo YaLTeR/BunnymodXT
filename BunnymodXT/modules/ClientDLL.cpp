@@ -113,6 +113,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_DrawTransparentTriangles), reinterpret_cast<void*>(HOOKED_HUD_DrawTransparentTriangles));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Key_Event), reinterpret_cast<void*>(HOOKED_HUD_Key_Event));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_UpdateClientData), reinterpret_cast<void*>(HOOKED_HUD_UpdateClientData));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_AddEntity), reinterpret_cast<void*>(HOOKED_HUD_AddEntity));
 
 	if (needToIntercept)
 	{
@@ -129,6 +130,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_HUD_DrawTransparentTriangles, HOOKED_HUD_DrawTransparentTriangles,
 			ORIG_HUD_Key_Event, HOOKED_HUD_Key_Event,
 			ORIG_HUD_UpdateClientData, HOOKED_HUD_UpdateClientData,
+			ORIG_HUD_AddEntity, HOOKED_HUD_AddEntity,
 			ORIG_EV_GetDefaultShellInfo, HOOKED_EV_GetDefaultShellInfo,
 			ORIG_StudioCalcAttachments, HOOKED_StudioCalcAttachments,
 			ORIG_VectorTransform, HOOKED_VectorTransform,
@@ -159,6 +161,7 @@ void ClientDLL::Unhook()
 			ORIG_HUD_DrawTransparentTriangles,
 			ORIG_HUD_Key_Event,
 			ORIG_HUD_UpdateClientData,
+			ORIG_HUD_AddEntity,
 			ORIG_EV_GetDefaultShellInfo,
 			ORIG_StudioCalcAttachments,
 			ORIG_VectorTransform,
@@ -174,6 +177,7 @@ void ClientDLL::Unhook()
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_DrawTransparentTriangles));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Key_Event));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_UpdateClientData));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_AddEntity));
 
 	Clear();
 }
@@ -203,6 +207,7 @@ void ClientDLL::Clear()
 	ORIG_HUD_DrawTransparentTriangles = nullptr;
 	ORIG_HUD_Key_Event = nullptr;
 	ORIG_HUD_UpdateClientData = nullptr;
+	ORIG_HUD_AddEntity = nullptr;
 	ORIG_IN_ActivateMouse = nullptr;
 	ORIG_IN_DeactivateMouse = nullptr;
 	ppmove = nullptr;
@@ -459,6 +464,14 @@ void ClientDLL::FindStuff()
 		EngineDevWarning("[client dll] Could not find HUD_UpdateClientData.\n");
 	}
 
+	ORIG_HUD_AddEntity = reinterpret_cast<_HUD_AddEntity>(MemUtils::GetSymbolAddress(m_Handle, "HUD_AddEntity"));
+	if (ORIG_HUD_AddEntity) {
+		EngineDevMsg("[client dll] Found HUD_AddEntity at %p.\n", ORIG_HUD_AddEntity);
+	} else {
+		EngineDevWarning("[client dll] Could not find HUD_AddEntity.\n");
+		EngineWarning("bxt_show_hidden_entities_clientside is not available.\n");
+	}
+
 	ORIG_IN_ActivateMouse = reinterpret_cast<_IN_ActivateMouse>(MemUtils::GetSymbolAddress(m_Handle, "IN_ActivateMouse"));
 	if (ORIG_IN_ActivateMouse) {
 		EngineDevMsg("[client dll] Found IN_ActivateMouse at %p.\n", ORIG_IN_ActivateMouse);
@@ -590,14 +603,6 @@ bool ClientDLL::FindHUDFunctions()
 	} else {
 		EngineDevWarning("[client dll] Could not find HUD_Redraw.\n");
 		EngineWarning("bxt_disable_hud is not available.\n");
-		return false;
-	}
-
-	if ((ORIG_HUD_AddEntity = reinterpret_cast<_HUD_AddEntity>(MemUtils::GetSymbolAddress(m_Handle, "HUD_AddEntity")))) {
-		EngineDevMsg("[client dll] Found HUD_AddEntity at %p.\n", HUD_AddEntity);
-	} else {
-		EngineDevWarning("[client dll] Could not find HUD_AddEntity.\n");
-		EngineWarning("bxt_show_hidden_entities_clientside is not available.\n");
 		return false;
 	}
 

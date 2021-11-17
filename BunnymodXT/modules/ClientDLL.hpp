@@ -55,6 +55,8 @@ public:
 
 	void StudioAdjustViewmodelAttachments(Vector &vOrigin);
 
+	bool DoesGameDirMatch(const char *game);
+
 	unsigned short last_buttons;
 
 	// When set to false, the mouse won't move the camera.

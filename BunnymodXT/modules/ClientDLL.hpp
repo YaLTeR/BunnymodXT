@@ -72,6 +72,8 @@ protected:
 	_IN_ActivateMouse ORIG_IN_ActivateMouse;
 	typedef void(__cdecl *_IN_DeactivateMouse) ();
 	_IN_DeactivateMouse ORIG_IN_DeactivateMouse;
+	typedef int(__cdecl *_CL_IsThirdPerson) ();
+	_CL_IsThirdPerson ORIG_CL_IsThirdPerson;
 
 	void FindStuff();
 	bool FindHUDFunctions();

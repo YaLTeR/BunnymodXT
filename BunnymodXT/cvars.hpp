@@ -256,6 +256,9 @@ namespace CVars
 	extern CVarWrapper bxt_cross_bottom_line;
 	extern CVarWrapper bxt_cross_left_line;
 	extern CVarWrapper bxt_cross_right_line;
+	extern CVarWrapper bxt_viewmodel_ofs_forward;
+	extern CVarWrapper bxt_viewmodel_ofs_right;
+	extern CVarWrapper bxt_viewmodel_ofs_up;
 
 	extern const std::vector<CVarWrapper*> allCVars;
 }

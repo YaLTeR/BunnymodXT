@@ -200,6 +200,7 @@ void ClientDLL::Clear()
 	ORIG_HUD_UpdateClientData = nullptr;
 	ORIG_IN_ActivateMouse = nullptr;
 	ORIG_IN_DeactivateMouse = nullptr;
+	ORIG_CL_IsThirdPerson = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -473,6 +474,13 @@ void ClientDLL::FindStuff()
 		EngineDevWarning("[client dll] Could not find IN_DeactivateMouse.\n");
 	}
 
+	ORIG_CL_IsThirdPerson = reinterpret_cast<_CL_IsThirdPerson>(MemUtils::GetSymbolAddress(m_Handle, "CL_IsThirdPerson"));
+	if (ORIG_CL_IsThirdPerson) {
+		EngineDevMsg("[client dll] Found CL_IsThirdPerson at %p.\n", ORIG_CL_IsThirdPerson);
+	} else {
+		EngineDevWarning("[client dll] Could not find CL_IsThirdPerson.\n");
+	}
+
 	bool noBhopcap = false;
 	{
 		auto pattern = fPM_PreventMegaBunnyJumping.get();
@@ -620,6 +628,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_V_CalcRefdef) {
 		REG(bxt_unlock_camera_during_pause);
+		REG(bxt_viewmodel_ofs_forward);
+		REG(bxt_viewmodel_ofs_right);
+		REG(bxt_viewmodel_ofs_up);
 	}
 
 	if (ORIG_HUD_Init)
@@ -834,6 +845,22 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 		pparams->paused = false;
 
 	ORIG_V_CalcRefdef(pparams);
+
+	float forward_offset = CVars::bxt_viewmodel_ofs_forward.GetFloat();
+	float right_offset = CVars::bxt_viewmodel_ofs_right.GetFloat();
+	float up_offset = CVars::bxt_viewmodel_ofs_up.GetFloat();
+
+	if (pEngfuncs) {
+		auto view = pEngfuncs->GetViewModel();
+
+		if (!paused) {
+			for (int i = 0; i < 3; i++) {
+				view->origin[i] += forward_offset * pparams->forward[i] +
+					right_offset * pparams->right[i] +
+					up_offset * pparams->up[i];
+			}
+		}
+	}
 
 	if (hwDLL.GetIsOverridingCamera()) {
 		// We want to keep looking as is in freecam.
@@ -1054,6 +1081,14 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, StudioCalcAttachments_Linux, void*, thisptr
 HOOK_DEF_11(ClientDLL, void, __cdecl, EV_GetDefaultShellInfo, event_args_t*, args, float*, origin, float*, velocity, float*, ShellVelocity, float*, ShellOrigin,
             float*, forward, float*, right, float*, up, float, forwardScale, float, upScale, float, rightScale)
 {
+	if (ORIG_CL_IsThirdPerson) {
+		if (!ORIG_CL_IsThirdPerson()) {
+			rightScale += CVars::bxt_viewmodel_ofs_right.GetFloat();
+			forwardScale += CVars::bxt_viewmodel_ofs_forward.GetFloat();
+			upScale += CVars::bxt_viewmodel_ofs_up.GetFloat();
+		}
+	}
+
 	ORIG_EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, forwardScale, upScale, rightScale);
 	if (pEngfuncs)
 	{

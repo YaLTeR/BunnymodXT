@@ -757,6 +757,16 @@ void ClientDLL::StudioAdjustViewmodelAttachments(Vector &vOrigin)
 	vOrigin = last_vieworg + vOut;
 }
 
+bool ClientDLL::DoesGameDirMatch(const char *game)
+{
+	if (!pEngfuncs)
+		return false;
+
+	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
+
+	return !std::strcmp(gameDir, game);
+}
+
 HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
 {
 	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);

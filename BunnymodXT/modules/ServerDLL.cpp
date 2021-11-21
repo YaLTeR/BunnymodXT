@@ -467,6 +467,14 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
 				break;
+			case 18: // HL-Delta
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x5C8;
+				offm_iClientFOV = 0x51C;
+				offFuncIsPlayer = 0xCC;
+				offFuncCenter = 0xF8;
+				offFuncObjectCaps = 0x3C;
+				break;
 			default:
 				assert(false);
 			}

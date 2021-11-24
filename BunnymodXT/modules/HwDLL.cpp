@@ -887,7 +887,7 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found R_DrawSkyBox at %p.\n", ORIG_R_DrawSkyBox);
 		} else {
 			EngineDevWarning("[hw dll] Could not find R_DrawSkyBox.\n");
-			EngineWarning("bxt_skybox_remove is not available.\n");
+			EngineWarning("bxt_remove_skybox is not available.\n");
 		}
 
 		ORIG_SCR_UpdateScreen = reinterpret_cast<_SCR_UpdateScreen>(MemUtils::GetSymbolAddress(m_Handle, "SCR_UpdateScreen"));
@@ -975,7 +975,7 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found EmitWaterPolys at %p.\n", ORIG_EmitWaterPolys);
 		} else {
 			EngineDevWarning("[hw dll] Could not find EmitWaterPolys.\n");
-			EngineWarning("bxt_water_remove has no effect.\n");
+			EngineWarning("bxt_remove_water has no effect.\n");
 		}
 
 		const auto CL_Move = reinterpret_cast<uintptr_t>(MemUtils::GetSymbolAddress(m_Handle, "CL_Move"));
@@ -3241,9 +3241,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_autopause);
 	RegisterCVar(CVars::bxt_bhopcap);
 	RegisterCVar(CVars::bxt_interprocess_enable);
-	RegisterCVar(CVars::bxt_fade_remove);
-	RegisterCVar(CVars::bxt_skybox_remove);
-	RegisterCVar(CVars::bxt_water_remove);
+	RegisterCVar(CVars::bxt_remove_fade);
+	RegisterCVar(CVars::bxt_remove_skybox);
+	RegisterCVar(CVars::bxt_remove_water);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
 	RegisterCVar(CVars::bxt_tas_editor_camera_editor);
@@ -4780,7 +4780,7 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 {
-	if (CVars::bxt_fade_remove.GetBool())
+	if (CVars::bxt_remove_fade.GetBool())
 		return 0;
 	else
 		return ORIG_V_FadeAlpha();
@@ -4788,7 +4788,7 @@ HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawSkyBox)
 {
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_skybox_remove.GetBool())
+	if (CVars::sv_cheats.GetBool() && CVars::bxt_remove_skybox.GetBool())
 		return;
 
 	ORIG_R_DrawSkyBox();
@@ -5043,7 +5043,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (CVars::bxt_water_remove.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool()))) {
+	if (CVars::bxt_remove_water.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_remove_skybox.GetBool()))) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
@@ -5147,7 +5147,7 @@ HOOK_DEF_3(HwDLL, void, __cdecl, VectorTransform, float*, in1, float*, in2, floa
 
 HOOK_DEF_2(HwDLL, void, __cdecl, EmitWaterPolys, msurface_t *, fa, int, direction)
 {
-	if (CVars::bxt_water_remove.GetBool())
+	if (CVars::bxt_remove_water.GetBool())
 		return;
 
 	ORIG_EmitWaterPolys(fa, direction);

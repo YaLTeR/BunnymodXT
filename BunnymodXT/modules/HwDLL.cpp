@@ -257,9 +257,9 @@ extern "C" char* __cdecl MD5_Print(unsigned char hash[16])
 	return HwDLL::HOOKED_MD5_Print(hash);
 }
 
-extern "C" void __fastcall _ZN7CBaseUI10HideGameUIEv(void* thisptr)
+extern "C" void __cdecl _ZN7CBaseUI10HideGameUIEv(void* thisptr)
 {
-	return HwDLL::HOOKED_CBaseUI__HideGameUI(thisptr);
+	return HwDLL::HOOKED_CBaseUI__HideGameUI_Linux(thisptr);
 }
 #endif
 
@@ -533,6 +533,7 @@ void HwDLL::Clear()
 	ORIG_MD5_Hash_File = nullptr;
 	ORIG_MD5_Print = nullptr;
 	ORIG_CBaseUI__HideGameUI = nullptr;
+	ORIG_CBaseUI__HideGameUI_Linux = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -818,11 +819,11 @@ void HwDLL::FindStuff()
 			EngineWarning("[hw dll] Weapon special effects will be misplaced when using bxt_viewmodel_fov.\n");
 		}
 
-		ORIG_CBaseUI__HideGameUI = reinterpret_cast<_CBaseUI__HideGameUI>(MemUtils::GetSymbolAddress(m_Handle, "_ZN7CBaseUI10HideGameUIEv"));
-		if (ORIG_CBaseUI__HideGameUI)
-			EngineDevMsg("[hw dll] Found CBaseUI__HideGameUI at %p.\n", ORIG_CBaseUI__HideGameUI);
+		ORIG_CBaseUI__HideGameUI_Linux = reinterpret_cast<_CBaseUI__HideGameUI_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN7CBaseUI10HideGameUIEv"));
+		if (ORIG_CBaseUI__HideGameUI_Linux)
+			EngineDevMsg("[hw dll] Found CBaseUI::HideGameUI [Linux] at %p.\n", ORIG_CBaseUI__HideGameUI_Linux);
 		else
-			EngineDevWarning("[hw dll] Could not find CBaseUI__HideGameUI.\n");
+			EngineDevWarning("[hw dll] Could not find CBaseUI::HideGameUI [Linux].\n");
 
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
@@ -5241,5 +5242,12 @@ HOOK_DEF_1(HwDLL, void, __fastcall, CBaseUI__HideGameUI, void*, thisptr)
 {
 	insideHideGameUI = true;
 	ORIG_CBaseUI__HideGameUI(thisptr);
+	insideHideGameUI = false;
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, CBaseUI__HideGameUI_Linux, void*, thisptr)
+{
+	insideHideGameUI = true;
+	ORIG_CBaseUI__HideGameUI_Linux(thisptr);
 	insideHideGameUI = false;
 }

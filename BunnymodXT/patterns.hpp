@@ -485,7 +485,9 @@ namespace patterns
 			"OpposingForce",
 			"83 C8 FF 89 81 CC 04 00 00 89 81 D0 04 00 00 8B 81 A8 04 00 00 0C C0 89 81 A8 04 00 00 33 C0 89 81 AC 04 00 00 89 81 30 03 00 00 8B 01 FF A0 0C 02 00 00",
 			"OPBT",
-			"83 C8 FF 89 81 90 05 00 00 89 81 94 05 00 00 8B 81 6C 05 00 00 0C C0 89 81 6C 05 00 00 33 C0 89 81 70 05 00 00 89 81 C8 03 00 00 8B 01 FF A0 04 02 00 00"
+			"83 C8 FF 89 81 90 05 00 00 89 81 94 05 00 00 8B 81 6C 05 00 00 0C C0 89 81 6C 05 00 00 33 C0 89 81 70 05 00 00 89 81 C8 03 00 00 8B 01 FF A0 04 02 00 00",
+			"Parasomnia",
+			"81 89 80 04 00 00 C0 00 00 00 83 C8 FF 89 81 A4 04 00 00 89 81 A8 04 00 00 89 81 98 07 00 00 89 81 A4 07 00 00 89 81 A8 07 00 00 89 81 9C 07 00 00"
 		);
 
 		PATTERNS(CBasePlayer__TakeDamage,
@@ -504,7 +506,9 @@ namespace patterns
 			"CSCZDS",
 			"83 EC 4C 53 8B 5C 24 60 55 8B E9 8B D3 56 8B 45 04 81 E2 00 00 00 80 83 FA 01 57 8B 88 60 01 00 00",
 			"Cthulhu",
-			"51 53 55 56 8B F1 8B 5C 24 20 57 8B 46 04 8B 16 BF 01 00 00 00 8B 88 60 01 00 00"
+			"51 53 55 56 8B F1 8B 5C 24 20 57 8B 46 04 8B 16 BF 01 00 00 00 8B 88 60 01 00 00",
+			"Parasomnia",
+			"55 8B EC 83 EC 10 D9 05 58 6C 0A 10 53 8B 5D 14 D9 5D F8 56 8B F1 57 89 75 FC 89 5D F4 BF 01 00 00 00 F6 C3 40 74 16 8B 0D A8 C6 0C 10 8B 01 8B 50 18 FF D2 85 C0 74 05"
 		);
 
 		PATTERNS(CPushable__Move,
@@ -539,7 +543,9 @@ namespace patterns
 			"Decay",
 			"55 8B EC 83 EC 44 53 56 57 89 4D ?? 8B 45 ?? C7 00 00 00 00 00 8B 45 ?? C7 40 ?? 00 00 00 00 8B 45",
 			"Halfquake-Trilogy",
-			"56 8B F1 57 33 FF 89 3E 89 7E 04 89 7E 08 39 7E 10 74 0C FF 76 10 E8 ?? ?? ?? ?? 59"
+			"56 8B F1 57 33 FF 89 3E 89 7E 04 89 7E 08 39 7E 10 74 0C FF 76 10 E8 ?? ?? ?? ?? 59",
+			"Parasomnia",
+			"A1 ?? ?? ?? ?? 56 33 F6 89 35 D8 C7 0C 10 89 35 DC C7 0C 10 89 35 E0 C7 0C 10 3B C6 74 0F 50 E8 ?? ?? ?? ?? 83 C4 04 89 35 E8 C7 0C 10 A1"
 		);
 
 		PATTERNS(MiddleOfCNihilanth__NextActivity,
@@ -578,7 +584,9 @@ namespace patterns
 			"Gunman",
 			"D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? 81 EC E4 01 00 00",
 			"Invasion",
-			"D9 05 ?? ?? ?? ?? DC 1D ?? ?? ?? ?? 81 EC ?? ?? ?? ?? 56 57 DF E0 8B F1 F6 C4 ?? 0F ?? ?? ?? ?? ?? A1 ?? ?? ?? ?? 85 C0 0F ?? ?? ?? ?? ?? 8B 84 24"
+			"D9 05 ?? ?? ?? ?? DC 1D ?? ?? ?? ?? 81 EC ?? ?? ?? ?? 56 57 DF E0 8B F1 F6 C4 ?? 0F ?? ?? ?? ?? ?? A1 ?? ?? ?? ?? 85 C0 0F ?? ?? ?? ?? ?? 8B 84 24",
+			"Parasomnia",
+			"55 8B EC D9 05 ?? ?? ?? ?? 81 EC C0 00 00 00 D9 EE 53 D9 C0 56 DD EA 57 8B F8 DF E0 DD D9 F6 C4 44 0F 8B CE 06 00 00 8B 45 08"
 		);
 
 		PATTERNS(CZDS_Velocity_Byte,
@@ -621,7 +629,9 @@ namespace patterns
 			"TWHL-Tower-2",
 			"56 8B F1 8B 46 44 8B 90 D4 00 00 00 83 FA 04 7E 1D 8B 46 30 FF B0 94 0B 00 00 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 59 6A FF E8 ?? ?? ?? ?? 8B 4E 44 8B 81 D8 00 00 00 53",
 			"Halfquake-Trilogy",
-			"55 8B EC 51 56 8B F1 57 8B 46 44 8B 88 D4 00 00 00 83 F9 04 7F 54 8B 90 D8 00 00 00 33"
+			"55 8B EC 51 56 8B F1 57 8B 46 44 8B 88 D4 00 00 00 83 F9 04 7F 54 8B 90 D8 00 00 00 33",
+			"Parasomnia",
+			"53 8B 59 44 56 57 8B BB D4 00 00 00 83 FF 04 7E 1F 8B 41 30 8B 88 94 0B 00 00 51 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 08 6A FF E8 ?? ?? ?? ?? 8B D3 8B 82 D8 00 00 00 03 C2"
 		);
 
 		PATTERNS(EV_GetDefaultShellInfo,
@@ -634,7 +644,9 @@ namespace patterns
 			"TWHL-Tower-2",
 			"55 8B EC 83 EC 20 56 D9 EE",
 			"Halfquake-Trilogy",
-			"55 8B EC 83 EC 18 83 65 ?? 00"
+			"55 8B EC 83 EC 18 83 65 ?? 00",
+			"Parasomnia",
+			"55 8B EC 83 EC 10 D9 EE"
 		);
 
 		PATTERNS(CStudioModelRenderer__StudioSetupBones,
@@ -659,7 +671,9 @@ namespace patterns
 			"Invasion",
 			"83 EC 44 53 55 56 8B F1 57 8B 46 30 8B 4E 44",
 			"Halfquake-Trilogy",
-			"55 8B EC 83 EC 50 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56"
+			"55 8B EC 83 EC 50 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56",
+			"Parasomnia",
+			"55 8B EC 83 E4 F8 83 EC 4C 53 8B D9 8B 43"
 		);
 	}
 
@@ -674,8 +688,8 @@ namespace patterns
 			"51 8B 0D ?? ?? ?? ?? 53 8B 81 D0 00 00 00 85 C0 74 11 8B 81 C8 00 00 00 5B 0C 02 89 81 C8 00 00 00 59 C3 D9 81 CC 00 00 00 D8 1D",
 			"AG-Client",
 			"51 8B 0D ?? ?? ?? ?? 8B 81 D0 00 00 00 85 C0 74 09 83 89 C8 00 00 00 02 59 C3 D9 05 ?? ?? ?? ?? D9 81 CC 00 00 00 DA E9",
-			"BigLolly",
-			"55 8B EC 83 EC ?? C7 45 F4 00 00 00 00 C7 45 FC 00 00 00 00 A1 ?? ?? ?? ?? 83 B8 D0 00 00 00 00 74 1F 8B 0D ?? ?? ?? ?? 8B 91 C8 00 00 00 83 CA 02 A1",
+			"Parasomnia",
+			"55 8B EC 51 A1 ?? ?? ?? ?? 83 B8 D0 00 00 00 00 53 56 57 74 0E 83 88 C8 00 00 00 02 5F 5E 5B 8B E5 5D C3 8B 90 54 F5 04 00 8D 88 F0 F3 04 00 68",
 			"TWHL-Tower-2",
 			"55 8B EC 51 A1 ?? ?? ?? ?? 57 33 FF 39 B8 D0 00 00 00 74 0C 83 88 C8 00 00 00 02 E9 FC 02 00 00 56 8D 88 F0 F3 04 00 68",
 			"Decay",
@@ -685,7 +699,9 @@ namespace patterns
 			"Half-Payne",
 			"55 8B EC 83 E4 F8 8B 0D ?? ?? ?? ?? 56 57 F7 81 B8 00 00 00 00 00 08 00 0F 85 52 03 00 00 83 3D ?? ?? ?? ?? 00 0F 85",
 			"DSM-Demo-1",
-			"55 8B EC 83 E4 F8 8B 0D ?? ?? ?? ?? 83 EC 08 83 B9 D0 00 00 00 00 53 56 74 ?? 83 89 C8 00 00 00 02 5E 5B 8B E5 5D C3 8D 81 F0 F3 04 00 68"
+			"55 8B EC 83 E4 F8 8B 0D ?? ?? ?? ?? 83 EC 08 83 B9 D0 00 00 00 00 53 56 74 ?? 83 89 C8 00 00 00 02 5E 5B 8B E5 5D C3 8D 81 F0 F3 04 00 68",
+			"BigLolly",
+			"55 8B EC 83 EC ?? C7 45 F4 00 00 00 00 C7 45 FC 00 00 00 00 A1 ?? ?? ?? ?? 83 B8 D0 00 00 00 00 74 1F 8B 0D ?? ?? ?? ?? 8B 91 C8 00 00 00 83 CA 02 A1"
 		);
 
 		PATTERNS(PM_PreventMegaBunnyJumping,
@@ -698,7 +714,9 @@ namespace patterns
 			"TWHL-Tower-2",
 			"55 8B EC 51 8B 0D ?? ?? ?? ?? D9 81 F4 01 00 00 D8 0D ?? ?? ?? ?? D9 55 FC D8 1D ?? ?? ?? ?? DF E0 F6 C4 41",
 			"Halfquake-Trilogy",
-			"55 8B EC 51 51 A1 ?? ?? ?? ?? 0F 57 C0 F3 0F 10 88 ?? ?? ?? ?? F3 0F 59 0D ?? ?? ?? ?? 0F 2F C1 F3 0F 11 4D F8 73 44 83 C0"
+			"55 8B EC 51 51 A1 ?? ?? ?? ?? 0F 57 C0 F3 0F 10 88 ?? ?? ?? ?? F3 0F 59 0D ?? ?? ?? ?? 0F 2F C1 F3 0F 11 4D F8 73 44 83 C0",
+			"Parasomnia",
+			"55 8B EC 83 EC 0C 56 8B 35 ?? ?? ?? ?? D9 86 ?? ?? ?? ?? DC 0D B0 6D 0A 10 D9 5D FC D9 EE D8 5D FC DF E0 F6 C4 01"
 		);
 
 		PATTERNS(Bhopcap,

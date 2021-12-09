@@ -321,16 +321,11 @@ void ServerDLL::FindStuff()
 				case 1:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 2);
 					break;
-
 				case 2:
 				case 3: // AG-Client, shouldn't happen here but who knows.
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 3);
 					break;
-
 				case 4:
-					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 21);
-					break;
-
 				case 5:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 5);
 					break;
@@ -343,6 +338,9 @@ void ServerDLL::FindStuff()
 				case 8:
 				case 9:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 8);
+					break;
+				case 10:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 21);
 					break;
 				}
 			}
@@ -481,6 +479,13 @@ void ServerDLL::FindStuff()
 				offm_rgAmmoLast = 0x65C;
 				offm_iClientFOV = 0x5A4;
 				break;
+			case 21: // Parasomnia
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x564;
+				offm_iClientFOV = 0x4B8;
+				offFuncIsPlayer = 0x98;
+				offFuncCenter = 0xC4;
+				break;
 			default:
 				assert(false);
 			}
@@ -533,6 +538,7 @@ void ServerDLL::FindStuff()
 			case 2:
 			case 3:
 			case 4:
+			case 5:
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;

@@ -357,30 +357,24 @@ void ServerDLL::FindStuff()
 		patterns::server::CBasePlayer__ForceClientDllUpdate,
 		[&](auto pattern) {
 			switch (pattern - patterns::server::CBasePlayer__ForceClientDllUpdate.cbegin()) {
-			case 0:  // HL-SteamPipe
+			case 0: // HL-SteamPipe
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x554;
 				offm_iClientFOV = 0x4AC;
 				break;
-			case 1:  // OpposingForce
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x604;
-				offm_iClientFOV = 0x4E0;
-				offFuncIsPlayer = 0xA0;
-				offFuncCenter = 0xCC;
-				break;
-			case 2:  // HazardousCourse2
+			case 1: // TheGate
+			case 2: // HazardousCourse2
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x540;
 				offm_iClientFOV = 0x498;
 				break;
-			case 3:  // Gunman
+			case 3: // Gunman
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x53C;
 				offm_iClientFOV = 0x47C;
 				offFuncCenter = 0xCC;
 				break;
-			case 4:  // HL-SteamPipe-8308
+			case 4: // HL-SteamPipe-8308
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x558;
 				offm_iClientFOV = 0x4B0;
@@ -474,6 +468,18 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xCC;
 				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
+				break;
+			case 19: // OpposingForce
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x604;
+				offm_iClientFOV = 0x4E0;
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
+				break;
+			case 20: // OPBT
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x65C;
+				offm_iClientFOV = 0x5A4;
 				break;
 			default:
 				assert(false);

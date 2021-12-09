@@ -277,6 +277,9 @@ void ClientDLL::FindStuff()
 				case 10:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 21);
 					break;
+				case 11:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 18);
+					break;
 				}
 			}
 		});

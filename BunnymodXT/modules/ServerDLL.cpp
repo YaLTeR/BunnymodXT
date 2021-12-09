@@ -342,6 +342,9 @@ void ServerDLL::FindStuff()
 				case 10:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 21);
 					break;
+				case 11:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 18);
+					break;
 				}
 			}
 		});
@@ -412,13 +415,7 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				break;
-			case 11: // OP4-8684
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x608;
-				offm_iClientFOV = 0x4E4;
-				offFuncIsPlayer = 0xA0;
-				offFuncCenter = 0xCC;
-				break;
+			case 11: // HL-SWEET
 			case 12: // HL-WON
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x50C;
@@ -486,6 +483,13 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0x98;
 				offFuncCenter = 0xC4;
 				break;
+			case 22: // OP4-8684
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x608;
+				offm_iClientFOV = 0x4E4;
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
+				break;
 			default:
 				assert(false);
 			}
@@ -539,6 +543,7 @@ void ServerDLL::FindStuff()
 			case 3:
 			case 4:
 			case 5:
+			case 6:
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;

@@ -2492,7 +2492,7 @@ struct HwDLL::Cmd_BXT_Triggers_Export
 			if (!first)
 				oss << command_separator;
 
-			oss << "bxt_triggers_add "
+			oss << "bxt_triggers_add " << std::fixed << std::setprecision(1)
 				<< corners.first.x << " " << corners.first.y << " " << corners.first.z << " "
 				<< corners.second.x << " " << corners.second.y << " " << corners.second.z;
 

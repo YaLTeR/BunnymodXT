@@ -1153,8 +1153,8 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linu
 HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent, char*, modelname)
 {
 	if (CVars::bxt_show_hidden_entities_clientside.GetBool()) {
-		ent->curstate.effects &= ~EF_NODRAW;
-		ent->curstate.rendermode = kRenderNormal;
+		if (ent->curstate.rendermode != kRenderNormal)
+			ent->curstate.renderamt = 255;
 	}
 
 	return ORIG_HUD_AddEntity(type, ent, modelname);

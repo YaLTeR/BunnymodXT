@@ -1738,7 +1738,18 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 			ent->v.effects &= ~EF_NODRAW;
 			ent->v.rendermode = kRenderNormal;
 		}
-	} else if (is_trigger && CVars::bxt_show_triggers_legacy.GetBool()) {
+	} else if (!is_trigger && CVars::bxt_show_hidden_entities_clientside.GetBool()) {
+		if (ent->v.effects & EF_NODRAW)
+		{
+			ent->v.effects &= ~EF_NODRAW;
+			ent->v.renderamt = 0;
+
+			// e.g. func_wall_toggle is kRenderNormal when it's EF_NODRAW'd, so that'd make it visible always, fix that
+			if (ent->v.rendermode == kRenderNormal)
+				ent->v.rendermode = kRenderTransTexture;
+		}
+	}
+	else if (is_trigger && CVars::bxt_show_triggers_legacy.GetBool()) {
 		ent->v.effects &= ~EF_NODRAW;
 		ent->v.rendermode = kRenderTransColor;
 		if (ent->v.solid == SOLID_NOT && std::strcmp(classname + 8, "transition") != 0)

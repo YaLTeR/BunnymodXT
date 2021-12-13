@@ -256,18 +256,19 @@ void ClientDLL::FindStuff()
 				case 1:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 2);
 					break;
-
 				case 2: // AG-Server, shouldn't happen here but who knows.
 				case 3:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 3);
 					break;
-
 				case 4:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 21);
 					break;
+				case 10:
+				case 11:
 				case 5:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 5);
 					break;
+				case 12:
 				case 6:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 24);
 					break;
@@ -326,6 +327,11 @@ void ClientDLL::FindStuff()
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 70)
 					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 74);
 				break;
+			case 6: // Reissues
+				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 97)
+					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 101);
+				break;
 			default:
 				assert(false);
 				break;
@@ -377,6 +383,11 @@ void ClientDLL::FindStuff()
 			if (!addr) {
 				// Halfquake Trilogy
 				static constexpr auto p = PATTERN("B8 ?? ?? ?? ?? 56 8B 75 08");
+				addr = MemUtils::find_pattern(pInitialize, 40, p);
+			}
+			if (!addr) {
+				// Reissues
+				static constexpr auto p = PATTERN("B8 ?? ?? ?? ?? 59 8B F8 F3 A5");
 				addr = MemUtils::find_pattern(pInitialize, 40, p);
 			}
 			if (!addr) {

@@ -321,19 +321,19 @@ void ServerDLL::FindStuff()
 				case 1:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 2);
 					break;
-
 				case 2:
 				case 3: // AG-Client, shouldn't happen here but who knows.
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 3);
 					break;
-
 				case 4:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 21);
 					break;
-
+				case 10:
+				case 11:
 				case 5:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 5);
 					break;
+				case 12:
 				case 6:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 24);
 					break;
@@ -369,6 +369,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xA0;
 				offFuncCenter = 0xCC;
 				break;
+			case 19: // TheGate
 			case 2:  // HazardousCourse2
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x540;
@@ -427,6 +428,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xA0;
 				offFuncCenter = 0xCC;
 				break;
+			case 22: // HL-SWEET
 			case 12: // HL-WON
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x50C;
@@ -474,6 +476,18 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xCC;
 				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
+				break;
+			case 20: // OPBT
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x65C;
+				offm_iClientFOV = 0x5A4;
+				break;
+			case 21: // Parasomnia
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x564;
+				offm_iClientFOV = 0x4B8;
+				offFuncIsPlayer = 0x98;
+				offFuncCenter = 0xC4;
 				break;
 			default:
 				assert(false);
@@ -527,6 +541,9 @@ void ServerDLL::FindStuff()
 			case 2:
 			case 3:
 			case 4:
+			case 5:
+			case 6:
+			case 7:
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;

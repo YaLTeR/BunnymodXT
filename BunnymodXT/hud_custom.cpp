@@ -495,6 +495,8 @@ namespace CustomHud
 	{
 		if (CVars::bxt_hud_origin.GetBool())
 		{
+			const auto& cl = ClientDLL::GetInstance();
+
 			int x, y;
 			GetPosition(CVars::bxt_hud_origin_offset, CVars::bxt_hud_origin_anchor, &x, &y, -200, (si.iCharHeight * 6) + 1);
 
@@ -508,9 +510,19 @@ namespace CustomHud
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
 			out.precision(precision);
-			out << "X: " << player.origin[0] << "\n"
-				<< "Y: " << player.origin[1] << "\n"
-				<< "Z: " << player.origin[2];
+
+			if (CVars::bxt_hud_origin.GetInt() == 2)
+			{
+				out << "X: " << cl.last_vieworg[0] << "\n"
+					<< "Y: " << cl.last_vieworg[1] << "\n"
+					<< "Z: " << cl.last_vieworg[2];
+			}
+			else
+			{
+				out << "X: " << player.origin[0] << "\n"
+					<< "Y: " << player.origin[1] << "\n"
+					<< "Z: " << player.origin[2];
+			}
 
 			DrawMultilineString(x, y, out.str());
 		}

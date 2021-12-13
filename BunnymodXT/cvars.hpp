@@ -163,6 +163,7 @@ namespace CVars
 	extern CVarWrapper bxt_bhopcap;
 	extern CVarWrapper bxt_timer_autostop;
 	extern CVarWrapper bxt_show_hidden_entities;
+	extern CVarWrapper bxt_show_hidden_entities_clientside;
 	extern CVarWrapper bxt_show_triggers_legacy;
 	extern CVarWrapper bxt_show_pickup_bbox;
 	extern CVarWrapper bxt_disable_autosave;

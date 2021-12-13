@@ -29,6 +29,7 @@ class ClientDLL : public IHookableNameFilter
 	          float *forward, float *right, float *up, float forwardScale, float upScale, float rightScale)
 	HOOK_DECL(void, __fastcall, CStudioModelRenderer__StudioSetupBones, void* thisptr)
 	HOOK_DECL(void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linux, void* thisptr)
+	HOOK_DECL(int, __cdecl, HUD_AddEntity, int type, cl_entity_s *ent, char *modelname)
 
 public:
 	static ClientDLL& GetInstance()

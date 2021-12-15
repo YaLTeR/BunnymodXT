@@ -89,6 +89,11 @@ extern "C" int __cdecl HUD_AddEntity(int type, cl_entity_s* ent, char* modelname
 {
 	return ClientDLL::HOOKED_HUD_AddEntity(type, ent, modelname);
 }
+
+extern "C" int __cdecl CL_IsThirdPerson()
+{
+	return ClientDLL::HOOKED_CL_IsThirdPerson();
+}
 #endif
 
 void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -114,6 +119,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Key_Event), reinterpret_cast<void*>(HOOKED_HUD_Key_Event));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_UpdateClientData), reinterpret_cast<void*>(HOOKED_HUD_UpdateClientData));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_AddEntity), reinterpret_cast<void*>(HOOKED_HUD_AddEntity));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_CL_IsThirdPerson), reinterpret_cast<void*>(HOOKED_CL_IsThirdPerson));
 
 	if (needToIntercept)
 	{
@@ -134,7 +140,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_EV_GetDefaultShellInfo, HOOKED_EV_GetDefaultShellInfo,
 			ORIG_StudioCalcAttachments, HOOKED_StudioCalcAttachments,
 			ORIG_VectorTransform, HOOKED_VectorTransform,
-			ORIG_CStudioModelRenderer__StudioSetupBones, HOOKED_CStudioModelRenderer__StudioSetupBones);
+			ORIG_CStudioModelRenderer__StudioSetupBones, HOOKED_CStudioModelRenderer__StudioSetupBones,
+			ORIG_CL_IsThirdPerson, HOOKED_CL_IsThirdPerson);
 	}
 
 	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
@@ -165,7 +172,8 @@ void ClientDLL::Unhook()
 			ORIG_EV_GetDefaultShellInfo,
 			ORIG_StudioCalcAttachments,
 			ORIG_VectorTransform,
-			ORIG_CStudioModelRenderer__StudioSetupBones);
+			ORIG_CStudioModelRenderer__StudioSetupBones,
+			ORIG_CL_IsThirdPerson);
 	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -178,6 +186,7 @@ void ClientDLL::Unhook()
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Key_Event));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_UpdateClientData));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_AddEntity));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_CL_IsThirdPerson));
 
 	Clear();
 }
@@ -740,6 +749,10 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (ORIG_HUD_AddEntity) {
 		REG(bxt_show_hidden_entities_clientside);
 	}
+
+	if (ORIG_CL_IsThirdPerson) {
+		REG(bxt_force_model);
+	}
 	#undef REG
 }
 
@@ -1219,4 +1232,14 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 	}
 
 	return ORIG_HUD_AddEntity(type, ent, modelname);
+}
+
+HOOK_DEF_0(ClientDLL, int, __cdecl, CL_IsThirdPerson)
+{
+	const auto& hw = HwDLL::GetInstance();
+
+	if (hw.insideCLEmitEntities && CVars::bxt_force_model.GetBool() && CVars::sv_cheats.GetBool())
+		return 1;
+
+	return ORIG_CL_IsThirdPerson();
 }

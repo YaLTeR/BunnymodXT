@@ -261,6 +261,11 @@ extern "C" void __cdecl _ZN7CBaseUI10HideGameUIEv(void* thisptr)
 {
 	return HwDLL::HOOKED_CBaseUI__HideGameUI_Linux(thisptr);
 }
+
+extern "C" void __cdecl CL_EmitEntities()
+{
+	HwDLL::HOOKED_CL_EmitEntities();
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -366,6 +371,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_NotifyOfServerConnect);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioSetupBones);
 			MemUtils::MarkAsExecutable(ORIG_CBaseUI__HideGameUI);
+			MemUtils::MarkAsExecutable(ORIG_CL_EmitEntities);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -409,7 +415,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_S_StartDynamicSound, HOOKED_S_StartDynamicSound,
 			ORIG_VGuiWrap2_NotifyOfServerConnect, HOOKED_VGuiWrap2_NotifyOfServerConnect,
 			ORIG_R_StudioSetupBones, HOOKED_R_StudioSetupBones,
-			ORIG_CBaseUI__HideGameUI, HOOKED_CBaseUI__HideGameUI);
+			ORIG_CBaseUI__HideGameUI, HOOKED_CBaseUI__HideGameUI,
+			ORIG_CL_EmitEntities, HOOKED_CL_EmitEntities);
 	}
 }
 
@@ -458,7 +465,8 @@ void HwDLL::Unhook()
 			ORIG_S_StartDynamicSound,
 			ORIG_VGuiWrap2_NotifyOfServerConnect,
 			ORIG_R_StudioSetupBones,
-			ORIG_CBaseUI__HideGameUI);
+			ORIG_CBaseUI__HideGameUI,
+			ORIG_CL_EmitEntities);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -1001,6 +1009,12 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found VGuiWrap2_NotifyOfServerConnect at %p.\n", ORIG_VGuiWrap2_NotifyOfServerConnect);
 		else
 			EngineDevWarning("[hw dll] Could not find VGuiWrap2_NotifyOfServerConnect.\n");
+
+		ORIG_CL_EmitEntities = reinterpret_cast<_CL_EmitEntities>(MemUtils::GetSymbolAddress(m_Handle, "CL_EmitEntities"));
+		if (ORIG_CL_EmitEntities)
+			EngineDevMsg("[hw dll] Found CL_EmitEntities at %p.\n", ORIG_CL_EmitEntities);
+		else
+			EngineDevWarning("[hw dll] Could not find CL_EmitEntities.\n");
 	}
 	else
 	{
@@ -1041,6 +1055,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(S_StartDynamicSound)
 		DEF_FUTURE(VGuiWrap2_NotifyOfServerConnect)
 		DEF_FUTURE(CBaseUI__HideGameUI)
+		DEF_FUTURE(CL_EmitEntities)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1657,6 +1672,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(S_StartDynamicSound);
 		GET_FUTURE(VGuiWrap2_NotifyOfServerConnect);
 		GET_FUTURE(CBaseUI__HideGameUI);
+		GET_FUTURE(CL_EmitEntities);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -5250,4 +5266,11 @@ HOOK_DEF_1(HwDLL, void, __cdecl, CBaseUI__HideGameUI_Linux, void*, thisptr)
 	insideHideGameUI = true;
 	ORIG_CBaseUI__HideGameUI_Linux(thisptr);
 	insideHideGameUI = false;
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, CL_EmitEntities)
+{
+	insideCLEmitEntities = true;
+	ORIG_CL_EmitEntities();
+	insideCLEmitEntities = false;
 }

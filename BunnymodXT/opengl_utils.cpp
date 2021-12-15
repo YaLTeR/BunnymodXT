@@ -28,6 +28,16 @@ void GLUtils::color(unsigned char r, unsigned char g, unsigned char b, unsigned 
 	glColor4ub(r, g, b, a);
 }
 
+void GLUtils::point_size(float size) const {
+	glPointSize(size);
+}
+
+void GLUtils::point(const Vector2D& center) const {
+	glBegin(GL_POINTS);
+	glVertex2f(center.x, center.y);
+	glEnd();
+}
+
 void GLUtils::line_width(float width) const {
 	glLineWidth(width);
 }

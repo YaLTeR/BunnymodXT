@@ -1275,7 +1275,7 @@ namespace CustomHud
 			}
 
 			// Dot
-			if (CVars::bxt_cross_dot_size.GetBool()) {
+			if (CVars::bxt_cross_dot_size.GetBool() && CVars::bxt_cross.GetInt() == 1) {
 				auto size = CVars::bxt_cross_dot_size.GetFloat();
 				auto offset = Vector2D(size / 2.0f, size / 2.0f);
 
@@ -1331,7 +1331,12 @@ namespace CustomHud
 			auto size = CVars::bxt_cross_dot_size.GetFloat();
 			auto offset = Vector2D(size / 2.0f, size / 2.0f);
 
-			gl.rectangle(center - offset, center + offset);
+			if (CVars::bxt_cross.GetInt() == 2) {
+				gl.point_size(CVars::bxt_cross_dot_size.GetFloat());
+				gl.point(center);
+			} else {
+				gl.rectangle(center - offset, center + offset);
+			}
 		}
 	}
 

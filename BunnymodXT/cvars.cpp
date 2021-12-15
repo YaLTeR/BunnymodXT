@@ -76,6 +76,7 @@ namespace CVars
 	CVarWrapper bxt_collision_depth_map_pixel_scale("bxt_collision_depth_map_pixel_scale", "8");
 	CVarWrapper bxt_collision_depth_map_remove_distance_limit("bxt_collision_depth_map_remove_distance_limit", "1");
 	CVarWrapper bxt_unlock_camera_during_pause("bxt_unlock_camera_during_pause", "0");
+	CVarWrapper bxt_show_player_in_hltv("bxt_show_player_in_hltv", "0");
 	CVarWrapper bxt_hud("bxt_hud", "1");
 	CVarWrapper bxt_hud_color("bxt_hud_color", "");
 	CVarWrapper bxt_hud_precision("bxt_hud_precision", "6");
@@ -218,6 +219,7 @@ namespace CVars
 		&bxt_collision_depth_map_pixel_scale,
 		&bxt_collision_depth_map_remove_distance_limit,
 		&bxt_unlock_camera_during_pause,
+		&bxt_show_player_in_hltv,
 		&bxt_hud,
 		&bxt_hud_color,
 		&bxt_hud_precision,

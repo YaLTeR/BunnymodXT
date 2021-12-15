@@ -398,7 +398,7 @@ namespace CustomHud
 
 	void GetAccurateInfo()
 	{
-		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.health);
+		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.health, player.armorvalue);
 		HwDLL::GetInstance().GetViewangles(player.viewangles);
 	}
 
@@ -860,6 +860,22 @@ namespace CustomHud
 		}
 	}
 
+	void DrawArmor(float flTime)
+	{
+		if (CVars::bxt_hud_armor.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_armor_offset, CVars::bxt_hud_armor_anchor, &x, &y, -200, (si.iCharHeight * 30) + 3);
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "Armor: " << player.armorvalue;
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
 	void DrawNihilanthInfo(float flTime)
 	{
 		static const char *IRRITATIONS[4] = {"Idle", "Attacking", "Opened", "Killed"};
@@ -867,7 +883,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_nihilanth.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 30) + 3);
+			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 31) + 3);
 
 			std::ostringstream out;
 			out << "Nihilanth:\n";
@@ -901,7 +917,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_gonarch.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 37) + 3);
+			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 38) + 3);
 
 			std::ostringstream out;
 			out << "Gonarch:\n";
@@ -1074,7 +1090,7 @@ namespace CustomHud
 			return;
 
 		int x, y;
-		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 40) + 3);
+		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 41) + 3);
 
 		std::ostringstream out;
 		out.setf(std::ios::fixed);
@@ -1415,6 +1431,7 @@ namespace CustomHud
 
 		DrawQuickGauss(flTime);
 		DrawHealth(flTime);
+		DrawArmor(flTime);
 		DrawVelocity(flTime);
 		DrawOrigin(flTime);
 		DrawViewangles(flTime);

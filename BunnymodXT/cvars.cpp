@@ -100,6 +100,9 @@ namespace CVars
 	CVarWrapper bxt_hud_selfgauss("bxt_hud_selfgauss", "0");
 	CVarWrapper bxt_hud_selfgauss_offset("bxt_hud_selfgauss_offset", "");
 	CVarWrapper bxt_hud_selfgauss_anchor("bxt_hud_selfgauss_anchor", "1 0");
+	CVarWrapper bxt_hud_armor("bxt_hud_armor", "0");
+	CVarWrapper bxt_hud_armor_offset("bxt_hud_armor_offset", "");
+	CVarWrapper bxt_hud_armor_anchor("bxt_hud_armor_anchor", "1 0");
 	CVarWrapper bxt_hud_speedometer("bxt_hud_speedometer", "1");
 	CVarWrapper bxt_hud_speedometer_offset("bxt_hud_speedometer_offset", "");
 	CVarWrapper bxt_hud_speedometer_anchor("bxt_hud_speedometer_anchor", "0.5 1");
@@ -239,6 +242,9 @@ namespace CVars
 		&bxt_hud_selfgauss,
 		&bxt_hud_selfgauss_offset,
 		&bxt_hud_selfgauss_anchor,
+		&bxt_hud_armor,
+		&bxt_hud_armor_offset,
+		&bxt_hud_armor_anchor,
 		&bxt_hud_speedometer,
 		&bxt_hud_speedometer_offset,
 		&bxt_hud_speedometer_anchor,

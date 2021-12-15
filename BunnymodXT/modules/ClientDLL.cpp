@@ -751,7 +751,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 	}
 
 	if (ORIG_CL_IsThirdPerson) {
-		REG(bxt_force_model);
+		REG(bxt_show_player_in_hltv);
 	}
 	#undef REG
 }
@@ -1238,7 +1238,7 @@ HOOK_DEF_0(ClientDLL, int, __cdecl, CL_IsThirdPerson)
 {
 	const auto& hw = HwDLL::GetInstance();
 
-	if (hw.insideCLEmitEntities && CVars::bxt_force_model.GetBool() && CVars::sv_cheats.GetBool())
+	if (hw.insideCLEmitEntities && CVars::bxt_show_player_in_hltv.GetBool() && CVars::sv_cheats.GetBool())
 		return 1;
 
 	return ORIG_CL_IsThirdPerson();

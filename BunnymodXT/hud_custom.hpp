@@ -10,6 +10,7 @@ namespace CustomHud
 		float velocity[3];
 		float viewangles[3];
 		float health;
+		float armorvalue;
 	} playerinfo;
 
 	void Init();

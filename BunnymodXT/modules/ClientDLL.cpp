@@ -689,6 +689,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_selfgauss);
 		REG(bxt_hud_selfgauss_offset);
 		REG(bxt_hud_selfgauss_anchor);
+		REG(bxt_hud_armor);
+		REG(bxt_hud_armor_offset);
+		REG(bxt_hud_armor_anchor);
 		REG(bxt_hud_speedometer);
 		REG(bxt_hud_speedometer_offset);
 		REG(bxt_hud_speedometer_anchor);

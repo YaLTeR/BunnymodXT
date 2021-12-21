@@ -2108,6 +2108,21 @@ struct HwDLL::Cmd_BXT_CH_Set_Armor
 	}
 };
 
+struct HwDLL::Cmd_BXT_CH_Get_Origin_And_Angles
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		float angles[3];
+		hw.GetViewangles(angles);
+		hw.ORIG_Con_Printf("bxt_ch_set_angles %f %f %f;", angles[0], angles[1], angles[2]);
+		hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", (*hw.sv_player)->v.origin[0], (*hw.sv_player)->v.origin[1],
+		                   (*hw.sv_player)->v.origin[2]);
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_Set_Origin
 {
 	USAGE("Usage: bxt_ch_set_pos <x> <y> <z>\n");
@@ -3308,6 +3323,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_New, Handler<const char *, const char *, int>>("bxt_tas_new");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Health, Handler<float>>("bxt_ch_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Armor, Handler<float>>("bxt_ch_set_armor");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_Origin_And_Angles, Handler<>>("bxt_ch_get_pos");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin_Offset, Handler<float, float, float>>("bxt_ch_set_pos_offset");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Velocity, Handler<float, float, float>>("bxt_ch_set_vel");

@@ -701,7 +701,7 @@ void ServerDLL::FindStuff()
 					offm_rgAmmoLast = 0x554;
 					offm_iClientFOV = 0x8B0;
 				}
-				if (ClientDLL::GetInstance().DoesGameDirMatch("bshift")) {
+				if (ClientDLL::GetInstance().DoesGameDirMatch("bshift") || ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless")) {
 					offm_rgAmmoLast = 0x568;
 					offm_iClientFOV = 0x4C0;
 				}

@@ -5318,7 +5318,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, CL_EmitEntities)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawWorld)
 {
-	if (CVars::bxt_disable_world.GetBool())
+	if (CVars::sv_cheats.GetBool() && CVars::bxt_disable_world.GetBool())
 		return;
 
 	ORIG_R_DrawWorld();

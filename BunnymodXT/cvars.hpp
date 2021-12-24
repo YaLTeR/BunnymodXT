@@ -138,10 +138,12 @@ namespace CVars
 	extern CVarWrapper bxt_tas_write_log;
 	extern CVarWrapper bxt_tas_playback_speed;
 	extern CVarWrapper bxt_disable_vgui;
+	extern CVarWrapper bxt_show_only_viewmodel;
 	extern CVarWrapper bxt_force_zmax;
 	extern CVarWrapper bxt_viewmodel_fov;
 	extern CVarWrapper bxt_viewmodel_disable_idle;
 	extern CVarWrapper bxt_viewmodel_disable_equip;
+	extern CVarWrapper bxt_clear_green;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_cheats;

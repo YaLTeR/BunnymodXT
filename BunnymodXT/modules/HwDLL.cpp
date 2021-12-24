@@ -266,6 +266,21 @@ extern "C" void __cdecl CL_EmitEntities()
 {
 	HwDLL::HOOKED_CL_EmitEntities();
 }
+
+extern "C" void __cdecl R_DrawWorld()
+{
+	HwDLL::HOOKED_R_DrawWorld();
+}
+
+extern "C" void __cdecl R_DrawEntitiesOnList()
+{
+	HwDLL::HOOKED_R_DrawEntitiesOnList();
+}
+
+extern "C" void __cdecl R_DrawParticles()
+{
+	HwDLL::HOOKED_R_DrawParticles();
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -372,6 +387,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_StudioSetupBones);
 			MemUtils::MarkAsExecutable(ORIG_CBaseUI__HideGameUI);
 			MemUtils::MarkAsExecutable(ORIG_CL_EmitEntities);
+			MemUtils::MarkAsExecutable(ORIG_R_DrawWorld);
+			MemUtils::MarkAsExecutable(ORIG_R_DrawEntitiesOnList);
+			MemUtils::MarkAsExecutable(ORIG_R_DrawParticles);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -416,7 +434,10 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_VGuiWrap2_NotifyOfServerConnect, HOOKED_VGuiWrap2_NotifyOfServerConnect,
 			ORIG_R_StudioSetupBones, HOOKED_R_StudioSetupBones,
 			ORIG_CBaseUI__HideGameUI, HOOKED_CBaseUI__HideGameUI,
-			ORIG_CL_EmitEntities, HOOKED_CL_EmitEntities);
+			ORIG_CL_EmitEntities, HOOKED_CL_EmitEntities,
+			ORIG_R_DrawWorld, HOOKED_R_DrawWorld,
+			ORIG_R_DrawEntitiesOnList, HOOKED_R_DrawEntitiesOnList,
+			ORIG_R_DrawParticles, HOOKED_R_DrawParticles);
 	}
 }
 
@@ -466,7 +487,10 @@ void HwDLL::Unhook()
 			ORIG_VGuiWrap2_NotifyOfServerConnect,
 			ORIG_R_StudioSetupBones,
 			ORIG_CBaseUI__HideGameUI,
-			ORIG_CL_EmitEntities);
+			ORIG_CL_EmitEntities,
+			ORIG_R_DrawWorld,
+			ORIG_R_DrawEntitiesOnList,
+			ORIG_R_DrawParticles);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -542,6 +566,9 @@ void HwDLL::Clear()
 	ORIG_MD5_Print = nullptr;
 	ORIG_CBaseUI__HideGameUI = nullptr;
 	ORIG_CBaseUI__HideGameUI_Linux = nullptr;
+	ORIG_R_DrawWorld = nullptr;
+	ORIG_R_DrawEntitiesOnList = nullptr;
+	ORIG_R_DrawParticles = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -1015,6 +1042,24 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found CL_EmitEntities at %p.\n", ORIG_CL_EmitEntities);
 		else
 			EngineDevWarning("[hw dll] Could not find CL_EmitEntities.\n");
+
+		ORIG_R_DrawWorld = reinterpret_cast<_R_DrawWorld>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawWorld"));
+		if (ORIG_R_DrawWorld)
+			EngineDevMsg("[hw dll] Found R_DrawWorld at %p.\n", ORIG_R_DrawWorld);
+		else
+			EngineDevWarning("[hw dll] Could not find R_DrawWorld.\n");
+
+		ORIG_R_DrawEntitiesOnList = reinterpret_cast<_R_DrawEntitiesOnList>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawEntitiesOnList"));
+		if (ORIG_R_DrawEntitiesOnList)
+			EngineDevMsg("[hw dll] Found R_DrawEntitiesOnList at %p.\n", ORIG_R_DrawEntitiesOnList);
+		else
+			EngineDevWarning("[hw dll] Could not find R_DrawEntitiesOnList.\n");
+
+		ORIG_R_DrawParticles = reinterpret_cast<_R_DrawParticles>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawParticles"));
+		if (ORIG_R_DrawParticles)
+			EngineDevMsg("[hw dll] Found R_DrawParticles at %p.\n", ORIG_R_DrawParticles);
+		else
+			EngineDevWarning("[hw dll] Could not find R_DrawParticles.\n");
 	}
 	else
 	{
@@ -1056,6 +1101,9 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(VGuiWrap2_NotifyOfServerConnect)
 		DEF_FUTURE(CBaseUI__HideGameUI)
 		DEF_FUTURE(CL_EmitEntities)
+		DEF_FUTURE(R_DrawWorld)
+		DEF_FUTURE(R_DrawEntitiesOnList)
+		DEF_FUTURE(R_DrawParticles)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1673,6 +1721,9 @@ void HwDLL::FindStuff()
 		GET_FUTURE(VGuiWrap2_NotifyOfServerConnect);
 		GET_FUTURE(CBaseUI__HideGameUI);
 		GET_FUTURE(CL_EmitEntities);
+		GET_FUTURE(R_DrawWorld);
+		GET_FUTURE(R_DrawEntitiesOnList);
+		GET_FUTURE(R_DrawParticles);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -3284,6 +3335,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_tas_playback_speed);
 	RegisterCVar(CVars::bxt_tas_editor_apply_smoothing_over_s);
 	RegisterCVar(CVars::bxt_disable_vgui);
+	RegisterCVar(CVars::bxt_show_only_viewmodel);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
 	RegisterCVar(CVars::bxt_wallhack_alpha);
@@ -3300,6 +3352,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_force_zmax);
 	RegisterCVar(CVars::bxt_viewmodel_disable_idle);
 	RegisterCVar(CVars::bxt_viewmodel_disable_equip);
+	RegisterCVar(CVars::bxt_clear_green);
 
 	if (ORIG_R_DrawViewModel)
 		RegisterCVar(CVars::bxt_viewmodel_fov);
@@ -5077,8 +5130,11 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (CVars::bxt_water_remove.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool()))) {
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	if (CVars::bxt_water_remove.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel.GetBool()))) {
+		if (CVars::bxt_clear_green.GetBool())
+			glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+		else
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 	ORIG_R_Clear();
@@ -5291,3 +5347,28 @@ HOOK_DEF_0(HwDLL, void, __cdecl, CL_EmitEntities)
 	ORIG_CL_EmitEntities();
 	insideCLEmitEntities = false;
 }
+
+HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawWorld)
+{
+	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel.GetBool())
+		return;
+
+	ORIG_R_DrawWorld();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawEntitiesOnList)
+{
+	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel.GetBool())
+		return;
+
+	ORIG_R_DrawEntitiesOnList();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawParticles)
+{
+	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel.GetBool())
+		return;
+
+	ORIG_R_DrawParticles();
+}
+

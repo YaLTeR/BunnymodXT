@@ -431,6 +431,11 @@ namespace patterns
 			"HL-SteamPipe",
 			"A1 ?? ?? ?? ?? C7 05 ?? ?? ?? ?? 00 00 00 00 83 F8 05"
 		);
+
+		PATTERNS(R_DrawWorld,
+			"HL-SteamPipe",
+			"55 8B EC 81 EC B8 0B 00 00"
+		);
 	}
 
 	namespace server

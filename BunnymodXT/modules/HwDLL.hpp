@@ -66,6 +66,8 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, CBaseUI__HideGameUI_Linux, void *thisptr)
 	HOOK_DECL(void, __cdecl, CL_EmitEntities)
 	HOOK_DECL(void, __cdecl, R_DrawWorld)
+	HOOK_DECL(void, __cdecl, R_DrawEntitiesOnList)
+	HOOK_DECL(void, __cdecl, R_DrawParticles)
 
 	struct cmdbuf_t
 	{

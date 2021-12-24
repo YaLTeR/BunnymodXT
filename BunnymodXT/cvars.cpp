@@ -25,7 +25,7 @@ namespace CVars
 	CVarWrapper bxt_tas_write_log("bxt_tas_write_log", "0");
 	CVarWrapper bxt_tas_playback_speed("bxt_tas_playback_speed", "1");
 	CVarWrapper bxt_disable_vgui("bxt_disable_vgui", "0");
-	CVarWrapper bxt_disable_world("bxt_disable_world", "0");
+	CVarWrapper bxt_show_only_viewmodel("bxt_show_only_viewmodel", "0");
 	CVarWrapper bxt_force_zmax("bxt_force_zmax", "0");
 	CVarWrapper bxt_viewmodel_fov("bxt_viewmodel_fov", "0");
 	CVarWrapper bxt_viewmodel_disable_idle("bxt_viewmodel_disable_idle", "0");
@@ -175,7 +175,7 @@ namespace CVars
 		&bxt_tas_write_log,
 		&bxt_tas_playback_speed,
 		&bxt_disable_vgui,
-		&bxt_disable_world,
+		&bxt_show_only_viewmodel,
 		&bxt_force_zmax,
 		&bxt_viewmodel_fov,
 		&bxt_viewmodel_disable_idle,

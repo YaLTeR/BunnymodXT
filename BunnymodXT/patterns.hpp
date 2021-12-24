@@ -436,6 +436,16 @@ namespace patterns
 			"HL-SteamPipe",
 			"55 8B EC 81 EC B8 0B 00 00"
 		);
+
+		PATTERNS(R_DrawEntitiesOnList,
+			"HL-SteamPipe",
+			"D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? 56 DF E0 F6 C4 44 0F 8B ?? ?? ?? ?? 8B 0D"
+		);
+
+		PATTERNS(R_DrawParticles,
+			"HL-SteamPipe",
+			"55 8B EC 51 A1 ?? ?? ?? ?? 85 C0 75"
+		);
 	}
 
 	namespace server

@@ -449,7 +449,7 @@ namespace patterns
 
 		PATTERNS(BIsValveGame,
 			"HL-SteamPipe",
-			"56 33 F6 8B 86 ?? ?? ?? ??"
+			"56 33 F6 8B 86"
 		);
 	}
 

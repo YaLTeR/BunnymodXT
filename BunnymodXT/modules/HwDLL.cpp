@@ -1680,7 +1680,6 @@ void HwDLL::FindStuff()
 		GET_FUTURE(CL_Record_f)
 		GET_FUTURE(build_number);
 		GET_FUTURE(Key_Event);
-		GET_FUTURE(BIsValveGame);
 		#undef GET_FUTURE
 
 		{
@@ -1730,6 +1729,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(R_DrawWorld);
 		GET_FUTURE(R_DrawEntitiesOnList);
 		GET_FUTURE(R_DrawParticles);
+		GET_FUTURE(BIsValveGame);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -5378,10 +5378,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawParticles)
 	ORIG_R_DrawParticles();
 }
 
-HOOK_DEF_1(HwDLL, int, __fastcall, BIsValveGame, void*, thisptr)
+HOOK_DEF_0(HwDLL, int, __cdecl, BIsValveGame)
 {
 	if (ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless"))
 		return true;
 	else
-		return ORIG_BIsValveGame(thisptr);
+		return ORIG_BIsValveGame();
 }

@@ -68,7 +68,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, R_DrawWorld)
 	HOOK_DECL(void, __cdecl, R_DrawEntitiesOnList)
 	HOOK_DECL(void, __cdecl, R_DrawParticles)
-	HOOK_DECL(int, __fastcall, BIsValveGame, void *thisptr)
+	HOOK_DECL(int, __cdecl, BIsValveGame)
 
 	struct cmdbuf_t
 	{

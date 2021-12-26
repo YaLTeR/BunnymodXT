@@ -446,6 +446,11 @@ namespace patterns
 			"HL-SteamPipe",
 			"55 8B EC 51 A1 ?? ?? ?? ?? 85 C0 75"
 		);
+
+		PATTERNS(BIsValveGame,
+			"HL-SteamPipe",
+			"56 33 F6 8B 86 ?? ?? ?? ??"
+		);
 	}
 
 	namespace server

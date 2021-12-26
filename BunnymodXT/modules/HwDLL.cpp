@@ -390,6 +390,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_DrawWorld);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawEntitiesOnList);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawParticles);
+			MemUtils::MarkAsExecutable(ORIG_BIsValveGame);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -437,7 +438,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_CL_EmitEntities, HOOKED_CL_EmitEntities,
 			ORIG_R_DrawWorld, HOOKED_R_DrawWorld,
 			ORIG_R_DrawEntitiesOnList, HOOKED_R_DrawEntitiesOnList,
-			ORIG_R_DrawParticles, HOOKED_R_DrawParticles);
+			ORIG_R_DrawParticles, HOOKED_R_DrawParticles,
+			ORIG_BIsValveGame, HOOKED_BIsValveGame);
 	}
 }
 
@@ -490,7 +492,8 @@ void HwDLL::Unhook()
 			ORIG_CL_EmitEntities,
 			ORIG_R_DrawWorld,
 			ORIG_R_DrawEntitiesOnList,
-			ORIG_R_DrawParticles);
+			ORIG_R_DrawParticles,
+			ORIG_BIsValveGame);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -569,6 +572,7 @@ void HwDLL::Clear()
 	ORIG_R_DrawWorld = nullptr;
 	ORIG_R_DrawEntitiesOnList = nullptr;
 	ORIG_R_DrawParticles = nullptr;
+	ORIG_BIsValveGame = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -1104,6 +1108,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(R_DrawWorld)
 		DEF_FUTURE(R_DrawEntitiesOnList)
 		DEF_FUTURE(R_DrawParticles)
+		DEF_FUTURE(BIsValveGame)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1675,6 +1680,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(CL_Record_f)
 		GET_FUTURE(build_number);
 		GET_FUTURE(Key_Event);
+		GET_FUTURE(BIsValveGame);
 		#undef GET_FUTURE
 
 		{
@@ -5372,3 +5378,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawParticles)
 	ORIG_R_DrawParticles();
 }
 
+HOOK_DEF_1(HwDLL, int, __fastcall, BIsValveGame, void*, thisptr)
+{
+	if (ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless"))
+		return true;
+	else
+		return ORIG_BIsValveGame(thisptr);
+}

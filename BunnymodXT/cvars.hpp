@@ -144,6 +144,7 @@ namespace CVars
 	extern CVarWrapper bxt_viewmodel_disable_idle;
 	extern CVarWrapper bxt_viewmodel_disable_equip;
 	extern CVarWrapper bxt_clear_green;
+	extern CVarWrapper bxt_autojump_priority;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_cheats;

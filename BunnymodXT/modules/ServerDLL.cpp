@@ -1170,8 +1170,10 @@ void ServerDLL::RegisterCVarsAndCommands()
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 	REG(bxt_timer_autostop);
-	if (ORIG_PM_Jump)
+	if (ORIG_PM_Jump) {
 		REG(bxt_autojump);
+		REG(bxt_autojump_priority);
+	}
 	if (!ORIG_PM_PreventMegaBunnyJumping && !pBhopcapWindows)
 		HwDLL::GetInstance().SetCVarValue(CVars::bxt_bhopcap, "0");
 	if (ORIG_AddToFullPack) {

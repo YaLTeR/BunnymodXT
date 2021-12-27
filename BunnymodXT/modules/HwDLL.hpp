@@ -426,6 +426,8 @@ protected:
 	void FindCVarsIfNeeded();
 public:
 	HLStrafe::MovementVars GetMovementVars();
+
+	bool ducktap;
 protected:
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
@@ -435,7 +437,6 @@ protected:
 	bool registeredVarsAndCmds;
 
 	bool autojump;
-	bool ducktap;
 	bool jumpbug;
 
 	std::string recordDemoName;

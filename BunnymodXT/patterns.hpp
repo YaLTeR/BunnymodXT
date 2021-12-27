@@ -447,9 +447,9 @@ namespace patterns
 			"55 8B EC 51 A1 ?? ?? ?? ?? 85 C0 75"
 		);
 
-		PATTERNS(BIsValveGame,
+		PATTERNS(BUsesSDLInput,
 			"HL-SteamPipe",
-			"56 33 F6 8B 86"
+			"A0 ?? ?? ?? ?? 53 84 C0 0F 85"
 		);
 	}
 

@@ -31,7 +31,6 @@ namespace CVars
 	CVarWrapper bxt_viewmodel_disable_idle("bxt_viewmodel_disable_idle", "0");
 	CVarWrapper bxt_viewmodel_disable_equip("bxt_viewmodel_disable_equip", "0");
 	CVarWrapper bxt_clear_green("bxt_clear_green", "0");
-	CVarWrapper bxt_autojump_priority("bxt_autojump_priority", "1");
 
 	CVarWrapper con_color;
 	CVarWrapper sv_cheats;
@@ -50,6 +49,7 @@ namespace CVars
 
 	// Serverside CVars
 	CVarWrapper bxt_autojump("bxt_autojump", "0");
+	CVarWrapper bxt_autojump_priority("bxt_autojump_priority", "1");
 	CVarWrapper bxt_bhopcap("bxt_bhopcap", "1");
 	CVarWrapper bxt_timer_autostop("bxt_timer_autostop", "1");
 	CVarWrapper bxt_show_hidden_entities("bxt_show_hidden_entities", "0");

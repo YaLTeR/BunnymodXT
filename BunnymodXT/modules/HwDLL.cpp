@@ -390,6 +390,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_DrawWorld);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawEntitiesOnList);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawParticles);
+			MemUtils::MarkAsExecutable(ORIG_BUsesSDLInput);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -437,7 +438,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_CL_EmitEntities, HOOKED_CL_EmitEntities,
 			ORIG_R_DrawWorld, HOOKED_R_DrawWorld,
 			ORIG_R_DrawEntitiesOnList, HOOKED_R_DrawEntitiesOnList,
-			ORIG_R_DrawParticles, HOOKED_R_DrawParticles);
+			ORIG_R_DrawParticles, HOOKED_R_DrawParticles,
+			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput);
 	}
 }
 
@@ -490,7 +492,8 @@ void HwDLL::Unhook()
 			ORIG_CL_EmitEntities,
 			ORIG_R_DrawWorld,
 			ORIG_R_DrawEntitiesOnList,
-			ORIG_R_DrawParticles);
+			ORIG_R_DrawParticles,
+			ORIG_BUsesSDLInput);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -569,6 +572,7 @@ void HwDLL::Clear()
 	ORIG_R_DrawWorld = nullptr;
 	ORIG_R_DrawEntitiesOnList = nullptr;
 	ORIG_R_DrawParticles = nullptr;
+	ORIG_BUsesSDLInput = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -1104,6 +1108,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(R_DrawWorld)
 		DEF_FUTURE(R_DrawEntitiesOnList)
 		DEF_FUTURE(R_DrawParticles)
+		DEF_FUTURE(BUsesSDLInput)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1724,6 +1729,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(R_DrawWorld);
 		GET_FUTURE(R_DrawEntitiesOnList);
 		GET_FUTURE(R_DrawParticles);
+		GET_FUTURE(BUsesSDLInput);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -5372,3 +5378,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawParticles)
 	ORIG_R_DrawParticles();
 }
 
+HOOK_DEF_0(HwDLL, int, __cdecl, BUsesSDLInput)
+{
+	if (ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless"))
+		return true;
+	else
+		return ORIG_BUsesSDLInput();
+}

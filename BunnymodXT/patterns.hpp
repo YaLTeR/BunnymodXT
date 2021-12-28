@@ -446,6 +446,11 @@ namespace patterns
 			"HL-SteamPipe",
 			"55 8B EC 51 A1 ?? ?? ?? ?? 85 C0 75"
 		);
+
+		PATTERNS(BUsesSDLInput,
+			"HL-SteamPipe",
+			"A0 ?? ?? ?? ?? 53 84 C0 0F 85"
+		);
 	}
 
 	namespace server

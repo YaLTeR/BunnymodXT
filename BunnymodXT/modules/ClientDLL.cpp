@@ -827,8 +827,11 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
 
 	if (CVars::bxt_autojump_prediction.GetBool())
 	{
-		if ((orig_onground != -1) && !cantJumpNextTime)
-			*oldbuttons &= ~IN_JUMP;
+		if ((orig_onground != -1) && !cantJumpNextTime) {
+			if (HwDLL::GetInstance().ducktap == false || (HwDLL::GetInstance().ducktap == true && CVars::bxt_autojump_priority.GetBool())) {
+				*oldbuttons &= ~IN_JUMP;
+			}
+		}
 	}
 
 	cantJumpNextTime = false;

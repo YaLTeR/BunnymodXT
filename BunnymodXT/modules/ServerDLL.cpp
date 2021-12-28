@@ -836,6 +836,7 @@ void ServerDLL::FindStuff()
 	ORIG_AddToFullPack = reinterpret_cast<_AddToFullPack>(MemUtils::GetSymbolAddress(m_Handle, "_Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh"));
 	ORIG_ClientCommand = reinterpret_cast<_ClientCommand>(MemUtils::GetSymbolAddress(m_Handle, "_Z13ClientCommandP7edict_s"));
 	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move"));
+
 	if (ORIG_CmdStart && ORIG_AddToFullPack && ORIG_ClientCommand && ORIG_PM_Move) {
 		EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
 		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
@@ -1184,6 +1185,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_disable_autosave);
 	if (ORIG_CChangeLevel__UseChangeLevel && ORIG_CChangeLevel__TouchChangeLevel)
 		REG(bxt_disable_changelevel);
+	if (ORIG_PM_PlayerMove)
+		REG(bxt_force_duck);
 	#undef REG
 }
 
@@ -1323,6 +1326,9 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	origin =   reinterpret_cast<float*>(pmove + offOrigin);
 	angles =   reinterpret_cast<float*>(pmove + offAngles);
 	usercmd_t *cmd = reinterpret_cast<usercmd_t*>(pmove + offCmd);
+
+	if (CVars::bxt_force_duck.GetBool())
+		cmd->buttons |= IN_DUCK;
 
 	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)

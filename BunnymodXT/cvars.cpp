@@ -49,6 +49,7 @@ namespace CVars
 
 	// Serverside CVars
 	CVarWrapper bxt_autojump("bxt_autojump", "0");
+	CVarWrapper bxt_autojump_priority("bxt_autojump_priority", "1");
 	CVarWrapper bxt_bhopcap("bxt_bhopcap", "1");
 	CVarWrapper bxt_timer_autostop("bxt_timer_autostop", "1");
 	CVarWrapper bxt_show_hidden_entities("bxt_show_hidden_entities", "0");
@@ -181,6 +182,7 @@ namespace CVars
 		&bxt_viewmodel_disable_idle,
 		&bxt_viewmodel_disable_equip,
 		&bxt_clear_green,
+		&bxt_autojump_priority,
 		&con_color,
 		&sv_cheats,
 		&sv_maxvelocity,

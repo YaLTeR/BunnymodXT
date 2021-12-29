@@ -1090,7 +1090,7 @@ namespace CustomHud
 			return;
 
 		int x, y;
-		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, -250, (si.iCharHeight * 41) + 3);
+		GetPosition(CVars::bxt_hud_tas_editor_status_offset, CVars::bxt_hud_tas_editor_status_anchor, &x, &y, 2, si.iCharHeight + 2);
 
 		std::ostringstream out;
 		out.setf(std::ios::fixed);
@@ -1186,7 +1186,7 @@ namespace CustomHud
 			return;
 
 		int x, y;
-		GetPosition(CVars::bxt_hud_entities_offset, CVars::bxt_hud_entities_anchor, &x, &y, 0, (4 * si.iCharHeight) + 8);
+		GetPosition(CVars::bxt_hud_entities_offset, CVars::bxt_hud_entities_anchor, &x, &y, 2, (si.iCharHeight * 3) + 2);
 
 		const auto max_lines = std::max(1, (si.iHeight - y - si.iCharHeight) / si.iCharHeight);
 		int current_line = 0;

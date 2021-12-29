@@ -179,6 +179,7 @@ namespace CVars
 		&bxt_disable_vgui,
 		&bxt_show_only_viewmodel,
 		&bxt_force_zmax,
+		&bxt_force_duck,
 		&bxt_viewmodel_fov,
 		&bxt_viewmodel_disable_idle,
 		&bxt_viewmodel_disable_equip,

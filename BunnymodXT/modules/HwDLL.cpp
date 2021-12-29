@@ -391,6 +391,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_DrawEntitiesOnList);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawParticles);
 			MemUtils::MarkAsExecutable(ORIG_BUsesSDLInput);
+			MemUtils::MarkAsExecutable(ORIG_R_StudioRenderModel);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -439,7 +440,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_DrawWorld, HOOKED_R_DrawWorld,
 			ORIG_R_DrawEntitiesOnList, HOOKED_R_DrawEntitiesOnList,
 			ORIG_R_DrawParticles, HOOKED_R_DrawParticles,
-			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput);
+			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput,
+			ORIG_R_StudioRenderModel, HOOKED_R_StudioRenderModel);
 	}
 }
 
@@ -493,7 +495,8 @@ void HwDLL::Unhook()
 			ORIG_R_DrawWorld,
 			ORIG_R_DrawEntitiesOnList,
 			ORIG_R_DrawParticles,
-			ORIG_BUsesSDLInput);
+			ORIG_BUsesSDLInput,
+			ORIG_R_StudioRenderModel);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -573,6 +576,7 @@ void HwDLL::Clear()
 	ORIG_R_DrawEntitiesOnList = nullptr;
 	ORIG_R_DrawParticles = nullptr;
 	ORIG_BUsesSDLInput = nullptr;
+	ORIG_R_StudioRenderModel = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -1652,6 +1656,16 @@ void HwDLL::FindStuff()
 			} else {
 				EngineDevWarning("[hw dll] Could not find R_StudioSetupBones.\n");
 				EngineWarning("[hw dll] Disabling weapon viewmodel idle or equip sequences is not available.\n");
+			}
+		}
+
+		{
+			auto pattern = fR_StudioRenderModel.get();
+			if (ORIG_R_StudioRenderModel) {
+				EngineDevMsg("[hw dll] Found R_StudioRenderModel at %p (using the %s pattern).\n", ORIG_R_StudioRenderModel, pattern->name());
+			} else {
+				EngineDevWarning("[hw dll] Could not find R_StudioRenderModel.\n");
+				EngineWarning("[hw dll] Changing weapon viewmodel opacity is not available.\n");
 			}
 		}
 
@@ -3358,6 +3372,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_force_zmax);
 	RegisterCVar(CVars::bxt_viewmodel_disable_idle);
 	RegisterCVar(CVars::bxt_viewmodel_disable_equip);
+	RegisterCVar(CVars::bxt_viewmodel_opacity);
 	RegisterCVar(CVars::bxt_clear_green);
 
 	if (ORIG_R_DrawViewModel)
@@ -5384,4 +5399,9 @@ HOOK_DEF_0(HwDLL, int, __cdecl, BUsesSDLInput)
 		return true;
 	else
 		return ORIG_BUsesSDLInput();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
+{
+	ORIG_R_StudioRenderModel();
 }

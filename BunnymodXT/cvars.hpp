@@ -143,6 +143,7 @@ namespace CVars
 	extern CVarWrapper bxt_viewmodel_fov;
 	extern CVarWrapper bxt_viewmodel_disable_idle;
 	extern CVarWrapper bxt_viewmodel_disable_equip;
+	extern CVarWrapper bxt_viewmodel_opacity;
 	extern CVarWrapper bxt_clear_green;
 
 	extern CVarWrapper con_color;

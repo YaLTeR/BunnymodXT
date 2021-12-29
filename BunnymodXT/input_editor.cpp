@@ -348,7 +348,8 @@ void EditedInput::run_script_in_second_game() {
 
 	const auto& properties = hw.input.GetProperties();
 	if (properties.find(std::string("load_command")) == properties.cend()) {
-		simulation_ipc::send_command_to_client("echo Cannot run the TAS because it is missing the load_command property.\n");
+		if (simulation_ipc::write_command("echo Cannot run the TAS because it is missing the load_command property.\n"))
+			simulation_ipc::send_message_to_client();
 		return;
 	}
 
@@ -362,20 +363,48 @@ void EditedInput::run_script_in_second_game() {
 	final_frame.Frametime = frame_bulks[0].Frametime;
 	frame_bulks.push_back(final_frame);
 
-	std::string filename("_bxt-tas-server-script-to-run.hltas");
-	auto err = save(filename);
-	if (err.Code != HLTAS::ErrorCode::OK) {
-		hw.ORIG_Con_Printf("Error saving the script: %s\n", HLTAS::GetErrorMessage(err).c_str());
-		return;
+	auto input = hw.input; // Make a copy to mess with.
+	const auto frame_count = input.GetFrames().size();
+	if (frame_count != 0) {
+		const auto last_frame = input.GetFrames()[frame_count - 1];
+		input.RemoveFrame(frame_count - 1);
+
+		for (const auto& frame_bulk: frame_bulks) {
+			input.PushFrame(frame_bulk);
+		}
+		input.PushFrame(last_frame);
 	}
 
 	frame_bulks.pop_back();
 	frame_bulks[0].Commands = tas_editor_command;
 
+	// Send the message to the client.
 	std::ostringstream oss;
 	oss << "_bxt_tas_script_generation " << current_generation
-	    << ";sensitivity 0;volume 0;MP3Volume 0;bxt_tas_norefresh_until_last_frames 1;bxt_tas_loadscript " << filename << '\n';
-	simulation_ipc::send_command_to_client(oss.str());
+	    << ";sensitivity 0;volume 0;MP3Volume 0;bxt_tas_norefresh_until_last_frames 1";
+
+	if (input.ToString(simulation_ipc::message.script, sizeof(simulation_ipc::message.script)).Code == HLTAS::ErrorCode::OK) {
+		oss << ";_bxt_tas_client_load_received_script\n";
+	} else {
+		// Couldn't save to the buffer, maybe the script was too large. Try saving to a file.
+		simulation_ipc::message.script[0] = 0;
+
+		const char filename[] = "_bxt-tas-server-script-to-run.hltas";
+
+		simulation_ipc::maybe_lock_mutex();
+		auto err = input.Save(filename);
+		simulation_ipc::maybe_unlock_mutex();
+
+		if (err.Code != HLTAS::ErrorCode::OK) {
+			hw.ORIG_Con_Printf("Error saving the script: %s\n", HLTAS::GetErrorMessage(err).c_str());
+			return;
+		}
+
+		oss << ";bxt_tas_loadscript " << filename << '\n';
+	}
+
+	if (simulation_ipc::write_command(oss.str()))
+		simulation_ipc::send_message_to_client();
 }
 
 void EditedInput::schedule_run_in_second_game() {

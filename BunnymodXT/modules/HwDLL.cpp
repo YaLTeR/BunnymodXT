@@ -1780,39 +1780,129 @@ cvar_t* HwDLL::FindCVar(const char* name)
 	return ORIG_Cvar_FindVar(name);
 }
 
+void HwDLL::ResetStateBeforeTASPlayback()
+{
+	// Disable the input editor.
+	SetTASEditorMode(TASEditorMode::DISABLED);
+
+	runningFrames = false;
+	currentFramebulk = 0;
+	currentRepeat = 0;
+	movementFrameCounter = 0;
+	StrafeState = HLStrafe::CurrentState();
+	PrevStrafeState = HLStrafe::CurrentState();
+	PrevFraction = 1;
+	PrevNormalz = 0;
+	ButtonsPresent = false;
+	demoName.clear();
+	saveName.clear();
+	frametime0ms.clear();
+	hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
+	SharedRNGSeedPresent = false;
+	SetNonSharedRNGSeed = false;
+	thisFrameIs0ms = false;
+	clearedImpulsesForTheFirstTime = false;
+	TargetYawOverrideIndex = 0;
+	TargetYawOverrides.clear();
+}
+
+void HwDLL::StartTASPlayback()
+{
+	if (!exportFilename.empty())
+		exportResult.ClearProperties();
+
+	bool saw_hlstrafe_version = false;
+	std::string load_command;
+	for (auto prop : input.GetProperties()) {
+		if (prop.first == "demo")
+			demoName = prop.second;
+		else if (prop.first == "save")
+			saveName = prop.second;
+		else if (prop.first == "seed") {
+			std::istringstream ss(prop.second);
+			ss >> SharedRNGSeed >> NonSharedRNGSeed;
+			SharedRNGSeedPresent = true;
+			SetNonSharedRNGSeed = true;
+		} else if (prop.first == "frametime0ms")
+			frametime0ms = prop.second;
+		else if (prop.first == "hlstrafe_version") {
+			hlstrafe_version = std::strtoul(prop.second.c_str(), nullptr, 10);
+
+			saw_hlstrafe_version = true;
+
+			if (hlstrafe_version > HLStrafe::MAX_SUPPORTED_VERSION) {
+				ORIG_Con_Printf("Error loading the script: hlstrafe_version %u is too high (maximum supported version: %u)\n", hlstrafe_version, HLStrafe::MAX_SUPPORTED_VERSION);
+				return;
+			}
+		} else if (prop.first == "load_command")
+			load_command = prop.second;
+
+		if (!exportFilename.empty())
+			exportResult.SetProperty(prop.first, prop.second);
+	}
+
+	if (saw_hlstrafe_version) {
+		if (hlstrafe_version < HLStrafe::MAX_SUPPORTED_VERSION)
+			ORIG_Con_Printf("The script's hlstrafe_version is %u, but the latest version is %u. If this is an old script, keep it as is. For new scripts, please add a \"hlstrafe_version %u\" property to get the most accurate TAS prediction.\n", hlstrafe_version, HLStrafe::MAX_SUPPORTED_VERSION, HLStrafe::MAX_SUPPORTED_VERSION);
+	} else {
+		hlstrafe_version = 1;
+		ORIG_Con_Printf("No hlstrafe_version property found in the script. If this is an old script, keep it as is, or add a \"hlstrafe_version 1\" property explicitly. For new scripts, please add a \"hlstrafe_version %u\" property to get the most accurate TAS prediction.\n", HLStrafe::MAX_SUPPORTED_VERSION);
+	}
+
+	if (!input.GetFrames().empty()) {
+		runningFrames = true;
+		wasRunningFrames = false; // So that ResetButtons() and others run in InsertCommands().
+		totalFramebulks = input.GetFrames().size();
+		HLTAS::Frame f;
+		if (GetNextMovementFrame(f)) {
+			std::ostringstream ss;
+			ss << "host_framerate " << f.Frametime.c_str() << "\n";
+			ORIG_Cbuf_InsertText(ss.str().c_str());
+		}
+
+		totalFrames = 0;
+		for (const auto& frame_bulk : input.GetFrames()) {
+			if (!frame_bulk.IsMovement())
+				continue;
+
+			totalFrames += frame_bulk.GetRepeats();
+		}
+
+		auto norefresh_until_frames = CVars::bxt_tas_norefresh_until_last_frames.GetInt();
+		if (norefresh_until_frames > 0 && totalFrames > static_cast<size_t>(norefresh_until_frames))
+			ORIG_Cbuf_InsertText("_bxt_norefresh 1\n");
+
+		// Reset the frametime remainder automatically upon starting a script.
+		// Fairly certain that's what you want in 100% of cases.
+		if (frametime_remainder)
+			*frametime_remainder = 0;
+
+		// Disable the freecam. A case could be made for it being useful, however with the
+		// current implementation it just uses the viewangles from the strafing and so isn't
+		// really useful.
+		SetFreeCam(false);
+
+		// It will be enabled by bxt_tas_write_log if needed.
+		SetTASLogging(false);
+	}
+
+	if (!load_command.empty()) {
+		load_command += '\n';
+		ORIG_Cbuf_InsertText(load_command.c_str());
+	}
+}
+
 struct HwDLL::Cmd_BXT_TAS_LoadScript
 {
 	USAGE("Usage: bxt_tas_loadscript <filename>\n");
 
-	static void handler(const char *fileName)
-	{
-		auto &hw = HwDLL::GetInstance();
+	static void handler(const char *fileName) {
+		auto& hw = HwDLL::GetInstance();
 		if (hw.resetState != ResetState::NORMAL)
 			return;
 
-		// Disable the input editor.
-		hw.SetTASEditorMode(TASEditorMode::DISABLED);
-
-		hw.runningFrames = false;
-		hw.currentFramebulk = 0;
-		hw.currentRepeat = 0;
-		hw.movementFrameCounter = 0;
-		hw.StrafeState = HLStrafe::CurrentState();
-		hw.PrevStrafeState = HLStrafe::CurrentState();
-		hw.PrevFraction = 1;
-		hw.PrevNormalz = 0;
-		hw.ButtonsPresent = false;
-		hw.demoName.clear();
-		hw.saveName.clear();
-		hw.frametime0ms.clear();
-		hw.hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
-		hw.SharedRNGSeedPresent = false;
-		hw.SetNonSharedRNGSeed = false;
-		hw.thisFrameIs0ms = false;
+		hw.ResetStateBeforeTASPlayback();
 		hw.hltas_filename = fileName;
-		hw.clearedImpulsesForTheFirstTime = false;
-		hw.TargetYawOverrideIndex = 0;
-		hw.TargetYawOverrides.clear();
 
 		simulation_ipc::maybe_lock_mutex();
 		auto err = hw.input.Open(fileName);
@@ -1828,88 +1918,7 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 			return;
 		}
 
-		if (!hw.exportFilename.empty())
-			hw.exportResult.ClearProperties();
-
-		bool saw_hlstrafe_version = false;
-		std::string load_command;
-		for (auto prop : hw.input.GetProperties()) {
-			if (prop.first == "demo")
-				hw.demoName = prop.second;
-			else if (prop.first == "save")
-				hw.saveName = prop.second;
-			else if (prop.first == "seed") {
-				std::istringstream ss(prop.second);
-				ss >> hw.SharedRNGSeed >> hw.NonSharedRNGSeed;
-				hw.SharedRNGSeedPresent = true;
-				hw.SetNonSharedRNGSeed = true;
-			} else if (prop.first == "frametime0ms")
-				hw.frametime0ms = prop.second;
-			else if (prop.first == "hlstrafe_version") {
-				hw.hlstrafe_version = std::strtoul(prop.second.c_str(), nullptr, 10);
-
-				saw_hlstrafe_version = true;
-
-				if (hw.hlstrafe_version > HLStrafe::MAX_SUPPORTED_VERSION) {
-					hw.ORIG_Con_Printf("Error loading the script: hlstrafe_version %u is too high (maximum supported version: %u)\n", hw.hlstrafe_version, HLStrafe::MAX_SUPPORTED_VERSION);
-					return;
-				}
-			} else if (prop.first == "load_command")
-				load_command = prop.second;
-
-			if (!hw.exportFilename.empty())
-				hw.exportResult.SetProperty(prop.first, prop.second);
-		}
-
-		if (saw_hlstrafe_version) {
-			if (hw.hlstrafe_version < HLStrafe::MAX_SUPPORTED_VERSION)
-				hw.ORIG_Con_Printf("The script's hlstrafe_version is %u, but the latest version is %u. If this is an old script, keep it as is. For new scripts, please add a \"hlstrafe_version %u\" property to get the most accurate TAS prediction.\n", hw.hlstrafe_version, HLStrafe::MAX_SUPPORTED_VERSION, HLStrafe::MAX_SUPPORTED_VERSION);
-		} else {
-			hw.hlstrafe_version = 1;
-			hw.ORIG_Con_Printf("No hlstrafe_version property found in the script. If this is an old script, keep it as is, or add a \"hlstrafe_version 1\" property explicitly. For new scripts, please add a \"hlstrafe_version %u\" property to get the most accurate TAS prediction.\n", HLStrafe::MAX_SUPPORTED_VERSION);
-		}
-
-		if (!hw.input.GetFrames().empty()) {
-			hw.runningFrames = true;
-			hw.wasRunningFrames = false; // So that ResetButtons() and others run in InsertCommands().
-			hw.totalFramebulks = hw.input.GetFrames().size();
-			HLTAS::Frame f;
-			if (hw.GetNextMovementFrame(f)) {
-				std::ostringstream ss;
-				ss << "host_framerate " << f.Frametime.c_str() << "\n";
-				hw.ORIG_Cbuf_InsertText(ss.str().c_str());
-			}
-
-			hw.totalFrames = 0;
-			for (const auto& frame_bulk : hw.input.GetFrames()) {
-				if (!frame_bulk.IsMovement())
-					continue;
-
-				hw.totalFrames += frame_bulk.GetRepeats();
-			}
-
-			auto norefresh_until_frames = CVars::bxt_tas_norefresh_until_last_frames.GetInt();
-			if (norefresh_until_frames > 0 && hw.totalFrames > static_cast<size_t>(norefresh_until_frames))
-				hw.ORIG_Cbuf_InsertText("_bxt_norefresh 1\n");
-
-			// Reset the frametime remainder automatically upon starting a script.
-			// Fairly certain that's what you want in 100% of cases.
-			if (hw.frametime_remainder)
-				*hw.frametime_remainder = 0;
-
-			// Disable the freecam. A case could be made for it being useful, however with the
-			// current implementation it just uses the viewangles from the strafing and so isn't
-			// really useful.
-			hw.SetFreeCam(false);
-
-			// It will be enabled by bxt_tas_write_log if needed.
-			hw.SetTASLogging(false);
-		}
-
-		if (!load_command.empty()) {
-			load_command += '\n';
-			hw.ORIG_Cbuf_InsertText(load_command.c_str());
-		}
+		hw.StartTASPlayback();
 	}
 };
 
@@ -3180,7 +3189,39 @@ struct HwDLL::Cmd_BXT_TAS_Server_Send_Command
 
 	static void handler(const char *command)
 	{
-		simulation_ipc::send_command_to_client(std::string(command) + '\n');
+		if (simulation_ipc::write_command(std::string(command) + '\n'))
+			simulation_ipc::send_message_to_client();
+	}
+};
+
+struct HwDLL::Cmd_BXT_TAS_Client_Load_Received_Script
+{
+	NO_USAGE()
+
+	static void handler() {
+		if (!simulation_ipc::is_client_initialized())
+			return;
+
+		if (simulation_ipc::message.script[0] == 0)
+			return;
+
+		auto& hw = HwDLL::GetInstance();
+		hw.ResetStateBeforeTASPlayback();
+
+		auto err = hw.input.FromString(simulation_ipc::message.script);
+		simulation_ipc::message.script[0] = 0;
+
+		if (err.Code != HLTAS::ErrorCode::OK) {
+			const auto& message = hw.input.GetErrorMessage();
+			if (message.empty()) {
+				hw.ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
+			} else {
+				hw.ORIG_Con_Printf("Error loading the script: %s\n", message.c_str());
+			}
+			return;
+		}
+
+		hw.StartTASPlayback();
 	}
 };
 
@@ -3456,6 +3497,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 
 	wrapper::Add<Cmd_BXT_TAS_Become_Simulator_Client, Handler<>>("bxt_tas_become_simulator_client");
 	wrapper::Add<Cmd_BXT_TAS_Server_Send_Command, Handler<const char*>>("_bxt_tas_server_send_command");
+	wrapper::Add<Cmd_BXT_TAS_Client_Load_Received_Script, Handler<>>("_bxt_tas_client_load_received_script");
 }
 
 void HwDLL::InsertCommands()
@@ -4306,11 +4348,12 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	}
 
 	simulation_ipc::receive_messages_from_server();
-	if (!simulation_ipc::command_to_run.empty()
+	if (simulation_ipc::is_client_initialized()
+			&& simulation_ipc::message.command[0] != 0
 			// Starting a TAS in states 2, 3, 4 (loading) leads to crashes or desyncs.
 			&& (*state == 5 || *state == 1)) {
-		ORIG_Cbuf_AddText(simulation_ipc::command_to_run.c_str());
-		simulation_ipc::command_to_run.clear();
+		ORIG_Cbuf_AddText(simulation_ipc::message.command);
+		simulation_ipc::message.command[0] = 0;
 	}
 
 	if (!finishingLoad && *state == 4 && !executing)

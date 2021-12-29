@@ -308,6 +308,9 @@ public:
 
 	bool insideCLEmitEntities = false;
 
+	void ResetStateBeforeTASPlayback();
+	void StartTASPlayback();
+
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
 	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};
@@ -419,6 +422,7 @@ protected:
 	struct Cmd_BXT_Print_Entities;
 	struct Cmd_BXT_TAS_Become_Simulator_Client;
 	struct Cmd_BXT_TAS_Server_Send_Command;
+	struct Cmd_BXT_TAS_Client_Load_Received_Script;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

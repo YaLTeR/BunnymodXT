@@ -19,8 +19,22 @@ namespace simulation_ipc {
 		float armor;
 	};
 
-	// Console command received from the server to be run.
-	extern std::string command_to_run;
+	enum ServerToClientMessageType {
+		CONSOLE_COMMAND_WITH_SCRIPT = 0,
+	};
+
+	struct ServerToClientMessage {
+		ServerToClientMessageType type;
+
+		char command[1024];
+
+		// 10 MiB should cover reasonably large scripts.
+		// If it starts with a NULL byte then there's no script, simply run the command.
+		char script[10 * 1024 * 1024];
+	};
+
+	// On the client, the last received message. On the server, the message to send.
+	extern ServerToClientMessage message;
 
 	// Initializes this game as the server if not already initialized.
 	// Returns a non-empty error message on error.
@@ -29,8 +43,10 @@ namespace simulation_ipc {
 	std::string initialize_server_if_needed();
 	// Returns `true` if the server part was initialized.
 	bool is_server_initialized();
-	// Sends a console command to the connected client.
-	void send_command_to_client(const std::string &command);
+	// Writes a console command to message.
+	bool write_command(const std::string &command);
+	// Sends message to the client.
+	void send_message_to_client();
 	// Receives and handles messages from the client.
 	void receive_messages_from_client();
 

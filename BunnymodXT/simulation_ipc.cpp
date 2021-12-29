@@ -27,18 +27,6 @@ using namespace std::literals;
 #define MUTEX_NAME "bxt-simulation-mutex"
 
 namespace simulation_ipc {
-	std::string command_to_run;
-
-	enum ServerToClientMessageType {
-		CONSOLE_COMMAND = 0,
-	};
-
-	struct ServerToClientMessage {
-		ServerToClientMessageType type;
-
-		char command[1024];
-	};
-
 	enum ClientToServerMessageType {
 		SIMULATED_FRAME = 0,
 	};
@@ -54,6 +42,8 @@ namespace simulation_ipc {
 	static unique_ptr<message_queue> client_tx;
 	static unique_ptr<message_queue> client_rx;
 	static unique_ptr<named_mutex> mutex;
+
+	ServerToClientMessage message;
 
 	void remove() {
 		server_tx.reset();
@@ -117,33 +107,33 @@ namespace simulation_ipc {
 		return !!server_tx;
 	}
 
-	void send_command_to_client(const std::string &command) {
-		if (!is_server_initialized()) {
-			cerr << "server is not initialized" << endl;
-			return;
-		}
+	bool write_command(const std::string &command) {
+		message.command[0] = 0;
 
 		if (command.length() >= 1024) {
 			cerr << "command is too long (" << command.length() << " >= 1024)" << endl;
-			return;
+			return false;
 		}
 
 		if (command.empty()) {
 			cerr << "command is empty" << endl;
-			return;
+			return false;
 		}
 
 		if (command[command.length() - 1] != '\n') {
 			cerr << "command does not end in \\n" << endl;
-			return;
+			return false;
 		}
 
-		ServerToClientMessage message {
-			ServerToClientMessageType::CONSOLE_COMMAND,
-			"",
-		};
-
 		strncpy(message.command, command.c_str(), 1023);
+		return true;
+	}
+
+	void send_message_to_client() {
+		if (!is_server_initialized()) {
+			cerr << "server is not initialized" << endl;
+			return;
+		}
 
 		try {
 			server_tx->try_send(&message, sizeof(message), 0);
@@ -152,6 +142,9 @@ namespace simulation_ipc {
 			cerr << "error sending message from server: " << ex.what() << endl;
 			return;
 		}
+
+		message.command[0] = 0;
+		message.script[0] = 0;
 	}
 
 	void receive_messages_from_client() {
@@ -240,7 +233,6 @@ namespace simulation_ipc {
 
 		try {
 			while (true) {
-				ServerToClientMessage message;
 				message_queue::size_type recvd_size;
 				unsigned int priority;
 				if (!client_rx->try_receive(&message, sizeof(message), recvd_size, priority)) {
@@ -256,8 +248,7 @@ namespace simulation_ipc {
 				}
 
 				switch (message.type) {
-				case ServerToClientMessageType::CONSOLE_COMMAND:
-					command_to_run = message.command;
+				case ServerToClientMessageType::CONSOLE_COMMAND_WITH_SCRIPT:
 					break;
 				default:
 					close_client();

@@ -1279,10 +1279,10 @@ HOOK_DEF_0(ClientDLL, int, __cdecl, CL_IsThirdPerson)
 
 HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel, void*, thisptr)
 {
-	ORIG_CStudioModelRenderer__StudioSetupBones(thisptr);
+	ORIG_CStudioModelRenderer__StudioRenderModel(thisptr);
 }
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Linux, void*, thisptr)
 {
-	ORIG_CStudioModelRenderer__StudioSetupBones_Linux(thisptr);
+	ORIG_CStudioModelRenderer__StudioRenderModel_Linux(thisptr);
 }

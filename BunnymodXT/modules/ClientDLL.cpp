@@ -1279,10 +1279,40 @@ HOOK_DEF_0(ClientDLL, int, __cdecl, CL_IsThirdPerson)
 
 HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel, void*, thisptr)
 {
+	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + 48);
+
+	int old_rendermode = pCurrentEntity->curstate.rendermode;
+
+	if (pEngfuncs) {
+		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+			if (!CVars::bxt_viewmodel_opacity.GetBool()) {
+				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
+				pEngfuncs->pTriAPI->Brightness(2);
+			} else {
+				pEngfuncs->pTriAPI->RenderMode(old_rendermode);
+			}
+		}
+	}
+
 	ORIG_CStudioModelRenderer__StudioRenderModel(thisptr);
 }
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Linux, void*, thisptr)
 {
+	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + 44);
+
+	int old_rendermode = pCurrentEntity->curstate.rendermode;
+
+	if (pEngfuncs) {
+		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+			if (!CVars::bxt_viewmodel_opacity.GetBool()) {
+				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
+				pEngfuncs->pTriAPI->Brightness(2);
+			} else {
+				pEngfuncs->pTriAPI->RenderMode(old_rendermode);
+			}
+		}
+	}
+
 	ORIG_CStudioModelRenderer__StudioRenderModel_Linux(thisptr);
 }

@@ -1068,6 +1068,14 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found R_DrawParticles at %p.\n", ORIG_R_DrawParticles);
 		else
 			EngineDevWarning("[hw dll] Could not find R_DrawParticles.\n");
+
+		ORIG_R_StudioRenderModel = reinterpret_cast<_R_StudioRenderModel>(MemUtils::GetSymbolAddress(m_Handle, "R_StudioRenderModel"));
+		if (ORIG_R_StudioRenderModel) {
+			EngineDevMsg("[hw dll] Found R_StudioRenderModel at %p.\n", ORIG_R_StudioRenderModel);
+		} else {
+			EngineDevWarning("[hw dll] Could not find R_StudioRenderModel.\n");
+			EngineWarning("Changing weapon viewmodel opacity is not available.\n");
+		}
 	}
 	else
 	{
@@ -1113,6 +1121,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(R_DrawEntitiesOnList)
 		DEF_FUTURE(R_DrawParticles)
 		DEF_FUTURE(BUsesSDLInput)
+		DEF_FUTURE(R_StudioRenderModel)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1659,16 +1668,6 @@ void HwDLL::FindStuff()
 			}
 		}
 
-		{
-			auto pattern = fR_StudioRenderModel.get();
-			if (ORIG_R_StudioRenderModel) {
-				EngineDevMsg("[hw dll] Found R_StudioRenderModel at %p (using the %s pattern).\n", ORIG_R_StudioRenderModel, pattern->name());
-			} else {
-				EngineDevWarning("[hw dll] Could not find R_StudioRenderModel.\n");
-				EngineWarning("[hw dll] Changing weapon viewmodel opacity is not available.\n");
-			}
-		}
-
 		#define GET_FUTURE(future_name) \
 			{ \
 				auto pattern = f##future_name.get(); \
@@ -1744,6 +1743,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(R_DrawEntitiesOnList);
 		GET_FUTURE(R_DrawParticles);
 		GET_FUTURE(BUsesSDLInput);
+		GET_FUTURE(R_StudioRenderModel);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -5403,5 +5403,22 @@ HOOK_DEF_0(HwDLL, int, __cdecl, BUsesSDLInput)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 {
+	if (ORIG_studioapi_GetCurrentEntity) {
+		auto& cl = ClientDLL::GetInstance();
+		auto currententity = ORIG_studioapi_GetCurrentEntity();
+
+		int old_rendermode = currententity->curstate.rendermode;
+
+		if (cl.pEngfuncs) {
+			if (currententity == cl.pEngfuncs->GetViewModel()) {
+				if (!CVars::bxt_viewmodel_opacity.GetBool()) {
+				cl.pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
+				cl.pEngfuncs->pTriAPI->Brightness(2);
+			} else {
+				cl.pEngfuncs->pTriAPI->RenderMode(old_rendermode); }
+			}
+		}
+	}
+
 	ORIG_R_StudioRenderModel();
 }

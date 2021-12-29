@@ -29,6 +29,7 @@ struct EditedInput {
 	unsigned current_generation;
 	size_t first_frame_counter_value;
 	std::chrono::steady_clock::time_point run_in_second_game_at;
+	bool received_data_from_second_game;
 
 	// Clears and initializes EditedInput with the current player data.
 	void initialize();

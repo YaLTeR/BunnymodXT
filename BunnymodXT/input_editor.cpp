@@ -32,6 +32,7 @@ void EditedInput::initialize() {
 	first_predicted_frame = 1;
 	current_generation = 0;
 	first_frame_counter_value = 0;
+	received_data_from_second_game = false;
 }
 
 void EditedInput::simulate() {
@@ -413,6 +414,8 @@ void EditedInput::schedule_run_in_second_game() {
 }
 
 void EditedInput::received_simulated_frame(const simulation_ipc::SimulatedFrame &frame) {
+	received_data_from_second_game = true;
+
 	if (frame.generation != current_generation)
 		return;
 

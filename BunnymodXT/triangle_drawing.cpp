@@ -573,7 +573,7 @@ namespace TriangleDrawing
 				const auto origin = Vector(player_datas[frame].Origin);
 
 				float brightness = 0.4f;
-				if (frame >= input.first_predicted_frame)
+				if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
 					brightness = 0.2f;
 
 				pTriAPI->Color4f(brightness, brightness, 1, 1);
@@ -599,7 +599,7 @@ namespace TriangleDrawing
 				const auto origin = Vector(player_datas[frame].Origin);
 
 				float brightness;
-				if (frame >= input.first_predicted_frame)
+				if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
 					brightness = 0.5f;
 				else
 					brightness = 0.8f;
@@ -1401,7 +1401,7 @@ namespace TriangleDrawing
 			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
 				const auto origin = Vector(player_datas[frame].Origin);
 
-				if (frame >= input.first_predicted_frame)
+				if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
 					pTriAPI->Color4f(0.5f, 0.5f, 0.5f, 1);
 				else
 					pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
@@ -1416,12 +1416,12 @@ namespace TriangleDrawing
 					}
 
 					if (frame > frames_until_non_ground_collision) {
-						if (frame >= input.first_predicted_frame)
+						if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
 							pTriAPI->Color4f(0.6f, 0, 0, 1);
 						else
 							pTriAPI->Color4f(1, 0, 0, 1);
 					} else {
-						if (frame >= input.first_predicted_frame)
+						if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
 							pTriAPI->Color4f(0, 0.6f, 0, 1);
 						else
 							pTriAPI->Color4f(0, 1, 0, 1);

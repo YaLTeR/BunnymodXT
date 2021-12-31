@@ -3372,7 +3372,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_force_zmax);
 	RegisterCVar(CVars::bxt_viewmodel_disable_idle);
 	RegisterCVar(CVars::bxt_viewmodel_disable_equip);
-	RegisterCVar(CVars::bxt_viewmodel_half_opacity);
+	RegisterCVar(CVars::bxt_viewmodel_semitransparent);
 	RegisterCVar(CVars::bxt_clear_green);
 
 	if (ORIG_R_DrawViewModel)
@@ -5411,7 +5411,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 
 		if (cl.pEngfuncs) {
 			if (currententity == cl.pEngfuncs->GetViewModel()) {
-				if (CVars::bxt_viewmodel_half_opacity.GetBool()) {
+				if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
 				cl.pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
 				cl.pEngfuncs->pTriAPI->Brightness(2);
 			} else {

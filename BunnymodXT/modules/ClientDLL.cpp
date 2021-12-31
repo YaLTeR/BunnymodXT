@@ -1285,7 +1285,7 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel,
 
 	if (pEngfuncs) {
 		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
-			if (CVars::bxt_viewmodel_half_opacity.GetBool()) {
+			if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
 				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
 				pEngfuncs->pTriAPI->Brightness(2);
 			} else {
@@ -1305,7 +1305,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Lin
 
 	if (pEngfuncs) {
 		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
-			if (CVars::bxt_viewmodel_half_opacity.GetBool()) {
+			if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
 				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
 				pEngfuncs->pTriAPI->Brightness(2);
 			} else {

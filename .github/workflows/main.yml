@@ -50,6 +50,20 @@ jobs:
         name: BunnymodXT-${{ runner.os }}-${{ matrix.configuration }}
         path: build/libBunnymodXT.so
 
+    - name: Prepare Release
+      if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Release'
+      run: |
+        cp build/libBunnymodXT.so .
+        7z a BunnymodXT-${{ runner.os }}.7z libBunnymodXT.so LICENSE
+
+    - name: Release
+      if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: BunnymodXT-${{ runner.os }}.7z
+        draft: true
+        fail_on_unmatched_files: true
+
   build-flatpak:
     name: Build under Flatpak
     runs-on: ubuntu-latest
@@ -118,3 +132,17 @@ jobs:
       with:
         name: BunnymodXT-${{ runner.os }}-${{ matrix.configuration }}
         path: build\${{ matrix.configuration }}\BunnymodXT.dll
+
+    - name: Prepare Release
+      if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Release'
+      run: |
+        cp build/${{ matrix.configuration }}/BunnymodXT.dll .
+        7z a BunnymodXT-${{ runner.os }}.7z BunnymodXT.dll LICENSE
+
+    - name: Release
+      if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: BunnymodXT-${{ runner.os }}.7z
+        draft: true
+        fail_on_unmatched_files: true

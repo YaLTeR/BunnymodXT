@@ -30,6 +30,7 @@ namespace CVars
 	CVarWrapper bxt_viewmodel_fov("bxt_viewmodel_fov", "0");
 	CVarWrapper bxt_viewmodel_disable_idle("bxt_viewmodel_disable_idle", "0");
 	CVarWrapper bxt_viewmodel_disable_equip("bxt_viewmodel_disable_equip", "0");
+	CVarWrapper bxt_viewmodel_semitransparent("bxt_viewmodel_semitransparent", "0");
 	CVarWrapper bxt_clear_green("bxt_clear_green", "0");
 
 	CVarWrapper con_color;
@@ -183,6 +184,7 @@ namespace CVars
 		&bxt_viewmodel_fov,
 		&bxt_viewmodel_disable_idle,
 		&bxt_viewmodel_disable_equip,
+		&bxt_viewmodel_semitransparent,
 		&bxt_clear_green,
 		&bxt_autojump_priority,
 		&con_color,

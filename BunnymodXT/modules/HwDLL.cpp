@@ -391,6 +391,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_DrawEntitiesOnList);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawParticles);
 			MemUtils::MarkAsExecutable(ORIG_BUsesSDLInput);
+			MemUtils::MarkAsExecutable(ORIG_R_StudioRenderModel);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -439,7 +440,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_DrawWorld, HOOKED_R_DrawWorld,
 			ORIG_R_DrawEntitiesOnList, HOOKED_R_DrawEntitiesOnList,
 			ORIG_R_DrawParticles, HOOKED_R_DrawParticles,
-			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput);
+			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput,
+			ORIG_R_StudioRenderModel, HOOKED_R_StudioRenderModel);
 	}
 }
 
@@ -493,7 +495,8 @@ void HwDLL::Unhook()
 			ORIG_R_DrawWorld,
 			ORIG_R_DrawEntitiesOnList,
 			ORIG_R_DrawParticles,
-			ORIG_BUsesSDLInput);
+			ORIG_BUsesSDLInput,
+			ORIG_R_StudioRenderModel);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -573,6 +576,7 @@ void HwDLL::Clear()
 	ORIG_R_DrawEntitiesOnList = nullptr;
 	ORIG_R_DrawParticles = nullptr;
 	ORIG_BUsesSDLInput = nullptr;
+	ORIG_R_StudioRenderModel = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -1064,6 +1068,14 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found R_DrawParticles at %p.\n", ORIG_R_DrawParticles);
 		else
 			EngineDevWarning("[hw dll] Could not find R_DrawParticles.\n");
+
+		ORIG_R_StudioRenderModel = reinterpret_cast<_R_StudioRenderModel>(MemUtils::GetSymbolAddress(m_Handle, "R_StudioRenderModel"));
+		if (ORIG_R_StudioRenderModel) {
+			EngineDevMsg("[hw dll] Found R_StudioRenderModel at %p.\n", ORIG_R_StudioRenderModel);
+		} else {
+			EngineDevWarning("[hw dll] Could not find R_StudioRenderModel.\n");
+			EngineWarning("Changing weapon viewmodel opacity is not available.\n");
+		}
 	}
 	else
 	{
@@ -1109,6 +1121,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(R_DrawEntitiesOnList)
 		DEF_FUTURE(R_DrawParticles)
 		DEF_FUTURE(BUsesSDLInput)
+		DEF_FUTURE(R_StudioRenderModel)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1730,6 +1743,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(R_DrawEntitiesOnList);
 		GET_FUTURE(R_DrawParticles);
 		GET_FUTURE(BUsesSDLInput);
+		GET_FUTURE(R_StudioRenderModel);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -3399,6 +3413,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_force_zmax);
 	RegisterCVar(CVars::bxt_viewmodel_disable_idle);
 	RegisterCVar(CVars::bxt_viewmodel_disable_equip);
+	RegisterCVar(CVars::bxt_viewmodel_semitransparent);
 	RegisterCVar(CVars::bxt_clear_green);
 
 	if (ORIG_R_DrawViewModel)
@@ -5427,4 +5442,26 @@ HOOK_DEF_0(HwDLL, int, __cdecl, BUsesSDLInput)
 		return true;
 	else
 		return ORIG_BUsesSDLInput();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
+{
+	if (ORIG_studioapi_GetCurrentEntity) {
+		auto& cl = ClientDLL::GetInstance();
+		auto currententity = ORIG_studioapi_GetCurrentEntity();
+
+		int old_rendermode = currententity->curstate.rendermode;
+
+		if (cl.pEngfuncs) {
+			if (currententity == cl.pEngfuncs->GetViewModel()) {
+				if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
+				cl.pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
+				cl.pEngfuncs->pTriAPI->Brightness(2);
+			} else {
+				cl.pEngfuncs->pTriAPI->RenderMode(old_rendermode); }
+			}
+		}
+	}
+
+	ORIG_R_StudioRenderModel();
 }

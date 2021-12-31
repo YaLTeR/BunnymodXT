@@ -69,6 +69,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, R_DrawEntitiesOnList)
 	HOOK_DECL(void, __cdecl, R_DrawParticles)
 	HOOK_DECL(int, __cdecl, BUsesSDLInput)
+	HOOK_DECL(void, __cdecl, R_StudioRenderModel)
 
 	struct cmdbuf_t
 	{

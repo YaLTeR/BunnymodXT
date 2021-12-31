@@ -94,6 +94,11 @@ extern "C" int __cdecl CL_IsThirdPerson()
 {
 	return ClientDLL::HOOKED_CL_IsThirdPerson();
 }
+
+extern "C" void __cdecl _ZN20CStudioModelRenderer17StudioRenderModelEv(void *thisptr)
+{
+	return ClientDLL::HOOKED_CStudioModelRenderer__StudioRenderModel_Linux(thisptr);
+}
 #endif
 
 void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -141,7 +146,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_StudioCalcAttachments, HOOKED_StudioCalcAttachments,
 			ORIG_VectorTransform, HOOKED_VectorTransform,
 			ORIG_CStudioModelRenderer__StudioSetupBones, HOOKED_CStudioModelRenderer__StudioSetupBones,
-			ORIG_CL_IsThirdPerson, HOOKED_CL_IsThirdPerson);
+			ORIG_CL_IsThirdPerson, HOOKED_CL_IsThirdPerson,
+			ORIG_CStudioModelRenderer__StudioRenderModel, HOOKED_CStudioModelRenderer__StudioRenderModel);
 	}
 
 	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
@@ -173,7 +179,8 @@ void ClientDLL::Unhook()
 			ORIG_StudioCalcAttachments,
 			ORIG_VectorTransform,
 			ORIG_CStudioModelRenderer__StudioSetupBones,
-			ORIG_CL_IsThirdPerson);
+			ORIG_CL_IsThirdPerson,
+			ORIG_CStudioModelRenderer__StudioRenderModel);
 	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -206,6 +213,8 @@ void ClientDLL::Clear()
 	ORIG_StudioCalcAttachments_Linux = nullptr;
 	ORIG_CStudioModelRenderer__StudioSetupBones = nullptr;
 	ORIG_CStudioModelRenderer__StudioSetupBones_Linux = nullptr;
+	ORIG_CStudioModelRenderer__StudioRenderModel = nullptr;
+	ORIG_CStudioModelRenderer__StudioRenderModel_Linux = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
 	ORIG_HUD_Init = nullptr;
 	ORIG_HUD_VidInit = nullptr;
@@ -361,6 +370,9 @@ void ClientDLL::FindStuff()
 	auto fCStudioModelRenderer__StudioSetupBones = FindAsync(
 		ORIG_CStudioModelRenderer__StudioSetupBones,
 		patterns::client::CStudioModelRenderer__StudioSetupBones);
+	auto fCStudioModelRenderer__StudioRenderModel = FindAsync(
+		ORIG_CStudioModelRenderer__StudioRenderModel,
+		patterns::client::CStudioModelRenderer__StudioRenderModel);
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
@@ -603,6 +615,21 @@ void ClientDLL::FindStuff()
 			} else {
 				EngineDevWarning("[client dll] Could not find CStudioModelRenderer::StudioSetupBones.\n");
 				EngineWarning("[client dll] Disabling weapon viewmodel idle or equip sequences is not available.\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fCStudioModelRenderer__StudioRenderModel.get();
+		if (ORIG_CStudioModelRenderer__StudioRenderModel) {
+			EngineDevMsg("[client dll] Found CStudioModelRenderer::StudioRenderModel at %p (using the %s pattern).\n", ORIG_CStudioModelRenderer__StudioRenderModel, pattern->name());
+		} else {
+			ORIG_CStudioModelRenderer__StudioRenderModel_Linux = reinterpret_cast<_CStudioModelRenderer__StudioRenderModel_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN20CStudioModelRenderer17StudioRenderModelEv"));
+			if (ORIG_CStudioModelRenderer__StudioRenderModel_Linux) {
+				EngineDevMsg("[client dll] Found CStudioModelRenderer::StudioRenderModel [Linux] at %p.\n", ORIG_CStudioModelRenderer__StudioRenderModel_Linux);
+			} else {
+				EngineDevWarning("[client dll] Could not find CStudioModelRenderer::StudioRenderModel.\n");
+				EngineWarning("[client dll] Changing weapon viewmodel opacity is not available.\n");
 			}
 		}
 	}
@@ -1248,4 +1275,44 @@ HOOK_DEF_0(ClientDLL, int, __cdecl, CL_IsThirdPerson)
 		return 1;
 
 	return ORIG_CL_IsThirdPerson();
+}
+
+HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel, void*, thisptr)
+{
+	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + 48);
+
+	int old_rendermode = pCurrentEntity->curstate.rendermode;
+
+	if (pEngfuncs) {
+		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+			if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
+				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
+				pEngfuncs->pTriAPI->Brightness(2);
+			} else {
+				pEngfuncs->pTriAPI->RenderMode(old_rendermode);
+			}
+		}
+	}
+
+	ORIG_CStudioModelRenderer__StudioRenderModel(thisptr);
+}
+
+HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Linux, void*, thisptr)
+{
+	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + 44);
+
+	int old_rendermode = pCurrentEntity->curstate.rendermode;
+
+	if (pEngfuncs) {
+		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+			if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
+				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
+				pEngfuncs->pTriAPI->Brightness(2);
+			} else {
+				pEngfuncs->pTriAPI->RenderMode(old_rendermode);
+			}
+		}
+	}
+
+	ORIG_CStudioModelRenderer__StudioRenderModel_Linux(thisptr);
 }

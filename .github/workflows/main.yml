@@ -54,13 +54,13 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Release'
       run: |
         cp build/libBunnymodXT.so .
-        7z a BunnymodXT-${{ runner.os }}.7z libBunnymodXT.so LICENSE
+        7z a 2-BunnymodXT-${{ runner.os }}.7z libBunnymodXT.so LICENSE
 
     - name: Release
       if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Release'
       uses: softprops/action-gh-release@v1
       with:
-        files: BunnymodXT-${{ runner.os }}.7z
+        files: 2-BunnymodXT-${{ runner.os }}.7z
         draft: true
         fail_on_unmatched_files: true
 
@@ -137,12 +137,12 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Release'
       run: |
         cp build/${{ matrix.configuration }}/BunnymodXT.dll .
-        7z a BunnymodXT-${{ runner.os }}.7z BunnymodXT.dll LICENSE
+        7z a 1-BunnymodXT-${{ runner.os }}.7z BunnymodXT.dll LICENSE
 
     - name: Release
       if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Release'
       uses: softprops/action-gh-release@v1
       with:
-        files: BunnymodXT-${{ runner.os }}.7z
+        files: 1-BunnymodXT-${{ runner.os }}.7z
         draft: true
         fail_on_unmatched_files: true

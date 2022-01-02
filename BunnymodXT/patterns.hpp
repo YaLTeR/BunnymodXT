@@ -444,7 +444,7 @@ namespace patterns
 
 		PATTERNS(R_DrawParticles,
 			"HL-SteamPipe",
-			"55 8B EC 51 A1 ?? ?? ?? ?? 85 C0 75"
+			"55 8B EC 83 EC 40 A1 ?? ?? ?? ?? 53 56 50"
 		);
 
 		PATTERNS(BUsesSDLInput,

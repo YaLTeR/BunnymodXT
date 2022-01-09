@@ -2232,7 +2232,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Origin_And_Angles
 		auto &hw = HwDLL::GetInstance();
 		float angles[3];
 		hw.GetViewangles(angles);
-		hw.ORIG_Con_Printf("bxt_ch_set_angles %f %f %f;", angles[0], angles[1], angles[2]);
+		hw.ORIG_Con_Printf("bxt_set_angles %f %f %f;", angles[0], angles[1], angles[2]);
 		hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", (*hw.sv_player)->v.origin[0], (*hw.sv_player)->v.origin[1],
 		                   (*hw.sv_player)->v.origin[2]);
 	}
@@ -2298,9 +2298,9 @@ struct HwDLL::Cmd_BXT_CH_Set_Origin_Offset
 	}
 };
 
-struct HwDLL::Cmd_BXT_CH_Set_Angles
+struct HwDLL::Cmd_BXT_Set_Angles
 {
-	USAGE("Usage: bxt_ch_set_angles <pitch> <yaw> [roll]\n");
+	USAGE("Usage: bxt_set_angles <pitch> <yaw> [roll]\n");
 
 	static void handler(float x, float y)
 	{
@@ -3496,10 +3496,10 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Cmd_BXT_CH_Set_Velocity_Angles,
 		Handler<float>,
 		Handler<float, float, float>>("bxt_ch_set_vel_angles");
-	wrapper::AddCheat<
-		Cmd_BXT_CH_Set_Angles,
+	wrapper::Add<
+		Cmd_BXT_Set_Angles,
 		Handler<float, float>,
-		Handler<float, float, float>>("bxt_ch_set_angles");
+		Handler<float, float, float>>("bxt_set_angles");
 	wrapper::Add<
 		Cmd_Multiwait,
 		Handler<>,

@@ -281,6 +281,11 @@ extern "C" void __cdecl R_DrawParticles()
 {
 	HwDLL::HOOKED_R_DrawParticles();
 }
+
+extern "C" void __cdecl R_SetFrustum()
+{
+	HwDLL::HOOKED_R_SetFrustum();
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -392,6 +397,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_DrawParticles);
 			MemUtils::MarkAsExecutable(ORIG_BUsesSDLInput);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioRenderModel);
+			MemUtils::MarkAsExecutable(ORIG_R_SetFrustum);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -441,7 +447,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_DrawEntitiesOnList, HOOKED_R_DrawEntitiesOnList,
 			ORIG_R_DrawParticles, HOOKED_R_DrawParticles,
 			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput,
-			ORIG_R_StudioRenderModel, HOOKED_R_StudioRenderModel);
+			ORIG_R_StudioRenderModel, HOOKED_R_StudioRenderModel,
+			ORIG_R_SetFrustum, HOOKED_R_SetFrustum);
 	}
 }
 
@@ -496,7 +503,8 @@ void HwDLL::Unhook()
 			ORIG_R_DrawEntitiesOnList,
 			ORIG_R_DrawParticles,
 			ORIG_BUsesSDLInput,
-			ORIG_R_StudioRenderModel);
+			ORIG_R_StudioRenderModel,
+			ORIG_R_SetFrustum);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -577,6 +585,7 @@ void HwDLL::Clear()
 	ORIG_R_DrawParticles = nullptr;
 	ORIG_BUsesSDLInput = nullptr;
 	ORIG_R_StudioRenderModel = nullptr;
+	ORIG_R_SetFrustum = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -611,6 +620,7 @@ void HwDLL::Clear()
 	offZmax = 0;
 	frametime_remainder = nullptr;
 	pstudiohdr = nullptr;
+	scr_fov_value = nullptr;
 	framesTillExecuting = 0;
 	executing = false;
 	insideCbuf_Execute = false;
@@ -1174,6 +1184,21 @@ void HwDLL::FindStuff()
 				}
 			});
 
+		auto fR_SetFrustum = FindAsync(
+			ORIG_R_SetFrustum,
+			patterns::engine::R_SetFrustum,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::R_SetFrustum.cbegin())
+				{
+				case 0: // HL-SteamPipe
+					scr_fov_value = reinterpret_cast<float*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_SetFrustum) + 13));
+					break;
+				case 1: // HL-4554
+					scr_fov_value = reinterpret_cast<float*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_SetFrustum) + 10));
+					break;
+				}
+			});
+
 		auto fSeedRandomNumberGenerator = FindAsync(
 			ORIG_SeedRandomNumberGenerator,
 			patterns::engine::SeedRandomNumberGenerator,
@@ -1499,6 +1524,16 @@ void HwDLL::FindStuff()
 				EngineDevMsg("[hw dll] Found cvar_vars at %p.\n", cvar_vars);
 			} else {
 				EngineDevWarning("[hw dll] Could not find Cvar_RegisterVariable.\n");
+			}
+		}
+
+		{
+			auto pattern = fR_SetFrustum.get();
+			if (ORIG_R_SetFrustum) {
+				EngineDevMsg("[hw dll] Found R_SetFrustum at %p (using the %s pattern).\n", ORIG_R_SetFrustum, pattern->name());
+				EngineDevMsg("[hw dll] Found scr_fov_value at %p.\n", scr_fov_value);
+			} else {
+				EngineDevWarning("[hw dll] Could not find R_SetFrustum.\n");
 			}
 		}
 
@@ -3415,6 +3450,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_viewmodel_disable_equip);
 	RegisterCVar(CVars::bxt_viewmodel_semitransparent);
 	RegisterCVar(CVars::bxt_clear_green);
+	RegisterCVar(CVars::bxt_force_fov);
 
 	if (ORIG_R_DrawViewModel)
 		RegisterCVar(CVars::bxt_viewmodel_fov);
@@ -5464,4 +5500,12 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 	}
 
 	ORIG_R_StudioRenderModel();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
+{
+	if (CVars::bxt_force_fov.GetFloat() >= 1.0)
+		*scr_fov_value = CVars::bxt_force_fov.GetFloat();
+
+	ORIG_R_SetFrustum();
 }

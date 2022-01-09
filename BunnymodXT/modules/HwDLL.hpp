@@ -70,6 +70,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, R_DrawParticles)
 	HOOK_DECL(int, __cdecl, BUsesSDLInput)
 	HOOK_DECL(void, __cdecl, R_StudioRenderModel)
+	HOOK_DECL(void, __cdecl, R_SetFrustum)
 
 	struct cmdbuf_t
 	{
@@ -477,6 +478,7 @@ protected:
 	void *movevars;
 	ptrdiff_t offZmax;
 	studiohdr_t **pstudiohdr;
+	float *scr_fov_value;
 
 	int framesTillExecuting;
 	bool executing;

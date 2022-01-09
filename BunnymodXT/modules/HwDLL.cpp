@@ -3220,6 +3220,20 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Apply_Smoothing
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Optim_Init
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		std::ostringstream oss;
+		oss << "_bxt_tas_optim_init \"" << hw.hltas_filename << "\" " << hw.movementFrameCounter << ";";
+		hw.ORIG_Cbuf_InsertText(oss.str().c_str());
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Become_Simulator_Client
 {
 	NO_USAGE()
@@ -3527,6 +3541,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>>("bxt_print_entities");
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Apply_Smoothing, Handler<>>("bxt_tas_editor_apply_smoothing");
+	wrapper::Add<Cmd_BXT_TAS_Optim_Init, Handler<>>("bxt_tas_optim_init");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Pitch, Handler<>>("bxt_tas_editor_unset_pitch");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Yaw, Handler<>>("bxt_tas_editor_unset_yaw");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Commands, Handler<const char*>>("bxt_tas_editor_set_commands");

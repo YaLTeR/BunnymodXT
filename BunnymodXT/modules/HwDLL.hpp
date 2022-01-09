@@ -420,6 +420,7 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Unset_Yaw;
 	struct Cmd_BXT_TAS_Editor_Unset_Pitch;
 	struct Cmd_BXT_TAS_Editor_Apply_Smoothing;
+	struct Cmd_BXT_TAS_Optim_Init;
 	struct Cmd_BXT_FreeCam;
 	struct Cmd_BXT_Print_Entities;
 	struct Cmd_BXT_TAS_Become_Simulator_Client;

@@ -1086,6 +1086,19 @@ void HwDLL::FindStuff()
 			EngineDevWarning("[hw dll] Could not find R_StudioRenderModel.\n");
 			EngineWarning("Changing weapon viewmodel opacity is not available.\n");
 		}
+
+		scr_fov_value = reinterpret_cast<float*>(MemUtils::GetSymbolAddress(m_Handle, "scr_fov_value"));
+		if (scr_fov_value)
+			EngineDevMsg("[hw dll] Found scr_fov_value at %p.\n", sv);
+		else
+			EngineDevWarning("[hw dll] Could not find scr_fov_value.\n");
+
+		ORIG_R_SetFrustum = reinterpret_cast<_R_SetFrustum>(MemUtils::GetSymbolAddress(m_Handle, "R_SetFrustum"));
+		if (ORIG_R_SetFrustum) {
+			EngineDevMsg("[hw dll] Found R_SetFrustum at %p.\n", ORIG_R_SetFrustum);
+		} else {
+			EngineDevWarning("[hw dll] Could not find R_SetFrustum.\n");
+		}
 	}
 	else
 	{

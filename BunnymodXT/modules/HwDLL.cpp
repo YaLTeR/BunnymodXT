@@ -3477,7 +3477,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_viewmodel_disable_equip);
 	RegisterCVar(CVars::bxt_viewmodel_semitransparent);
 	RegisterCVar(CVars::bxt_clear_green);
-	RegisterCVar(CVars::bxt_force_fov);
+
+	if (ORIG_R_SetFrustum && scr_fov_value)
+		RegisterCVar(CVars::bxt_force_fov);
 
 	if (ORIG_R_DrawViewModel)
 		RegisterCVar(CVars::bxt_viewmodel_fov);

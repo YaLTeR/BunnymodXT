@@ -1597,7 +1597,7 @@ namespace CustomHud
 			frame_bulk_status.pitch = frame_bulk.GetPitch();
 		}
 
-		frame_bulk_status.yaw_present = frame_bulk.GetYawPresent();
+		frame_bulk_status.yaw_present = frame_bulk.HasYaw();
 		if (frame_bulk_status.yaw_present) {
 			frame_bulk_status.yaw = frame_bulk.GetYaw();
 		}

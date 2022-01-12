@@ -1372,7 +1372,7 @@ namespace TriangleDrawing
 
 			static double saved_yaw = 0;
 			if ((right_got_pressed || mouse4_got_pressed) && closest_edge_frame != 0
-					&& input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYawPresent())
+					&& input.frame_bulks[closest_edge_prev_frame_bulk_index].HasYaw())
 				saved_yaw = input.frame_bulks[closest_edge_prev_frame_bulk_index].GetYaw();
 
 			size_t frames_until_non_ground_collision = frame_limit;
@@ -1481,7 +1481,7 @@ namespace TriangleDrawing
 						auto& frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
 
 						// Visualize the target yaw.
-						if (frame_bulk.GetYawPresent()) {
+						if (frame_bulk.HasYaw()) {
 							auto yaw = frame_bulk.GetYaw() * M_DEG2RAD;
 							auto yaw_dir = Vector(static_cast<float>(std::cos(yaw)), static_cast<float>(std::sin(yaw)), 0);
 							yaw_dir *= 20;
@@ -1599,7 +1599,7 @@ namespace TriangleDrawing
 					}
 				}
 
-				if (right_pressed && frame_bulk.GetYawPresent()) {
+				if (right_pressed && frame_bulk.HasYaw()) {
 					auto mouse_diff = mouse - right_pressed_at;
 
 					auto amount = DotProduct(mouse_diff, saved_rmb_diff) * 0.1f * adjustment_speed;
@@ -1610,7 +1610,7 @@ namespace TriangleDrawing
 					}
 				}
 
-				if (mouse4_pressed && frame_bulk.GetYawPresent()) {
+				if (mouse4_pressed && frame_bulk.HasYaw()) {
 					auto mouse_diff = mouse - mouse4_pressed_at;
 
 					auto amount = DotProduct(mouse_diff, saved_ms4_diff) * 0.1f * adjustment_speed;
@@ -1633,7 +1633,7 @@ namespace TriangleDrawing
 									continue;
 								}
 
-								if (prev_line->GetYawPresent() && prev_line->GetYaw() == old_yaw) {
+								if (prev_line->HasYaw() && prev_line->GetYaw() == old_yaw) {
 									stale_index = real_index;
 									prev_line->SetYaw(new_yaw);
 								} else {
@@ -1650,7 +1650,7 @@ namespace TriangleDrawing
 								continue;
 							}
 
-							if (next_line->GetYawPresent() && next_line->GetYaw() == old_yaw) {
+							if (next_line->HasYaw() && next_line->GetYaw() == old_yaw) {
 								next_line->SetYaw(new_yaw);
 							} else {
 								break;
@@ -1667,9 +1667,9 @@ namespace TriangleDrawing
 						frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
 						frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
 
-						if (!frame_bulk.GetYawPresent()) {
+						if (!frame_bulk.HasYaw()) {
 							const auto& prev_frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
-							frame_bulk.SetYaw(prev_frame_bulk.GetYawPresent() ? prev_frame_bulk.GetYaw() : 0);
+							frame_bulk.SetYaw(prev_frame_bulk.HasYaw() ? prev_frame_bulk.GetYaw() : 0);
 						}
 					} else {
 						frame_bulk.Strafe = false;
@@ -1685,9 +1685,9 @@ namespace TriangleDrawing
 						frame_bulk.SetDir(HLTAS::StrafeDir::YAW);
 						frame_bulk.SetType(HLTAS::StrafeType::MAXANGLE);
 
-						if (!frame_bulk.GetYawPresent()) {
+						if (!frame_bulk.HasYaw()) {
 							const auto& prev_frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
-							frame_bulk.SetYaw(prev_frame_bulk.GetYawPresent() ? prev_frame_bulk.GetYaw() : 0);
+							frame_bulk.SetYaw(prev_frame_bulk.HasYaw() ? prev_frame_bulk.GetYaw() : 0);
 						}
 					} else {
 						frame_bulk.Strafe = false;
@@ -1831,7 +1831,7 @@ namespace TriangleDrawing
 				if (hw.tas_editor_set_yaw
 						// If we're strafing, then if we can set the yaw it should already be present.
 						// If we're not strafing, then we can set the yaw.
-						&& (frame_bulk.GetYawPresent() || !frame_bulk.Strafe)) {
+						&& frame_bulk.HasYaw()) {
 					frame_bulk.SetYaw(hw.tas_editor_set_yaw_yaw);
 					stale_index = closest_edge_prev_frame_bulk_index;
 				}

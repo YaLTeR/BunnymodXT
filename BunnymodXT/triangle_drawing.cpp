@@ -1709,6 +1709,52 @@ namespace TriangleDrawing
 					stale_index = closest_edge_prev_frame_bulk_index;
 				}
 
+				if (hw.tas_editor_toggle_s06) {
+					if (!frame_bulk.Strafe
+					    || frame_bulk.GetDir() != HLTAS::StrafeDir::LEFT_RIGHT
+					    || frame_bulk.GetType() != HLTAS::StrafeType::MAXACCEL) {
+						unsigned count = 30;
+						if (frame_bulk.HasCount()) {
+							count = frame_bulk.GetCount();
+						} else {
+							const auto& prev_frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
+							if (prev_frame_bulk.HasCount())
+								count = prev_frame_bulk.GetCount();
+						}
+
+						frame_bulk.Strafe = true;
+						frame_bulk.SetDir(HLTAS::StrafeDir::LEFT_RIGHT);
+						frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
+						frame_bulk.SetCount(count);
+					} else {
+						frame_bulk.Strafe = false;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_s07) {
+					if (!frame_bulk.Strafe
+					    || frame_bulk.GetDir() != HLTAS::StrafeDir::RIGHT_LEFT
+					    || frame_bulk.GetType() != HLTAS::StrafeType::MAXACCEL) {
+						unsigned count = 30;
+						if (frame_bulk.HasCount()) {
+							count = frame_bulk.GetCount();
+						} else {
+							const auto& prev_frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
+							if (prev_frame_bulk.HasCount())
+								count = prev_frame_bulk.GetCount();
+						}
+
+						frame_bulk.Strafe = true;
+						frame_bulk.SetDir(HLTAS::StrafeDir::RIGHT_LEFT);
+						frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
+						frame_bulk.SetCount(count);
+					} else {
+						frame_bulk.Strafe = false;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
 				if (hw.tas_editor_toggle_lgagst) {
 					if (frame_bulk.Lgagst) {
 						frame_bulk.Lgagst = false;
@@ -1922,6 +1968,8 @@ namespace TriangleDrawing
 		hw.tas_editor_toggle_s03 = false;
 		hw.tas_editor_toggle_s13 = false;
 		hw.tas_editor_toggle_s22 = false;
+		hw.tas_editor_toggle_s06 = false;
+		hw.tas_editor_toggle_s07 = false;
 		hw.tas_editor_toggle_lgagst = false;
 		hw.tas_editor_toggle_autojump = false;
 		hw.tas_editor_toggle_ducktap = false;

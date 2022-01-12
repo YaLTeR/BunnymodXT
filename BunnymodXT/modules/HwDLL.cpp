@@ -666,6 +666,8 @@ void HwDLL::Clear()
 	tas_editor_toggle_s03 = false;
 	tas_editor_toggle_s13 = false;
 	tas_editor_toggle_s22 = false;
+	tas_editor_toggle_s06 = false;
+	tas_editor_toggle_s07 = false;
 	tas_editor_toggle_lgagst = false;
 	tas_editor_toggle_autojump = false;
 	tas_editor_toggle_ducktap = false;
@@ -3001,6 +3003,8 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 	      " - s03 - speed increasing strafing,\n"
 	      " - s13 - quick turn strafing,\n"
 	      " - s22 - slow down strafing,\n"
+	      " - s06 - left-right strafing,\n"
+	      " - s07 - right-left strafing,\n"
 	      " - lgagst - makes autojump and ducktap trigger at optimal speed,\n"
 	      " - autojump,\n"
 	      " - ducktap,\n"
@@ -3031,6 +3035,10 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 			HwDLL::GetInstance().tas_editor_toggle_s13 = true;
 		} else if (!strcmp(what, "s22")) {
 			HwDLL::GetInstance().tas_editor_toggle_s22 = true;
+		} else if (!strcmp(what, "s06")) {
+			HwDLL::GetInstance().tas_editor_toggle_s06 = true;
+		} else if (!strcmp(what, "s07")) {
+			HwDLL::GetInstance().tas_editor_toggle_s07 = true;
 		} else if (!strcmp(what, "lgagst")) {
 			HwDLL::GetInstance().tas_editor_toggle_lgagst = true;
 		} else if (!strcmp(what, "autojump")) {

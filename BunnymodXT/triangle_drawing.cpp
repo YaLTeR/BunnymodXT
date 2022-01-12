@@ -1896,6 +1896,11 @@ namespace TriangleDrawing
 					frame_bulk.Commands = hw.tas_editor_set_commands_commands;
 				}
 
+				if (hw.tas_editor_set_left_right_count && frame_bulk.HasCount()) {
+					frame_bulk.SetCount(hw.tas_editor_set_left_right_count_count);
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
 				if (hw.tas_editor_unset_yaw
 						// Yaw must be set if we're strafing to yaw or point.
 						&& !(frame_bulk.Strafe
@@ -1997,6 +2002,7 @@ namespace TriangleDrawing
 		hw.tas_editor_set_pitch = false;
 		hw.tas_editor_set_repeats = false;
 		hw.tas_editor_set_commands = false;
+		hw.tas_editor_set_left_right_count = false;
 		hw.tas_editor_unset_yaw = false;
 		hw.tas_editor_unset_pitch = false;
 		hw.tas_editor_set_run_point_and_save = false;

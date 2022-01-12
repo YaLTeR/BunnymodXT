@@ -692,6 +692,7 @@ void HwDLL::Clear()
 	tas_editor_set_pitch = false;
 	tas_editor_set_repeats = false;
 	tas_editor_set_commands = false;
+	tas_editor_set_left_right_count = false;
 	tas_editor_unset_yaw = false;
 	tas_editor_unset_pitch = false;
 	tas_editor_apply_smoothing = false;
@@ -3208,6 +3209,18 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Commands
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Set_Left_Right_Count
+{
+	USAGE("Usage: bxt_tas_editor_set_left_right_count <count>\n Sets the left-right or right-left frame count on the currently selected point.\n");
+
+	static void handler(unsigned long value)
+	{
+		auto& hw = HwDLL::GetInstance();
+		hw.tas_editor_set_left_right_count = true;
+		hw.tas_editor_set_left_right_count_count = value;
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Editor_Unset_Yaw
 {
 	USAGE("Usage: bxt_tas_editor_unset_yaw <yaw>\n Unsets the yaw angle on the currently selected point.\n");
@@ -3571,6 +3584,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Repeats, Handler<int>>("bxt_tas_editor_set_repeats");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Pitch, Handler<float>>("bxt_tas_editor_set_pitch");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Yaw, Handler<float>>("bxt_tas_editor_set_yaw");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Left_Right_Count, Handler<unsigned long>>("bxt_tas_editor_set_left_right_count");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle, Handler<const char*>>("bxt_tas_editor_toggle");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Change_Type, Handler<const char*>>("bxt_tas_editor_set_change_type");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save, Handler<>>("bxt_tas_editor_set_run_point_and_save");

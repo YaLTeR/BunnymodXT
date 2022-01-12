@@ -298,6 +298,8 @@ public:
 	unsigned tas_editor_set_repeats_repeats;
 	bool tas_editor_set_commands;
 	std::string tas_editor_set_commands_commands;
+	bool tas_editor_set_left_right_count;
+	unsigned tas_editor_set_left_right_count_count;
 	bool tas_editor_unset_yaw;
 	bool tas_editor_unset_pitch;
 	bool tas_editor_apply_smoothing;
@@ -419,6 +421,7 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Set_Pitch;
 	struct Cmd_BXT_TAS_Editor_Set_Repeats;
 	struct Cmd_BXT_TAS_Editor_Set_Commands;
+	struct Cmd_BXT_TAS_Editor_Set_Left_Right_Count;
 	struct Cmd_BXT_TAS_Editor_Unset_Yaw;
 	struct Cmd_BXT_TAS_Editor_Unset_Pitch;
 	struct Cmd_BXT_TAS_Editor_Apply_Smoothing;

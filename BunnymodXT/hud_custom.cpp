@@ -67,8 +67,10 @@ namespace CustomHud
 
 		double pitch;
 		double yaw;
+		unsigned count;
 		bool pitch_present;
 		bool yaw_present;
+		bool count_present;
 
 		std::string commands;
 
@@ -1161,6 +1163,9 @@ namespace CustomHud
 			if (frame_bulk_status.yaw_present) {
 				out << "Yaw: " << frame_bulk_status.yaw << "\n";
 			}
+			if (frame_bulk_status.count_present) {
+				out << "Left-right frame count: " << frame_bulk_status.count << "\n";
+			}
 			if (!frame_bulk_status.commands.empty()) {
 				out << "Commands:\n  " << frame_bulk_status.commands << '\n';
 			}
@@ -1600,6 +1605,11 @@ namespace CustomHud
 		frame_bulk_status.yaw_present = frame_bulk.HasYaw();
 		if (frame_bulk_status.yaw_present) {
 			frame_bulk_status.yaw = frame_bulk.GetYaw();
+		}
+
+		frame_bulk_status.count_present = frame_bulk.HasCount();
+		if (frame_bulk_status.count_present) {
+			frame_bulk_status.count = frame_bulk.GetCount();
 		}
 
 		frame_bulk_status.commands = frame_bulk.Commands;

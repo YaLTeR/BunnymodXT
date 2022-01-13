@@ -173,6 +173,7 @@ namespace CVars
 		&bxt_skybox_remove,
 		&bxt_water_remove,
 		&bxt_stop_demo_on_changelevel,
+		&bxt_tas_editor_apply_smoothing_over_s,
 		&bxt_tas_editor_simulate_for_ms,
 		&bxt_tas_editor_camera_editor,
 		&bxt_tas_norefresh_until_last_frames,

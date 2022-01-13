@@ -4934,7 +4934,7 @@ HOOK_DEF_2(HwDLL, long double, __cdecl, RandomFloat, float, a1, float, a2)
 
 HOOK_DEF_2(HwDLL, long, __cdecl, RandomLong, long, low, long, high)
 {
-	if (insideSStartDynamicSound)
+	if (insideSStartDynamicSound && runningFrames)
 		return low;
 
 	auto ret = ORIG_RandomLong(low, high);

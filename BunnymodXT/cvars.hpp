@@ -146,6 +146,7 @@ namespace CVars
 	extern CVarWrapper bxt_viewmodel_semitransparent;
 	extern CVarWrapper bxt_clear_green;
 	extern CVarWrapper bxt_force_fov;
+	extern CVarWrapper bxt_sdl_gamedir;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_cheats;

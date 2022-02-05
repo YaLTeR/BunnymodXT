@@ -3498,6 +3498,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_viewmodel_disable_equip);
 	RegisterCVar(CVars::bxt_viewmodel_semitransparent);
 	RegisterCVar(CVars::bxt_clear_green);
+	RegisterCVar(CVars::bxt_fix_mouse_horizontal_limit);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -5338,7 +5339,7 @@ HOOK_DEF_3(HwDLL, int, __cdecl, DispatchDirectUserMsg, char*, pszName, int, iSiz
 {
 	const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
 
-	if (!std::strcmp(gameDir, "czeror") && !std::strcmp(pszName, "InitHUD"))
+	if ((!std::strcmp(gameDir, "czeror") || !std::strcmp(gameDir, "czeror_cutsceneless")) && !std::strcmp(pszName, "InitHUD"))
 		return ORIG_DispatchDirectUserMsg(0, iSize, pBuf);
 	else
 		return ORIG_DispatchDirectUserMsg(pszName, iSize, pBuf);
@@ -5526,7 +5527,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawParticles)
 
 HOOK_DEF_0(HwDLL, int, __cdecl, BUsesSDLInput)
 {
-	if (ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless"))
+	if (ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless") || CVars::bxt_fix_mouse_horizontal_limit.GetBool())
 		return true;
 	else
 		return ORIG_BUsesSDLInput();

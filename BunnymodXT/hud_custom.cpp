@@ -478,7 +478,7 @@ namespace CustomHud
 
 			auto time = ServerDLL::GetInstance().GetTime();
 			auto v_forward = ClientDLL::GetInstance().AnglesToForward(player.viewangles);
-			auto flDamage = 200;
+			float flDamage = 200;
 			if (time < 4.0f)
 				flDamage = 200 * time / 4;
 

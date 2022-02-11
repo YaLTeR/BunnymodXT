@@ -3279,7 +3279,7 @@ struct HwDLL::Cmd_BXT_TAS_Optim_Init
 		auto& hw = HwDLL::GetInstance();
 
 		std::ostringstream oss;
-		oss << "_bxt_tas_optim_init \"" << hw.hltas_filename << "\" " << hw.movementFrameCounter << ";";
+		oss << "_bxt_tas_optim_init \"" << hw.hltas_filename << "\" " << hw.movementFrameCounter - 1 << ";";
 		hw.ORIG_Cbuf_InsertText(oss.str().c_str());
 	}
 };

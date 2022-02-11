@@ -663,7 +663,11 @@ void HwDLL::Clear()
 	tas_editor_delete_point = false;
 	tas_editor_insert_point = false;
 	tas_editor_insert_point_held = false;
+	tas_editor_toggle_s00 = false;
+	tas_editor_toggle_s01 = false;
 	tas_editor_toggle_s03 = false;
+	tas_editor_toggle_s10 = false;
+	tas_editor_toggle_s11 = false;
 	tas_editor_toggle_s13 = false;
 	tas_editor_toggle_s22 = false;
 	tas_editor_toggle_s06 = false;
@@ -3004,6 +3008,10 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 	      " - s03 - speed increasing strafing,\n"
 	      " - s13 - quick turn strafing,\n"
 	      " - s22 - slow down strafing,\n"
+	      " - s00 - speed increasing strafing to the left,\n"
+	      " - s01 - speed increasing strafing to the right,\n"
+	      " - s10 - quick turn strafing to the left,\n"
+	      " - s11 - quick turn strafing to the right,\n"
 	      " - s06 - left-right strafing,\n"
 	      " - s07 - right-left strafing,\n"
 	      " - lgagst - makes autojump and ducktap trigger at optimal speed,\n"
@@ -3030,8 +3038,16 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 
 	static void handler(const char *what)
 	{
-		if (!strcmp(what, "s03")) {
+		if (!strcmp(what, "s00")) {
+			HwDLL::GetInstance().tas_editor_toggle_s00 = true;
+		} else if (!strcmp(what, "s01")) {
+			HwDLL::GetInstance().tas_editor_toggle_s01 = true;
+		} else if (!strcmp(what, "s03")) {
 			HwDLL::GetInstance().tas_editor_toggle_s03 = true;
+		} else if (!strcmp(what, "s10")) {
+			HwDLL::GetInstance().tas_editor_toggle_s10 = true;
+		} else if (!strcmp(what, "s11")) {
+			HwDLL::GetInstance().tas_editor_toggle_s11 = true;
 		} else if (!strcmp(what, "s13")) {
 			HwDLL::GetInstance().tas_editor_toggle_s13 = true;
 		} else if (!strcmp(what, "s22")) {

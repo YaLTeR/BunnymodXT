@@ -1659,6 +1659,34 @@ namespace TriangleDrawing
 					}
 				}
 
+				if (hw.tas_editor_toggle_s00) {
+					if (!frame_bulk.Strafe
+						    || frame_bulk.GetDir() != HLTAS::StrafeDir::LEFT
+						    || frame_bulk.GetType() != HLTAS::StrafeType::MAXACCEL) {
+						frame_bulk.Strafe = true;
+						frame_bulk.SetDir(HLTAS::StrafeDir::LEFT);
+						frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
+						frame_bulk.SetYawPresent(false);
+					} else {
+						frame_bulk.Strafe = false;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_s01) {
+					if (!frame_bulk.Strafe
+						    || frame_bulk.GetDir() != HLTAS::StrafeDir::RIGHT
+						    || frame_bulk.GetType() != HLTAS::StrafeType::MAXACCEL) {
+						frame_bulk.Strafe = true;
+						frame_bulk.SetDir(HLTAS::StrafeDir::RIGHT);
+						frame_bulk.SetType(HLTAS::StrafeType::MAXACCEL);
+						frame_bulk.SetYawPresent(false);
+					} else {
+						frame_bulk.Strafe = false;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
 				if (hw.tas_editor_toggle_s03) {
 					if (!frame_bulk.Strafe
 							|| frame_bulk.GetDir() != HLTAS::StrafeDir::YAW
@@ -1671,6 +1699,34 @@ namespace TriangleDrawing
 							const auto& prev_frame_bulk = input.frame_bulks[closest_edge_prev_frame_bulk_index];
 							frame_bulk.SetYaw(prev_frame_bulk.HasYaw() ? prev_frame_bulk.GetYaw() : 0);
 						}
+					} else {
+						frame_bulk.Strafe = false;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_s10) {
+					if (!frame_bulk.Strafe
+						    || frame_bulk.GetDir() != HLTAS::StrafeDir::LEFT
+						    || frame_bulk.GetType() != HLTAS::StrafeType::MAXANGLE) {
+						frame_bulk.Strafe = true;
+						frame_bulk.SetDir(HLTAS::StrafeDir::LEFT);
+						frame_bulk.SetType(HLTAS::StrafeType::MAXANGLE);
+						frame_bulk.SetYawPresent(false);
+					} else {
+						frame_bulk.Strafe = false;
+					}
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
+				if (hw.tas_editor_toggle_s11) {
+					if (!frame_bulk.Strafe
+						    || frame_bulk.GetDir() != HLTAS::StrafeDir::RIGHT
+						    || frame_bulk.GetType() != HLTAS::StrafeType::MAXANGLE) {
+						frame_bulk.Strafe = true;
+						frame_bulk.SetDir(HLTAS::StrafeDir::RIGHT);
+						frame_bulk.SetType(HLTAS::StrafeType::MAXANGLE);
+						frame_bulk.SetYawPresent(false);
 					} else {
 						frame_bulk.Strafe = false;
 					}
@@ -1970,7 +2026,11 @@ namespace TriangleDrawing
 		auto& hw = HwDLL::GetInstance();
 		hw.tas_editor_delete_point = false;
 		hw.tas_editor_insert_point = false;
+		hw.tas_editor_toggle_s00 = false;
+		hw.tas_editor_toggle_s01 = false;
 		hw.tas_editor_toggle_s03 = false;
+		hw.tas_editor_toggle_s10 = false;
+		hw.tas_editor_toggle_s11 = false;
 		hw.tas_editor_toggle_s13 = false;
 		hw.tas_editor_toggle_s22 = false;
 		hw.tas_editor_toggle_s06 = false;

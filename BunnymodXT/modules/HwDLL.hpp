@@ -261,7 +261,11 @@ public:
 	bool tas_editor_delete_point;
 	bool tas_editor_insert_point;
 	bool tas_editor_insert_point_held;
+	bool tas_editor_toggle_s00;
+	bool tas_editor_toggle_s01;
 	bool tas_editor_toggle_s03;
+	bool tas_editor_toggle_s10;
+	bool tas_editor_toggle_s11;
 	bool tas_editor_toggle_s13;
 	bool tas_editor_toggle_s22;
 	bool tas_editor_toggle_s06;

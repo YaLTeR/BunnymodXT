@@ -1408,18 +1408,29 @@ namespace TriangleDrawing
 
 				if (frame > color_from && frame <= color_to) {
 					// If we bumped into something along the way
-					if (frames_until_non_ground_collision == frame_limit && fractions[frame] != 1) {
+					bool collision = false;
+					if (fractions[frame] != 1) {
 						auto n = normalzs[frame];
 						// And it wasn't a ground or a ceiling
 						if (n < 0.7 && n != -1)
-							frames_until_non_ground_collision = frame;
+							collision = true;
 					}
 
-					if (frame > frames_until_non_ground_collision) {
+					if (frames_until_non_ground_collision == frame_limit && collision)
+						frames_until_non_ground_collision = frame;
+
+					if (collision) {
+						// Color frames with collision red.
 						if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
 							pTriAPI->Color4f(0.6f, 0, 0, 1);
 						else
 							pTriAPI->Color4f(1, 0, 0, 1);
+					} else if (frame > frames_until_non_ground_collision) {
+						// Color frames after collision pink.
+						if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
+							pTriAPI->Color4f(0.6f, 0.4f, 0.4f, 1);
+						else
+							pTriAPI->Color4f(1, 0.7f, 0.7f, 1);
 					} else {
 						if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
 							pTriAPI->Color4f(0, 0.6f, 0, 1);

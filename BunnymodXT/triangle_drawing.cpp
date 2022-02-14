@@ -1409,11 +1409,17 @@ namespace TriangleDrawing
 				if (frame > color_from && frame <= color_to) {
 					// If we bumped into something along the way
 					bool collision = false;
-					if (fractions[frame] != 1) {
-						auto n = normalzs[frame];
+
+					for (int i = 0; i < 4; ++i) {
+						if (fractions[frame][i] == 1)
+							break;
+
+						auto n = normalzs[frame][i];
 						// And it wasn't a ground or a ceiling
-						if (n < 0.7 && n != -1)
+						if (n < 0.7 && n != -1) {
 							collision = true;
+							break;
+						}
 					}
 
 					if (frames_until_non_ground_collision == frame_limit && collision)

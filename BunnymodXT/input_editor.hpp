@@ -16,8 +16,8 @@ struct EditedInput {
 	std::vector<float> player_armor_datas;
 	// Every strafe state must be good to go for simulating subsequent frame bulks without any changes.
 	std::vector<HLStrafe::CurrentState> strafe_states;
-	std::vector<float> fractions;
-	std::vector<float> normalzs;
+	std::vector<std::array<float, 4>> fractions;
+	std::vector<std::array<float, 4>> normalzs;
 	std::vector<char> next_frame_is_0mss; // char instead of bool because C++ vector bool bitset.
 	std::vector<float> frametimes;
 	std::vector<std::vector<float>> target_yaw_overrides;

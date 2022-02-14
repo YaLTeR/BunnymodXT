@@ -12,8 +12,8 @@ void EditedInput::initialize() {
 
 	auto player = hw.GetPlayerData();
 	player_datas.push_back(player);
-	fractions.push_back(1);
-	normalzs.push_back(0);
+	fractions.push_back({1, 0, 0, 0});
+	normalzs.push_back({0, 0, 0, 0});
 	frame_bulk_starts.push_back(0);
 	next_frame_is_0mss.push_back(0);
 	player_health_datas.push_back(0);
@@ -215,8 +215,12 @@ void EditedInput::simulate() {
 
 			player_datas.push_back(player);
 			strafe_states.push_back(strafe_state);
-			fractions.push_back(processed_frame.fractions[0]);
-			normalzs.push_back(processed_frame.normalzs[0]);
+			fractions.push_back(std::array<float, 4>{
+				processed_frame.fractions[0], processed_frame.fractions[1], processed_frame.fractions[2], processed_frame.fractions[3]
+			});
+			normalzs.push_back(std::array<float, 4>{
+				processed_frame.normalzs[0], processed_frame.normalzs[1], processed_frame.normalzs[2], processed_frame.normalzs[3]
+			});
 			next_frame_is_0mss.push_back(next_frame_is_0ms);
 			frametimes.push_back(movement_vars.Frametime);
 
@@ -428,8 +432,8 @@ void EditedInput::received_simulated_frame(const simulation_ipc::SimulatedFrame 
 
 	player_datas[frame_number] = frame.player_data;
 	strafe_states[frame_number] = frame.strafe_state;
-	fractions[frame_number] = frame.fraction;
-	normalzs[frame_number] = frame.normalz;
+	fractions[frame_number] = frame.fractions;
+	normalzs[frame_number] = frame.normalzs;
 	next_frame_is_0mss[frame_number] = frame.next_frame_is_0ms;
 	player_health_datas[frame_number] = frame.health;
 	player_armor_datas[frame_number] = frame.armor;

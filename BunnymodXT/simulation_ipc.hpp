@@ -10,8 +10,8 @@ namespace simulation_ipc {
 
 		HLStrafe::PlayerData player_data;
 		HLStrafe::CurrentState strafe_state;
-		float fraction;
-		float normalz;
+		std::array<float, 4> fractions;
+		std::array<float, 4> normalzs;
 		bool next_frame_is_0ms;
 		float frametime;
 

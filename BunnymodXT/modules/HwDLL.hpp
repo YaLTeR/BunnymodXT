@@ -553,8 +553,8 @@ public:
 	HLTAS::StrafeButtons Buttons;
 	HLStrafe::CurrentState StrafeState;
 	HLStrafe::CurrentState PrevStrafeState;
-	float PrevFraction;
-	float PrevNormalz;
+	std::array<float, 4> PrevFractions;
+	std::array<float, 4> PrevNormalzs;
 protected:
 	std::string exportFilename;
 	HLTAS::Input exportResult;

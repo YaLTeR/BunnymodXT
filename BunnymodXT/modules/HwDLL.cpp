@@ -717,8 +717,8 @@ void HwDLL::Clear()
 		totalFrames = 0;
 		StrafeState = HLStrafe::CurrentState();
 		PrevStrafeState = HLStrafe::CurrentState();
-		PrevFraction = 1;
-		PrevNormalz = 0;
+		PrevFractions = {1, 0, 0, 0 };
+		PrevNormalzs = {0, 0, 0, 0 };
 		SharedRNGSeedPresent = false;
 		SharedRNGSeed = 0;
 		ButtonsPresent = false;
@@ -1860,8 +1860,8 @@ void HwDLL::ResetStateBeforeTASPlayback()
 	movementFrameCounter = 0;
 	StrafeState = HLStrafe::CurrentState();
 	PrevStrafeState = HLStrafe::CurrentState();
-	PrevFraction = 1;
-	PrevNormalz = 0;
+	PrevFractions = {1, 0, 0, 0 };
+	PrevNormalzs = {0, 0, 0, 0 };
 	ButtonsPresent = false;
 	demoName.clear();
 	saveName.clear();
@@ -3717,8 +3717,8 @@ void HwDLL::InsertCommands()
 					movementFrameCounter++,
 					player,
 					StrafeState,
-					PrevFraction,
-					PrevNormalz,
+					PrevFractions,
+					PrevNormalzs,
 					thisFrameIs0ms,
 					movement_vars.Frametime,
 					health,
@@ -3729,8 +3729,8 @@ void HwDLL::InsertCommands()
 				auto p = HLStrafe::MainFunc(player, movement_vars, f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::UnsafePlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), hlstrafe_version);
 				StopTracing();
 
-				PrevFraction = p.fractions[0];
-				PrevNormalz = p.normalzs[0];
+				PrevFractions = { p.fractions[0], p.fractions[1], p.fractions[2], p.fractions[3] };
+				PrevNormalzs = { p.normalzs[0], p.normalzs[1], p.normalzs[2], p.normalzs[3] };
 
 				if (TargetYawOverrideIndex == TargetYawOverrides.size()) {
 					TargetYawOverrides.clear();

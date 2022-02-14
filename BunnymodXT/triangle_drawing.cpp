@@ -1416,7 +1416,7 @@ namespace TriangleDrawing
 
 						auto n = normalzs[frame][i];
 						// And it wasn't a ground or a ceiling
-						if (n < 0.7 && n != -1) {
+						if (n != 1 && n != -1) {
 							collision = true;
 							break;
 						}

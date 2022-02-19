@@ -729,9 +729,7 @@ namespace CustomHud
 				edict_t *edicts;
 				hw.GetEdicts(&edicts);
 				const auto index = ent - edicts;
-				if (CVars::bxt_hud_entity_info.GetInt() != 2) {
-					out << "Entity: " << index << '\n';
-				}
+				out << "Entity: " << index << '\n';
 
 				const char *classname = sv.GetString(ent->v.classname);
 				out << classname << '\n';
@@ -748,7 +746,7 @@ namespace CustomHud
 
 				out << "HP: " << ent->v.health << '\n';
 
-				if (CVars::bxt_hud_entity_info.GetInt() != 2)
+				if (CVars::bxt_hud_entity_info.GetInt() == 2)
 				{
 					out << "Yaw: " << ent->v.angles[1] << '\n';
 

@@ -738,12 +738,12 @@ namespace CustomHud
 
 				if (ent->v.targetname != 0) {
 					const char *targetname = sv.GetString(ent->v.targetname);
-					out << targetname << '\n';
+					out << "TN: " << targetname << '\n';
 				}
 
 				if (ent->v.target != 0) {
 					const char *target = sv.GetString(ent->v.target);
-					out << target << '\n';
+					out << "T: " << target << '\n';
 				}
 
 				out << "HP: " << ent->v.health << '\n';

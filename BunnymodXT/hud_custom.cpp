@@ -736,14 +736,14 @@ namespace CustomHud
 				const char *classname = sv.GetString(ent->v.classname);
 				out << classname << '\n';
 
-				if (ent->v.targetname != 0) {
-					const char *targetname = sv.GetString(ent->v.targetname);
-					out << "TN: " << targetname << '\n';
-				}
-
 				if (ent->v.target != 0) {
 					const char *target = sv.GetString(ent->v.target);
 					out << "T: " << target << '\n';
+				}
+
+				if (ent->v.targetname != 0) {
+					const char *targetname = sv.GetString(ent->v.targetname);
+					out << "TN: " << targetname << '\n';
 				}
 
 				out << "HP: " << ent->v.health << '\n';

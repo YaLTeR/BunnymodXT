@@ -729,7 +729,9 @@ namespace CustomHud
 				edict_t *edicts;
 				hw.GetEdicts(&edicts);
 				const auto index = ent - edicts;
-				out << "Entity: " << index << '\n';
+				if (CVars::bxt_hud_entity_info.GetInt() != 2) {
+					out << "Entity: " << index << '\n';
+				}
 
 				const char *classname = sv.GetString(ent->v.classname);
 				out << classname << '\n';
@@ -739,17 +741,25 @@ namespace CustomHud
 					out << targetname << '\n';
 				}
 
+				if (ent->v.target != 0) {
+					const char *target = sv.GetString(ent->v.target);
+					out << target << '\n';
+				}
+
 				out << "HP: " << ent->v.health << '\n';
 
-				out << "Yaw: " << ent->v.angles[1] << '\n';
+				if (CVars::bxt_hud_entity_info.GetInt() != 2)
+				{
+					out << "Yaw: " << ent->v.angles[1] << '\n';
 
-				out << "X: " << ent->v.origin.x << '\n';
-				out << "Y: " << ent->v.origin.y << '\n';
-				out << "Z: " << ent->v.origin.z << '\n';
+					out << "X: " << ent->v.origin.x << '\n';
+					out << "Y: " << ent->v.origin.y << '\n';
+					out << "Z: " << ent->v.origin.z << '\n';
 
-				out << "X Vel: " << ent->v.velocity.x << '\n';
-				out << "Y Vel: " << ent->v.velocity.y << '\n';
-				out << "Z Vel: " << ent->v.velocity.z;
+					out << "X Vel: " << ent->v.velocity.x << '\n';
+					out << "Y Vel: " << ent->v.velocity.y << '\n';
+					out << "Z Vel: " << ent->v.velocity.z;
+				}
 			}
 			else
 			{
@@ -809,7 +819,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_selfgauss.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 27) + 3);
+			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 28) + 3);
 
 			bool selfgaussable;
 			int hitGroup = 0; // It's always initialized if selfgaussable is set to true, but GCC issues a warning anyway.
@@ -867,7 +877,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_armor.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_armor_offset, CVars::bxt_hud_armor_anchor, &x, &y, -200, (si.iCharHeight * 30) + 3);
+			GetPosition(CVars::bxt_hud_armor_offset, CVars::bxt_hud_armor_anchor, &x, &y, -200, (si.iCharHeight * 31) + 3);
 
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
@@ -885,7 +895,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_nihilanth.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 31) + 3);
+			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 32) + 3);
 
 			std::ostringstream out;
 			out << "Nihilanth:\n";
@@ -919,7 +929,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_gonarch.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 38) + 3);
+			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 39) + 3);
 
 			std::ostringstream out;
 			out << "Gonarch:\n";

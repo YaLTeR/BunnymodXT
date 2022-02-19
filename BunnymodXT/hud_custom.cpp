@@ -848,7 +848,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_visible_landmarks.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_visible_landmarks_offset, CVars::bxt_hud_visible_landmarks_anchor, &x, &y, -20, 0);
+			GetPosition(CVars::bxt_hud_visible_landmarks_offset, CVars::bxt_hud_visible_landmarks_anchor, &x, &y, -75, 0);
 
 			std::ostringstream out;
 			out << "Visible Landmarks:\n";

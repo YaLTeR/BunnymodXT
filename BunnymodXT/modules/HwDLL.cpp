@@ -948,7 +948,6 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found R_DrawSkyBox at %p.\n", ORIG_R_DrawSkyBox);
 		} else {
 			EngineDevWarning("[hw dll] Could not find R_DrawSkyBox.\n");
-			EngineWarning("bxt_skybox_remove is not available.\n");
 		}
 
 		ORIG_SCR_UpdateScreen = reinterpret_cast<_SCR_UpdateScreen>(MemUtils::GetSymbolAddress(m_Handle, "SCR_UpdateScreen"));
@@ -3485,7 +3484,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_bhopcap);
 	RegisterCVar(CVars::bxt_interprocess_enable);
 	RegisterCVar(CVars::bxt_fade_remove);
-	RegisterCVar(CVars::bxt_skybox_remove);
 	RegisterCVar(CVars::bxt_water_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
@@ -5044,7 +5042,7 @@ HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawSkyBox)
 {
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_skybox_remove.GetBool())
+	if (CVars::sv_cheats.GetBool() && CVars::bxt_wallhack.GetBool())
 		return;
 
 	ORIG_R_DrawSkyBox();
@@ -5299,7 +5297,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (CVars::bxt_water_remove.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel.GetBool()))) {
+	if (CVars::bxt_water_remove.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_show_only_viewmodel.GetBool()))) {
 		if (CVars::bxt_clear_green.GetBool())
 			glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
 		else

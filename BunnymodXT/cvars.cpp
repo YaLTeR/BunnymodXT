@@ -15,7 +15,6 @@ namespace CVars
 	CVarWrapper bxt_autopause("bxt_autopause", "0");
 	CVarWrapper bxt_interprocess_enable("bxt_interprocess_enable", "0");
 	CVarWrapper bxt_fade_remove("bxt_fade_remove", "0");
-	CVarWrapper bxt_skybox_remove("bxt_skybox_remove", "0");
 	CVarWrapper bxt_water_remove("bxt_water_remove", "0");
 	CVarWrapper bxt_stop_demo_on_changelevel("bxt_stop_demo_on_changelevel", "0");
 	CVarWrapper bxt_tas_editor_simulate_for_ms("bxt_tas_editor_simulate_for_ms", "40");
@@ -171,7 +170,6 @@ namespace CVars
 		&bxt_autopause,
 		&bxt_interprocess_enable,
 		&bxt_fade_remove,
-		&bxt_skybox_remove,
 		&bxt_water_remove,
 		&bxt_stop_demo_on_changelevel,
 		&bxt_tas_editor_apply_smoothing_over_s,

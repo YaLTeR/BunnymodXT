@@ -2442,6 +2442,7 @@ struct HwDLL::Cmd_BXT_Timer_Reset
 	static void handler()
 	{
 		CustomHud::SaveTimeToDemo();
+		CustomHud::SetInvalidRun(false);
 		return CustomHud::ResetTime();
 	}
 };

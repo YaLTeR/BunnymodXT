@@ -33,6 +33,8 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(int, __cdecl, CL_IsThirdPerson)
 	HOOK_DECL(void, __fastcall, CStudioModelRenderer__StudioRenderModel, void* thisptr)
 	HOOK_DECL(void, __cdecl, CStudioModelRenderer__StudioRenderModel_Linux, void* thisptr)
+	HOOK_DECL(void, __fastcall, CHudFlashlight__drawNightVision, void* thisptr)
+	HOOK_DECL(void, __cdecl, CHudFlashlight__drawNightVision_Linux, void* thisptr)
 
 public:
 	static ClientDLL& GetInstance()

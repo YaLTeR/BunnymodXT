@@ -741,6 +741,11 @@ namespace patterns
 			"AoMDC",
 			"55 8B EC 83 EC 44 53 56 57 89 4D ?? FF 15 ?? ?? ?? ?? 6A 00"
 		);
+
+		PATTERNS(CHudFlashlight__drawNightVision,
+			"Op4-WON",
+			"83 EC 18 53 55 56 8B F1 57"
+		);
 	}
 
 	namespace shared

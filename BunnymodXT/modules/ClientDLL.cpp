@@ -1352,14 +1352,12 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CHudFlashlight__drawNightVision, void*, 
 {
 	if (CVars::bxt_disable_nightvision_sprite.GetBool())
 		return;
-	else
-		ORIG_CHudFlashlight__drawNightVision(thisptr);
+	ORIG_CHudFlashlight__drawNightVision(thisptr);
 }
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, CHudFlashlight__drawNightVision_Linux, void*, thisptr)
 {
 	if (CVars::bxt_disable_nightvision_sprite.GetBool())
 		return;
-	else
-		ORIG_CHudFlashlight__drawNightVision_Linux(thisptr);
+	ORIG_CHudFlashlight__drawNightVision_Linux(thisptr);
 }

@@ -25,6 +25,7 @@ namespace CustomHud
 	static bool receivedAccurateInfo = false;
 	static playerinfo player;
 	bool countingTime = false;
+	bool invalidRun = false;
 	int hours = 0, minutes = 0, seconds = 0;
 	double timeRemainder = 0.0;
 	int frames = 0;
@@ -338,6 +339,14 @@ namespace CustomHud
 		return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2], fieldMinWidth);
 	}
 
+	static inline int DrawNumberTimer(int number, int x, int y, int fieldMinWidth = 1)
+	{
+		if (invalidRun)
+			return DrawNumber(number, x, y, 240, 0, 0, fieldMinWidth);
+		else
+			return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2], fieldMinWidth);
+	}
+
 	static void DrawDecimalSeparator(int x, int y, int r, int g, int b)
 	{
 		x += (NumberWidth - 6) / 2;
@@ -347,7 +356,10 @@ namespace CustomHud
 
 	static void DrawDecimalSeparator(int x, int y)
 	{
-		return DrawDecimalSeparator(x, y, hudColor[0], hudColor[1], hudColor[2]);
+		if (invalidRun)
+			return DrawDecimalSeparator(x, y, 240, 0, 0);
+		else
+			return DrawDecimalSeparator(x, y, hudColor[0], hudColor[1], hudColor[2]);
 	}
 
 	static void DrawColon(int x, int y, int r, int g, int b)
@@ -360,7 +372,10 @@ namespace CustomHud
 
 	static void DrawColon(int x, int y)
 	{
-		return DrawColon(x, y, hudColor[0], hudColor[1], hudColor[2]);
+		if (invalidRun)
+			return DrawColon(x, y, 240, 0, 0);
+		else
+			return DrawColon(x, y, hudColor[0], hudColor[1], hudColor[2]);
 	}
 
 	static void GetPosition(const CVarWrapper& Offset, const CVarWrapper& Anchor, int* x, int* y, int rx = 0, int ry = 0)
@@ -632,9 +647,12 @@ namespace CustomHud
 			int x, y;
 			GetPosition(CVars::bxt_hud_timer_offset, CVars::bxt_hud_timer_anchor, &x, &y, 0, 0);
 
+			if (invalidRun)
+				DrawMultilineString(x, y + NumberHeight, "Invalid run", 1.0f, 0.0f, 0.0f);
+
 			if (hours)
 			{
-				x = DrawNumber(hours, x, y);
+				x = DrawNumberTimer(hours, x, y);
 				DrawColon(x, y);
 				x += NumberWidth;
 			}
@@ -642,18 +660,18 @@ namespace CustomHud
 			if (hours || minutes)
 			{
 				int fieldMinWidth = (hours && minutes < 10) ? 2 : 1;
-				x = DrawNumber(minutes, x, y, fieldMinWidth);
+				x = DrawNumberTimer(minutes, x, y, fieldMinWidth);
 				DrawColon(x, y);
 				x += NumberWidth;
 			}
 
 			int fieldMinWidth = ((hours || minutes) && seconds < 10) ? 2 : 1;
-			x = DrawNumber(seconds, x, y, fieldMinWidth);
+			x = DrawNumberTimer(seconds, x, y, fieldMinWidth);
 
 			DrawDecimalSeparator(x, y);
 			x += NumberWidth;
 
-			DrawNumber(static_cast<int>(timeRemainder * 1000), x, y, 3);
+			DrawNumberTimer(static_cast<int>(timeRemainder * 1000), x, y, 3);
 		}
 	}
 
@@ -1521,6 +1539,7 @@ namespace CustomHud
 	{
 		Interprocess::WriteTimerReset(GetTime());
 		countingTime = false;
+		invalidRun = false;
 		hours = minutes = seconds = 0;
 		timeRemainder = 0.0;
 		frames = 0;
@@ -1533,6 +1552,13 @@ namespace CustomHud
 			Interprocess::WriteTimerStart(GetTime());
 
 		countingTime = counting;
+	}
+
+	void SetInvalidRun(bool invalidated)
+	{
+		// Only set as invalid, if the timer is actually running
+		if (countingTime)
+			invalidRun = invalidated;
 	}
 
 	void SendTimeUpdate() {

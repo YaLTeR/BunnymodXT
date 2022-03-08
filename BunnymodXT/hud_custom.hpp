@@ -24,6 +24,7 @@ namespace CustomHud
 	void TimePassed(double time);
 	void ResetTime();
 	void SetCountingTime(bool counting);
+	void SetInvalidRun(bool invalidated);
 	void SendTimeUpdate();
 	void SaveTimeToDemo();
 	Interprocess::Time GetTime();

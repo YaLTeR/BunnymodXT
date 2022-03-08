@@ -1923,14 +1923,18 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CPushable__Move, void*, thisptr, int, ed
 
 void ServerDLL::DoWouldCrashMessage()
 {
-	char command[] = "say The game would have crashed. BXT prevented the crash and the timer was stopped. This run is no longer valid.\n";
+	char command[] = "say The game would have crashed. BXT prevented the crash, however this run is no longer valid.\n";
 	// We send a say message from the ServerDLL so that we have the notice in the demo.
 	pEngfuncs->pfnServerCommand(command);
 	// Console
-	pEngfuncs->pfnServerPrint("[BXT] The game would have crashed. BXT prevented the crash and the timer was stopped. This run is no longer valid.\n");
+	pEngfuncs->pfnServerPrint("[BXT] The game would have crashed. BXT prevented the crash, however this run is no longer valid.\n");
 
 	CustomHud::SaveTimeToDemo();
-	CustomHud::SetCountingTime(false);
+	CustomHud::SetInvalidRun(true);
+
+	// Some people might be running with LiveSplit only and hud_saytext CAN be 0, enable timer for those players, so they know
+	if (!CVars::bxt_hud_timer.GetBool())
+		HwDLL::GetInstance().SetCVarValue(CVars::bxt_hud_timer, "1");
 }
 
 HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, int, edx, entvars_t*, pevInflictor, entvars_t*, pevAttacker, float, flDamage, int, bitsDamageType)

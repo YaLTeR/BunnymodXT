@@ -286,6 +286,11 @@ extern "C" void __cdecl R_SetFrustum()
 {
 	HwDLL::HOOKED_R_SetFrustum();
 }
+
+extern "C" void __cdecl ClientDLL_CalcRefdef(ref_params_s *pparams)
+{
+	ClientDLL::HOOKED_V_CalcRefdef(pparams);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)

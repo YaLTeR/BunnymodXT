@@ -652,7 +652,7 @@ void ClientDLL::FindStuff()
 			EngineDevMsg("[client dll] Found CHudFlashlight::drawNightVision at %p (using the %s pattern).\n", ORIG_CHudFlashlight__drawNightVision, pattern->name());
 		} else {
 			ORIG_CHudFlashlight__drawNightVision_Linux = reinterpret_cast<_CHudFlashlight__drawNightVision_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN14CHudFlashlight15drawNightVisionEv"));
-			if (ORIG_CStudioModelRenderer__StudioRenderModel_Linux) {
+			if (ORIG_CHudFlashlight__drawNightVision_Linux) {
 				EngineDevMsg("[client dll] Found CHudFlashlight::drawNightVision [Linux] at %p.\n", ORIG_CHudFlashlight__drawNightVision_Linux);
 			} else {
 				EngineDevWarning("[client dll] Could not find HudFlashlight::drawNightVision [Linux].\n");

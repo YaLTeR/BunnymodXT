@@ -5044,7 +5044,7 @@ HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawSkyBox)
 {
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_skybox_remove.GetBool())
+	if (CVars::sv_cheats.GetBool() && (CVars::bxt_skybox_remove.GetBool() || CVars::bxt_wallhack.GetBool()))
 		return;
 
 	ORIG_R_DrawSkyBox();

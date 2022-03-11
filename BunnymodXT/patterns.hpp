@@ -532,7 +532,9 @@ namespace patterns
 			"Parasomnia",
 			"81 89 80 04 00 00 C0 00 00 00 83 C8 FF 89 81 A4 04 00 00 89 81 A8 04 00 00 89 81 98 07 00 00 89 81 A4 07 00 00 89 81 A8 07 00 00 89 81 9C 07 00 00",
 			"HL-SWEET",
-			"55 8B EC 83 EC 04 53 56 57 89 4D FC 8B 45 FC C7 80 50 04 00 00 FF FF FF FF 8B 45 FC C7 80 54 04 00 00 FF FF FF FF"
+			"55 8B EC 83 EC 04 53 56 57 89 4D FC 8B 45 FC C7 80 50 04 00 00 FF FF FF FF 8B 45 FC C7 80 54 04 00 00 FF FF FF FF",
+			"AVP2",
+			"55 8B EC 83 EC 44 53 56 57 89 4D FC 8B 45 FC C7 80 94 04 00 00 FF FF FF FF 8B 45 FC C7 80 98 04 00 00 FF FF FF FF 8B 45 FC 8B 88 70 04 00 00"
 		);
 
 		PATTERNS(CBasePlayer__TakeDamage,
@@ -730,7 +732,9 @@ namespace patterns
 			"Halfquake-Trilogy",
 			"55 8B EC 83 EC 50 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56",
 			"Reissues",
-			"55 8B EC 83 EC 48 53 56 8B F1 57"
+			"55 8B EC 83 EC 48 53 56 8B F1 57",
+			"AVP2",
+			"55 8B EC 81 EC A0 00 00 00 53 56 57 89 4D"
 		);
 
 		PATTERNS(CStudioModelRenderer__StudioRenderModel,

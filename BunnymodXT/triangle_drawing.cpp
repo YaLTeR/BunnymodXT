@@ -1198,6 +1198,9 @@ namespace TriangleDrawing
 								unwrapped_yaws.push_back(prev_yaw + diff);
 							}
 
+							float high_weight_multiplier = CVars::_bxt_tas_editor_apply_smoothing_high_weight_multiplier.GetFloat();
+							float high_weight_duration = CVars::_bxt_tas_editor_apply_smoothing_high_weight_duration.GetFloat();
+
 							vector<float> yaws;
 							size_t i;
 
@@ -1225,6 +1228,10 @@ namespace TriangleDrawing
 								// Start with the current frame.
 								time = input.frametimes[i];
 
+								// If most of this frame covers the high weight zone, raise the weight.
+								if (time - high_weight_duration < high_weight_duration)
+									time *= high_weight_multiplier;
+
 								float final_yaw = unwrapped_yaws[i - first_frame] * time;
 								float total_time = time;
 
@@ -1241,6 +1248,10 @@ namespace TriangleDrawing
 										break;
 									} else {
 										time += dt;
+
+										// If most of this frame covers the high weight zone, raise the weight.
+										if (time - high_weight_duration / 2 < high_weight_duration / 2 - (time - dt))
+											dt *= high_weight_multiplier;
 
 										final_yaw += yaw * dt;
 										total_time += dt;
@@ -1260,6 +1271,10 @@ namespace TriangleDrawing
 										break;
 									} else {
 										time += dt;
+
+										// If most of this frame covers the high weight zone, raise the weight.
+										if (time - high_weight_duration / 2 < high_weight_duration / 2 - (time - dt))
+											dt *= high_weight_multiplier;
 
 										final_yaw += yaw * dt;
 										total_time += dt;

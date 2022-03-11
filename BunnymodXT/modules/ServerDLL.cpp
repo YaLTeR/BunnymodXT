@@ -489,6 +489,11 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0x98;
 				offFuncCenter = 0xC4;
 				break;
+			case 23: // AVP2
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x550;
+				offm_iClientFOV = 0x4A8;
+				break;
 			default:
 				assert(false);
 			}

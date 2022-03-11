@@ -1223,21 +1223,27 @@ namespace TriangleDrawing
 							// Fill the intermediate yaws.
 							for (; i < j; ++i) {
 								// Start with the current frame.
-								float final_yaw = unwrapped_yaws[i - first_frame] * input.frametimes[i];
+								time = input.frametimes[i];
+
+								float final_yaw = unwrapped_yaws[i - first_frame] * time;
+								float total_time = time;
 
 								// Walk back half an interval.
 								time = input.frametimes[i] / 2;
 								for (size_t k = i - 1; k >= first_frame; --k) {
 									float yaw = unwrapped_yaws[k - first_frame];
 									float dt = input.frametimes[k];
-									if (time + input.frametimes[k] >= apply_smoothing_over_s / 2) {
+									if (time + dt >= apply_smoothing_over_s / 2) {
 										// Limit the contribution of the last frame so a single low FPS frame on the edge doesn't skew the results.
 										dt = apply_smoothing_over_s / 2 - time;
 										final_yaw += yaw * dt;
+										total_time += dt;
 										break;
 									} else {
-										final_yaw += yaw * dt;
 										time += dt;
+
+										final_yaw += yaw * dt;
+										total_time += dt;
 									}
 								}
 
@@ -1246,18 +1252,21 @@ namespace TriangleDrawing
 								for (size_t k = i + 1; k < last_frame; ++k) {
 									float yaw = unwrapped_yaws[k - first_frame];
 									float dt = input.frametimes[k];
-									if (time + input.frametimes[k] >= apply_smoothing_over_s / 2) {
+									if (time + dt >= apply_smoothing_over_s / 2) {
 										// Limit the contribution of the last frame so a single low FPS frame on the edge doesn't skew the results.
 										dt = apply_smoothing_over_s / 2 - time;
 										final_yaw += yaw * dt;
+										total_time += dt;
 										break;
 									} else {
-										final_yaw += yaw * dt;
 										time += dt;
+
+										final_yaw += yaw * dt;
+										total_time += dt;
 									}
 								}
 
-								yaws.push_back(final_yaw / apply_smoothing_over_s);
+								yaws.push_back(final_yaw / total_time);
 							}
 
 							// Fill the last half-kernel-size worth of yaws.

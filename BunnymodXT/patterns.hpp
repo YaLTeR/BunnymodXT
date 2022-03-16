@@ -750,6 +750,11 @@ namespace patterns
 			"Op4-WON",
 			"83 EC 18 53 55 56 8B F1 57"
 		);
+
+		PATTERNS(ScaleColors,
+			"HL-SteamPipe",
+			"DB 44 24 ?? 56 8B 74 24 ?? D8 0D"
+		);
 	}
 
 	namespace shared

@@ -3,6 +3,12 @@
 #include "simulation_ipc.hpp"
 #include "modules/HwDLL.hpp"
 
+// Hack to fix boost::interprocess on wine.
+#ifdef _WIN32
+#include <filesystem>
+#define BOOST_INTERPROCESS_SHARED_DIR_FUNC
+#endif
+
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
@@ -25,6 +31,18 @@ using namespace std::literals;
 #define SERVER_TO_CLIENT_MQ_NAME "bxt-simulation-server-to-client"
 #define CLIENT_TO_SERVER_MQ_NAME "bxt-simulation-client-to-server"
 #define MUTEX_NAME "bxt-simulation-mutex"
+
+#ifdef _WIN32
+namespace boost::interprocess::ipcdetail {
+	void get_shared_dir(std::string& shared_dir) {
+		shared_dir = ".bxt-ipc";
+	}
+
+	void get_shared_dir(std::wstring& shared_dir) {
+		shared_dir = L".bxt-ipc";
+	}
+}
+#endif
 
 namespace simulation_ipc {
 	enum ClientToServerMessageType {
@@ -60,12 +78,30 @@ namespace simulation_ipc {
 		mutex.reset();
 	}
 
+#ifdef _WIN32
+	std::string create_ipc_dir() {
+		try {
+			std::filesystem::create_directory(".bxt-ipc");
+		} catch (std::filesystem::filesystem_error &ex) {
+			return "error creating \".bxt-ipc\" directory: "s + ex.what();
+		}
+
+		return {};
+	}
+#endif
+
 	std::string initialize_server_if_needed() {
 		if (is_client_initialized())
 			return "already initialized as client"s;
 
 		if (is_server_initialized())
 			return {};
+
+#ifdef _WIN32
+		const auto rv = create_ipc_dir();
+		if (!rv.empty())
+			return rv;
+#endif
 
 		remove();
 
@@ -190,6 +226,12 @@ namespace simulation_ipc {
 	std::string initialize_client() {
 		if (is_server_initialized())
 			return "already initialized as server"s;
+
+#ifdef _WIN32
+		const auto rv = create_ipc_dir();
+		if (!rv.empty())
+			return rv;
+#endif
 
 		close_client();
 

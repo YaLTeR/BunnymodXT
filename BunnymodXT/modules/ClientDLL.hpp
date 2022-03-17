@@ -64,6 +64,10 @@ public:
 
 	bool DoesGameDirMatch(const char *game);
 
+	unsigned custom_r = 0, custom_g = 0, custom_b = 0;
+
+	bool custom_hud_color_set = false;
+
 	unsigned short last_buttons;
 
 	// When set to false, the mouse won't move the camera.

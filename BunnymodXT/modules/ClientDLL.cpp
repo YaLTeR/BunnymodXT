@@ -1086,8 +1086,16 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Reset)
 
 HOOK_DEF_2(ClientDLL, void, __cdecl, HUD_Redraw, float, time, int, intermission)
 {
+	if (!CVars::bxt_hud_game_color.IsEmpty()) {
+		custom_hud_color_set = true;
+		std::istringstream ss(CVars::bxt_hud_game_color.GetString());
+		ss >> custom_r >> custom_g >> custom_b;
+	}
+
 	if (!CVars::bxt_disable_hud.GetBool())
 		ORIG_HUD_Redraw(time, intermission);
+
+	custom_hud_color_set = false;
 
 	CustomHud::Draw(time);
 }
@@ -1393,11 +1401,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CHudFlashlight__drawNightVision_Linux, void
 
 HOOK_DEF_4(ClientDLL, void, __cdecl, ScaleColors, int*, r, int*, g, int*, b, int, a)
 {
-	if (!CVars::bxt_hud_game_color.IsEmpty()) {
-		unsigned custom_r = 0, custom_g = 0, custom_b = 0;
-		std::istringstream ss(CVars::bxt_hud_game_color.GetString());
-		ss >> custom_r >> custom_g >> custom_b;
-
+	if (custom_hud_color_set) {
 		*r = custom_r;
 		*g = custom_g;
 		*b = custom_b;

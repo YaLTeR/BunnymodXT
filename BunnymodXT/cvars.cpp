@@ -89,6 +89,8 @@ namespace CVars
 	CVarWrapper bxt_show_player_in_hltv("bxt_show_player_in_hltv", "0");
 	CVarWrapper bxt_hud("bxt_hud", "1");
 	CVarWrapper bxt_hud_color("bxt_hud_color", "");
+	CVarWrapper bxt_hud_game_color("bxt_hud_game_color", "");
+	CVarWrapper bxt_hud_game_alpha("bxt_hud_game_alpha", "0");
 	CVarWrapper bxt_hud_precision("bxt_hud_precision", "6");
 	CVarWrapper bxt_hud_quickgauss("bxt_hud_quickgauss", "0");
 	CVarWrapper bxt_hud_quickgauss_offset("bxt_hud_quickgauss_offset", "");
@@ -243,6 +245,8 @@ namespace CVars
 		&bxt_show_player_in_hltv,
 		&bxt_hud,
 		&bxt_hud_color,
+		&bxt_hud_game_color,
+		&bxt_hud_game_alpha,
 		&bxt_hud_precision,
 		&bxt_hud_quickgauss,
 		&bxt_hud_quickgauss_offset,

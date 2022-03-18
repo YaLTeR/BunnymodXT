@@ -1086,16 +1086,13 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Reset)
 
 HOOK_DEF_2(ClientDLL, void, __cdecl, HUD_Redraw, float, time, int, intermission)
 {
-	if (!CVars::bxt_hud_game_color.IsEmpty()) {
+	custom_hud_color_set = false;
+
+	if (sscanf(CVars::bxt_hud_game_color.GetString().c_str(), "%hhu %hhu %hhu", &custom_r, &custom_g, &custom_b) == 3)
 		custom_hud_color_set = true;
-		std::istringstream ss(CVars::bxt_hud_game_color.GetString());
-		ss >> custom_r >> custom_g >> custom_b;
-	}
 
 	if (!CVars::bxt_disable_hud.GetBool())
 		ORIG_HUD_Redraw(time, intermission);
-
-	custom_hud_color_set = false;
 
 	CustomHud::Draw(time);
 }
@@ -1407,8 +1404,8 @@ HOOK_DEF_4(ClientDLL, void, __cdecl, ScaleColors, int*, r, int*, g, int*, b, int
 		*b = custom_b;
 	}
 
-	if (CVars::bxt_hud_game_alpha.GetInt() >= 1 && CVars::bxt_hud_game_alpha.GetInt() <= 255)
-		a = CVars::bxt_hud_game_alpha.GetInt();
+	if (CVars::bxt_hud_game_alpha.GetFloat() > 0 && CVars::bxt_hud_game_alpha.GetFloat() <= 1)
+		a = static_cast<int>(CVars::bxt_hud_game_alpha.GetFloat() * 255);
 
 	ORIG_ScaleColors(r, g, b, a);
 }

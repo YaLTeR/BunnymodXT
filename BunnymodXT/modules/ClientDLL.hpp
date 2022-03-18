@@ -64,8 +64,7 @@ public:
 
 	bool DoesGameDirMatch(const char *game);
 
-	unsigned custom_r = 0, custom_g = 0, custom_b = 0;
-
+	unsigned char custom_r, custom_g, custom_b;
 	bool custom_hud_color_set = false;
 
 	unsigned short last_buttons;

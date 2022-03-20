@@ -447,6 +447,11 @@ void ClientDLL::FindStuff()
 				static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 74 12");
 				addr = MemUtils::find_pattern(pInitialize, 50, p);
 			}
+			if (!addr) {
+				// OpenAG
+				static constexpr auto p = PATTERN("BF ?? ?? ?? ?? 8B F0 F3 A5");
+				addr = MemUtils::find_pattern(pInitialize, 70, p);
+			}
 
 			if (addr)
 			{

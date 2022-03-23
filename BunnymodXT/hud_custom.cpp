@@ -773,12 +773,17 @@ namespace CustomHud
 					}
 				}
 
-				// Borrowed from https://github.com/SNMetamorph/goldsrc-monitor/blob/08c368e246d09996b2d85e4367d4d8cc1e507712/sources/library/displaymode_entityreport.cpp#L45-L48
-				const Vector origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
-
 				if (CVars::bxt_hud_entity_info.GetInt() == 2)
 				{
 					out << "Yaw: " << ent->v.angles[1] << '\n';
+
+					// Borrowed from https://github.com/SNMetamorph/goldsrc-monitor/blob/08c368e246d09996b2d85e4367d4d8cc1e507712/sources/library/displaymode_entityreport.cpp#L45
+					Vector origin;
+
+					if (strstr(classname, "func_") != NULL)
+						origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
+					else
+						origin = ent->v.origin;
 
 					out << "X: " << origin.x << '\n';
 					out << "Y: " << origin.y << '\n';

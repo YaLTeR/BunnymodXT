@@ -766,11 +766,16 @@ namespace CustomHud
 
 				if (strstr(classname, "func_door") != NULL)
 				{
-					if (ent->v.spawnflags & 512) { // https://github.com/ValveSoftware/halflife/blob/master/dlls/doors.h#L28
+					// https://github.com/ValveSoftware/halflife/blob/master/dlls/doors.h#L27-L28
+					if (ent->v.spawnflags & 256)
+						out << "Usable: Yes" << '\n';
+					else
+						out << "Usable: No" << '\n';
+
+					if (ent->v.spawnflags & 512)
 						out << "Monsters: Can't open" << '\n';
-					} else {
+					else
 						out << "Monsters: Can open" << '\n';
-					}
 				}
 
 				if (CVars::bxt_hud_entity_info.GetInt() == 2)

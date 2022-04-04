@@ -64,6 +64,7 @@ namespace CVars
 	CVarWrapper bxt_disable_autosave("bxt_disable_autosave", "0");
 	CVarWrapper bxt_disable_changelevel("bxt_disable_changelevel", "0");
 	CVarWrapper bxt_force_duck("bxt_force_duck", "0");
+	CVarWrapper bxt_novis_serverside("bxt_novis_serverside", "0");
 
 	// Clientside CVars
 	CVarWrapper bxt_disable_hud("bxt_disable_hud", "0");
@@ -233,6 +234,7 @@ namespace CVars
 		&bxt_wallhack_additive,
 		&bxt_wallhack_alpha,
 		&bxt_novis,
+		&bxt_novis_serverside,
 		&bxt_show_triggers,
 		&bxt_show_triggers_legacy,
 		&bxt_collision_depth_map,

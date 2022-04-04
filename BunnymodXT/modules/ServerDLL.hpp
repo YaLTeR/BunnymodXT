@@ -62,7 +62,7 @@ public:
 	std::vector<const Vector *> GetNodePositions() const;
 	std::vector<const Vector *> GetDisplacerTargets() const;
 	bool GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres, int &sequence, float &frame) const;
-	
+
 	bool GetGonarchInfo(float& health, int& sequence, float& frame) const;
 
 	inline const char *GetString(int string) const {
@@ -154,8 +154,12 @@ protected:
 
 	ptrdiff_t offBhopcap;
 	ptrdiff_t pCZDS_Velocity_Byte;
+	ptrdiff_t pAddToFullPack_PVS_Byte;
 	ptrdiff_t pBhopcapWindows;
 	byte originalBhopcapInsn[6];
+
+	bool twhltower2 = false;
+	bool hqtrilogy = false;
 
 	bool callerIsWalkMove;
 	bool callerIsFlyMove;

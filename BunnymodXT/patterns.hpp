@@ -672,6 +672,15 @@ namespace patterns
 			"HL-SteamPipe",
 			"53 55 56 8B 74 24 ?? 57 8B CE 8B 06 FF 50"
 		);
+
+		PATTERNS(AddToFullPack_PVS_Byte,
+			"HL-SteamPipe",
+			"3B EE 74 ?? 8B 54 24",
+			"Parasomnia",
+			"3B FE 74 ?? 8B 55",
+			"AoMDC",
+			"8B 45 ?? 3B 45 ?? 74 ?? 8B 4D ?? 51 8B 55 ?? 52 FF 15"
+		);
 	}
 
 	namespace client

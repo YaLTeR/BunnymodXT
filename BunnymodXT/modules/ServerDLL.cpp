@@ -1794,18 +1794,11 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldRenderAmount = ent->v.renderamt;
 	auto oldRenderFx = ent->v.renderfx;
 
-	if (CVars::bxt_novis_serverside.GetBool())
-	{
-		if (pAddToFullPack_PVS_Byte)
-		{
-			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>(CVars::bxt_novis_serverside.GetBool() ? "\xEB" : "\x74"));
-		}
+	if (pAddToFullPack_PVS_Byte)
+		MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>(CVars::bxt_novis_serverside.GetBool() ? "\xEB" : "\x74"));
 
-		if (twhltower2 || hqtrilogy || CVars::bxt_novis_serverside.GetInt() == 2)
-		{
-			ent->v.renderfx = 22; // kRenderFxEntInPVS from Spirit SDK
-		}
-	}
+	if (CVars::bxt_novis_serverside.GetInt() == 2 || (CVars::bxt_novis_serverside.GetBool() && (twhltower2 || hqtrilogy)))
+		ent->v.renderfx = 22; // kRenderFxEntInPVS from Spirit SDK
 
 	const char *classname = (*ppGlobals)->pStringBase + ent->v.classname;
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;

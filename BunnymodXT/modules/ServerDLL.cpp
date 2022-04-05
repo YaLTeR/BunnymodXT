@@ -1210,7 +1210,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_AddToFullPack) {
 		REG(bxt_show_hidden_entities);
 		REG(bxt_show_triggers_legacy);
-		REG(bxt_novis_serverside);
+		REG(bxt_render_far_entities);
 	}
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
@@ -1795,9 +1795,9 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldRenderFx = ent->v.renderfx;
 
 	if (pAddToFullPack_PVS_Byte)
-		MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>(CVars::bxt_novis_serverside.GetBool() ? "\xEB" : "\x74"));
+		MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>(CVars::bxt_render_far_entities.GetBool() ? "\xEB" : "\x74"));
 
-	if (CVars::bxt_novis_serverside.GetInt() == 2 || (CVars::bxt_novis_serverside.GetBool() && (twhltower2 || hqtrilogy)))
+	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && (twhltower2 || hqtrilogy)))
 		ent->v.renderfx = 22; // kRenderFxEntInPVS from Spirit SDK
 
 	const char *classname = (*ppGlobals)->pStringBase + ent->v.classname;

@@ -1795,7 +1795,15 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldRenderFx = ent->v.renderfx;
 
 	if (pAddToFullPack_PVS_Byte)
-		MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>(CVars::bxt_render_far_entities.GetBool() ? "\xEB" : "\x74"));
+	{
+		if (CVars::bxt_render_far_entities.GetBool())
+		{
+			if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x74)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
+		}
+		else if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0xEB)
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x74"));
+	}
 
 	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && (twhltower2 || hqtrilogy)))
 		ent->v.renderfx = 22; // kRenderFxEntInPVS from Spirit SDK

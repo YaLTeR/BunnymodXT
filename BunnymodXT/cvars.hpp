@@ -177,6 +177,7 @@ namespace CVars
 	extern CVarWrapper bxt_disable_autosave;
 	extern CVarWrapper bxt_disable_changelevel;
 	extern CVarWrapper bxt_force_duck;
+	extern CVarWrapper bxt_render_far_entities;
 
 	// Clientside CVars
 	extern CVarWrapper bxt_disable_hud;

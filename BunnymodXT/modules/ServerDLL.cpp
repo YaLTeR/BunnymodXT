@@ -208,6 +208,7 @@ void ServerDLL::Clear()
 	offBhopcap = 0;
 	pBhopcapWindows = 0;
 	pCZDS_Velocity_Byte = 0;
+	pAddToFullPack_PVS_Byte = 0;
 	offm_iClientFOV = 0;
 	offm_rgAmmoLast = 0;
 	maxAmmoSlots = 0;
@@ -526,6 +527,23 @@ void ServerDLL::FindStuff()
 			}
 		});
 
+	auto fAddToFullPack_PVS_Byte = FindAsync(
+		pAddToFullPack_PVS_Byte,
+		patterns::server::AddToFullPack_PVS_Byte,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::AddToFullPack_PVS_Byte.cbegin()) {
+			case 0: // HL-SteamPipe
+			case 1: // Parasomnia
+				pAddToFullPack_PVS_Byte += 2;
+				break;
+			case 2: // AoMDC
+				pAddToFullPack_PVS_Byte += 6;
+				break;
+			default:
+				assert(false);
+			}
+		});
+
 	auto fPM_WalkMove = FindFunctionAsync(ORIG_PM_WalkMove, "PM_WalkMove", patterns::shared::PM_WalkMove);
 	auto fPM_FlyMove = FindFunctionAsync(ORIG_PM_FlyMove, "PM_FlyMove", patterns::shared::PM_FlyMove);
 	auto fPM_AddToTouched = FindFunctionAsync(ORIG_PM_AddToTouched, "PM_AddToTouched", patterns::shared::PM_AddToTouched);
@@ -639,6 +657,15 @@ void ServerDLL::FindStuff()
 			EngineDevMsg("[server dll] Found CZDS Velocity Reset Byte at %p (using the %s pattern).\n", pCZDS_Velocity_Byte, pattern->name());
 		} else {
 			EngineDevWarning("[server dll] Could not find CZDS Velocity Reset Byte.\n");
+		}
+	}
+
+	{
+		auto pattern = fAddToFullPack_PVS_Byte.get();
+		if (pAddToFullPack_PVS_Byte) {
+			EngineDevMsg("[server dll] Found AddToFullPack PVS Byte at %p (using the %s pattern).\n", pAddToFullPack_PVS_Byte, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find AddToFullPack PVS Byte.\n");
 		}
 	}
 
@@ -1054,8 +1081,6 @@ void ServerDLL::FindStuff()
 			auto blolly = false;
 			auto svencoop = false;
 			bool twhltower = false;
-			bool twhltower2 = false;
-			bool hqtrilogy = false;
 			bool paranoia = false;
 			bool halfpayne = false;
 			if (!addr)
@@ -1185,6 +1210,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_AddToFullPack) {
 		REG(bxt_show_hidden_entities);
 		REG(bxt_show_triggers_legacy);
+		REG(bxt_render_far_entities);
 	}
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
@@ -1767,6 +1793,20 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldRenderColor = ent->v.rendercolor;
 	auto oldRenderAmount = ent->v.renderamt;
 	auto oldRenderFx = ent->v.renderfx;
+
+	if (pAddToFullPack_PVS_Byte)
+	{
+		if (CVars::bxt_render_far_entities.GetBool())
+		{
+			if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x74)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
+		}
+		else if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0xEB)
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x74"));
+	}
+
+	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && (twhltower2 || hqtrilogy)))
+		ent->v.renderfx = 22; // kRenderFxEntInPVS from Spirit SDK
 
 	const char *classname = (*ppGlobals)->pStringBase + ent->v.classname;
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;

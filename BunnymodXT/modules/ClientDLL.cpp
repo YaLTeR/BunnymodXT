@@ -752,6 +752,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_viewmodel_ofs_forward);
 		REG(bxt_viewmodel_ofs_right);
 		REG(bxt_viewmodel_ofs_up);
+		REG(bxt_viewmodel_bob_angled);
 	}
 
 	if (ORIG_HUD_Init)
@@ -1013,6 +1014,9 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 					right_offset * pparams->right[i] +
 					up_offset * pparams->up[i];
 			}
+
+			if (CVars::bxt_viewmodel_bob_angled.GetBool())
+				view->curstate.angles = view->angles;
 		}
 	}
 

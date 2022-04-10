@@ -277,6 +277,7 @@ namespace CVars
 	extern CVarWrapper bxt_viewmodel_ofs_forward;
 	extern CVarWrapper bxt_viewmodel_ofs_right;
 	extern CVarWrapper bxt_viewmodel_ofs_up;
+	extern CVarWrapper bxt_viewmodel_bob_angled;
 
 	extern const std::vector<CVarWrapper*> allCVars;
 }

@@ -2255,11 +2255,14 @@ struct HwDLL::Cmd_BXT_CH_Get_Origin_And_Angles
 	static void handler()
 	{
 		auto &hw = HwDLL::GetInstance();
+		auto &cl = ClientDLL::GetInstance();
 		float angles[3];
 		hw.GetViewangles(angles);
 		hw.ORIG_Con_Printf("bxt_set_angles %f %f %f;", angles[0], angles[1], angles[2]);
-		hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", (*hw.sv_player)->v.origin[0], (*hw.sv_player)->v.origin[1],
-		                   (*hw.sv_player)->v.origin[2]);
+		if (CVars::bxt_hud_origin.GetInt() == 2)
+			hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", cl.last_vieworg[0], cl.last_vieworg[1], cl.last_vieworg[2]);
+		else
+			hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", (*hw.sv_player)->v.origin[0], (*hw.sv_player)->v.origin[1], (*hw.sv_player)->v.origin[2]);
 	}
 };
 

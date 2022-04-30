@@ -5365,7 +5365,7 @@ HOOK_DEF_3(HwDLL, int, __cdecl, DispatchDirectUserMsg, char*, pszName, int, iSiz
 	const auto &cl = ClientDLL::GetInstance();
 	const char *gameDir = cl.pEngfuncs->pfnGetGameDirectory();
 
-	if ((!std::strcmp(gameDir, "czeror") || !std::strcmp(gameDir, "czeror_cutsceneless")) && !std::strcmp(pszName, "InitHUD") && cl.pEngfuncs->pDemoAPI->IsPlayingback())
+	if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback() && (!std::strcmp(gameDir, "czeror") || !std::strcmp(gameDir, "czeror_cutsceneless")) && !std::strcmp(pszName, "InitHUD"))
 		return ORIG_DispatchDirectUserMsg(0, iSize, pBuf);
 	else
 		return ORIG_DispatchDirectUserMsg(pszName, iSize, pBuf);

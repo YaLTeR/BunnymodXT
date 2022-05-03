@@ -229,7 +229,6 @@ void ServerDLL::Clear()
 	offNihilanthRecharger = 0;
 	offNihilanthSpheres = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
-	pEngfuncs = nullptr;
 	ppGlobals = nullptr;
 	cantJumpNextTime.clear();
 	m_Intercepted = false;
@@ -1060,10 +1059,8 @@ void ServerDLL::FindStuff()
 	}
 
 	// This has to be the last thing to check and hook.
-	pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
 	ppGlobals = reinterpret_cast<globalvars_t**>(MemUtils::GetSymbolAddress(m_Handle, "gpGlobals"));
-	if (pEngfuncs && ppGlobals) {
-		EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
+	if (ppGlobals) {
 		EngineDevMsg("[server dll] ppGlobals is %p.\n", ppGlobals);
 	} else {
 		auto pGiveFnptrsToDll = MemUtils::GetSymbolAddress(m_Handle, "GiveFnptrsToDll");
@@ -1137,46 +1134,37 @@ void ServerDLL::FindStuff()
 			{
 				if (blolly)
 				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 2);
 					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 19);
 				}
 				else if (svencoop)
 				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
 					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 13);
 				}
 				else if (twhltower)
 				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 2);
 					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 18);
 				}
 				else if (twhltower2)
 				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
 					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 18);
 				}
 				else if (hqtrilogy)
 				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
 					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 17);
 				}
 				else if (paranoia)
 				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t **>(addr + 1);
 					ppGlobals = *reinterpret_cast<globalvars_t ***>(addr + 11);
 				}
 				else if (halfpayne)
 				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t **>(addr + 1);
 					ppGlobals = *reinterpret_cast<globalvars_t ***>(addr + 6);
 				}
 				else
 				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
 					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 9);
 				}
 
-				EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
 				EngineDevMsg("[server dll] ppGlobals is %p.\n", ppGlobals);
 			}
 			else

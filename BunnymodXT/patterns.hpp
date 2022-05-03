@@ -469,6 +469,26 @@ namespace patterns
 			"HL-4554",
 			"83 EC 08 DB 05 ?? ?? ?? ?? A1 ?? ?? ?? ?? 56 89 44 24 04"
 		);
+
+		PATTERNS(ClientDLL_Init,
+			"HL-SteamPipe",
+			"55 8B EC 81 EC 00 02 00 00 68",
+			"HL-4554",
+			"81 EC 00 04 00 00 8D 44 24 00 68 5C 6D E6 01",
+			"HL-NGHL",
+			"81 EC 00 04 00 00 8D 44 24 00 68 94 75 EB 01",
+			"HL-WON-1712",
+			"A1 ?? ?? ?? ?? 81 EC 00 02 00 00 85 C0"
+		);
+
+		PATTERNS(LoadThisDll,
+			"HL-SteamPipe",
+			"55 8B EC 53 8B 5D ?? 57 53 E8 ?? ?? ?? ?? 8B F8",
+			"HL-4554",
+			"53 8B 5C 24 ?? 57 53 E8 ?? ?? ?? ?? 8B F8",
+			"HL-WON-1712",
+			"53 8B 5C 24 ?? 57 53 FF 15 ?? ?? ?? ?? 8B F8"
+		);
 	}
 
 	namespace server

@@ -592,6 +592,9 @@ void HwDLL::Clear()
 	ORIG_R_StudioRenderModel = nullptr;
 	ORIG_R_SetFrustum = nullptr;
 
+	ClientDLL::GetInstance().pEngfuncs = nullptr;
+	ServerDLL::GetInstance().pEngfuncs = nullptr;
+
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
@@ -890,6 +893,18 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find CBaseUI::HideGameUI [Linux].\n");
 
+		ClientDLL::GetInstance().pEngfuncs = reinterpret_cast<cl_enginefunc_t*>(MemUtils::GetSymbolAddress(m_Handle, "cl_enginefuncs"));
+		if (ClientDLL::GetInstance().pEngfuncs)
+			EngineDevMsg("[hw dll] Found cl_enginefuncs at %p.\n", ClientDLL::GetInstance().pEngfuncs);
+		else
+			EngineDevWarning("[hw dll] Could not find cl_enginefuncs.\n");
+
+		ServerDLL::GetInstance().pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncsExportedToDlls"));
+		if (ServerDLL::GetInstance().pEngfuncs)
+			EngineDevMsg("[hw dll] Found g_engfuncsExportedToDlls at %p.\n", ServerDLL::GetInstance().pEngfuncs);
+		else
+			EngineDevWarning("[hw dll] Could not find g_engfuncsExportedToDlls.\n");
+
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -1172,6 +1187,49 @@ void HwDLL::FindStuff()
 						ORIG_LoadAndDecryptHwDLL);
 				});
 		}
+
+		void* ClientDLL_Init;
+		auto fClientDLL_Init = FindAsync(
+			ClientDLL_Init,
+			patterns::engine::ClientDLL_Init,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::ClientDLL_Init.cbegin())
+				{
+				default:
+				case 0: // HL-Steampipe
+					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 181);
+					break;
+				case 1: // HL-4554
+					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 226);
+					break;
+				case 2: // HL-NGHL
+					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 203);
+					break;
+				case 3: // HL-WON-1712
+					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 1456);
+					break;
+				}
+			});
+
+		void* LoadThisDll;
+		auto fLoadThisDll = FindAsync(
+			LoadThisDll,
+			patterns::engine::LoadThisDll,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::LoadThisDll.cbegin())
+				{
+				default:
+				case 0: // HL-Steampipe
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 95);
+					break;
+				case 1: // HL-4554
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 91);
+					break;
+				case 2: // HL-WON-1712
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 89);
+					break;
+				}
+			});
 
 		auto fCbuf_Execute = FindAsync(
 			ORIG_Cbuf_Execute,
@@ -1531,6 +1589,28 @@ void HwDLL::FindStuff()
 					break;
 				}
 			});
+
+		{
+			auto pattern = fClientDLL_Init.get();
+			if (ClientDLL_Init) {
+				EngineDevMsg("[hw dll] Found ClientDLL_Init at %p (using the %s pattern).\n", ClientDLL_Init, pattern->name());
+				EngineDevMsg("[hw dll] Found cl_enginefuncs at %p.\n", ClientDLL::GetInstance().pEngfuncs);
+			}
+			else {
+				EngineDevWarning("[hw dll] Could not find ClientDLL_Init.\n");
+			}
+		}
+
+		{
+			auto pattern = fLoadThisDll.get();
+			if (LoadThisDll) {
+				EngineDevMsg("[hw dll] Found LoadThisDll at %p (using the %s pattern).\n", LoadThisDll, pattern->name());
+				EngineDevMsg("[hw dll] Found g_engfuncsExportedToDlls at %p.\n", ServerDLL::GetInstance().pEngfuncs);
+			}
+			else {
+				EngineDevWarning("[hw dll] Could not find LoadThisDll.\n");
+			}
+		}
 
 		{
 			auto pattern = fCbuf_Execute.get();

@@ -393,6 +393,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD4;
 				offFuncCenter = 0x100;
 				offFuncObjectCaps = 0x44;
+				spirit_sdk = true;
 				break;
 			case 7: // Echoes
 				maxAmmoSlots = MAX_AMMO_SLOTS;
@@ -1668,7 +1669,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x74"));
 	}
 
-	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && (twhltower2 || hqtrilogy)))
+	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && spirit_sdk))
 		ent->v.renderfx = 22; // kRenderFxEntInPVS from Spirit SDK
 
 	const char *classname = ppGlobals->pStringBase + ent->v.classname;

@@ -158,8 +158,7 @@ protected:
 	ptrdiff_t pBhopcapWindows;
 	byte originalBhopcapInsn[6];
 
-	bool twhltower2 = false;
-	bool hqtrilogy = false;
+	bool spirit_sdk = false;
 
 	bool callerIsWalkMove;
 	bool callerIsFlyMove;

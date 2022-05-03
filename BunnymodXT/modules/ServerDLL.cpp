@@ -229,7 +229,6 @@ void ServerDLL::Clear()
 	offNihilanthRecharger = 0;
 	offNihilanthSpheres = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
-	ppGlobals = nullptr;
 	cantJumpNextTime.clear();
 	m_Intercepted = false;
 	WorldGraph = nullptr;
@@ -1057,130 +1056,6 @@ void ServerDLL::FindStuff()
 			EngineWarning("Blue Shift \"A Leap of Faith\" chapter autosplit is unavailable.\n");
 		}
 	}
-
-	// This has to be the last thing to check and hook.
-	ppGlobals = reinterpret_cast<globalvars_t**>(MemUtils::GetSymbolAddress(m_Handle, "gpGlobals"));
-	if (ppGlobals) {
-		EngineDevMsg("[server dll] ppGlobals is %p.\n", ppGlobals);
-	} else {
-		auto pGiveFnptrsToDll = MemUtils::GetSymbolAddress(m_Handle, "GiveFnptrsToDll");
-		if (pGiveFnptrsToDll)
-		{
-			// Decay: GiveFnptrsToDll is actually a goto to the real function.
-			if (*reinterpret_cast<uint8_t*>(pGiveFnptrsToDll) == 0xE9)
-				pGiveFnptrsToDll = reinterpret_cast<void*>(*reinterpret_cast<ptrdiff_t*>(reinterpret_cast<uintptr_t>(pGiveFnptrsToDll) + 1)
-				                                           + reinterpret_cast<uintptr_t>(pGiveFnptrsToDll) + 5);
-
-			// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
-			static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 5F A3");
-			auto addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-
-			auto blolly = false;
-			auto svencoop = false;
-			bool twhltower = false;
-			bool paranoia = false;
-			bool halfpayne = false;
-			if (!addr)
-			{
-				// Big Lolly version: push eax; push offset dword; call memcpy
-				static constexpr auto p = PATTERN("50 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 0C 8B 4D 0C 89 0D");
-				addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-				if (addr) {
-					blolly = true;
-				} else {
-					// Sven Co-op version: has a push in between.
-					static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 68 ?? ?? ?? ?? A3");
-					addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-					if (addr) {
-						svencoop = true;
-					} else {
-						// TWHL Tower (Spirit) and Decay version: mov to eax instead of ecx.
-						static constexpr auto p = PATTERN("50 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 0C 8B 45 0C A3");
-						addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-						if (addr) {
-							twhltower = true;
-						} else {
-							// TWHL Tower 2
-							static constexpr auto p = PATTERN("68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 44 24 14 83 C4 0C A3");
-							addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-							if (addr) {
-								twhltower2 = true;
-							} else {
-								// Halfquake Trilogy
-								static constexpr auto p = PATTERN("68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 45 0C 83 C4 0C A3");
-								addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-								if (addr) {
-									hqtrilogy = true;
-								} else {
-									// PARANOIA
-									static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 8B 45 0C A3");
-									addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-									if (addr) {
-										paranoia = true;
-									} else {
-										// Half-Payne
-										static constexpr auto p = PATTERN("BF ?? ?? ?? ?? A3 ?? ?? ?? ?? F3 A5 5F");
-										addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-										halfpayne = true;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			if (addr)
-			{
-				if (blolly)
-				{
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 19);
-				}
-				else if (svencoop)
-				{
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 13);
-				}
-				else if (twhltower)
-				{
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 18);
-				}
-				else if (twhltower2)
-				{
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 18);
-				}
-				else if (hqtrilogy)
-				{
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 17);
-				}
-				else if (paranoia)
-				{
-					ppGlobals = *reinterpret_cast<globalvars_t ***>(addr + 11);
-				}
-				else if (halfpayne)
-				{
-					ppGlobals = *reinterpret_cast<globalvars_t ***>(addr + 6);
-				}
-				else
-				{
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 9);
-				}
-
-				EngineDevMsg("[server dll] ppGlobals is %p.\n", ppGlobals);
-			}
-			else
-			{
-				EngineDevWarning("[server dll] Couldn't find the pattern in GiveFnptrsToDll.\n");
-				EngineWarning("Serverside logging is not available.\n");
-				EngineWarning("Blue Shift and Gunman Chronicles automatic timer stopping is not available.\n");
-			}
-		}
-		else
-		{
-			EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll.\n");
-			EngineWarning("Serverside logging is not avaliable.\n");
-			EngineWarning("Blue Shift and Gunman Chronicles automatic timer stopping is not available.\n");
-		}
-	}
 }
 
 void ServerDLL::RegisterCVarsAndCommands()
@@ -1573,7 +1448,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 	if (ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
-			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
+			const char *targetname = ppGlobals->pStringBase + pev->targetname;
 			if (!std::strcmp(targetname, "sheriffs_chppr")) {
 				DoAutoStopTasks();
 			}
@@ -1588,7 +1463,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 	if (ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->target) {
-			const char *target= (*ppGlobals)->pStringBase + pev->target;
+			const char *target= ppGlobals->pStringBase + pev->target;
 			if (!std::strcmp(target, "oil_spouts1_mm")) {
 				DoAutoStopTasks();
 			}
@@ -1606,7 +1481,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 		if (pev && pev->targetname && pPlayer) {
 			void *classPtr = pPlayer->pvPrivateData;
 			char pVolumeName[] = "lm15";
-			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
+			const char *targetname = ppGlobals->pStringBase + pev->targetname;
 			const char *gameDir = "";
 
 			if (ClientDLL::GetInstance().pEngfuncs)
@@ -1626,7 +1501,7 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, in
 	if (ppGlobals) {
 		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->classname) {
-			const char* classname = (*ppGlobals)->pStringBase + pev->classname;
+			const char* classname = ppGlobals->pStringBase + pev->classname;
 			const char* gameDir = "";
 			if (ClientDLL::GetInstance().pEngfuncs)
 				gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
@@ -1645,7 +1520,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 	if (ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
-			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
+			const char *targetname = ppGlobals->pStringBase + pev->targetname;
 			DoMultiManagerAutoStop(targetname);
 		}
 	}
@@ -1659,8 +1534,8 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
 		if(pev && pev->targetname)
 		{
-			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
-			const char *classname = (*ppGlobals)->pStringBase + pev->classname;
+			const char *targetname = ppGlobals->pStringBase + pev->targetname;
+			const char *classname = ppGlobals->pStringBase + pev->classname;
 			// We first need to check if the pCaller is a multi_manager since FireTargets can be called by anyone
 			if (!std::strcmp(classname, "multi_manager")) {
 				DoMultiManagerAutoStop(targetname);
@@ -1796,7 +1671,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && (twhltower2 || hqtrilogy)))
 		ent->v.renderfx = 22; // kRenderFxEntInPVS from Spirit SDK
 
-	const char *classname = (*ppGlobals)->pStringBase + ent->v.classname;
+	const char *classname = ppGlobals->pStringBase + ent->v.classname;
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
 
 	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool()) {
@@ -1858,7 +1733,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerVolume__Spawn, void*, thisptr)
 	string_t old_model = pev->model;
 	ORIG_CTriggerVolume__Spawn(thisptr);
 	pev->model = old_model;
-	pev->modelindex = pEngfuncs->pfnModelIndex((*ppGlobals)->pStringBase + old_model);
+	pev->modelindex = pEngfuncs->pfnModelIndex(ppGlobals->pStringBase + old_model);
 	pev->effects |= EF_NODRAW;
 }
 
@@ -1873,7 +1748,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CTriggerVolume__Spawn_Linux, void*, thisptr
 	string_t old_model = pev->model;
 	ORIG_CTriggerVolume__Spawn_Linux(thisptr);
 	pev->model = old_model;
-	pev->modelindex = pEngfuncs->pfnModelIndex((*ppGlobals)->pStringBase + old_model);
+	pev->modelindex = pEngfuncs->pfnModelIndex(ppGlobals->pStringBase + old_model);
 	pev->effects |= EF_NODRAW;
 }
 
@@ -2073,7 +1948,7 @@ bool ServerDLL::GetGlobalState(const std::string& name, int& state)
 float ServerDLL::GetTime()
 {
 	if (ppGlobals)
-		return (*ppGlobals)->time;
+		return ppGlobals->time;
 
 	return 0.0f;
 }

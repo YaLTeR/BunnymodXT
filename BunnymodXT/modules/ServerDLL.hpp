@@ -67,7 +67,7 @@ public:
 
 	inline const char *GetString(int string) const {
 		assert(ppGlobals);
-		return (*ppGlobals)->pStringBase + string;
+		return ppGlobals->pStringBase + string;
 	}
 
 	static void DoMultiManagerAutoStop(const char *classname);
@@ -79,6 +79,7 @@ public:
 	TraceResult TraceLine(const float v1[3], const float v2[3], int fNoMonsters, edict_t *pentToSkip) const;
 
 	enginefuncs_t *pEngfuncs;
+	globalvars_t *ppGlobals;
 
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
@@ -131,7 +132,6 @@ protected:
 	ptrdiff_t offBasevelocity;
 
 	void *pGlobalState;
-	globalvars_t **ppGlobals;
 
 	ptrdiff_t offFuncIsPlayer = 0x9C;
 	ptrdiff_t offFuncCenter = 0xC8;

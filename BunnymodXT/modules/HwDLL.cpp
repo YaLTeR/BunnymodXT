@@ -594,6 +594,7 @@ void HwDLL::Clear()
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
+	ServerDLL::GetInstance().ppGlobals = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -904,6 +905,12 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found g_engfuncsExportedToDlls at %p.\n", ServerDLL::GetInstance().pEngfuncs);
 		else
 			EngineDevWarning("[hw dll] Could not find g_engfuncsExportedToDlls.\n");
+
+		ServerDLL::GetInstance().ppGlobals = reinterpret_cast<globalvars_t*>(MemUtils::GetSymbolAddress(m_Handle, "gGlobalVariables"));
+		if (ServerDLL::GetInstance().ppGlobals)
+			EngineDevMsg("[hw dll] Found gGlobalVariables at %p.\n", ServerDLL::GetInstance().ppGlobals);
+		else
+			EngineDevWarning("[hw dll] Could not find gGlobalVariables.\n");
 
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
@@ -1221,6 +1228,7 @@ void HwDLL::FindStuff()
 				default:
 				case 0: // HL-Steampipe
 					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 95);
+					ServerDLL::GetInstance().ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 90);
 					break;
 				case 1: // HL-4554
 					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 91);
@@ -1606,6 +1614,7 @@ void HwDLL::FindStuff()
 			if (LoadThisDll) {
 				EngineDevMsg("[hw dll] Found LoadThisDll at %p (using the %s pattern).\n", LoadThisDll, pattern->name());
 				EngineDevMsg("[hw dll] Found g_engfuncsExportedToDlls at %p.\n", ServerDLL::GetInstance().pEngfuncs);
+				EngineDevMsg("[hw dll] Found gGlobalVariables at %p.\n", ServerDLL::GetInstance().ppGlobals);
 			}
 			else {
 				EngineDevWarning("[hw dll] Could not find LoadThisDll.\n");

@@ -1057,6 +1057,9 @@ void ServerDLL::FindStuff()
 			EngineWarning("Blue Shift \"A Leap of Faith\" chapter autosplit is unavailable.\n");
 		}
 	}
+
+	if (!pEngfuncs)
+		pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
 }
 
 void ServerDLL::RegisterCVarsAndCommands()

@@ -894,18 +894,6 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find CBaseUI::HideGameUI [Linux].\n");
 
-		ClientDLL::GetInstance().pEngfuncs = reinterpret_cast<cl_enginefunc_t*>(MemUtils::GetSymbolAddress(m_Handle, "cl_enginefuncs"));
-		if (ClientDLL::GetInstance().pEngfuncs)
-			EngineDevMsg("[hw dll] Found cl_enginefuncs at %p.\n", ClientDLL::GetInstance().pEngfuncs);
-		else
-			EngineDevWarning("[hw dll] Could not find cl_enginefuncs.\n");
-
-		ServerDLL::GetInstance().pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncsExportedToDlls"));
-		if (ServerDLL::GetInstance().pEngfuncs)
-			EngineDevMsg("[hw dll] Found g_engfuncsExportedToDlls at %p.\n", ServerDLL::GetInstance().pEngfuncs);
-		else
-			EngineDevWarning("[hw dll] Could not find g_engfuncsExportedToDlls.\n");
-
 		ServerDLL::GetInstance().ppGlobals = reinterpret_cast<globalvars_t*>(MemUtils::GetSymbolAddress(m_Handle, "gGlobalVariables"));
 		if (ServerDLL::GetInstance().ppGlobals)
 			EngineDevMsg("[hw dll] Found gGlobalVariables at %p.\n", ServerDLL::GetInstance().ppGlobals);
@@ -1232,9 +1220,11 @@ void HwDLL::FindStuff()
 					break;
 				case 1: // HL-4554
 					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 91);
+					ServerDLL::GetInstance().ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 86);
 					break;
 				case 2: // HL-WON-1712
 					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 89);
+					ServerDLL::GetInstance().ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 84);
 					break;
 				}
 			});

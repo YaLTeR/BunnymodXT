@@ -399,6 +399,9 @@ void ClientDLL::FindStuff()
 	ORIG_PM_WaterMove = reinterpret_cast<_PM_WaterMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_WaterMove")); // For Linux.
 	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move")); // For Linux.
 
+	if (!pEngfuncs)
+		pEngfuncs = reinterpret_cast<cl_enginefunc_t*>(MemUtils::GetSymbolAddress(m_Handle, "gEngfuncs"));
+
 	// We can draw stuff only if we know that we have already received / will receive engfuncs.
 	if (pEngfuncs) {
 		if (!FindHUDFunctions()) {

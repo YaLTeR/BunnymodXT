@@ -65,11 +65,6 @@ public:
 
 	bool GetGonarchInfo(float& health, int& sequence, float& frame) const;
 
-	inline const char *GetString(int string) const {
-		assert(ppGlobals);
-		return ppGlobals->pStringBase + string;
-	}
-
 	static void DoMultiManagerAutoStop(const char *classname);
 
 	static void DoAutoStopTasks();
@@ -79,7 +74,6 @@ public:
 	TraceResult TraceLine(const float v1[3], const float v2[3], int fNoMonsters, edict_t *pentToSkip) const;
 
 	enginefuncs_t *pEngfuncs;
-	globalvars_t *ppGlobals;
 
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};

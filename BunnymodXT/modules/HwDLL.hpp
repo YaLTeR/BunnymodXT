@@ -318,6 +318,13 @@ public:
 
 	bool insideCLEmitEntities = false;
 
+	globalvars_t *ppGlobals;
+
+	inline const char* GetString(int string) const {
+		assert(ppGlobals);
+		return ppGlobals->pStringBase + string;
+	}
+
 	void ResetStateBeforeTASPlayback();
 	void StartTASPlayback();
 

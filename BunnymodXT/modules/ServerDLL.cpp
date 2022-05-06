@@ -1452,10 +1452,10 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, COFGeneWorm__DyingThink_Linux, void*, thisp
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 {
-	if (ppGlobals) {
+	if (HwDLL::GetInstance().ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
-			const char *targetname = ppGlobals->pStringBase + pev->targetname;
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			if (!std::strcmp(targetname, "sheriffs_chppr")) {
 				DoAutoStopTasks();
 			}
@@ -1467,10 +1467,10 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 {
-	if (ppGlobals) {
+	if (HwDLL::GetInstance().ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->target) {
-			const char *target= ppGlobals->pStringBase + pev->target;
+			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
 			if (!std::strcmp(target, "oil_spouts1_mm")) {
 				DoAutoStopTasks();
 			}
@@ -1482,13 +1482,13 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 {
-	if (ppGlobals && pEngfuncs) {
+	if (HwDLL::GetInstance().ppGlobals && pEngfuncs) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		edict_t *pPlayer = pEngfuncs->pfnPEntityOfEntIndex(1);
 		if (pev && pev->targetname && pPlayer) {
 			void *classPtr = pPlayer->pvPrivateData;
 			char pVolumeName[] = "lm15";
-			const char *targetname = ppGlobals->pStringBase + pev->targetname;
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			const char *gameDir = "";
 
 			if (ClientDLL::GetInstance().pEngfuncs)
@@ -1505,10 +1505,10 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 
 HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, int, edx, entvars_t*, pevAttacker, int, iGib)
 {
-	if (ppGlobals) {
+	if (HwDLL::GetInstance().ppGlobals) {
 		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->classname) {
-			const char* classname = ppGlobals->pStringBase + pev->classname;
+			const char* classname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->classname;
 			const char* gameDir = "";
 			if (ClientDLL::GetInstance().pEngfuncs)
 				gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
@@ -1524,10 +1524,10 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, in
 
 HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, thisptr, int, edx)
 {
-	if (ppGlobals) {
+	if (HwDLL::GetInstance().ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
-			const char *targetname = ppGlobals->pStringBase + pev->targetname;
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			DoMultiManagerAutoStop(targetname);
 		}
 	}
@@ -1537,12 +1537,12 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 
 HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
-	if(ppGlobals && targetName != NULL && pCaller) {
+	if (HwDLL::GetInstance().ppGlobals && targetName != NULL && pCaller) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
 		if(pev && pev->targetname)
 		{
-			const char *targetname = ppGlobals->pStringBase + pev->targetname;
-			const char *classname = ppGlobals->pStringBase + pev->classname;
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+			const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->classname;
 			// We first need to check if the pCaller is a multi_manager since FireTargets can be called by anyone
 			if (!std::strcmp(classname, "multi_manager")) {
 				DoMultiManagerAutoStop(targetname);
@@ -1654,7 +1654,7 @@ void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool addit
 
 HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state, int, e, edict_t*, ent, edict_t*, host, int, hostflags, int, player, unsigned char*, pSet)
 {
-	if (!ppGlobals) {
+	if (!HwDLL::GetInstance().ppGlobals) {
 		return ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);
 	}
 
@@ -1678,7 +1678,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && spirit_sdk))
 		ent->v.renderfx = 22; // kRenderFxEntInPVS from Spirit SDK
 
-	const char *classname = ppGlobals->pStringBase + ent->v.classname;
+	const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + ent->v.classname;
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
 
 	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool()) {
@@ -1731,7 +1731,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerVolume__Spawn, void*, thisptr)
 {
-	if (!ppGlobals || !pEngfuncs) {
+	if (!HwDLL::GetInstance().ppGlobals || !pEngfuncs) {
 		ORIG_CTriggerVolume__Spawn(thisptr);
 		return;
 	}
@@ -1740,13 +1740,13 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerVolume__Spawn, void*, thisptr)
 	string_t old_model = pev->model;
 	ORIG_CTriggerVolume__Spawn(thisptr);
 	pev->model = old_model;
-	pev->modelindex = pEngfuncs->pfnModelIndex(ppGlobals->pStringBase + old_model);
+	pev->modelindex = pEngfuncs->pfnModelIndex(HwDLL::GetInstance().ppGlobals->pStringBase + old_model);
 	pev->effects |= EF_NODRAW;
 }
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, CTriggerVolume__Spawn_Linux, void*, thisptr)
 {
-	if (!ppGlobals || !pEngfuncs) {
+	if (!HwDLL::GetInstance().ppGlobals || !pEngfuncs) {
 		ORIG_CTriggerVolume__Spawn_Linux(thisptr);
 		return;
 	}
@@ -1755,7 +1755,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CTriggerVolume__Spawn_Linux, void*, thisptr
 	string_t old_model = pev->model;
 	ORIG_CTriggerVolume__Spawn_Linux(thisptr);
 	pev->model = old_model;
-	pev->modelindex = pEngfuncs->pfnModelIndex(ppGlobals->pStringBase + old_model);
+	pev->modelindex = pEngfuncs->pfnModelIndex(HwDLL::GetInstance().ppGlobals->pStringBase + old_model);
 	pev->effects |= EF_NODRAW;
 }
 
@@ -1796,7 +1796,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 
 bool ServerDLL::IsPlayerMovingPushable(const entvars_t *pevPushable, const entvars_t *pevToucher, int push) const
 {
-	if (!ppGlobals)
+	if (!HwDLL::GetInstance().ppGlobals)
 		return false;
 
 	if (pevToucher->flags & FL_ONGROUND && pevToucher->groundentity && &pevToucher->groundentity->v == pevPushable)
@@ -1954,8 +1954,8 @@ bool ServerDLL::GetGlobalState(const std::string& name, int& state)
 
 float ServerDLL::GetTime()
 {
-	if (ppGlobals)
-		return ppGlobals->time;
+	if (HwDLL::GetInstance().ppGlobals)
+		return HwDLL::GetInstance().ppGlobals->time;
 
 	return 0.0f;
 }

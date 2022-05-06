@@ -594,7 +594,7 @@ void HwDLL::Clear()
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
-	ServerDLL::GetInstance().ppGlobals = nullptr;
+	ppGlobals = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -894,9 +894,9 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find CBaseUI::HideGameUI [Linux].\n");
 
-		ServerDLL::GetInstance().ppGlobals = reinterpret_cast<globalvars_t*>(MemUtils::GetSymbolAddress(m_Handle, "gGlobalVariables"));
-		if (ServerDLL::GetInstance().ppGlobals)
-			EngineDevMsg("[hw dll] Found gGlobalVariables [Linux] at %p.\n", ServerDLL::GetInstance().ppGlobals);
+		ppGlobals = reinterpret_cast<globalvars_t*>(MemUtils::GetSymbolAddress(m_Handle, "gGlobalVariables"));
+		if (ppGlobals)
+			EngineDevMsg("[hw dll] Found gGlobalVariables [Linux] at %p.\n", ppGlobals);
 		else
 			EngineDevWarning("[hw dll] Could not find gGlobalVariables [Linux].\n");
 
@@ -1216,15 +1216,15 @@ void HwDLL::FindStuff()
 				default:
 				case 0: // HL-Steampipe
 					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 95);
-					ServerDLL::GetInstance().ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 90);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 90);
 					break;
 				case 1: // HL-4554
 					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 91);
-					ServerDLL::GetInstance().ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 86);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 86);
 					break;
 				case 2: // HL-WON-1712
 					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 89);
-					ServerDLL::GetInstance().ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 84);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 84);
 					break;
 				}
 			});
@@ -1604,7 +1604,7 @@ void HwDLL::FindStuff()
 			if (LoadThisDll) {
 				EngineDevMsg("[hw dll] Found LoadThisDll at %p (using the %s pattern).\n", LoadThisDll, pattern->name());
 				EngineDevMsg("[hw dll] Found g_engfuncsExportedToDlls at %p.\n", ServerDLL::GetInstance().pEngfuncs);
-				EngineDevMsg("[hw dll] Found gGlobalVariables at %p.\n", ServerDLL::GetInstance().ppGlobals);
+				EngineDevMsg("[hw dll] Found gGlobalVariables at %p.\n", ppGlobals);
 			}
 			else {
 				EngineDevWarning("[hw dll] Could not find LoadThisDll.\n");
@@ -3232,11 +3232,11 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			if (!hw.IsValidEdict(ent))
 				continue;
 
-			const char *classname = sv.GetString(ent->v.classname);
+			const char *classname = hw.GetString(ent->v.classname);
 			out << e << ": " << classname;
 
 			if (ent->v.targetname != 0) {
-				const char *targetname = sv.GetString(ent->v.targetname);
+				const char *targetname = hw.GetString(ent->v.targetname);
 				out << " - " << targetname;
 			}
 

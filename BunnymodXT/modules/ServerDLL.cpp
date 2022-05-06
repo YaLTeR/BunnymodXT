@@ -1059,7 +1059,10 @@ void ServerDLL::FindStuff()
 	}
 
 	if (!pEngfuncs)
+	{
 		pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
+		EngineDevMsg("[server dll] g_engfuncs [Linux] is %p.\n", pEngfuncs);
+	}
 }
 
 void ServerDLL::RegisterCVarsAndCommands()

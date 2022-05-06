@@ -896,9 +896,9 @@ void HwDLL::FindStuff()
 
 		ServerDLL::GetInstance().ppGlobals = reinterpret_cast<globalvars_t*>(MemUtils::GetSymbolAddress(m_Handle, "gGlobalVariables"));
 		if (ServerDLL::GetInstance().ppGlobals)
-			EngineDevMsg("[hw dll] Found gGlobalVariables at %p.\n", ServerDLL::GetInstance().ppGlobals);
+			EngineDevMsg("[hw dll] Found gGlobalVariables [Linux] at %p.\n", ServerDLL::GetInstance().ppGlobals);
 		else
-			EngineDevWarning("[hw dll] Could not find gGlobalVariables.\n");
+			EngineDevWarning("[hw dll] Could not find gGlobalVariables [Linux].\n");
 
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;

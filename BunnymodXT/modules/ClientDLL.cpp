@@ -400,7 +400,10 @@ void ClientDLL::FindStuff()
 	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move")); // For Linux.
 
 	if (!pEngfuncs)
+	{
 		pEngfuncs = reinterpret_cast<cl_enginefunc_t*>(MemUtils::GetSymbolAddress(m_Handle, "gEngfuncs"));
+		EngineDevMsg("[client dll] gEngfuncs [Linux] is %p.\n", pEngfuncs);
+	}
 
 	// We can draw stuff only if we know that we have already received / will receive engfuncs.
 	if (pEngfuncs) {

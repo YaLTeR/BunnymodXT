@@ -35,7 +35,6 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(void, __cdecl, CStudioModelRenderer__StudioRenderModel_Linux, void* thisptr)
 	HOOK_DECL(void, __fastcall, CHudFlashlight__drawNightVision, void* thisptr)
 	HOOK_DECL(void, __cdecl, CHudFlashlight__drawNightVision_Linux, void* thisptr)
-	HOOK_DECL(void, __cdecl, ScaleColors, int* r, int* g, int* b, int a)
 
 public:
 	static ClientDLL& GetInstance()
@@ -66,6 +65,7 @@ public:
 
 	unsigned char custom_r, custom_g, custom_b;
 	bool custom_hud_color_set = false;
+	bool bxt_hud_color_set = false;
 
 	unsigned short last_buttons;
 

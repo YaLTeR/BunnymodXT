@@ -800,17 +800,6 @@ namespace patterns
 			"Op4-WON",
 			"83 EC 18 53 55 56 8B F1 57"
 		);
-
-		PATTERNS(ScaleColors,
-			"HL-SteamPipe",
-			"DB 44 24 ?? 56 8B 74 24 ?? D8 0D",
-			"Echoes",
-			"55 8B EC 51 DB 45",
-			"AoMDC",
-			"55 8B EC 83 EC 44 53 56 57 DB 45",
-			"Halfquake-Trilogy",
-			"55 8B EC 66 0F 6E 4D"
-		);
 	}
 
 	namespace shared

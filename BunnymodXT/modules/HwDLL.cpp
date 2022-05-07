@@ -3660,12 +3660,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	if (ORIG_R_DrawViewModel)
 		RegisterCVar(CVars::bxt_viewmodel_fov);
 
-	if (ORIG_SPR_Set && ORIG_DrawCrosshair)
-		RegisterCVar(CVars::bxt_hud_game_engineside);
-
-	if (ORIG_Draw_FillRGBA)
-		RegisterCVar(CVars::bxt_hud_game_alpha);
-
 	CVars::sv_cheats.Assign(FindCVar("sv_cheats"));
 	CVars::fps_max.Assign(FindCVar("fps_max"));
 	CVars::default_fov.Assign(FindCVar("default_fov"));
@@ -5727,17 +5721,12 @@ HOOK_DEF_4(HwDLL, void, __cdecl, SPR_Set, HSPRITE_HL, hSprite, int, r, int, g, i
 {
 	auto& cl = ClientDLL::GetInstance();
 
-	if (CVars::bxt_hud_game_engineside.GetBool())
+	if (cl.custom_hud_color_set && !cl.bxt_hud_color_set && !insideDrawCrosshair)
 	{
-		if (cl.custom_hud_color_set && !cl.bxt_hud_color_set && !insideDrawCrosshair)
-		{
-			r = cl.custom_r;
-			g = cl.custom_g;
-			b = cl.custom_b;
-		}
+		r = cl.custom_r;
+		g = cl.custom_g;
+		b = cl.custom_b;
 	}
-
-	// TODO: Completely rewrite code of the function to get change alpha of SPR_Set, since it's hardcoded to 1.0, so we can get rid of the ScaleColors client hook entirely.
 
 	ORIG_SPR_Set(hSprite, r, g, b);
 }
@@ -5758,10 +5747,8 @@ HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, 
 		r = cl.custom_r;
 		g = cl.custom_g;
 		b = cl.custom_b;
+		a = 255; // SPR_Set hardcoded to 255 alpha
 	}
-
-	if (CVars::bxt_hud_game_alpha.GetInt() >= 1 && CVars::bxt_hud_game_alpha.GetInt() <= 255)
-		a = CVars::bxt_hud_game_alpha.GetInt();
 
 	ORIG_Draw_FillRGBA(x, y, w, h, r, g, b, a);
 }

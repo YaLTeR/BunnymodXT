@@ -104,11 +104,6 @@ extern "C" void __cdecl _ZN14CHudFlashlight15drawNightVisionEv(void *thisptr)
 {
 	return ClientDLL::HOOKED_CHudFlashlight__drawNightVision_Linux(thisptr);
 }
-
-extern "C" void __cdecl _Z11ScaleColorsRiS_S_i(int* r, int* g, int* b, int a)
-{
-	return ClientDLL::HOOKED_ScaleColors(r, g, b, a);
-}
 #endif
 
 void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -158,8 +153,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CStudioModelRenderer__StudioSetupBones, HOOKED_CStudioModelRenderer__StudioSetupBones,
 			ORIG_CL_IsThirdPerson, HOOKED_CL_IsThirdPerson,
 			ORIG_CStudioModelRenderer__StudioRenderModel, HOOKED_CStudioModelRenderer__StudioRenderModel,
-			ORIG_CHudFlashlight__drawNightVision, HOOKED_CHudFlashlight__drawNightVision,
-			ORIG_ScaleColors, HOOKED_ScaleColors);
+			ORIG_CHudFlashlight__drawNightVision, HOOKED_CHudFlashlight__drawNightVision);
 	}
 
 	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
@@ -193,8 +187,7 @@ void ClientDLL::Unhook()
 			ORIG_CStudioModelRenderer__StudioSetupBones,
 			ORIG_CL_IsThirdPerson,
 			ORIG_CStudioModelRenderer__StudioRenderModel,
-			ORIG_CHudFlashlight__drawNightVision,
-			ORIG_ScaleColors);
+			ORIG_CHudFlashlight__drawNightVision);
 	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -245,7 +238,6 @@ void ClientDLL::Clear()
 	ORIG_IN_ActivateMouse = nullptr;
 	ORIG_IN_DeactivateMouse = nullptr;
 	ORIG_CL_IsThirdPerson = nullptr;
-	ORIG_ScaleColors = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -392,7 +384,6 @@ void ClientDLL::FindStuff()
 	auto fCHudFlashlight__drawNightVision = FindAsync(
 		ORIG_CHudFlashlight__drawNightVision,
 		patterns::client::CHudFlashlight__drawNightVision);
-	auto fScaleColors = FindAsync(ORIG_ScaleColors, patterns::client::ScaleColors);
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
@@ -603,21 +594,6 @@ void ClientDLL::FindStuff()
 			} else {
 				EngineDevWarning("[client dll] Could not find HudFlashlight::drawNightVision [Linux].\n");
 				EngineWarning("[client dll] Disabling Opposing Force nightvision sprite is unavailable.\n");
-			}
-		}
-	}
-
-	{
-		auto pattern = fScaleColors.get();
-		if (ORIG_ScaleColors) {
-			EngineDevMsg("[client dll] Found ScaleColors at %p (using the %s pattern).\n", ORIG_ScaleColors, pattern->name());
-		} else {
-			ORIG_ScaleColors = reinterpret_cast<_ScaleColors>(MemUtils::GetSymbolAddress(m_Handle, "_Z11ScaleColorsRiS_S_i"));
-			if (ORIG_ScaleColors) {
-				EngineDevMsg("[client dll] Found ScaleColors at %p.\n", ORIG_ScaleColors);
-			} else {
-				EngineDevWarning("[client dll] Could not find ScaleColors.\n");
-				EngineWarning("[client dll] Changing HUD color and alpha is not available.\n");
 			}
 		}
 	}
@@ -1331,21 +1307,4 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CHudFlashlight__drawNightVision_Linux, void
 	if (CVars::bxt_disable_nightvision_sprite.GetBool())
 		return;
 	ORIG_CHudFlashlight__drawNightVision_Linux(thisptr);
-}
-
-HOOK_DEF_4(ClientDLL, void, __cdecl, ScaleColors, int*, r, int*, g, int*, b, int, a)
-{
-	if (!CVars::bxt_hud_game_engineside.GetBool())
-	{
-		if (custom_hud_color_set) {
-			*r = custom_r;
-			*g = custom_g;
-			*b = custom_b;
-		}
-
-		if (CVars::bxt_hud_game_alpha.GetInt() >= 1 && CVars::bxt_hud_game_alpha.GetInt() <= 255)
-			a = CVars::bxt_hud_game_alpha.GetInt();
-	}
-
-	ORIG_ScaleColors(r, g, b, a);
 }

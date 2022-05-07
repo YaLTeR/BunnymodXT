@@ -3221,7 +3221,6 @@ struct HwDLL::Cmd_BXT_Print_Entities
 	static void handler()
 	{
 		const auto& hw = HwDLL::GetInstance();
-		const auto& sv = ServerDLL::GetInstance();
 
 		std::ostringstream out;
 

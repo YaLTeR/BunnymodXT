@@ -1247,7 +1247,6 @@ namespace CustomHud
 		std::ostringstream out;
 
 		const auto& hw = HwDLL::GetInstance();
-		const auto& sv = ServerDLL::GetInstance();
 
 		edict_t *edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);

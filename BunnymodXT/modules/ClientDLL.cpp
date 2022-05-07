@@ -104,6 +104,11 @@ extern "C" void __cdecl _ZN14CHudFlashlight15drawNightVisionEv(void *thisptr)
 {
 	return ClientDLL::HOOKED_CHudFlashlight__drawNightVision_Linux(thisptr);
 }
+
+extern "C" bool __cdecl _ZN4CHud18DrawHudNightVisionEf(void *thisptr, float flTime)
+{
+	return ClientDLL::HOOKED_CHud__DrawHudNightVision_Linux(thisptr, flTime);
+}
 #endif
 
 void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -153,7 +158,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CStudioModelRenderer__StudioSetupBones, HOOKED_CStudioModelRenderer__StudioSetupBones,
 			ORIG_CL_IsThirdPerson, HOOKED_CL_IsThirdPerson,
 			ORIG_CStudioModelRenderer__StudioRenderModel, HOOKED_CStudioModelRenderer__StudioRenderModel,
-			ORIG_CHudFlashlight__drawNightVision, HOOKED_CHudFlashlight__drawNightVision);
+			ORIG_CHudFlashlight__drawNightVision, HOOKED_CHudFlashlight__drawNightVision,
+			ORIG_CHud__DrawHudNightVision, HOOKED_CHud__DrawHudNightVision);
 	}
 
 	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
@@ -187,7 +193,8 @@ void ClientDLL::Unhook()
 			ORIG_CStudioModelRenderer__StudioSetupBones,
 			ORIG_CL_IsThirdPerson,
 			ORIG_CStudioModelRenderer__StudioRenderModel,
-			ORIG_CHudFlashlight__drawNightVision);
+			ORIG_CHudFlashlight__drawNightVision,
+			ORIG_CHud__DrawHudNightVision);
 	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -224,6 +231,8 @@ void ClientDLL::Clear()
 	ORIG_CStudioModelRenderer__StudioRenderModel_Linux = nullptr;
 	ORIG_CHudFlashlight__drawNightVision = nullptr;
 	ORIG_CHudFlashlight__drawNightVision_Linux = nullptr;
+	ORIG_CHud__DrawHudNightVision = nullptr;
+	ORIG_CHud__DrawHudNightVision_Linux = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
 	ORIG_HUD_Init = nullptr;
 	ORIG_HUD_VidInit = nullptr;
@@ -384,6 +393,9 @@ void ClientDLL::FindStuff()
 	auto fCHudFlashlight__drawNightVision = FindAsync(
 		ORIG_CHudFlashlight__drawNightVision,
 		patterns::client::CHudFlashlight__drawNightVision);
+	auto fCHud__DrawHudNightVision = FindAsync(
+		ORIG_CHud__DrawHudNightVision,
+		patterns::client::CHud__DrawHudNightVision);
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
@@ -597,6 +609,20 @@ void ClientDLL::FindStuff()
 			}
 		}
 	}
+
+	{
+		auto pattern = fCHud__DrawHudNightVision.get();
+		if (ORIG_CHud__DrawHudNightVision) {
+			EngineDevMsg("[client dll] Found CHud::DrawHudNightVision at %p (using the %s pattern).\n", ORIG_CHud__DrawHudNightVision, pattern->name());
+		} else {
+			ORIG_CHud__DrawHudNightVision_Linux = reinterpret_cast<_CHud__DrawHudNightVision_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN4CHud18DrawHudNightVisionEf"));
+			if (ORIG_CHud__DrawHudNightVision_Linux) {
+				EngineDevMsg("[client dll] Found CHud::DrawHudNightVision [Linux] at %p.\n", ORIG_CHud__DrawHudNightVision_Linux);
+			} else {
+				EngineDevWarning("[client dll] Could not find CHud::DrawHudNightVision [Linux].\n");
+			}
+		}
+	}
 }
 
 bool ClientDLL::FindHUDFunctions()
@@ -750,7 +776,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_player_in_hltv);
 	}
 
-	if (ORIG_CHudFlashlight__drawNightVision_Linux || ORIG_CHudFlashlight__drawNightVision) {
+	if (ORIG_CHudFlashlight__drawNightVision_Linux || ORIG_CHudFlashlight__drawNightVision || ORIG_CHud__DrawHudNightVision_Linux || ORIG_CHud__DrawHudNightVision ) {
 		REG(bxt_disable_nightvision_sprite);
 	}
 	#undef REG
@@ -1307,4 +1333,20 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CHudFlashlight__drawNightVision_Linux, void
 	if (CVars::bxt_disable_nightvision_sprite.GetBool())
 		return;
 	ORIG_CHudFlashlight__drawNightVision_Linux(thisptr);
+}
+
+HOOK_DEF_3(ClientDLL, bool, __fastcall, CHud__DrawHudNightVision, void*, thisptr, int, edx, float, flTime)
+{
+	if (CVars::bxt_disable_nightvision_sprite.GetBool())
+		return false;
+	else
+		return ORIG_CHud__DrawHudNightVision(thisptr, edx, flTime);
+}
+
+HOOK_DEF_2(ClientDLL, bool, __cdecl, CHud__DrawHudNightVision_Linux, void*, thisptr, float, flTime)
+{
+	if (CVars::bxt_disable_nightvision_sprite.GetBool())
+		return false;
+	else
+		return ORIG_CHud__DrawHudNightVision_Linux(thisptr, flTime);
 }

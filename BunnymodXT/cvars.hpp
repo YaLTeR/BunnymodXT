@@ -149,6 +149,7 @@ namespace CVars
 	extern CVarWrapper bxt_clear_green;
 	extern CVarWrapper bxt_force_fov;
 	extern CVarWrapper bxt_fix_mouse_horizontal_limit;
+	extern CVarWrapper bxt_hud_game_engineside;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_cheats;

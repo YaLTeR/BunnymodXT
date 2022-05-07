@@ -291,6 +291,21 @@ extern "C" void __cdecl ClientDLL_CalcRefdef(ref_params_s *pparams)
 {
 	ClientDLL::HOOKED_V_CalcRefdef(pparams);
 }
+
+extern "C" void __cdecl SPR_Set(HSPRITE_HL hSprite, int r, int g, int b)
+{
+	HwDLL::HOOKED_SPR_Set(hSprite, r, g, b);
+}
+
+extern "C" void __cdecl DrawCrosshair(int x, int y)
+{
+	HwDLL::HOOKED_DrawCrosshair(x, y);
+}
+
+extern "C" void __cdecl Draw_FillRGBA(int x, int y, int w, int h, int r, int g, int b, int a)
+{
+	HwDLL::HOOKED_Draw_FillRGBA(x, y, w, h, r, g, b, a);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -403,6 +418,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_BUsesSDLInput);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioRenderModel);
 			MemUtils::MarkAsExecutable(ORIG_R_SetFrustum);
+			MemUtils::MarkAsExecutable(ORIG_SPR_Set);
+			MemUtils::MarkAsExecutable(ORIG_DrawCrosshair);
+			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -453,7 +471,10 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_DrawParticles, HOOKED_R_DrawParticles,
 			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput,
 			ORIG_R_StudioRenderModel, HOOKED_R_StudioRenderModel,
-			ORIG_R_SetFrustum, HOOKED_R_SetFrustum);
+			ORIG_R_SetFrustum, HOOKED_R_SetFrustum,
+			ORIG_SPR_Set, HOOKED_SPR_Set,
+			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
+			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA);
 	}
 }
 
@@ -509,7 +530,10 @@ void HwDLL::Unhook()
 			ORIG_R_DrawParticles,
 			ORIG_BUsesSDLInput,
 			ORIG_R_StudioRenderModel,
-			ORIG_R_SetFrustum);
+			ORIG_R_SetFrustum,
+			ORIG_SPR_Set,
+			ORIG_DrawCrosshair,
+			ORIG_Draw_FillRGBA);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -591,6 +615,9 @@ void HwDLL::Clear()
 	ORIG_BUsesSDLInput = nullptr;
 	ORIG_R_StudioRenderModel = nullptr;
 	ORIG_R_SetFrustum = nullptr;
+	ORIG_SPR_Set = nullptr;
+	ORIG_DrawCrosshair = nullptr;
+	ORIG_Draw_FillRGBA = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -900,6 +927,24 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find gGlobalVariables [Linux].\n");
 
+		ORIG_SPR_Set = reinterpret_cast<_SPR_Set>(MemUtils::GetSymbolAddress(m_Handle, "SPR_Set"));
+		if (ORIG_SPR_Set)
+			EngineDevMsg("[hw dll] Found SPR_Set at %p.\n", ORIG_SPR_Set);
+		else
+			EngineDevWarning("[hw dll] Could not find SPR_Set.\n");
+
+		ORIG_DrawCrosshair = reinterpret_cast<_DrawCrosshair>(MemUtils::GetSymbolAddress(m_Handle, "DrawCrosshair"));
+		if (ORIG_DrawCrosshair)
+			EngineDevMsg("[hw dll] Found DrawCrosshair at %p.\n", ORIG_DrawCrosshair);
+		else
+			EngineDevWarning("[hw dll] Could not find DrawCrosshair.\n");
+
+		ORIG_Draw_FillRGBA = reinterpret_cast<_Draw_FillRGBA>(MemUtils::GetSymbolAddress(m_Handle, "Draw_FillRGBA"));
+		if (ORIG_Draw_FillRGBA)
+			EngineDevMsg("[hw dll] Found Draw_FillRGBA at %p.\n", ORIG_Draw_FillRGBA);
+		else
+			EngineDevWarning("[hw dll] Could not find Draw_FillRGBA.\n");
+
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -1167,6 +1212,9 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(R_DrawParticles)
 		DEF_FUTURE(BUsesSDLInput)
 		DEF_FUTURE(R_StudioRenderModel)
+		DEF_FUTURE(SPR_Set)
+		DEF_FUTURE(DrawCrosshair)
+		DEF_FUTURE(Draw_FillRGBA)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1883,6 +1931,9 @@ void HwDLL::FindStuff()
 		GET_FUTURE(R_DrawParticles);
 		GET_FUTURE(BUsesSDLInput);
 		GET_FUTURE(R_StudioRenderModel);
+		GET_FUTURE(SPR_Set);
+		GET_FUTURE(DrawCrosshair);
+		GET_FUTURE(Draw_FillRGBA);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -3608,6 +3659,12 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 
 	if (ORIG_R_DrawViewModel)
 		RegisterCVar(CVars::bxt_viewmodel_fov);
+
+	if (ORIG_SPR_Set && ORIG_DrawCrosshair)
+		RegisterCVar(CVars::bxt_hud_game_engineside);
+
+	if (ORIG_Draw_FillRGBA)
+		RegisterCVar(CVars::bxt_hud_game_alpha);
 
 	CVars::sv_cheats.Assign(FindCVar("sv_cheats"));
 	CVars::fps_max.Assign(FindCVar("fps_max"));
@@ -5664,4 +5721,47 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 		*scr_fov_value = CVars::bxt_force_fov.GetFloat();
 
 	ORIG_R_SetFrustum();
+}
+
+HOOK_DEF_4(HwDLL, void, __cdecl, SPR_Set, HSPRITE_HL, hSprite, int, r, int, g, int, b)
+{
+	auto& cl = ClientDLL::GetInstance();
+
+	if (CVars::bxt_hud_game_engineside.GetBool())
+	{
+		if (cl.custom_hud_color_set && !cl.bxt_hud_color_set && !insideDrawCrosshair)
+		{
+			r = cl.custom_r;
+			g = cl.custom_g;
+			b = cl.custom_b;
+		}
+	}
+
+	// TODO: Completely rewrite code of the function to get change alpha of SPR_Set, since it's hardcoded to 1.0, so we can get rid of the ScaleColors client hook entirely.
+
+	ORIG_SPR_Set(hSprite, r, g, b);
+}
+
+HOOK_DEF_2(HwDLL, void, __cdecl, DrawCrosshair, int, x, int, y)
+{
+	insideDrawCrosshair = true;
+	ORIG_DrawCrosshair(x, y);
+	insideDrawCrosshair = false;
+}
+
+HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, int, r, int, g, int, b, int, a)
+{
+	auto& cl = ClientDLL::GetInstance();
+
+	if (cl.custom_hud_color_set)
+	{
+		r = cl.custom_r;
+		g = cl.custom_g;
+		b = cl.custom_b;
+	}
+
+	if (CVars::bxt_hud_game_alpha.GetInt() >= 1 && CVars::bxt_hud_game_alpha.GetInt() <= 255)
+		a = CVars::bxt_hud_game_alpha.GetInt();
+
+	ORIG_Draw_FillRGBA(x, y, w, h, r, g, b, a);
 }

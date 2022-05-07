@@ -170,7 +170,10 @@ namespace CustomHud
 	{
 		assert(digit >= 0 && digit <= 9);
 
+		ClientDLL::GetInstance().bxt_hud_color_set = true;
 		ClientDLL::GetInstance().pEngfuncs->pfnSPR_Set(NumberSprites[digit], r, g, b);
+		ClientDLL::GetInstance().bxt_hud_color_set = false;
+
 		ClientDLL::GetInstance().pEngfuncs->pfnSPR_DrawAdditive(0, x, y, &NumberSpriteRects[digit]);
 	}
 

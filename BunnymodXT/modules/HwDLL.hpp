@@ -71,6 +71,9 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(int, __cdecl, BUsesSDLInput)
 	HOOK_DECL(void, __cdecl, R_StudioRenderModel)
 	HOOK_DECL(void, __cdecl, R_SetFrustum)
+	HOOK_DECL(void, __cdecl, SPR_Set, HSPRITE_HL hSprite, int r, int g, int b)
+	HOOK_DECL(void, __cdecl, DrawCrosshair, int x, int y)
+	HOOK_DECL(void, __cdecl, Draw_FillRGBA, int x, int y, int w, int h, int r, int g, int b, int a)
 
 	struct cmdbuf_t
 	{
@@ -317,6 +320,7 @@ public:
 	float currentRenderFOV = 0;
 
 	bool insideCLEmitEntities = false;
+	bool insideDrawCrosshair = false;
 
 	globalvars_t *ppGlobals;
 

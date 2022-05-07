@@ -763,6 +763,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_HUD_Redraw) {
 		REG(bxt_disable_hud);
+		REG(bxt_hud_game_color);
 	}
 
 	if (ORIG_HUD_AddEntity) {
@@ -775,11 +776,6 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_CHudFlashlight__drawNightVision_Linux || ORIG_CHudFlashlight__drawNightVision) {
 		REG(bxt_disable_nightvision_sprite);
-	}
-
-	if (ORIG_ScaleColors) {
-		REG(bxt_hud_game_color);
-		REG(bxt_hud_game_alpha);
 	}
 	#undef REG
 }
@@ -1339,14 +1335,17 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CHudFlashlight__drawNightVision_Linux, void
 
 HOOK_DEF_4(ClientDLL, void, __cdecl, ScaleColors, int*, r, int*, g, int*, b, int, a)
 {
-	if (custom_hud_color_set) {
-		*r = custom_r;
-		*g = custom_g;
-		*b = custom_b;
-	}
+	if (!CVars::bxt_hud_game_engineside.GetBool())
+	{
+		if (custom_hud_color_set) {
+			*r = custom_r;
+			*g = custom_g;
+			*b = custom_b;
+		}
 
-	if (CVars::bxt_hud_game_alpha.GetInt() >= 1 && CVars::bxt_hud_game_alpha.GetInt() <= 255)
-		a = CVars::bxt_hud_game_alpha.GetInt();
+		if (CVars::bxt_hud_game_alpha.GetInt() >= 1 && CVars::bxt_hud_game_alpha.GetInt() <= 255)
+			a = CVars::bxt_hud_game_alpha.GetInt();
+	}
 
 	ORIG_ScaleColors(r, g, b, a);
 }

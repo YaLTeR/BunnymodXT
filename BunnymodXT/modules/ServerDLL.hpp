@@ -65,11 +65,6 @@ public:
 
 	bool GetGonarchInfo(float& health, int& sequence, float& frame) const;
 
-	inline const char *GetString(int string) const {
-		assert(ppGlobals);
-		return (*ppGlobals)->pStringBase + string;
-	}
-
 	static void DoMultiManagerAutoStop(const char *classname);
 
 	static void DoAutoStopTasks();
@@ -131,7 +126,6 @@ protected:
 	ptrdiff_t offBasevelocity;
 
 	void *pGlobalState;
-	globalvars_t **ppGlobals;
 
 	ptrdiff_t offFuncIsPlayer = 0x9C;
 	ptrdiff_t offFuncCenter = 0xC8;
@@ -158,8 +152,7 @@ protected:
 	ptrdiff_t pBhopcapWindows;
 	byte originalBhopcapInsn[6];
 
-	bool twhltower2 = false;
-	bool hqtrilogy = false;
+	bool spirit_sdk = false;
 
 	bool callerIsWalkMove;
 	bool callerIsFlyMove;

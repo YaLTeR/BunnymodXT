@@ -174,7 +174,7 @@ namespace TriangleDrawing
 			if (!HwDLL::GetInstance().IsValidEdict(ent))
 				continue;
 
-			const char *classname = ServerDLL::GetInstance().GetString(ent->v.classname);
+			const char *classname = HwDLL::GetInstance().GetString(ent->v.classname);
 			if (std::strncmp(classname, "trigger_", 8) != 0)
 				continue;
 
@@ -270,7 +270,7 @@ namespace TriangleDrawing
 				continue;
 			}
 
-			const char* classname = server.GetString(ent->v.classname);
+			const char* classname = hw.GetString(ent->v.classname);
 			if (strcmp(classname, "player") == 0) {
 				pTriAPI->RenderMode(kRenderTransColor);
 				pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 1.0f);

@@ -749,16 +749,16 @@ namespace CustomHud
 				const auto index = ent - edicts;
 				out << "Entity: " << index << '\n';
 
-				const char *classname = sv.GetString(ent->v.classname);
+				const char *classname = hw.GetString(ent->v.classname);
 				out << classname << '\n';
 
 				if (ent->v.target != 0) {
-					const char *target = sv.GetString(ent->v.target);
+					const char *target = hw.GetString(ent->v.target);
 					out << "Target: " << target << '\n';
 				}
 
 				if (ent->v.targetname != 0) {
-					const char *targetname = sv.GetString(ent->v.targetname);
+					const char *targetname = hw.GetString(ent->v.targetname);
 					out << "Name: " << targetname << '\n';
 				}
 
@@ -903,7 +903,7 @@ namespace CustomHud
 				if (!pentPlayer || !efun->pfnEntOffsetOfPEntity(pentPlayer))
 					continue;
 
-				out << ServerDLL::GetInstance().GetString(pent->v.targetname) << '\n';
+				out << HwDLL::GetInstance().GetString(pent->v.targetname) << '\n';
 			}
 
 			DrawMultilineString(x, y, out.str());
@@ -1247,7 +1247,6 @@ namespace CustomHud
 		std::ostringstream out;
 
 		const auto& hw = HwDLL::GetInstance();
-		const auto& sv = ServerDLL::GetInstance();
 
 		edict_t *edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
@@ -1256,11 +1255,11 @@ namespace CustomHud
 			if (!hw.IsValidEdict(ent))
 				continue;
 
-			const char *classname = sv.GetString(ent->v.classname);
+			const char *classname = hw.GetString(ent->v.classname);
 			out << e << ": " << classname;
 
 			if (ent->v.targetname != 0) {
-				const char *targetname = sv.GetString(ent->v.targetname);
+				const char *targetname = hw.GetString(ent->v.targetname);
 				out << " - " << targetname;
 			}
 

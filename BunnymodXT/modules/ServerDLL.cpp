@@ -229,8 +229,6 @@ void ServerDLL::Clear()
 	offNihilanthRecharger = 0;
 	offNihilanthSpheres = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
-	pEngfuncs = nullptr;
-	ppGlobals = nullptr;
 	cantJumpNextTime.clear();
 	m_Intercepted = false;
 	WorldGraph = nullptr;
@@ -395,6 +393,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD4;
 				offFuncCenter = 0x100;
 				offFuncObjectCaps = 0x44;
+				spirit_sdk = true;
 				break;
 			case 7: // Echoes
 				maxAmmoSlots = MAX_AMMO_SLOTS;
@@ -1059,139 +1058,10 @@ void ServerDLL::FindStuff()
 		}
 	}
 
-	// This has to be the last thing to check and hook.
-	pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
-	ppGlobals = reinterpret_cast<globalvars_t**>(MemUtils::GetSymbolAddress(m_Handle, "gpGlobals"));
-	if (pEngfuncs && ppGlobals) {
-		EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
-		EngineDevMsg("[server dll] ppGlobals is %p.\n", ppGlobals);
-	} else {
-		auto pGiveFnptrsToDll = MemUtils::GetSymbolAddress(m_Handle, "GiveFnptrsToDll");
-		if (pGiveFnptrsToDll)
-		{
-			// Decay: GiveFnptrsToDll is actually a goto to the real function.
-			if (*reinterpret_cast<uint8_t*>(pGiveFnptrsToDll) == 0xE9)
-				pGiveFnptrsToDll = reinterpret_cast<void*>(*reinterpret_cast<ptrdiff_t*>(reinterpret_cast<uintptr_t>(pGiveFnptrsToDll) + 1)
-				                                           + reinterpret_cast<uintptr_t>(pGiveFnptrsToDll) + 5);
-
-			// Find "mov edi, offset dword; rep movsd" inside GiveFnptrsToDll. The pointer to g_engfuncs is that dword.
-			static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 5F A3");
-			auto addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-
-			auto blolly = false;
-			auto svencoop = false;
-			bool twhltower = false;
-			bool paranoia = false;
-			bool halfpayne = false;
-			if (!addr)
-			{
-				// Big Lolly version: push eax; push offset dword; call memcpy
-				static constexpr auto p = PATTERN("50 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 0C 8B 4D 0C 89 0D");
-				addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-				if (addr) {
-					blolly = true;
-				} else {
-					// Sven Co-op version: has a push in between.
-					static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 68 ?? ?? ?? ?? A3");
-					addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-					if (addr) {
-						svencoop = true;
-					} else {
-						// TWHL Tower (Spirit) and Decay version: mov to eax instead of ecx.
-						static constexpr auto p = PATTERN("50 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 0C 8B 45 0C A3");
-						addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-						if (addr) {
-							twhltower = true;
-						} else {
-							// TWHL Tower 2
-							static constexpr auto p = PATTERN("68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 44 24 14 83 C4 0C A3");
-							addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-							if (addr) {
-								twhltower2 = true;
-							} else {
-								// Halfquake Trilogy
-								static constexpr auto p = PATTERN("68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 45 0C 83 C4 0C A3");
-								addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-								if (addr) {
-									hqtrilogy = true;
-								} else {
-									// PARANOIA
-									static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 8B 45 0C A3");
-									addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-									if (addr) {
-										paranoia = true;
-									} else {
-										// Half-Payne
-										static constexpr auto p = PATTERN("BF ?? ?? ?? ?? A3 ?? ?? ?? ?? F3 A5 5F");
-										addr = MemUtils::find_pattern(pGiveFnptrsToDll, 40, p);
-										halfpayne = true;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			if (addr)
-			{
-				if (blolly)
-				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 2);
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 19);
-				}
-				else if (svencoop)
-				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 13);
-				}
-				else if (twhltower)
-				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 2);
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 18);
-				}
-				else if (twhltower2)
-				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 18);
-				}
-				else if (hqtrilogy)
-				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 17);
-				}
-				else if (paranoia)
-				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t **>(addr + 1);
-					ppGlobals = *reinterpret_cast<globalvars_t ***>(addr + 11);
-				}
-				else if (halfpayne)
-				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t **>(addr + 1);
-					ppGlobals = *reinterpret_cast<globalvars_t ***>(addr + 6);
-				}
-				else
-				{
-					pEngfuncs = *reinterpret_cast<enginefuncs_t**>(addr + 1);
-					ppGlobals = *reinterpret_cast<globalvars_t***>(addr + 9);
-				}
-
-				EngineDevMsg("[server dll] pEngfuncs is %p.\n", pEngfuncs);
-				EngineDevMsg("[server dll] ppGlobals is %p.\n", ppGlobals);
-			}
-			else
-			{
-				EngineDevWarning("[server dll] Couldn't find the pattern in GiveFnptrsToDll.\n");
-				EngineWarning("Serverside logging is not available.\n");
-				EngineWarning("Blue Shift and Gunman Chronicles automatic timer stopping is not available.\n");
-			}
-		}
-		else
-		{
-			EngineDevWarning("[server dll] Couldn't get the address of GiveFnptrsToDll.\n");
-			EngineWarning("Serverside logging is not avaliable.\n");
-			EngineWarning("Blue Shift and Gunman Chronicles automatic timer stopping is not available.\n");
-		}
+	if (!pEngfuncs)
+	{
+		pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
+		EngineDevMsg("[server dll] g_engfuncs [Linux] is %p.\n", pEngfuncs);
 	}
 }
 
@@ -1582,10 +1452,10 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, COFGeneWorm__DyingThink_Linux, void*, thisp
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 {
-	if (ppGlobals) {
+	if (HwDLL::GetInstance().ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
-			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			if (!std::strcmp(targetname, "sheriffs_chppr")) {
 				DoAutoStopTasks();
 			}
@@ -1597,10 +1467,10 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 {
-	if (ppGlobals) {
+	if (HwDLL::GetInstance().ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->target) {
-			const char *target= (*ppGlobals)->pStringBase + pev->target;
+			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
 			if (!std::strcmp(target, "oil_spouts1_mm")) {
 				DoAutoStopTasks();
 			}
@@ -1612,13 +1482,13 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 {
-	if (ppGlobals && pEngfuncs) {
+	if (HwDLL::GetInstance().ppGlobals && pEngfuncs) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		edict_t *pPlayer = pEngfuncs->pfnPEntityOfEntIndex(1);
 		if (pev && pev->targetname && pPlayer) {
 			void *classPtr = pPlayer->pvPrivateData;
 			char pVolumeName[] = "lm15";
-			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			const char *gameDir = "";
 
 			if (ClientDLL::GetInstance().pEngfuncs)
@@ -1635,10 +1505,10 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 
 HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, int, edx, entvars_t*, pevAttacker, int, iGib)
 {
-	if (ppGlobals) {
+	if (HwDLL::GetInstance().ppGlobals) {
 		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->classname) {
-			const char* classname = (*ppGlobals)->pStringBase + pev->classname;
+			const char* classname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->classname;
 			const char* gameDir = "";
 			if (ClientDLL::GetInstance().pEngfuncs)
 				gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
@@ -1654,10 +1524,10 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, in
 
 HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, thisptr, int, edx)
 {
-	if (ppGlobals) {
+	if (HwDLL::GetInstance().ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
-			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			DoMultiManagerAutoStop(targetname);
 		}
 	}
@@ -1667,12 +1537,12 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 
 HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
-	if(ppGlobals && targetName != NULL && pCaller) {
+	if (HwDLL::GetInstance().ppGlobals && targetName != NULL && pCaller) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
 		if(pev && pev->targetname)
 		{
-			const char *targetname = (*ppGlobals)->pStringBase + pev->targetname;
-			const char *classname = (*ppGlobals)->pStringBase + pev->classname;
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+			const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->classname;
 			// We first need to check if the pCaller is a multi_manager since FireTargets can be called by anyone
 			if (!std::strcmp(classname, "multi_manager")) {
 				DoMultiManagerAutoStop(targetname);
@@ -1784,7 +1654,7 @@ void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool addit
 
 HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state, int, e, edict_t*, ent, edict_t*, host, int, hostflags, int, player, unsigned char*, pSet)
 {
-	if (!ppGlobals) {
+	if (!HwDLL::GetInstance().ppGlobals) {
 		return ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);
 	}
 
@@ -1805,10 +1675,10 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x74"));
 	}
 
-	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && (twhltower2 || hqtrilogy)))
+	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && spirit_sdk))
 		ent->v.renderfx = 22; // kRenderFxEntInPVS from Spirit SDK
 
-	const char *classname = (*ppGlobals)->pStringBase + ent->v.classname;
+	const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + ent->v.classname;
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
 
 	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool()) {
@@ -1861,7 +1731,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerVolume__Spawn, void*, thisptr)
 {
-	if (!ppGlobals || !pEngfuncs) {
+	if (!HwDLL::GetInstance().ppGlobals || !pEngfuncs) {
 		ORIG_CTriggerVolume__Spawn(thisptr);
 		return;
 	}
@@ -1870,13 +1740,13 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerVolume__Spawn, void*, thisptr)
 	string_t old_model = pev->model;
 	ORIG_CTriggerVolume__Spawn(thisptr);
 	pev->model = old_model;
-	pev->modelindex = pEngfuncs->pfnModelIndex((*ppGlobals)->pStringBase + old_model);
+	pev->modelindex = pEngfuncs->pfnModelIndex(HwDLL::GetInstance().ppGlobals->pStringBase + old_model);
 	pev->effects |= EF_NODRAW;
 }
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, CTriggerVolume__Spawn_Linux, void*, thisptr)
 {
-	if (!ppGlobals || !pEngfuncs) {
+	if (!HwDLL::GetInstance().ppGlobals || !pEngfuncs) {
 		ORIG_CTriggerVolume__Spawn_Linux(thisptr);
 		return;
 	}
@@ -1885,7 +1755,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CTriggerVolume__Spawn_Linux, void*, thisptr
 	string_t old_model = pev->model;
 	ORIG_CTriggerVolume__Spawn_Linux(thisptr);
 	pev->model = old_model;
-	pev->modelindex = pEngfuncs->pfnModelIndex((*ppGlobals)->pStringBase + old_model);
+	pev->modelindex = pEngfuncs->pfnModelIndex(HwDLL::GetInstance().ppGlobals->pStringBase + old_model);
 	pev->effects |= EF_NODRAW;
 }
 
@@ -1926,7 +1796,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 
 bool ServerDLL::IsPlayerMovingPushable(const entvars_t *pevPushable, const entvars_t *pevToucher, int push) const
 {
-	if (!ppGlobals)
+	if (!HwDLL::GetInstance().ppGlobals)
 		return false;
 
 	if (pevToucher->flags & FL_ONGROUND && pevToucher->groundentity && &pevToucher->groundentity->v == pevPushable)
@@ -2084,8 +1954,8 @@ bool ServerDLL::GetGlobalState(const std::string& name, int& state)
 
 float ServerDLL::GetTime()
 {
-	if (ppGlobals)
-		return (*ppGlobals)->time;
+	if (HwDLL::GetInstance().ppGlobals)
+		return HwDLL::GetInstance().ppGlobals->time;
 
 	return 0.0f;
 }

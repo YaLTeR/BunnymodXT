@@ -592,6 +592,10 @@ void HwDLL::Clear()
 	ORIG_R_StudioRenderModel = nullptr;
 	ORIG_R_SetFrustum = nullptr;
 
+	ClientDLL::GetInstance().pEngfuncs = nullptr;
+	ServerDLL::GetInstance().pEngfuncs = nullptr;
+	ppGlobals = nullptr;
+
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
@@ -890,6 +894,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find CBaseUI::HideGameUI [Linux].\n");
 
+		ppGlobals = reinterpret_cast<globalvars_t*>(MemUtils::GetSymbolAddress(m_Handle, "gGlobalVariables"));
+		if (ppGlobals)
+			EngineDevMsg("[hw dll] Found gGlobalVariables [Linux] at %p.\n", ppGlobals);
+		else
+			EngineDevWarning("[hw dll] Could not find gGlobalVariables [Linux].\n");
+
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -1172,6 +1182,52 @@ void HwDLL::FindStuff()
 						ORIG_LoadAndDecryptHwDLL);
 				});
 		}
+
+		void* ClientDLL_Init;
+		auto fClientDLL_Init = FindAsync(
+			ClientDLL_Init,
+			patterns::engine::ClientDLL_Init,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::ClientDLL_Init.cbegin())
+				{
+				default:
+				case 0: // HL-Steampipe
+					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 181);
+					break;
+				case 1: // HL-4554
+					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 226);
+					break;
+				case 2: // HL-NGHL
+					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 203);
+					break;
+				case 3: // HL-WON-1712
+					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 1456);
+					break;
+				}
+			});
+
+		void* LoadThisDll;
+		auto fLoadThisDll = FindAsync(
+			LoadThisDll,
+			patterns::engine::LoadThisDll,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::LoadThisDll.cbegin())
+				{
+				default:
+				case 0: // HL-Steampipe
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 95);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 90);
+					break;
+				case 1: // HL-4554
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 91);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 86);
+					break;
+				case 2: // HL-WON-1712
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 89);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 84);
+					break;
+				}
+			});
 
 		auto fCbuf_Execute = FindAsync(
 			ORIG_Cbuf_Execute,
@@ -1531,6 +1587,29 @@ void HwDLL::FindStuff()
 					break;
 				}
 			});
+
+		{
+			auto pattern = fClientDLL_Init.get();
+			if (ClientDLL_Init) {
+				EngineDevMsg("[hw dll] Found ClientDLL_Init at %p (using the %s pattern).\n", ClientDLL_Init, pattern->name());
+				EngineDevMsg("[hw dll] Found cl_enginefuncs at %p.\n", ClientDLL::GetInstance().pEngfuncs);
+			}
+			else {
+				EngineDevWarning("[hw dll] Could not find ClientDLL_Init.\n");
+			}
+		}
+
+		{
+			auto pattern = fLoadThisDll.get();
+			if (LoadThisDll) {
+				EngineDevMsg("[hw dll] Found LoadThisDll at %p (using the %s pattern).\n", LoadThisDll, pattern->name());
+				EngineDevMsg("[hw dll] Found g_engfuncsExportedToDlls at %p.\n", ServerDLL::GetInstance().pEngfuncs);
+				EngineDevMsg("[hw dll] Found gGlobalVariables at %p.\n", ppGlobals);
+			}
+			else {
+				EngineDevWarning("[hw dll] Could not find LoadThisDll.\n");
+			}
+		}
 
 		{
 			auto pattern = fCbuf_Execute.get();
@@ -3142,7 +3221,6 @@ struct HwDLL::Cmd_BXT_Print_Entities
 	static void handler()
 	{
 		const auto& hw = HwDLL::GetInstance();
-		const auto& sv = ServerDLL::GetInstance();
 
 		std::ostringstream out;
 
@@ -3153,11 +3231,11 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			if (!hw.IsValidEdict(ent))
 				continue;
 
-			const char *classname = sv.GetString(ent->v.classname);
+			const char *classname = hw.GetString(ent->v.classname);
 			out << e << ": " << classname;
 
 			if (ent->v.targetname != 0) {
-				const char *targetname = sv.GetString(ent->v.targetname);
+				const char *targetname = hw.GetString(ent->v.targetname);
 				out << " - " << targetname;
 			}
 

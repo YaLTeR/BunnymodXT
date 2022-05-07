@@ -252,7 +252,6 @@ void ClientDLL::Clear()
 	offBhopcap = 0;
 	pBhopcapWindows = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
-	pEngfuncs = nullptr;
 	cantJumpNextTime = false;
 	SeedsQueued = 0;
 	m_Intercepted = false;
@@ -400,77 +399,10 @@ void ClientDLL::FindStuff()
 	ORIG_PM_WaterMove = reinterpret_cast<_PM_WaterMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_WaterMove")); // For Linux.
 	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move")); // For Linux.
 
-	pEngfuncs = reinterpret_cast<cl_enginefunc_t*>(MemUtils::GetSymbolAddress(m_Handle, "gEngfuncs"));
-	if (pEngfuncs) {
-		EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
-	} else {
-		// In AG, this thing is the main function, so check that first.
-		auto pInitialize = MemUtils::GetSymbolAddress(m_Handle, "?Initialize_Body@@YAHPAUcl_enginefuncs_s@@H@Z");
-		if (!pInitialize)
-			pInitialize = MemUtils::GetSymbolAddress(m_Handle, "Initialize");
-		if (pInitialize)
-		{
-			EngineDevMsg("Found Initialize at %p.\n", pInitialize);
-
-			// In some cases Initialize contains just a jump to the real function (Residual Life).
-			if (*reinterpret_cast<byte*>(pInitialize) == 0xE9) {
-				pInitialize = reinterpret_cast<void*>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(pInitialize) + 1)
-					+ reinterpret_cast<uintptr_t>(pInitialize) + 5);
-				EngineDevMsg("Jump detected, found the real Initialize at %p.\n", pInitialize);
-			}
-
-			// Find "mov edi, offset dword; rep movsd" inside Initialize. The pointer to gEngfuncs is that dword.
-			static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5");
-			auto addr = MemUtils::find_pattern(pInitialize, 40, p);
-			if (!addr) {
-				static constexpr auto p = PATTERN("B9 ?? ?? ?? ?? 8B 54 24 10");
-				addr = MemUtils::find_pattern(pInitialize, 40, p);
-			}
-			if (!addr) {
-				// client.dll that comes with TWHL Tower 2
-				static constexpr auto p = PATTERN("B8 ?? ?? ?? ?? 8B F8 F3 A5");
-				addr = MemUtils::find_pattern(pInitialize, 40, p);
-			}
-			if (!addr) {
-				// Halfquake Trilogy
-				static constexpr auto p = PATTERN("B8 ?? ?? ?? ?? 56 8B 75 08");
-				addr = MemUtils::find_pattern(pInitialize, 40, p);
-			}
-			if (!addr) {
-				// Reissues
-				static constexpr auto p = PATTERN("B8 ?? ?? ?? ?? 59 8B F8 F3 A5");
-				addr = MemUtils::find_pattern(pInitialize, 40, p);
-			}
-			if (!addr) {
-				// Half-Payne
-				static constexpr auto p = PATTERN("BF ?? ?? ?? ?? F3 A5 74 12");
-				addr = MemUtils::find_pattern(pInitialize, 50, p);
-			}
-			if (!addr) {
-				// OpenAG
-				static constexpr auto p = PATTERN("BF ?? ?? ?? ?? 8B F0 F3 A5");
-				addr = MemUtils::find_pattern(pInitialize, 70, p);
-			}
-
-			if (addr)
-			{
-				pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(addr+1);
-				EngineDevMsg("[client dll] pEngfuncs is %p.\n", pEngfuncs);
-			}
-			else
-			{
-				EngineDevWarning("[client dll] Couldn't find the pattern in Initialize.\n");
-				EngineWarning("Custom HUD is not available.\n");
-				EngineWarning("Clientside logging is not available.\n");
-			}
-		}
-		else
-		{
-			EngineDevWarning("[client dll] Couldn't get the address of Initialize.\n");
-			EngineWarning("Custom HUD is not available.\n");
-			EngineWarning("Clientside logging is not available.\n");
-		}
+	if (!pEngfuncs)
+	{
+		pEngfuncs = reinterpret_cast<cl_enginefunc_t*>(MemUtils::GetSymbolAddress(m_Handle, "gEngfuncs"));
+		EngineDevMsg("[client dll] gEngfuncs [Linux] is %p.\n", pEngfuncs);
 	}
 
 	// We can draw stuff only if we know that we have already received / will receive engfuncs.

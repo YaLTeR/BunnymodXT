@@ -74,6 +74,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, SPR_Set, HSPRITE_HL hSprite, int r, int g, int b)
 	HOOK_DECL(void, __cdecl, DrawCrosshair, int x, int y)
 	HOOK_DECL(void, __cdecl, Draw_FillRGBA, int x, int y, int w, int h, int r, int g, int b, int a)
+	HOOK_DECL(void, __cdecl, SCR_DrawLoading)
 
 	struct cmdbuf_t
 	{

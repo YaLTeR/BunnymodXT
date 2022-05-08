@@ -306,6 +306,11 @@ extern "C" void __cdecl Draw_FillRGBA(int x, int y, int w, int h, int r, int g, 
 {
 	HwDLL::HOOKED_Draw_FillRGBA(x, y, w, h, r, g, b, a);
 }
+
+extern "C" void __cdecl SCR_DrawLoading()
+{
+	HwDLL::HOOKED_SCR_DrawLoading();
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -421,6 +426,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SPR_Set);
 			MemUtils::MarkAsExecutable(ORIG_DrawCrosshair);
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
+			MemUtils::MarkAsExecutable(ORIG_SCR_DrawLoading);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -474,7 +480,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_SetFrustum, HOOKED_R_SetFrustum,
 			ORIG_SPR_Set, HOOKED_SPR_Set,
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
-			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA);
+			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
+			ORIG_SCR_DrawLoading, HOOKED_SCR_DrawLoading);
 	}
 }
 
@@ -533,7 +540,8 @@ void HwDLL::Unhook()
 			ORIG_R_SetFrustum,
 			ORIG_SPR_Set,
 			ORIG_DrawCrosshair,
-			ORIG_Draw_FillRGBA);
+			ORIG_Draw_FillRGBA,
+			ORIG_SCR_DrawLoading);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -618,6 +626,7 @@ void HwDLL::Clear()
 	ORIG_SPR_Set = nullptr;
 	ORIG_DrawCrosshair = nullptr;
 	ORIG_Draw_FillRGBA = nullptr;
+	ORIG_SCR_DrawLoading = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -945,6 +954,14 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find Draw_FillRGBA.\n");
 
+		ORIG_SCR_DrawLoading = reinterpret_cast<_SCR_DrawLoading>(MemUtils::GetSymbolAddress(m_Handle, "SCR_DrawLoading"));
+		if (ORIG_SCR_DrawLoading) {
+			EngineDevMsg("[hw dll] Found SCR_DrawLoading at %p.\n", ORIG_SCR_DrawLoading);
+		} else {
+			EngineDevWarning("[hw dll] Could not find SCR_DrawLoading.\n");
+			EngineWarning("bxt_disable_loading_text has no effect.\n");
+		}
+
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -1215,6 +1232,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SPR_Set)
 		DEF_FUTURE(DrawCrosshair)
 		DEF_FUTURE(Draw_FillRGBA)
+		DEF_FUTURE(SCR_DrawLoading)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1934,6 +1952,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(SPR_Set);
 		GET_FUTURE(DrawCrosshair);
 		GET_FUTURE(Draw_FillRGBA);
+		GET_FUTURE(SCR_DrawLoading);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -3653,6 +3672,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_viewmodel_semitransparent);
 	RegisterCVar(CVars::bxt_clear_green);
 	RegisterCVar(CVars::bxt_fix_mouse_horizontal_limit);
+	RegisterCVar(CVars::bxt_disable_loading_text);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -5751,4 +5771,12 @@ HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, 
 	}
 
 	ORIG_Draw_FillRGBA(x, y, w, h, r, g, b, a);
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, SCR_DrawLoading)
+{
+	if (CVars::bxt_disable_loading_text.GetBool())
+		return;
+
+	ORIG_SCR_DrawLoading();
 }

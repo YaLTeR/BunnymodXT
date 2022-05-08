@@ -37,6 +37,7 @@ namespace CVars
 	CVarWrapper bxt_force_fov("bxt_force_fov", "0");
 	CVarWrapper bxt_fix_mouse_horizontal_limit("bxt_fix_mouse_horizontal_limit", "0");
 	CVarWrapper bxt_hud_game_color("bxt_hud_game_color", "");
+	CVarWrapper bxt_disable_loading_text("bxt_disable_loading_text", "0");
 
 	CVarWrapper con_color;
 	CVarWrapper sv_cheats;
@@ -200,6 +201,7 @@ namespace CVars
 		&bxt_force_fov,
 		&bxt_fix_mouse_horizontal_limit,
 		&bxt_hud_game_color,
+		&bxt_disable_loading_text,
 		&bxt_autojump_priority,
 		&con_color,
 		&sv_cheats,

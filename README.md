@@ -30,6 +30,7 @@ Use the [Bunnymod XT Launcher](https://github.com/YaLTeR/bxt-launcher).
 
 ### Environment variables
 
+- **BXT_DISABLEPROCESSWINGHOSTING** - if set to 1, calls DisableProcessWindowsGhosting. Fix freezing startup vids in pre-Steampipe builds.
 - **BXT_SCRIPT** - if set to a filename of a hltas script, loads the non-shared RNG from that script on load.
 - **BXT_LOGFILE** - if set, logs all Bunnymod XT messages into a file with that filename.
 - **SPTLIB_DEBUG** - if set to 1, logs all dlopen, dlclose and dlsym calls.
@@ -40,7 +41,7 @@ Use the [Bunnymod XT Launcher](https://github.com/YaLTeR/bxt-launcher).
 
 Building on Windows requires
 
-- Visual Studio 2017 or 2019
+- Visual Studio 2017, 2019 or 2022
 - [Boost](http://www.boost.org/)
 - [Rust](https://rustup.rs/)
   - The `i686-pc-windows-msvc` target must be installed. You can do that using `rustup target add i686-pc-windows-msvc`.

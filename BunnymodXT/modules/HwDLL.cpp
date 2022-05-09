@@ -421,6 +421,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SPR_Set);
 			MemUtils::MarkAsExecutable(ORIG_DrawCrosshair);
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
+			MemUtils::MarkAsExecutable(ORIG_CGame__PlayAVIAndWait);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -474,7 +475,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_SetFrustum, HOOKED_R_SetFrustum,
 			ORIG_SPR_Set, HOOKED_SPR_Set,
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
-			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA);
+			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
+			ORIG_CGame__PlayAVIAndWait, HOOKED_CGame__PlayAVIAndWait);
 	}
 }
 
@@ -533,7 +535,8 @@ void HwDLL::Unhook()
 			ORIG_R_SetFrustum,
 			ORIG_SPR_Set,
 			ORIG_DrawCrosshair,
-			ORIG_Draw_FillRGBA);
+			ORIG_Draw_FillRGBA,
+			ORIG_CGame__PlayAVIAndWait);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -618,6 +621,7 @@ void HwDLL::Clear()
 	ORIG_SPR_Set = nullptr;
 	ORIG_DrawCrosshair = nullptr;
 	ORIG_Draw_FillRGBA = nullptr;
+	ORIG_CGame__PlayAVIAndWait = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1215,6 +1219,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SPR_Set)
 		DEF_FUTURE(DrawCrosshair)
 		DEF_FUTURE(Draw_FillRGBA)
+		DEF_FUTURE(CGame__PlayAVIAndWait)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1934,6 +1939,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(SPR_Set);
 		GET_FUTURE(DrawCrosshair);
 		GET_FUTURE(Draw_FillRGBA);
+		GET_FUTURE(CGame__PlayAVIAndWait);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -5751,4 +5757,17 @@ HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, 
 	}
 
 	ORIG_Draw_FillRGBA(x, y, w, h, r, g, b, a);
+}
+
+HOOK_DEF_3(HwDLL, void, __fastcall, CGame__PlayAVIAndWait, void*, thisptr, int, edx, char*, fileName)
+{
+	#ifdef _WIN32
+	auto bxtDisableProcessWinGhosting = getenv("BXT_DISABLEPROCESSWINGHOSTING");
+	if (bxtDisableProcessWinGhosting && (bxtDisableProcessWinGhosting[0] == '1'))
+	{
+		DisableProcessWindowsGhosting();
+	}
+	#endif
+
+	ORIG_CGame__PlayAVIAndWait(thisptr, edx, fileName);
 }

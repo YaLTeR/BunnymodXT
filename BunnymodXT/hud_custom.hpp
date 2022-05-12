@@ -11,6 +11,7 @@ namespace CustomHud
 		float viewangles[3];
 		float health;
 		float armorvalue;
+		int waterlevel;
 	} playerinfo;
 
 	void Init();

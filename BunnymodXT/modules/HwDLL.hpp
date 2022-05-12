@@ -168,7 +168,7 @@ public:
 
 	void SetPlayerOrigin(float origin[3]);
 	void SetPlayerVelocity(float velocity[3]);
-	bool TryGettingAccurateInfo(float origin[3], float velocity[3], float& health, float& armorvalue);
+	bool TryGettingAccurateInfo(float origin[3], float velocity[3], float& health, float& armorvalue, int& waterlevel);
 	void GetViewangles(float* va);
 	void SetViewangles(float* va);
 

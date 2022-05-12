@@ -229,6 +229,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_armor;
 	extern CVarWrapper bxt_hud_armor_offset;
 	extern CVarWrapper bxt_hud_armor_anchor;
+	extern CVarWrapper bxt_hud_waterlevel;
+	extern CVarWrapper bxt_hud_waterlevel_offset;
+	extern CVarWrapper bxt_hud_waterlevel_anchor;
 	extern CVarWrapper bxt_hud_speedometer;
 	extern CVarWrapper bxt_hud_speedometer_offset;
 	extern CVarWrapper bxt_hud_speedometer_anchor;

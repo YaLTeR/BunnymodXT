@@ -719,6 +719,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_armor);
 		REG(bxt_hud_armor_offset);
 		REG(bxt_hud_armor_anchor);
+		REG(bxt_hud_waterlevel);
+		REG(bxt_hud_waterlevel_offset);
+		REG(bxt_hud_waterlevel_anchor);
 		REG(bxt_hud_speedometer);
 		REG(bxt_hud_speedometer_offset);
 		REG(bxt_hud_speedometer_anchor);

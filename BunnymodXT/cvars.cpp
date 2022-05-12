@@ -116,6 +116,9 @@ namespace CVars
 	CVarWrapper bxt_hud_armor("bxt_hud_armor", "0");
 	CVarWrapper bxt_hud_armor_offset("bxt_hud_armor_offset", "");
 	CVarWrapper bxt_hud_armor_anchor("bxt_hud_armor_anchor", "1 0");
+	CVarWrapper bxt_hud_waterlevel("bxt_hud_waterlevel", "0");
+	CVarWrapper bxt_hud_waterlevel_offset("bxt_hud_waterlevel_offset", "");
+	CVarWrapper bxt_hud_waterlevel_anchor("bxt_hud_waterlevel_anchor", "1 0");
 	CVarWrapper bxt_hud_speedometer("bxt_hud_speedometer", "1");
 	CVarWrapper bxt_hud_speedometer_offset("bxt_hud_speedometer_offset", "");
 	CVarWrapper bxt_hud_speedometer_anchor("bxt_hud_speedometer_anchor", "0.5 1");
@@ -273,6 +276,9 @@ namespace CVars
 		&bxt_hud_armor,
 		&bxt_hud_armor_offset,
 		&bxt_hud_armor_anchor,
+		&bxt_hud_waterlevel,
+		&bxt_hud_waterlevel_offset,
+		&bxt_hud_waterlevel_anchor,
 		&bxt_hud_speedometer,
 		&bxt_hud_speedometer_offset,
 		&bxt_hud_speedometer_anchor,

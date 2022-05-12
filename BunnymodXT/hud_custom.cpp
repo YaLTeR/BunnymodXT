@@ -418,7 +418,7 @@ namespace CustomHud
 
 	void GetAccurateInfo()
 	{
-		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.health, player.armorvalue);
+		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.health, player.armorvalue, player.waterlevel);
 		HwDLL::GetInstance().GetViewangles(player.viewangles);
 	}
 
@@ -929,6 +929,22 @@ namespace CustomHud
 		}
 	}
 
+	void DrawWaterlevel(float flTime)
+	{
+		if (CVars::bxt_hud_waterlevel.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_waterlevel_offset, CVars::bxt_hud_waterlevel_anchor, &x, &y, -200, (si.iCharHeight * 34) + 3);
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "Waterlevel: " << player.waterlevel;
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
 	void DrawNihilanthInfo(float flTime)
 	{
 		static const char *IRRITATIONS[4] = {"Idle", "Attacking", "Opened", "Killed"};
@@ -936,7 +952,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_nihilanth.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 34) + 3);
+			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 35) + 3);
 
 			std::ostringstream out;
 			out << "Nihilanth:\n";
@@ -970,7 +986,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_gonarch.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 41) + 3);
+			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 42) + 3);
 
 			std::ostringstream out;
 			out << "Gonarch:\n";
@@ -1487,6 +1503,7 @@ namespace CustomHud
 		DrawQuickGauss(flTime);
 		DrawHealth(flTime);
 		DrawArmor(flTime);
+		DrawWaterlevel(flTime);
 		DrawVelocity(flTime);
 		DrawOrigin(flTime);
 		DrawViewangles(flTime);

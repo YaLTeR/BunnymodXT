@@ -69,6 +69,11 @@ extern "C" int __cdecl _ZN11CBasePlayer10TakeDamageEP9entvars_sS1_fi(void* thisp
 {
 	return ServerDLL::HOOKED_CBasePlayer__TakeDamage_Linux(thisptr, pevInflictor, pevAttacker, flDamage, bitsDamageType);
 }
+
+extern "C" void __cdecl _ZN9CPushable4MoveEP11CBaseEntityi(void* thisptr, void* pOther, int push)
+{
+	return ServerDLL::HOOKED_CPushable__Move_Linux(thisptr, pOther, push);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -185,6 +190,7 @@ void ServerDLL::Clear()
 	ORIG_CBasePlayer__ForceClientDllUpdate_Linux = nullptr;
 	ORIG_ClientCommand = nullptr;
 	ORIG_CPushable__Move = nullptr;
+	ORIG_CPushable__Move_Linux = nullptr;
 	ORIG_CBasePlayer__TakeDamage = nullptr;
 	ORIG_CBasePlayer__TakeDamage_Linux = nullptr;
 	ORIG_GetEntityAPI = nullptr;
@@ -752,8 +758,13 @@ void ServerDLL::FindStuff()
 			else
 				EngineDevMsg("[server dll] Found CPushable::Move at %p (using the %s pattern).\n", ORIG_CPushable__Move, pattern->name());
 		} else {
-			EngineDevWarning("[server dll] Could not find CPushable::Move.\n");
-			EngineWarning("Object boost logging is not available.\n");
+			ORIG_CPushable__Move_Linux = reinterpret_cast<_CPushable__Move_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN9CPushable4MoveEP11CBaseEntityi"));
+			if (ORIG_CPushable__Move_Linux)
+				EngineDevMsg("[server dll] Found CPushable::Move [Linux] at %p.\n", ORIG_CPushable__Move_Linux);
+			else {
+				EngineDevWarning("[server dll] Could not find CPushable::Move.\n");
+				EngineWarning("Object boost logging is not available.\n");
+			}
 		}
 	}
 
@@ -1834,6 +1845,26 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CPushable__Move, void*, thisptr, int, ed
 	}
 
 	ORIG_CPushable__Move(thisptr, edx, pOther, push);
+}
+
+HOOK_DEF_3(ServerDLL, void, __cdecl, CPushable__Move_Linux, void*, thisptr, void*, pOther, int, push)
+{
+	const entvars_t *pevToucher = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(pOther) + 4);
+	const entvars_t *pevPushable = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+
+	if (HwDLL::GetInstance().IsTASLogging() && IsPlayerMovingPushable(pevPushable, pevToucher, push)) {
+		TASLogger::ObjectMove objectMove;
+		objectMove.pull = !push;
+		objectMove.velocity[0] = pevPushable->velocity[0];
+		objectMove.velocity[1] = pevPushable->velocity[1];
+		objectMove.velocity[2] = pevPushable->velocity[2];
+		objectMove.position[0] = pevPushable->origin[0];
+		objectMove.position[1] = pevPushable->origin[1];
+		objectMove.position[2] = pevPushable->origin[2];
+		HwDLL::GetInstance().logWriter.PushObjectMove(objectMove);
+	}
+
+	return ORIG_CPushable__Move_Linux(thisptr, pOther, push);
 }
 
 void ServerDLL::DoWouldCrashMessage()

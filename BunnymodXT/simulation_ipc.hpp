@@ -3,6 +3,14 @@
 #include <string>
 
 namespace simulation_ipc {
+	struct PushableInfo {
+		// Unique identifier.
+		uintptr_t index;
+		float origin[3];
+		int water_level;
+		bool did_obbo;
+	};
+
 	// Frame data sent from the simulator client to the server. Must be plain old data.
 	struct SimulatedFrame {
 		unsigned generation;
@@ -17,6 +25,8 @@ namespace simulation_ipc {
 
 		float health;
 		float armor;
+
+		std::array<PushableInfo, 25> pushables;
 	};
 
 	enum ServerToClientMessageType {

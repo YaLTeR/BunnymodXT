@@ -22,6 +22,7 @@ struct EditedInput {
 	std::vector<float> frametimes;
 	std::vector<std::vector<float>> target_yaw_overrides;
 	std::vector<size_t> active_target_yaw_override_indices; // 0 means none.
+	std::vector<std::array<simulation_ipc::PushableInfo, 25>> pushables;
 
 	HLStrafe::MovementVars initial_movement_vars;
 

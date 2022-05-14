@@ -76,6 +76,8 @@ public:
 
 	enginefuncs_t *pEngfuncs;
 
+	entvars_t *obboPushable = nullptr;
+
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
 	ServerDLL(const ServerDLL&);

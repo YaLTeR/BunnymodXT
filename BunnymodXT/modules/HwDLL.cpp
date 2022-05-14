@@ -3850,6 +3850,40 @@ void HwDLL::InsertCommands()
 
 				const auto movement_vars = GetMovementVars();
 
+				std::array<simulation_ipc::PushableInfo, 25> pushables{};
+
+				const auto obbo_pushable = ServerDLL::GetInstance().obboPushable;
+				ServerDLL::GetInstance().obboPushable = nullptr;
+
+				if (simulation_ipc::is_client_initialized()) {
+					size_t i = 0;
+
+					edict_t *edicts;
+					const int numEdicts = GetEdicts(&edicts);
+					for (int e = 0; e < numEdicts; ++e) {
+						const edict_t *ent = edicts + e;
+						if (!IsValidEdict(ent))
+							continue;
+
+						const entvars_t *pev = &(ent->v);
+						if (std::strcmp(GetString(pev->classname), "func_pushable") != 0)
+							continue;
+
+						pushables[i].index = reinterpret_cast<uintptr_t>(pev);
+
+						Vector origin = pev->origin + ((pev->mins + pev->maxs) / 2.f);
+						pushables[i].origin[0] = origin[0];
+						pushables[i].origin[1] = origin[1];
+						pushables[i].origin[2] = origin[2];
+
+						pushables[i].water_level = pev->waterlevel;
+						pushables[i].did_obbo = (pev == obbo_pushable);
+
+						if (++i == pushables.size())
+							break;
+					}
+				}
+
 				simulation_ipc::send_simulated_frame_to_server(simulation_ipc::SimulatedFrame {
 					CVars::_bxt_tas_script_generation.GetUint(),
 					movementFrameCounter++,
@@ -3861,6 +3895,7 @@ void HwDLL::InsertCommands()
 					movement_vars.Frametime,
 					health,
 					armor,
+					pushables,
 				});
 
 				StartTracing();

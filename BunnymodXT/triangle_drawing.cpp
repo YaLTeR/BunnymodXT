@@ -1425,6 +1425,37 @@ namespace TriangleDrawing
 			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
 				const auto origin = Vector(player_datas[frame].Origin);
 
+				// Draw the pushables.
+				for (const auto& pushable : input.pushables[frame]) {
+					if (pushable.index == 0)
+						break;
+
+					const simulation_ipc::PushableInfo *last_frame_pushable = nullptr;
+					for (const auto &p : input.pushables[frame - 1]) {
+						if (p.index == 0)
+							break;
+
+						if (p.index == pushable.index)
+							last_frame_pushable = &p;
+					}
+
+					if (!last_frame_pushable)
+						continue;
+
+					if (pushable.water_level >= 1) {
+						if (pushable.did_obbo)
+							pTriAPI->Color4f(0, 1, 1, 1);
+						else
+							pTriAPI->Color4f(0.4f, 0.4f, 1, 1);
+					} else {
+						if (pushable.did_obbo)
+							pTriAPI->Color4f(0, 1, 0, 1);
+						else
+							pTriAPI->Color4f(1, 1, 0, 1);
+					}
+					TriangleUtils::DrawLine(pTriAPI, last_frame_pushable->origin, pushable.origin);
+				}
+
 				if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
 					pTriAPI->Color4f(0.5f, 0.5f, 0.5f, 1);
 				else

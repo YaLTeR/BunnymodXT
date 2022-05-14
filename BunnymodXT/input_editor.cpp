@@ -20,6 +20,7 @@ void EditedInput::initialize() {
 	player_armor_datas.push_back(0);
 	target_yaw_overrides.emplace_back();
 	active_target_yaw_override_indices.push_back(0);
+	pushables.emplace_back();
 
 	// TODO: replace with hw.StrafeState when the
 	// one-frame-being-run-from-tas-editor-enable-frame-bulk issue is solved.
@@ -227,6 +228,7 @@ void EditedInput::simulate() {
 			// push back 0s because there's no data
 			player_health_datas.push_back(0);
 			player_armor_datas.push_back(0);
+			pushables.emplace_back();
 
 			safe_to_exit_early = true;
 		}
@@ -288,6 +290,7 @@ void EditedInput::mark_as_stale(size_t frame_bulk_index) {
 	frametimes.erase(frametimes.begin() + first_frame + 1, frametimes.end());
 	target_yaw_overrides.erase(target_yaw_overrides.begin() + first_frame + 1, target_yaw_overrides.end());
 	active_target_yaw_override_indices.erase(active_target_yaw_override_indices.begin() + first_frame + 1, active_target_yaw_override_indices.end());
+	pushables.erase(pushables.begin() + first_frame + 1, pushables.end());
 	first_predicted_frame = std::min(first_predicted_frame, first_frame + 1);
 
 	schedule_run_in_second_game();
@@ -335,6 +338,7 @@ void EditedInput::set_repeats(size_t frame_bulk_index, unsigned repeats) {
 	next_frame_is_0mss.erase(next_frame_is_0mss.begin() + last_frame + 1, next_frame_is_0mss.end());
 	frametimes.erase(frametimes.begin() + last_frame + 1, frametimes.end());
 	target_yaw_overrides.erase(target_yaw_overrides.begin() + last_frame + 1, target_yaw_overrides.end());
+	pushables.erase(pushables.begin() + last_frame + 1, pushables.end());
 	active_target_yaw_override_indices.erase(active_target_yaw_override_indices.begin() + last_frame + 1, active_target_yaw_override_indices.end());
 
 	// Update the frame count.
@@ -438,6 +442,7 @@ void EditedInput::received_simulated_frame(const simulation_ipc::SimulatedFrame 
 	player_health_datas[frame_number] = frame.health;
 	player_armor_datas[frame_number] = frame.armor;
 	frametimes[frame_number] = frame.frametime;
+	pushables[frame_number] = frame.pushables;
 
 	first_predicted_frame = std::max(first_predicted_frame, frame_number + 1);
 }

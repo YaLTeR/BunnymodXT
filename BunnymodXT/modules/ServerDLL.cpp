@@ -1830,18 +1830,23 @@ bool ServerDLL::IsPlayerMovingPushable(const entvars_t *pevPushable, const entva
 HOOK_DEF_4(ServerDLL, void, __fastcall, CPushable__Move, void*, thisptr, int, edx, void*, pOther, int, push)
 {
 	const entvars_t *pevToucher = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(pOther) + 4);
-	const entvars_t *pevPushable = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	entvars_t *pevPushable = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 
-	if (HwDLL::GetInstance().IsTASLogging() && IsPlayerMovingPushable(pevPushable, pevToucher, push)) {
-		TASLogger::ObjectMove objectMove;
-		objectMove.pull = !push;
-		objectMove.velocity[0] = pevPushable->velocity[0];
-		objectMove.velocity[1] = pevPushable->velocity[1];
-		objectMove.velocity[2] = pevPushable->velocity[2];
-		objectMove.position[0] = pevPushable->origin[0];
-		objectMove.position[1] = pevPushable->origin[1];
-		objectMove.position[2] = pevPushable->origin[2];
-		HwDLL::GetInstance().logWriter.PushObjectMove(objectMove);
+	if (IsPlayerMovingPushable(pevPushable, pevToucher, push)) {
+		if (!push)
+			obboPushable = pevPushable;
+
+		if (HwDLL::GetInstance().IsTASLogging()) {
+			TASLogger::ObjectMove objectMove;
+			objectMove.pull = !push;
+			objectMove.velocity[0] = pevPushable->velocity[0];
+			objectMove.velocity[1] = pevPushable->velocity[1];
+			objectMove.velocity[2] = pevPushable->velocity[2];
+			objectMove.position[0] = pevPushable->origin[0];
+			objectMove.position[1] = pevPushable->origin[1];
+			objectMove.position[2] = pevPushable->origin[2];
+			HwDLL::GetInstance().logWriter.PushObjectMove(objectMove);
+		}
 	}
 
 	ORIG_CPushable__Move(thisptr, edx, pOther, push);
@@ -1850,18 +1855,23 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CPushable__Move, void*, thisptr, int, ed
 HOOK_DEF_3(ServerDLL, void, __cdecl, CPushable__Move_Linux, void*, thisptr, void*, pOther, int, push)
 {
 	const entvars_t *pevToucher = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(pOther) + 4);
-	const entvars_t *pevPushable = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	entvars_t *pevPushable = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 
-	if (HwDLL::GetInstance().IsTASLogging() && IsPlayerMovingPushable(pevPushable, pevToucher, push)) {
-		TASLogger::ObjectMove objectMove;
-		objectMove.pull = !push;
-		objectMove.velocity[0] = pevPushable->velocity[0];
-		objectMove.velocity[1] = pevPushable->velocity[1];
-		objectMove.velocity[2] = pevPushable->velocity[2];
-		objectMove.position[0] = pevPushable->origin[0];
-		objectMove.position[1] = pevPushable->origin[1];
-		objectMove.position[2] = pevPushable->origin[2];
-		HwDLL::GetInstance().logWriter.PushObjectMove(objectMove);
+	if (IsPlayerMovingPushable(pevPushable, pevToucher, push)) {
+		if (!push)
+			obboPushable = pevPushable;
+
+		if (HwDLL::GetInstance().IsTASLogging()) {
+			TASLogger::ObjectMove objectMove;
+			objectMove.pull = !push;
+			objectMove.velocity[0] = pevPushable->velocity[0];
+			objectMove.velocity[1] = pevPushable->velocity[1];
+			objectMove.velocity[2] = pevPushable->velocity[2];
+			objectMove.position[0] = pevPushable->origin[0];
+			objectMove.position[1] = pevPushable->origin[1];
+			objectMove.position[2] = pevPushable->origin[2];
+			HwDLL::GetInstance().logWriter.PushObjectMove(objectMove);
+		}
 	}
 
 	return ORIG_CPushable__Move_Linux(thisptr, pOther, push);

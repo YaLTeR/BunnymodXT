@@ -3632,6 +3632,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_tas_write_log);
 	RegisterCVar(CVars::bxt_tas_playback_speed);
 	RegisterCVar(CVars::bxt_tas_editor_apply_smoothing_over_s);
+	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_duration);
+	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_multiplier);
 	RegisterCVar(CVars::bxt_disable_vgui);
 	RegisterCVar(CVars::bxt_show_only_viewmodel);
 	RegisterCVar(CVars::bxt_wallhack);

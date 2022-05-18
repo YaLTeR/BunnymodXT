@@ -306,6 +306,11 @@ extern "C" void __cdecl Draw_FillRGBA(int x, int y, int w, int h, int r, int g, 
 {
 	HwDLL::HOOKED_Draw_FillRGBA(x, y, w, h, r, g, b, a);
 }
+
+extern "C" int __cdecl CL_DemoAPIRecording()
+{
+	return HwDLL::HOOKED_CL_DemoAPIRecording();
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -421,6 +426,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SPR_Set);
 			MemUtils::MarkAsExecutable(ORIG_DrawCrosshair);
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
+			MemUtils::MarkAsExecutable(ORIG_CL_DemoAPIRecording);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -474,7 +480,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_SetFrustum, HOOKED_R_SetFrustum,
 			ORIG_SPR_Set, HOOKED_SPR_Set,
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
-			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA);
+			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
+			ORIG_CL_DemoAPIRecording, HOOKED_CL_DemoAPIRecording);
 	}
 }
 
@@ -533,7 +540,8 @@ void HwDLL::Unhook()
 			ORIG_R_SetFrustum,
 			ORIG_SPR_Set,
 			ORIG_DrawCrosshair,
-			ORIG_Draw_FillRGBA);
+			ORIG_Draw_FillRGBA,
+			ORIG_CL_DemoAPIRecording);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -618,6 +626,7 @@ void HwDLL::Clear()
 	ORIG_SPR_Set = nullptr;
 	ORIG_DrawCrosshair = nullptr;
 	ORIG_Draw_FillRGBA = nullptr;
+	ORIG_CL_DemoAPIRecording = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1011,6 +1020,13 @@ void HwDLL::FindStuff()
 			EngineWarning("bxt_skybox_remove is not available.\n");
 		}
 
+		ORIG_CL_DemoAPIRecording = reinterpret_cast<_CL_DemoAPIRecording>(MemUtils::GetSymbolAddress(m_Handle, "CL_DemoAPIRecording"));
+		if (ORIG_CL_DemoAPIRecording) {
+			EngineDevMsg("[hw dll] Found CL_DemoAPIRecording at %p.\n", ORIG_CL_DemoAPIRecording);
+		} else {
+			EngineDevWarning("[hw dll] Could not find CL_DemoAPIRecording.\n");
+		}
+
 		ORIG_SCR_UpdateScreen = reinterpret_cast<_SCR_UpdateScreen>(MemUtils::GetSymbolAddress(m_Handle, "SCR_UpdateScreen"));
 		if (ORIG_SCR_UpdateScreen)
 			EngineDevMsg("[hw dll] Found SCR_UpdateScreen at %p.\n", ORIG_SCR_UpdateScreen);
@@ -1215,6 +1231,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SPR_Set)
 		DEF_FUTURE(DrawCrosshair)
 		DEF_FUTURE(Draw_FillRGBA)
+		DEF_FUTURE(CL_DemoAPIRecording)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1934,6 +1951,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(SPR_Set);
 		GET_FUTURE(DrawCrosshair);
 		GET_FUTURE(Draw_FillRGBA);
+		GET_FUTURE(CL_DemoAPIRecording);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -5789,4 +5807,14 @@ HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, 
 	}
 
 	ORIG_Draw_FillRGBA(x, y, w, h, r, g, b, a);
+}
+
+HOOK_DEF_0(HwDLL, int, __cdecl, CL_DemoAPIRecording)
+{
+	auto &hw = HwDLL::GetInstance();
+	int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
+
+	RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
+
+	return ORIG_CL_DemoAPIRecording();
 }

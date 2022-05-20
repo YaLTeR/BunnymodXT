@@ -5059,6 +5059,11 @@ void HwDLL::SaveInitialDataToDemo()
 		RuntimeData::Add(RuntimeData::Edicts{ maxEdicts });
 	}
 
+	auto &hw = HwDLL::GetInstance();
+	int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
+
+	RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
+
 	// Initial BXT timer value.
 	CustomHud::SaveTimeToDemo();
 }
@@ -5814,7 +5819,8 @@ HOOK_DEF_0(HwDLL, int, __cdecl, CL_DemoAPIRecording)
 	auto &hw = HwDLL::GetInstance();
 	int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
 
-	RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
+	if (IsRecordingDemo() && (playerhealth != ServerDLL::GetInstance().m_afHealthLast))
+		RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
 
 	return ORIG_CL_DemoAPIRecording();
 }

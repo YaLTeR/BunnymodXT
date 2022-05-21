@@ -5817,10 +5817,14 @@ HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, 
 HOOK_DEF_0(HwDLL, int, __cdecl, CL_DemoAPIRecording)
 {
 	auto &hw = HwDLL::GetInstance();
-	int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
 
-	if (IsRecordingDemo() && (playerhealth != ServerDLL::GetInstance().m_afHealthLast))
-		RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
+	if (IsRecordingDemo())
+	{
+		int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
+
+	 	if (playerhealth != ServerDLL::GetInstance().m_afHealthLast)
+			RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
+	}
 
 	return ORIG_CL_DemoAPIRecording();
 }

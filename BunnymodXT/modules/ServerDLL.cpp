@@ -2176,9 +2176,12 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, PlayerPostThink, edict_t*, pEntity)
 {
-	entvars_t *pev = &pEntity->v;
+	if (HwDLL::GetInstance().IsRecordingDemo())
+	{
+		entvars_t *pev = &pEntity->v;
 
-	m_afHealthLast = static_cast<int>(pev->health);
+		m_afHealthLast = static_cast<int>(pev->health);
+	}
 
 	ORIG_PlayerPostThink(pEntity);
 }

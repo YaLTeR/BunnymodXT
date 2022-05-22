@@ -2180,7 +2180,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PlayerPostThink, edict_t*, pEntity)
 	{
 		entvars_t *pev = &pEntity->v;
 
-		m_afHealthLast = static_cast<int>(pev->health);
+		lastRecordedHealth = static_cast<int>(pev->health);
 	}
 
 	ORIG_PlayerPostThink(pEntity);

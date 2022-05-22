@@ -79,7 +79,7 @@ public:
 
 	entvars_t *obboPushable = nullptr;
 
-	int m_afHealthLast;
+	int lastRecordedHealth;
 
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};

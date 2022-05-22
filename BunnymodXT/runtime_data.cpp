@@ -298,7 +298,7 @@ namespace RuntimeData
 			void operator()(const PlayerHealth& p) const {
 				archive(RuntimeDataType::PLAYERHEALTH);
 
-				archive(p.playerhealth);
+				archive(p.health);
 			}
 
 		private:

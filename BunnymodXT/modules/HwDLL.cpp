@@ -5186,6 +5186,7 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 {
 	static double timeCounter = 0.0;
 	static bool usePassedTime = false;
+
 	auto minFrametime = CVars::_bxt_min_frametime.GetFloat();
 
 	auto &hw = HwDLL::GetInstance();
@@ -5194,7 +5195,7 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 	{
 		int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
 
-		if (playerhealth != ServerDLL::GetInstance().m_afHealthLast)
+		if (playerhealth != ServerDLL::GetInstance().lastRecordedHealth)
 			RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
 	}
 

@@ -53,7 +53,7 @@ namespace RuntimeData
 	};
 
 	struct PlayerHealth {
-		int playerhealth;
+		int health;
 	};
 
 	using Data = boost::variant<VersionInfo,

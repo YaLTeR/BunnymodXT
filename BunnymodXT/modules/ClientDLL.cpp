@@ -776,10 +776,6 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_hidden_entities_clientside);
 	}
 
-	if (ORIG_CL_IsThirdPerson) {
-		REG(bxt_show_player_in_hltv);
-	}
-
 	if (ORIG_CHudFlashlight__drawNightVision_Linux || ORIG_CHudFlashlight__drawNightVision || ORIG_CHud__DrawHudNightVision_Linux || ORIG_CHud__DrawHudNightVision ) {
 		REG(bxt_disable_nightvision_sprite);
 	}
@@ -1277,9 +1273,7 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 
 HOOK_DEF_0(ClientDLL, int, __cdecl, CL_IsThirdPerson)
 {
-	const auto& hw = HwDLL::GetInstance();
-
-	if (hw.insideCLEmitEntities && CVars::bxt_show_player_in_hltv.GetBool() && CVars::sv_cheats.GetBool())
+	if (pEngfuncs->pDemoAPI->IsPlayingback() && pEngfuncs->IsSpectateOnly())
 		return 1;
 
 	return ORIG_CL_IsThirdPerson();

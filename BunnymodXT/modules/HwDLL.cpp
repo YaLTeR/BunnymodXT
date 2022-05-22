@@ -262,11 +262,6 @@ extern "C" void __cdecl _ZN7CBaseUI10HideGameUIEv(void* thisptr)
 	return HwDLL::HOOKED_CBaseUI__HideGameUI_Linux(thisptr);
 }
 
-extern "C" void __cdecl CL_EmitEntities()
-{
-	HwDLL::HOOKED_CL_EmitEntities();
-}
-
 extern "C" void __cdecl R_DrawWorld()
 {
 	HwDLL::HOOKED_R_DrawWorld();
@@ -411,7 +406,6 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_NotifyOfServerConnect);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioSetupBones);
 			MemUtils::MarkAsExecutable(ORIG_CBaseUI__HideGameUI);
-			MemUtils::MarkAsExecutable(ORIG_CL_EmitEntities);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawWorld);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawEntitiesOnList);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawParticles);
@@ -465,7 +459,6 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_VGuiWrap2_NotifyOfServerConnect, HOOKED_VGuiWrap2_NotifyOfServerConnect,
 			ORIG_R_StudioSetupBones, HOOKED_R_StudioSetupBones,
 			ORIG_CBaseUI__HideGameUI, HOOKED_CBaseUI__HideGameUI,
-			ORIG_CL_EmitEntities, HOOKED_CL_EmitEntities,
 			ORIG_R_DrawWorld, HOOKED_R_DrawWorld,
 			ORIG_R_DrawEntitiesOnList, HOOKED_R_DrawEntitiesOnList,
 			ORIG_R_DrawParticles, HOOKED_R_DrawParticles,
@@ -524,7 +517,6 @@ void HwDLL::Unhook()
 			ORIG_VGuiWrap2_NotifyOfServerConnect,
 			ORIG_R_StudioSetupBones,
 			ORIG_CBaseUI__HideGameUI,
-			ORIG_CL_EmitEntities,
 			ORIG_R_DrawWorld,
 			ORIG_R_DrawEntitiesOnList,
 			ORIG_R_DrawParticles,
@@ -1122,12 +1114,6 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find VGuiWrap2_NotifyOfServerConnect.\n");
 
-		ORIG_CL_EmitEntities = reinterpret_cast<_CL_EmitEntities>(MemUtils::GetSymbolAddress(m_Handle, "CL_EmitEntities"));
-		if (ORIG_CL_EmitEntities)
-			EngineDevMsg("[hw dll] Found CL_EmitEntities at %p.\n", ORIG_CL_EmitEntities);
-		else
-			EngineDevWarning("[hw dll] Could not find CL_EmitEntities.\n");
-
 		ORIG_R_DrawWorld = reinterpret_cast<_R_DrawWorld>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawWorld"));
 		if (ORIG_R_DrawWorld)
 			EngineDevMsg("[hw dll] Found R_DrawWorld at %p.\n", ORIG_R_DrawWorld);
@@ -1206,7 +1192,6 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(S_StartDynamicSound)
 		DEF_FUTURE(VGuiWrap2_NotifyOfServerConnect)
 		DEF_FUTURE(CBaseUI__HideGameUI)
-		DEF_FUTURE(CL_EmitEntities)
 		DEF_FUTURE(R_DrawWorld)
 		DEF_FUTURE(R_DrawEntitiesOnList)
 		DEF_FUTURE(R_DrawParticles)
@@ -1925,7 +1910,6 @@ void HwDLL::FindStuff()
 		GET_FUTURE(S_StartDynamicSound);
 		GET_FUTURE(VGuiWrap2_NotifyOfServerConnect);
 		GET_FUTURE(CBaseUI__HideGameUI);
-		GET_FUTURE(CL_EmitEntities);
 		GET_FUTURE(R_DrawWorld);
 		GET_FUTURE(R_DrawEntitiesOnList);
 		GET_FUTURE(R_DrawParticles);
@@ -5194,7 +5178,7 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 	{
 		int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
 
-	 	if (playerhealth != ServerDLL::GetInstance().m_afHealthLast)
+		if (playerhealth != ServerDLL::GetInstance().m_afHealthLast)
 			RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
 	}
 
@@ -5698,13 +5682,6 @@ HOOK_DEF_1(HwDLL, void, __cdecl, CBaseUI__HideGameUI_Linux, void*, thisptr)
 	insideHideGameUI = true;
 	ORIG_CBaseUI__HideGameUI_Linux(thisptr);
 	insideHideGameUI = false;
-}
-
-HOOK_DEF_0(HwDLL, void, __cdecl, CL_EmitEntities)
-{
-	insideCLEmitEntities = true;
-	ORIG_CL_EmitEntities();
-	insideCLEmitEntities = false;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawWorld)

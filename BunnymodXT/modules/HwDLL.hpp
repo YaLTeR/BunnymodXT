@@ -64,7 +64,6 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(char*, __cdecl, MD5_Print, unsigned char hash[16])
 	HOOK_DECL(void, __fastcall, CBaseUI__HideGameUI, void *thisptr)
 	HOOK_DECL(void, __cdecl, CBaseUI__HideGameUI_Linux, void *thisptr)
-	HOOK_DECL(void, __cdecl, CL_EmitEntities)
 	HOOK_DECL(void, __cdecl, R_DrawWorld)
 	HOOK_DECL(void, __cdecl, R_DrawEntitiesOnList)
 	HOOK_DECL(void, __cdecl, R_DrawParticles)
@@ -319,7 +318,6 @@ public:
 
 	float currentRenderFOV = 0;
 
-	bool insideCLEmitEntities = false;
 	bool insideDrawCrosshair = false;
 
 	int lastRecordedHealth;

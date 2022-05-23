@@ -74,11 +74,6 @@ extern "C" void __cdecl _ZN9CPushable4MoveEP11CBaseEntityi(void* thisptr, void* 
 {
 	return ServerDLL::HOOKED_CPushable__Move_Linux(thisptr, pOther, push);
 }
-
-extern "C" void __cdecl _Z15PlayerPostThinkP7edict_s(edict_t *pEntity)
-{
-	return ServerDLL::HOOKED_PlayerPostThink(pEntity);
-}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -123,8 +118,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CTriggerSave__SaveTouch, HOOKED_CTriggerSave__SaveTouch,
 			ORIG_CChangeLevel__UseChangeLevel, HOOKED_CChangeLevel__UseChangeLevel,
 			ORIG_CChangeLevel__TouchChangeLevel, HOOKED_CChangeLevel__TouchChangeLevel,
-			ORIG_CBaseMonster__Killed, HOOKED_CBaseMonster__Killed,
-			ORIG_PlayerPostThink, HOOKED_PlayerPostThink);
+			ORIG_CBaseMonster__Killed, HOOKED_CBaseMonster__Killed);
 	}
 }
 
@@ -159,8 +153,7 @@ void ServerDLL::Unhook()
 			ORIG_CTriggerSave__SaveTouch,
 			ORIG_CChangeLevel__UseChangeLevel,
 			ORIG_CChangeLevel__TouchChangeLevel,
-			ORIG_CBaseMonster__Killed,
-			ORIG_PlayerPostThink);
+			ORIG_CBaseMonster__Killed);
 	}
 
 	Clear();
@@ -210,7 +203,6 @@ void ServerDLL::Clear()
 	ORIG_CChangeLevel__UseChangeLevel = nullptr;
 	ORIG_CChangeLevel__TouchChangeLevel = nullptr;
 	ORIG_CChangeLevel__InTransitionVolume = nullptr;
-	ORIG_PlayerPostThink = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -886,14 +878,12 @@ void ServerDLL::FindStuff()
 	ORIG_AddToFullPack = reinterpret_cast<_AddToFullPack>(MemUtils::GetSymbolAddress(m_Handle, "_Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh"));
 	ORIG_ClientCommand = reinterpret_cast<_ClientCommand>(MemUtils::GetSymbolAddress(m_Handle, "_Z13ClientCommandP7edict_s"));
 	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move"));
-	ORIG_PlayerPostThink = reinterpret_cast<_PlayerPostThink>(MemUtils::GetSymbolAddress(m_Handle, "_Z15PlayerPostThinkP7edict_s"));
 
-	if (ORIG_CmdStart && ORIG_AddToFullPack && ORIG_ClientCommand && ORIG_PM_Move && ORIG_PlayerPostThink) {
+	if (ORIG_CmdStart && ORIG_AddToFullPack && ORIG_ClientCommand && ORIG_PM_Move) {
 		EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
 		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
 		EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 		EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
-		EngineDevMsg("[server dll] Found PlayerPostThink at %p.\n", ORIG_PlayerPostThink);
 	} else {
 		ORIG_GetEntityAPI = reinterpret_cast<_GetEntityAPI>(MemUtils::GetSymbolAddress(m_Handle, "GetEntityAPI"));
 		if (ORIG_GetEntityAPI) {
@@ -904,12 +894,10 @@ void ServerDLL::FindStuff()
 				ORIG_AddToFullPack = funcs.pfnAddToFullPack;
 				ORIG_ClientCommand = funcs.pfnClientCommand;
 				ORIG_PM_Move = funcs.pfnPM_Move;
-				ORIG_PlayerPostThink = funcs.pfnPlayerPostThink;
 				EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
 				EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
 				EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 				EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
-				EngineDevMsg("[server dll] Found PlayerPostThink at %p.\n", ORIG_PlayerPostThink);
 			} else {
 				EngineDevWarning("[server dll] Could not get the server DLL function table.\n");
 				EngineWarning("Serverside shared RNG manipulation and usercommand logging are not available.\n");
@@ -2172,16 +2160,4 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 		return;
 
 	return ORIG_CChangeLevel__TouchChangeLevel(thisptr, edx, pOther);
-}
-
-HOOK_DEF_1(ServerDLL, void, __cdecl, PlayerPostThink, edict_t*, pEntity)
-{
-	if (HwDLL::GetInstance().IsRecordingDemo())
-	{
-		entvars_t *pev = &pEntity->v;
-
-		lastRecordedHealth = static_cast<int>(pev->health);
-	}
-
-	ORIG_PlayerPostThink(pEntity);
 }

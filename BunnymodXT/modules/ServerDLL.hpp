@@ -43,7 +43,6 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, CTriggerSave__SaveTouch_Linux, void* thisptr, void* pOther)
 	HOOK_DECL(void, __fastcall, CChangeLevel__UseChangeLevel, void* thisptr, int edx, void* pActivator, void* pCaller, int useType, float value)
 	HOOK_DECL(void, __fastcall, CChangeLevel__TouchChangeLevel, void* thisptr, int edx, void* pOther)
-	HOOK_DECL(void, __cdecl, PlayerPostThink, edict_t* pEntity)
 
 public:
 	static ServerDLL& GetInstance()
@@ -78,8 +77,6 @@ public:
 	enginefuncs_t *pEngfuncs;
 
 	entvars_t *obboPushable = nullptr;
-
-	int lastRecordedHealth;
 
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};

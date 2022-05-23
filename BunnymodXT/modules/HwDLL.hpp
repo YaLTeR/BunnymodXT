@@ -322,6 +322,8 @@ public:
 	bool insideCLEmitEntities = false;
 	bool insideDrawCrosshair = false;
 
+	int lastRecordedHealth;
+
 	globalvars_t *ppGlobals;
 
 	inline const char* GetString(int string) const {

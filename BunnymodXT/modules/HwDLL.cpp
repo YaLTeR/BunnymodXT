@@ -636,6 +636,7 @@ void HwDLL::Clear()
 	cls = nullptr;
 	clientstate = nullptr;
 	sv = nullptr;
+	lastRecordedHealth = 0;
 	offTime = 0;
 	offWorldmodel = 0;
 	offModels = 0;
@@ -5042,9 +5043,9 @@ void HwDLL::SaveInitialDataToDemo()
 	}
 
 	auto &hw = HwDLL::GetInstance();
-	int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
+	lastRecordedHealth = static_cast<int>((*hw.sv_player)->v.health);
 
-	RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
+	RuntimeData::Add(RuntimeData::PlayerHealth{lastRecordedHealth});
 
 	// Initial BXT timer value.
 	CustomHud::SaveTimeToDemo();
@@ -5195,8 +5196,10 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 	{
 		int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
 
-		if (playerhealth != ServerDLL::GetInstance().lastRecordedHealth)
+		if (playerhealth != lastRecordedHealth)
 			RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
+
+		lastRecordedHealth = playerhealth;
 	}
 
 	if (runningFrames) {

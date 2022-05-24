@@ -3461,6 +3461,26 @@ struct HwDLL::Cmd_BXT_TAS_Client_Load_Received_Script
 	}
 };
 
+extern "C" DLLEXPORT void bxt_tas_load_script_from_string(const char *script)
+{
+	auto& hw = HwDLL::GetInstance();
+	hw.ResetStateBeforeTASPlayback();
+
+	auto err = hw.input.FromString(script);
+
+	if (err.Code != HLTAS::ErrorCode::OK) {
+		const auto& message = hw.input.GetErrorMessage();
+		if (message.empty()) {
+			hw.ORIG_Con_Printf("Error loading the script file on line %u: %s\n", err.LineNumber, HLTAS::GetErrorMessage(err).c_str());
+		} else {
+			hw.ORIG_Con_Printf("Error loading the script: %s\n", message.c_str());
+		}
+		return;
+	}
+
+	hw.StartTASPlayback();
+}
+
 void HwDLL::SetTASEditorMode(TASEditorMode mode)
 {
 	auto& cl = ClientDLL::GetInstance();

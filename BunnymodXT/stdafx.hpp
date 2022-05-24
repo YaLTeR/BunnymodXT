@@ -17,6 +17,9 @@
 #define __cdecl __attribute__((cdecl))
 #define __fastcall __attribute__((fastcall))
 #define __stdcall
+#define DLLEXPORT
+#else
+#define DLLEXPORT __declspec(dllexport)
 #endif
 
 #include <cassert>

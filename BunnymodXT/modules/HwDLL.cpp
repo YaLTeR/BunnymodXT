@@ -636,6 +636,7 @@ void HwDLL::Clear()
 	cls = nullptr;
 	clientstate = nullptr;
 	sv = nullptr;
+	lastRecordedHealth = 0;
 	offTime = 0;
 	offWorldmodel = 0;
 	offModels = 0;
@@ -5041,6 +5042,11 @@ void HwDLL::SaveInitialDataToDemo()
 		RuntimeData::Add(RuntimeData::Edicts{ maxEdicts });
 	}
 
+	auto &hw = HwDLL::GetInstance();
+	lastRecordedHealth = static_cast<int>((*hw.sv_player)->v.health);
+
+	RuntimeData::Add(RuntimeData::PlayerHealth{lastRecordedHealth});
+
 	// Initial BXT timer value.
 	CustomHud::SaveTimeToDemo();
 }
@@ -5183,6 +5189,18 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 	static bool usePassedTime = false;
 
 	auto minFrametime = CVars::_bxt_min_frametime.GetFloat();
+
+	auto &hw = HwDLL::GetInstance();
+
+	if (IsRecordingDemo())
+	{
+		int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
+
+		if (playerhealth != lastRecordedHealth)
+			RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
+
+		lastRecordedHealth = playerhealth;
+	}
 
 	if (runningFrames) {
 		auto playbackSpeed = CVars::bxt_tas_playback_speed.GetFloat();

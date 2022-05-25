@@ -40,6 +40,7 @@ namespace RuntimeData
 			LOADED_MODULES,
 			CUSTOM_TRIGGER_COMMAND,
 			EDICTS,
+			PLAYERHEALTH,
 		};
 
 		// Encrypting filter.
@@ -55,7 +56,7 @@ namespace RuntimeData
 			template<typename Sink>
 			bool put(Sink& dest, char c) {
 				buffer[pos++] = c;
-				
+
 				if (pos == 8) {
 					encrypt();
 
@@ -292,6 +293,12 @@ namespace RuntimeData
 				archive(RuntimeDataType::EDICTS);
 
 				archive(e.edicts);
+			}
+
+			void operator()(const PlayerHealth& p) const {
+				archive(RuntimeDataType::PLAYERHEALTH);
+
+				archive(p.health);
 			}
 
 		private:

@@ -60,6 +60,7 @@ using std::ptrdiff_t;
 #include "HLSDK/common/com_model.h"
 #include "HLSDK/common/cl_entity.h"
 #include "HLSDK/common/event_args.h"
+#include "HLSDK/common/demo_api.h"
 #include "HLSDK/engine/studio.h"
 
 typedef int(*pfnUserMsgHook)(const char *pszName, int iSize, void *pbuf);

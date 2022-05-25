@@ -52,6 +52,10 @@ namespace RuntimeData
 		int edicts;
 	};
 
+	struct PlayerHealth {
+		int health;
+	};
+
 	using Data = boost::variant<VersionInfo,
 	                            CVarValues,
 	                            Time,
@@ -62,7 +66,8 @@ namespace RuntimeData
 	                            GameEndMarker,
 	                            LoadedModules,
 	                            CustomTriggerCommand,
-	                            Edicts>;
+	                            Edicts,
+	                            PlayerHealth>;
 
 	void Add(Data data);
 	void Clear();

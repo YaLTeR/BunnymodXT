@@ -241,6 +241,7 @@ namespace CVars
 	extern CVarWrapper bxt_hud_health;
 	extern CVarWrapper bxt_hud_health_offset;
 	extern CVarWrapper bxt_hud_health_anchor;
+	extern CVarWrapper bxt_hud_health_override_in_demo;
 	extern CVarWrapper bxt_hud_nihilanth;
 	extern CVarWrapper bxt_hud_nihilanth_offset;
 	extern CVarWrapper bxt_hud_nihilanth_anchor;

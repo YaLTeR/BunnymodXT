@@ -128,6 +128,7 @@ namespace CVars
 	CVarWrapper bxt_hud_health("bxt_hud_health", "0");
 	CVarWrapper bxt_hud_health_offset("bxt_hud_health_offset", "");
 	CVarWrapper bxt_hud_health_anchor("bxt_hud_health_anchor", "0.5 1");
+	CVarWrapper bxt_hud_health_override_in_demo("bxt_hud_health_override_in_demo", "0");
 	CVarWrapper bxt_hud_nihilanth("bxt_hud_nihilanth", "0");
 	CVarWrapper bxt_hud_nihilanth_offset("bxt_hud_nihilanth_offset", "");
 	CVarWrapper bxt_hud_nihilanth_anchor("bxt_hud_nihilanth_anchor", "1 0");
@@ -288,6 +289,7 @@ namespace CVars
 		&bxt_hud_health,
 		&bxt_hud_health_offset,
 		&bxt_hud_health_anchor,
+		&bxt_hud_health_override_in_demo,
 		&bxt_hud_nihilanth,
 		&bxt_hud_nihilanth_offset,
 		&bxt_hud_nihilanth_anchor,

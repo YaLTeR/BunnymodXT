@@ -100,6 +100,16 @@ extern "C" void __cdecl _ZN20CStudioModelRenderer17StudioRenderModelEv(void *thi
 	return ClientDLL::HOOKED_CStudioModelRenderer__StudioRenderModel_Linux(thisptr);
 }
 
+extern "C" void __cdecl _Z11ScaleColorsRiS_S_i(int* r, int* g, int* b, int a)
+{
+	return ClientDLL::HOOKED_ScaleColors(r, g, b, a);
+}
+
+extern "C" int __cdecl _ZN15HistoryResource15DrawAmmoHistoryEf(void *thisptr, float flTime)
+{
+	return ClientDLL::HOOKED_HistoryResource__DrawAmmoHistory_Linux(thisptr, flTime);
+}
+
 extern "C" void __cdecl _ZN14CHudFlashlight15drawNightVisionEv(void *thisptr)
 {
 	return ClientDLL::HOOKED_CHudFlashlight__drawNightVision_Linux(thisptr);
@@ -158,6 +168,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CStudioModelRenderer__StudioSetupBones, HOOKED_CStudioModelRenderer__StudioSetupBones,
 			ORIG_CL_IsThirdPerson, HOOKED_CL_IsThirdPerson,
 			ORIG_CStudioModelRenderer__StudioRenderModel, HOOKED_CStudioModelRenderer__StudioRenderModel,
+			ORIG_ScaleColors, HOOKED_ScaleColors,
+			ORIG_HistoryResource__DrawAmmoHistory, HOOKED_HistoryResource__DrawAmmoHistory,
 			ORIG_CHudFlashlight__drawNightVision, HOOKED_CHudFlashlight__drawNightVision,
 			ORIG_CHud__DrawHudNightVision, HOOKED_CHud__DrawHudNightVision);
 	}
@@ -193,6 +205,8 @@ void ClientDLL::Unhook()
 			ORIG_CStudioModelRenderer__StudioSetupBones,
 			ORIG_CL_IsThirdPerson,
 			ORIG_CStudioModelRenderer__StudioRenderModel,
+			ORIG_ScaleColors,
+			ORIG_HistoryResource__DrawAmmoHistory,
 			ORIG_CHudFlashlight__drawNightVision,
 			ORIG_CHud__DrawHudNightVision);
 	}
@@ -229,6 +243,9 @@ void ClientDLL::Clear()
 	ORIG_CStudioModelRenderer__StudioSetupBones_Linux = nullptr;
 	ORIG_CStudioModelRenderer__StudioRenderModel = nullptr;
 	ORIG_CStudioModelRenderer__StudioRenderModel_Linux = nullptr;
+	ORIG_ScaleColors = nullptr;
+	ORIG_HistoryResource__DrawAmmoHistory = nullptr;
+	ORIG_HistoryResource__DrawAmmoHistory_Linux = nullptr;
 	ORIG_CHudFlashlight__drawNightVision = nullptr;
 	ORIG_CHudFlashlight__drawNightVision_Linux = nullptr;
 	ORIG_CHud__DrawHudNightVision = nullptr;
@@ -390,6 +407,10 @@ void ClientDLL::FindStuff()
 	auto fCStudioModelRenderer__StudioRenderModel = FindAsync(
 		ORIG_CStudioModelRenderer__StudioRenderModel,
 		patterns::client::CStudioModelRenderer__StudioRenderModel);
+	auto fScaleColors = FindAsync(ORIG_ScaleColors, patterns::client::ScaleColors);
+	auto fHistoryResource__DrawAmmoHistory = FindAsync(
+		ORIG_HistoryResource__DrawAmmoHistory,
+		patterns::client::HistoryResource__DrawAmmoHistory);
 	auto fCHudFlashlight__drawNightVision = FindAsync(
 		ORIG_CHudFlashlight__drawNightVision,
 		patterns::client::CHudFlashlight__drawNightVision);
@@ -591,6 +612,35 @@ void ClientDLL::FindStuff()
 			} else {
 				EngineDevWarning("[client dll] Could not find CStudioModelRenderer::StudioRenderModel.\n");
 				EngineWarning("[client dll] Changing weapon viewmodel opacity is not available.\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fScaleColors.get();
+		if (ORIG_ScaleColors) {
+			EngineDevMsg("[client dll] Found ScaleColors at %p (using the %s pattern).\n", ORIG_ScaleColors, pattern->name());
+		} else {
+			ORIG_ScaleColors = reinterpret_cast<_ScaleColors>(MemUtils::GetSymbolAddress(m_Handle, "_Z11ScaleColorsRiS_S_i"));
+			if (ORIG_ScaleColors) {
+				EngineDevMsg("[client dll] Found ScaleColors at %p.\n", ORIG_ScaleColors);
+			} else {
+				EngineDevWarning("[client dll] Could not find ScaleColors.\n");
+				EngineWarning("[client dll] Changing HUD color for ammo history is not available.\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fHistoryResource__DrawAmmoHistory.get();
+		if (ORIG_HistoryResource__DrawAmmoHistory) {
+			EngineDevMsg("[client dll] Found HistoryResource::DrawAmmoHistory at %p (using the %s pattern).\n", ORIG_HistoryResource__DrawAmmoHistory, pattern->name());
+		} else {
+			ORIG_HistoryResource__DrawAmmoHistory_Linux = reinterpret_cast<_HistoryResource__DrawAmmoHistory_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN15HistoryResource15DrawAmmoHistoryEf"));
+			if (ORIG_HistoryResource__DrawAmmoHistory_Linux) {
+				EngineDevMsg("[client dll] Found HistoryResource::DrawAmmoHistory [Linux] at %p.\n", ORIG_HistoryResource__DrawAmmoHistory_Linux);
+			} else {
+				EngineDevWarning("[client dll] Could not find HistoryResource::DrawAmmoHistory [Linux].\n");
 			}
 		}
 	}
@@ -1317,6 +1367,39 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Lin
 	}
 
 	ORIG_CStudioModelRenderer__StudioRenderModel_Linux(thisptr);
+}
+
+HOOK_DEF_4(ClientDLL, void, __cdecl, ScaleColors, int*, r, int*, g, int*, b, int, a)
+{
+	if (custom_hud_color_set && insideDrawAmmoHistory) {
+		*r = custom_r;
+		*g = custom_g;
+		*b = custom_b;
+	}
+
+	ORIG_ScaleColors(r, g, b, a);
+}
+
+HOOK_DEF_3(ClientDLL, int, __fastcall, HistoryResource__DrawAmmoHistory, void*, thisptr, int, edx, float, flTime)
+{
+	insideDrawAmmoHistory = true;
+
+	auto ret = ORIG_HistoryResource__DrawAmmoHistory(thisptr, edx, flTime);
+
+	insideDrawAmmoHistory = false;
+
+	return ret;
+}
+
+HOOK_DEF_2(ClientDLL, int, __cdecl, HistoryResource__DrawAmmoHistory_Linux, void*, thisptr, float, flTime)
+{
+	insideDrawAmmoHistory = true;
+
+	auto ret = ORIG_HistoryResource__DrawAmmoHistory_Linux(thisptr, flTime);
+
+	insideDrawAmmoHistory = false;
+
+	return ret;
 }
 
 HOOK_DEF_1(ClientDLL, void, __fastcall, CHudFlashlight__drawNightVision, void*, thisptr)

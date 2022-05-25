@@ -33,6 +33,9 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(int, __cdecl, CL_IsThirdPerson)
 	HOOK_DECL(void, __fastcall, CStudioModelRenderer__StudioRenderModel, void* thisptr)
 	HOOK_DECL(void, __cdecl, CStudioModelRenderer__StudioRenderModel_Linux, void* thisptr)
+	HOOK_DECL(void, __cdecl, ScaleColors, int* r, int* g, int* b, int a)
+	HOOK_DECL(int, __fastcall, HistoryResource__DrawAmmoHistory, void *thisptr, int edx, float flTime)
+	HOOK_DECL(int, __cdecl, HistoryResource__DrawAmmoHistory_Linux, void *thisptr, float flTime)
 	HOOK_DECL(void, __fastcall, CHudFlashlight__drawNightVision, void* thisptr)
 	HOOK_DECL(void, __cdecl, CHudFlashlight__drawNightVision_Linux, void* thisptr)
 	HOOK_DECL(bool, __fastcall, CHud__DrawHudNightVision, void *thisptr, int edx, float flTime)
@@ -68,6 +71,8 @@ public:
 	unsigned char custom_r, custom_g, custom_b;
 	bool custom_hud_color_set = false;
 	bool bxt_hud_color_set = false;
+
+	bool insideDrawAmmoHistory = false;
 
 	unsigned short last_buttons;
 

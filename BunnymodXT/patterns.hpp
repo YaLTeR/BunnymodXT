@@ -800,6 +800,32 @@ namespace patterns
 			"CSCZDS",
 			"56 8B F1 8A 86 ?? ?? ?? ?? 84 C0 75 ?? 32 C0 5E C2 04 00 8B 46 ?? 85 C0 75 ?? 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 04 89 46 ?? 8B 46 ?? 6A 64"
 		);
+
+		PATTERNS(ScaleColors,
+			"HL-SteamPipe",
+			"DB 44 24 ?? 56 8B 74 24 ?? D8 0D",
+			"Echoes",
+			"55 8B EC 51 DB 45",
+			"AoMDC",
+			"55 8B EC 83 EC 44 53 56 57 DB 45",
+			"Halfquake-Trilogy",
+			"55 8B EC 66 0F 6E 4D"
+		);
+
+		PATTERNS(HistoryResource__DrawAmmoHistory,
+			"HL-Steampipe",
+			"83 EC 50 53 55",
+			"CSCZDS",
+			"83 EC 50 53 ?? ?? 55",
+			"Echoes",
+			"55 8B EC 81 EC 88 00 00 00 89 4D",
+			"AoMDC",
+			"55 8B EC 81 EC C8 00 00 00 53 56 57 89 4D ?? C7 45 ?? 00 00 00 00",
+			"Halfquake-Trilogy",
+			"55 8B EC 83 EC 58 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 8B F1",
+			"TWHL-Tower-2",
+			"55 8B EC 83 EC 54 83 65 ?? 00"
+		);
 	}
 
 	namespace shared

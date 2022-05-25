@@ -5754,7 +5754,7 @@ HOOK_DEF_4(HwDLL, void, __cdecl, SPR_Set, HSPRITE_HL, hSprite, int, r, int, g, i
 {
 	auto& cl = ClientDLL::GetInstance();
 
-	if (cl.custom_hud_color_set && !cl.bxt_hud_color_set && !insideDrawCrosshair)
+	if (cl.custom_hud_color_set && !cl.bxt_hud_color_set && !insideDrawCrosshair && !cl.insideDrawAmmoHistory)
 	{
 		r = cl.custom_r;
 		g = cl.custom_g;

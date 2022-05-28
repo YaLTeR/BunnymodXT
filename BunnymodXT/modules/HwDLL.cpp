@@ -5780,8 +5780,10 @@ HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, 
 		r = cl.custom_r;
 		g = cl.custom_g;
 		b = cl.custom_b;
-		a = 255; // SPR_Set hardcoded to 255 alpha
 	}
+
+	if (cl.custom_hud_color_set || CVars::bxt_hud_game_alpha_max_clientside.GetBool())
+		a = 255;
 
 	ORIG_Draw_FillRGBA(x, y, w, h, r, g, b, a);
 }

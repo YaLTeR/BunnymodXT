@@ -90,6 +90,7 @@ namespace CVars
 	CVarWrapper bxt_unlock_camera_during_pause("bxt_unlock_camera_during_pause", "0");
 	CVarWrapper bxt_hud("bxt_hud", "1");
 	CVarWrapper bxt_hud_color("bxt_hud_color", "");
+	CVarWrapper bxt_hud_game_alpha_max_clientside("bxt_hud_game_alpha_max_clientside", "0");
 	CVarWrapper bxt_hud_precision("bxt_hud_precision", "6");
 	CVarWrapper bxt_hud_quickgauss("bxt_hud_quickgauss", "0");
 	CVarWrapper bxt_hud_quickgauss_offset("bxt_hud_quickgauss_offset", "");
@@ -250,6 +251,7 @@ namespace CVars
 		&bxt_unlock_camera_during_pause,
 		&bxt_hud,
 		&bxt_hud_color,
+		&bxt_hud_game_alpha_max_clientside,
 		&bxt_hud_precision,
 		&bxt_hud_quickgauss,
 		&bxt_hud_quickgauss_offset,

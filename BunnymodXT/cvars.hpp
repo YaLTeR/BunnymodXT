@@ -203,6 +203,7 @@ namespace CVars
 	extern CVarWrapper bxt_unlock_camera_during_pause;
 	extern CVarWrapper bxt_hud;
 	extern CVarWrapper bxt_hud_color;
+	extern CVarWrapper bxt_hud_game_alpha_max_clientside;
 	extern CVarWrapper bxt_hud_precision;
 	extern CVarWrapper bxt_hud_quickgauss;
 	extern CVarWrapper bxt_hud_quickgauss_offset;

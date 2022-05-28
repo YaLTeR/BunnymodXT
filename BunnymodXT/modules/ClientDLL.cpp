@@ -826,6 +826,10 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_hidden_entities_clientside);
 	}
 
+	if (ORIG_ScaleColors) {
+		REG(bxt_hud_game_alpha_max_clientside);
+	}
+
 	if (ORIG_CHudFlashlight__drawNightVision_Linux || ORIG_CHudFlashlight__drawNightVision || ORIG_CHud__DrawHudNightVision_Linux || ORIG_CHud__DrawHudNightVision ) {
 		REG(bxt_disable_nightvision_sprite);
 	}
@@ -1376,6 +1380,9 @@ HOOK_DEF_4(ClientDLL, void, __cdecl, ScaleColors, int*, r, int*, g, int*, b, int
 		*g = custom_g;
 		*b = custom_b;
 	}
+
+	if (CVars::bxt_hud_game_alpha_max_clientside.GetBool() && !insideDrawAmmoHistory)
+		a = 255;
 
 	ORIG_ScaleColors(r, g, b, a);
 }

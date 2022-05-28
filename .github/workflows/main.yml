@@ -79,6 +79,8 @@ jobs:
         # We need the full history to find the tag
         fetch-depth: 0
 
+    - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
     # We need the tags for the version string
     - run: git fetch --force --tags
 

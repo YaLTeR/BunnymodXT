@@ -269,6 +269,10 @@ namespace simulation_ipc {
 		return !!client_tx;
 	}
 
+	extern "C" DLLEXPORT int bxt_simulation_ipc_is_client_initialized() {
+		return is_client_initialized() ? 1 : 0;
+	}
+
 	void receive_messages_from_server() {
 		if (!is_client_initialized())
 			return;

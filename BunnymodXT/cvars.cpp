@@ -33,6 +33,7 @@ namespace CVars
 	CVarWrapper bxt_viewmodel_disable_idle("bxt_viewmodel_disable_idle", "0");
 	CVarWrapper bxt_viewmodel_disable_equip("bxt_viewmodel_disable_equip", "0");
 	CVarWrapper bxt_viewmodel_semitransparent("bxt_viewmodel_semitransparent", "0");
+	CVarWrapper bxt_viewmodel_lefthand("bxt_viewmodel_lefthand", "0");
 	CVarWrapper bxt_clear_green("bxt_clear_green", "0");
 	CVarWrapper bxt_force_fov("bxt_force_fov", "0");
 	CVarWrapper bxt_fix_mouse_horizontal_limit("bxt_fix_mouse_horizontal_limit", "0");
@@ -200,6 +201,7 @@ namespace CVars
 		&bxt_viewmodel_disable_idle,
 		&bxt_viewmodel_disable_equip,
 		&bxt_viewmodel_semitransparent,
+		&bxt_viewmodel_lefthand,
 		&bxt_clear_green,
 		&bxt_force_fov,
 		&bxt_fix_mouse_horizontal_limit,

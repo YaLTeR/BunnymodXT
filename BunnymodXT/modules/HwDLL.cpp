@@ -277,6 +277,11 @@ extern "C" void __cdecl R_DrawParticles()
 	HwDLL::HOOKED_R_DrawParticles();
 }
 
+extern "C" qboolean __cdecl IsFlippedViewModel()
+{
+	return HwDLL::HOOKED_IsFlippedViewModel();
+}
+
 extern "C" void __cdecl R_SetFrustum()
 {
 	HwDLL::HOOKED_R_SetFrustum();
@@ -411,6 +416,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_DrawParticles);
 			MemUtils::MarkAsExecutable(ORIG_BUsesSDLInput);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioRenderModel);
+			MemUtils::MarkAsExecutable(ORIG_IsFlippedViewModel);
 			MemUtils::MarkAsExecutable(ORIG_R_SetFrustum);
 			MemUtils::MarkAsExecutable(ORIG_SPR_Set);
 			MemUtils::MarkAsExecutable(ORIG_DrawCrosshair);
@@ -464,6 +470,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_DrawParticles, HOOKED_R_DrawParticles,
 			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput,
 			ORIG_R_StudioRenderModel, HOOKED_R_StudioRenderModel,
+			ORIG_IsFlippedViewModel, HOOKED_IsFlippedViewModel,
 			ORIG_R_SetFrustum, HOOKED_R_SetFrustum,
 			ORIG_SPR_Set, HOOKED_SPR_Set,
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
@@ -522,6 +529,7 @@ void HwDLL::Unhook()
 			ORIG_R_DrawParticles,
 			ORIG_BUsesSDLInput,
 			ORIG_R_StudioRenderModel,
+			ORIG_IsFlippedViewModel,
 			ORIG_R_SetFrustum,
 			ORIG_SPR_Set,
 			ORIG_DrawCrosshair,
@@ -606,6 +614,7 @@ void HwDLL::Clear()
 	ORIG_R_DrawParticles = nullptr;
 	ORIG_BUsesSDLInput = nullptr;
 	ORIG_R_StudioRenderModel = nullptr;
+	ORIG_IsFlippedViewModel = nullptr;
 	ORIG_R_SetFrustum = nullptr;
 	ORIG_SPR_Set = nullptr;
 	ORIG_DrawCrosshair = nullptr;
@@ -614,6 +623,7 @@ void HwDLL::Clear()
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
 	ppGlobals = nullptr;
+	pEngStudio = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -920,6 +930,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find gGlobalVariables [Linux].\n");
 
+		pEngStudio = reinterpret_cast<engine_studio_api_t*>(MemUtils::GetSymbolAddress(m_Handle, "engine_studio_api"));
+		if (pEngStudio)
+			EngineDevMsg("[hw dll] Found engine_studio_api [Linux] at %p.\n", pEngStudio);
+		else
+			EngineDevWarning("[hw dll] Could not find engine_studio_api [Linux].\n");
+
 		ORIG_SPR_Set = reinterpret_cast<_SPR_Set>(MemUtils::GetSymbolAddress(m_Handle, "SPR_Set"));
 		if (ORIG_SPR_Set)
 			EngineDevMsg("[hw dll] Found SPR_Set at %p.\n", ORIG_SPR_Set);
@@ -1141,6 +1157,14 @@ void HwDLL::FindStuff()
 			EngineWarning("Changing weapon viewmodel opacity is not available.\n");
 		}
 
+		ORIG_IsFlippedViewModel = reinterpret_cast<_IsFlippedViewModel>(MemUtils::GetSymbolAddress(m_Handle, "IsFlippedViewModel"));
+		if (ORIG_IsFlippedViewModel) {
+			EngineDevMsg("[hw dll] Found IsFlippedViewModel at %p.\n", ORIG_IsFlippedViewModel);
+		} else {
+			EngineDevWarning("[hw dll] Could not find IsFlippedViewModel.\n");
+			EngineWarning("Changing weapon viewmodel hand is not available.\n");
+		}
+
 		scr_fov_value = reinterpret_cast<float*>(MemUtils::GetSymbolAddress(m_Handle, "scr_fov_value"));
 		if (scr_fov_value)
 			EngineDevMsg("[hw dll] Found scr_fov_value at %p.\n", sv);
@@ -1198,6 +1222,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(R_DrawParticles)
 		DEF_FUTURE(BUsesSDLInput)
 		DEF_FUTURE(R_StudioRenderModel)
+		DEF_FUTURE(IsFlippedViewModel)
 		DEF_FUTURE(SPR_Set)
 		DEF_FUTURE(DrawCrosshair)
 		DEF_FUTURE(Draw_FillRGBA)
@@ -1216,6 +1241,26 @@ void HwDLL::FindStuff()
 						ORIG_LoadAndDecryptHwDLL);
 				});
 		}
+
+		void* ClientDLL_CheckStudioInterface;
+		auto fClientDLL_CheckStudioInterface = FindAsync(
+			ClientDLL_CheckStudioInterface,
+			patterns::engine::ClientDLL_CheckStudioInterface,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::ClientDLL_CheckStudioInterface.cbegin())
+				{
+				default:
+				case 0: // HL-Steampipe
+					pEngStudio = *reinterpret_cast<engine_studio_api_t**>(reinterpret_cast<uintptr_t>(ClientDLL_CheckStudioInterface) + 42);
+					break;
+				case 1: // HL-4554
+					pEngStudio = *reinterpret_cast<engine_studio_api_t**>(reinterpret_cast<uintptr_t>(ClientDLL_CheckStudioInterface) + 40);
+					break;
+				case 2: // HL-WON-1712
+					pEngStudio = *reinterpret_cast<engine_studio_api_t**>(reinterpret_cast<uintptr_t>(ClientDLL_CheckStudioInterface) + 30);
+					break;
+				}
+			});
 
 		void* ClientDLL_Init;
 		auto fClientDLL_Init = FindAsync(
@@ -1623,6 +1668,17 @@ void HwDLL::FindStuff()
 			});
 
 		{
+			auto pattern = fClientDLL_CheckStudioInterface.get();
+			if (ClientDLL_CheckStudioInterface) {
+				EngineDevMsg("[hw dll] Found ClientDLL_CheckStudioInterface at %p (using the %s pattern).\n", ClientDLL_CheckStudioInterface, pattern->name());
+				EngineDevMsg("[hw dll] Found engine_studio_api at %p.\n", pEngStudio);
+			}
+			else {
+				EngineDevWarning("[hw dll] Could not find ClientDLL_CheckStudioInterface.\n");
+			}
+		}
+
+		{
 			auto pattern = fClientDLL_Init.get();
 			if (ClientDLL_Init) {
 				EngineDevMsg("[hw dll] Found ClientDLL_Init at %p (using the %s pattern).\n", ClientDLL_Init, pattern->name());
@@ -1916,6 +1972,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(R_DrawParticles);
 		GET_FUTURE(BUsesSDLInput);
 		GET_FUTURE(R_StudioRenderModel);
+		GET_FUTURE(IsFlippedViewModel);
 		GET_FUTURE(SPR_Set);
 		GET_FUTURE(DrawCrosshair);
 		GET_FUTURE(Draw_FillRGBA);
@@ -3660,6 +3717,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_viewmodel_semitransparent);
 	RegisterCVar(CVars::bxt_clear_green);
 	RegisterCVar(CVars::bxt_fix_mouse_horizontal_limit);
+	RegisterCVar(CVars::bxt_viewmodel_lefthand);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -5640,6 +5698,15 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioSetupBones)
 
 		if (cl.pEngfuncs) {
 			if (currententity == cl.pEngfuncs->GetViewModel()) {
+				if (CVars::bxt_viewmodel_lefthand.GetBool())
+				{
+					float(*rotationmatrix)[3][4] = reinterpret_cast<float(*)[3][4]>(pEngStudio->StudioGetRotationMatrix());
+
+					(*rotationmatrix)[0][1] *= -1;
+					(*rotationmatrix)[1][1] *= -1;
+					(*rotationmatrix)[2][1] *= -1;
+				}
+
 				if (CVars::bxt_viewmodel_disable_idle.GetBool()) {
 					if (strstr(pseqdesc->label, "idle") != NULL || strstr(pseqdesc->label, "fidget") != NULL) {
 						currententity->curstate.framerate = 0; // don't animate at all
@@ -5760,6 +5827,14 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 	}
 
 	ORIG_R_StudioRenderModel();
+}
+
+HOOK_DEF_0(HwDLL, qboolean, __cdecl, IsFlippedViewModel)
+{
+	if (CVars::bxt_viewmodel_lefthand.GetBool())
+		return true;
+	else
+		return ORIG_IsFlippedViewModel();
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)

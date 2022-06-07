@@ -146,6 +146,7 @@ namespace CVars
 	extern CVarWrapper bxt_viewmodel_disable_idle;
 	extern CVarWrapper bxt_viewmodel_disable_equip;
 	extern CVarWrapper bxt_viewmodel_semitransparent;
+	extern CVarWrapper bxt_viewmodel_lefthand;
 	extern CVarWrapper bxt_clear_green;
 	extern CVarWrapper bxt_force_fov;
 	extern CVarWrapper bxt_fix_mouse_horizontal_limit;

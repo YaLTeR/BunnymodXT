@@ -408,6 +408,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xCC;
 				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
+				spirit_sdk = true;
 				break;
 			case 8: // Decay
 				maxAmmoSlots = MAX_AMMO_SLOTS;

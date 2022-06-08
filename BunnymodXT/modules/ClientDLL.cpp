@@ -715,7 +715,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 
-	if (!DoesGameDirMatch("czeror") && !DoesGameDirMatch("czeror_cutsceneless"))
+	if (!HwDLL::GetInstance().ORIG_Cvar_FindVar("cl_righthand"))
 	{
 		orig_righthand_not_found = true;
 		REG(cl_righthand);

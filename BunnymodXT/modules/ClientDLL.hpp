@@ -74,6 +74,8 @@ public:
 
 	bool insideDrawAmmoHistory = false;
 
+	bool orig_righthand_not_found = false;
+
 	unsigned short last_buttons;
 
 	// When set to false, the mouse won't move the camera.

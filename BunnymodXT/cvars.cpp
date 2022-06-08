@@ -33,7 +33,6 @@ namespace CVars
 	CVarWrapper bxt_viewmodel_disable_idle("bxt_viewmodel_disable_idle", "0");
 	CVarWrapper bxt_viewmodel_disable_equip("bxt_viewmodel_disable_equip", "0");
 	CVarWrapper bxt_viewmodel_semitransparent("bxt_viewmodel_semitransparent", "0");
-	CVarWrapper bxt_viewmodel_lefthand("bxt_viewmodel_lefthand", "0");
 	CVarWrapper bxt_clear_green("bxt_clear_green", "0");
 	CVarWrapper bxt_force_fov("bxt_force_fov", "0");
 	CVarWrapper bxt_fix_mouse_horizontal_limit("bxt_fix_mouse_horizontal_limit", "0");
@@ -69,6 +68,7 @@ namespace CVars
 	CVarWrapper bxt_render_far_entities("bxt_render_far_entities", "0");
 
 	// Clientside CVars
+	CVarWrapper cl_righthand("cl_righthand", "0");
 	CVarWrapper bxt_disable_hud("bxt_disable_hud", "0");
 	CVarWrapper bxt_disable_nightvision_sprite("bxt_disable_nightvision_sprite", "0");
 	CVarWrapper bxt_autojump_prediction("bxt_autojump_prediction", "0");
@@ -201,7 +201,6 @@ namespace CVars
 		&bxt_viewmodel_disable_idle,
 		&bxt_viewmodel_disable_equip,
 		&bxt_viewmodel_semitransparent,
-		&bxt_viewmodel_lefthand,
 		&bxt_clear_green,
 		&bxt_force_fov,
 		&bxt_fix_mouse_horizontal_limit,
@@ -251,6 +250,7 @@ namespace CVars
 		&bxt_collision_depth_map_pixel_scale,
 		&bxt_collision_depth_map_remove_distance_limit,
 		&bxt_unlock_camera_during_pause,
+		&cl_righthand,
 		&bxt_hud,
 		&bxt_hud_color,
 		&bxt_hud_game_alpha_max_clientside,

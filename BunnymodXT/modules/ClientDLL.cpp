@@ -714,6 +714,13 @@ void ClientDLL::RegisterCVarsAndCommands()
 	EngineDevMsg("[client dll] Registering CVars.\n");
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
+
+	if (!DoesGameDirMatch("czeror") && !DoesGameDirMatch("czeror_cutsceneless"))
+	{
+		orig_righthand_not_found = true;
+		REG(cl_righthand);
+	}
+
 	if (ORIG_PM_Jump)
 		REG(bxt_autojump_prediction);
 
@@ -993,7 +1000,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 		auto view = pEngfuncs->GetViewModel();
 
 		if (!paused) {
-			if (CVars::bxt_viewmodel_lefthand.GetBool())
+			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
 				right_offset *= -1;
 
 			for (int i = 0; i < 3; i++) {
@@ -1237,7 +1244,7 @@ HOOK_DEF_11(ClientDLL, void, __cdecl, EV_GetDefaultShellInfo, event_args_t*, arg
 			forwardScale += CVars::bxt_viewmodel_ofs_forward.GetFloat();
 			upScale += CVars::bxt_viewmodel_ofs_up.GetFloat();
 
-			if (CVars::bxt_viewmodel_lefthand.GetBool())
+			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
 				rightScale *= -1;
 		}
 	}
@@ -1267,7 +1274,7 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioSetupBones, 
 
 	if (pEngfuncs) {
 		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
-			if (CVars::bxt_viewmodel_lefthand.GetBool())
+			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
 			{
 				float(*rotationmatrix)[3][4] = reinterpret_cast<float(*)[3][4]>(HwDLL::GetInstance().pEngStudio->StudioGetRotationMatrix());
 
@@ -1308,7 +1315,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linu
 
 	if (pEngfuncs) {
 		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
-			if (CVars::bxt_viewmodel_lefthand.GetBool())
+			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
 			{
 				float(*rotationmatrix)[3][4] = reinterpret_cast<float(*)[3][4]>(HwDLL::GetInstance().pEngStudio->StudioGetRotationMatrix());
 

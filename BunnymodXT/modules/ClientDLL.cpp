@@ -1359,7 +1359,7 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 
 HOOK_DEF_0(ClientDLL, int, __cdecl, CL_IsThirdPerson)
 {
-	if (pEngfuncs->pDemoAPI->IsPlayingback() && pEngfuncs->IsSpectateOnly())
+	if (pEngfuncs->pDemoAPI->IsPlayingback() && HwDLL::GetInstance().ORIG_Cmd_FindCmd("dem_forcehltv") && pEngfuncs->IsSpectateOnly())
 		return 1;
 
 	return ORIG_CL_IsThirdPerson();

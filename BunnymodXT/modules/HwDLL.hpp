@@ -340,6 +340,8 @@ private:
 	void operator=(const HwDLL&);
 
 public:
+	typedef cmd_function_t*(__cdecl *_Cmd_FindCmd) (const char* cmd_name);
+	_Cmd_FindCmd ORIG_Cmd_FindCmd;
 	typedef void(__cdecl *_Con_Printf) (const char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
 	typedef cl_entity_t*(__cdecl *_studioapi_GetCurrentEntity) ();

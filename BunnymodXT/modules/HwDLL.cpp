@@ -564,6 +564,7 @@ void HwDLL::Clear()
 	ORIG_Cvar_RegisterVariable = nullptr;
 	ORIG_Cvar_DirectSet = nullptr;
 	ORIG_Cvar_FindVar = nullptr;
+	ORIG_Cmd_FindCmd = nullptr;
 	ORIG_Cmd_AddMallocCommand = nullptr;
 	ORIG_Cmd_Argc = nullptr;
 	ORIG_Cmd_Args = nullptr;
@@ -961,6 +962,7 @@ void HwDLL::FindStuff()
 		FIND(Cvar_RegisterVariable)
 		FIND(Cvar_DirectSet)
 		FIND(Cvar_FindVar)
+		FIND(Cmd_FindCmd)
 		FIND(Cbuf_InsertText)
 		FIND(Cbuf_AddText)
 		FIND(Cbuf_InsertTextLines)
@@ -1166,6 +1168,7 @@ void HwDLL::FindStuff()
 		#define DEF_FUTURE(name) auto f##name = FindAsync(ORIG_##name, patterns::engine::name);
 		DEF_FUTURE(Cvar_DirectSet)
 		DEF_FUTURE(Cvar_FindVar)
+		DEF_FUTURE(Cmd_FindCmd)
 		DEF_FUTURE(Cbuf_InsertText)
 		DEF_FUTURE(Cbuf_AddText)
 		DEF_FUTURE(Cmd_AddMallocCommand)
@@ -1891,6 +1894,7 @@ void HwDLL::FindStuff()
 			}
 		GET_FUTURE(Cvar_DirectSet)
 		GET_FUTURE(Cvar_FindVar)
+		GET_FUTURE(Cmd_FindCmd)
 		GET_FUTURE(Cbuf_InsertText)
 		GET_FUTURE(Cbuf_AddText)
 		GET_FUTURE(Cmd_AddMallocCommand)

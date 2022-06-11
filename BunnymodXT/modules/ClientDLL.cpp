@@ -714,6 +714,13 @@ void ClientDLL::RegisterCVarsAndCommands()
 	EngineDevMsg("[client dll] Registering CVars.\n");
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
+
+	if (!HwDLL::GetInstance().ORIG_Cvar_FindVar("cl_righthand"))
+	{
+		orig_righthand_not_found = true;
+		REG(cl_righthand);
+	}
+
 	if (ORIG_PM_Jump)
 		REG(bxt_autojump_prediction);
 
@@ -993,6 +1000,9 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 		auto view = pEngfuncs->GetViewModel();
 
 		if (!paused) {
+			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
+				right_offset *= -1;
+
 			for (int i = 0; i < 3; i++) {
 				view->origin[i] += forward_offset * pparams->forward[i] +
 					right_offset * pparams->right[i] +
@@ -1233,10 +1243,14 @@ HOOK_DEF_11(ClientDLL, void, __cdecl, EV_GetDefaultShellInfo, event_args_t*, arg
 			rightScale += CVars::bxt_viewmodel_ofs_right.GetFloat();
 			forwardScale += CVars::bxt_viewmodel_ofs_forward.GetFloat();
 			upScale += CVars::bxt_viewmodel_ofs_up.GetFloat();
+
+			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
+				rightScale *= -1;
 		}
 	}
 
 	ORIG_EV_GetDefaultShellInfo(args, origin, velocity, ShellVelocity, ShellOrigin, forward, right, up, forwardScale, upScale, rightScale);
+
 	if (pEngfuncs)
 	{
 		// Are we overriding viewmodel fov && is the entity that the shell info is for the local player?
@@ -1260,6 +1274,15 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioSetupBones, 
 
 	if (pEngfuncs) {
 		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
+			{
+				float(*rotationmatrix)[3][4] = reinterpret_cast<float(*)[3][4]>(HwDLL::GetInstance().pEngStudio->StudioGetRotationMatrix());
+
+				(*rotationmatrix)[0][1] *= -1;
+				(*rotationmatrix)[1][1] *= -1;
+				(*rotationmatrix)[2][1] *= -1;
+			}
+
 			if (CVars::bxt_viewmodel_disable_idle.GetBool()) {
 				if (strstr(pseqdesc->label, "idle") != NULL || strstr(pseqdesc->label, "fidget") != NULL) {
 					pCurrentEntity->curstate.framerate = 0; // don't animate at all
@@ -1292,6 +1315,15 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linu
 
 	if (pEngfuncs) {
 		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
+			{
+				float(*rotationmatrix)[3][4] = reinterpret_cast<float(*)[3][4]>(HwDLL::GetInstance().pEngStudio->StudioGetRotationMatrix());
+
+				(*rotationmatrix)[0][1] *= -1;
+				(*rotationmatrix)[1][1] *= -1;
+				(*rotationmatrix)[2][1] *= -1;
+			}
+
 			if (CVars::bxt_viewmodel_disable_idle.GetBool()) {
 				if (strstr(pseqdesc->label, "idle") != NULL || strstr(pseqdesc->label, "fidget") != NULL) {
 					pCurrentEntity->curstate.framerate = 0; // don't animate at all

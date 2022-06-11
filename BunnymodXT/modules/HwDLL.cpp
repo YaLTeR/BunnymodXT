@@ -614,6 +614,7 @@ void HwDLL::Clear()
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
 	ppGlobals = nullptr;
+	pEngStudio = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -920,6 +921,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find gGlobalVariables [Linux].\n");
 
+		pEngStudio = reinterpret_cast<engine_studio_api_t*>(MemUtils::GetSymbolAddress(m_Handle, "engine_studio_api"));
+		if (pEngStudio)
+			EngineDevMsg("[hw dll] Found engine_studio_api [Linux] at %p.\n", pEngStudio);
+		else
+			EngineDevWarning("[hw dll] Could not find engine_studio_api [Linux].\n");
+
 		ORIG_SPR_Set = reinterpret_cast<_SPR_Set>(MemUtils::GetSymbolAddress(m_Handle, "SPR_Set"));
 		if (ORIG_SPR_Set)
 			EngineDevMsg("[hw dll] Found SPR_Set at %p.\n", ORIG_SPR_Set);
@@ -1216,6 +1223,26 @@ void HwDLL::FindStuff()
 						ORIG_LoadAndDecryptHwDLL);
 				});
 		}
+
+		void* ClientDLL_CheckStudioInterface;
+		auto fClientDLL_CheckStudioInterface = FindAsync(
+			ClientDLL_CheckStudioInterface,
+			patterns::engine::ClientDLL_CheckStudioInterface,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::ClientDLL_CheckStudioInterface.cbegin())
+				{
+				default:
+				case 0: // HL-Steampipe
+					pEngStudio = *reinterpret_cast<engine_studio_api_t**>(reinterpret_cast<uintptr_t>(ClientDLL_CheckStudioInterface) + 42);
+					break;
+				case 1: // HL-4554
+					pEngStudio = *reinterpret_cast<engine_studio_api_t**>(reinterpret_cast<uintptr_t>(ClientDLL_CheckStudioInterface) + 40);
+					break;
+				case 2: // HL-WON-1712
+					pEngStudio = *reinterpret_cast<engine_studio_api_t**>(reinterpret_cast<uintptr_t>(ClientDLL_CheckStudioInterface) + 30);
+					break;
+				}
+			});
 
 		void* ClientDLL_Init;
 		auto fClientDLL_Init = FindAsync(
@@ -1621,6 +1648,17 @@ void HwDLL::FindStuff()
 					break;
 				}
 			});
+
+		{
+			auto pattern = fClientDLL_CheckStudioInterface.get();
+			if (ClientDLL_CheckStudioInterface) {
+				EngineDevMsg("[hw dll] Found ClientDLL_CheckStudioInterface at %p (using the %s pattern).\n", ClientDLL_CheckStudioInterface, pattern->name());
+				EngineDevMsg("[hw dll] Found engine_studio_api at %p.\n", pEngStudio);
+			}
+			else {
+				EngineDevWarning("[hw dll] Could not find ClientDLL_CheckStudioInterface.\n");
+			}
+		}
 
 		{
 			auto pattern = fClientDLL_Init.get();
@@ -5640,6 +5678,15 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioSetupBones)
 
 		if (cl.pEngfuncs) {
 			if (currententity == cl.pEngfuncs->GetViewModel()) {
+				if (cl.orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
+				{
+					float(*rotationmatrix)[3][4] = reinterpret_cast<float(*)[3][4]>(pEngStudio->StudioGetRotationMatrix());
+
+					(*rotationmatrix)[0][1] *= -1;
+					(*rotationmatrix)[1][1] *= -1;
+					(*rotationmatrix)[2][1] *= -1;
+				}
+
 				if (CVars::bxt_viewmodel_disable_idle.GetBool()) {
 					if (strstr(pseqdesc->label, "idle") != NULL || strstr(pseqdesc->label, "fidget") != NULL) {
 						currententity->curstate.framerate = 0; // don't animate at all

@@ -68,6 +68,7 @@ namespace CVars
 	CVarWrapper bxt_render_far_entities("bxt_render_far_entities", "0");
 
 	// Clientside CVars
+	CVarWrapper cl_righthand("cl_righthand", "0");
 	CVarWrapper bxt_disable_hud("bxt_disable_hud", "0");
 	CVarWrapper bxt_disable_nightvision_sprite("bxt_disable_nightvision_sprite", "0");
 	CVarWrapper bxt_autojump_prediction("bxt_autojump_prediction", "0");
@@ -249,6 +250,7 @@ namespace CVars
 		&bxt_collision_depth_map_pixel_scale,
 		&bxt_collision_depth_map_remove_distance_limit,
 		&bxt_unlock_camera_during_pause,
+		&cl_righthand,
 		&bxt_hud,
 		&bxt_hud_color,
 		&bxt_hud_game_alpha_max_clientside,

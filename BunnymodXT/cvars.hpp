@@ -181,6 +181,7 @@ namespace CVars
 	extern CVarWrapper bxt_render_far_entities;
 
 	// Clientside CVars
+	extern CVarWrapper cl_righthand;
 	extern CVarWrapper bxt_disable_hud;
 	extern CVarWrapper bxt_disable_nightvision_sprite;
 	extern CVarWrapper bxt_autojump_prediction;

@@ -323,6 +323,7 @@ public:
 	int lastRecordedHealth;
 
 	globalvars_t *ppGlobals;
+	engine_studio_api_t *pEngStudio;
 
 	inline const char* GetString(int string) const {
 		assert(ppGlobals);
@@ -343,6 +344,8 @@ public:
 	_Con_Printf ORIG_Con_Printf;
 	typedef cl_entity_t*(__cdecl *_studioapi_GetCurrentEntity) ();
 	_studioapi_GetCurrentEntity ORIG_studioapi_GetCurrentEntity;
+	typedef cvar_t*(__cdecl *_Cvar_FindVar) (const char* name);
+	_Cvar_FindVar ORIG_Cvar_FindVar;
 
 	HLStrafe::PlayerData GetPlayerData();
 
@@ -351,8 +354,6 @@ protected:
 	_Cvar_RegisterVariable ORIG_Cvar_RegisterVariable;
 	typedef void(__cdecl *_Cvar_DirectSet) (cvar_t* cvar, const char* value);
 	_Cvar_DirectSet ORIG_Cvar_DirectSet;
-	typedef cvar_t*(__cdecl *_Cvar_FindVar) (const char* name);
-	_Cvar_FindVar ORIG_Cvar_FindVar;
 	typedef void(__cdecl *_Cmd_AddMallocCommand) (const char* name, void(*func)(void), int flags);
 	_Cmd_AddMallocCommand ORIG_Cmd_AddMallocCommand;
 	typedef int(__cdecl *_Cmd_Argc) ();

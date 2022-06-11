@@ -68,6 +68,8 @@ public:
 
 	bool DoesGameDirMatch(const char *game);
 
+	bool orig_forcehltv_found = false;
+
 	unsigned char custom_r, custom_g, custom_b;
 	bool custom_hud_color_set = false;
 	bool bxt_hud_color_set = false;

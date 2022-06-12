@@ -715,12 +715,6 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 
-	if (!HwDLL::GetInstance().ORIG_Cvar_FindVar("cl_righthand"))
-	{
-		orig_righthand_not_found = true;
-		REG(cl_righthand);
-	}
-
 	if (ORIG_PM_Jump)
 		REG(bxt_autojump_prediction);
 
@@ -1066,8 +1060,11 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Init)
 {
 	ORIG_HUD_Init();
 
-	if (HwDLL::GetInstance().ORIG_Cmd_FindCmd("dem_forcehltv"))
-		orig_forcehltv_found = true;
+	if (!HwDLL::GetInstance().ORIG_Cvar_FindVar("cl_righthand"))
+	{
+		orig_righthand_not_found = true;
+		HwDLL::GetInstance().RegisterCVar(CVars::cl_righthand);
+	}
 
 	CustomHud::Init();
 }
@@ -1142,6 +1139,9 @@ HOOK_DEF_6(ClientDLL, void, __cdecl, HUD_PostRunCmd, local_state_s*, from, local
 HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 {
 	ORIG_HUD_Frame(time);
+
+	if (!orig_forcehltv_found && HwDLL::GetInstance().ORIG_Cmd_FindCmd("dem_forcehltv"))
+		orig_forcehltv_found = true;
 
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 		pEngfuncs->Con_Printf(const_cast<char*>("HUD_Frame time: %f\n"), time);

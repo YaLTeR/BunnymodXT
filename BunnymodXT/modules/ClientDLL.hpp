@@ -68,6 +68,7 @@ public:
 
 	bool DoesGameDirMatch(const char *game);
 
+	bool check_forcehltv = true;
 	bool orig_forcehltv_found = false;
 
 	unsigned char custom_r, custom_g, custom_b;

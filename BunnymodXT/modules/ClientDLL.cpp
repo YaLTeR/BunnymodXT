@@ -1140,8 +1140,10 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 {
 	ORIG_HUD_Frame(time);
 
-	if (!orig_forcehltv_found && HwDLL::GetInstance().ORIG_Cmd_FindCmd("dem_forcehltv"))
-		orig_forcehltv_found = true;
+	if (check_forcehltv) {
+		check_forcehltv = false;
+		orig_forcehltv_found = HwDLL::GetInstance().ORIG_Cmd_FindCmd("dem_forcehltv");
+	}
 
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 		pEngfuncs->Con_Printf(const_cast<char*>("HUD_Frame time: %f\n"), time);

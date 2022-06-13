@@ -415,6 +415,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SPR_Set);
 			MemUtils::MarkAsExecutable(ORIG_DrawCrosshair);
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
+			MemUtils::MarkAsExecutable(ORIG_Draw_ConsoleBackground);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -467,7 +468,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_SetFrustum, HOOKED_R_SetFrustum,
 			ORIG_SPR_Set, HOOKED_SPR_Set,
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
-			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA);
+			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
+			ORIG_Draw_ConsoleBackground, HOOKED_Draw_ConsoleBackground);
 	}
 }
 
@@ -525,7 +527,8 @@ void HwDLL::Unhook()
 			ORIG_R_SetFrustum,
 			ORIG_SPR_Set,
 			ORIG_DrawCrosshair,
-			ORIG_Draw_FillRGBA);
+			ORIG_Draw_FillRGBA,
+			ORIG_Draw_ConsoleBackground);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -611,6 +614,7 @@ void HwDLL::Clear()
 	ORIG_SPR_Set = nullptr;
 	ORIG_DrawCrosshair = nullptr;
 	ORIG_Draw_FillRGBA = nullptr;
+	ORIG_Draw_ConsoleBackground = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1211,6 +1215,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SPR_Set)
 		DEF_FUTURE(DrawCrosshair)
 		DEF_FUTURE(Draw_FillRGBA)
+		DEF_FUTURE(Draw_ConsoleBackground)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1961,6 +1966,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(SPR_Set);
 		GET_FUTURE(DrawCrosshair);
 		GET_FUTURE(Draw_FillRGBA);
+		GET_FUTURE(Draw_ConsoleBackground);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -3708,6 +3714,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 
 	if (ORIG_R_DrawViewModel)
 		RegisterCVar(CVars::bxt_viewmodel_fov);
+
+	if (ORIG_Draw_ConsoleBackground)
+		RegisterCVar(CVars::bxt_disable_conback_in_demo);
 
 	CVars::sv_cheats.Assign(FindCVar("sv_cheats"));
 	CVars::fps_max.Assign(FindCVar("fps_max"));
@@ -5857,4 +5866,12 @@ HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, 
 		a = 255;
 
 	ORIG_Draw_FillRGBA(x, y, w, h, r, g, b, a);
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, Draw_ConsoleBackground, int, lines)
+{
+	if (CVars::bxt_disable_conback_in_demo.GetBool() && ClientDLL::GetInstance().pEngfuncs->pDemoAPI->IsPlayingback())
+		return;
+
+	ORIG_Draw_ConsoleBackground(lines);
 }

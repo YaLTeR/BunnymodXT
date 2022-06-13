@@ -539,6 +539,11 @@ namespace patterns
 			"HL-WON-1712",
 			"83 EC 08 53 56 57 68 E1 0D 00 00 FF 15"
 		);
+
+		PATTERNS(Draw_ConsoleBackground,
+			"HL-WON-1712",
+			"A1 ?? ?? ?? ?? 83 EC 64"
+		);
 	}
 
 	namespace server

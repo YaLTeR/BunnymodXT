@@ -1188,9 +1188,9 @@ HOOK_DEF_2(ClientDLL, int, __cdecl, HUD_UpdateClientData, client_data_t*, pcldat
 		pEngfuncs->pfnGetScreenInfo = [](SCREENINFO *pscrinfo) { return 0; };
 	}
 
-	const auto rv = ORIG_HUD_UpdateClientData(pcldata, flTime);
-
 	HwDLL::GetInstance().currentRenderFOV = pcldata->fov;
+
+	const auto rv = ORIG_HUD_UpdateClientData(pcldata, flTime);
 
 	if (norefresh && pEngfuncs) {
 		pEngfuncs->pfnGetScreenInfo = ORIG_GetScreenInfo;

@@ -179,8 +179,11 @@ namespace CustomHud
 
 	static inline int DrawBitmap(int x, int y, const int bitmap[], int width, int height, int r, int g, int b) {
 		for (int i = 0; i < height; i++)
-			for (int j = 0; j < width; j++)
+			for (int j = 0; j < width; j++) {
+				ClientDLL::GetInstance().bxt_hud_color_fill = true;
 				ClientDLL::GetInstance().pEngfuncs->pfnFillRGBA(x + j, y + i, 1, 1, r, g, b, bitmap[i * width + j]);
+				ClientDLL::GetInstance().bxt_hud_color_fill = false;
+			}
 
 		return width;
 	}

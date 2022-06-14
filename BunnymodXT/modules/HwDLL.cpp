@@ -5825,7 +5825,7 @@ HOOK_DEF_4(HwDLL, void, __cdecl, SPR_Set, HSPRITE_HL, hSprite, int, r, int, g, i
 {
 	auto& cl = ClientDLL::GetInstance();
 
-	if (cl.custom_hud_color_set && !cl.bxt_hud_color_set && !insideDrawCrosshair && !cl.insideDrawAmmoHistory)
+	if (cl.custom_hud_color_set && !cl.bxt_hud_color_set && !insideDrawCrosshair && !cl.insideDrawAmmoHistory && !cl.insideDrawNightVision)
 	{
 		r = cl.custom_r;
 		g = cl.custom_g;
@@ -5846,7 +5846,7 @@ HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, 
 {
 	auto& cl = ClientDLL::GetInstance();
 
-	if (cl.custom_hud_color_set)
+	if (cl.custom_hud_color_set && !cl.bxt_hud_color_fill)
 	{
 		r = cl.custom_r;
 		g = cl.custom_g;

@@ -74,8 +74,10 @@ public:
 	unsigned char custom_r, custom_g, custom_b;
 	bool custom_hud_color_set = false;
 	bool bxt_hud_color_set = false;
+	bool bxt_hud_color_fill = false;
 
 	bool insideDrawAmmoHistory = false;
+	bool insideDrawNightVision = false;
 
 	bool orig_righthand_not_found = false;
 

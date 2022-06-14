@@ -1450,28 +1450,42 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CHudFlashlight__drawNightVision, void*, 
 {
 	if (CVars::bxt_disable_nightvision_sprite.GetBool())
 		return;
+
+	insideDrawNightVision = true;
 	ORIG_CHudFlashlight__drawNightVision(thisptr);
+	insideDrawNightVision = false;
 }
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, CHudFlashlight__drawNightVision_Linux, void*, thisptr)
 {
 	if (CVars::bxt_disable_nightvision_sprite.GetBool())
 		return;
+
+	insideDrawNightVision = true;
 	ORIG_CHudFlashlight__drawNightVision_Linux(thisptr);
+	insideDrawNightVision = false;
 }
 
 HOOK_DEF_3(ClientDLL, bool, __fastcall, CHud__DrawHudNightVision, void*, thisptr, int, edx, float, flTime)
 {
 	if (CVars::bxt_disable_nightvision_sprite.GetBool())
 		return false;
-	else
-		return ORIG_CHud__DrawHudNightVision(thisptr, edx, flTime);
+
+	insideDrawNightVision = true;
+	auto ret = ORIG_CHud__DrawHudNightVision(thisptr, edx, flTime);
+	insideDrawNightVision = false;
+
+	return ret;
 }
 
 HOOK_DEF_2(ClientDLL, bool, __cdecl, CHud__DrawHudNightVision_Linux, void*, thisptr, float, flTime)
 {
 	if (CVars::bxt_disable_nightvision_sprite.GetBool())
 		return false;
-	else
-		return ORIG_CHud__DrawHudNightVision_Linux(thisptr, flTime);
+
+	insideDrawNightVision = true;
+	auto ret = ORIG_CHud__DrawHudNightVision_Linux(thisptr, flTime);
+	insideDrawNightVision = false;
+
+	return ret;
 }

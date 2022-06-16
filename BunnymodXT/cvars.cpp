@@ -35,6 +35,7 @@ namespace CVars
 	CVarWrapper bxt_viewmodel_semitransparent("bxt_viewmodel_semitransparent", "0");
 	CVarWrapper bxt_clear_green("bxt_clear_green", "0");
 	CVarWrapper bxt_force_fov("bxt_force_fov", "0");
+	CVarWrapper bxt_force_clear("bxt_force_clear", "0");
 	CVarWrapper bxt_fix_mouse_horizontal_limit("bxt_fix_mouse_horizontal_limit", "0");
 	CVarWrapper bxt_hud_game_color("bxt_hud_game_color", "");
 
@@ -203,6 +204,7 @@ namespace CVars
 		&bxt_viewmodel_semitransparent,
 		&bxt_clear_green,
 		&bxt_force_fov,
+		&bxt_force_clear,
 		&bxt_fix_mouse_horizontal_limit,
 		&bxt_hud_game_color,
 		&bxt_autojump_priority,

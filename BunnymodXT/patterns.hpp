@@ -860,6 +860,34 @@ namespace patterns
 			"TWHL-Tower-2",
 			"55 8B EC 83 EC 54 83 65 ?? 00"
 		);
+
+		PATTERNS(CHudHealth__DrawDamage,
+			"HL-Steampipe",
+			"83 EC 10 53 8B D9 8B",
+			"HL-WON",
+			"83 EC 10 55 8B E9 57",
+			"Echoes",
+			"55 8B EC 83 EC 34 89 4D ?? 8B 45 ?? 83 B8 ?? ?? ?? ?? 00",
+			"AoMDC",
+			"55 8B EC 83 EC 74 53 56 57 89 4D ?? A1 ?? ?? ?? ?? 83 E0 20",
+			"Halfquake-Trilogy",
+			"55 8B EC 83 EC 1C 56 8B F1",
+			"TWHL-Tower-2",
+			"55 8B EC 83 EC 14 53 56 8B F1"
+		);
+
+		PATTERNS(CHudHealth__DrawPain,
+			"HL-Steampipe",
+			"83 EC 10 56 8B F1 D9 46",
+			"Echoes",
+			"55 8B EC 83 EC 54 56 89 4D",
+			"AoMDC",
+			"55 8B EC 81 EC 94 00 00 00 53 56 57 89 4D ?? 8B 45",
+			"Halfquake-Trilogy",
+			"55 8B EC 83 EC 30 0F 57 C9 53 8B D9 F3 0F",
+			"TWHL-Tower-2",
+			"55 8B EC 83 EC 14 D9 05 ?? ?? ?? ?? 56 8B F1"
+		);
 	}
 
 	namespace shared

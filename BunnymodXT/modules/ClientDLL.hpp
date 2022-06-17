@@ -36,6 +36,10 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(void, __cdecl, ScaleColors, int* r, int* g, int* b, int a)
 	HOOK_DECL(int, __fastcall, HistoryResource__DrawAmmoHistory, void *thisptr, int edx, float flTime)
 	HOOK_DECL(int, __cdecl, HistoryResource__DrawAmmoHistory_Linux, void *thisptr, float flTime)
+	HOOK_DECL(int, __fastcall, CHudHealth__DrawDamage, void *thisptr, int edx, float flTime)
+	HOOK_DECL(int, __cdecl, CHudHealth__DrawDamage_Linux, void *thisptr, float flTime)
+	HOOK_DECL(int, __fastcall, CHudHealth__DrawPain, void *thisptr, int edx, float flTime)
+	HOOK_DECL(int, __cdecl, CHudHealth__DrawPain_Linux, void *thisptr, float flTime)
 	HOOK_DECL(void, __fastcall, CHudFlashlight__drawNightVision, void* thisptr)
 	HOOK_DECL(void, __cdecl, CHudFlashlight__drawNightVision_Linux, void* thisptr)
 	HOOK_DECL(bool, __fastcall, CHud__DrawHudNightVision, void *thisptr, int edx, float flTime)
@@ -77,6 +81,8 @@ public:
 	bool bxt_hud_color_fill = false;
 
 	bool insideDrawAmmoHistory = false;
+	bool insideDrawHealthDamage = false;
+	bool insideDrawHealthPain = false;
 	bool insideDrawNightVision = false;
 
 	bool orig_righthand_not_found = false;

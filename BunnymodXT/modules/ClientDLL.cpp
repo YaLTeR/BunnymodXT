@@ -110,6 +110,16 @@ extern "C" int __cdecl _ZN15HistoryResource15DrawAmmoHistoryEf(void *thisptr, fl
 	return ClientDLL::HOOKED_HistoryResource__DrawAmmoHistory_Linux(thisptr, flTime);
 }
 
+extern "C" int __cdecl _ZN10CHudHealth10DrawDamageEf(void *thisptr, float flTime)
+{
+	return ClientDLL::HOOKED_CHudHealth__DrawDamage_Linux(thisptr, flTime);
+}
+
+extern "C" int __cdecl _ZN10CHudHealth8DrawPainEf(void *thisptr, float flTime)
+{
+	return ClientDLL::HOOKED_CHudHealth__DrawPain_Linux(thisptr, flTime);
+}
+
 extern "C" void __cdecl _ZN14CHudFlashlight15drawNightVisionEv(void *thisptr)
 {
 	return ClientDLL::HOOKED_CHudFlashlight__drawNightVision_Linux(thisptr);
@@ -170,6 +180,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CStudioModelRenderer__StudioRenderModel, HOOKED_CStudioModelRenderer__StudioRenderModel,
 			ORIG_ScaleColors, HOOKED_ScaleColors,
 			ORIG_HistoryResource__DrawAmmoHistory, HOOKED_HistoryResource__DrawAmmoHistory,
+			ORIG_CHudHealth__DrawDamage, HOOKED_CHudHealth__DrawDamage,
+			ORIG_CHudHealth__DrawPain, HOOKED_CHudHealth__DrawPain,
 			ORIG_CHudFlashlight__drawNightVision, HOOKED_CHudFlashlight__drawNightVision,
 			ORIG_CHud__DrawHudNightVision, HOOKED_CHud__DrawHudNightVision);
 	}
@@ -207,6 +219,8 @@ void ClientDLL::Unhook()
 			ORIG_CStudioModelRenderer__StudioRenderModel,
 			ORIG_ScaleColors,
 			ORIG_HistoryResource__DrawAmmoHistory,
+			ORIG_CHudHealth__DrawDamage,
+			ORIG_CHudHealth__DrawPain,
 			ORIG_CHudFlashlight__drawNightVision,
 			ORIG_CHud__DrawHudNightVision);
 	}
@@ -246,6 +260,10 @@ void ClientDLL::Clear()
 	ORIG_ScaleColors = nullptr;
 	ORIG_HistoryResource__DrawAmmoHistory = nullptr;
 	ORIG_HistoryResource__DrawAmmoHistory_Linux = nullptr;
+	ORIG_CHudHealth__DrawDamage = nullptr;
+	ORIG_CHudHealth__DrawDamage_Linux = nullptr;
+	ORIG_CHudHealth__DrawPain = nullptr;
+	ORIG_CHudHealth__DrawPain_Linux = nullptr;
 	ORIG_CHudFlashlight__drawNightVision = nullptr;
 	ORIG_CHudFlashlight__drawNightVision_Linux = nullptr;
 	ORIG_CHud__DrawHudNightVision = nullptr;
@@ -411,6 +429,12 @@ void ClientDLL::FindStuff()
 	auto fHistoryResource__DrawAmmoHistory = FindAsync(
 		ORIG_HistoryResource__DrawAmmoHistory,
 		patterns::client::HistoryResource__DrawAmmoHistory);
+	auto fCHudHealth__DrawDamage = FindAsync(
+		ORIG_CHudHealth__DrawDamage,
+		patterns::client::CHudHealth__DrawDamage);
+	auto fCHudHealth__DrawPain = FindAsync(
+		ORIG_CHudHealth__DrawPain,
+		patterns::client::CHudHealth__DrawPain);
 	auto fCHudFlashlight__drawNightVision = FindAsync(
 		ORIG_CHudFlashlight__drawNightVision,
 		patterns::client::CHudFlashlight__drawNightVision);
@@ -626,7 +650,7 @@ void ClientDLL::FindStuff()
 				EngineDevMsg("[client dll] Found ScaleColors at %p.\n", ORIG_ScaleColors);
 			} else {
 				EngineDevWarning("[client dll] Could not find ScaleColors.\n");
-				EngineWarning("[client dll] Changing HUD color for ammo history is not available.\n");
+				EngineWarning("[client dll] Changing HUD color for ammo history and damage icons is not available.\n");
 			}
 		}
 	}
@@ -641,6 +665,34 @@ void ClientDLL::FindStuff()
 				EngineDevMsg("[client dll] Found HistoryResource::DrawAmmoHistory [Linux] at %p.\n", ORIG_HistoryResource__DrawAmmoHistory_Linux);
 			} else {
 				EngineDevWarning("[client dll] Could not find HistoryResource::DrawAmmoHistory [Linux].\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fCHudHealth__DrawDamage.get();
+		if (ORIG_CHudHealth__DrawDamage) {
+			EngineDevMsg("[client dll] Found CHudHealth::DrawDamage at %p (using the %s pattern).\n", ORIG_CHudHealth__DrawDamage, pattern->name());
+		} else {
+			ORIG_CHudHealth__DrawDamage_Linux = reinterpret_cast<_CHudHealth__DrawDamage_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN10CHudHealth10DrawDamageEf"));
+			if (ORIG_CHudHealth__DrawDamage_Linux) {
+				EngineDevMsg("[client dll] Found CHudHealth::DrawDamage [Linux] at %p.\n", ORIG_CHudHealth__DrawDamage_Linux);
+			} else {
+				EngineDevWarning("[client dll] Could not find CHudHealth::DrawDamage [Linux].\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fCHudHealth__DrawPain.get();
+		if (ORIG_CHudHealth__DrawPain) {
+			EngineDevMsg("[client dll] Found CHudHealth::DrawPain at %p (using the %s pattern).\n", ORIG_CHudHealth__DrawPain, pattern->name());
+		} else {
+			ORIG_CHudHealth__DrawPain_Linux = reinterpret_cast<_CHudHealth__DrawPain_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN10CHudHealth8DrawPainEf"));
+			if (ORIG_CHudHealth__DrawPain_Linux) {
+				EngineDevMsg("[client dll] Found CHudHealth::DrawPain [Linux] at %p.\n", ORIG_CHudHealth__DrawPain_Linux);
+			} else {
+				EngineDevWarning("[client dll] Could not find CHudHealth::DrawPain [Linux].\n");
 			}
 		}
 	}
@@ -1413,13 +1465,13 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Lin
 
 HOOK_DEF_4(ClientDLL, void, __cdecl, ScaleColors, int*, r, int*, g, int*, b, int, a)
 {
-	if (custom_hud_color_set && insideDrawAmmoHistory) {
+	if (custom_hud_color_set && !insideDrawHealthPain && (insideDrawAmmoHistory || insideDrawHealthDamage)) {
 		*r = custom_r;
 		*g = custom_g;
 		*b = custom_b;
 	}
 
-	if (CVars::bxt_hud_game_alpha_max_clientside.GetBool() && !insideDrawAmmoHistory)
+	if (CVars::bxt_hud_game_alpha_max_clientside.GetBool() && !insideDrawAmmoHistory && !insideDrawHealthDamage && !insideDrawHealthPain)
 		a = 255;
 
 	ORIG_ScaleColors(r, g, b, a);
@@ -1428,9 +1480,7 @@ HOOK_DEF_4(ClientDLL, void, __cdecl, ScaleColors, int*, r, int*, g, int*, b, int
 HOOK_DEF_3(ClientDLL, int, __fastcall, HistoryResource__DrawAmmoHistory, void*, thisptr, int, edx, float, flTime)
 {
 	insideDrawAmmoHistory = true;
-
 	auto ret = ORIG_HistoryResource__DrawAmmoHistory(thisptr, edx, flTime);
-
 	insideDrawAmmoHistory = false;
 
 	return ret;
@@ -1439,10 +1489,44 @@ HOOK_DEF_3(ClientDLL, int, __fastcall, HistoryResource__DrawAmmoHistory, void*, 
 HOOK_DEF_2(ClientDLL, int, __cdecl, HistoryResource__DrawAmmoHistory_Linux, void*, thisptr, float, flTime)
 {
 	insideDrawAmmoHistory = true;
-
 	auto ret = ORIG_HistoryResource__DrawAmmoHistory_Linux(thisptr, flTime);
-
 	insideDrawAmmoHistory = false;
+
+	return ret;
+}
+
+HOOK_DEF_3(ClientDLL, int, __fastcall, CHudHealth__DrawDamage, void*, thisptr, int, edx, float, flTime)
+{
+	insideDrawHealthDamage = true;
+	auto ret = ORIG_CHudHealth__DrawDamage(thisptr, edx, flTime);
+	insideDrawHealthDamage = false;
+
+	return ret;
+}
+
+HOOK_DEF_2(ClientDLL, int, __cdecl, CHudHealth__DrawDamage_Linux, void*, thisptr, float, flTime)
+{
+	insideDrawHealthDamage = true;
+	auto ret = ORIG_CHudHealth__DrawDamage_Linux(thisptr, flTime);
+	insideDrawHealthDamage = false;
+
+	return ret;
+}
+
+HOOK_DEF_3(ClientDLL, int, __fastcall, CHudHealth__DrawPain, void*, thisptr, int, edx, float, flTime)
+{
+	insideDrawHealthPain = true;
+	auto ret = ORIG_CHudHealth__DrawPain(thisptr, edx, flTime);
+	insideDrawHealthPain = false;
+
+	return ret;
+}
+
+HOOK_DEF_2(ClientDLL, int, __cdecl, CHudHealth__DrawPain_Linux, void*, thisptr, float, flTime)
+{
+	insideDrawHealthPain = true;
+	auto ret = ORIG_CHudHealth__DrawPain_Linux(thisptr, flTime);
+	insideDrawHealthPain = false;
 
 	return ret;
 }

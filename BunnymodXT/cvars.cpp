@@ -66,6 +66,7 @@ namespace CVars
 	CVarWrapper bxt_disable_autosave("bxt_disable_autosave", "0");
 	CVarWrapper bxt_disable_changelevel("bxt_disable_changelevel", "0");
 	CVarWrapper bxt_force_duck("bxt_force_duck", "0");
+	CVarWrapper bxt_force_jumpless("bxt_force_jumpless", "0");
 	CVarWrapper bxt_render_far_entities("bxt_render_far_entities", "0");
 
 	// Clientside CVars
@@ -198,6 +199,7 @@ namespace CVars
 		&bxt_show_only_viewmodel,
 		&bxt_force_zmax,
 		&bxt_force_duck,
+		&bxt_force_jumpless,
 		&bxt_viewmodel_fov,
 		&bxt_viewmodel_disable_idle,
 		&bxt_viewmodel_disable_equip,

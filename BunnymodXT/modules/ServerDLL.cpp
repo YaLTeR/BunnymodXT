@@ -291,7 +291,6 @@ void ServerDLL::FindStuff()
 			offPunchangles = 0xA0;
 			offWaterlevel = 0xE4;
 			offInDuck = 0x90;
-			offFlags = 0xB8;
 			offBasevelocity = 0x74;
 		});
 
@@ -303,6 +302,7 @@ void ServerDLL::FindStuff()
 			offPlayerIndex = 0;
 			offOldbuttons = 200;
 			offOnground = 224;
+			offFlags = 0xB8;
 			if (pattern == patterns::shared::PM_Jump.cend()) // Linux.
 			{
 				ptrdiff_t bhopcapAddr;
@@ -1086,6 +1086,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_PM_Jump) {
 		REG(bxt_autojump);
 		REG(bxt_autojump_priority);
+		REG(bxt_force_jumpless);
 	}
 	if (!ORIG_PM_PreventMegaBunnyJumping && !pBhopcapWindows)
 		HwDLL::GetInstance().SetCVarValue(CVars::bxt_bhopcap, "0");
@@ -1134,6 +1135,24 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
 
 	int *oldbuttons = reinterpret_cast<int*>(pmove + offOldbuttons);
 	int orig_oldbuttons = *oldbuttons;
+
+	int *flags = reinterpret_cast<int*>(pmove + offFlags);
+
+	static bool reset_waterjump_flag = false;
+
+	if (CVars::bxt_force_jumpless.GetBool())
+	{
+		*flags |= FL_WATERJUMP;
+		reset_waterjump_flag = true;
+
+		return;
+	}
+
+	if (reset_waterjump_flag)
+	{
+		*flags &= ~FL_WATERJUMP;
+		reset_waterjump_flag = false;
+	}
 
 	if (CVars::bxt_autojump.GetBool())
 	{

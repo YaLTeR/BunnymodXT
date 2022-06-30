@@ -955,6 +955,9 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
 	int *oldbuttons = reinterpret_cast<int*>(pmove + offOldbuttons);
 	int orig_oldbuttons = *oldbuttons;
 
+	if (CVars::bxt_force_jumpless.GetBool())
+		return;
+
 	if (CVars::bxt_autojump_prediction.GetBool())
 	{
 		if ((orig_onground != -1) && !cantJumpNextTime) {

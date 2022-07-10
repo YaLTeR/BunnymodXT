@@ -83,13 +83,6 @@ class HwDLL : public IHookableNameFilterOrdered
 		unsigned cursize;
 	};
 
-	struct cmdalias_t
-	{
-		cmdalias_t* next;
-		char name[32];
-		char* value;
-	};
-
 	struct svs_t
 	{
 		char unk[4];

@@ -260,6 +260,24 @@ typedef struct enginefuncs_s
 	qboolean	(*pfnVoice_SetClientListening)(int iReceiver, int iSender, qboolean bListen);
 
 	const char *(*pfnGetPlayerAuthId)		( edict_t *e );
+
+	void	*(*pfnSequenceGet)( const char *fileName, const char *entryName );
+	void	*(*pfnSequencePickSentence)( const char *groupName, int pickMethod, int *picked );
+	int	(*pfnGetFileSize)( const char *filename );
+	unsigned int (*pfnGetApproxWavePlayLen)( const char *filepath );
+	int	(*pfnIsCareerMatch)( void );
+	int	(*pfnGetLocalizedStringLength)( const char *label );
+	void	(*pfnRegisterTutorMessageShown)( int mid );
+	int	(*pfnGetTimesTutorMessageShown)( int mid );
+	void	(*pfnProcessTutorMessageDecayBuffer)( int *buffer, int bufferLength );
+	void	(*pfnConstructTutorMessageDecayBuffer)( int *buffer, int bufferLength );
+	void	(*pfnResetTutorMessageDecayData)( void );
+	void	(*pfnQueryClientCvarValue)( const edict_t *player, const char *cvarName );
+	void	(*pfnQueryClientCvarValue2)( const edict_t *player, const char *cvarName, int requestID );
+	int	(*CheckParm)( char *parm, char **ppnext );
+
+	// added in 8279
+	edict_t* (*pfnPEntityOfEntIndexAllEntities)( int iEntIndex );
 } enginefuncs_t;
 // ONLY ADD NEW FUNCTIONS TO THE END OF THIS STRUCT.  INTERFACE VERSION IS FROZEN AT 138
 
@@ -379,7 +397,7 @@ typedef struct
 	short			flags;
 } TYPEDESCRIPTION;
 
-// #define ARRAYSIZE(p)		(sizeof(p)/sizeof(p[0]))
+#define ARRAYSIZE_HL(p)		(sizeof(p)/sizeof(p[0]))
 
 typedef struct 
 {
@@ -480,6 +498,8 @@ typedef struct
 	void			(*pfnOnFreeEntPrivateData)(edict_t *pEnt);
 	void			(*pfnGameShutdown)(void);
 	int				(*pfnShouldCollide)( edict_t *pentTouched, edict_t *pentOther );
+	void	(*pfnCvarValue)( const edict_t *pEnt, const char *value ); 
+	void	(*pfnCvarValue2)( const edict_t *pEnt, int requestID, const char *cvarName, const char *value );
 } NEW_DLL_FUNCTIONS;
 typedef int	(*NEW_DLL_FUNCTIONS_FN)( NEW_DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion );
 

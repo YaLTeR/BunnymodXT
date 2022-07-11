@@ -1,0 +1,418 @@
+#include "discord_integration.hpp"
+
+namespace discord_integration
+{
+	namespace
+	{
+		// From Discord developer dashboard.
+		constexpr const char CLIENT_ID[] = "962015108714885150";
+
+		// Text names of game states
+		const std::string STATE_NAMES[] = {
+			"In the menu"s,
+			"Playing"s
+		};
+
+		// Possible game states.
+		enum class game_state
+		{
+			NOT_PLAYING = 0,
+			PLAYING
+		};
+
+		// For tracking if we're in-game.
+		bool updated_client_data = false;
+
+		// Start timestamp
+		int64_t start_timestamp;
+
+		// Class that handles tracking state changes.
+		class DiscordState {
+		public:
+			DiscordState()
+				: cur_state(game_state::NOT_PLAYING)
+				, dirty(true)
+			{
+				update_presence();
+			};
+
+			inline void set_game_state(game_state new_game_state)
+			{
+				if (cur_state != new_game_state)
+				{
+					cur_state = new_game_state;
+
+					dirty = true;
+				}
+			}
+
+			inline static size_t get_map_name(char* dest, size_t count)
+			{
+				auto map_path = ClientDLL::GetInstance().pEngfuncs->pfnGetLevelName();
+
+				const char* slash = strrchr(map_path, '/');
+				if (!slash)
+					slash = map_path - 1;
+
+				const char* dot = strrchr(map_path, '.');
+				if (!dot)
+					dot = map_path + strlen(map_path);
+
+				size_t bytes_to_copy = std::min(count - 1, static_cast<size_t>(dot - slash - 1));
+
+				strncpy(dest, slash + 1, bytes_to_copy);
+				dest[bytes_to_copy] = '\0';
+
+				return bytes_to_copy;
+			}
+
+			inline game_state get_game_state() const
+			{
+				return cur_state;
+			}
+
+			inline void update_presence_if_dirty()
+			{
+				if (HwDLL::GetInstance().Called_Timer)
+				{
+					HwDLL::GetInstance().Called_Timer = false;
+
+					dirty = true;
+				}
+
+				if (dirty)
+					update_presence();
+			}
+
+		protected:
+			void update_presence()
+			{
+				dirty = false;
+
+				DiscordRichPresence presence{};
+
+				std::string state = STATE_NAMES[static_cast<size_t>(cur_state)];
+
+				// Default icon.
+				presence.largeImageKey = "default";
+
+				// Declare these outside of the following block, so they are in scope for Discord_UpdatePresence().
+				char map_name[64];
+				char buffer_details[128];
+
+				// Convert BXT timer to seconds
+				const auto& gt = CustomHud::GetTime();
+				int total_time = (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds;
+
+				if (cur_state != game_state::NOT_PLAYING)
+				{
+					if (ClientDLL::GetInstance().pEngfuncs)
+					{
+						// Get the map name and icon.
+						get_map_name(map_name, ARRAYSIZE_HL(map_name));
+						if (map_name[0])
+						{
+							// Game directory
+							const char* gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+
+							// Adjust to lowercase
+							unsigned char *tptr = (unsigned char *)map_name;
+							while (*tptr) {
+								*tptr = tolower(*tptr);
+								tptr++;
+							}
+
+							snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s", map_name, gameDir);
+							presence.largeImageText = map_name;
+							presence.details = buffer_details;
+
+							if (!strncmp(gameDir, "valve", 5) || !strncmp(gameDir, "abh", 3) || !strncmp(gameDir, "glitchless", 10))
+							{
+								if (hl1_map_name_to_thumbnail.find(map_name) != hl1_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = hl1_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = hl1_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
+							else if (!strncmp(gameDir, "gearbox", 7))
+							{
+								if (op4_map_name_to_thumbnail.find(map_name) != op4_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = op4_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = op4_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
+							else if (!strncmp(gameDir, "bshift", 6))
+							{
+								if (bs_map_name_to_thumbnail.find(map_name) != bs_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = bs_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = bs_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
+							else if (!strncmp(gameDir, "rewolf", 6))
+							{
+								if (gmc_map_name_to_thumbnail.find(map_name) != gmc_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = gmc_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = gmc_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
+							else if (!strncmp(gameDir, "czeror", 6))
+							{
+								if (czds_map_name_to_thumbnail.find(map_name) != czds_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = czds_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = czds_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
+							else if (!strncmp(gameDir, "wantedsp", 8))
+							{
+								if (wanted_map_name_to_thumbnail.find(map_name) != wanted_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = wanted_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = wanted_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
+							else if (!strncmp(gameDir, "echoes", 6))
+							{
+								if (echoes_map_name_to_thumbnail.find(map_name) != echoes_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = echoes_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = echoes_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
+							else if (!strncmp(gameDir, "caged_fgs", 9))
+							{
+								if (caged_map_name_to_thumbnail.find(map_name) != caged_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = caged_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = caged_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
+							else if (!strncmp(gameDir, "poke646", 7))
+							{
+								if (poke646_map_name_to_thumbnail.find(map_name) != poke646_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = poke646_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = poke646_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
+							else if (!strncmp(gameDir, "paranoia", 8))
+							{
+								if (paranoia_map_name_to_thumbnail.find(map_name) != paranoia_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = paranoia_map_name_to_thumbnail.find(map_name)->second.data();
+
+									if (!strncmp(presence.largeImageKey, "paranoiachapter1", 16))
+										presence.largeImageText = "Army";
+									else if (!strncmp(presence.largeImageKey, "paranoiachapter2", 16))
+										presence.largeImageText = "Industrial";
+									else if (!strncmp(presence.largeImageKey, "paranoiachapter3", 16))
+										presence.largeImageText = "Bunker";
+								}
+							}
+							else if (!strncmp(gameDir, "twhltower2", 10))
+							{
+								if (twhltower2_map_name_to_thumbnail.find(map_name) != twhltower2_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = twhltower2_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = twhltower2_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
+							else if (!strncmp(gameDir, "AoMDC", 5))
+							{
+								if (aomdc_map_name_to_thumbnail.find(map_name) != aomdc_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = aomdc_map_name_to_thumbnail.find(map_name)->second.data();
+
+									if (aomdc_map_name_to_chapter_misc.find(map_name) != aomdc_map_name_to_chapter_misc.cend())
+										presence.largeImageText = aomdc_map_name_to_chapter_misc.find(map_name)->second.data();
+									else if (!strncmp(map_name, "1", 1) || !strncmp(map_name, "cityx", 5))
+										presence.largeImageText = "Ending 1 or 4";
+									else if (!strncmp(map_name, "2", 1))
+										presence.largeImageText = "Ending 2 or 4";
+									else if (!strncmp(map_name, "3", 1) || !strncmp(map_name, "cityz", 5))
+										presence.largeImageText = "Ending 3 or 4";
+									else if (!strncmp(map_name, "4", 1))
+										presence.largeImageText = "Ending 4";
+									else
+										presence.largeImageText = "All Endings";
+								}
+							}
+							else if (!strncmp(gameDir, "hrp", 3))
+							{
+								if (hlrats_parasomnia_map_name_to_thumbnail.find(map_name) != hlrats_parasomnia_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = hlrats_parasomnia_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = hlrats_parasomnia_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
+							else if (!strncmp(gameDir, "hl_urbicide", 11))
+							{
+								if (urbicide_maps.find(map_name) != urbicide_maps.cend())
+								{
+									presence.largeImageKey = map_name;
+									presence.largeImageText = map_name;
+								}
+							}
+							else if (!strncmp(gameDir, "Hunger", 6))
+							{
+								if (th_map_name_to_thumbnail.find(map_name) != th_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = th_map_name_to_thumbnail.find(map_name)->second.data();
+
+									if (!strncmp(presence.largeImageKey, "thchapter1", 10))
+										presence.largeImageText = "They Hunger Episode 1";
+									else if (!strncmp(presence.largeImageKey, "thchapter2", 10))
+										presence.largeImageText = "They Hunger Episode 2";
+									else if (!strncmp(presence.largeImageKey, "thchapter3", 10))
+										presence.largeImageText = "They Hunger Episode 3";
+								}
+							}
+						}
+					}
+				}
+
+				char buffer_state[128];
+				char buffer_stop[128];
+
+				const auto current_timestamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+				start_timestamp = current_timestamp - total_time;
+
+				const char *skillName;
+
+				switch (CVars::skill.GetInt())
+				{
+					case 1:
+						skillName = "| Easy";
+						break;
+					case 2:
+						skillName = "| Normal";
+						break;
+					case 3:
+						skillName = "| Hard";
+						break;
+					default:
+						skillName = "";
+				}
+
+				snprintf(buffer_state, sizeof(buffer_state), "%s | FPS: %.1f %s", state.c_str(), CVars::fps_max.GetFloat(), skillName);
+				presence.state = buffer_state;
+
+				if (CustomHud::GetCountingTime())
+				{
+					if (CVars::bxt_autopause.GetBool()) {
+						presence.smallImageKey = "discord_blue";
+						presence.smallImageText = "Segmenting";
+					} else if (CustomHud::GetInvalidRun()) {
+						presence.smallImageKey = "discord_pink";
+						presence.smallImageText = "Invalid run (game crash prevented by BXT)";
+					} else {
+						presence.smallImageKey = "discord_green";
+						presence.smallImageText = "Run in progress";
+					}
+
+					presence.startTimestamp = start_timestamp;
+				}
+				else if ((gt.milliseconds == 0 && total_time == 0) && !CustomHud::GetCountingTime())
+				{
+					presence.smallImageKey = "discord_red";
+					presence.smallImageText = "Not running";
+					presence.startTimestamp = current_timestamp;
+				}
+				else if ((gt.milliseconds > 0 || total_time > 0) && !CustomHud::GetCountingTime())
+				{
+					snprintf(buffer_stop, sizeof(buffer_stop), "Timer stopped at %d:%02d:%02d.%03d", gt.hours, gt.minutes, gt.seconds, gt.milliseconds);
+					presence.state = buffer_stop;
+					presence.smallImageKey = "discord_yellow";
+					presence.smallImageText = "Timer stopped";
+					presence.startTimestamp = 0;
+				}
+
+				presence.buttonLabel[0] = "Download";
+				presence.buttonLabel[1] = "Join SourceRuns Discord";
+				presence.buttonUrl[0] = "https://github.com/YaLTeR/BunnymodXT/releases";
+				presence.buttonUrl[1] = "https://discord.gg/sourceruns";
+
+				Discord_UpdatePresence(&presence);
+			}
+
+			game_state cur_state;
+
+			// Flag indicating there are some changes not sent to Discord yet.
+			bool dirty;
+		};
+
+		// Pointer so the constructor doesn't run too early.
+		std::unique_ptr<DiscordState> discord_state;
+
+		void handle_ready(const DiscordUser*)
+		{
+			if (ClientDLL::GetInstance().pEngfuncs)
+				ClientDLL::GetInstance().pEngfuncs->Con_Printf(const_cast<char*>("Connected to Discord.\n"));
+		}
+
+		void handle_errored(int error_code, const char* message)
+		{
+			if (ClientDLL::GetInstance().pEngfuncs)
+				ClientDLL::GetInstance().pEngfuncs->Con_Printf(const_cast<char*>("Discord error (%d): %s\n"), error_code, message);
+		}
+
+		void handle_disconnected(int error_code, const char* message)
+		{
+			if (ClientDLL::GetInstance().pEngfuncs)
+				ClientDLL::GetInstance().pEngfuncs->Con_Printf(const_cast<char*>("Disconnected from Discord (%d): %s\n"), error_code, message);
+		}
+	}
+
+	void initialize()
+	{
+		DiscordEventHandlers handlers{};
+		handlers.ready = handle_ready;
+		handlers.errored = handle_errored;
+		handlers.disconnected = handle_disconnected;
+		Discord_Initialize(CLIENT_ID, &handlers, 1, NULL);
+
+		discord_state = std::make_unique<DiscordState>();
+
+		Discord_RunCallbacks();
+	}
+
+	void on_update_client_data()
+	{
+		updated_client_data = true;
+	}
+
+	void on_frame()
+	{
+		static bool rpc_initialized = false;
+
+		if (!rpc_initialized)
+		{
+			initialize();
+			rpc_initialized = true;
+		}
+
+		float FPS_current = CVars::fps_max.GetFloat();
+		static float FPS_previous = FPS_current;
+
+		if (FPS_current != FPS_previous)
+			HwDLL::GetInstance().Called_Timer = true;
+
+		FPS_previous = FPS_current;
+
+		// Check if we're still in-game.
+		if (!updated_client_data)
+			discord_state->set_game_state(game_state::NOT_PLAYING);
+		else if (discord_state->get_game_state() == game_state::NOT_PLAYING)
+			// Only set this if we weren't playing, otherwise we might overwrite some other state.
+			discord_state->set_game_state(game_state::PLAYING);
+
+		updated_client_data = false;
+
+		discord_state->update_presence_if_dirty();
+
+		Discord_RunCallbacks();
+	}
+}

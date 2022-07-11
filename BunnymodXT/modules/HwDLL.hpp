@@ -325,6 +325,8 @@ public:
 		return ppGlobals->pStringBase + string;
 	}
 
+	bool Called_Timer = false;
+
 	void ResetStateBeforeTASPlayback();
 	void StartTASPlayback();
 

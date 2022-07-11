@@ -54,6 +54,7 @@ namespace CVars
 	CVarWrapper sv_bounce;
 	CVarWrapper fps_max;
 	CVarWrapper default_fov;
+	CVarWrapper skill;
 
 	// Serverside CVars
 	CVarWrapper bxt_autojump("bxt_autojump", "0");
@@ -230,6 +231,7 @@ namespace CVars
 		&sv_bounce,
 		&fps_max,
 		&default_fov,
+		&skill,
 		&bxt_autojump,
 		&bxt_bhopcap,
 		&bxt_timer_autostop,

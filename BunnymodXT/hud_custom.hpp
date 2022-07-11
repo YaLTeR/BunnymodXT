@@ -29,6 +29,8 @@ namespace CustomHud
 	void SendTimeUpdate();
 	void SaveTimeToDemo();
 	Interprocess::Time GetTime();
+	bool GetCountingTime();
+	bool GetInvalidRun();
 
 	const SCREENINFO& GetScreenInfo();
 

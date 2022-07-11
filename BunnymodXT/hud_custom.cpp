@@ -1635,6 +1635,16 @@ namespace CustomHud
 			milliseconds };
 	}
 
+	bool GetCountingTime()
+	{
+		return countingTime;
+	}
+
+	bool GetInvalidRun()
+	{
+		return invalidRun;
+	}
+
 	const SCREENINFO& GetScreenInfo()
 	{
 		return si;

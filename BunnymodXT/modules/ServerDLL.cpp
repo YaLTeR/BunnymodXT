@@ -1690,7 +1690,12 @@ void ServerDLL::OnMultiManagerFired(const char *targetname)
 void ServerDLL::DoAutoStopTasks()
 {
 	if (CVars::bxt_timer_autostop.GetBool())
+	{
+		if (CustomHud::GetCountingTime())
+			HwDLL::GetInstance().Called_Timer = true;
+
 		CustomHud::SetCountingTime(false);
+	}
 	Interprocess::WriteGameEnd(CustomHud::GetTime());
 	CustomHud::SaveTimeToDemo();
 	RuntimeData::Add(RuntimeData::GameEndMarker{});
@@ -1982,6 +1987,9 @@ void ServerDLL::DoWouldCrashMessage()
 
 	CustomHud::SaveTimeToDemo();
 	CustomHud::SetInvalidRun(true);
+
+	if (CustomHud::GetCountingTime())
+		HwDLL::GetInstance().Called_Timer = true;
 
 	// Some people might be running with LiveSplit only and hud_saytext CAN be 0, enable timer for those players, so they know
 	if (!CVars::bxt_hud_timer.GetBool())

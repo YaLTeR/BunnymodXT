@@ -167,6 +167,7 @@ namespace CVars
 	extern CVarWrapper sv_bounce;
 	extern CVarWrapper fps_max;
 	extern CVarWrapper default_fov;
+	extern CVarWrapper skill;
 
 	// Serverside CVars
 	extern CVarWrapper bxt_autojump;

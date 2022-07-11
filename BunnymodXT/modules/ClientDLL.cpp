@@ -10,6 +10,7 @@
 #include "../cvars.hpp"
 #include "../hud_custom.hpp"
 #include "../triangle_drawing.hpp"
+#include "../discord_integration.hpp"
 #include <GL/gl.h>
 
 // Linux hooks.
@@ -1204,6 +1205,8 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 		pEngfuncs->Con_Printf(const_cast<char*>("HUD_Frame time: %f\n"), time);
 
 	SeedsQueued = 0;
+
+	discord_integration::on_frame();
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_DrawTransparentTriangles)
@@ -1251,6 +1254,8 @@ HOOK_DEF_2(ClientDLL, int, __cdecl, HUD_UpdateClientData, client_data_t*, pcldat
 	if (norefresh && pEngfuncs) {
 		pEngfuncs->pfnGetScreenInfo = ORIG_GetScreenInfo;
 	}
+
+	discord_integration::on_update_client_data();
 
 	return rv;
 }

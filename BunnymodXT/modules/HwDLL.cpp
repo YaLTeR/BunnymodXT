@@ -2667,6 +2667,9 @@ struct HwDLL::Cmd_BXT_Timer_Start
 
 	static void handler()
 	{
+		if (!CustomHud::GetCountingTime())
+			HwDLL::GetInstance().Called_Timer = true;
+
 		CustomHud::SaveTimeToDemo();
 		return CustomHud::SetCountingTime(true);
 	}
@@ -2678,6 +2681,9 @@ struct HwDLL::Cmd_BXT_Timer_Stop
 
 	static void handler()
 	{
+		if (CustomHud::GetCountingTime())
+			HwDLL::GetInstance().Called_Timer = true;
+
 		CustomHud::SaveTimeToDemo();
 		return CustomHud::SetCountingTime(false);
 	}
@@ -2689,6 +2695,12 @@ struct HwDLL::Cmd_BXT_Timer_Reset
 
 	static void handler()
 	{
+		const auto& gt = CustomHud::GetTime();
+		int total_time = (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds;
+
+		if (gt.milliseconds > 0 || total_time > 0)
+			HwDLL::GetInstance().Called_Timer = true;
+
 		CustomHud::SaveTimeToDemo();
 		CustomHud::SetInvalidRun(false);
 		return CustomHud::ResetTime();
@@ -3815,6 +3827,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	CVars::sv_cheats.Assign(FindCVar("sv_cheats"));
 	CVars::fps_max.Assign(FindCVar("fps_max"));
 	CVars::default_fov.Assign(FindCVar("default_fov"));
+	CVars::skill.Assign(FindCVar("skill"));
 
 	FindCVarsIfNeeded();
 

@@ -80,6 +80,26 @@ git_describe(GIT_TAG --tags)
 git_local_changes(GIT_LOCAL_CHANGES)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/BunnymodXT/git_revision.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/BunnymodXT/git_revision.cpp" @ONLY)
 
+# Add discord-rpc
+set(BUILD_EXAMPLES OFF CACHE BOOL "build discord-rpc examples" FORCE)
+set(CLANG_FORMAT_SUFFIX "-dummy")
+add_subdirectory(discord-rpc)
+
+if(MSVC)
+	target_compile_options(discord-rpc PRIVATE
+		/wd4191 # 'reinterpret_cast': unsafe conversion from 'FARPROC' to 'RegSetKeyValueW_T'
+		/wd4571 # Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
+		/wd4623 # 'std::_UInt_is_zero': default constructor was implicitly defined as deleted
+		/wd5039 # '_Thrd_start': pointer or reference to potentially throwing function passed to extern C function under -EHc. Undefined behavior may occur if this function throws an exception.
+		/wd5045 # "Compiler will insert Spectre mitigation if /Qspectre is enabled"
+		)
+else(MSVC)
+	if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		target_compile_options(discord-rpc PRIVATE
+			$<$<COMPILE_LANGUAGE:CXX>:-Wno-class-memaccess>)
+	endif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+endif(MSVC)
+
 find_package (Boost 1.57.0 REQUIRED)
 include_directories (SYSTEM ${Boost_INCLUDE_DIR})
 
@@ -128,6 +148,7 @@ set (HEADER_FILES
 	BunnymodXT/cmd_wrapper.hpp
 	BunnymodXT/custom_triggers.hpp
 	BunnymodXT/cvars.hpp
+	BunnymodXT/discord_integration.hpp
 	BunnymodXT/hud_custom.hpp
 	BunnymodXT/interprocess.hpp
 	BunnymodXT/modules.hpp
@@ -158,6 +179,7 @@ set (SOURCE_FILES
 	BunnymodXT/modules/SDL.cpp
 	BunnymodXT/custom_triggers.cpp
 	BunnymodXT/cvars.cpp
+	BunnymodXT/discord_integration.cpp
 	BunnymodXT/hud_custom.cpp
 	BunnymodXT/triangle_drawing.cpp
 	BunnymodXT/triangle_utils.cpp
@@ -199,7 +221,7 @@ if (NOT MSVC)
 	endif ()
 endif ()
 
-target_link_libraries (BunnymodXT hltas-cpp hlstrafe taslogger)
+target_link_libraries (BunnymodXT hltas-cpp hlstrafe taslogger discord-rpc)
 if (NOT MSVC)
 	target_link_libraries (BunnymodXT pthread rt GL)
 else()

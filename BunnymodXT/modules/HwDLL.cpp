@@ -3503,6 +3503,28 @@ struct HwDLL::Cmd_BXT_TAS_Client_Load_Received_Script
 	}
 };
 
+struct HwDLL::Cmd_BXT_Show_Bullets_Clear
+{
+	NO_USAGE()
+
+	static void handler() {
+		auto& serverDLL = ServerDLL::GetInstance();
+
+		serverDLL.ClearBulletsTrace();
+	}
+};
+
+struct HwDLL::Cmd_BXT_Show_Bullets_Enemy_Clear
+{
+	NO_USAGE()
+
+	static void handler() {
+		auto& serverDLL = ServerDLL::GetInstance();
+
+		serverDLL.ClearBulletsEnemyTrace();
+	}
+};
+
 extern "C" DLLEXPORT void bxt_tas_load_script_from_string(const char *script)
 {
 	auto& hw = HwDLL::GetInstance();
@@ -3806,6 +3828,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Become_Simulator_Client, Handler<>>("bxt_tas_become_simulator_client");
 	wrapper::Add<Cmd_BXT_TAS_Server_Send_Command, Handler<const char*>>("_bxt_tas_server_send_command");
 	wrapper::Add<Cmd_BXT_TAS_Client_Load_Received_Script, Handler<>>("_bxt_tas_client_load_received_script");
+
+	wrapper::Add<Cmd_BXT_Show_Bullets_Clear, Handler<>>("bxt_show_bullets_clear");
+	wrapper::Add<Cmd_BXT_Show_Bullets_Enemy_Clear, Handler<>>("bxt_show_bullets_enemy_clear");
 }
 
 void HwDLL::InsertCommands()

@@ -284,6 +284,10 @@ namespace CVars
 	extern CVarWrapper bxt_viewmodel_ofs_right;
 	extern CVarWrapper bxt_viewmodel_ofs_up;
 	extern CVarWrapper bxt_viewmodel_bob_angled;
+	extern CVarWrapper bxt_show_bullets;
+	extern CVarWrapper bxt_show_bullets_limit;
+	extern CVarWrapper bxt_show_bullets_enemy;
+	extern CVarWrapper bxt_show_bullets_enemy_limit;
 
 	extern const std::vector<CVarWrapper*> allCVars;
 }

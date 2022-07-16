@@ -782,6 +782,10 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_displacer_earth_targets);
 		REG(bxt_hud_useables);
 		REG(bxt_hud_useables_radius);
+		REG(bxt_show_bullets);
+		REG(bxt_show_bullets_limit);
+		REG(bxt_show_bullets_enemy);
+		REG(bxt_show_bullets_enemy_limit);
 	}
 
 	if (ORIG_V_CalcRefdef) {
@@ -886,6 +890,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (ORIG_CHudFlashlight__drawNightVision_Linux || ORIG_CHudFlashlight__drawNightVision || ORIG_CHud__DrawHudNightVision_Linux || ORIG_CHud__DrawHudNightVision ) {
 		REG(bxt_disable_nightvision_sprite);
 	}
+
 	#undef REG
 }
 

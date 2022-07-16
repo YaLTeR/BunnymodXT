@@ -442,6 +442,8 @@ protected:
 	struct Cmd_BXT_TAS_Become_Simulator_Client;
 	struct Cmd_BXT_TAS_Server_Send_Command;
 	struct Cmd_BXT_TAS_Client_Load_Received_Script;
+	struct Cmd_BXT_Show_Bullets_Clear;
+	struct Cmd_BXT_Show_Bullets_Enemy_Clear;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

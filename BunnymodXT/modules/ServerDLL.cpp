@@ -2229,22 +2229,46 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 HOOK_DEF_5(ServerDLL, void, __cdecl, UTIL_TraceLine, const Vector*, vecStart, const Vector*, vecEnd, int, igmon, edict_t*, pentIgnore, TraceResult*, ptr)
 {
-	if (firebullets_call)
-		traceLineResults2.push_back({ Vector(*vecStart), Vector(*vecEnd) });
-	if (firebulletsplayer_call)
-		traceLineResults.push_back({ Vector(*vecStart), Vector(*vecEnd) });
+	if (fireBullets_call) {
+		traceLineFireBullets.push_back({ Vector(*vecStart), Vector(*vecEnd) });
+
+		while (traceLineFireBullets.size() > 0 && traceLineFireBullets.size() > CVars::bxt_show_bullets_enemy_limit.GetUint())
+			traceLineFireBullets.pop_front();
+	}
+	if (fireBulletsPlayer_call) {
+		traceLineFireBulletsPlayer.push_back({ Vector(*vecStart), Vector(*vecEnd) });
+
+		while (traceLineFireBulletsPlayer.size() > 0 && traceLineFireBulletsPlayer.size() > CVars::bxt_show_bullets_limit.GetUint())
+			traceLineFireBulletsPlayer.pop_front();
+	}
 
 	return ORIG_UTIL_TraceLine(vecStart, vecEnd, igmon, pentIgnore, ptr);
 }
 
 HOOK_DEF_10(ServerDLL, void, __thiscall, CBaseEntity__FireBullets, void*, thisptr, ULONG, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker) {
-	firebullets_call = true;
+	fireBullets_call = true;
 	ORIG_CBaseEntity__FireBullets(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
-	firebullets_call = false;
+	fireBullets_call = false;
 }
 
 HOOK_DEF_12(ServerDLL, void, __thiscall, CBaseEntity__FireBulletsPlayer, void*, thisptr, int, edx, ULONG, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) {
-	firebulletsplayer_call = true;
+	fireBulletsPlayer_call = true;
 	ORIG_CBaseEntity__FireBulletsPlayer(thisptr, edx, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
-	firebulletsplayer_call = false;
+	fireBulletsPlayer_call = false;
+}
+
+const std::deque<std::array<Vector, 2>>* ServerDLL::GetBulletsEnemyTrace() const {
+	return &traceLineFireBullets;
+}
+
+const std::deque<std::array<Vector, 2>>* ServerDLL::GetBulletsPlayerTrace() const {
+	return &traceLineFireBulletsPlayer;
+}
+
+void ServerDLL::ClearBulletsEnemyTrace() {
+	traceLineFireBullets.clear();
+}
+
+void ServerDLL::ClearBulletsTrace() {
+	traceLineFireBulletsPlayer.clear();
 }

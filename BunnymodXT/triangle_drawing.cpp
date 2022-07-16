@@ -301,19 +301,34 @@ namespace TriangleDrawing
 		}
 	}
 
-	static void DrawBulletTrace(triangleapi_s* pTriAPI)
+	static void DrawBulletsEnemyTrace(triangleapi_s* pTriAPI)
 	{
-		const auto& server = ServerDLL::GetInstance();
+		if (!CVars::bxt_show_bullets_enemy.GetBool())
+			return;
 
-		for (const auto& points : server.traceLineResults)
+		const auto* points_vec = ServerDLL::GetInstance().GetBulletsEnemyTrace();
+
+		for (size_t i = 0; i < points_vec->size(); i++)
 		{
-			pTriAPI->Color4f(0, 1, 0, 1);
+			const auto points = points_vec->at(i);
+
+			pTriAPI->Color4f(1.0f, 0.0f, 0.0f, 1.0f);
 			TriangleUtils::DrawLine(pTriAPI, points[0], points[1]);
 		}
+	}
 
-		for (const auto& points : server.traceLineResults2)
+	static void DrawBulletsPlayerTrace(triangleapi_s* pTriAPI)
+	{
+		if (!CVars::bxt_show_bullets.GetBool())
+			return;
+
+		const auto* points_vec = ServerDLL::GetInstance().GetBulletsPlayerTrace();
+
+		for (size_t i = 0; i < points_vec->size(); i++)
 		{
-			pTriAPI->Color4f(1, 0, 0, 1);
+			const auto points = points_vec->at(i);
+
+			pTriAPI->Color4f(0.0f, 0.0f, 1.0f, 1.0f);
 			TriangleUtils::DrawLine(pTriAPI, points[0], points[1]);
 		}
 	}
@@ -2180,7 +2195,8 @@ namespace TriangleDrawing
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);
 		DrawAbsMinMax(pTriAPI);
-		DrawBulletTrace(pTriAPI);
+		DrawBulletsEnemyTrace(pTriAPI);
+		DrawBulletsPlayerTrace(pTriAPI);
 
 		DrawTASEditor(pTriAPI);
 		ResetTASEditorCommands();

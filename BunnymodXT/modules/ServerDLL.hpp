@@ -81,9 +81,10 @@ public:
 
 	entvars_t *obboPushable = nullptr;
 
-	std::vector<std::array<Vector, 2>> traceLineResults;
-	std::vector<std::array<Vector, 2>> traceLineResults2;
-
+	const std::deque<std::array<Vector, 2>>* GetBulletsEnemyTrace() const;
+	const std::deque<std::array<Vector, 2>>* GetBulletsPlayerTrace() const;
+	void ClearBulletsTrace();
+	void ClearBulletsEnemyTrace();
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
 	ServerDLL(const ServerDLL&);
@@ -173,6 +174,9 @@ protected:
 	std::deque<TASLogger::Collision> secondFlyMoveTouchQueue;
 
 	std::unordered_map<int, bool> cantJumpNextTime;
-	bool firebulletsplayer_call = false;
-	bool firebullets_call = false;
+
+	bool fireBulletsPlayer_call = false;
+	bool fireBullets_call = false;
+	std::deque<std::array<Vector, 2>> traceLineFireBulletsPlayer;
+	std::deque<std::array<Vector, 2>> traceLineFireBullets;
 };

@@ -754,17 +754,23 @@ namespace patterns
 
 		PATTERNS(UTIL_TraceLine,
 			"HL-SteamPipe-6153",
-			"8B 4C 24 ?? 33 D2 83 F9 01"
+			"8B 4C 24 ?? 33 D2 83 F9 01",
+			"Echoes",
+			"55 8B EC 8B 45 ?? 50 8B 4D ?? 51 33 D2 83 7D ?? 01 0F 94 C2 52"
 		);
 
 		PATTERNS(CBaseEntity__FireBullets,
 			"HL-SteamPipe-6153",
-			"81 EC FC 00 00 00"
+			"81 EC FC 00 00 00",
+			"Echoes",
+			"55 8B EC 81 EC 80 01 00 00"
 		);
 
 		PATTERNS(CBaseEntity__FireBulletsPlayer,
 			"HL-SteamPipe-6153",
-			"81 EC B0 00 00 00 A1"
+			"81 EC B0 00 00 00 A1",
+			"Echoes",
+			"55 8B EC 81 EC 10 01 00 00 89 8D ?? ?? ?? ?? 8D 4D"
 		);
 	}
 

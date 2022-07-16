@@ -2229,17 +2229,19 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 HOOK_DEF_5(ServerDLL, void, __cdecl, UTIL_TraceLine, const Vector*, vecStart, const Vector*, vecEnd, int, igmon, edict_t*, pentIgnore, TraceResult*, ptr)
 {
-	if (fireBullets_call) {
-		traceLineFireBullets.push_back({ Vector(*vecStart), Vector(*vecEnd) });
+	if (igmon == 0)	{
+		if (fireBullets_call) {
+			traceLineFireBullets.push_back({ Vector(*vecStart), Vector(*vecEnd) });
 
-		while (traceLineFireBullets.size() > 0 && traceLineFireBullets.size() > CVars::bxt_show_bullets_enemy_limit.GetUint())
-			traceLineFireBullets.pop_front();
-	}
-	if (fireBulletsPlayer_call) {
-		traceLineFireBulletsPlayer.push_back({ Vector(*vecStart), Vector(*vecEnd) });
+			while (traceLineFireBullets.size() > 0 && traceLineFireBullets.size() > CVars::bxt_show_bullets_enemy_limit.GetUint())
+				traceLineFireBullets.pop_front();
+		}
+		if (fireBulletsPlayer_call) {
+			traceLineFireBulletsPlayer.push_back({ Vector(*vecStart), Vector(*vecEnd) });
 
-		while (traceLineFireBulletsPlayer.size() > 0 && traceLineFireBulletsPlayer.size() > CVars::bxt_show_bullets_limit.GetUint())
-			traceLineFireBulletsPlayer.pop_front();
+			while (traceLineFireBulletsPlayer.size() > 0 && traceLineFireBulletsPlayer.size() > CVars::bxt_show_bullets_limit.GetUint())
+				traceLineFireBulletsPlayer.pop_front();
+		}
 	}
 
 	return ORIG_UTIL_TraceLine(vecStart, vecEnd, igmon, pentIgnore, ptr);

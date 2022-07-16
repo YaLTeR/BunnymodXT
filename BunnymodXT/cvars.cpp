@@ -68,6 +68,8 @@ namespace CVars
 	CVarWrapper bxt_force_duck("bxt_force_duck", "0");
 	CVarWrapper bxt_force_jumpless("bxt_force_jumpless", "0");
 	CVarWrapper bxt_render_far_entities("bxt_render_far_entities", "0");
+	CVarWrapper bxt_fire_on_mm("bxt_fire_on_mm", "");
+	CVarWrapper bxt_fire_on_mm_setcommand("bxt_fire_on_mm_setcommand", "");
 
 	// Clientside CVars
 	CVarWrapper cl_righthand("cl_righthand", "0");
@@ -245,6 +247,8 @@ namespace CVars
 		&bxt_wallhack_alpha,
 		&bxt_novis,
 		&bxt_render_far_entities,
+		&bxt_fire_on_mm,
+		&bxt_fire_on_mm_setcommand,
 		&bxt_show_triggers,
 		&bxt_show_triggers_legacy,
 		&bxt_collision_depth_map,

@@ -2299,9 +2299,9 @@ HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, 
 	fireBulletsPlayer_call = false;
 }
 
-HOOK_DEF_11(ServerDLL, void, __cdecl, CBaseEntity__FireBulletsPlayer_Linux, void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) {
+HOOK_DEF_12(ServerDLL, void, __cdecl, CBaseEntity__FireBulletsPlayer_Linux, Vector*, __return_storage_ptr__void, void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) {
 	fireBulletsPlayer_call = true;
-	ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
+	ORIG_CBaseEntity__FireBulletsPlayer_Linux(__return_storage_ptr__void, thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	fireBulletsPlayer_call = false;
 }
 

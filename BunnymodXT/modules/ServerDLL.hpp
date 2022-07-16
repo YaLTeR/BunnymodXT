@@ -48,7 +48,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CBaseEntity__FireBullets, void* thisptr, unsigned long cShots, float param1, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker)
 	HOOK_DECL(void, __cdecl, CBaseEntity__FireBullets_Linux, void* thisptr, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker)
 	HOOK_DECL(void, __fastcall, CBaseEntity__FireBulletsPlayer, void* thisptr, int edx, float param1, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker, int shared_rand)
-	HOOK_DECL(void, __cdecl, CBaseEntity__FireBulletsPlayer_Linux, void* thisptr, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker, int shared_rand)
+	HOOK_DECL(void, __cdecl, CBaseEntity__FireBulletsPlayer_Linux, Vector* __return_storage_ptr__void, void* thisptr, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker, int shared_rand)
 
 public:
 	static ServerDLL& GetInstance()

@@ -120,8 +120,11 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CChangeLevel__TouchChangeLevel, HOOKED_CChangeLevel__TouchChangeLevel,
 			ORIG_CBaseMonster__Killed, HOOKED_CBaseMonster__Killed,
 			ORIG_UTIL_TraceLine, HOOKED_UTIL_TraceLine,
+			ORIG_UTIL_TraceLine_Linux, HOOKED_UTIL_TraceLine_Linux,
 			ORIG_CBaseEntity__FireBullets, HOOKED_CBaseEntity__FireBullets,
-			ORIG_CBaseEntity__FireBulletsPlayer, HOOKED_CBaseEntity__FireBulletsPlayer);
+			ORIG_CBaseEntity__FireBullets_Linux, HOOKED_CBaseEntity__FireBullets_Linux,
+			ORIG_CBaseEntity__FireBulletsPlayer, HOOKED_CBaseEntity__FireBulletsPlayer,
+			ORIG_CBaseEntity__FireBulletsPlayer_Linux, HOOKED_CBaseEntity__FireBulletsPlayer_Linux);
 	}
 }
 
@@ -157,8 +160,11 @@ void ServerDLL::Unhook()
 			ORIG_CChangeLevel__UseChangeLevel,
 			ORIG_CChangeLevel__TouchChangeLevel,
 			ORIG_UTIL_TraceLine,
+			ORIG_UTIL_TraceLine_Linux,
 			ORIG_CBaseEntity__FireBullets,
+			ORIG_CBaseEntity__FireBullets_Linux,
 			ORIG_CBaseEntity__FireBulletsPlayer,
+			ORIG_CBaseEntity__FireBulletsPlayer_Linux,
 			ORIG_CBaseMonster__Killed);
 	}
 
@@ -209,8 +215,11 @@ void ServerDLL::Clear()
 	ORIG_CChangeLevel__UseChangeLevel = nullptr;
 	ORIG_CChangeLevel__TouchChangeLevel = nullptr;
 	ORIG_UTIL_TraceLine = nullptr;
+	ORIG_UTIL_TraceLine_Linux = nullptr;
 	ORIG_CBaseEntity__FireBullets = nullptr;
+	ORIG_CBaseEntity__FireBullets_Linux = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer = nullptr;
+	ORIG_CBaseEntity__FireBulletsPlayer_Linux = nullptr;
 	ORIG_CChangeLevel__InTransitionVolume = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -1083,13 +1092,37 @@ void ServerDLL::FindStuff()
 	auto fCBaseEntity__FireBullets = FindAsync(ORIG_CBaseEntity__FireBullets, patterns::server::CBaseEntity__FireBullets);
 	auto fCBaseEntity__FireBulletsPlayer = FindAsync(ORIG_CBaseEntity__FireBulletsPlayer, patterns::server::CBaseEntity__FireBulletsPlayer);
 
+	/*{
+		auto pattern = fCPushable__Move.get();
+		if (ORIG_CPushable__Move) {
+			if (pattern == patterns::server::CPushable__Move.cend())
+				EngineDevMsg("[server dll] Found CPushable::Move at %p.\n", ORIG_CPushable__Move);
+			else
+				EngineDevMsg("[server dll] Found CPushable::Move at %p (using the %s pattern).\n", ORIG_CPushable__Move, pattern->name());
+		}
+		else {
+			ORIG_CPushable__Move_Linux = reinterpret_cast<_CPushable__Move_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN9CPushable4MoveEP11CBaseEntityi"));
+			if (ORIG_CPushable__Move_Linux)
+				EngineDevMsg("[server dll] Found CPushable::Move [Linux] at %p.\n", ORIG_CPushable__Move_Linux);
+			else {
+				EngineDevWarning("[server dll] Could not find CPushable::Move.\n");
+				EngineWarning("Object boost logging is not available.\n");
+			}
+		}
+	}*/
+
+
 	{
 		auto pattern = fUTIL_TraceLine.get();
 		if (ORIG_UTIL_TraceLine) {
 			EngineDevMsg("[server dll] Found UTIL_TraceLine at %p (using the %s pattern).\n", ORIG_UTIL_TraceLine, pattern->name());
 		}
 		else {
-			EngineDevWarning("[server dll] Could not find UTIL_TraceLine.\n");
+			ORIG_UTIL_TraceLine_Linux = reinterpret_cast<_UTIL_TraceLine_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_Z14UTIL_TraceLineRK6VectorS1_15IGNORE_MONSTERS12IGNORE_GLASSP7edict_sP11TraceResult"));
+			if (ORIG_UTIL_TraceLine_Linux)
+				EngineDevMsg("[server dll] Found UTIL_TraceLine [Linux] at %p.\n", ORIG_UTIL_TraceLine_Linux);
+			else
+				EngineDevWarning("[server dll] Could not find UTIL_TraceLine.\n");
 		}
 	}
 
@@ -2229,7 +2262,21 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 HOOK_DEF_5(ServerDLL, void, __cdecl, UTIL_TraceLine, const Vector*, vecStart, const Vector*, vecEnd, int, igmon, edict_t*, pentIgnore, TraceResult*, ptr)
 {
-	if (igmon == 0)	{
+	TraceLineWrap(vecStart, vecEnd, igmon, pentIgnore, ptr);
+
+	return ORIG_UTIL_TraceLine(vecStart, vecEnd, igmon, pentIgnore, ptr);
+}
+
+HOOK_DEF_5(ServerDLL, void, __cdecl, UTIL_TraceLine_Linux, const Vector*, vecStart, const Vector*, vecEnd, int, igmon, edict_t*, pentIgnore, TraceResult*, ptr)
+{
+	TraceLineWrap(vecStart, vecEnd, igmon, pentIgnore, ptr);
+
+	return ORIG_UTIL_TraceLine_Linux(vecStart, vecEnd, igmon, pentIgnore, ptr);
+}
+
+void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
+{
+	if (igmon == 0) {
 		if (fireBullets_call) {
 			traceLineFireBullets.push_back({ Vector(*vecStart), Vector(*vecEnd) });
 
@@ -2243,8 +2290,6 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, UTIL_TraceLine, const Vector*, vecStart, co
 				traceLineFireBulletsPlayer.pop_front();
 		}
 	}
-
-	return ORIG_UTIL_TraceLine(vecStart, vecEnd, igmon, pentIgnore, ptr);
 }
 
 HOOK_DEF_10(ServerDLL, void, __thiscall, CBaseEntity__FireBullets, void*, thisptr, ULONG, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker) {
@@ -2253,9 +2298,21 @@ HOOK_DEF_10(ServerDLL, void, __thiscall, CBaseEntity__FireBullets, void*, thispt
 	fireBullets_call = false;
 }
 
+HOOK_DEF_10(ServerDLL, void, __cdecl, CBaseEntity__FireBullets_Linux, void*, thisptr, ULONG, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker) {
+	fireBullets_call = true;
+	ORIG_CBaseEntity__FireBullets_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
+	fireBullets_call = false;
+}
+
 HOOK_DEF_12(ServerDLL, void, __thiscall, CBaseEntity__FireBulletsPlayer, void*, thisptr, int, edx, ULONG, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) {
 	fireBulletsPlayer_call = true;
 	ORIG_CBaseEntity__FireBulletsPlayer(thisptr, edx, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
+	fireBulletsPlayer_call = false;
+}
+
+HOOK_DEF_11(ServerDLL, void, __cdecl, CBaseEntity__FireBulletsPlayer_Linux, void*, thisptr, ULONG, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) {
+	fireBulletsPlayer_call = true;
+	ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	fireBulletsPlayer_call = false;
 }
 

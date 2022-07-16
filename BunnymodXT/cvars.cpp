@@ -173,8 +173,10 @@ namespace CVars
 	CVarWrapper bxt_viewmodel_bob_angled("bxt_viewmodel_bob_angled", "0");
 	CVarWrapper bxt_show_bullets("bxt_show_bullets", "0");
 	CVarWrapper bxt_show_bullets_limit("bxt_show_bullets_limit", "24");
+	CVarWrapper bxt_show_bullets_color("bxt_show_bullets_color", "");
 	CVarWrapper bxt_show_bullets_enemy("bxt_show_bullets_enemy", "0");
 	CVarWrapper bxt_show_bullets_enemy_limit("bxt_show_bullets_enemy_limit", "20");
+	CVarWrapper bxt_show_bullets_enemy_color("bxt_show_bullets_enemy_color", "");
 
 	const std::vector<CVarWrapper*> allCVars =
 	{
@@ -341,7 +343,9 @@ namespace CVars
 		&bxt_viewmodel_bob_angled,
 		&bxt_show_bullets,
 		&bxt_show_bullets_limit,
+		&bxt_show_bullets_color,
 		&bxt_show_bullets_enemy,
 		&bxt_show_bullets_enemy_limit,
+		&bxt_show_bullets_enemy_color,
 	};
 }

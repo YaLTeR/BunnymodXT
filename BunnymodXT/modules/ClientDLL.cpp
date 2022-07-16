@@ -784,8 +784,10 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_useables_radius);
 		REG(bxt_show_bullets);
 		REG(bxt_show_bullets_limit);
+		REG(bxt_show_bullets_color);
 		REG(bxt_show_bullets_enemy);
 		REG(bxt_show_bullets_enemy_limit);
+		REG(bxt_show_bullets_enemy_color);
 	}
 
 	if (ORIG_V_CalcRefdef) {

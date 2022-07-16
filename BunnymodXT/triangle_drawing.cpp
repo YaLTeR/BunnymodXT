@@ -308,11 +308,24 @@ namespace TriangleDrawing
 
 		const auto* points_vec = ServerDLL::GetInstance().GetBulletsEnemyTrace();
 
+		unsigned r = 255, g = 0, b = 0;
+
+		if (!CVars::bxt_show_bullets_enemy_color.IsEmpty())
+		{
+			auto colorStr = CVars::bxt_show_bullets_enemy_color.GetString();
+			if (colorStr != "auto")
+			{
+				std::istringstream color_ss(colorStr);
+				color_ss >> r >> g >> b;
+			}
+		}
+
+		pTriAPI->Color4f(r / 256.0f, g / 256.0f, b / 256.0f, 1.0f);
+
 		for (size_t i = 0; i < points_vec->size(); i++)
 		{
 			const auto points = points_vec->at(i);
 
-			pTriAPI->Color4f(1.0f, 0.0f, 0.0f, 1.0f);
 			TriangleUtils::DrawLine(pTriAPI, points[0], points[1]);
 		}
 	}
@@ -324,11 +337,24 @@ namespace TriangleDrawing
 
 		const auto* points_vec = ServerDLL::GetInstance().GetBulletsPlayerTrace();
 
+		unsigned r = 0, g = 0, b = 255;
+
+		if (!CVars::bxt_show_bullets_color.IsEmpty())
+		{
+			auto colorStr = CVars::bxt_show_bullets_color.GetString();
+			if (colorStr != "auto")
+			{
+				std::istringstream color_ss(colorStr);
+				color_ss >> r >> g >> b;
+			}
+		}
+
+		pTriAPI->Color4f(r / 256.0f, g / 256.0f, b / 256.0f, 1.0f);
+
 		for (size_t i = 0; i < points_vec->size(); i++)
 		{
 			const auto points = points_vec->at(i);
 
-			pTriAPI->Color4f(0.0f, 0.0f, 1.0f, 1.0f);
 			TriangleUtils::DrawLine(pTriAPI, points[0], points[1]);
 		}
 	}

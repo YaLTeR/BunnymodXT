@@ -301,6 +301,23 @@ namespace TriangleDrawing
 		}
 	}
 
+	static void DrawBulletTrace(triangleapi_s* pTriAPI)
+	{
+		const auto& server = ServerDLL::GetInstance();
+
+		for (const auto& points : server.traceLineResults)
+		{
+			pTriAPI->Color4f(0, 1, 0, 1);
+			TriangleUtils::DrawLine(pTriAPI, points[0], points[1]);
+		}
+
+		for (const auto& points : server.traceLineResults2)
+		{
+			pTriAPI->Color4f(1, 0, 0, 1);
+			TriangleUtils::DrawLine(pTriAPI, points[0], points[1]);
+		}
+	}
+
 	static Vector perpendicular(const Vector &prev, const Vector &next) {
 		Vector perpendicular;
 
@@ -2163,6 +2180,7 @@ namespace TriangleDrawing
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);
 		DrawAbsMinMax(pTriAPI);
+		DrawBulletTrace(pTriAPI);
 
 		DrawTASEditor(pTriAPI);
 		ResetTASEditorCommands();

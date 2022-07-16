@@ -118,7 +118,10 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CTriggerSave__SaveTouch, HOOKED_CTriggerSave__SaveTouch,
 			ORIG_CChangeLevel__UseChangeLevel, HOOKED_CChangeLevel__UseChangeLevel,
 			ORIG_CChangeLevel__TouchChangeLevel, HOOKED_CChangeLevel__TouchChangeLevel,
-			ORIG_CBaseMonster__Killed, HOOKED_CBaseMonster__Killed);
+			ORIG_CBaseMonster__Killed, HOOKED_CBaseMonster__Killed,
+			ORIG_UTIL_TraceLine, HOOKED_UTIL_TraceLine,
+			ORIG_CBaseEntity__FireBullets, HOOKED_CBaseEntity__FireBullets,
+			ORIG_CBaseEntity__FireBulletsPlayer, HOOKED_CBaseEntity__FireBulletsPlayer);
 	}
 }
 
@@ -153,6 +156,9 @@ void ServerDLL::Unhook()
 			ORIG_CTriggerSave__SaveTouch,
 			ORIG_CChangeLevel__UseChangeLevel,
 			ORIG_CChangeLevel__TouchChangeLevel,
+			ORIG_UTIL_TraceLine,
+			ORIG_CBaseEntity__FireBullets,
+			ORIG_CBaseEntity__FireBulletsPlayer,
 			ORIG_CBaseMonster__Killed);
 	}
 
@@ -202,6 +208,9 @@ void ServerDLL::Clear()
 	ORIG_CTriggerSave__SaveTouch_Linux = nullptr;
 	ORIG_CChangeLevel__UseChangeLevel = nullptr;
 	ORIG_CChangeLevel__TouchChangeLevel = nullptr;
+	ORIG_UTIL_TraceLine = nullptr;
+	ORIG_CBaseEntity__FireBullets = nullptr;
+	ORIG_CBaseEntity__FireBulletsPlayer = nullptr;
 	ORIG_CChangeLevel__InTransitionVolume = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -1067,6 +1076,40 @@ void ServerDLL::FindStuff()
 		} else {
 			EngineDevWarning("[server dll] Could not find DispatchRestore.\n");
 			EngineWarning("Blue Shift \"A Leap of Faith\" chapter autosplit is unavailable.\n");
+		}
+	}
+
+	auto fUTIL_TraceLine = FindAsync(ORIG_UTIL_TraceLine, patterns::server::UTIL_TraceLine);
+	auto fCBaseEntity__FireBullets = FindAsync(ORIG_CBaseEntity__FireBullets, patterns::server::CBaseEntity__FireBullets);
+	auto fCBaseEntity__FireBulletsPlayer = FindAsync(ORIG_CBaseEntity__FireBulletsPlayer, patterns::server::CBaseEntity__FireBulletsPlayer);
+
+	{
+		auto pattern = fUTIL_TraceLine.get();
+		if (ORIG_UTIL_TraceLine) {
+			EngineDevMsg("[server dll] Found UTIL_TraceLine at %p (using the %s pattern).\n", ORIG_UTIL_TraceLine, pattern->name());
+		}
+		else {
+			EngineDevWarning("[server dll] Could not find UTIL_TraceLine.\n");
+		}
+	}
+
+	{
+		auto pattern = fCBaseEntity__FireBullets.get();
+		if (ORIG_CBaseEntity__FireBullets) {
+			EngineDevMsg("[server dll] Found CBaseEntity::FireBullets at %p (using the %s pattern).\n", ORIG_CBaseEntity__FireBullets, pattern->name());
+		}
+		else {
+			EngineDevWarning("[server dll] Could not find CBaseEntity::FireBullets.\n");
+		}
+	}
+
+	{
+		auto pattern = fCBaseEntity__FireBulletsPlayer.get();
+		if (ORIG_CBaseEntity__FireBulletsPlayer) {
+			EngineDevMsg("[server dll] Found CBaseEntity::FireBulletsPlayer at %p (using the %s pattern).\n", ORIG_CBaseEntity__FireBulletsPlayer, pattern->name());
+		}
+		else {
+			EngineDevWarning("[server dll] Could not find CBaseEntity::FireBulletsPlayer.\n");
 		}
 	}
 
@@ -2182,4 +2225,26 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 		return;
 
 	return ORIG_CChangeLevel__TouchChangeLevel(thisptr, edx, pOther);
+}
+
+HOOK_DEF_5(ServerDLL, void, __cdecl, UTIL_TraceLine, const Vector*, vecStart, const Vector*, vecEnd, int, igmon, edict_t*, pentIgnore, TraceResult*, ptr)
+{
+	if (firebullets_call)
+		traceLineResults2.push_back({ Vector(*vecStart), Vector(*vecEnd) });
+	if (firebulletsplayer_call)
+		traceLineResults.push_back({ Vector(*vecStart), Vector(*vecEnd) });
+
+	return ORIG_UTIL_TraceLine(vecStart, vecEnd, igmon, pentIgnore, ptr);
+}
+
+HOOK_DEF_10(ServerDLL, void, __thiscall, CBaseEntity__FireBullets, void*, thisptr, ULONG, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker) {
+	firebullets_call = true;
+	ORIG_CBaseEntity__FireBullets(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
+	firebullets_call = false;
+}
+
+HOOK_DEF_12(ServerDLL, void, __thiscall, CBaseEntity__FireBulletsPlayer, void*, thisptr, int, edx, ULONG, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) {
+	firebulletsplayer_call = true;
+	ORIG_CBaseEntity__FireBulletsPlayer(thisptr, edx, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
+	firebulletsplayer_call = false;
 }

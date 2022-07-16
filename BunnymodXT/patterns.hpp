@@ -751,6 +751,21 @@ namespace patterns
 			"AoMDC",
 			"8B 45 ?? 3B 45 ?? 74 ?? 8B 4D ?? 51 8B 55 ?? 52 FF 15"
 		);
+
+		PATTERNS(UTIL_TraceLine,
+			"HL-SteamPipe-6153",
+			"8B 4C 24 ?? 33 D2 83 F9 01"
+		);
+
+		PATTERNS(CBaseEntity__FireBullets,
+			"HL-SteamPipe-6153",
+			"81 EC FC 00 00 00"
+		);
+
+		PATTERNS(CBaseEntity__FireBulletsPlayer,
+			"HL-SteamPipe-6153",
+			"81 EC B0 00 00 00 A1"
+		);
 	}
 
 	namespace client

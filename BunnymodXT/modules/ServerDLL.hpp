@@ -43,6 +43,9 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, CTriggerSave__SaveTouch_Linux, void* thisptr, void* pOther)
 	HOOK_DECL(void, __fastcall, CChangeLevel__UseChangeLevel, void* thisptr, int edx, void* pActivator, void* pCaller, int useType, float value)
 	HOOK_DECL(void, __fastcall, CChangeLevel__TouchChangeLevel, void* thisptr, int edx, void* pOther)
+	HOOK_DECL(void, __cdecl, UTIL_TraceLine, const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
+	HOOK_DECL(void, __thiscall, CBaseEntity__FireBullets, void* thisptr, ULONG cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker)
+	HOOK_DECL(void, __thiscall, CBaseEntity__FireBulletsPlayer, void* thisptr, int edx, ULONG cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker, int shared_rand)
 
 public:
 	static ServerDLL& GetInstance()
@@ -77,6 +80,9 @@ public:
 	enginefuncs_t *pEngfuncs;
 
 	entvars_t *obboPushable = nullptr;
+
+	std::vector<std::array<Vector, 2>> traceLineResults;
+	std::vector<std::array<Vector, 2>> traceLineResults2;
 
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
@@ -167,4 +173,6 @@ protected:
 	std::deque<TASLogger::Collision> secondFlyMoveTouchQueue;
 
 	std::unordered_map<int, bool> cantJumpNextTime;
+	bool firebulletsplayer_call = false;
+	bool firebullets_call = false;
 };

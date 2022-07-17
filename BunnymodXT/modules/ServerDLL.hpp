@@ -181,8 +181,8 @@ protected:
 
 	std::unordered_map<int, bool> cantJumpNextTime;
 
-	bool fireBulletsPlayer_call = false;
-	bool fireBullets_call = false;
+	unsigned long fireBulletsPlayer_count = 0;
+	unsigned long fireBullets_count = 0;
 	std::deque<std::array<Vector, 2>> traceLineFireBulletsPlayer;
 	std::deque<bool> traceLineFireBulletsPlayerHit;
 	std::deque<std::array<Vector, 2>> traceLineFireBullets;

@@ -2249,10 +2249,10 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
 {
-	if (igmon == 0 && (fireBullets_call || fireBulletsPlayer_call)) {
+	if (!igmon && (fireBullets_count || fireBulletsPlayer_count)) {
 		bool hitSomething = std::strcmp(HwDLL::GetInstance().ppGlobals->pStringBase + ptr->pHit->v.classname, "worldspawn");
 
-		if (fireBullets_call) {
+		if (fireBullets_count) {
 			traceLineFireBullets.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
 			traceLineFireBulletsHit.push_back(hitSomething);
 
@@ -2260,7 +2260,9 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 				traceLineFireBullets.pop_front();
 				traceLineFireBulletsHit.pop_front();
 			}
-		} else if (fireBulletsPlayer_call) {
+
+			fireBullets_count--;
+		} else if (fireBulletsPlayer_count) {
 			traceLineFireBulletsPlayer.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
 			traceLineFireBulletsPlayerHit.push_back(hitSomething);
 
@@ -2268,36 +2270,42 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 				traceLineFireBulletsPlayer.pop_front();
 				traceLineFireBulletsPlayerHit.pop_front();
 			}
+
+			fireBulletsPlayer_count--;
 		}
 	}
 }
 
 HOOK_DEF_11(ServerDLL, void, __fastcall, CBaseEntity__FireBullets, void*, thisptr, unsigned long, cShots, float, param1, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker)
 {
-	fireBullets_call = true;
+	fireBullets_count = cShots;
 	ORIG_CBaseEntity__FireBullets(thisptr, cShots, param1, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
-	fireBullets_call = false;
+	// just in case
+	fireBullets_count = 0;
 }
 
 HOOK_DEF_10(ServerDLL, void, __cdecl, CBaseEntity__FireBullets_Linux, void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker)
 {
-	fireBullets_call = true;
+	fireBullets_count = cShots;
 	ORIG_CBaseEntity__FireBullets_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
-	fireBullets_call = false;
+	// just in case
+	fireBullets_count = 0;
 }
 
 HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, thisptr, int, edx, float, param1, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand)
 {
-	fireBulletsPlayer_call = true;
+	fireBulletsPlayer_count = cShots;
 	ORIG_CBaseEntity__FireBulletsPlayer(thisptr, edx, param1, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
-	fireBulletsPlayer_call = false;
+	// just in case
+	fireBulletsPlayer_count = 0;
 }
 
 HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand)
 {
-	fireBulletsPlayer_call = true;
+	fireBulletsPlayer_count = cShots;
 	auto ret = ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
-	fireBulletsPlayer_call = false;
+	// just in case
+	fireBulletsPlayer_count = 0;
 	return ret;
 }
 

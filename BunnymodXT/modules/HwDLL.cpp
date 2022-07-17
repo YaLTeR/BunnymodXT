@@ -4752,12 +4752,14 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	if (framesTillExecuting > 0)
 		framesTillExecuting--;
 
+	if (*state == 4) {
+		ServerDLL::GetInstance().ClearBulletsEnemyTrace();
+		ServerDLL::GetInstance().ClearBulletsTrace();
+	}
+
 	if (*state == 4 && !*paused && CVars::bxt_autopause.GetBool()) {
 		ORIG_Cbuf_InsertText("pause\n");
 		pauseOnTheFirstFrame = true;
-
-		ServerDLL::GetInstance().ClearBulletsEnemyTrace();
-		ServerDLL::GetInstance().ClearBulletsTrace();
 	}
 
 	if (*state != 5 && *state != 4)

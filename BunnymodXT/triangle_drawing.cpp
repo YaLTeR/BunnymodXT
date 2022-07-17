@@ -301,7 +301,7 @@ namespace TriangleDrawing
 		}
 	}
 
-	static void DrawBullets(triangleapi_s* pTriAPI, const std::deque<std::array<Vector, 2>>* points_vec, const std::deque<bool>* hit_vec, byte r, byte g, byte b, float hitAlpha)
+	static void DrawBullets(triangleapi_s* pTriAPI, const std::deque<std::array<Vector, 2>>* points_vec, const std::deque<bool>* hit_vec, byte r, byte g, byte b, float missAlpha)
 	{
 		byte rEnd = 255 - r, gEnd = 255 - g, bEnd = 255 - b;
 
@@ -313,6 +313,7 @@ namespace TriangleDrawing
 			const auto points = points_vec->at(i);
 			const auto hit = hit_vec->at(i);
 			
+			float hitAlpha = missAlpha;
 			if (hit)
 				hitAlpha = 1.0f;
 

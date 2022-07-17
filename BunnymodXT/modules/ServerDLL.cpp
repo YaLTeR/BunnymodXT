@@ -2251,7 +2251,7 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 {
 	if (!igmon && (fireBullets_count || fireBulletsPlayer_count)) {
 		const size_t IGNORE_ENTITIES_COUNT = 2;
-		const char* IGNORE_ENTITIES[] = { "worldspawn", "func_wall" };
+		const char* IGNORE_ENTITIES[] = { "worldspawn", "func_wall", "func_wall_toggle"};
 
 		bool hitSomething;
 		for (size_t i = 0; i < IGNORE_ENTITIES_COUNT; i++)

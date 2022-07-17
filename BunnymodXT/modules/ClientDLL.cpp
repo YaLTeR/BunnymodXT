@@ -892,7 +892,6 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (ORIG_CHudFlashlight__drawNightVision_Linux || ORIG_CHudFlashlight__drawNightVision || ORIG_CHud__DrawHudNightVision_Linux || ORIG_CHud__DrawHudNightVision ) {
 		REG(bxt_disable_nightvision_sprite);
 	}
-
 	#undef REG
 }
 

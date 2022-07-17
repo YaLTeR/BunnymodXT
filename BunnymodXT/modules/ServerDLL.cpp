@@ -2324,20 +2324,20 @@ HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,voi
 	return ret;
 }
 
-const std::deque<std::array<Vector, 2>>* ServerDLL::GetBulletsEnemyTrace() const {
-	return &traceLineFireBullets;
+const std::deque<std::array<Vector, 2>>& ServerDLL::GetBulletsEnemyTrace() const {
+	return traceLineFireBullets;
 }
 
-const std::deque<std::array<Vector, 2>>* ServerDLL::GetBulletsPlayerTrace() const {
-	return &traceLineFireBulletsPlayer;
+const std::deque<std::array<Vector, 2>>& ServerDLL::GetBulletsPlayerTrace() const {
+	return traceLineFireBulletsPlayer;
 }
 
-const std::deque<bool>* ServerDLL::GetBulletsEnemyTraceHit() const {
-	return &traceLineFireBulletsHit;
+const std::deque<bool>& ServerDLL::GetBulletsEnemyTraceHit() const {
+	return traceLineFireBulletsHit;
 }
 
-const std::deque<bool>* ServerDLL::GetBulletsPlayerTraceHit() const {
-	return &traceLineFireBulletsPlayerHit;
+const std::deque<bool>& ServerDLL::GetBulletsPlayerTraceHit() const {
+	return traceLineFireBulletsPlayerHit;
 }
 
 void ServerDLL::ClearBulletsEnemyTrace() {

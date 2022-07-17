@@ -301,17 +301,17 @@ namespace TriangleDrawing
 		}
 	}
 
-	static void DrawBullets(triangleapi_s* pTriAPI, const std::deque<std::array<Vector, 2>>* points_vec, const std::deque<bool>* hit_vec, byte r, byte g, byte b)
+	static void DrawBullets(triangleapi_s* pTriAPI, const std::deque<std::array<Vector, 2>>& points_vec, const std::deque<bool>& hit_vec, byte r, byte g, byte b)
 	{
 		byte rEnd = 255 - r, gEnd = 255 - g, bEnd = 255 - b;
 
 		float r_float = r / 255.0f, g_float = g / 255.0f, b_float = b / 255.0f;
 		float rEnd_float = rEnd / 255.0f, gEnd_float = gEnd / 255.0f, bEnd_float = bEnd / 255.0f;
 
-		for (size_t i = 0; i < points_vec->size(); i++)
+		for (size_t i = 0; i < points_vec.size(); i++)
 		{
-			const auto points = points_vec->at(i);
-			const auto hit = hit_vec->at(i);
+			const auto points = points_vec.at(i);
+			const auto hit = hit_vec.at(i);
 			
 			float hitAlpha = 0.3f;
 			if (hit)
@@ -343,8 +343,8 @@ namespace TriangleDrawing
 		if (!CVars::bxt_show_bullets_enemy.GetBool())
 			return;
 
-		const auto* points_vec = ServerDLL::GetInstance().GetBulletsEnemyTrace();
-		const auto* hit_vec = ServerDLL::GetInstance().GetBulletsEnemyTraceHit();
+		const auto points_vec = ServerDLL::GetInstance().GetBulletsEnemyTrace();
+		const auto hit_vec = ServerDLL::GetInstance().GetBulletsEnemyTraceHit();
 
 		DrawBullets(pTriAPI, points_vec, hit_vec, 255, 0, 144);
 	}
@@ -354,8 +354,8 @@ namespace TriangleDrawing
 		if (!CVars::bxt_show_bullets.GetBool())
 			return;
 
-		const auto* points_vec = ServerDLL::GetInstance().GetBulletsPlayerTrace();
-		const auto* hit_vec = ServerDLL::GetInstance().GetBulletsPlayerTraceHit();
+		const auto points_vec = ServerDLL::GetInstance().GetBulletsPlayerTrace();
+		const auto hit_vec = ServerDLL::GetInstance().GetBulletsPlayerTraceHit();
 
 		DrawBullets(pTriAPI, points_vec, hit_vec, 0, 200, 255);
 	}

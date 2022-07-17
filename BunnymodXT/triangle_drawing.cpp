@@ -301,6 +301,38 @@ namespace TriangleDrawing
 		}
 	}
 
+	static void DrawBullets(triangleapi_s* pTriAPI, const std::deque<std::array<Vector, 2>>* points_vec, byte r, byte g, byte b)
+	{
+		byte rEnd = 255 - r, gEnd = 255 - g, bEnd = 255 - b;
+
+		float r_float = r / 256.0f, g_float = g / 256.0f, b_float = b / 256.0f;
+		float rEnd_float = rEnd / 256.0f, gEnd_float = gEnd / 256.0f, bEnd_float = bEnd / 256.0f;
+
+		for (size_t i = 0; i < points_vec->size(); i++)
+		{
+			const auto points = points_vec->at(i);
+			float lastHalfDist = 20.0f;
+			auto diff = points[1] - points[0];
+			auto diffLen = diff.Length();
+			Vector half;
+
+			if (diffLen < lastHalfDist) {
+				auto diffFirstHalf = diff * 0.7f;
+				half = points[0] + diffFirstHalf;
+			}
+			else {
+				auto diffFirstHalf = diff - diff.Normalize() * lastHalfDist;
+				half = points[0] + diffFirstHalf;
+			}
+
+			pTriAPI->Color4f(r_float, g_float, b_float, 1.0f);
+			TriangleUtils::DrawLine(pTriAPI, points[0], half);
+
+			pTriAPI->Color4f(rEnd_float, gEnd_float, bEnd_float, 1.0f);
+			TriangleUtils::DrawLine(pTriAPI, half, points[1]);
+		}
+	}
+
 	static void DrawBulletsEnemyTrace(triangleapi_s* pTriAPI)
 	{
 		if (!CVars::bxt_show_bullets_enemy.GetBool())
@@ -308,26 +340,7 @@ namespace TriangleDrawing
 
 		const auto* points_vec = ServerDLL::GetInstance().GetBulletsEnemyTrace();
 
-		unsigned r = 255, g = 0, b = 0;
-
-		if (!CVars::bxt_show_bullets_enemy_color.IsEmpty())
-		{
-			auto colorStr = CVars::bxt_show_bullets_enemy_color.GetString();
-			if (colorStr != "auto")
-			{
-				std::istringstream color_ss(colorStr);
-				color_ss >> r >> g >> b;
-			}
-		}
-
-		pTriAPI->Color4f(r / 256.0f, g / 256.0f, b / 256.0f, 1.0f);
-
-		for (size_t i = 0; i < points_vec->size(); i++)
-		{
-			const auto points = points_vec->at(i);
-
-			TriangleUtils::DrawLine(pTriAPI, points[0], points[1]);
-		}
+		DrawBullets(pTriAPI, points_vec, 255, 0, 0);
 	}
 
 	static void DrawBulletsPlayerTrace(triangleapi_s* pTriAPI)
@@ -337,26 +350,7 @@ namespace TriangleDrawing
 
 		const auto* points_vec = ServerDLL::GetInstance().GetBulletsPlayerTrace();
 
-		unsigned r = 0, g = 0, b = 255;
-
-		if (!CVars::bxt_show_bullets_color.IsEmpty())
-		{
-			auto colorStr = CVars::bxt_show_bullets_color.GetString();
-			if (colorStr != "auto")
-			{
-				std::istringstream color_ss(colorStr);
-				color_ss >> r >> g >> b;
-			}
-		}
-
-		pTriAPI->Color4f(r / 256.0f, g / 256.0f, b / 256.0f, 1.0f);
-
-		for (size_t i = 0; i < points_vec->size(); i++)
-		{
-			const auto points = points_vec->at(i);
-
-			TriangleUtils::DrawLine(pTriAPI, points[0], points[1]);
-		}
+		DrawBullets(pTriAPI, points_vec, 0, 0, 255);
 	}
 
 	static Vector perpendicular(const Vector &prev, const Vector &next) {

@@ -1157,13 +1157,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_force_jumpless);
 	if ((ORIG_CBaseEntity__FireBullets && ORIG_CBaseEntity__FireBulletsPlayer) || (ORIG_CBaseEntity__FireBullets_Linux && ORIG_CBaseEntity__FireBulletsPlayer_Linux)) {
 		REG(bxt_show_bullets);
-		REG(bxt_show_bullets_limit);
-		REG(bxt_show_bullets_color);
-		REG(bxt_show_bullets_miss_alpha);
 		REG(bxt_show_bullets_enemy);
-		REG(bxt_show_bullets_enemy_limit);
-		REG(bxt_show_bullets_enemy_color);
-		REG(bxt_show_bullets_enemy_miss_alpha);
 	}
 	#undef REG
 }
@@ -2275,7 +2269,7 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 			traceLineFireBullets.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
 			traceLineFireBulletsHit.push_back(hitSomething);
 
-			while (traceLineFireBullets.size() > 0 && traceLineFireBullets.size() > CVars::bxt_show_bullets_enemy_limit.GetUint()) {
+			while (traceLineFireBullets.size() && traceLineFireBullets.size() > 20) {
 				traceLineFireBullets.pop_front();
 				traceLineFireBulletsHit.pop_front();
 			}
@@ -2285,7 +2279,8 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 			traceLineFireBulletsPlayer.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
 			traceLineFireBulletsPlayerHit.push_back(hitSomething);
 
-			while (traceLineFireBulletsPlayer.size() > 0 && traceLineFireBulletsPlayer.size() > CVars::bxt_show_bullets_limit.GetUint()) {
+			// 12 = mouse2 shotgun shot count
+			while (traceLineFireBulletsPlayer.size() && traceLineFireBulletsPlayer.size() > 12) {
 				traceLineFireBulletsPlayer.pop_front();
 				traceLineFireBulletsPlayerHit.pop_front();
 			}

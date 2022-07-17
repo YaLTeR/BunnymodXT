@@ -5904,7 +5904,7 @@ HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, 
 
 HOOK_DEF_5(HwDLL, void, __cdecl, PF_traceline_DLL, const Vector*, v1, const Vector*, v2, int, fNoMonsters, edict_t*, pentToSkip, TraceResult*, ptr)
 {
-	ServerDLL::GetInstance().TraceLineWrap(v1, v2, fNoMonsters, pentToSkip, ptr);
-
 	ORIG_PF_traceline_DLL(v1, v2, fNoMonsters, pentToSkip, ptr);
+
+	ServerDLL::GetInstance().TraceLineWrap(v1, v2, fNoMonsters, pentToSkip, ptr);
 }

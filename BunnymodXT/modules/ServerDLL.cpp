@@ -2249,13 +2249,13 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 {
 	if (igmon == 0) {
 		if (fireBullets_call) {
-			traceLineFireBullets.push_back({ Vector(*vecStart), Vector(*vecEnd) });
+			traceLineFireBullets.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
 
 			while (traceLineFireBullets.size() > 0 && traceLineFireBullets.size() > CVars::bxt_show_bullets_enemy_limit.GetUint())
 				traceLineFireBullets.pop_front();
 		}
 		if (fireBulletsPlayer_call) {
-			traceLineFireBulletsPlayer.push_back({ Vector(*vecStart), Vector(*vecEnd) });
+			traceLineFireBulletsPlayer.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
 
 			while (traceLineFireBulletsPlayer.size() > 0 && traceLineFireBulletsPlayer.size() > CVars::bxt_show_bullets_limit.GetUint())
 				traceLineFireBulletsPlayer.pop_front();

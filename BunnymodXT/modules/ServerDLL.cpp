@@ -1103,7 +1103,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_PM_PlayerMove && ORIG_PM_Jump)
 		REG(bxt_force_jumpless);
 	if (ORIG_CMultiManager__ManagerThink || ORIG_FireTargets_Linux) {
-		REG(bxt_fire_on_mm);
+		REG(bxt_fire_on_mm_targetname);
 		REG(bxt_fire_on_mm_setcommand);
 	}
 	#undef REG
@@ -1617,8 +1617,8 @@ void ServerDLL::DoMultiManagerAutoStop(const char *targetname)
 		DoAutoStopTasks();
 	}
 
-	if (!CVars::bxt_fire_on_mm.IsEmpty() && !CVars::bxt_fire_on_mm_setcommand.IsEmpty()) {
-		if (!std::strcmp(targetname, CVars::bxt_fire_on_mm.GetString().c_str()))
+	if (!CVars::bxt_fire_on_mm_targetname.IsEmpty() && !CVars::bxt_fire_on_mm_setcommand.IsEmpty()) {
+		if (!std::strcmp(targetname, CVars::bxt_fire_on_mm_targetname.GetString().c_str()))
 		{
 			std::ostringstream ss;
 			ss << CVars::bxt_fire_on_mm_setcommand.GetString().c_str() << "\n";

@@ -2249,44 +2249,45 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
 {
-	if (!igmon && (fireBullets_count || fireBulletsPlayer_count)) {
-		const char* SOLID_HIT_ENTITIES[] = {
-			"func_breakable",
-			"func_pushable"
-		};
+	if (igmon || !fireBullets_count || !fireBulletsPlayer_count)
+		return;
+		
+	const char* SOLID_HIT_ENTITIES[] = {
+		"func_breakable",
+		"func_pushable"
+	};
 
-		bool hitSomething = !(ptr->pHit->v.solid == SOLID_BSP || ptr->pHit->v.movetype == MOVETYPE_PUSHSTEP);
-		if (!hitSomething)
-			for (size_t i = 0; i < std::size(SOLID_HIT_ENTITIES); i++)
-			{
-				hitSomething = !std::strcmp(HwDLL::GetInstance().ppGlobals->pStringBase + ptr->pHit->v.classname, SOLID_HIT_ENTITIES[i]);
+	bool hitSomething = !(ptr->pHit->v.solid == SOLID_BSP || ptr->pHit->v.movetype == MOVETYPE_PUSHSTEP);
+	if (!hitSomething)
+		for (size_t i = 0; i < std::size(SOLID_HIT_ENTITIES); i++)
+		{
+			hitSomething = !std::strcmp(HwDLL::GetInstance().ppGlobals->pStringBase + ptr->pHit->v.classname, SOLID_HIT_ENTITIES[i]);
 
-				if (hitSomething)
-					break;
-			}
-
-		if (fireBullets_count) {
-			traceLineFireBullets.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
-			traceLineFireBulletsHit.push_back(hitSomething);
-
-			while (traceLineFireBullets.size() && traceLineFireBullets.size() > 20) {
-				traceLineFireBullets.pop_front();
-				traceLineFireBulletsHit.pop_front();
-			}
-
-			fireBullets_count--;
-		} else if (fireBulletsPlayer_count) {
-			traceLineFireBulletsPlayer.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
-			traceLineFireBulletsPlayerHit.push_back(hitSomething);
-
-			// 12 = mouse2 shotgun shot count
-			while (traceLineFireBulletsPlayer.size() && traceLineFireBulletsPlayer.size() > 12) {
-				traceLineFireBulletsPlayer.pop_front();
-				traceLineFireBulletsPlayerHit.pop_front();
-			}
-
-			fireBulletsPlayer_count--;
+			if (hitSomething)
+				break;
 		}
+
+	if (fireBullets_count) {
+		traceLineFireBullets.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
+		traceLineFireBulletsHit.push_back(hitSomething);
+
+		while (traceLineFireBullets.size() && traceLineFireBullets.size() > 20) {
+			traceLineFireBullets.pop_front();
+			traceLineFireBulletsHit.pop_front();
+		}
+
+		fireBullets_count--;
+	} else if (fireBulletsPlayer_count) {
+		traceLineFireBulletsPlayer.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
+		traceLineFireBulletsPlayerHit.push_back(hitSomething);
+
+		// 12 = mouse2 shotgun shot count
+		while (traceLineFireBulletsPlayer.size() && traceLineFireBulletsPlayer.size() > 12) {
+			traceLineFireBulletsPlayer.pop_front();
+			traceLineFireBulletsPlayerHit.pop_front();
+		}
+
+		fireBulletsPlayer_count--;
 	}
 }
 

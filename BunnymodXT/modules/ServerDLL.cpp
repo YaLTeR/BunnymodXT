@@ -2286,10 +2286,10 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 	}
 }
 
-HOOK_DEF_11(ServerDLL, void, __fastcall, CBaseEntity__FireBullets, void*, thisptr, unsigned long, cShots, float, param1, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker)
+HOOK_DEF_11(ServerDLL, void, __fastcall, CBaseEntity__FireBullets, void*, thisptr, int, param1, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker)
 {
 	fireBullets_count = cShots;
-	ORIG_CBaseEntity__FireBullets(thisptr, cShots, param1, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
+	ORIG_CBaseEntity__FireBullets(thisptr, param1, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
 	// just in case
 	fireBullets_count = 0;
 }

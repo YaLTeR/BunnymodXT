@@ -2250,11 +2250,29 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
 {
 	if (!igmon && (fireBullets_count || fireBulletsPlayer_count)) {
-		const size_t IGNORE_ENTITIES_COUNT = 2;
-		const char* IGNORE_ENTITIES[] = { "worldspawn", "func_wall", "func_wall_toggle"};
+		const char* IGNORE_ENTITIES[] = {
+			"worldspawn",
+			"func_wall",
+			"func_wall_toggle",
+			"func_door",
+			"func_door_rotating",
+			"momentary_door",
+			"func_button",
+			"func_rot_button",
+			"func_healthcharger",
+			"func_recharge",
+			"func_train",
+			"func_traincontrols",
+			"func_tracktrain",
+			"func_ladder",
+			"func_water",
+			"func_plat",
+			"func_conveyor",
+			"func_illusionary"
+		};
 
 		bool hitSomething;
-		for (size_t i = 0; i < IGNORE_ENTITIES_COUNT; i++)
+		for (size_t i = 0; i < std::size(IGNORE_ENTITIES); i++)
 		{
 			hitSomething = std::strcmp(HwDLL::GetInstance().ppGlobals->pStringBase + ptr->pHit->v.classname, IGNORE_ENTITIES[i]);
 

@@ -72,7 +72,7 @@ public:
 
 	bool GetGonarchInfo(float& health, int& sequence, float& frame) const;
 
-	static void DoMultiManagerAutoStop(const char *classname);
+	static void OnMultiManagerFired(const char *classname);
 
 	static void DoAutoStopTasks();
 

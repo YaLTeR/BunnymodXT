@@ -1155,6 +1155,10 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_force_duck);
 	if (ORIG_PM_PlayerMove && ORIG_PM_Jump)
 		REG(bxt_force_jumpless);
+	if (ORIG_CMultiManager__ManagerThink || ORIG_FireTargets_Linux) {
+		REG(bxt_fire_on_mm_targetname);
+		REG(bxt_fire_on_mm_command);
+  }
 	if ((ORIG_CBaseEntity__FireBullets && ORIG_CBaseEntity__FireBulletsPlayer) || (ORIG_CBaseEntity__FireBullets_Linux && ORIG_CBaseEntity__FireBulletsPlayer_Linux)) {
 		REG(bxt_show_bullets);
 		REG(bxt_show_bullets_enemy);
@@ -1618,7 +1622,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
-			DoMultiManagerAutoStop(targetname);
+			OnMultiManagerFired(targetname);
 		}
 	}
 
@@ -1635,7 +1639,7 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 			const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->classname;
 			// We first need to check if the pCaller is a multi_manager since FireTargets can be called by anyone
 			if (!std::strcmp(classname, "multi_manager")) {
-				DoMultiManagerAutoStop(targetname);
+				OnMultiManagerFired(targetname);
 			}
 		}
 	}
@@ -1643,7 +1647,7 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 	return ORIG_FireTargets_Linux(targetName, pActivator, pCaller, useType, value);
 }
 
-void ServerDLL::DoMultiManagerAutoStop(const char *targetname)
+void ServerDLL::OnMultiManagerFired(const char *targetname)
 {
 	const char *gameDir = "";
 	if (ClientDLL::GetInstance().pEngfuncs)
@@ -1668,6 +1672,16 @@ void ServerDLL::DoMultiManagerAutoStop(const char *targetname)
 		|| (!std::strcmp(targetname, "fc_mm1") && !std::strcmp(gameDir, "hc")) // Hazardous Course 2
 		|| (!std::strcmp(targetname, "medicosprey") && !std::strcmp(gameDir, "visitors"))) { // Visitors
 		DoAutoStopTasks();
+	}
+
+	if (!CVars::bxt_fire_on_mm_targetname.IsEmpty() && !CVars::bxt_fire_on_mm_command.IsEmpty()) {
+		if (!std::strcmp(targetname, CVars::bxt_fire_on_mm_targetname.GetString().c_str()))
+		{
+			std::ostringstream ss;
+			ss << CVars::bxt_fire_on_mm_command.GetString().c_str() << "\n";
+
+			HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+		}
 	}
 }
 

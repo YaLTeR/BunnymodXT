@@ -1159,9 +1159,11 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_bullets);
 		REG(bxt_show_bullets_limit);
 		REG(bxt_show_bullets_color);
+		REG(bxt_show_bullets_miss_alpha);
 		REG(bxt_show_bullets_enemy);
 		REG(bxt_show_bullets_enemy_limit);
 		REG(bxt_show_bullets_enemy_color);
+		REG(bxt_show_bullets_enemy_miss_alpha);
 	}
 	#undef REG
 }
@@ -2247,17 +2249,25 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
 {
-	if (igmon == 0) {
+	if (igmon == 0 && (fireBullets_call || fireBulletsPlayer_call)) {
+		bool hitSomething = std::strcmp(HwDLL::GetInstance().ppGlobals->pStringBase + ptr->pHit->v.classname, "worldspawn");
+
 		if (fireBullets_call) {
 			traceLineFireBullets.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
+			traceLineFireBulletsHit.push_back(hitSomething);
 
-			while (traceLineFireBullets.size() > 0 && traceLineFireBullets.size() > CVars::bxt_show_bullets_enemy_limit.GetUint())
+			while (traceLineFireBullets.size() > 0 && traceLineFireBullets.size() > CVars::bxt_show_bullets_enemy_limit.GetUint()) {
 				traceLineFireBullets.pop_front();
+				traceLineFireBulletsHit.pop_front();
+			}
 		} else if (fireBulletsPlayer_call) {
 			traceLineFireBulletsPlayer.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });
+			traceLineFireBulletsPlayerHit.push_back(hitSomething);
 
-			while (traceLineFireBulletsPlayer.size() > 0 && traceLineFireBulletsPlayer.size() > CVars::bxt_show_bullets_limit.GetUint())
+			while (traceLineFireBulletsPlayer.size() > 0 && traceLineFireBulletsPlayer.size() > CVars::bxt_show_bullets_limit.GetUint()) {
 				traceLineFireBulletsPlayer.pop_front();
+				traceLineFireBulletsPlayerHit.pop_front();
+			}
 		}
 	}
 }
@@ -2299,10 +2309,20 @@ const std::deque<std::array<Vector, 2>>* ServerDLL::GetBulletsPlayerTrace() cons
 	return &traceLineFireBulletsPlayer;
 }
 
+const std::deque<bool>* ServerDLL::GetBulletsEnemyTraceHit() const {
+	return &traceLineFireBulletsHit;
+}
+
+const std::deque<bool>* ServerDLL::GetBulletsPlayerTraceHit() const {
+	return &traceLineFireBulletsPlayerHit;
+}
+
 void ServerDLL::ClearBulletsEnemyTrace() {
 	traceLineFireBullets.clear();
+	traceLineFireBulletsHit.clear();
 }
 
 void ServerDLL::ClearBulletsTrace() {
 	traceLineFireBulletsPlayer.clear();
+	traceLineFireBulletsPlayerHit.clear();
 }

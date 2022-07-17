@@ -85,7 +85,9 @@ public:
 	entvars_t *obboPushable = nullptr;
 
 	const std::deque<std::array<Vector, 2>>* GetBulletsEnemyTrace() const;
+	const std::deque<bool>* GetBulletsEnemyTraceHit() const;
 	const std::deque<std::array<Vector, 2>>* GetBulletsPlayerTrace() const;
+	const std::deque<bool>* GetBulletsPlayerTraceHit() const;
 	void ClearBulletsTrace();
 	void ClearBulletsEnemyTrace();
 	void TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr);
@@ -182,5 +184,7 @@ protected:
 	bool fireBulletsPlayer_call = false;
 	bool fireBullets_call = false;
 	std::deque<std::array<Vector, 2>> traceLineFireBulletsPlayer;
+	std::deque<bool> traceLineFireBulletsPlayerHit;
 	std::deque<std::array<Vector, 2>> traceLineFireBullets;
+	std::deque<bool> traceLineFireBulletsHit;
 };

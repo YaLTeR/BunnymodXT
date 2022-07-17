@@ -301,21 +301,25 @@ namespace TriangleDrawing
 		}
 	}
 
-	static void DrawBullets(triangleapi_s* pTriAPI, const std::deque<std::array<Vector, 2>>* points_vec, byte r, byte g, byte b)
+	static void DrawBullets(triangleapi_s* pTriAPI, const std::deque<std::array<Vector, 2>>* points_vec, const std::deque<bool>* hit_vec, byte r, byte g, byte b, float hitAlpha)
 	{
 		byte rEnd = 255 - r, gEnd = 255 - g, bEnd = 255 - b;
 
-		float r_float = r / 256.0f, g_float = g / 256.0f, b_float = b / 256.0f;
-		float rEnd_float = rEnd / 256.0f, gEnd_float = gEnd / 256.0f, bEnd_float = bEnd / 256.0f;
+		float r_float = r / 255.0f, g_float = g / 255.0f, b_float = b / 255.0f;
+		float rEnd_float = rEnd / 255.0f, gEnd_float = gEnd / 255.0f, bEnd_float = bEnd / 255.0f;
 
 		for (size_t i = 0; i < points_vec->size(); i++)
 		{
 			const auto points = points_vec->at(i);
+			const auto hit = hit_vec->at(i);
+			
+			if (hit)
+				hitAlpha = 1.0f;
+
 			float lastHalfDist = 20.0f;
 			auto diff = points[1] - points[0];
 			auto diffLen = diff.Length();
 			Vector half;
-
 			if (diffLen < lastHalfDist) {
 				auto diffFirstHalf = diff * 0.7f;
 				half = points[0] + diffFirstHalf;
@@ -324,11 +328,10 @@ namespace TriangleDrawing
 				auto diffFirstHalf = diff - diff.Normalize() * lastHalfDist;
 				half = points[0] + diffFirstHalf;
 			}
-
-			pTriAPI->Color4f(r_float, g_float, b_float, 1.0f);
+			
+			pTriAPI->Color4f(r_float, g_float, b_float, hitAlpha);
 			TriangleUtils::DrawLine(pTriAPI, points[0], half);
-
-			pTriAPI->Color4f(rEnd_float, gEnd_float, bEnd_float, 1.0f);
+			pTriAPI->Color4f(rEnd_float, gEnd_float, bEnd_float, hitAlpha);
 			TriangleUtils::DrawLine(pTriAPI, half, points[1]);
 		}
 	}
@@ -339,8 +342,10 @@ namespace TriangleDrawing
 			return;
 
 		const auto* points_vec = ServerDLL::GetInstance().GetBulletsEnemyTrace();
+		const auto* hit_vec = ServerDLL::GetInstance().GetBulletsEnemyTraceHit();
+		float hitAlpha = CVars::bxt_show_bullets_enemy_miss_alpha.GetFloat();
 
-		DrawBullets(pTriAPI, points_vec, 255, 0, 0);
+		DrawBullets(pTriAPI, points_vec, hit_vec, 255, 0, 0, hitAlpha);
 	}
 
 	static void DrawBulletsPlayerTrace(triangleapi_s* pTriAPI)
@@ -349,8 +354,10 @@ namespace TriangleDrawing
 			return;
 
 		const auto* points_vec = ServerDLL::GetInstance().GetBulletsPlayerTrace();
+		const auto* hit_vec = ServerDLL::GetInstance().GetBulletsPlayerTraceHit();
+		float hitAlpha = CVars::bxt_show_bullets_miss_alpha.GetFloat();
 
-		DrawBullets(pTriAPI, points_vec, 0, 0, 255);
+		DrawBullets(pTriAPI, points_vec, hit_vec, 0, 0, 255, hitAlpha);
 	}
 
 	static Vector perpendicular(const Vector &prev, const Vector &next) {

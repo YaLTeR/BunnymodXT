@@ -2250,7 +2250,17 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
 {
 	if (!igmon && (fireBullets_count || fireBulletsPlayer_count)) {
-		bool hitSomething = std::strcmp(HwDLL::GetInstance().ppGlobals->pStringBase + ptr->pHit->v.classname, "worldspawn");
+		const size_t IGNORE_ENTITIES_COUNT = 2;
+		const char* IGNORE_ENTITIES[] = { "worldspawn", "func_wall" };
+
+		bool hitSomething;
+		for (size_t i = 0; i < IGNORE_ENTITIES_COUNT; i++)
+		{
+			hitSomething = std::strcmp(HwDLL::GetInstance().ppGlobals->pStringBase + ptr->pHit->v.classname, IGNORE_ENTITIES[i]);
+
+			if (!hitSomething)
+				break;
+		}
 
 		if (fireBullets_count) {
 			traceLineFireBullets.push_back({ Vector(*vecStart), Vector(ptr->vecEndPos) });

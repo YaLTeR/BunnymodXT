@@ -88,6 +88,7 @@ public:
 	const std::deque<std::array<Vector, 2>>* GetBulletsPlayerTrace() const;
 	void ClearBulletsTrace();
 	void ClearBulletsEnemyTrace();
+	void TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr);
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
 	ServerDLL(const ServerDLL&);
@@ -178,7 +179,6 @@ protected:
 
 	std::unordered_map<int, bool> cantJumpNextTime;
 
-	void TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr);
 	bool fireBulletsPlayer_call = false;
 	bool fireBullets_call = false;
 	std::deque<std::array<Vector, 2>> traceLineFireBulletsPlayer;

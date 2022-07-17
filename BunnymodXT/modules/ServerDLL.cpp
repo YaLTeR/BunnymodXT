@@ -82,10 +82,6 @@ extern "C" Vector __cdecl _ZN11CBaseEntity17FireBulletsPlayerEj6VectorS0_S0_fiii
 {
 	return ServerDLL::HOOKED_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 }
-extern "C" void __cdecl _Z14UTIL_TraceLineRK6VectorS1_15IGNORE_MONSTERSP7edict_sP11TraceResult(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
-{
-	return ServerDLL::HOOKED_UTIL_TraceLine_Linux(vecStart, vecEnd, igmon, pentIgnore, ptr);
-}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -131,8 +127,6 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CChangeLevel__UseChangeLevel, HOOKED_CChangeLevel__UseChangeLevel,
 			ORIG_CChangeLevel__TouchChangeLevel, HOOKED_CChangeLevel__TouchChangeLevel,
 			ORIG_CBaseMonster__Killed, HOOKED_CBaseMonster__Killed,
-			ORIG_UTIL_TraceLine, HOOKED_UTIL_TraceLine,
-			ORIG_UTIL_TraceLine_Linux, HOOKED_UTIL_TraceLine_Linux,
 			ORIG_CBaseEntity__FireBullets, HOOKED_CBaseEntity__FireBullets,
 			ORIG_CBaseEntity__FireBullets_Linux, HOOKED_CBaseEntity__FireBullets_Linux,
 			ORIG_CBaseEntity__FireBulletsPlayer, HOOKED_CBaseEntity__FireBulletsPlayer,
@@ -171,8 +165,6 @@ void ServerDLL::Unhook()
 			ORIG_CTriggerSave__SaveTouch,
 			ORIG_CChangeLevel__UseChangeLevel,
 			ORIG_CChangeLevel__TouchChangeLevel,
-			ORIG_UTIL_TraceLine,
-			ORIG_UTIL_TraceLine_Linux,
 			ORIG_CBaseEntity__FireBullets,
 			ORIG_CBaseEntity__FireBullets_Linux,
 			ORIG_CBaseEntity__FireBulletsPlayer,
@@ -226,8 +218,6 @@ void ServerDLL::Clear()
 	ORIG_CTriggerSave__SaveTouch_Linux = nullptr;
 	ORIG_CChangeLevel__UseChangeLevel = nullptr;
 	ORIG_CChangeLevel__TouchChangeLevel = nullptr;
-	ORIG_UTIL_TraceLine = nullptr;
-	ORIG_UTIL_TraceLine_Linux = nullptr;
 	ORIG_CBaseEntity__FireBullets = nullptr;
 	ORIG_CBaseEntity__FireBullets_Linux = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer = nullptr;
@@ -1100,24 +1090,8 @@ void ServerDLL::FindStuff()
 		}
 	}
 
-	auto fUTIL_TraceLine = FindAsync(ORIG_UTIL_TraceLine, patterns::server::UTIL_TraceLine);
 	auto fCBaseEntity__FireBullets = FindAsync(ORIG_CBaseEntity__FireBullets, patterns::server::CBaseEntity__FireBullets);
 	auto fCBaseEntity__FireBulletsPlayer = FindAsync(ORIG_CBaseEntity__FireBulletsPlayer, patterns::server::CBaseEntity__FireBulletsPlayer);
-
-
-	{
-		auto pattern = fUTIL_TraceLine.get();
-		if (ORIG_UTIL_TraceLine) {
-			EngineDevMsg("[server dll] Found UTIL_TraceLine at %p (using the %s pattern).\n", ORIG_UTIL_TraceLine, pattern->name());
-		}
-		else {
-			ORIG_UTIL_TraceLine_Linux = reinterpret_cast<_UTIL_TraceLine_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_Z14UTIL_TraceLineRK6VectorS1_15IGNORE_MONSTERSP7edict_sP11TraceResult"));
-			if (ORIG_UTIL_TraceLine_Linux)
-				EngineDevMsg("[server dll] Found UTIL_TraceLine [Linux] at %p.\n", ORIG_UTIL_TraceLine_Linux);
-			else
-				EngineDevWarning("[server dll] Could not find UTIL_TraceLine.\n");
-		}
-	}
 
 	{
 		auto pattern = fCBaseEntity__FireBullets.get();
@@ -1181,6 +1155,14 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_force_duck);
 	if (ORIG_PM_PlayerMove && ORIG_PM_Jump)
 		REG(bxt_force_jumpless);
+	if ((ORIG_CBaseEntity__FireBullets && ORIG_CBaseEntity__FireBulletsPlayer) || (ORIG_CBaseEntity__FireBullets_Linux && ORIG_CBaseEntity__FireBulletsPlayer_Linux)) {
+		REG(bxt_show_bullets);
+		REG(bxt_show_bullets_limit);
+		REG(bxt_show_bullets_color);
+		REG(bxt_show_bullets_enemy);
+		REG(bxt_show_bullets_enemy_limit);
+		REG(bxt_show_bullets_enemy_color);
+	}
 	#undef REG
 }
 
@@ -2263,20 +2245,6 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 	return ORIG_CChangeLevel__TouchChangeLevel(thisptr, edx, pOther);
 }
 
-HOOK_DEF_5(ServerDLL, void, __cdecl, UTIL_TraceLine, const Vector*, vecStart, const Vector*, vecEnd, int, igmon, edict_t*, pentIgnore, TraceResult*, ptr)
-{
-	TraceLineWrap(vecStart, vecEnd, igmon, pentIgnore, ptr);
-
-	return ORIG_UTIL_TraceLine(vecStart, vecEnd, igmon, pentIgnore, ptr);
-}
-
-HOOK_DEF_5(ServerDLL, void, __cdecl, UTIL_TraceLine_Linux, const Vector*, vecStart, const Vector*, vecEnd, int, igmon, edict_t*, pentIgnore, TraceResult*, ptr)
-{
-	TraceLineWrap(vecStart, vecEnd, igmon, pentIgnore, ptr);
-
-	return ORIG_UTIL_TraceLine_Linux(vecStart, vecEnd, igmon, pentIgnore, ptr);
-}
-
 void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
 {
 	if (igmon == 0) {
@@ -2295,28 +2263,28 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 	}
 }
 
-HOOK_DEF_11(ServerDLL, void, __fastcall, CBaseEntity__FireBullets, void*, thisptr, unsigned long, cShots, float, param1, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker) 
+HOOK_DEF_11(ServerDLL, void, __fastcall, CBaseEntity__FireBullets, void*, thisptr, unsigned long, cShots, float, param1, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker)
 {
 	fireBullets_call = true;
 	ORIG_CBaseEntity__FireBullets(thisptr, cShots, param1, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
 	fireBullets_call = false;
 }
 
-HOOK_DEF_10(ServerDLL, void, __cdecl, CBaseEntity__FireBullets_Linux, void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker) 
+HOOK_DEF_10(ServerDLL, void, __cdecl, CBaseEntity__FireBullets_Linux, void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker)
 {
 	fireBullets_call = true;
 	ORIG_CBaseEntity__FireBullets_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
 	fireBullets_call = false;
 }
 
-HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, thisptr, int, edx, float, param1, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) 
+HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, thisptr, int, edx, float, param1, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand)
 {
 	fireBulletsPlayer_call = true;
 	ORIG_CBaseEntity__FireBulletsPlayer(thisptr, edx, param1, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	fireBulletsPlayer_call = false;
 }
 
-HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) 
+HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand)
 {
 	fireBulletsPlayer_call = true;
 	auto ret = ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);

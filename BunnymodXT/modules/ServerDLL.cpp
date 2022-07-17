@@ -74,6 +74,19 @@ extern "C" void __cdecl _ZN9CPushable4MoveEP11CBaseEntityi(void* thisptr, void* 
 {
 	return ServerDLL::HOOKED_CPushable__Move_Linux(thisptr, pOther, push);
 }
+
+extern "C" void __cdecl _ZN11CBaseEntity11FireBulletsEj6VectorS0_S0_fiiiP9entvars_s(void* thisptr, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker)
+{
+	return ServerDLL::HOOKED_CBaseEntity__FireBullets_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
+}
+extern "C" Vector __cdecl _ZN11CBaseEntity17FireBulletsPlayerEj6VectorS0_S0_fiiiP9entvars_si(void* thisptr, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker, int shared_rand)
+{
+	return ServerDLL::HOOKED_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
+}
+extern "C" void __cdecl _Z14UTIL_TraceLineRK6VectorS1_15IGNORE_MONSTERSP7edict_sP11TraceResult(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
+{
+	return ServerDLL::HOOKED_UTIL_TraceLine_Linux(vecStart, vecEnd, igmon, pentIgnore, ptr);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -1099,7 +1112,7 @@ void ServerDLL::FindStuff()
 			EngineDevMsg("[server dll] Found UTIL_TraceLine at %p (using the %s pattern).\n", ORIG_UTIL_TraceLine, pattern->name());
 		}
 		else {
-			ORIG_UTIL_TraceLine_Linux = reinterpret_cast<_UTIL_TraceLine_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_Z14UTIL_TraceLineRK6VectorS1_15IGNORE_MONSTERS12IGNORE_GLASSP7edict_sP11TraceResult"));
+			ORIG_UTIL_TraceLine_Linux = reinterpret_cast<_UTIL_TraceLine_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_Z14UTIL_TraceLineRK6VectorS1_15IGNORE_MONSTERSP7edict_sP11TraceResult"));
 			if (ORIG_UTIL_TraceLine_Linux)
 				EngineDevMsg("[server dll] Found UTIL_TraceLine [Linux] at %p.\n", ORIG_UTIL_TraceLine_Linux);
 			else
@@ -1122,14 +1135,16 @@ void ServerDLL::FindStuff()
 	}
 
 	{
-		auto pattern = fCBaseEntity__FireBulletsPlayer.get();
-		if (ORIG_CBaseEntity__FireBulletsPlayer) {
-			EngineDevMsg("[server dll] Found CBaseEntity::FireBulletsPlayer at %p (using the %s pattern).\n", ORIG_CBaseEntity__FireBulletsPlayer, pattern->name());
-		}
-		else {
-			ORIG_CBaseEntity__FireBulletsPlayer_Linux = reinterpret_cast<_CBaseEntity__FireBulletsPlayer_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBaseEntity17FireBulletsPlayerEj6VectorS0_S0_fiiiP9entvars_si"));
-			if (ORIG_CBaseEntity__FireBulletsPlayer_Linux)
-				EngineDevMsg("[server dll] Found CBaseEntity::FireBulletsPlayer [Linux] at %p.\n", ORIG_CBaseEntity__FireBulletsPlayer_Linux);
+		// Reversed the order, because the Windows pattern matches something entirely different in the Linux ServerDLL.
+		ORIG_CBaseEntity__FireBulletsPlayer_Linux = reinterpret_cast<_CBaseEntity__FireBulletsPlayer_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBaseEntity17FireBulletsPlayerEj6VectorS0_S0_fiiiP9entvars_si"));
+		if (ORIG_CBaseEntity__FireBulletsPlayer_Linux)
+			EngineDevMsg("[server dll] Found CBaseEntity::FireBulletsPlayer [Linux] at %p.\n", ORIG_CBaseEntity__FireBulletsPlayer_Linux);
+		else
+		{
+			auto pattern = fCBaseEntity__FireBulletsPlayer.get();
+			if (ORIG_CBaseEntity__FireBulletsPlayer) {
+				EngineDevMsg("[server dll] Found CBaseEntity::FireBulletsPlayer at %p (using the %s pattern).\n", ORIG_CBaseEntity__FireBulletsPlayer, pattern->name());
+			}
 			else
 				EngineDevWarning("[server dll] Could not find CBaseEntity::FireBulletsPlayer.\n");
 		}
@@ -2281,28 +2296,33 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 	}
 }
 
-HOOK_DEF_11(ServerDLL, void, __fastcall, CBaseEntity__FireBullets, void*, thisptr, unsigned long, cShots, float, param1, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker) {
+HOOK_DEF_11(ServerDLL, void, __fastcall, CBaseEntity__FireBullets, void*, thisptr, unsigned long, cShots, float, param1, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker) 
+{
 	fireBullets_call = true;
 	ORIG_CBaseEntity__FireBullets(thisptr, cShots, param1, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
 	fireBullets_call = false;
 }
 
-HOOK_DEF_10(ServerDLL, void, __cdecl, CBaseEntity__FireBullets_Linux, void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker) {
+HOOK_DEF_10(ServerDLL, void, __cdecl, CBaseEntity__FireBullets_Linux, void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker) 
+{
 	fireBullets_call = true;
 	ORIG_CBaseEntity__FireBullets_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker);
 	fireBullets_call = false;
 }
 
-HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, thisptr, int, edx, float, param1, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) {
+HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, thisptr, int, edx, float, param1, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) 
+{
 	fireBulletsPlayer_call = true;
 	ORIG_CBaseEntity__FireBulletsPlayer(thisptr, edx, param1, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	fireBulletsPlayer_call = false;
 }
 
-HOOK_DEF_12(ServerDLL, void, __cdecl, CBaseEntity__FireBulletsPlayer_Linux, Vector*, __return_storage_ptr__void, void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) {
+HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand) 
+{
 	fireBulletsPlayer_call = true;
-	ORIG_CBaseEntity__FireBulletsPlayer_Linux(__return_storage_ptr__void, thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
+	auto ret = ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	fireBulletsPlayer_call = false;
+	return ret;
 }
 
 const std::deque<std::array<Vector, 2>>* ServerDLL::GetBulletsEnemyTrace() const {

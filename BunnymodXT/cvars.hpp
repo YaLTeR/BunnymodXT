@@ -182,7 +182,7 @@ namespace CVars
 	extern CVarWrapper bxt_force_jumpless;
 	extern CVarWrapper bxt_render_far_entities;
 	extern CVarWrapper bxt_fire_on_mm_targetname;
-	extern CVarWrapper bxt_fire_on_mm_setcommand;
+	extern CVarWrapper bxt_fire_on_mm_command;
 
 	// Clientside CVars
 	extern CVarWrapper cl_righthand;

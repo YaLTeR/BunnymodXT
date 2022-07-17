@@ -318,10 +318,11 @@ namespace TriangleDrawing
 				hitAlpha = 1.0f;
 
 			float lastHalfDist = 20.0f;
+			float totalLenMin = 60.0f;
 			auto diff = points[1] - points[0];
 			auto diffLen = diff.Length();
 			Vector half;
-			if (diffLen < lastHalfDist) {
+			if (diffLen < totalLenMin) {
 				auto diffFirstHalf = diff * 0.7f;
 				half = points[0] + diffFirstHalf;
 			}

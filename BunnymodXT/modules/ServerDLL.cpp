@@ -2244,6 +2244,9 @@ HOOK_DEF_6(ServerDLL, void, __fastcall, CChangeLevel__UseChangeLevel, void*, thi
 	if (CVars::bxt_disable_changelevel.GetBool())
 		return;
 
+	ServerDLL::GetInstance().ClearBulletsEnemyTrace();
+	ServerDLL::GetInstance().ClearBulletsTrace();
+
 	return ORIG_CChangeLevel__UseChangeLevel(thisptr, edx, pActivator, pCaller, useType, value);
 }
 
@@ -2251,6 +2254,9 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 {
 	if (CVars::bxt_disable_changelevel.GetBool())
 		return;
+
+	ServerDLL::GetInstance().ClearBulletsEnemyTrace();
+	ServerDLL::GetInstance().ClearBulletsTrace();
 
 	return ORIG_CChangeLevel__TouchChangeLevel(thisptr, edx, pOther);
 }

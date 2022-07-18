@@ -43,8 +43,6 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, CTriggerSave__SaveTouch_Linux, void* thisptr, void* pOther)
 	HOOK_DECL(void, __fastcall, CChangeLevel__UseChangeLevel, void* thisptr, int edx, void* pActivator, void* pCaller, int useType, float value)
 	HOOK_DECL(void, __fastcall, CChangeLevel__TouchChangeLevel, void* thisptr, int edx, void* pOther)
-	HOOK_DECL(void, __cdecl, UTIL_TraceLine, const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
-	HOOK_DECL(void, __cdecl, UTIL_TraceLine_Linux, const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
 	HOOK_DECL(void, __fastcall, CBaseEntity__FireBullets, void* thisptr, int param1, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker)
 	HOOK_DECL(void, __cdecl, CBaseEntity__FireBullets_Linux, void* thisptr, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker)
 	HOOK_DECL(void, __fastcall, CBaseEntity__FireBulletsPlayer, void* thisptr, int edx, float param1, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker, int shared_rand)

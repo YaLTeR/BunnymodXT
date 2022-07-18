@@ -2257,7 +2257,7 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)
 {
-	if (igmon || !fireBullets_count || !fireBulletsPlayer_count)
+	if (igmon || (!fireBullets_count && !fireBulletsPlayer_count))
 		return;
 		
 	const char* SOLID_HIT_ENTITIES[] = {

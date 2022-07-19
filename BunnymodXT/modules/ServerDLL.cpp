@@ -1160,7 +1160,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_CMultiManager__ManagerThink || ORIG_FireTargets_Linux) {
 		REG(bxt_fire_on_mm_targetname);
 		REG(bxt_fire_on_mm_command);
-  }
+	}
 	if ((ORIG_CBaseEntity__FireBullets && ORIG_CBaseEntity__FireBulletsPlayer) || (ORIG_CBaseEntity__FireBullets_Linux && ORIG_CBaseEntity__FireBulletsPlayer_Linux)) {
 		REG(bxt_show_bullets);
 		REG(bxt_show_bullets_enemy);

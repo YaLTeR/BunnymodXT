@@ -539,6 +539,13 @@ namespace patterns
 			"HL-WON-1712",
 			"83 EC 08 53 56 57 68 E1 0D 00 00 FF 15"
 		);
+
+		PATTERNS(PF_traceline_DLL,
+			"HL-SteamPipe",
+			"55 8B EC 8B 45 14 85 C0 75 05 A1 ?? ?? ?? ?? 8B 4D 0C 8B 55 08 56 50 8B 45 10 50 51 52 E8 ?? ?? ?? ?? D9 05",
+			"HL-4554",
+			"8B 44 24 10 85 C0 75 05 A1 ?? ?? ?? ?? 8B 4C 24 08 8B 54 24 04 56 50 8B 44 24 14 50 51 52 E8 ?? ?? ?? ?? D9 05"
+		);
 	}
 
 	namespace server
@@ -750,6 +757,20 @@ namespace patterns
 			"3B FE 74 ?? 8B 55",
 			"AoMDC",
 			"8B 45 ?? 3B 45 ?? 74 ?? 8B 4D ?? 51 8B 55 ?? 52 FF 15"
+		);
+
+		PATTERNS(CBaseEntity__FireBullets,
+			"HL-SteamPipe-6153",
+			"81 EC FC 00 00 00",
+			"Echoes",
+			"55 8B EC 81 EC 80 01 00 00"
+		);
+
+		PATTERNS(CBaseEntity__FireBulletsPlayer,
+			"HL-SteamPipe-6153",
+			"81 EC B0 00 00 00 A1",
+			"Echoes",
+			"55 8B EC 81 EC 10 01 00 00 89 8D ?? ?? ?? ?? 8D 4D"
 		);
 	}
 

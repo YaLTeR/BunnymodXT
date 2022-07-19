@@ -43,6 +43,10 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, CTriggerSave__SaveTouch_Linux, void* thisptr, void* pOther)
 	HOOK_DECL(void, __fastcall, CChangeLevel__UseChangeLevel, void* thisptr, int edx, void* pActivator, void* pCaller, int useType, float value)
 	HOOK_DECL(void, __fastcall, CChangeLevel__TouchChangeLevel, void* thisptr, int edx, void* pOther)
+	HOOK_DECL(void, __fastcall, CBaseEntity__FireBullets, void* thisptr, int param1, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker)
+	HOOK_DECL(void, __cdecl, CBaseEntity__FireBullets_Linux, void* thisptr, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker)
+	HOOK_DECL(void, __fastcall, CBaseEntity__FireBulletsPlayer, void* thisptr, int edx, float param1, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker, int shared_rand)
+	HOOK_DECL(Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux, void* thisptr, unsigned long cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t* pevAttacker, int shared_rand)
 
 public:
 	static ServerDLL& GetInstance()
@@ -78,6 +82,13 @@ public:
 
 	entvars_t *obboPushable = nullptr;
 
+	const std::deque<std::array<Vector, 2>>& GetBulletsEnemyTrace() const;
+	const std::deque<bool>& GetBulletsEnemyTraceHit() const;
+	const std::deque<std::array<Vector, 2>>& GetBulletsPlayerTrace() const;
+	const std::deque<bool>& GetBulletsPlayerTraceHit() const;
+	void ClearBulletsTrace();
+	void ClearBulletsEnemyTrace();
+	void TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr);
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
 	ServerDLL(const ServerDLL&);
@@ -167,4 +178,11 @@ protected:
 	std::deque<TASLogger::Collision> secondFlyMoveTouchQueue;
 
 	std::unordered_map<int, bool> cantJumpNextTime;
+
+	unsigned long fireBulletsPlayer_count = 0;
+	unsigned long fireBullets_count = 0;
+	std::deque<std::array<Vector, 2>> traceLineFireBulletsPlayer;
+	std::deque<bool> traceLineFireBulletsPlayerHit;
+	std::deque<std::array<Vector, 2>> traceLineFireBullets;
+	std::deque<bool> traceLineFireBulletsHit;
 };

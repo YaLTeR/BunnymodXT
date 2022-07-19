@@ -173,6 +173,8 @@ namespace CVars
 	CVarWrapper bxt_viewmodel_ofs_right("bxt_viewmodel_ofs_right", "0");
 	CVarWrapper bxt_viewmodel_ofs_up("bxt_viewmodel_ofs_up", "0");
 	CVarWrapper bxt_viewmodel_bob_angled("bxt_viewmodel_bob_angled", "0");
+	CVarWrapper bxt_show_bullets("bxt_show_bullets", "0");
+	CVarWrapper bxt_show_bullets_enemy("bxt_show_bullets_enemy", "0");
 
 	const std::vector<CVarWrapper*> allCVars =
 	{
@@ -338,6 +340,8 @@ namespace CVars
 		&bxt_viewmodel_ofs_forward,
 		&bxt_viewmodel_ofs_right,
 		&bxt_viewmodel_ofs_up,
-		&bxt_viewmodel_bob_angled
+		&bxt_viewmodel_bob_angled,
+		&bxt_show_bullets,
+		&bxt_show_bullets_enemy,
 	};
 }

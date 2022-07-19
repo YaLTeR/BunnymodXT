@@ -301,6 +301,11 @@ extern "C" void __cdecl Draw_FillRGBA(int x, int y, int w, int h, int r, int g, 
 {
 	HwDLL::HOOKED_Draw_FillRGBA(x, y, w, h, r, g, b, a);
 }
+
+extern "C" void __cdecl PF_traceline_DLL(const Vector* v1, const Vector* v2, int fNoMonsters, edict_t* pentToSkip, TraceResult* ptr)
+{
+	HwDLL::HOOKED_PF_traceline_DLL(v1, v2, fNoMonsters, pentToSkip, ptr);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -415,6 +420,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SPR_Set);
 			MemUtils::MarkAsExecutable(ORIG_DrawCrosshair);
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
+			MemUtils::MarkAsExecutable(ORIG_PF_traceline_DLL);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -467,7 +473,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_SetFrustum, HOOKED_R_SetFrustum,
 			ORIG_SPR_Set, HOOKED_SPR_Set,
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
-			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA);
+			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
+			ORIG_PF_traceline_DLL, HOOKED_PF_traceline_DLL);
 	}
 }
 
@@ -525,7 +532,8 @@ void HwDLL::Unhook()
 			ORIG_R_SetFrustum,
 			ORIG_SPR_Set,
 			ORIG_DrawCrosshair,
-			ORIG_Draw_FillRGBA);
+			ORIG_Draw_FillRGBA,
+			ORIG_PF_traceline_DLL);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -611,6 +619,7 @@ void HwDLL::Clear()
 	ORIG_SPR_Set = nullptr;
 	ORIG_DrawCrosshair = nullptr;
 	ORIG_Draw_FillRGBA = nullptr;
+	ORIG_PF_traceline_DLL = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -946,6 +955,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find Draw_FillRGBA.\n");
 
+		ORIG_PF_traceline_DLL = reinterpret_cast<_PF_traceline_DLL>(MemUtils::GetSymbolAddress(m_Handle, "PF_traceline_DLL"));
+		if (ORIG_PF_traceline_DLL)
+			EngineDevMsg("[hw dll] Found PF_traceline_DLL at %p.\n", ORIG_PF_traceline_DLL);
+		else
+			EngineDevWarning("[hw dll] Could not find PF_traceline_DLL.\n");
+
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -1211,6 +1226,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SPR_Set)
 		DEF_FUTURE(DrawCrosshair)
 		DEF_FUTURE(Draw_FillRGBA)
+		DEF_FUTURE(PF_traceline_DLL)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1961,6 +1977,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(SPR_Set);
 		GET_FUTURE(DrawCrosshair);
 		GET_FUTURE(Draw_FillRGBA);
+		GET_FUTURE(PF_traceline_DLL);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -3503,6 +3520,28 @@ struct HwDLL::Cmd_BXT_TAS_Client_Load_Received_Script
 	}
 };
 
+struct HwDLL::Cmd_BXT_Show_Bullets_Clear
+{
+	NO_USAGE()
+
+	static void handler() {
+		auto& serverDLL = ServerDLL::GetInstance();
+
+		serverDLL.ClearBulletsTrace();
+	}
+};
+
+struct HwDLL::Cmd_BXT_Show_Bullets_Enemy_Clear
+{
+	NO_USAGE()
+
+	static void handler() {
+		auto& serverDLL = ServerDLL::GetInstance();
+
+		serverDLL.ClearBulletsEnemyTrace();
+	}
+};
+
 extern "C" DLLEXPORT void bxt_tas_load_script_from_string(const char *script)
 {
 	auto& hw = HwDLL::GetInstance();
@@ -3806,6 +3845,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Become_Simulator_Client, Handler<>>("bxt_tas_become_simulator_client");
 	wrapper::Add<Cmd_BXT_TAS_Server_Send_Command, Handler<const char*>>("_bxt_tas_server_send_command");
 	wrapper::Add<Cmd_BXT_TAS_Client_Load_Received_Script, Handler<>>("_bxt_tas_client_load_received_script");
+
+	wrapper::Add<Cmd_BXT_Show_Bullets_Clear, Handler<>>("bxt_show_bullets_clear");
+	wrapper::Add<Cmd_BXT_Show_Bullets_Enemy_Clear, Handler<>>("bxt_show_bullets_enemy_clear");
 }
 
 void HwDLL::InsertCommands()
@@ -5858,4 +5900,11 @@ HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, 
 		a = 255;
 
 	ORIG_Draw_FillRGBA(x, y, w, h, r, g, b, a);
+}
+
+HOOK_DEF_5(HwDLL, void, __cdecl, PF_traceline_DLL, const Vector*, v1, const Vector*, v2, int, fNoMonsters, edict_t*, pentToSkip, TraceResult*, ptr)
+{
+	ORIG_PF_traceline_DLL(v1, v2, fNoMonsters, pentToSkip, ptr);
+
+	ServerDLL::GetInstance().TraceLineWrap(v1, v2, fNoMonsters, pentToSkip, ptr);
 }

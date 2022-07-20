@@ -298,6 +298,8 @@ void ClientDLL::Clear()
 	last_viewup = Vector();
 	last_viewright = Vector();
 	last_buttons = 0;
+	pCS_AngleSpeedCap = 0;
+	pCS_AngleSpeedCap_Linux = 0;
 }
 
 void ClientDLL::FindStuff()
@@ -419,6 +421,12 @@ void ClientDLL::FindStuff()
 			}
 		});
 
+	auto fCS_AngleSpeedCap = FindAsync(
+		pCS_AngleSpeedCap,
+		patterns::client::CS_AngleSpeedCap);
+	auto fCS_AngleSpeedCap_Linux = FindAsync(
+		pCS_AngleSpeedCap_Linux,
+		patterns::client::CS_AngleSpeedCap_Linux);
 	auto fEV_GetDefaultShellInfo = FindAsync(ORIG_EV_GetDefaultShellInfo, patterns::client::EV_GetDefaultShellInfo);
 	auto fCStudioModelRenderer__StudioSetupBones = FindAsync(
 		ORIG_CStudioModelRenderer__StudioSetupBones,
@@ -726,6 +734,20 @@ void ClientDLL::FindStuff()
 			}
 		}
 	}
+
+	{
+		auto pattern = fCS_AngleSpeedCap.get();
+		if (pCS_AngleSpeedCap) {
+				EngineDevMsg("[client dll] Found the angle speed cap pattern at %p (using the %s pattern).\n", pCS_AngleSpeedCap, pattern->name());
+		} else {
+			if (pCS_AngleSpeedCap_Linux) {
+				pattern = fCS_AngleSpeedCap_Linux.get();
+				EngineDevMsg("[client dll] Found the angle speed cap pattern [Linux] at %p (using the %s pattern).\n", pCS_AngleSpeedCap_Linux, pattern->name());
+			} else {
+				EngineDevWarning("[client dll] Could not find angle speed cap pattern.\n");
+			}
+		}
+	}
 }
 
 bool ClientDLL::FindHUDFunctions()
@@ -887,6 +909,10 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (ORIG_CHudFlashlight__drawNightVision_Linux || ORIG_CHudFlashlight__drawNightVision || ORIG_CHud__DrawHudNightVision_Linux || ORIG_CHud__DrawHudNightVision ) {
 		REG(bxt_disable_nightvision_sprite);
 	}
+
+	if (pCS_AngleSpeedCap || pCS_AngleSpeedCap_Linux) {
+		REG(bxt_anglespeed_cap);
+	}
 	#undef REG
 }
 
@@ -945,6 +971,40 @@ bool ClientDLL::DoesGameDirMatch(const char *game)
 	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
 
 	return !std::strcmp(gameDir, game);
+}
+
+void ClientDLL::SetAngleSpeedCap(bool capped) {
+	if (!pCS_AngleSpeedCap && !pCS_AngleSpeedCap_Linux) {
+		return;
+	}
+
+	if (capped) { // restore the bytes
+		if (pCS_AngleSpeedCap) {
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 5), 1, reinterpret_cast<const byte*>("\x7B"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 37), 1, reinterpret_cast<const byte*>("\x7A"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 328), 1, reinterpret_cast<const byte*>("\x7B"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 360), 1, reinterpret_cast<const byte*>("\x7A"));
+		}
+		else if (pCS_AngleSpeedCap_Linux) {
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 79), 1, reinterpret_cast<const byte*>("\xD9"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 1089), 1, reinterpret_cast<const byte*>("\xD9"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 359), 1, reinterpret_cast<const byte*>("\xD9"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 801), 1, reinterpret_cast<const byte*>("\xD9"));
+		}
+	} else {
+		if (pCS_AngleSpeedCap) {
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 5), 1, reinterpret_cast<const byte*>("\xEB"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 37), 1, reinterpret_cast<const byte*>("\xEB"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 328), 1, reinterpret_cast<const byte*>("\xEB"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 360), 1, reinterpret_cast<const byte*>("\xEB"));
+		}
+		else if (pCS_AngleSpeedCap_Linux) {
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 79), 1, reinterpret_cast<const byte*>("\xD8"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 1089), 1, reinterpret_cast<const byte*>("\xD8"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 359), 1, reinterpret_cast<const byte*>("\xD8"));
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 801), 1, reinterpret_cast<const byte*>("\xD8"));
+		}
+	}
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)

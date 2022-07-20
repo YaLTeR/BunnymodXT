@@ -94,6 +94,8 @@ public:
 
 	Vector AnglesToForward(const Vector &angles);
 
+	void SetAngleSpeedCap(bool capped);
+
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};
 	ClientDLL(const ClientDLL&);
@@ -117,6 +119,9 @@ protected:
 	ptrdiff_t offBhopcap;
 	ptrdiff_t pBhopcapWindows;
 	byte originalBhopcapInsn[6];
+
+	ptrdiff_t pCS_AngleSpeedCap;
+	ptrdiff_t pCS_AngleSpeedCap_Linux;
 
 	bool cantJumpNextTime;
 

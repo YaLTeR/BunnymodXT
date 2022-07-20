@@ -916,6 +916,16 @@ namespace patterns
 			"TWHL-Tower-2",
 			"55 8B EC 83 EC 14 D9 05 ?? ?? ?? ?? 56 8B F1"
 		);
+				
+		PATTERNS(CS_AngleSpeedCap,
+			"CS-SteamPipe",
+			"DF E0 F6 C4 05 7B 10 D9 41 0C D8 1D ?? ?? ?? ?? DF E0 F6 C4 05 7A 1D D9 41 0C D8 1D ?? ?? ?? ?? DF E0 F6 C4 05 7A 08 D9 05 ?? ?? ?? ?? EB 0B D9 41 0C EB 06 D9 05"
+		);
+
+		PATTERNS(CS_AngleSpeedCap_Linux,
+			"CS-SteamPipe",
+			"57 56 53 83 EC 30 F6 05 ?? ?? ?? ?? 01"
+		);
 	}
 
 	namespace shared

@@ -177,6 +177,7 @@ namespace CVars
 	CVarWrapper bxt_viewmodel_bob_angled("bxt_viewmodel_bob_angled", "0");
 	CVarWrapper bxt_show_bullets("bxt_show_bullets", "0");
 	CVarWrapper bxt_show_bullets_enemy("bxt_show_bullets_enemy", "0");
+	CVarWrapper bxt_anglespeed_cap("bxt_anglespeed_cap", "1");
 
 	const std::vector<CVarWrapper*> allCVars =
 	{
@@ -188,6 +189,7 @@ namespace CVars
 		&_bxt_tas_script_generation,
 		&bxt_taslog_filename,
 		&bxt_autopause,
+		&bxt_anglespeed_cap,
 		&bxt_interprocess_enable,
 		&bxt_fade_remove,
 		&bxt_skybox_remove,

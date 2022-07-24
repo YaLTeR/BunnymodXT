@@ -546,6 +546,13 @@ namespace patterns
 			"HL-4554",
 			"8B 44 24 10 85 C0 75 05 A1 ?? ?? ?? ?? 8B 4C 24 08 8B 54 24 04 56 50 8B 44 24 14 50 51 52 E8 ?? ?? ?? ?? D9 05"
 		);
+
+		PATTERNS(CL_CheckGameDirectory,
+			"HL-SteamPipe",
+			"55 8B EC 81 EC 04 01 00 00 56 8B 75",
+			"HL-4554",
+			"81 EC 04 01 00 00 56 8B B4 24 ?? ?? ?? ?? 85 F6"
+		);
 	}
 
 	namespace server

@@ -306,6 +306,11 @@ extern "C" void __cdecl PF_traceline_DLL(const Vector* v1, const Vector* v2, int
 {
 	HwDLL::HOOKED_PF_traceline_DLL(v1, v2, fNoMonsters, pentToSkip, ptr);
 }
+
+extern "C" qboolean __cdecl CL_CheckGameDirectory(char *gamedir)
+{
+	return HwDLL::HOOKED_CL_CheckGameDirectory(gamedir);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -421,6 +426,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_DrawCrosshair);
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
 			MemUtils::MarkAsExecutable(ORIG_PF_traceline_DLL);
+			MemUtils::MarkAsExecutable(ORIG_CL_CheckGameDirectory);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -474,7 +480,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_SPR_Set, HOOKED_SPR_Set,
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
 			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
-			ORIG_PF_traceline_DLL, HOOKED_PF_traceline_DLL);
+			ORIG_PF_traceline_DLL, HOOKED_PF_traceline_DLL,
+			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory);
 	}
 }
 
@@ -533,7 +540,8 @@ void HwDLL::Unhook()
 			ORIG_SPR_Set,
 			ORIG_DrawCrosshair,
 			ORIG_Draw_FillRGBA,
-			ORIG_PF_traceline_DLL);
+			ORIG_PF_traceline_DLL,
+			ORIG_CL_CheckGameDirectory);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -620,6 +628,7 @@ void HwDLL::Clear()
 	ORIG_DrawCrosshair = nullptr;
 	ORIG_Draw_FillRGBA = nullptr;
 	ORIG_PF_traceline_DLL = nullptr;
+	ORIG_CL_CheckGameDirectory = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -961,6 +970,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find PF_traceline_DLL.\n");
 
+		ORIG_CL_CheckGameDirectory = reinterpret_cast<_CL_CheckGameDirectory>(MemUtils::GetSymbolAddress(m_Handle, "CL_CheckGameDirectory"));
+		if (ORIG_CL_CheckGameDirectory)
+			EngineDevMsg("[hw dll] Found CL_CheckGameDirectory at %p.\n", ORIG_CL_CheckGameDirectory);
+		else
+			EngineDevWarning("[hw dll] Could not find CL_CheckGameDirectory.\n");
+
 		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -1227,6 +1242,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(DrawCrosshair)
 		DEF_FUTURE(Draw_FillRGBA)
 		DEF_FUTURE(PF_traceline_DLL)
+		DEF_FUTURE(CL_CheckGameDirectory)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1978,6 +1994,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(DrawCrosshair);
 		GET_FUTURE(Draw_FillRGBA);
 		GET_FUTURE(PF_traceline_DLL);
+		GET_FUTURE(CL_CheckGameDirectory);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -3742,6 +3759,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_clear_green);
 	RegisterCVar(CVars::bxt_fix_mouse_horizontal_limit);
 	RegisterCVar(CVars::bxt_force_clear);
+	RegisterCVar(CVars::bxt_disable_gamedir_check_in_demo);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -5907,4 +5925,12 @@ HOOK_DEF_5(HwDLL, void, __cdecl, PF_traceline_DLL, const Vector*, v1, const Vect
 	ORIG_PF_traceline_DLL(v1, v2, fNoMonsters, pentToSkip, ptr);
 
 	ServerDLL::GetInstance().TraceLineWrap(v1, v2, fNoMonsters, pentToSkip, ptr);
+}
+
+HOOK_DEF_1(HwDLL, qboolean, __cdecl, CL_CheckGameDirectory, char*, gamedir)
+{
+	if (ClientDLL::GetInstance().pEngfuncs->pDemoAPI->IsPlayingback() && CVars::bxt_disable_gamedir_check_in_demo.GetBool())
+		return true;
+	else
+		return ORIG_CL_CheckGameDirectory(gamedir);
 }

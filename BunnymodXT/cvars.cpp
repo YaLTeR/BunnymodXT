@@ -155,6 +155,9 @@ namespace CVars
 	CVarWrapper bxt_hud_entities("bxt_hud_entities", "0");
 	CVarWrapper bxt_hud_entities_offset("bxt_hud_entities_offset", "");
 	CVarWrapper bxt_hud_entities_anchor("bxt_hud_entities_anchor", "0 0");
+	CVarWrapper bxt_hud_weapon_cooldown("bxt_hud_weapon_cooldown", "0");
+	CVarWrapper bxt_hud_weapon_cooldown_offset("bxt_hud_weapon_cooldown_offset", "");
+	CVarWrapper bxt_hud_weapon_cooldown_anchor("bxt_hud_weapon_cooldown_anchor", "0 0");
 	CVarWrapper bxt_cross("bxt_cross", "0");
 	CVarWrapper bxt_cross_color("bxt_cross_color", "");
 	CVarWrapper bxt_cross_alpha("bxt_cross_alpha", "");
@@ -323,6 +326,9 @@ namespace CVars
 		&bxt_hud_entities,
 		&bxt_hud_entities_offset,
 		&bxt_hud_entities_anchor,
+		&bxt_hud_weapon_cooldown,
+		&bxt_hud_weapon_cooldown_offset,
+		&bxt_hud_weapon_cooldown_anchor,
 		&bxt_cross,
 		&bxt_cross_color,
 		&bxt_cross_alpha,

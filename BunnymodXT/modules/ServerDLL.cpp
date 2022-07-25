@@ -257,6 +257,7 @@ void ServerDLL::Clear()
 	offNihilanthRecharger = 0;
 	offNihilanthSpheres = 0;
 	offNextAttack = 0;
+	offActiveItem = 0;
 	offNextPrimaryAttack = 0;
 	offNextSecondaryAttack = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
@@ -704,6 +705,26 @@ void ServerDLL::FindStuff()
 			break;
 		case 2: // Echoes
 			offNextAttack = *reinterpret_cast<ptrdiff_t*>(pCGauss__PrimaryAttack + 0x14F);
+			break;
+		default:
+			assert(false);
+		}
+	});
+
+	uintptr_t pCBasePlayer__SelectNextItem;
+	auto fCBasePlayer__SelectNextItem = FindAsync(
+		pCBasePlayer__SelectNextItem,
+		patterns::server::CBasePlayer__SelectNextItem,
+		[&](auto pattern) {
+		switch (pattern - patterns::server::CBasePlayer__SelectNextItem.cbegin()) {
+		case 0: // HL-SteamPipe-6153
+			offActiveItem = *reinterpret_cast<ptrdiff_t*>(pCBasePlayer__SelectNextItem + 0xD7);
+			break;
+		case 1: // HL-SteamPipe-Linux
+			offActiveItem = *reinterpret_cast<ptrdiff_t*>(pCBasePlayer__SelectNextItem + 0xC7);
+			break;
+		case 2: // Echoes
+			offActiveItem = *reinterpret_cast<ptrdiff_t*>(pCBasePlayer__SelectNextItem + 0xF2);
 			break;
 		default:
 			assert(false);
@@ -2285,7 +2306,7 @@ void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& 
 
 	m_flNextAttack = 0.0f;
 
-	if (offNextAttack == 0)
+	if (offNextAttack == 0 || offActiveItem == 0)
 		return;
 
 	auto player = pEngfuncs->pfnFindEntityByString(nullptr, "classname", "player");
@@ -2296,7 +2317,7 @@ void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& 
 	m_flNextAttack = *reinterpret_cast<float*>(playerpobj + offNextAttack);
 
 	// special cases
-	auto pActiveItem = *reinterpret_cast<uintptr_t*>(playerpobj + 0x4C8);
+	auto pActiveItem = *reinterpret_cast<uintptr_t*>(playerpobj + offActiveItem);
 	if (!pActiveItem)
 		return;
 	// TODO what is this offset?
@@ -2304,7 +2325,7 @@ void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& 
 	if (!activeItemBase)
 		return;
 	// TODO what is this offset?
-	auto activeItem = (edict_t*)(activeItemBase - 0x80);
+	auto activeItem = reinterpret_cast<edict_t*>(activeItemBase - 0x80);
 	if (!activeItem || !pEngfuncs->pfnEntOffsetOfPEntity(activeItem))
 		return;
 

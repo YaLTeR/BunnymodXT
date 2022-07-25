@@ -191,4 +191,5 @@ protected:
 	ptrdiff_t offNextPrimaryAttack;
 	ptrdiff_t offNextSecondaryAttack;
 	ptrdiff_t offNextAttack;
+	ptrdiff_t offActiveItem;
 };

@@ -187,4 +187,8 @@ protected:
 	std::deque<bool> traceLineFireBulletsPlayerHit;
 	std::deque<std::array<Vector, 2>> traceLineFireBullets;
 	std::deque<bool> traceLineFireBulletsHit;
+
+	ptrdiff_t offNextPrimaryAttack;
+	ptrdiff_t offNextSecondaryAttack;
+	ptrdiff_t offNextAttack;
 };

@@ -256,6 +256,9 @@ void ServerDLL::Clear()
 	offNihilanthIrritation = 0;
 	offNihilanthRecharger = 0;
 	offNihilanthSpheres = 0;
+	offNextAttack = 0;
+	offNextPrimaryAttack = 0;
+	offNextSecondaryAttack = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	cantJumpNextTime.clear();
 	m_Intercepted = false;
@@ -663,6 +666,42 @@ void ServerDLL::FindStuff()
 				assert(false);
 			}
 		});
+
+	uintptr_t pCGlock__GlockFire;
+	auto fCGlock__GlockFire = FindAsync(
+		pCGlock__GlockFire,
+		patterns::server::CGlock__GlockFire,
+		[&](auto pattern) {
+		switch (pattern - patterns::server::CGlock__GlockFire.cbegin()) {
+		case 0: // HL-SteamPipe-6153
+			offNextPrimaryAttack = *reinterpret_cast<ptrdiff_t*>(pCGlock__GlockFire + 0x36);
+			offNextSecondaryAttack = offNextPrimaryAttack + 0x4;
+			break;
+		case 1: // HL-SteamPipe-Linux
+			offNextPrimaryAttack = *reinterpret_cast<ptrdiff_t*>(pCGlock__GlockFire + 0x5D);
+			offNextSecondaryAttack = offNextPrimaryAttack + 0x4;
+			break;
+		default:
+			assert(false);
+		}
+	});
+
+	uintptr_t pCGauss__PrimaryAttack;
+	auto fCGauss__PrimaryAttack = FindAsync(
+		pCGauss__PrimaryAttack,
+		patterns::server::CGauss__PrimaryAttack,
+		[&](auto pattern) {
+		switch (pattern - patterns::server::CGauss__PrimaryAttack.cbegin()) {
+		case 0: // HL-SteamPipe-6153
+			offNextAttack = *reinterpret_cast<ptrdiff_t*>(pCGauss__PrimaryAttack + 0x61);
+			break;
+		case 1: // HL-SteamPipe-Linux
+			offNextAttack = *reinterpret_cast<ptrdiff_t*>(pCGauss__PrimaryAttack + 0xBE);
+			break;
+		default:
+			assert(false);
+		}
+	});
 
 	bool noBhopcap = false;
 	{
@@ -2205,6 +2244,9 @@ void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& 
 
 	cooldownInfoPrimary = std::vector<std::tuple<edict_t*, float>>();
 	cooldownInfoBoth = std::vector<std::tuple<edict_t*, float, float, const char*, const char*>>();
+
+	if (offNextPrimaryAttack == 0 || offNextSecondaryAttack == 0)
+		return;
 	
 	for (size_t i = 0; i < std::size(WEAPONS_PRIMARY); i++)
 	{
@@ -2214,7 +2256,7 @@ void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& 
 		if (weapon && pEngfuncs->pfnEntOffsetOfPEntity(weapon)) {
 			const auto pobj = reinterpret_cast<uintptr_t>(weapon->pvPrivateData);
 
-			auto cooldown = *reinterpret_cast<float*>(pobj + 0x8C);
+			auto cooldown = *reinterpret_cast<float*>(pobj + offNextPrimaryAttack);
 
 			cooldownInfoPrimary.push_back(std::tuple(weapon, cooldown));
 		}
@@ -2227,8 +2269,8 @@ void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& 
 		if (weapon && pEngfuncs->pfnEntOffsetOfPEntity(weapon)) {
 			const auto pobj = reinterpret_cast<uintptr_t>(weapon->pvPrivateData);
 
-			auto primary = *reinterpret_cast<float*>(pobj + 0x8C);
-			auto secondary = *reinterpret_cast<float*>(pobj + 0x90);
+			auto primary = *reinterpret_cast<float*>(pobj + offNextPrimaryAttack);
+			auto secondary = *reinterpret_cast<float*>(pobj + offNextSecondaryAttack);
 
 			cooldownInfoBoth.push_back(std::tuple(weapon, primary, secondary, WEAPONS_BOTH_MSG[i * 2], WEAPONS_BOTH_MSG[i * 2 + 1]));
 		}
@@ -2236,20 +2278,25 @@ void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& 
 
 	m_flNextAttack = 0.0f;
 
+	if (offNextAttack == 0)
+		return;
+
 	auto player = pEngfuncs->pfnFindEntityByString(nullptr, "classname", "player");
 	if (!player || !pEngfuncs->pfnEntOffsetOfPEntity(player))
 		return;
+	auto playerpobj = reinterpret_cast<uintptr_t>(player->pvPrivateData);
 
-	m_flNextAttack = *reinterpret_cast<float*>((uintptr_t)player->pvPrivateData + 0x250);
+	m_flNextAttack = *reinterpret_cast<float*>(playerpobj + offNextAttack);
 
 	// special cases
-	auto pActiveItem = *reinterpret_cast<uintptr_t*>((uintptr_t)player->pvPrivateData + 0x4C8);
+	auto pActiveItem = *reinterpret_cast<uintptr_t*>(playerpobj + 0x4C8);
 	if (!pActiveItem)
 		return;
-	// TODO what are those offsets?
+	// TODO what is this offset?
 	auto activeItemBase = *reinterpret_cast<uintptr_t*>(pActiveItem + 0x4);
 	if (!activeItemBase)
 		return;
+	// TODO what is this offset?
 	auto activeItem = (edict_t*)(activeItemBase - 0x80);
 	if (!activeItem || !pEngfuncs->pfnEntOffsetOfPEntity(activeItem))
 		return;
@@ -2257,7 +2304,7 @@ void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& 
 	auto* gauss = pEngfuncs->pfnFindEntityByString(nullptr, "classname", "weapon_gauss");
 	if (gauss && pEngfuncs->pfnEntOffsetOfPEntity(gauss) && !std::strcmp(HwDLL::GetInstance().ppGlobals->pStringBase + activeItem->v.classname, "weapon_gauss")) {
 		const auto pobj = reinterpret_cast<uintptr_t>(gauss->pvPrivateData);
-		auto cooldown = *reinterpret_cast<float*>(pobj + 0x8C);
+		auto cooldown = *reinterpret_cast<float*>(pobj + offNextPrimaryAttack);
 
 		float attTotal = 0.0f;
 		if (m_flNextAttack > 0.0f)

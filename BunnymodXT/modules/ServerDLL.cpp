@@ -2178,6 +2178,97 @@ bool ServerDLL::GetGonarchInfo(float &health, int& sequence, float& frame) const
 	return true;
 }
 
+void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& cooldownInfoPrimary, std::vector<std::tuple<edict_t*, float, float, const char*, const char*>>& cooldownInfoBoth, float& m_flNextAttack) const {
+	const char* WEAPONS_PRIMARY[] = {
+		"weapon_crowbar", // 1
+		"weapon_357", // 1
+		"weapon_snark", // 1
+		"weapon_9mmhandgun", // 1 2 same
+		"weapon_9mmAR", // 1 2 same
+		"weapon_shotgun", // 1 2 same
+		"weapon_egon", // 1 2 same
+		"weapon_tripmine", // 1 2 same
+		"weapon_hornetgun", // 1 2 same
+		"weapon_handgrenade" // 1 2 same
+	};
+
+	const char* WEAPONS_BOTH[] = {
+		"weapon_crossbow", // 1 primary, 2 zoom
+		"weapon_rpg", // 1 primary, 2 lazer
+		"weapon_satchel" // 1 detonate, 2 throw
+	};
+	const char* WEAPONS_BOTH_MSG[] = {
+		"shoot", "zoom",
+		"shoot", "lazer",
+		"detonate", "throw"
+	};
+
+	cooldownInfoPrimary = std::vector<std::tuple<edict_t*, float>>();
+	cooldownInfoBoth = std::vector<std::tuple<edict_t*, float, float, const char*, const char*>>();
+	
+	for (size_t i = 0; i < std::size(WEAPONS_PRIMARY); i++)
+	{
+		const auto WEAPON = WEAPONS_PRIMARY[i];
+
+		auto* weapon = pEngfuncs->pfnFindEntityByString(nullptr, "classname", WEAPON);
+		if (weapon && pEngfuncs->pfnEntOffsetOfPEntity(weapon)) {
+			const auto pobj = reinterpret_cast<uintptr_t>(weapon->pvPrivateData);
+
+			auto cooldown = *reinterpret_cast<float*>(pobj + 0x8C);
+
+			cooldownInfoPrimary.push_back(std::tuple(weapon, cooldown));
+		}
+	}
+	for (size_t i = 0; i < std::size(WEAPONS_BOTH); i++)
+	{
+		const auto WEAPON = WEAPONS_BOTH[i];
+
+		auto* weapon = pEngfuncs->pfnFindEntityByString(nullptr, "classname", WEAPON);
+		if (weapon && pEngfuncs->pfnEntOffsetOfPEntity(weapon)) {
+			const auto pobj = reinterpret_cast<uintptr_t>(weapon->pvPrivateData);
+
+			auto primary = *reinterpret_cast<float*>(pobj + 0x8C);
+			auto secondary = *reinterpret_cast<float*>(pobj + 0x90);
+
+			cooldownInfoBoth.push_back(std::tuple(weapon, primary, secondary, WEAPONS_BOTH_MSG[i * 2], WEAPONS_BOTH_MSG[i * 2 + 1]));
+		}
+	}
+
+	m_flNextAttack = 0.0f;
+
+	auto player = pEngfuncs->pfnFindEntityByString(nullptr, "classname", "player");
+	if (!player || !pEngfuncs->pfnEntOffsetOfPEntity(player))
+		return;
+
+	m_flNextAttack = *reinterpret_cast<float*>((uintptr_t)player->pvPrivateData + 0x250);
+
+	// special cases
+	auto pActiveItem = *reinterpret_cast<uintptr_t*>((uintptr_t)player->pvPrivateData + 0x4C8);
+	if (!pActiveItem)
+		return;
+	// TODO what are those offsets?
+	auto activeItemBase = *reinterpret_cast<uintptr_t*>(pActiveItem + 0x4);
+	if (!activeItemBase)
+		return;
+	auto activeItem = (edict_t*)(activeItemBase - 0x80);
+	if (!activeItem || !pEngfuncs->pfnEntOffsetOfPEntity(activeItem))
+		return;
+
+	auto* gauss = pEngfuncs->pfnFindEntityByString(nullptr, "classname", "weapon_gauss");
+	if (gauss && pEngfuncs->pfnEntOffsetOfPEntity(gauss) && !std::strcmp(HwDLL::GetInstance().ppGlobals->pStringBase + activeItem->v.classname, "weapon_gauss")) {
+		const auto pobj = reinterpret_cast<uintptr_t>(gauss->pvPrivateData);
+		auto cooldown = *reinterpret_cast<float*>(pobj + 0x8C);
+
+		float attTotal = 0.0f;
+		if (m_flNextAttack > 0.0f)
+			attTotal = m_flNextAttack;
+		else if (cooldown > 0.0f)
+			attTotal = cooldown;
+
+		cooldownInfoPrimary.push_back(std::tuple(gauss, attTotal));
+	}
+}
+
 TraceResult ServerDLL::TraceLine(const float v1[3], const float v2[3], int fNoMonsters, edict_t *pentToSkip) const
 {
 	TraceResult tr{};

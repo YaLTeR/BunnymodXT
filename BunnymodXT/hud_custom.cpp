@@ -1009,7 +1009,7 @@ namespace CustomHud
 		}
 	}
 
-		bool cooldownCmp(std::tuple<std::string, float> l, std::tuple<std::string, float> r)
+	bool cooldownCmp(std::tuple<std::string, float> l, std::tuple<std::string, float> r)
 	{
 		return std::get<1>(l) < std::get<1>(r);
 	}

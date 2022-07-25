@@ -681,6 +681,10 @@ void ServerDLL::FindStuff()
 			offNextPrimaryAttack = *reinterpret_cast<ptrdiff_t*>(pCGlock__GlockFire + 0x5D);
 			offNextSecondaryAttack = offNextPrimaryAttack + 0x4;
 			break;
+		case 2: // Echoes
+			offNextPrimaryAttack = *reinterpret_cast<ptrdiff_t*>(pCGlock__GlockFire + 0x3F);
+			offNextSecondaryAttack = offNextPrimaryAttack + 0x4;
+			break;
 		default:
 			assert(false);
 		}
@@ -697,6 +701,9 @@ void ServerDLL::FindStuff()
 			break;
 		case 1: // HL-SteamPipe-Linux
 			offNextAttack = *reinterpret_cast<ptrdiff_t*>(pCGauss__PrimaryAttack + 0xBE);
+			break;
+		case 2: // Echoes
+			offNextAttack = *reinterpret_cast<ptrdiff_t*>(pCGauss__PrimaryAttack + 0x14F);
 			break;
 		default:
 			assert(false);

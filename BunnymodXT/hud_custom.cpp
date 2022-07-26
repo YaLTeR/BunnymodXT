@@ -1019,7 +1019,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_weapon_cooldown.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_weapon_cooldown_offset, CVars::bxt_hud_weapon_cooldown_anchor, &x, &y, 200, (si.iCharHeight * 42) + 3);
+			GetPosition(CVars::bxt_hud_weapon_cooldown_offset, CVars::bxt_hud_weapon_cooldown_anchor, &x, &y, 0, si.iCharHeight + 3);
 
 			std::ostringstream out;
 			out.setf(std::ios::fixed);

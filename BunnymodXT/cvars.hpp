@@ -189,6 +189,7 @@ namespace CVars
 	// Clientside CVars
 	extern CVarWrapper cl_righthand;
 	extern CVarWrapper bxt_anglespeed_cap;
+	extern CVarWrapper bxt_speed_scaling;
 	extern CVarWrapper bxt_disable_hud;
 	extern CVarWrapper bxt_disable_nightvision_sprite;
 	extern CVarWrapper bxt_autojump_prediction;

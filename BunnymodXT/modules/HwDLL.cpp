@@ -5058,6 +5058,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 	ClientDLL::GetInstance().SetAngleSpeedCap(CVars::bxt_anglespeed_cap.GetBool());
 
+	ClientDLL::GetInstance().SetSpeedScaling(CVars::bxt_speed_scaling.GetBool());
+
 	RuntimeData::SaveStored();
 
 	if (CVars::_bxt_taslog.GetBool()) {

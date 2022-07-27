@@ -926,6 +926,16 @@ namespace patterns
 			"CS-SteamPipe",
 			"57 56 53 83 EC 30 F6 05 ?? ?? ?? ?? 01"
 		);
+
+		PATTERNS(CS_SpeedScaling,
+			"CS-SteamPipe",
+			"D9 FA DD DB DD D8 DD D8 D8 54 24 18 DF E0 25 00 41 00 00 75 1C D8 7C 24 18 D9 C0 D8 4E 10 D9 5E 10 D9 C0 D8 4E 14 D9 5E 14 D8 4E 18 D9 5E 18 EB 02"
+			);
+
+		PATTERNS(CS_SpeedScaling_Linux,
+			"CS-SteamPipe",
+			"DB E9 0F 86 ?? ?? ?? ?? DE F9 D9 43 ??"
+		);
 	}
 
 	namespace shared

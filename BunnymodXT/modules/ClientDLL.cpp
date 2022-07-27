@@ -300,6 +300,8 @@ void ClientDLL::Clear()
 	last_buttons = 0;
 	pCS_AngleSpeedCap = 0;
 	pCS_AngleSpeedCap_Linux = 0;
+	pCS_SpeedScaling = 0;
+	pCS_SpeedScaling_Linux = 0;
 }
 
 void ClientDLL::FindStuff()
@@ -427,6 +429,12 @@ void ClientDLL::FindStuff()
 	auto fCS_AngleSpeedCap_Linux = FindAsync(
 		pCS_AngleSpeedCap_Linux,
 		patterns::client::CS_AngleSpeedCap_Linux);
+	auto fCS_SpeedScaling = FindAsync(
+		pCS_SpeedScaling,
+		patterns::client::CS_SpeedScaling);
+	auto fCS_SpeedScaling_Linux = FindAsync(
+		pCS_SpeedScaling_Linux,
+		patterns::client::CS_SpeedScaling_Linux);	
 	auto fEV_GetDefaultShellInfo = FindAsync(ORIG_EV_GetDefaultShellInfo, patterns::client::EV_GetDefaultShellInfo);
 	auto fCStudioModelRenderer__StudioSetupBones = FindAsync(
 		ORIG_CStudioModelRenderer__StudioSetupBones,
@@ -748,6 +756,20 @@ void ClientDLL::FindStuff()
 			}
 		}
 	}
+
+	{
+		auto pattern = fCS_SpeedScaling.get();
+		if (pCS_SpeedScaling) {
+			EngineDevMsg("[client dll] Found the speed scaling pattern at %p (using the %s pattern).\n", pCS_SpeedScaling, pattern->name());
+		} else {
+			if (pCS_SpeedScaling_Linux) {
+				pattern = fCS_SpeedScaling_Linux.get();
+				EngineDevMsg("[client dll] Found the speed scaling pattern [Linux] at %p (using the %s pattern).\n", pCS_SpeedScaling_Linux, pattern->name());
+			} else {
+				EngineDevWarning("[client dll] Could not find the speed scaling pattern.\n");
+			}
+		}
+	}
 }
 
 bool ClientDLL::FindHUDFunctions()
@@ -913,6 +935,10 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (pCS_AngleSpeedCap || pCS_AngleSpeedCap_Linux) {
 		REG(bxt_anglespeed_cap);
 	}
+
+	if (pCS_SpeedScaling || pCS_SpeedScaling_Linux) {
+		REG(bxt_speed_scaling);
+	}
 	#undef REG
 }
 
@@ -1007,6 +1033,27 @@ void ClientDLL::SetAngleSpeedCap(bool capped) {
 	}
 }
 
+void ClientDLL::SetSpeedScaling(bool scaled) {
+	if (!pCS_SpeedScaling && !pCS_SpeedScaling_Linux) {
+		return;
+	}
+
+	if (scaled) {
+		if (pCS_SpeedScaling) {
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling + 19), 1, reinterpret_cast<const byte*>("\x75"));
+		}
+		else if (pCS_SpeedScaling_Linux) {
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling_Linux + 2), 4, reinterpret_cast<const byte*>("\x0F\x86\x61\xFE"));
+		}
+	} else {
+		if (pCS_SpeedScaling) {
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling + 19), 1, reinterpret_cast<const byte*>("\xEB"));
+		}
+		else if (pCS_SpeedScaling_Linux) {
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling_Linux + 2), 4, reinterpret_cast<const byte*>("\xE9\x62\xFE\xFF"));
+		}
+	}
+}
 HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
 {
 	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);

@@ -2418,6 +2418,50 @@ struct HwDLL::Cmd_BXT_TAS_New
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Check_Position
+{
+	USAGE("Usage: _bxt_tas_check_position <x> <y> <z>\n Checks that the current player position matches the given coordinates, and if it doesn't, restarts the TAS.\n");
+
+	static void handler(float x, float y, float z)
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		if (!hw.runningFrames)
+		{
+			hw.ORIG_Con_Printf("Not playing back a TAS.\n");
+			return;
+		}
+
+		const auto& origin = (*hw.sv_player)->v.origin;
+
+		if (fabs(origin.x - x) < 0.001 &&
+			fabs(origin.y - y) < 0.001 &&
+			fabs(origin.z - z) < 0.001)
+		{
+			hw.ORIG_Con_Printf("Position check succeeded.\n");
+			return;
+		}
+
+		hw.ORIG_Con_Printf("Player position %.4f %.4f %.4f doesn't match the expected position %.4f %.4f %.4f, restarting the script.\n",
+			origin.x, origin.y, origin.z, x, y, z);
+
+		const auto filename = hw.hltas_filename;
+		hw.ResetStateBeforeTASPlayback();
+		hw.hltas_filename = filename;
+
+		if (std::getenv("BXT_SCRIPT"))
+		{
+			// BXT_SCRIPT is set; assume that this TAS requires an RNG seed set at startup and restart the game.
+			hw.ORIG_Cbuf_InsertText("_restart\n");
+		}
+		else
+		{
+			// No seed, just start the playback.
+			hw.StartTASPlayback();
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_Set_Health
 {
 	USAGE("Usage: bxt_ch_set_health <health>\n");
@@ -3785,6 +3829,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_ExportLibTASInput, Handler<const char *>>("bxt_tas_export_libtas_input");
 	wrapper::Add<Cmd_BXT_TAS_Split, Handler<const char *>>("bxt_tas_split");
 	wrapper::Add<Cmd_BXT_TAS_New, Handler<const char *, const char *, int>>("bxt_tas_new");
+	wrapper::Add<Cmd_BXT_TAS_Check_Position, Handler<float, float, float>>("_bxt_tas_check_position");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Health, Handler<float>>("bxt_ch_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Armor, Handler<float>>("bxt_ch_set_armor");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Origin_And_Angles, Handler<>>("bxt_ch_get_pos");

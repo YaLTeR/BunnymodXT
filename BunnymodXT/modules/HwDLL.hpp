@@ -379,6 +379,7 @@ protected:
 	struct Cmd_BXT_TAS_ExportLibTASInput;
 	struct Cmd_BXT_TAS_Split;
 	struct Cmd_BXT_TAS_New;
+	struct Cmd_BXT_TAS_Check_Position;
 	struct Cmd_BXT_CH_Set_Health;
 	struct Cmd_BXT_Set_Angles;
 	struct Cmd_BXT_CH_Set_Armor;

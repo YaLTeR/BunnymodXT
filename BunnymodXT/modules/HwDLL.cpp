@@ -2059,6 +2059,7 @@ void HwDLL::ResetStateBeforeTASPlayback()
 	PrevFractions = {1, 0, 0, 0 };
 	PrevNormalzs = {0, 0, 0, 0 };
 	ButtonsPresent = false;
+	hltas_filename.clear();
 	demoName.clear();
 	saveName.clear();
 	frametime0ms.clear();

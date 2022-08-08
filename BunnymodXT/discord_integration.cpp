@@ -5,7 +5,7 @@ namespace discord_integration
 	namespace
 	{
 		// From Discord developer dashboard.
-		constexpr const char CLIENT_ID[] = "962015108714885150";
+		constexpr const char CLIENT_ID[] = "1005991693406973993";
 
 		// Text names of game states
 		const std::string STATE_NAMES[] = {

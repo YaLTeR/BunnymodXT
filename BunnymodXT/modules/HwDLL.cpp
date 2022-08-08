@@ -4771,6 +4771,14 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Stepsize = CVars::sv_stepsize.GetFloat();
 	vars.Bounce = CVars::sv_bounce.GetFloat();
 	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
+	vars.BhopcapScale = 0.65f;
+	vars.SpeedScale = 1.7f;
+
+	if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike")) {
+		vars.Maxspeed = 250.0f; // sv_maxspeed does not override the speed unless below 300
+		vars.BhopcapScale = 0.8f;
+		vars.SpeedScale = 1.2f;
+	}
 
 	if (svs->num_clients >= 1) {
 		edict_t *pl = GetPlayerEdict();

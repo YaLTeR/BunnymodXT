@@ -421,7 +421,7 @@ namespace CustomHud
 
 	void GetAccurateInfo()
 	{
-		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.health, player.armorvalue, player.waterlevel);
+		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.health, player.armorvalue, player.waterlevel, player.stamina);
 		HwDLL::GetInstance().GetViewangles(player.viewangles);
 	}
 
@@ -1429,6 +1429,21 @@ namespace CustomHud
 		}
 	}
 
+	void DrawStamina(float flTime)
+	{
+		if (CVars::bxt_hud_stamina.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_stamina_offset, CVars::bxt_hud_stamina_anchor, &x, &y, -200, (si.iCharHeight * 16) + 4);
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "Stamina: " << player.stamina;
+			DrawString(x, y, out.str().c_str());
+		}
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -1528,6 +1543,7 @@ namespace CustomHud
 		DrawTASEditorStatus();
 		DrawEntities(flTime);
 		DrawCrosshair(flTime);
+		DrawStamina(flTime);
 
 		receivedAccurateInfo = false;
 		frame_bulk_selected = false;

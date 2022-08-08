@@ -12,6 +12,7 @@ namespace CustomHud
 		float health;
 		float armorvalue;
 		int waterlevel;
+		float stamina;
 	} playerinfo;
 
 	void Init();

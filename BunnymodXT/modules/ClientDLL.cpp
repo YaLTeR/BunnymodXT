@@ -913,6 +913,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_cross_bottom_line);
 		REG(bxt_cross_left_line);
 		REG(bxt_cross_right_line);
+		REG(bxt_hud_stamina);
+		REG(bxt_hud_stamina_offset);
+		REG(bxt_hud_stamina_anchor);
 	}
 
 	if (ORIG_HUD_Redraw) {

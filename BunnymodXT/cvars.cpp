@@ -157,6 +157,9 @@ namespace CVars
 	CVarWrapper bxt_hud_entities("bxt_hud_entities", "0");
 	CVarWrapper bxt_hud_entities_offset("bxt_hud_entities_offset", "");
 	CVarWrapper bxt_hud_entities_anchor("bxt_hud_entities_anchor", "0 0");
+	CVarWrapper bxt_hud_stamina("bxt_hud_stamina", "0");
+	CVarWrapper bxt_hud_stamina_offset("bxt_hud_stamina_offset", "");
+	CVarWrapper bxt_hud_stamina_anchor("bxt_hud_stamina_anchor", "1 0");
 	CVarWrapper bxt_cross("bxt_cross", "0");
 	CVarWrapper bxt_cross_color("bxt_cross_color", "");
 	CVarWrapper bxt_cross_alpha("bxt_cross_alpha", "");
@@ -331,6 +334,9 @@ namespace CVars
 		&bxt_hud_entities,
 		&bxt_hud_entities_offset,
 		&bxt_hud_entities_anchor,
+		&bxt_hud_stamina,
+		&bxt_hud_stamina_offset,
+		&bxt_hud_stamina_anchor,
 		&bxt_cross,
 		&bxt_cross_color,
 		&bxt_cross_alpha,

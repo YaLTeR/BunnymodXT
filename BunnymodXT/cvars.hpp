@@ -272,6 +272,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_entities;
 	extern CVarWrapper bxt_hud_entities_offset;
 	extern CVarWrapper bxt_hud_entities_anchor;
+	extern CVarWrapper bxt_hud_stamina;
+	extern CVarWrapper bxt_hud_stamina_offset;
+	extern CVarWrapper bxt_hud_stamina_anchor;
 	extern CVarWrapper bxt_cross;
 	extern CVarWrapper bxt_cross_color;
 	extern CVarWrapper bxt_cross_alpha;

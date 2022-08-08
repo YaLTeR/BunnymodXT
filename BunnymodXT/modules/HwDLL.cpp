@@ -5092,7 +5092,7 @@ void HwDLL::SetPlayerVelocity(float velocity[3])
 	player.Velocity[2] = velocity[2];
 }
 
-bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& health, float& armorvalue, int& waterlevel)
+bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& health, float& armorvalue, int& waterlevel, float& stamina)
 {
 	if (!svs || svs->num_clients < 1)
 		return false;
@@ -5110,6 +5110,7 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	health = pl->v.health;
 	armorvalue = pl->v.armorvalue;
 	waterlevel = pl->v.waterlevel;
+	stamina = pl->v.fuser2;
 
 	return true;
 }

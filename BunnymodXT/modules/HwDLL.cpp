@@ -2707,6 +2707,17 @@ struct HwDLL::Cmd_BXT_Timer_Reset
 	}
 };
 
+struct HwDLL::Cmd_BXT_Get_ClientMaxSpeed
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		if (ClientDLL::GetInstance().pEngfuncs)
+			HwDLL::GetInstance().ORIG_Con_Printf("Client maxspeed: %f\n", ClientDLL::GetInstance().pEngfuncs->GetClientMaxspeed());
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Autojump_Down
 {
 	NO_USAGE();
@@ -3867,6 +3878,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Timer_Start, Handler<>>("bxt_timer_start");
 	wrapper::Add<Cmd_BXT_Timer_Stop, Handler<>>("bxt_timer_stop");
 	wrapper::Add<Cmd_BXT_Timer_Reset, Handler<>>("bxt_timer_reset");
+	wrapper::Add<Cmd_BXT_Get_ClientMaxSpeed, Handler<>>("bxt_get_clientmaxspeed");
 	wrapper::Add<Cmd_BXT_TAS_Autojump_Down, Handler<>, Handler<const char*>>("+bxt_tas_autojump");
 	wrapper::Add<Cmd_BXT_TAS_Autojump_Up, Handler<>, Handler<const char*>>("-bxt_tas_autojump");
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Down, Handler<>, Handler<const char*>>("+bxt_tas_ducktap");

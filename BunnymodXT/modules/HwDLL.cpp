@@ -4733,11 +4733,19 @@ void HwDLL::FindCVarsIfNeeded()
 HLStrafe::MovementVars HwDLL::GetMovementVars()
 {
 	auto vars = HLStrafe::MovementVars();
+	auto &cl = ClientDLL::GetInstance();
 
 	FindCVarsIfNeeded();
 	vars.Frametime = GetFrameTime();
 	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
-	vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
+
+	if (cl.DoesGameDirMatch("paranoia"))
+		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * 3.2f; // GetMaxSpeed is factor here, 3.2f is approx. multiplier
+	else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f))
+		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in CS games & other mods (Poke646 e.g.)
+	else
+		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
+
 	vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
 	vars.Friction = CVars::sv_friction.GetFloat();
 	vars.Edgefriction = CVars::edgefriction.GetFloat();

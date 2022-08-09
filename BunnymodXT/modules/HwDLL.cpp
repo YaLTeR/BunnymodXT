@@ -4762,23 +4762,28 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	else
 		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
 
-	vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
-	vars.Friction = CVars::sv_friction.GetFloat();
-	vars.Edgefriction = CVars::edgefriction.GetFloat();
-	vars.Accelerate = CVars::sv_accelerate.GetFloat();
-	vars.Airaccelerate = CVars::sv_airaccelerate.GetFloat();
-	vars.Gravity = CVars::sv_gravity.GetFloat();
-	vars.Stepsize = CVars::sv_stepsize.GetFloat();
-	vars.Bounce = CVars::sv_bounce.GetFloat();
-	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
-	vars.BhopcapScale = 0.65f;
-	vars.SpeedScale = 1.7f;
+	// vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
+	// vars.Friction = CVars::sv_friction.GetFloat();
+	// vars.Edgefriction = CVars::edgefriction.GetFloat();
+	// vars.Accelerate = CVars::sv_accelerate.GetFloat();
+	// vars.Airaccelerate = CVars::sv_airaccelerate.GetFloat();
+	// vars.Gravity = CVars::sv_gravity.GetFloat();
+	// vars.Stepsize = CVars::sv_stepsize.GetFloat();
+	// vars.Bounce = CVars::sv_bounce.GetFloat();
+	// vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
 
-	if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike")) {
-		vars.Maxspeed = 250.0f; // sv_maxspeed does not override the speed unless below 300
-		vars.BhopcapScale = 0.8f;
-		vars.SpeedScale = 1.2f;
-	}
+	// if (cl.DoesGameDirMatch("cstrike")) {
+	// 	vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed();
+	// 	vars.BhopcapScale = 0.8f;
+	// 	vars.SpeedScale = 1.2f;
+	// 	vars.HasStamina = true;
+	// }
+	// else {
+	// 	vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
+	// 	vars.BhopcapScale = 0.65f;
+	// 	vars.SpeedScale = 1.7f;
+	// 	vars.UseSlow = true;
+	// }
 
 	if (svs->num_clients >= 1) {
 		edict_t *pl = GetPlayerEdict();

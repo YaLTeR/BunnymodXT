@@ -81,6 +81,9 @@ namespace CustomHud
 		float realyaw;
 		float health;
 		float armor;
+
+		// non hl stuff
+		float stamina;
 	};
 	static FrameBulkStatus frame_bulk_status;
 	static bool frame_bulk_selected;
@@ -1439,7 +1442,13 @@ namespace CustomHud
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
 			out.precision(precision);
-			out << "Stamina: " << player.stamina;
+			out << "Stamina: ";
+
+			if (frame_bulk_selected)
+				out << frame_bulk_status.stamina;
+			else
+				out << player.stamina;
+
 			DrawString(x, y, out.str().c_str());
 		}
 	}
@@ -1666,7 +1675,7 @@ namespace CustomHud
 		return si;
 	}
 
-	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor)
+	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor, const float& player_stamina)
 	{
 		frame_bulk_selected = true;
 		frame_bulk_status = FrameBulkStatus{};
@@ -1724,5 +1733,8 @@ namespace CustomHud
 
 		frame_bulk_status.health = player_health;
 		frame_bulk_status.armor = player_armor;
+
+		// non-HL stuff
+		frame_bulk_status.stamina = player_stamina;
 	}
 }

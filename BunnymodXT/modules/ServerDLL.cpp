@@ -2286,6 +2286,8 @@ void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& 
 
 			auto cooldown = *reinterpret_cast<float*>(pobj + offNextPrimaryAttack);
 
+			auto ptr = pEngfuncs->pfnPvEntPrivateData(weapon);
+
 			cooldownInfoPrimary.push_back(std::tuple(weapon, cooldown));
 		}
 	}
@@ -2299,6 +2301,8 @@ void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& 
 
 			auto primary = *reinterpret_cast<float*>(pobj + offNextPrimaryAttack);
 			auto secondary = *reinterpret_cast<float*>(pobj + offNextSecondaryAttack);
+
+			auto ptr = pEngfuncs->pfnPvEntPrivateData(weapon);
 
 			cooldownInfoBoth.push_back(std::tuple(weapon, primary, secondary, WEAPONS_BOTH_MSG[i * 2], WEAPONS_BOTH_MSG[i * 2 + 1]));
 		}

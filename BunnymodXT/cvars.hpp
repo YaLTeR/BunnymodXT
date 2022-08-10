@@ -124,7 +124,6 @@ namespace CVars
 	extern CVarWrapper _bxt_bunnysplit_time_update_frequency;
 	extern CVarWrapper _bxt_save_runtime_data_in_demos;
 	extern CVarWrapper _bxt_tas_script_generation;
-	extern CVarWrapper bxt_tas_clientmaxspeed_in_prediction;
 	extern CVarWrapper bxt_taslog_filename;
 	extern CVarWrapper bxt_autopause;
 	extern CVarWrapper bxt_interprocess_enable;

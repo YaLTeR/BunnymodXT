@@ -3789,7 +3789,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::_bxt_taslog);
 	RegisterCVar(CVars::_bxt_min_frametime);
 	RegisterCVar(CVars::_bxt_tas_script_generation);
-	RegisterCVar(CVars::bxt_tas_clientmaxspeed_in_prediction);
 	RegisterCVar(CVars::bxt_taslog_filename);
 	RegisterCVar(CVars::bxt_autopause);
 	RegisterCVar(CVars::bxt_bhopcap);
@@ -4752,9 +4751,9 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Frametime = GetFrameTime();
 	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
 
-	if (CVars::bxt_tas_clientmaxspeed_in_prediction.GetBool() && cl.DoesGameDirMatch("paranoia"))
+	if (cl.DoesGameDirMatch("paranoia"))
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
-	else if (CVars::bxt_tas_clientmaxspeed_in_prediction.GetBool() && cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f))
+	else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in CS games & other mods (Poke646 e.g.)
 	else
 		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();

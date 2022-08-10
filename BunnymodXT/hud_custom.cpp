@@ -1437,7 +1437,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_stamina.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_stamina_offset, CVars::bxt_hud_stamina_anchor, &x, &y, -200, (si.iCharHeight * 16) + 4);
+			GetPosition(CVars::bxt_hud_stamina_offset, CVars::bxt_hud_stamina_anchor, &x, &y, -75, si.iCharHeight * 4);
 
 			std::ostringstream out;
 			out.setf(std::ios::fixed);

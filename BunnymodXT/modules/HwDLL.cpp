@@ -4753,7 +4753,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
 
 	if (CVars::bxt_tas_clientmaxspeed_in_prediction.GetBool() && cl.DoesGameDirMatch("paranoia"))
-		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * 3.2f; // GetMaxSpeed is factor here, 3.2f is approx. multiplier for walkmove
+		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
 	else if (CVars::bxt_tas_clientmaxspeed_in_prediction.GetBool() && cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f))
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in CS games & other mods (Poke646 e.g.)
 	else

@@ -567,6 +567,10 @@ void ServerDLL::FindStuff()
 			case 2: // AoMDC
 				pAddToFullPack_PVS_Byte += 6;
 				break;
+			case 3: // Counter-Strike 1.6
+				pAddToFullPack_PVS_Byte += 5;
+				cstrike_addtofullpack_pvs_found = true;
+				break;
 			default:
 				assert(false);
 			}
@@ -1774,16 +1778,31 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldRenderColor = ent->v.rendercolor;
 	auto oldRenderAmount = ent->v.renderamt;
 	auto oldRenderFx = ent->v.renderfx;
+	auto oldFlags = ent->v.flags;
+	auto oldIUser1 = ent->v.iuser1;
+	auto oldIUser2 = ent->v.iuser2;
 
 	if (pAddToFullPack_PVS_Byte)
 	{
 		if (CVars::bxt_render_far_entities.GetBool())
 		{
-			if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x74)
+			if ((*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x74) || (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x75))
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
 		}
 		else if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0xEB)
-			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x74"));
+		{
+			if (cstrike_addtofullpack_pvs_found)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x75"));
+			else
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x74"));
+		}
+	}
+
+	if (!strncmp(ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory(), "czeror", 6) && CVars::bxt_render_far_entities.GetBool())
+	{
+		ent->v.flags |= FL_IMMUNE_LAVA; // Because the PVS check in AddToFullPack points to '524288' bit
+		ent->v.iuser1 = 1; // Similar to above explanation
+		ent->v.iuser2 = 1; // Mappers used on some entities 'nopvs = 1' keyvalue, which is 'iuser2 = 1` in game code
 	}
 
 	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && spirit_sdk))
@@ -1836,6 +1855,9 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	ent->v.rendercolor = oldRenderColor;
 	ent->v.renderamt = oldRenderAmount;
 	ent->v.renderfx = oldRenderFx;
+	ent->v.flags = oldFlags;
+	ent->v.iuser1 = oldIUser1;
+	ent->v.iuser2 = oldIUser2;
 
 	return ret;
 }
@@ -2275,7 +2297,7 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 {
 	if (igmon || (!fireBullets_count && !fireBulletsPlayer_count))
 		return;
-		
+
 	const char* SOLID_HIT_ENTITIES[] = {
 		"func_breakable",
 		"func_pushable"

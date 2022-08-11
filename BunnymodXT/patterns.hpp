@@ -763,7 +763,9 @@ namespace patterns
 			"Parasomnia",
 			"3B FE 74 ?? 8B 55",
 			"AoMDC",
-			"8B 45 ?? 3B 45 ?? 74 ?? 8B 4D ?? 51 8B 55 ?? 52 FF 15"
+			"8B 45 ?? 3B 45 ?? 74 ?? 8B 4D ?? 51 8B 55 ?? 52 FF 15",
+			"CStrike-Latest",
+			"83 C4 08 85 C0 75 0E 89"
 		);
 
 		PATTERNS(CBaseEntity__FireBullets,

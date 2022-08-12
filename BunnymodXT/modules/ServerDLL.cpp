@@ -523,6 +523,14 @@ void ServerDLL::FindStuff()
 				offm_rgAmmoLast = 0x550;
 				offm_iClientFOV = 0x4A8;
 				break;
+			case 24: // CStrike-8684
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x660;
+				offm_iClientFOV = 0x5B0;
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
+				offFuncObjectCaps = 0x18;
+				break;
 			default:
 				assert(false);
 			}
@@ -568,7 +576,7 @@ void ServerDLL::FindStuff()
 				pAddToFullPack_PVS_Byte += 6;
 				break;
 			case 3: // Counter-Strike 1.6
-				pAddToFullPack_PVS_Byte += 5;
+				pAddToFullPack_PVS_Byte += 17;
 				cstrike_addtofullpack_pvs_found = true;
 				break;
 			default:
@@ -1800,7 +1808,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 
 	if (!strncmp(ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory(), "czeror", 6) && CVars::bxt_render_far_entities.GetBool())
 	{
-		ent->v.flags |= FL_IMMUNE_LAVA; // Because the PVS check in AddToFullPack points to '524288' bit
+		ent->v.flags |= FL_IMMUNE_LAVA; // Because the PVS check in AddToFullPack points to '524288' flags bit
 		ent->v.iuser1 = 1; // Similar to above explanation
 		ent->v.iuser2 = 1; // Mappers used on some entities 'nopvs = 1' keyvalue, which is 'iuser2 = 1` in game code
 	}

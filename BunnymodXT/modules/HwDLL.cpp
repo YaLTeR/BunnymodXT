@@ -4755,6 +4755,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Frametime = GetFrameTime();
 	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
 
+
 	static bool is_paranoia = cl.DoesGameDirMatch("paranoia");
 
 	if (is_paranoia)
@@ -4763,6 +4764,17 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in CS games & other mods (Poke646 e.g.)
 	else
 		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
+
+	// if (cl.DoesGameDirMatch("cstrike")) {
+	// 	vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed();
+	// 	vars.BhopcapScale = 0.8f;
+	// 	vars.SpeedScale = 1.2f;
+	// 	vars.HasStamina = true;
+	// 	vars.DuckTapSlow = true;
+	// 	vars.DuckTapSlowScale = 0.96f;
+	// }
+	// else {
+
 
 	// vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
 	// vars.Friction = CVars::sv_friction.GetFloat();

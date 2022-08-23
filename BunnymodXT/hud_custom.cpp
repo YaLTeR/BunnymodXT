@@ -81,8 +81,7 @@ namespace CustomHud
 		float realyaw;
 		float health;
 		float armor;
-
-		// non hl stuff
+		
 		float stamina;
 	};
 	static FrameBulkStatus frame_bulk_status;
@@ -1734,7 +1733,6 @@ namespace CustomHud
 		frame_bulk_status.health = player_health;
 		frame_bulk_status.armor = player_armor;
 
-		// non-HL stuff
 		frame_bulk_status.stamina = player_stamina;
 	}
 }

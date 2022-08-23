@@ -4695,7 +4695,6 @@ HLStrafe::PlayerData HwDLL::GetPlayerData()
 	player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
 	player.InDuckAnimation = (pl->v.bInDuck != 0);
 	player.DuckTime = static_cast<float>(pl->v.flDuckTime);
-	// non-HL stuffs
 	player.StaminaTime = pl->v.fuser2;
 
 	if (ORIG_PF_GetPhysicsKeyValue) {
@@ -4755,7 +4754,6 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Frametime = GetFrameTime();
 	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
 
-
 	static bool is_paranoia = cl.DoesGameDirMatch("paranoia");
 
 	if (is_paranoia)
@@ -4765,39 +4763,22 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	else
 		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
 
+
+
 	// if (cl.DoesGameDirMatch("cstrike")) {
 	// 	vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed();
-	// 	vars.BhopcapScale = 0.8f;
-	// 	vars.SpeedScale = 1.2f;
+	// 	vars.BhopcapMultiplier = 0.8f;
+	// 	vars.BhopcapMaxspeedScale = 1.2f;
 	// 	vars.HasStamina = true;
 	// 	vars.DuckTapSlow = true;
-	// 	vars.DuckTapSlowScale = 0.96f;
-	// }
-	// else {
-
-
-	// vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
-	// vars.Friction = CVars::sv_friction.GetFloat();
-	// vars.Edgefriction = CVars::edgefriction.GetFloat();
-	// vars.Accelerate = CVars::sv_accelerate.GetFloat();
-	// vars.Airaccelerate = CVars::sv_airaccelerate.GetFloat();
-	// vars.Gravity = CVars::sv_gravity.GetFloat();
-	// vars.Stepsize = CVars::sv_stepsize.GetFloat();
-	// vars.Bounce = CVars::sv_bounce.GetFloat();
-	// vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
-
-	// if (cl.DoesGameDirMatch("cstrike")) {
-	// 	vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed();
-	// 	vars.BhopcapScale = 0.8f;
-	// 	vars.SpeedScale = 1.2f;
-	// 	vars.HasStamina = true;
 	// }
 	// else {
 	// 	vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
-	// 	vars.BhopcapScale = 0.65f;
-	// 	vars.SpeedScale = 1.7f;
+	// 	vars.BhopcapMultiplier = 0.65f;
+	// 	vars.BhopcapMaxspeedScale = 1.7f;
 	// 	vars.UseSlow = true;
 	// }
+
 
 	if (svs->num_clients >= 1) {
 		edict_t *pl = GetPlayerEdict();
@@ -5129,8 +5110,6 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	health = pl->v.health;
 	armorvalue = pl->v.armorvalue;
 	waterlevel = pl->v.waterlevel;
-
-	// non-HL stuff
 	stamina = pl->v.fuser2;
 
 	return true;

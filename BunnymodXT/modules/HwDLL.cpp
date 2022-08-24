@@ -4753,6 +4753,15 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	FindCVarsIfNeeded();
 	vars.Frametime = GetFrameTime();
 	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
+	vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
+	vars.Friction = CVars::sv_friction.GetFloat();
+	vars.Edgefriction = CVars::edgefriction.GetFloat();
+	vars.Accelerate = CVars::sv_accelerate.GetFloat();
+	vars.Airaccelerate = CVars::sv_airaccelerate.GetFloat();
+	vars.Gravity = CVars::sv_gravity.GetFloat();
+	vars.Stepsize = CVars::sv_stepsize.GetFloat();
+	vars.Bounce = CVars::sv_bounce.GetFloat();
+	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
 
 	static bool is_paranoia = cl.DoesGameDirMatch("paranoia");
 	static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
@@ -4766,7 +4775,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	} else {
 		if (is_paranoia)
 			vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
-		else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed())) {
+		else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
 			vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in other mods (Poke646 e.g.)
 		else
 			vars.Maxspeed = CVars::sv_maxspeed.GetFloat();

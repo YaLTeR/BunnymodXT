@@ -1806,7 +1806,9 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 		}
 	}
 
-	if (!strncmp(ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory(), "czeror", 6) && CVars::bxt_render_far_entities.GetBool())
+	static bool is_czeror = ClientDLL::GetInstance().DoesGameSubDirMatch("czeror");
+
+	if (is_czeror && CVars::bxt_render_far_entities.GetBool())
 	{
 		ent->v.flags |= FL_IMMUNE_LAVA; // Because the PVS check in AddToFullPack points to '524288' flags bit
 		ent->v.iuser1 = 1; // Similar to above explanation

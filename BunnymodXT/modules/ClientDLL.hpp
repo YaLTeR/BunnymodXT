@@ -71,6 +71,7 @@ public:
 	void StudioAdjustViewmodelAttachments(Vector &vOrigin);
 
 	bool DoesGameDirMatch(const char *game);
+	bool DoesGameSubDirMatch(const char *game);
 
 	bool check_forcehltv = true;
 	bool orig_forcehltv_found = false;

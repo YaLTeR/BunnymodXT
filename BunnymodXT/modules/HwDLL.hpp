@@ -75,6 +75,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, Draw_FillRGBA, int x, int y, int w, int h, int r, int g, int b, int a)
 	HOOK_DECL(void, __cdecl, PF_traceline_DLL, const Vector* v1, const Vector* v2, int fNoMonsters, edict_t* pentToSkip, TraceResult* ptr)
 	HOOK_DECL(qboolean, __cdecl, CL_CheckGameDirectory, char *gamedir)
+	HOOK_DECL(void, __cdecl, SV_CountPlayers, int *clients)
 
 	struct cmdbuf_t
 	{
@@ -326,6 +327,7 @@ public:
 	}
 
 	bool Called_Timer = false;
+	bool won_host_filtertime_fps_cap_found = false;
 
 	void ResetStateBeforeTASPlayback();
 	void StartTASPlayback();
@@ -465,6 +467,7 @@ protected:
 	void KeyUp(Key& btn);
 	void SaveInitialDataToDemo();
 	void UpdateCustomTriggers();
+	int CountPlayers();
 
 	bool registeredVarsAndCmds;
 
@@ -504,6 +507,7 @@ protected:
 	ptrdiff_t offZmax;
 	studiohdr_t **pstudiohdr;
 	float *scr_fov_value;
+	ptrdiff_t pHost_FilterTime_FPS_Cap_Byte;
 
 	int framesTillExecuting;
 	bool executing;

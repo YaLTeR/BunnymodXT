@@ -141,6 +141,13 @@ namespace patterns
 			"55 8B EC 83 E4 F8 83 EC 08 D9 45"
 		);
 
+		PATTERNS(Host_FilterTime_FPS_Cap_Byte,
+			"HL-SteamPipe",
+			"83 3D ?? ?? ?? ?? 01 7E ?? D9 45",
+			"HL-WON-1712",
+			"DC 1D ?? ?? ?? ?? DF E0 F6 C4 41 75 ?? C7 44 24 00 00 00 00 00 C7 44 24 ?? 00 00 59 40"
+		);
+
 		PATTERNS(SeedRandomNumberGenerator,
 			"HL-SteamPipe",
 			"6A 00 E8 ?? ?? ?? ?? F7 D8 83 C4 04 3D E8 03 00 00 A3 ?? ?? ?? ?? 7E 08 F7 D8 A3 ?? ?? ?? ?? C3 3D 18 FC FF FF 7E 0A 2D 38 AD 53 01 A3 ?? ?? ?? ?? C3"
@@ -553,6 +560,13 @@ namespace patterns
 			"HL-4554",
 			"81 EC 04 01 00 00 56 8B B4 24 ?? ?? ?? ?? 85 F6"
 		);
+
+		PATTERNS(SV_CountPlayers,
+			"HL-SteamPipe",
+			"55 8B EC 8B 55 ?? 8B 0D ?? ?? ?? ?? A1 ?? ?? ?? ?? 85 C9 C7 02 00 00 00 00 7E ?? 56 83 38 00 75 ?? 8B 70 ?? 85 F6 75 ?? 8B 70 ?? 85 F6 74 ?? FF 02",
+			"HL-4554",
+			"8B 54 24 ?? 8B 0D ?? ?? ?? ?? A1 ?? ?? ?? ?? 85 C9 C7 02 00 00 00 00 7E ?? 56 83 38 00 75 ?? 8B 70 ?? 85 F6 75 ?? 8B 70 ?? 85 F6 74 ?? FF 02"
+		);
 	}
 
 	namespace server
@@ -886,7 +900,9 @@ namespace patterns
 
 		PATTERNS(HistoryResource__DrawAmmoHistory,
 			"HL-Steampipe",
-			"83 EC 50 53 55 56 8B",
+			"83 EC 50 53 55 8B",
+			"HL-WON",
+			"83 EC 50 53 55 56 57",
 			"CSCZDS",
 			"83 EC 50 53 ?? ?? 55",
 			"Echoes",
@@ -896,7 +912,9 @@ namespace patterns
 			"Halfquake-Trilogy",
 			"55 8B EC 83 EC 58 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 8B F1",
 			"TWHL-Tower-2",
-			"55 8B EC 83 EC 54 83 65 ?? 00"
+			"55 8B EC 83 EC 54 83 65 ?? 00",
+			"CStrike-8684",
+			"83 EC 50 53 55 56 8B"
 		);
 
 		PATTERNS(CHudHealth__DrawDamage,

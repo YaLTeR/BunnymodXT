@@ -311,6 +311,11 @@ extern "C" qboolean __cdecl CL_CheckGameDirectory(char *gamedir)
 {
 	return HwDLL::HOOKED_CL_CheckGameDirectory(gamedir);
 }
+
+extern "C" void __cdecl SV_CountPlayers(int *clients)
+{
+	return HwDLL::HOOKED_SV_CountPlayers(clients);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -427,6 +432,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
 			MemUtils::MarkAsExecutable(ORIG_PF_traceline_DLL);
 			MemUtils::MarkAsExecutable(ORIG_CL_CheckGameDirectory);
+			MemUtils::MarkAsExecutable(ORIG_SV_CountPlayers);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -481,7 +487,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
 			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
 			ORIG_PF_traceline_DLL, HOOKED_PF_traceline_DLL,
-			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory);
+			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory,
+			ORIG_SV_CountPlayers, HOOKED_SV_CountPlayers);
 	}
 }
 
@@ -541,7 +548,8 @@ void HwDLL::Unhook()
 			ORIG_DrawCrosshair,
 			ORIG_Draw_FillRGBA,
 			ORIG_PF_traceline_DLL,
-			ORIG_CL_CheckGameDirectory);
+			ORIG_CL_CheckGameDirectory,
+			ORIG_SV_CountPlayers);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -629,6 +637,7 @@ void HwDLL::Clear()
 	ORIG_Draw_FillRGBA = nullptr;
 	ORIG_PF_traceline_DLL = nullptr;
 	ORIG_CL_CheckGameDirectory = nullptr;
+	ORIG_SV_CountPlayers = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -667,6 +676,7 @@ void HwDLL::Clear()
 	cvar_vars = nullptr;
 	movevars = nullptr;
 	offZmax = 0;
+	pHost_FilterTime_FPS_Cap_Byte = 0;
 	frametime_remainder = nullptr;
 	pstudiohdr = nullptr;
 	scr_fov_value = nullptr;
@@ -1043,6 +1053,12 @@ void HwDLL::FindStuff()
 			EngineWarning("bxt_skybox_remove is not available.\n");
 		}
 
+		ORIG_SV_CountPlayers = reinterpret_cast<_SV_CountPlayers>(MemUtils::GetSymbolAddress(m_Handle, "SV_CountPlayers"));
+		if (ORIG_SV_CountPlayers)
+			EngineDevMsg("[hw dll] Found SV_CountPlayers at %p.\n", ORIG_SV_CountPlayers);
+		else
+			EngineDevWarning("[hw dll] Could not find SV_CountPlayers.\n");
+
 		ORIG_SCR_UpdateScreen = reinterpret_cast<_SCR_UpdateScreen>(MemUtils::GetSymbolAddress(m_Handle, "SCR_UpdateScreen"));
 		if (ORIG_SCR_UpdateScreen)
 			EngineDevMsg("[hw dll] Found SCR_UpdateScreen at %p.\n", ORIG_SCR_UpdateScreen);
@@ -1243,6 +1259,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Draw_FillRGBA)
 		DEF_FUTURE(PF_traceline_DLL)
 		DEF_FUTURE(CL_CheckGameDirectory)
+		DEF_FUTURE(SV_CountPlayers)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1322,6 +1339,23 @@ void HwDLL::FindStuff()
 					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 89);
 					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 84);
 					break;
+				}
+			});
+
+		auto fHost_FilterTime_FPS_Cap_Byte = FindAsync(
+			pHost_FilterTime_FPS_Cap_Byte,
+			patterns::engine::Host_FilterTime_FPS_Cap_Byte,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::Host_FilterTime_FPS_Cap_Byte.cbegin()) {
+				case 0: // HL-SteamPipe
+					pHost_FilterTime_FPS_Cap_Byte += 7;
+					break;
+				case 1: // HL-WON-1712
+					pHost_FilterTime_FPS_Cap_Byte += 11;
+					won_host_filtertime_fps_cap_found = true;
+					break;
+				default:
+					assert(false);
 				}
 			});
 
@@ -1719,6 +1753,15 @@ void HwDLL::FindStuff()
 		}
 
 		{
+			auto pattern = fHost_FilterTime_FPS_Cap_Byte.get();
+			if (pHost_FilterTime_FPS_Cap_Byte) {
+				EngineDevMsg("[hw dll] Found Host_FilterTime FPS Cap Byte at %p (using the %s pattern).\n", pHost_FilterTime_FPS_Cap_Byte, pattern->name());
+			} else {
+				EngineDevWarning("[hw dll] Could not find Host_FilterTime FPS Cap Byte.\n");
+			}
+		}
+
+		{
 			auto pattern = fCbuf_Execute.get();
 			if (ORIG_Cbuf_Execute) {
 				EngineDevMsg("[hw dll] Found Cbuf_Execute at %p (using the %s pattern).\n", ORIG_Cbuf_Execute, pattern->name());
@@ -1995,6 +2038,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Draw_FillRGBA);
 		GET_FUTURE(PF_traceline_DLL);
 		GET_FUTURE(CL_CheckGameDirectory);
+		GET_FUTURE(SV_CountPlayers);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -3828,6 +3872,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_fix_mouse_horizontal_limit);
 	RegisterCVar(CVars::bxt_force_clear);
 	RegisterCVar(CVars::bxt_disable_gamedir_check_in_demo);
+	RegisterCVar(CVars::_bxt_remove_fps_limit_conditions);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -5308,6 +5353,16 @@ void HwDLL::FreeCamTick()
 	cameraOverrideOrigin[2] += direction[2];
 }
 
+int HwDLL::CountPlayers()
+{
+	int active_players = 0;
+
+	if (ORIG_SV_CountPlayers)
+		ORIG_SV_CountPlayers(&active_players);
+
+	return active_players;
+}
+
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)
 {
 	insideSeedRNG = true;
@@ -5400,6 +5455,25 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 	auto &hw = HwDLL::GetInstance();
 
+	if (pHost_FilterTime_FPS_Cap_Byte)
+	{
+		if (CVars::_bxt_remove_fps_limit_conditions.GetBool())
+		{
+			if (CVars::sv_cheats.GetBool() || won_host_filtertime_fps_cap_found)
+			{
+				if ((*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x7E) || (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75))
+					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
+			}
+		}
+		else if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0xEB)
+		{
+			if (won_host_filtertime_fps_cap_found)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\x75"));
+			else
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\x7E"));
+		}
+	}
+
 	if (IsRecordingDemo())
 	{
 		int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
@@ -5438,7 +5512,7 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 {
-	if (CVars::bxt_fade_remove.GetBool())
+	if (((CountPlayers() == 1) || CVars::sv_cheats.GetBool()) && CVars::bxt_fade_remove.GetBool())
 		return 0;
 	else
 		return ORIG_V_FadeAlpha();
@@ -5701,7 +5775,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel.GetBool()))) {
+	if (((CountPlayers() == 1 || CVars::sv_cheats.GetBool()) && (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool())) || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel.GetBool()))) {
 		if (CVars::bxt_clear_green.GetBool())
 			glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
 		else
@@ -5808,7 +5882,7 @@ HOOK_DEF_3(HwDLL, void, __cdecl, VectorTransform, float*, in1, float*, in2, floa
 
 HOOK_DEF_2(HwDLL, void, __cdecl, EmitWaterPolys, msurface_t *, fa, int, direction)
 {
-	if (CVars::bxt_water_remove.GetBool())
+	if (((CountPlayers() == 1) || CVars::sv_cheats.GetBool()) && CVars::bxt_water_remove.GetBool())
 		return;
 
 	ORIG_EmitWaterPolys(fa, direction);
@@ -5977,7 +6051,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 {
-	if (CVars::bxt_force_fov.GetFloat() >= 1.0)
+	if (((CountPlayers() == 1) || CVars::sv_cheats.GetBool()) && CVars::bxt_force_fov.GetFloat() >= 1.0)
 		*scr_fov_value = CVars::bxt_force_fov.GetFloat();
 
 	ORIG_R_SetFrustum();
@@ -6034,4 +6108,9 @@ HOOK_DEF_1(HwDLL, qboolean, __cdecl, CL_CheckGameDirectory, char*, gamedir)
 		return true;
 	else
 		return ORIG_CL_CheckGameDirectory(gamedir);
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, SV_CountPlayers, int*, clients)
+{
+	ORIG_SV_CountPlayers(clients);
 }

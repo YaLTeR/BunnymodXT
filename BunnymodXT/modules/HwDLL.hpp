@@ -397,6 +397,7 @@ protected:
 	struct Cmd_BXT_Timer_Start;
 	struct Cmd_BXT_Timer_Stop;
 	struct Cmd_BXT_Timer_Reset;
+	struct Cmd_BXT_Get_ClientMaxSpeed;
 	struct Cmd_BXT_TAS_Autojump_Down;
 	struct Cmd_BXT_TAS_Autojump_Up;
 	struct Cmd_BXT_TAS_Ducktap_Down;

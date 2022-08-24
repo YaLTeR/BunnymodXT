@@ -2707,6 +2707,17 @@ struct HwDLL::Cmd_BXT_Timer_Reset
 	}
 };
 
+struct HwDLL::Cmd_BXT_Get_ClientMaxSpeed
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		if (ClientDLL::GetInstance().pEngfuncs)
+			HwDLL::GetInstance().ORIG_Con_Printf("Client maxspeed: %f\n", ClientDLL::GetInstance().pEngfuncs->GetClientMaxspeed());
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Autojump_Down
 {
 	NO_USAGE();
@@ -3867,6 +3878,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Timer_Start, Handler<>>("bxt_timer_start");
 	wrapper::Add<Cmd_BXT_Timer_Stop, Handler<>>("bxt_timer_stop");
 	wrapper::Add<Cmd_BXT_Timer_Reset, Handler<>>("bxt_timer_reset");
+	wrapper::Add<Cmd_BXT_Get_ClientMaxSpeed, Handler<>>("bxt_get_clientmaxspeed");
 	wrapper::Add<Cmd_BXT_TAS_Autojump_Down, Handler<>, Handler<const char*>>("+bxt_tas_autojump");
 	wrapper::Add<Cmd_BXT_TAS_Autojump_Up, Handler<>, Handler<const char*>>("-bxt_tas_autojump");
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Down, Handler<>, Handler<const char*>>("+bxt_tas_ducktap");
@@ -4733,11 +4745,21 @@ void HwDLL::FindCVarsIfNeeded()
 HLStrafe::MovementVars HwDLL::GetMovementVars()
 {
 	auto vars = HLStrafe::MovementVars();
+	auto &cl = ClientDLL::GetInstance();
 
 	FindCVarsIfNeeded();
 	vars.Frametime = GetFrameTime();
 	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
-	vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
+
+	static bool is_paranoia = cl.DoesGameDirMatch("paranoia");
+
+	if (is_paranoia)
+		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
+	else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
+		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in CS games & other mods (Poke646 e.g.)
+	else
+		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
+
 	vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
 	vars.Friction = CVars::sv_friction.GetFloat();
 	vars.Edgefriction = CVars::edgefriction.GetFloat();

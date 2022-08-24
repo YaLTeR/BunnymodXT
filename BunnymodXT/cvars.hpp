@@ -270,6 +270,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_entities;
 	extern CVarWrapper bxt_hud_entities_offset;
 	extern CVarWrapper bxt_hud_entities_anchor;
+	extern CVarWrapper bxt_hud_weapon_cooldown;
+	extern CVarWrapper bxt_hud_weapon_cooldown_offset;
+	extern CVarWrapper bxt_hud_weapon_cooldown_anchor;
 	extern CVarWrapper bxt_cross;
 	extern CVarWrapper bxt_cross_color;
 	extern CVarWrapper bxt_cross_alpha;

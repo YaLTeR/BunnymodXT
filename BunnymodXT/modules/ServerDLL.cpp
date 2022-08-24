@@ -256,6 +256,10 @@ void ServerDLL::Clear()
 	offNihilanthIrritation = 0;
 	offNihilanthRecharger = 0;
 	offNihilanthSpheres = 0;
+	offNextAttack = 0;
+	offActiveItem = 0;
+	offNextPrimaryAttack = 0;
+	offNextSecondaryAttack = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
 	cantJumpNextTime.clear();
 	m_Intercepted = false;
@@ -663,6 +667,69 @@ void ServerDLL::FindStuff()
 				assert(false);
 			}
 		});
+
+	uintptr_t pCGlock__GlockFire;
+	auto fCGlock__GlockFire = FindAsync(
+		pCGlock__GlockFire,
+		patterns::server::CGlock__GlockFire,
+		[&](auto pattern) {
+		switch (pattern - patterns::server::CGlock__GlockFire.cbegin()) {
+		case 0: // HL-SteamPipe-6153
+			offNextPrimaryAttack = *reinterpret_cast<ptrdiff_t*>(pCGlock__GlockFire + 0x36);
+			offNextSecondaryAttack = offNextPrimaryAttack + 0x4;
+			break;
+		case 1: // HL-SteamPipe-Linux
+			offNextPrimaryAttack = *reinterpret_cast<ptrdiff_t*>(pCGlock__GlockFire + 0x5D);
+			offNextSecondaryAttack = offNextPrimaryAttack + 0x4;
+			break;
+		case 2: // Echoes
+			offNextPrimaryAttack = *reinterpret_cast<ptrdiff_t*>(pCGlock__GlockFire + 0x3F);
+			offNextSecondaryAttack = offNextPrimaryAttack + 0x4;
+			break;
+		default:
+			assert(false);
+		}
+	});
+
+	uintptr_t pCGauss__PrimaryAttack;
+	auto fCGauss__PrimaryAttack = FindAsync(
+		pCGauss__PrimaryAttack,
+		patterns::server::CGauss__PrimaryAttack,
+		[&](auto pattern) {
+		switch (pattern - patterns::server::CGauss__PrimaryAttack.cbegin()) {
+		case 0: // HL-SteamPipe-6153
+			offNextAttack = *reinterpret_cast<ptrdiff_t*>(pCGauss__PrimaryAttack + 0x61);
+			break;
+		case 1: // HL-SteamPipe-Linux
+			offNextAttack = *reinterpret_cast<ptrdiff_t*>(pCGauss__PrimaryAttack + 0xBE);
+			break;
+		case 2: // Echoes
+			offNextAttack = *reinterpret_cast<ptrdiff_t*>(pCGauss__PrimaryAttack + 0x14F);
+			break;
+		default:
+			assert(false);
+		}
+	});
+
+	uintptr_t pCBasePlayer__SelectNextItem;
+	auto fCBasePlayer__SelectNextItem = FindAsync(
+		pCBasePlayer__SelectNextItem,
+		patterns::server::CBasePlayer__SelectNextItem,
+		[&](auto pattern) {
+		switch (pattern - patterns::server::CBasePlayer__SelectNextItem.cbegin()) {
+		case 0: // HL-SteamPipe-6153
+			offActiveItem = *reinterpret_cast<ptrdiff_t*>(pCBasePlayer__SelectNextItem + 0xD7);
+			break;
+		case 1: // HL-SteamPipe-Linux
+			offActiveItem = *reinterpret_cast<ptrdiff_t*>(pCBasePlayer__SelectNextItem + 0xC7);
+			break;
+		case 2: // Echoes
+			offActiveItem = *reinterpret_cast<ptrdiff_t*>(pCBasePlayer__SelectNextItem + 0xF2);
+			break;
+		default:
+			assert(false);
+		}
+	});
 
 	bool noBhopcap = false;
 	{
@@ -2184,6 +2251,109 @@ bool ServerDLL::GetGonarchInfo(float &health, int& sequence, float& frame) const
 	frame = pent->v.frame;
 
 	return true;
+}
+
+void ServerDLL::GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& cooldownInfoPrimary, std::vector<std::tuple<edict_t*, float, float, const char*, const char*>>& cooldownInfoBoth, float& m_flNextAttack) const {
+	const char* WEAPONS_PRIMARY[] = {
+		"weapon_crowbar", // 1
+		"weapon_357", // 1
+		"weapon_snark", // 1
+		"weapon_9mmhandgun", // 1 2 same
+		"weapon_9mmAR", // 1 2 same
+		"weapon_shotgun", // 1 2 same
+		"weapon_egon", // 1 2 same
+		"weapon_tripmine", // 1 2 same
+		"weapon_hornetgun", // 1 2 same
+		"weapon_handgrenade" // 1 2 same
+	};
+
+	const char* WEAPONS_BOTH[] = {
+		"weapon_crossbow", // 1 primary, 2 zoom
+		"weapon_rpg", // 1 primary, 2 lazer
+		"weapon_satchel" // 1 detonate, 2 throw
+	};
+	const char* WEAPONS_BOTH_MSG[] = {
+		"shoot", "zoom",
+		"shoot", "lazer",
+		"detonate", "throw"
+	};
+
+	cooldownInfoPrimary = std::vector<std::tuple<edict_t*, float>>();
+	cooldownInfoBoth = std::vector<std::tuple<edict_t*, float, float, const char*, const char*>>();
+
+	if (offNextPrimaryAttack == 0 || offNextSecondaryAttack == 0)
+		return;
+	
+	for (size_t i = 0; i < std::size(WEAPONS_PRIMARY); i++)
+	{
+		const auto WEAPON = WEAPONS_PRIMARY[i];
+
+		auto* weapon = pEngfuncs->pfnFindEntityByString(nullptr, "classname", WEAPON);
+		if (weapon && pEngfuncs->pfnEntOffsetOfPEntity(weapon)) {
+			const auto pobj = reinterpret_cast<uintptr_t>(weapon->pvPrivateData);
+
+			auto cooldown = *reinterpret_cast<float*>(pobj + offNextPrimaryAttack);
+
+			auto ptr = pEngfuncs->pfnPvEntPrivateData(weapon);
+
+			cooldownInfoPrimary.push_back(std::tuple(weapon, cooldown));
+		}
+	}
+	for (size_t i = 0; i < std::size(WEAPONS_BOTH); i++)
+	{
+		const auto WEAPON = WEAPONS_BOTH[i];
+
+		auto* weapon = pEngfuncs->pfnFindEntityByString(nullptr, "classname", WEAPON);
+		if (weapon && pEngfuncs->pfnEntOffsetOfPEntity(weapon)) {
+			const auto pobj = reinterpret_cast<uintptr_t>(weapon->pvPrivateData);
+
+			auto primary = *reinterpret_cast<float*>(pobj + offNextPrimaryAttack);
+			auto secondary = *reinterpret_cast<float*>(pobj + offNextSecondaryAttack);
+
+			auto ptr = pEngfuncs->pfnPvEntPrivateData(weapon);
+
+			cooldownInfoBoth.push_back(std::tuple(weapon, primary, secondary, WEAPONS_BOTH_MSG[i * 2], WEAPONS_BOTH_MSG[i * 2 + 1]));
+		}
+	}
+
+	m_flNextAttack = 0.0f;
+
+	if (offNextAttack == 0 || offActiveItem == 0)
+		return;
+
+	auto player = pEngfuncs->pfnFindEntityByString(nullptr, "classname", "player");
+	if (!player || !pEngfuncs->pfnEntOffsetOfPEntity(player))
+		return;
+	auto playerpobj = reinterpret_cast<uintptr_t>(player->pvPrivateData);
+
+	m_flNextAttack = *reinterpret_cast<float*>(playerpobj + offNextAttack);
+
+	// special cases
+	auto pActiveItem = *reinterpret_cast<uintptr_t*>(playerpobj + offActiveItem);
+	if (!pActiveItem)
+		return;
+	// TODO what is this offset?
+	auto activeItemBase = *reinterpret_cast<uintptr_t*>(pActiveItem + 0x4);
+	if (!activeItemBase)
+		return;
+	// TODO what is this offset?
+	auto activeItem = reinterpret_cast<edict_t*>(activeItemBase - 0x80);
+	if (!activeItem || !pEngfuncs->pfnEntOffsetOfPEntity(activeItem))
+		return;
+
+	auto* gauss = pEngfuncs->pfnFindEntityByString(nullptr, "classname", "weapon_gauss");
+	if (gauss && pEngfuncs->pfnEntOffsetOfPEntity(gauss) && !std::strcmp(HwDLL::GetInstance().ppGlobals->pStringBase + activeItem->v.classname, "weapon_gauss")) {
+		const auto pobj = reinterpret_cast<uintptr_t>(gauss->pvPrivateData);
+		auto cooldown = *reinterpret_cast<float*>(pobj + offNextPrimaryAttack);
+
+		float attTotal = 0.0f;
+		if (m_flNextAttack > 0.0f)
+			attTotal = m_flNextAttack;
+		else if (cooldown > 0.0f)
+			attTotal = cooldown;
+
+		cooldownInfoPrimary.push_back(std::tuple(gauss, attTotal));
+	}
 }
 
 TraceResult ServerDLL::TraceLine(const float v1[3], const float v2[3], int fNoMonsters, edict_t *pentToSkip) const

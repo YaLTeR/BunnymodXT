@@ -70,6 +70,8 @@ public:
 
 	bool GetGonarchInfo(float& health, int& sequence, float& frame) const;
 
+	void GetWeaponCooldownInfo(std::vector<std::tuple<edict_t*, float>>& cooldownInfoPrimary, std::vector<std::tuple<edict_t*, float, float, const char*, const char*>>& cooldownInfoBoth, float& m_flNextAttack) const;
+
 	static void OnMultiManagerFired(const char *classname);
 
 	static void DoAutoStopTasks();
@@ -188,4 +190,9 @@ protected:
 	std::deque<bool> traceLineFireBulletsPlayerHit;
 	std::deque<std::array<Vector, 2>> traceLineFireBullets;
 	std::deque<bool> traceLineFireBulletsHit;
+
+	ptrdiff_t offNextPrimaryAttack;
+	ptrdiff_t offNextSecondaryAttack;
+	ptrdiff_t offNextAttack;
+	ptrdiff_t offActiveItem;
 };

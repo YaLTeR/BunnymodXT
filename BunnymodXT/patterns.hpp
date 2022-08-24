@@ -779,6 +779,33 @@ namespace patterns
 			"Echoes",
 			"55 8B EC 81 EC 10 01 00 00 89 8D ?? ?? ?? ?? 8D 4D"
 		);
+
+		PATTERNS(CGlock__GlockFire,
+			"HL-SteamPipe-6153",
+			"83 EC 24 53 56",
+			"HL-SteamPipe-Linux",
+			"53 83 EC 18 8B 5C 24 ?? 8B 44 24 ?? 8B 4C 24",
+			"Echoes",
+			"55 8B EC 83 EC 70 89 4D ?? 8B 45 ?? 83 B8 ?? ?? ?? ?? 00 7F"
+		);
+
+		PATTERNS(CGauss__PrimaryAttack,
+			"HL-SteamPipe-6153",
+			"56 8B F1 8B 46 ?? 8B 48 ?? 83 B9 ?? ?? ?? ?? 03 75 ?? 8B 16 8B CE FF 92 ?? ?? ?? ?? 68 9A 99 19 3E 8B CE E8 ?? ?? ?? ?? D9 96",
+			"HL-SteamPipe-Linux",
+			"53 83 EC 28 8B 5C 24 ?? 8B 83 ?? ?? ?? ?? 8B 50 ?? 83 BA ?? ?? ?? ?? 03",
+			"Echoes",
+			"55 8B EC 83 EC 0C 89 4D ?? 8B 45 ?? 8B 88 ?? ?? ?? ?? 8B 51"
+		);
+
+		PATTERNS(CBasePlayer__SelectNextItem,
+			"HL-SteamPipe-6153",
+			"83 EC 08 8B 54 24 ?? 53 55",
+			"HL-SteamPipe-Linux",
+			"57 56 53 83 EC 10 8B 7C 24 ?? 8B 5C 24",
+			"Echoes",
+			"55 8B EC 83 EC 0C 89 4D ?? 83 7D ?? 00 75 ?? E9"
+		);
 	}
 
 	namespace client

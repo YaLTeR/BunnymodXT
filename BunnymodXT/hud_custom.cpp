@@ -1009,6 +1009,105 @@ namespace CustomHud
 		}
 	}
 
+	bool cooldownCmp(std::tuple<std::string, float> l, std::tuple<std::string, float> r)
+	{
+		return std::get<1>(l) < std::get<1>(r);
+	}
+
+	void DrawWeaponCooldownInfo(float flTime)
+	{
+		if (CVars::bxt_hud_weapon_cooldown.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_weapon_cooldown_offset, CVars::bxt_hud_weapon_cooldown_anchor, &x, &y, 2, NumberHeight + 3);
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+
+			out << "Weapon cooldown:\n";
+
+			std::vector<std::tuple<edict_t*, float>> cooldownInfoPrimary;
+			std::vector<std::tuple<edict_t*, float, float, const char*, const char*>> cooldownInfoBoth;
+			float m_flNextAttack;
+
+			ServerDLL::GetInstance().GetWeaponCooldownInfo(cooldownInfoPrimary, cooldownInfoBoth, m_flNextAttack);
+
+			const auto stringBase = HwDLL::GetInstance().ppGlobals->pStringBase;
+			// float will contain the total cooldown time to be used for sorting
+			std::vector<std::tuple<std::string, float>> cooldownMsgs;
+
+			for (auto& info : cooldownInfoPrimary) {
+				std::ostringstream outInner;
+				outInner.setf(std::ios::fixed);
+				outInner.precision(precision);
+
+				auto weapon = std::get<0>(info);
+				auto name = stringBase + weapon->v.classname + 7;
+				auto primary = std::get<1>(info);
+
+				if (primary > 0.0f) {
+					outInner << name << ":\n" << primary << "s\n";
+
+					cooldownMsgs.push_back(std::tuple(outInner.str(), primary));
+				}
+			}
+			for (auto& info : cooldownInfoBoth)
+			{
+				std::ostringstream outInner;
+				outInner.setf(std::ios::fixed);
+				outInner.precision(precision);
+
+				auto weapon = std::get<0>(info);
+				auto name = stringBase + weapon->v.classname + 7;
+				auto primary = std::get<1>(info);
+				auto secondary = std::get<2>(info);
+				auto primaryMsg = std::get<3>(info);
+				auto secondaryMsg = std::get<4>(info);
+
+				if (primary <= 0.0f && secondary <= 0.0f)
+					continue;
+
+				float totalTime = 0.0f;
+
+				outInner << name << ":\n" << primaryMsg << ": ";
+
+				if (primary > 0.0f) {
+					outInner << primary;
+					totalTime += primary;
+				}
+				else
+					outInner << std::string(precision, '_');
+
+				outInner << "s, " << secondaryMsg << ": ";
+
+				if (secondary > 0.0f) {
+					outInner << secondary;
+					totalTime += secondary;
+				}
+				else
+					outInner << std::string(precision, '_');
+
+				outInner << "s\n";
+
+				// we only care about the primary since that contains useful info
+				cooldownMsgs.push_back(std::tuple(outInner.str(), primary > 0.0f ? primary : 0.0f));
+			}
+
+			std::sort(cooldownMsgs.begin(), cooldownMsgs.end(), cooldownCmp);
+
+			out << "Player next att: ";
+			if (m_flNextAttack > 0.0f)
+				out << m_flNextAttack;
+			out << "\n";
+
+			for (auto& cooldownMsg : cooldownMsgs)
+				out << std::get<0>(cooldownMsg);
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
 	void DrawHealth(float flTime)
 	{
 		if (CVars::bxt_hud_health.GetBool())
@@ -1523,6 +1622,7 @@ namespace CustomHud
 		DrawVisibleLandmarks(flTime);
 		DrawNihilanthInfo(flTime);
 		DrawGonarchInfo(flTime);
+		DrawWeaponCooldownInfo(flTime);
 		DrawIncorrectFPSIndicator(flTime);
 		DrawCollisionDepthMap(flTime);
 		DrawTASEditorStatus();

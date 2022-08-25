@@ -12,6 +12,7 @@ namespace CustomHud
 		float health;
 		float armorvalue;
 		int waterlevel;
+		float stamina;
 	} playerinfo;
 
 	void Init();
@@ -34,5 +35,5 @@ namespace CustomHud
 
 	const SCREENINFO& GetScreenInfo();
 
-	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor);
+	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor, const float& player_stamina);
 };

@@ -3981,6 +3981,7 @@ void HwDLL::InsertCommands()
 						player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
 						player.InDuckAnimation = (pl->v.bInDuck != 0);
 						player.DuckTime = static_cast<float>(pl->v.flDuckTime);
+						player.StaminaTime = pl->v.fuser2;
 
 						if (ORIG_PF_GetPhysicsKeyValue) {
 							auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));
@@ -4564,6 +4565,7 @@ void HwDLL::InsertCommands()
 					player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
 					player.InDuckAnimation = (pl->v.bInDuck != 0);
 					player.DuckTime = static_cast<float>(pl->v.flDuckTime);
+					player.StaminaTime = pl->v.fuser2;
 
 					if (ORIG_PF_GetPhysicsKeyValue) {
 						auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));
@@ -4693,6 +4695,7 @@ HLStrafe::PlayerData HwDLL::GetPlayerData()
 	player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
 	player.InDuckAnimation = (pl->v.bInDuck != 0);
 	player.DuckTime = static_cast<float>(pl->v.flDuckTime);
+	player.StaminaTime = pl->v.fuser2;
 
 	if (ORIG_PF_GetPhysicsKeyValue) {
 		auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));
@@ -4750,16 +4753,6 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	FindCVarsIfNeeded();
 	vars.Frametime = GetFrameTime();
 	vars.Maxvelocity = CVars::sv_maxvelocity.GetFloat();
-
-	static bool is_paranoia = cl.DoesGameDirMatch("paranoia");
-
-	if (is_paranoia)
-		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
-	else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
-		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in CS games & other mods (Poke646 e.g.)
-	else
-		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
-
 	vars.Stopspeed = CVars::sv_stopspeed.GetFloat();
 	vars.Friction = CVars::sv_friction.GetFloat();
 	vars.Edgefriction = CVars::edgefriction.GetFloat();
@@ -4769,6 +4762,28 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Stepsize = CVars::sv_stepsize.GetFloat();
 	vars.Bounce = CVars::sv_bounce.GetFloat();
 	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
+
+	static bool is_paranoia = cl.DoesGameDirMatch("paranoia");
+	static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
+
+	if (is_cstrike) {
+		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed();
+		vars.BhopcapMultiplier = 0.8f;
+		vars.BhopcapMaxspeedScale = 1.2f;
+		vars.HasStamina = true;
+		vars.DuckTapSlow = true;
+	} else {
+		if (is_paranoia)
+			vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
+		else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
+			vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in other mods (Poke646 e.g.)
+		else
+			vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
+
+		vars.BhopcapMultiplier = 0.65f;
+		vars.BhopcapMaxspeedScale = 1.7f;
+		vars.UseSlow = true;
+	}
 
 	if (svs->num_clients >= 1) {
 		edict_t *pl = GetPlayerEdict();
@@ -5056,6 +5071,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	}
 	insideCbuf_Execute = false;
 
+	ClientDLL::GetInstance().SetAngleSpeedCap(CVars::bxt_anglespeed_cap.GetBool());
+
+	ClientDLL::GetInstance().SetSpeedScaling(CVars::bxt_speed_scaling.GetBool());
+
 	RuntimeData::SaveStored();
 
 	if (CVars::_bxt_taslog.GetBool()) {
@@ -5078,7 +5097,7 @@ void HwDLL::SetPlayerVelocity(float velocity[3])
 	player.Velocity[2] = velocity[2];
 }
 
-bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& health, float& armorvalue, int& waterlevel)
+bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& health, float& armorvalue, int& waterlevel, float& stamina)
 {
 	if (!svs || svs->num_clients < 1)
 		return false;
@@ -5096,6 +5115,7 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	health = pl->v.health;
 	armorvalue = pl->v.armorvalue;
 	waterlevel = pl->v.waterlevel;
+	stamina = pl->v.fuser2;
 
 	return true;
 }

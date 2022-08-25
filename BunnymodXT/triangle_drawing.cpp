@@ -1684,6 +1684,8 @@ namespace TriangleDrawing
 				float current_player_health = 0;
 				float current_player_armor = 0;
 
+				float current_player_stamina = 0;
+
 				if (input.player_datas.size() > closest_edge_frame) {
 					auto& current_player_data = input.player_datas[closest_edge_frame];
 					auto& current_player_vels = current_player_data.Velocity;
@@ -1695,6 +1697,8 @@ namespace TriangleDrawing
 
 					current_player_health = input.player_health_datas[closest_edge_frame];
 					current_player_armor = input.player_armor_datas[closest_edge_frame];
+
+					current_player_stamina = current_player_data.StaminaTime;
 				}
 
 				// Update the HUD status before any changes, since that's the state that was visualized earlier.
@@ -1702,7 +1706,7 @@ namespace TriangleDrawing
 					frame_bulk,
 					current_player_vel, current_player_zvel, current_player_zpos,
 					current_player_realyaw,
-					current_player_health, current_player_armor);
+					current_player_health, current_player_armor, current_player_stamina);
 
 				if (left_pressed) {
 					auto mouse_diff = mouse - left_pressed_at;

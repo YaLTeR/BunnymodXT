@@ -157,6 +157,9 @@ namespace CVars
 	CVarWrapper bxt_hud_entities("bxt_hud_entities", "0");
 	CVarWrapper bxt_hud_entities_offset("bxt_hud_entities_offset", "");
 	CVarWrapper bxt_hud_entities_anchor("bxt_hud_entities_anchor", "0 0");
+	CVarWrapper bxt_hud_stamina("bxt_hud_stamina", "0");
+	CVarWrapper bxt_hud_stamina_offset("bxt_hud_stamina_offset", "");
+	CVarWrapper bxt_hud_stamina_anchor("bxt_hud_stamina_anchor", "0.5 0");
 	CVarWrapper bxt_cross("bxt_cross", "0");
 	CVarWrapper bxt_cross_color("bxt_cross_color", "");
 	CVarWrapper bxt_cross_alpha("bxt_cross_alpha", "");
@@ -177,6 +180,8 @@ namespace CVars
 	CVarWrapper bxt_viewmodel_bob_angled("bxt_viewmodel_bob_angled", "0");
 	CVarWrapper bxt_show_bullets("bxt_show_bullets", "0");
 	CVarWrapper bxt_show_bullets_enemy("bxt_show_bullets_enemy", "0");
+	CVarWrapper bxt_anglespeed_cap("bxt_anglespeed_cap", "1");
+	CVarWrapper bxt_speed_scaling("bxt_speed_scaling", "1");
 
 	const std::vector<CVarWrapper*> allCVars =
 	{
@@ -188,6 +193,8 @@ namespace CVars
 		&_bxt_tas_script_generation,
 		&bxt_taslog_filename,
 		&bxt_autopause,
+		&bxt_anglespeed_cap,
+		&bxt_speed_scaling,
 		&bxt_interprocess_enable,
 		&bxt_fade_remove,
 		&bxt_skybox_remove,
@@ -327,6 +334,9 @@ namespace CVars
 		&bxt_hud_entities,
 		&bxt_hud_entities_offset,
 		&bxt_hud_entities_anchor,
+		&bxt_hud_stamina,
+		&bxt_hud_stamina_offset,
+		&bxt_hud_stamina_anchor,
 		&bxt_cross,
 		&bxt_cross_color,
 		&bxt_cross_alpha,

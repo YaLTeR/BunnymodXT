@@ -81,6 +81,8 @@ namespace CustomHud
 		float realyaw;
 		float health;
 		float armor;
+		
+		float stamina;
 	};
 	static FrameBulkStatus frame_bulk_status;
 	static bool frame_bulk_selected;
@@ -421,7 +423,7 @@ namespace CustomHud
 
 	void GetAccurateInfo()
 	{
-		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.health, player.armorvalue, player.waterlevel);
+		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.health, player.armorvalue, player.waterlevel, player.stamina);
 		HwDLL::GetInstance().GetViewangles(player.viewangles);
 	}
 
@@ -1429,6 +1431,27 @@ namespace CustomHud
 		}
 	}
 
+	void DrawStamina(float flTime)
+	{
+		if (CVars::bxt_hud_stamina.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_stamina_offset, CVars::bxt_hud_stamina_anchor, &x, &y, -75, si.iCharHeight * 4);
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "Stamina: ";
+
+			if (frame_bulk_selected)
+				out << frame_bulk_status.stamina;
+			else
+				out << player.stamina;
+
+			DrawString(x, y, out.str().c_str());
+		}
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -1528,6 +1551,7 @@ namespace CustomHud
 		DrawTASEditorStatus();
 		DrawEntities(flTime);
 		DrawCrosshair(flTime);
+		DrawStamina(flTime);
 
 		receivedAccurateInfo = false;
 		frame_bulk_selected = false;
@@ -1650,7 +1674,7 @@ namespace CustomHud
 		return si;
 	}
 
-	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor)
+	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor, const float& player_stamina)
 	{
 		frame_bulk_selected = true;
 		frame_bulk_status = FrameBulkStatus{};
@@ -1708,5 +1732,7 @@ namespace CustomHud
 
 		frame_bulk_status.health = player_health;
 		frame_bulk_status.armor = player_armor;
+
+		frame_bulk_status.stamina = player_stamina;
 	}
 }

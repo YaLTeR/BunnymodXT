@@ -779,6 +779,9 @@ void ServerDLL::FindStuff()
 				if (ClientDLL::GetInstance().DoesGameDirMatch("czeror")) {
 					offm_rgAmmoLast = 0x554;
 					offm_iClientFOV = 0x8B0;
+					offFuncIsPlayer = 0xA8;
+					offFuncCenter = 0xDC;
+					offFuncObjectCaps = 0x18;
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("bshift") || ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless")) {
 					offm_rgAmmoLast = 0x568;
@@ -787,10 +790,14 @@ void ServerDLL::FindStuff()
 				if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike")) {
 					offm_rgAmmoLast = 0x674;
 					offm_iClientFOV = 0x5C4;
+					offFuncIsPlayer = 0xA0;
+					offFuncCenter = 0xCC;
+					offFuncObjectCaps = 0x18;
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("tfc")) {
 					offm_rgAmmoLast = 0x98C;
 					offm_iClientFOV = 0x8E0;
+					offFuncObjectCaps = 0x1C;
 				}
 				EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate [Linux] at %p.\n", ORIG_CBasePlayer__ForceClientDllUpdate_Linux);
 			} else {

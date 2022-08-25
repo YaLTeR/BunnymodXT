@@ -585,7 +585,6 @@ void ServerDLL::FindStuff()
 				break;
 			case 3: // Counter-Strike 1.6
 				pAddToFullPack_PVS_Byte += 17;
-				cstrike_addtofullpack_pvs_found = true;
 				break;
 			default:
 				assert(false);
@@ -1806,16 +1805,21 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldIUser1 = ent->v.iuser1;
 	auto oldIUser2 = ent->v.iuser2;
 
+	static bool is_0x75 = false;
+
 	if (pAddToFullPack_PVS_Byte)
 	{
 		if (CVars::bxt_render_far_entities.GetBool())
 		{
+			if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x75)
+				is_0x75 = true;
+
 			if ((*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x74) || (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x75))
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
 		}
 		else if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0xEB)
 		{
-			if (cstrike_addtofullpack_pvs_found)
+			if (is_0x75)
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x75"));
 			else
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x74"));

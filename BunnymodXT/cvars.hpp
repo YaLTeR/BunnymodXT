@@ -152,7 +152,7 @@ namespace CVars
 	extern CVarWrapper bxt_fix_mouse_horizontal_limit;
 	extern CVarWrapper bxt_hud_game_color;
 	extern CVarWrapper bxt_disable_gamedir_check_in_demo;
-	extern CVarWrapper _bxt_remove_fps_limit_conditions;
+	extern CVarWrapper bxt_remove_fps_limit;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_cheats;

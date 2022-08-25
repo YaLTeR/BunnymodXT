@@ -90,8 +90,6 @@ public:
 	void ClearBulletsEnemyTrace();
 	void TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr);
 
-	bool cstrike_addtofullpack_pvs_found = false;
-
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
 	ServerDLL(const ServerDLL&);

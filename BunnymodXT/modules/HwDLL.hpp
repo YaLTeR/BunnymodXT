@@ -327,7 +327,6 @@ public:
 	}
 
 	bool Called_Timer = false;
-	bool won_host_filtertime_fps_cap_found = false;
 
 	void ResetStateBeforeTASPlayback();
 	void StartTASPlayback();

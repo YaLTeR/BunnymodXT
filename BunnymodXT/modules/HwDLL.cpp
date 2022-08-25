@@ -1352,7 +1352,6 @@ void HwDLL::FindStuff()
 					break;
 				case 1: // HL-WON-1712
 					pHost_FilterTime_FPS_Cap_Byte += 11;
-					won_host_filtertime_fps_cap_found = true;
 					break;
 				default:
 					assert(false);
@@ -3872,7 +3871,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_fix_mouse_horizontal_limit);
 	RegisterCVar(CVars::bxt_force_clear);
 	RegisterCVar(CVars::bxt_disable_gamedir_check_in_demo);
-	RegisterCVar(CVars::_bxt_remove_fps_limit_conditions);
+	RegisterCVar(CVars::bxt_remove_fps_limit);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -5357,6 +5356,9 @@ int HwDLL::CountPlayers()
 {
 	int active_players = 0;
 
+	if (CVars::sv_cheats.GetBool())
+		return 1;
+
 	if (ORIG_SV_CountPlayers)
 		ORIG_SV_CountPlayers(&active_players);
 
@@ -5455,19 +5457,21 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 	auto &hw = HwDLL::GetInstance();
 
+	static bool is_0x75 = false;
+
 	if (pHost_FilterTime_FPS_Cap_Byte)
 	{
-		if (CVars::_bxt_remove_fps_limit_conditions.GetBool())
+		if (CVars::bxt_remove_fps_limit.GetBool())
 		{
-			if (CVars::sv_cheats.GetBool() || won_host_filtertime_fps_cap_found)
-			{
-				if ((*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x7E) || (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75))
-					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
-			}
+			if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75)
+				is_0x75 = true;
+
+			if (((*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x7E) && CVars::sv_cheats.GetBool()) || (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75))
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
 		}
 		else if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0xEB)
 		{
-			if (won_host_filtertime_fps_cap_found)
+			if (is_0x75)
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\x75"));
 			else
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\x7E"));
@@ -5512,7 +5516,7 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 {
-	if (((CountPlayers() == 1) || CVars::sv_cheats.GetBool()) && CVars::bxt_fade_remove.GetBool())
+	if ((CountPlayers() == 1) && CVars::bxt_fade_remove.GetBool())
 		return 0;
 	else
 		return ORIG_V_FadeAlpha();
@@ -5775,7 +5779,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (((CountPlayers() == 1 || CVars::sv_cheats.GetBool()) && (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool())) || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel.GetBool()))) {
+	if ((CountPlayers() == 1 && (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool())) || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel.GetBool()))) {
 		if (CVars::bxt_clear_green.GetBool())
 			glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
 		else
@@ -5882,7 +5886,7 @@ HOOK_DEF_3(HwDLL, void, __cdecl, VectorTransform, float*, in1, float*, in2, floa
 
 HOOK_DEF_2(HwDLL, void, __cdecl, EmitWaterPolys, msurface_t *, fa, int, direction)
 {
-	if (((CountPlayers() == 1) || CVars::sv_cheats.GetBool()) && CVars::bxt_water_remove.GetBool())
+	if ((CountPlayers() == 1) && CVars::bxt_water_remove.GetBool())
 		return;
 
 	ORIG_EmitWaterPolys(fa, direction);
@@ -6051,7 +6055,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 {
-	if (((CountPlayers() == 1) || CVars::sv_cheats.GetBool()) && CVars::bxt_force_fov.GetFloat() >= 1.0)
+	if ((CountPlayers() == 1) && CVars::bxt_force_fov.GetFloat() >= 1.0)
 		*scr_fov_value = CVars::bxt_force_fov.GetFloat();
 
 	ORIG_R_SetFrustum();

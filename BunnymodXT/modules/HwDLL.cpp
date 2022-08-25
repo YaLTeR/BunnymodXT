@@ -311,11 +311,6 @@ extern "C" qboolean __cdecl CL_CheckGameDirectory(char *gamedir)
 {
 	return HwDLL::HOOKED_CL_CheckGameDirectory(gamedir);
 }
-
-extern "C" void __cdecl SV_CountPlayers(int *clients)
-{
-	return HwDLL::HOOKED_SV_CountPlayers(clients);
-}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -432,7 +427,6 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
 			MemUtils::MarkAsExecutable(ORIG_PF_traceline_DLL);
 			MemUtils::MarkAsExecutable(ORIG_CL_CheckGameDirectory);
-			MemUtils::MarkAsExecutable(ORIG_SV_CountPlayers);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -487,8 +481,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
 			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
 			ORIG_PF_traceline_DLL, HOOKED_PF_traceline_DLL,
-			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory,
-			ORIG_SV_CountPlayers, HOOKED_SV_CountPlayers);
+			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory);
 	}
 }
 
@@ -548,8 +541,7 @@ void HwDLL::Unhook()
 			ORIG_DrawCrosshair,
 			ORIG_Draw_FillRGBA,
 			ORIG_PF_traceline_DLL,
-			ORIG_CL_CheckGameDirectory,
-			ORIG_SV_CountPlayers);
+			ORIG_CL_CheckGameDirectory);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -1031,6 +1023,7 @@ void HwDLL::FindStuff()
 		FIND(MD5Transform)
 		FIND(MD5_Hash_File)
 		FIND(MD5_Print)
+		FIND(SV_CountPlayers)
 		#undef FIND
 
 		ORIG_Host_FilterTime = reinterpret_cast<_Host_FilterTime>(MemUtils::GetSymbolAddress(m_Handle, "Host_FilterTime"));
@@ -1052,12 +1045,6 @@ void HwDLL::FindStuff()
 			EngineDevWarning("[hw dll] Could not find R_DrawSkyBox.\n");
 			EngineWarning("bxt_skybox_remove is not available.\n");
 		}
-
-		ORIG_SV_CountPlayers = reinterpret_cast<_SV_CountPlayers>(MemUtils::GetSymbolAddress(m_Handle, "SV_CountPlayers"));
-		if (ORIG_SV_CountPlayers)
-			EngineDevMsg("[hw dll] Found SV_CountPlayers at %p.\n", ORIG_SV_CountPlayers);
-		else
-			EngineDevWarning("[hw dll] Could not find SV_CountPlayers.\n");
 
 		ORIG_SCR_UpdateScreen = reinterpret_cast<_SCR_UpdateScreen>(MemUtils::GetSymbolAddress(m_Handle, "SCR_UpdateScreen"));
 		if (ORIG_SCR_UpdateScreen)
@@ -6112,9 +6099,4 @@ HOOK_DEF_1(HwDLL, qboolean, __cdecl, CL_CheckGameDirectory, char*, gamedir)
 		return true;
 	else
 		return ORIG_CL_CheckGameDirectory(gamedir);
-}
-
-HOOK_DEF_1(HwDLL, void, __cdecl, SV_CountPlayers, int*, clients)
-{
-	ORIG_SV_CountPlayers(clients);
 }

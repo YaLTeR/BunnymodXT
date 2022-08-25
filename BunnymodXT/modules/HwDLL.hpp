@@ -75,7 +75,6 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, Draw_FillRGBA, int x, int y, int w, int h, int r, int g, int b, int a)
 	HOOK_DECL(void, __cdecl, PF_traceline_DLL, const Vector* v1, const Vector* v2, int fNoMonsters, edict_t* pentToSkip, TraceResult* ptr)
 	HOOK_DECL(qboolean, __cdecl, CL_CheckGameDirectory, char *gamedir)
-	HOOK_DECL(void, __cdecl, SV_CountPlayers, int *clients)
 
 	struct cmdbuf_t
 	{
@@ -374,6 +373,8 @@ protected:
 	_CL_RecordHUDCommand ORIG_CL_RecordHUDCommand;
 	typedef int(__cdecl *_build_number)();
 	_build_number ORIG_build_number;
+	typedef void(__cdecl *_SV_CountPlayers) (int* clients);
+	_SV_CountPlayers ORIG_SV_CountPlayers;
 
 	void FindStuff();
 

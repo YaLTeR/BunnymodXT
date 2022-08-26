@@ -523,7 +523,7 @@ void ServerDLL::FindStuff()
 				offm_rgAmmoLast = 0x550;
 				offm_iClientFOV = 0x4A8;
 				break;
-			case 24: // CStrike-8684
+			case 24: // CStrike-Latest
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x660;
 				offm_iClientFOV = 0x5B0;
@@ -531,7 +531,7 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xCC;
 				offFuncObjectCaps = 0x18;
 				break;
-			case 25: // TFC
+			case 25: // TFC-Latest
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x978;
 				offm_iClientFOV = 0x8CC;
@@ -787,7 +787,7 @@ void ServerDLL::FindStuff()
 					offm_rgAmmoLast = 0x568;
 					offm_iClientFOV = 0x4C0;
 				}
-				if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike")) {
+				if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike") || ClientDLL::GetInstance().DoesGameDirMatch("czero")) {
 					offm_rgAmmoLast = 0x674;
 					offm_iClientFOV = 0x5C4;
 					offFuncIsPlayer = 0xA0;

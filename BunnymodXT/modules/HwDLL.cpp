@@ -4796,8 +4796,9 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 
 	static bool is_paranoia = cl.DoesGameDirMatch("paranoia");
 	static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
+	static bool is_czero = cl.DoesGameDirMatch("czero");
 
-	if (is_cstrike) {
+	if (is_cstrike || is_czero) {
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed();
 		vars.BhopcapMultiplier = 0.8f;
 		vars.BhopcapMaxspeedScale = 1.2f;

@@ -523,6 +523,22 @@ void ServerDLL::FindStuff()
 				offm_rgAmmoLast = 0x550;
 				offm_iClientFOV = 0x4A8;
 				break;
+			case 24: // CStrike-Latest
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x660;
+				offm_iClientFOV = 0x5B0;
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
+				offFuncObjectCaps = 0x18;
+				break;
+			case 25: // TFC-Latest
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x978;
+				offm_iClientFOV = 0x8CC;
+				offFuncIsPlayer = 0x98;
+				offFuncCenter = 0xC4;
+				offFuncObjectCaps = 0x18;
+				break;
 			default:
 				assert(false);
 			}
@@ -566,6 +582,9 @@ void ServerDLL::FindStuff()
 				break;
 			case 2: // AoMDC
 				pAddToFullPack_PVS_Byte += 6;
+				break;
+			case 3: // Counter-Strike 1.6
+				pAddToFullPack_PVS_Byte += 17;
 				break;
 			default:
 				assert(false);
@@ -760,10 +779,25 @@ void ServerDLL::FindStuff()
 				if (ClientDLL::GetInstance().DoesGameDirMatch("czeror")) {
 					offm_rgAmmoLast = 0x554;
 					offm_iClientFOV = 0x8B0;
+					offFuncIsPlayer = 0xA8;
+					offFuncCenter = 0xDC;
+					offFuncObjectCaps = 0x18;
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("bshift") || ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless")) {
 					offm_rgAmmoLast = 0x568;
 					offm_iClientFOV = 0x4C0;
+				}
+				if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike") || ClientDLL::GetInstance().DoesGameDirMatch("czero")) {
+					offm_rgAmmoLast = 0x674;
+					offm_iClientFOV = 0x5C4;
+					offFuncIsPlayer = 0xA0;
+					offFuncCenter = 0xCC;
+					offFuncObjectCaps = 0x18;
+				}
+				if (ClientDLL::GetInstance().DoesGameDirMatch("tfc")) {
+					offm_rgAmmoLast = 0x98C;
+					offm_iClientFOV = 0x8E0;
+					offFuncObjectCaps = 0x1C;
 				}
 				EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate [Linux] at %p.\n", ORIG_CBasePlayer__ForceClientDllUpdate_Linux);
 			} else {
@@ -1774,16 +1808,38 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldRenderColor = ent->v.rendercolor;
 	auto oldRenderAmount = ent->v.renderamt;
 	auto oldRenderFx = ent->v.renderfx;
+	auto oldFlags = ent->v.flags;
+	auto oldIUser1 = ent->v.iuser1;
+	auto oldIUser2 = ent->v.iuser2;
+
+	static bool is_0x75 = false;
 
 	if (pAddToFullPack_PVS_Byte)
 	{
 		if (CVars::bxt_render_far_entities.GetBool())
 		{
-			if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x74)
+			if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x75)
+				is_0x75 = true;
+
+			if ((*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x74) || (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x75))
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
 		}
 		else if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0xEB)
-			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x74"));
+		{
+			if (is_0x75)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x75"));
+			else
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x74"));
+		}
+	}
+
+	static bool is_czeror = ClientDLL::GetInstance().DoesGameSubDirMatch("czeror");
+
+	if (is_czeror && CVars::bxt_render_far_entities.GetBool())
+	{
+		ent->v.flags |= FL_IMMUNE_LAVA; // Because the PVS check in AddToFullPack points to '524288' flags bit
+		ent->v.iuser1 = 1; // Similar to above explanation
+		ent->v.iuser2 = 1; // Mappers used on some entities 'nopvs = 1' keyvalue, which is 'iuser2 = 1` in game code
 	}
 
 	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && spirit_sdk))
@@ -1836,6 +1892,9 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	ent->v.rendercolor = oldRenderColor;
 	ent->v.renderamt = oldRenderAmount;
 	ent->v.renderfx = oldRenderFx;
+	ent->v.flags = oldFlags;
+	ent->v.iuser1 = oldIUser1;
+	ent->v.iuser2 = oldIUser2;
 
 	return ret;
 }
@@ -2275,7 +2334,7 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 {
 	if (igmon || (!fireBullets_count && !fireBulletsPlayer_count))
 		return;
-		
+
 	const char* SOLID_HIT_ENTITIES[] = {
 		"func_breakable",
 		"func_pushable"

@@ -141,6 +141,13 @@ namespace patterns
 			"55 8B EC 83 E4 F8 83 EC 08 D9 45"
 		);
 
+		PATTERNS(Host_FilterTime_FPS_Cap_Byte,
+			"HL-SteamPipe",
+			"83 3D ?? ?? ?? ?? 01 7E ?? D9 45",
+			"HL-WON-1712",
+			"DC 1D ?? ?? ?? ?? DF E0 F6 C4 41 75 ?? C7 44 24 00 00 00 00 00 C7 44 24 ?? 00 00 59 40"
+		);
+
 		PATTERNS(SeedRandomNumberGenerator,
 			"HL-SteamPipe",
 			"6A 00 E8 ?? ?? ?? ?? F7 D8 83 C4 04 3D E8 03 00 00 A3 ?? ?? ?? ?? 7E 08 F7 D8 A3 ?? ?? ?? ?? C3 3D 18 FC FF FF 7E 0A 2D 38 AD 53 01 A3 ?? ?? ?? ?? C3"
@@ -618,7 +625,11 @@ namespace patterns
 			"HL-SWEET",
 			"55 8B EC 83 EC 04 53 56 57 89 4D FC 8B 45 FC C7 80 50 04 00 00 FF FF FF FF 8B 45 FC C7 80 54 04 00 00 FF FF FF FF",
 			"AVP2",
-			"55 8B EC 83 EC 44 53 56 57 89 4D FC 8B 45 FC C7 80 94 04 00 00 FF FF FF FF 8B 45 FC C7 80 98 04 00 00 FF FF FF FF 8B 45 FC 8B 88 70 04 00 00"
+			"55 8B EC 83 EC 44 53 56 57 89 4D FC 8B 45 FC C7 80 94 04 00 00 FF FF FF FF 8B 45 FC C7 80 98 04 00 00 FF FF FF FF 8B 45 FC 8B 88 70 04 00 00",
+			"CStrike-Latest",
+			"56 8B F1 83 C8 FF 89 86 9C 05 00 00 89 86 A0 05 00 00 8B 86 78 05 00 00 C7 86 7C 05 00 00 00 00 00 00 0C C0 C7 86 70 05 00 00 01 00 00 00 89 86 78 05 00 00",
+			"TFC-Latest",
+			"8B 91 90 08 00 00 83 C8 FF 80 CA C0 89 81 B8 08 00 00 89 91 90 08 00 00 33 D2 89 81 BC 08 00 00 89 81 50 0E 00 00 89 91 94 08 00 00 89 91 10 07 00 00 C7 81 88 08 00 00 01 00 00 00"
 		);
 
 		PATTERNS(CBasePlayer__TakeDamage,
@@ -643,7 +654,11 @@ namespace patterns
 			"HL-SWEET",
 			"55 8B EC 83 EC 3C 53 56 57 89 4D C8 8B 45 14 89 45 E4 C7 45 D8 01 00 00 00 8B 45 C8 8B 40 04 8B 80 60 01 00 00 89 45 E8 C7 45 E0 00 00 00 3F C7 45 FC CD CC 4C 3E F6 45 14 40 0F 84 24 00 00 00 A1",
 			"Reissues",
-			"55 8B EC 83 EC 14 53 8B 5D 14 56 8B F1 57 6A 01 8B 46 04 89 5D FC F6 C3 40 8B 80 60 01 00 00"
+			"55 8B EC 83 EC 14 53 8B 5D 14 56 8B F1 57 6A 01 8B 46 04 89 5D FC F6 C3 40 8B 80 60 01 00 00",
+			"CStrike-Latest",
+			"83 EC 34 53 8B 5C 24 48 55 33 C0 56 57 F7 C3 60 00 00 01 8B E9 C7 44 24 28 00 00 00 00 89 44 24 1C 89 44 24 14 89 44 24 18 74 06 89 85 2C 01 00 00",
+			"TFC-Latest",
+			"83 EC 30 53 55 8B 5C 24 48 56 57 8B F9 33 ED C7 44 24 24 01 00 00 00"
 		);
 
 		PATTERNS(CPushable__Move,
@@ -660,7 +675,9 @@ namespace patterns
 			"PARANOIA",
 			"55 8B EC 83 EC 38 89 4D C8 8B 45 08 8B 48 04 89 4D F8 C7 45 F4 00 00 00 00 8B 55 F8 8B 82 A4 01 00 00 25 00 02 00 00",
 			"CSCZDS",
-			"83 EC 1C 53 56 8B F1 8B 4C 24 28 57 33 DB 8B 79 04 8B 87 A4 01 00 00 F6 C4 02 74 3D 8B 87 9C 01 00 00 85 C0 74 33 8D 90 80 00 00 00 8B 46 04"
+			"83 EC 1C 53 56 8B F1 8B 4C 24 28 57 33 DB 8B 79 04 8B 87 A4 01 00 00 F6 C4 02 74 3D 8B 87 9C 01 00 00 85 C0 74 33 8D 90 80 00 00 00 8B 46 04",
+			"TFC-Latest",
+			"8B 44 24 ?? 53 55 56 8B 50 ?? 8B F1 57 33 ED 8B 8A A4 01 00 00 8B F9 81 E7 00 02 00 00 74 3B 8B 82 9C 01 00 00 85 C0 74 31 8D 98 80 00 00 00 8B 46 04"
 		);
 
 		PATTERNS(DispatchRestore,
@@ -729,7 +746,11 @@ namespace patterns
 			"HL-SWEET",
 			"55 8B EC 81 EC 04 01 00 00 53 56 57 89 8D ?? ?? ?? ?? D9 05",
 			"Reissues",
-			"55 8B EC 81 EC 00 01 00 00 D9 05 E8 EE 0E 10 DC 1D 78 12 0A 10 56 57 8B F1 DF E0 9E 0F 84 7B 07 00 00"
+			"55 8B EC 81 EC 00 01 00 00 D9 05 E8 EE 0E 10 DC 1D 78 12 0A 10 56 57 8B F1 DF E0 9E 0F 84 7B 07 00 00",
+			"CStrike-Latest",
+			"81 EC ?? ?? ?? ?? 53 56 57 68 ?? ?? ?? ?? 8B F1 FF 15 ?? ?? ?? ?? DC 1D ?? ?? ?? ?? 83 C4 04 DF E0 F6 C4 44 0F 8B ?? ?? ?? ?? 8B 84 24",
+			"TFC-Latest",
+			"83 EC 5C 56 68 ?? ?? ?? ?? 8B F1 FF 15 ?? ?? ?? ?? DC 1D ?? ?? ?? ?? 83 C4 04 DF E0 F6 C4 44 0F 8B ?? ?? ?? ?? 8B 44 24"
 		);
 
 		PATTERNS(CZDS_Velocity_Byte,
@@ -763,7 +784,9 @@ namespace patterns
 			"Parasomnia",
 			"3B FE 74 ?? 8B 55",
 			"AoMDC",
-			"8B 45 ?? 3B 45 ?? 74 ?? 8B 4D ?? 51 8B 55 ?? 52 FF 15"
+			"8B 45 ?? 3B 45 ?? 74 ?? 8B 4D ?? 51 8B 55 ?? 52 FF 15",
+			"CStrike-Latest",
+			"8B 44 24 ?? 50 55 FF 15 ?? ?? ?? ?? 83 C4 08 85 C0 ??"
 		);
 
 		PATTERNS(CBaseEntity__FireBullets,
@@ -841,7 +864,9 @@ namespace patterns
 			"Reissues",
 			"55 8B EC 83 EC 48 53 56 8B F1 57",
 			"AVP2",
-			"55 8B EC 81 EC A0 00 00 00 53 56 57 89 4D"
+			"55 8B EC 81 EC A0 00 00 00 53 56 57 89 4D",
+			"CStrike-Latest",
+			"83 EC 48 53 55 8B E9 56 57 8B 4D 30 8B 55 44"
 		);
 
 		PATTERNS(CStudioModelRenderer__StudioRenderModel,
@@ -876,7 +901,9 @@ namespace patterns
 
 		PATTERNS(HistoryResource__DrawAmmoHistory,
 			"HL-Steampipe",
-			"83 EC 50 53 55",
+			"83 EC 50 53 55 8B",
+			"HL-WON",
+			"83 EC 50 53 55 56 57",
 			"CSCZDS",
 			"83 EC 50 53 ?? ?? 55",
 			"Echoes",
@@ -886,7 +913,9 @@ namespace patterns
 			"Halfquake-Trilogy",
 			"55 8B EC 83 EC 58 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 8B F1",
 			"TWHL-Tower-2",
-			"55 8B EC 83 EC 54 83 65 ?? 00"
+			"55 8B EC 83 EC 54 83 65 ?? 00",
+			"CStrike-Latest",
+			"83 EC 50 53 55 56 8B"
 		);
 
 		PATTERNS(CHudHealth__DrawDamage,
@@ -914,9 +943,11 @@ namespace patterns
 			"Halfquake-Trilogy",
 			"55 8B EC 83 EC 30 0F 57 C9 53 8B D9 F3 0F",
 			"TWHL-Tower-2",
-			"55 8B EC 83 EC 14 D9 05 ?? ?? ?? ?? 56 8B F1"
+			"55 8B EC 83 EC 14 D9 05 ?? ?? ?? ?? 56 8B F1",
+			"CStrike-Latest",
+			"83 EC 14 56 8B F1 D9 46"
 		);
-				
+
 		PATTERNS(CS_AngleSpeedCap,
 			"CS-SteamPipe",
 			"DF E0 F6 C4 05 7B 10 D9 41 0C D8 1D ?? ?? ?? ?? DF E0 F6 C4 05 7A 1D D9 41 0C D8 1D ?? ?? ?? ?? DF E0 F6 C4 05 7A 08 D9 05 ?? ?? ?? ?? EB 0B D9 41 0C EB 06 D9 05"
@@ -1011,8 +1042,8 @@ namespace patterns
 			"A1 ?? ?? ?? ?? 8B 4C 24 04 55 56 57 33 ED 33 ?? 89 48 04 E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 33 C9 89 AA 8C 54 04 00 A1 ?? ?? ?? ?? 8A 88 5A 54 04 00 89",
 			"Cthulhu",
 			"A1 ?? ?? ?? ?? 8B 4C 24 04 53 55 57 33 DB 33 FF 89 48 04 E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 33 C9 89 9A 8C 54 04 00 A1 ?? ?? ?? ?? 8A 88 5A 54 04 00 89",
-			"CS-SteamPipe",
-			"83 EC 10 A1 ?? ?? ?? ?? 8B 4C 24 ??"
+			"CStrike-Latest",
+			"83 EC 10 A1 ?? ?? ?? ?? 8B 4C 24 14 53 56 57 33 FF 89 48 04 E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 33 C9 89 BA 8C 54 04 00 A1 ?? ?? ?? ?? 8A 88 5A 54 04 00 89"
 		);
 
 		PATTERNS(PM_ClipVelocity,
@@ -1060,7 +1091,9 @@ namespace patterns
 			"Echoes",
 			"55 8B EC 81 EC ?? 01 00 00 56 57 A1 ?? ?? ?? ?? 8B 88 68 54 04 00 89 4D 88 8B 15 ?? ?? ?? ?? 8B 82 6C 54 04 00",
 			"Halfquake-Trilogy",
-			"55 8B EC 81 EC E0 00 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC A1 ?? ?? ?? ?? F3 0F 10 80 68 54 04 00 F3 0F 11 45 D4 F3 0F 10 80 6C 54 04 00 83 60 1C 00"
+			"55 8B EC 81 EC E0 00 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC A1 ?? ?? ?? ?? F3 0F 10 80 68 54 04 00 F3 0F 11 45 D4 F3 0F 10 80 6C 54 04 00 83 60 1C 00",
+			"CStrike-Latest",
+			"8B 0D ?? ?? ?? ?? 81 EC ?? ?? ?? ?? D9 81 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? DF E0 25 ?? ?? ?? ?? 75"
 		);
 
 		PATTERNS(PM_FlyMove,
@@ -1073,7 +1106,9 @@ namespace patterns
 			"Echoes",
 			"55 8B EC 81 EC 28 01 00 00 56 57 C7 85 ?? ?? ?? ?? 04 00 00 00 C7 85 ?? ?? ?? ?? 00 00 00 00 C7 45 ?? 00 00 00 00 A1",
 			"Halfquake-Trilogy",
-			"55 8B EC 81 EC 18 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC 53 56 8B 35 ?? ?? ?? ?? 33 C0 57 0F 57 C9 89 45 88 33 DB F3 0F 11 4D 80 F3 0F 10 56 10 8D 4E 5C F3 0F 10 01 8D 56 60"
+			"55 8B EC 81 EC 18 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC 53 56 8B 35 ?? ?? ?? ?? 33 C0 57 0F 57 C9 89 45 88 33 DB F3 0F 11 4D 80 F3 0F 10 56 10 8D 4E 5C F3 0F 10 01 8D 56 60",
+			"CStrike-Latest",
+			"81 EC 54 01 00 00 53 8B 1D ?? ?? ?? ?? 55 33 ED 8B 43 5C 8B 4B 60 8B 53 64 89 44 24 14 89 44 24 30 8B 43 10 56 57 89 6C 24 10 89 4C 24 20 89 54 24 24"
 		);
 
 		PATTERNS(PM_AddToTouched,

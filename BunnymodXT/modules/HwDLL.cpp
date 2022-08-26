@@ -667,6 +667,7 @@ void HwDLL::Clear()
 	cvar_vars = nullptr;
 	movevars = nullptr;
 	offZmax = 0;
+	pHost_FilterTime_FPS_Cap_Byte = 0;
 	frametime_remainder = nullptr;
 	pstudiohdr = nullptr;
 	scr_fov_value = nullptr;
@@ -1325,6 +1326,22 @@ void HwDLL::FindStuff()
 				}
 			});
 
+		auto fHost_FilterTime_FPS_Cap_Byte = FindAsync(
+			pHost_FilterTime_FPS_Cap_Byte,
+			patterns::engine::Host_FilterTime_FPS_Cap_Byte,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::Host_FilterTime_FPS_Cap_Byte.cbegin()) {
+				case 0: // HL-SteamPipe
+					pHost_FilterTime_FPS_Cap_Byte += 7;
+					break;
+				case 1: // HL-WON-1712
+					pHost_FilterTime_FPS_Cap_Byte += 11;
+					break;
+				default:
+					assert(false);
+				}
+			});
+
 		auto fCbuf_Execute = FindAsync(
 			ORIG_Cbuf_Execute,
 			patterns::engine::Cbuf_Execute,
@@ -1715,6 +1732,15 @@ void HwDLL::FindStuff()
 			}
 			else {
 				EngineDevWarning("[hw dll] Could not find LoadThisDll.\n");
+			}
+		}
+
+		{
+			auto pattern = fHost_FilterTime_FPS_Cap_Byte.get();
+			if (pHost_FilterTime_FPS_Cap_Byte) {
+				EngineDevMsg("[hw dll] Found Host_FilterTime FPS Cap Byte at %p (using the %s pattern).\n", pHost_FilterTime_FPS_Cap_Byte, pattern->name());
+			} else {
+				EngineDevWarning("[hw dll] Could not find Host_FilterTime FPS Cap Byte.\n");
 			}
 		}
 
@@ -3828,6 +3854,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_fix_mouse_horizontal_limit);
 	RegisterCVar(CVars::bxt_force_clear);
 	RegisterCVar(CVars::bxt_disable_gamedir_check_in_demo);
+	RegisterCVar(CVars::bxt_remove_fps_limit);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -4765,8 +4792,9 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 
 	static bool is_paranoia = cl.DoesGameDirMatch("paranoia");
 	static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
+	static bool is_czero = cl.DoesGameDirMatch("czero");
 
-	if (is_cstrike) {
+	if (is_cstrike || is_czero) {
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed();
 		vars.BhopcapMultiplier = 0.8f;
 		vars.BhopcapMaxspeedScale = 1.2f;
@@ -5399,6 +5427,27 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 	auto minFrametime = CVars::_bxt_min_frametime.GetFloat();
 
 	auto &hw = HwDLL::GetInstance();
+
+	static bool is_0x75 = false;
+
+	if (pHost_FilterTime_FPS_Cap_Byte)
+	{
+		if (CVars::bxt_remove_fps_limit.GetBool())
+		{
+			if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75)
+				is_0x75 = true;
+
+			if (((*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x7E) && CVars::sv_cheats.GetBool()) || (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75))
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
+		}
+		else if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0xEB)
+		{
+			if (is_0x75)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\x75"));
+			else
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\x7E"));
+		}
+	}
 
 	if (IsRecordingDemo())
 	{

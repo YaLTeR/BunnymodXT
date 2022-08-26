@@ -504,6 +504,7 @@ protected:
 	ptrdiff_t offZmax;
 	studiohdr_t **pstudiohdr;
 	float *scr_fov_value;
+	ptrdiff_t pHost_FilterTime_FPS_Cap_Byte;
 
 	int framesTillExecuting;
 	bool executing;

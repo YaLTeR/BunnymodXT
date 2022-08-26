@@ -434,7 +434,7 @@ void ClientDLL::FindStuff()
 		patterns::client::CS_SpeedScaling);
 	auto fCS_SpeedScaling_Linux = FindAsync(
 		pCS_SpeedScaling_Linux,
-		patterns::client::CS_SpeedScaling_Linux);	
+		patterns::client::CS_SpeedScaling_Linux);
 	auto fEV_GetDefaultShellInfo = FindAsync(ORIG_EV_GetDefaultShellInfo, patterns::client::EV_GetDefaultShellInfo);
 	auto fCStudioModelRenderer__StudioSetupBones = FindAsync(
 		ORIG_CStudioModelRenderer__StudioSetupBones,
@@ -1002,6 +1002,16 @@ bool ClientDLL::DoesGameDirMatch(const char *game)
 	return !std::strcmp(gameDir, game);
 }
 
+bool ClientDLL::DoesGameSubDirMatch(const char *game)
+{
+	if (!pEngfuncs)
+		return false;
+
+	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
+
+	return std::strstr(gameDir, game);
+}
+
 void ClientDLL::SetAngleSpeedCap(bool capped)
 {
 	if (!pCS_AngleSpeedCap && !pCS_AngleSpeedCap_Linux) {
@@ -1009,22 +1019,22 @@ void ClientDLL::SetAngleSpeedCap(bool capped)
 	}
 
 	if (capped) { // restore the bytes
-		if (pCS_AngleSpeedCap 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 5) == 0xEB 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 37) == 0xEB 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 328) == 0xEB 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 360) == 0xEB) 
+		if (pCS_AngleSpeedCap
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 5) == 0xEB
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 37) == 0xEB
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 328) == 0xEB
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 360) == 0xEB)
 		{
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 5), 1, reinterpret_cast<const byte*>("\x7B"));
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 37), 1, reinterpret_cast<const byte*>("\x7A"));
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 328), 1, reinterpret_cast<const byte*>("\x7B"));
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 360), 1, reinterpret_cast<const byte*>("\x7A"));
 		}
-		else if (pCS_AngleSpeedCap_Linux 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 79) == 0xD8 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 1089) == 0xD8 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 359) == 0xD8 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 801) == 0xD8) 
+		else if (pCS_AngleSpeedCap_Linux
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 79) == 0xD8
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 1089) == 0xD8
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 359) == 0xD8
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 801) == 0xD8)
 		{
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 79), 1, reinterpret_cast<const byte*>("\xD9"));
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 1089), 1, reinterpret_cast<const byte*>("\xD9"));
@@ -1032,10 +1042,10 @@ void ClientDLL::SetAngleSpeedCap(bool capped)
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 801), 1, reinterpret_cast<const byte*>("\xD9"));
 		}
 	} else {
-		if (pCS_AngleSpeedCap 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 5) == 0x7B 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 37) == 0x7A 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 328) == 0x7B 
+		if (pCS_AngleSpeedCap
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 5) == 0x7B
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 37) == 0x7A
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 328) == 0x7B
 			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap + 360) == 0x7A)
 		{
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 5), 1, reinterpret_cast<const byte*>("\xEB"));
@@ -1043,11 +1053,11 @@ void ClientDLL::SetAngleSpeedCap(bool capped)
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 328), 1, reinterpret_cast<const byte*>("\xEB"));
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap + 360), 1, reinterpret_cast<const byte*>("\xEB"));
 		}
-		else if (pCS_AngleSpeedCap_Linux 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 79) == 0xD9 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 1089) == 0xD9 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 359) == 0xD9 
-			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 801) == 0xD9) 
+		else if (pCS_AngleSpeedCap_Linux
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 79) == 0xD9
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 1089) == 0xD9
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 359) == 0xD9
+			&& *reinterpret_cast<byte*>(pCS_AngleSpeedCap_Linux + 801) == 0xD9)
 		{
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 79), 1, reinterpret_cast<const byte*>("\xD8"));
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_AngleSpeedCap_Linux + 1089), 1, reinterpret_cast<const byte*>("\xD8"));
@@ -1064,9 +1074,9 @@ void ClientDLL::SetSpeedScaling(bool scaled)
 	}
 
 	if (scaled) {
-		if (pCS_SpeedScaling && *reinterpret_cast<byte*>(pCS_SpeedScaling + 19) == 0xEB) 
+		if (pCS_SpeedScaling && *reinterpret_cast<byte*>(pCS_SpeedScaling + 19) == 0xEB)
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling + 19), 1, reinterpret_cast<const byte*>("\x75"));
-		else if (pCS_SpeedScaling_Linux 
+		else if (pCS_SpeedScaling_Linux
 			&& *reinterpret_cast<byte*>(pCS_SpeedScaling_Linux + 2) == 0xE9
 			&& *reinterpret_cast<byte*>(pCS_SpeedScaling_Linux + 3) == 0x62)
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling_Linux + 2), 4, reinterpret_cast<const byte*>("\x0F\x86\x61\xFE"));

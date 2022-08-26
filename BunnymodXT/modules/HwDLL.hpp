@@ -373,8 +373,6 @@ protected:
 	_CL_RecordHUDCommand ORIG_CL_RecordHUDCommand;
 	typedef int(__cdecl *_build_number)();
 	_build_number ORIG_build_number;
-	typedef void(__cdecl *_SV_CountPlayers) (int* clients);
-	_SV_CountPlayers ORIG_SV_CountPlayers;
 
 	void FindStuff();
 
@@ -467,7 +465,6 @@ protected:
 	void KeyUp(Key& btn);
 	void SaveInitialDataToDemo();
 	void UpdateCustomTriggers();
-	int CountPlayers();
 
 	bool registeredVarsAndCmds;
 

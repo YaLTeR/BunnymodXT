@@ -629,7 +629,6 @@ void HwDLL::Clear()
 	ORIG_Draw_FillRGBA = nullptr;
 	ORIG_PF_traceline_DLL = nullptr;
 	ORIG_CL_CheckGameDirectory = nullptr;
-	ORIG_SV_CountPlayers = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1023,7 +1022,6 @@ void HwDLL::FindStuff()
 		FIND(MD5Transform)
 		FIND(MD5_Hash_File)
 		FIND(MD5_Print)
-		FIND(SV_CountPlayers)
 		#undef FIND
 
 		ORIG_Host_FilterTime = reinterpret_cast<_Host_FilterTime>(MemUtils::GetSymbolAddress(m_Handle, "Host_FilterTime"));
@@ -1246,7 +1244,6 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Draw_FillRGBA)
 		DEF_FUTURE(PF_traceline_DLL)
 		DEF_FUTURE(CL_CheckGameDirectory)
-		DEF_FUTURE(SV_CountPlayers)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -2024,7 +2021,6 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Draw_FillRGBA);
 		GET_FUTURE(PF_traceline_DLL);
 		GET_FUTURE(CL_CheckGameDirectory);
-		GET_FUTURE(SV_CountPlayers);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -5340,19 +5336,6 @@ void HwDLL::FreeCamTick()
 	cameraOverrideOrigin[2] += direction[2];
 }
 
-int HwDLL::CountPlayers()
-{
-	int active_players = 0;
-
-	if (CVars::sv_cheats.GetBool())
-		return 1;
-
-	if (ORIG_SV_CountPlayers)
-		ORIG_SV_CountPlayers(&active_players);
-
-	return active_players;
-}
-
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)
 {
 	insideSeedRNG = true;
@@ -5504,7 +5487,7 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 {
-	if ((CountPlayers() == 1) && CVars::bxt_fade_remove.GetBool())
+	if (CVars::bxt_fade_remove.GetBool())
 		return 0;
 	else
 		return ORIG_V_FadeAlpha();
@@ -5767,7 +5750,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if ((CountPlayers() == 1 && (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool())) || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel.GetBool()))) {
+	if (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel.GetBool()))) {
 		if (CVars::bxt_clear_green.GetBool())
 			glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
 		else
@@ -5874,7 +5857,7 @@ HOOK_DEF_3(HwDLL, void, __cdecl, VectorTransform, float*, in1, float*, in2, floa
 
 HOOK_DEF_2(HwDLL, void, __cdecl, EmitWaterPolys, msurface_t *, fa, int, direction)
 {
-	if ((CountPlayers() == 1) && CVars::bxt_water_remove.GetBool())
+	if (CVars::bxt_water_remove.GetBool())
 		return;
 
 	ORIG_EmitWaterPolys(fa, direction);
@@ -6043,7 +6026,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 {
-	if ((CountPlayers() == 1) && CVars::bxt_force_fov.GetFloat() >= 1.0)
+	if (CVars::bxt_force_fov.GetFloat() >= 1.0)
 		*scr_fov_value = CVars::bxt_force_fov.GetFloat();
 
 	ORIG_R_SetFrustum();

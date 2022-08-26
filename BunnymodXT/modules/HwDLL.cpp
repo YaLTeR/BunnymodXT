@@ -4794,20 +4794,19 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
 	static bool is_czero = cl.DoesGameDirMatch("czero");
 
+	if (is_paranoia)
+		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
+	else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
+		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in other mods (example: CS 1.6)
+	else
+		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
+
 	if (is_cstrike || is_czero) {
-		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed();
 		vars.BhopcapMultiplier = 0.8f;
 		vars.BhopcapMaxspeedScale = 1.2f;
 		vars.HasStamina = true;
 		vars.DuckTapSlow = true;
 	} else {
-		if (is_paranoia)
-			vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
-		else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
-			vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in other mods (Poke646 e.g.)
-		else
-			vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
-
 		vars.BhopcapMultiplier = 0.65f;
 		vars.BhopcapMaxspeedScale = 1.7f;
 		vars.UseSlow = true;

@@ -791,14 +791,14 @@ namespace patterns
 
 		PATTERNS(CBaseEntity__FireBullets,
 			"HL-SteamPipe-6153",
-			"81 EC FC 00 00 00",
+			"81 EC FC 00 00 00 A1 ?? ?? ?? ?? 53",
 			"Echoes",
 			"55 8B EC 81 EC 80 01 00 00"
 		);
 
 		PATTERNS(CBaseEntity__FireBulletsPlayer,
 			"HL-SteamPipe-6153",
-			"81 EC B0 00 00 00 A1",
+			"81 EC B0 00 00 00 A1 ?? ?? ?? ?? 53",
 			"Echoes",
 			"55 8B EC 81 EC 10 01 00 00 89 8D ?? ?? ?? ?? 8D 4D"
 		);

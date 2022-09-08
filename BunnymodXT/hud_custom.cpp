@@ -81,7 +81,7 @@ namespace CustomHud
 		float realyaw;
 		float health;
 		float armor;
-		
+
 		float stamina;
 	};
 	static FrameBulkStatus frame_bulk_status;
@@ -1092,7 +1092,13 @@ namespace CustomHud
 			// Some constants.
 			const float aspect_ratio = (float)si.iHeight / (float)si.iWidth;
 
-			const auto fov = std::clamp(CVars::default_fov.GetFloat(), 30.f, 150.f) * M_DEG2RAD;
+			float fov_getfloat;
+			if (CVars::bxt_force_fov.GetFloat() >= 1.0)
+				fov_getfloat = CVars::bxt_force_fov.GetFloat();
+			else
+				fov_getfloat = CVars::default_fov.GetFloat();
+
+			const auto fov = std::clamp(fov_getfloat, 30.f, 150.f) * M_DEG2RAD;
 			const auto vfov = 2.f * std::atan(std::tan(fov * 0.5f) * aspect_ratio);
 
 			const float screen_width = max_depth * (float) std::tan(fov * 0.5);

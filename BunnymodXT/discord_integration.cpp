@@ -122,7 +122,12 @@ namespace discord_integration
 								tptr++;
 							}
 
-							snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s", map_name, gameDir);
+							auto &hw = HwDLL::GetInstance();
+							if (hw.ORIG_build_number)
+								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s | Build: %i", map_name, gameDir, hw.ORIG_build_number());
+							else
+								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s", map_name, gameDir);
+
 							presence.largeImageText = map_name;
 							presence.details = buffer_details;
 
@@ -285,19 +290,19 @@ namespace discord_integration
 				switch (CVars::skill.GetInt())
 				{
 					case 1:
-						skillName = "| Easy";
+						skillName = "Easy";
 						break;
 					case 2:
-						skillName = "| Normal";
+						skillName = "Normal";
 						break;
 					case 3:
-						skillName = "| Hard";
+						skillName = "Hard";
 						break;
 					default:
 						skillName = "";
 				}
 
-				snprintf(buffer_state, sizeof(buffer_state), "%s | FPS: %.1f %s", state.c_str(), CVars::fps_max.GetFloat(), skillName);
+				snprintf(buffer_state, sizeof(buffer_state), "%s | FPS: %.1f | %s", state.c_str(), CVars::fps_max.GetFloat(), skillName);
 				presence.state = buffer_state;
 
 				if (CustomHud::GetCountingTime())

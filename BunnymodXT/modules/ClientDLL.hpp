@@ -118,6 +118,7 @@ protected:
 	void **ppmove;
 	ptrdiff_t offOldbuttons;
 	ptrdiff_t offOnground;
+	ptrdiff_t offIUser1;
 
 	ptrdiff_t offBhopcap;
 	ptrdiff_t pBhopcapWindows;

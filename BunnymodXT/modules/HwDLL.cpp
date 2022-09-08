@@ -5791,9 +5791,7 @@ HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap_Paint, int, paintAll)
 
 HOOK_DEF_3(HwDLL, int, __cdecl, DispatchDirectUserMsg, char*, pszName, int, iSize, void*, pBuf)
 {
-	const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
-
-	if ((!std::strcmp(gameDir, "czeror") || !std::strcmp(gameDir, "czeror_cutsceneless")) && !std::strcmp(pszName, "InitHUD"))
+	if (ClientDLL::GetInstance().DoesGameSubDirMatch("czeror") && !std::strcmp(pszName, "InitHUD"))
 		return ORIG_DispatchDirectUserMsg(0, iSize, pBuf);
 	else
 		return ORIG_DispatchDirectUserMsg(pszName, iSize, pBuf);

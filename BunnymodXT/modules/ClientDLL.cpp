@@ -1575,7 +1575,7 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 
 HOOK_DEF_0(ClientDLL, int, __cdecl, CL_IsThirdPerson)
 {
-	if (!ppmove && !pEngfuncs && !orig_forcehltv_found)
+	if (!ppmove || !pEngfuncs || !orig_forcehltv_found)
 		return ORIG_CL_IsThirdPerson();
 
 	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);

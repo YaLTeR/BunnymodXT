@@ -73,8 +73,8 @@ public:
 	bool DoesGameDirMatch(const char *game);
 	bool DoesGameSubDirMatch(const char *game);
 
-	bool check_forcehltv = true;
 	bool orig_forcehltv_found = false;
+	bool orig_righthand_not_found = false;
 
 	unsigned char custom_r, custom_g, custom_b;
 	bool custom_hud_color_set = false;
@@ -85,8 +85,6 @@ public:
 	bool insideDrawHealthDamage = false;
 	bool insideDrawHealthPain = false;
 	bool insideDrawNightVision = false;
-
-	bool orig_righthand_not_found = false;
 
 	unsigned short last_buttons;
 

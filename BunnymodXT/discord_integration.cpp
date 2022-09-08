@@ -317,16 +317,29 @@ namespace discord_integration
 				}
 				else if ((gt.milliseconds == 0 && total_time == 0) && !CustomHud::GetCountingTime())
 				{
-					presence.smallImageKey = "discord_red";
-					presence.smallImageText = "Not running";
+					if (ClientDLL::GetInstance().pEngfuncs && ClientDLL::GetInstance().pEngfuncs->pDemoAPI->IsPlayingback()) {
+						presence.smallImageKey = "discord_brown";
+						presence.smallImageText = "Demo playback";
+					} else {
+						presence.smallImageKey = "discord_red";
+						presence.smallImageText = "Not running";
+					}
+
 					presence.startTimestamp = current_timestamp;
 				}
 				else if ((gt.milliseconds > 0 || total_time > 0) && !CustomHud::GetCountingTime())
 				{
 					snprintf(buffer_stop, sizeof(buffer_stop), "Timer stopped at %d:%02d:%02d.%03d", gt.hours, gt.minutes, gt.seconds, gt.milliseconds);
 					presence.state = buffer_stop;
-					presence.smallImageKey = "discord_yellow";
-					presence.smallImageText = "Timer stopped";
+
+					if (ClientDLL::GetInstance().pEngfuncs && ClientDLL::GetInstance().pEngfuncs->pDemoAPI->IsPlayingback()) {
+						presence.smallImageKey = "discord_brown";
+						presence.smallImageText = "Demo playback";
+					} else {
+						presence.smallImageKey = "discord_yellow";
+						presence.smallImageText = "Timer stopped";
+					}
+
 					presence.startTimestamp = 0;
 				}
 

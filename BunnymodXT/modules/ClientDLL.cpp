@@ -1341,6 +1341,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 {
 	ORIG_HUD_Frame(time);
 
+	static bool check_forcehltv = true;
 	if (check_forcehltv) {
 		check_forcehltv = false;
 		orig_forcehltv_found = HwDLL::GetInstance().ORIG_Cmd_FindCmd("dem_forcehltv");
@@ -1424,9 +1425,11 @@ HOOK_DEF_3(ClientDLL, void, __cdecl, VectorTransform, float*, in1, float*, in2, 
 
 HOOK_DEF_1(ClientDLL, void, __fastcall, StudioCalcAttachments, void*, thisptr)
 {
-	if (pEngfuncs && HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity)
+	auto& hw = HwDLL::GetInstance();
+
+	if (pEngfuncs && hw.pEngStudio)
 	{
-		auto currententity = HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity();
+		auto currententity = hw.pEngStudio->GetCurrentEntity();
 		if (currententity == pEngfuncs->GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
 			insideStudioCalcAttachmentsViewmodel = true;
 	}
@@ -1436,9 +1439,11 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, StudioCalcAttachments, void*, thisptr)
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, StudioCalcAttachments_Linux, void*, thisptr)
 {
-	if (pEngfuncs && HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity)
+	auto& hw = HwDLL::GetInstance();
+
+	if (pEngfuncs && hw.pEngStudio)
 	{
-		auto currententity = HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity();
+		auto currententity = hw.pEngStudio->GetCurrentEntity();
 		if (currententity == pEngfuncs->GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
 			insideStudioCalcAttachmentsViewmodel = true;
 	}

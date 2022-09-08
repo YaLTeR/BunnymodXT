@@ -341,8 +341,6 @@ public:
 	_Cmd_FindCmd ORIG_Cmd_FindCmd;
 	typedef void(__cdecl *_Con_Printf) (const char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
-	typedef cl_entity_t*(__cdecl *_studioapi_GetCurrentEntity) ();
-	_studioapi_GetCurrentEntity ORIG_studioapi_GetCurrentEntity;
 	typedef cvar_t*(__cdecl *_Cvar_FindVar) (const char* name);
 	_Cvar_FindVar ORIG_Cvar_FindVar;
 

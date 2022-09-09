@@ -114,24 +114,34 @@ namespace discord_integration
 						{
 							// Game directory
 							const char* gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+							char gd[1024];
 
 							// Adjust to lowercase
-							unsigned char *tptr = (unsigned char *)map_name;
-							while (*tptr) {
-								*tptr = tolower(*tptr);
-								tptr++;
+							unsigned char *map_lw = (unsigned char *)map_name;
+							while (*map_lw) {
+								*map_lw = tolower(*map_lw);
+								map_lw++;
 							}
+
+							if (gameDir && gameDir[0])
+								ClientDLL::GetInstance().FileBase(gameDir, gd);
 
 							auto &hw = HwDLL::GetInstance();
 							if (hw.ORIG_build_number)
-								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s | Build: %i", map_name, gameDir, hw.ORIG_build_number());
+								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s | Build: %i", map_name, gd, hw.ORIG_build_number());
 							else
-								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s", map_name, gameDir);
+								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s", map_name, gd);
 
 							presence.largeImageText = map_name;
 							presence.details = buffer_details;
 
-							if (!strncmp(gameDir, "valve", 5) || !strncmp(gameDir, "abh", 3) || !strncmp(gameDir, "glitchless", 10))
+							unsigned char *gd_lw = (unsigned char *)gd;
+							while (*gd_lw) {
+								*gd_lw = tolower(*gd_lw);
+								gd_lw++;
+							}
+
+							if (!strncmp(gd, "valve", 5) || !strncmp(gd, "abh", 3) || !strncmp(gd, "glitchless", 10))
 							{
 								if (hl1_map_name_to_thumbnail.find(map_name) != hl1_map_name_to_thumbnail.cend())
 								{
@@ -139,7 +149,7 @@ namespace discord_integration
 									presence.largeImageText = hl1_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "gearbox", 7))
+							else if (!strncmp(gd, "gearbox", 7))
 							{
 								if (op4_map_name_to_thumbnail.find(map_name) != op4_map_name_to_thumbnail.cend())
 								{
@@ -147,7 +157,7 @@ namespace discord_integration
 									presence.largeImageText = op4_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "bshift", 6))
+							else if (!strncmp(gd, "bshift", 6))
 							{
 								if (bs_map_name_to_thumbnail.find(map_name) != bs_map_name_to_thumbnail.cend())
 								{
@@ -155,7 +165,7 @@ namespace discord_integration
 									presence.largeImageText = bs_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "rewolf", 6))
+							else if (!strncmp(gd, "rewolf", 6))
 							{
 								if (gmc_map_name_to_thumbnail.find(map_name) != gmc_map_name_to_thumbnail.cend())
 								{
@@ -163,7 +173,7 @@ namespace discord_integration
 									presence.largeImageText = gmc_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "czeror", 6))
+							else if (!strncmp(gd, "czeror", 6))
 							{
 								if (czds_map_name_to_thumbnail.find(map_name) != czds_map_name_to_thumbnail.cend())
 								{
@@ -171,7 +181,7 @@ namespace discord_integration
 									presence.largeImageText = czds_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "wantedsp", 8))
+							else if (!strncmp(gd, "wantedsp", 8))
 							{
 								if (wanted_map_name_to_thumbnail.find(map_name) != wanted_map_name_to_thumbnail.cend())
 								{
@@ -179,7 +189,7 @@ namespace discord_integration
 									presence.largeImageText = wanted_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "echoes", 6))
+							else if (!strncmp(gd, "echoes", 6))
 							{
 								if (echoes_map_name_to_thumbnail.find(map_name) != echoes_map_name_to_thumbnail.cend())
 								{
@@ -187,7 +197,7 @@ namespace discord_integration
 									presence.largeImageText = echoes_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "caged_fgs", 9))
+							else if (!strncmp(gd, "caged_fgs", 9))
 							{
 								if (caged_map_name_to_thumbnail.find(map_name) != caged_map_name_to_thumbnail.cend())
 								{
@@ -195,7 +205,7 @@ namespace discord_integration
 									presence.largeImageText = caged_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "poke646", 7))
+							else if (!strncmp(gd, "poke646", 7))
 							{
 								if (poke646_map_name_to_thumbnail.find(map_name) != poke646_map_name_to_thumbnail.cend())
 								{
@@ -203,7 +213,7 @@ namespace discord_integration
 									presence.largeImageText = poke646_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "paranoia", 8))
+							else if (!strncmp(gd, "paranoia", 8))
 							{
 								if (paranoia_map_name_to_thumbnail.find(map_name) != paranoia_map_name_to_thumbnail.cend())
 								{
@@ -217,7 +227,7 @@ namespace discord_integration
 										presence.largeImageText = "Bunker";
 								}
 							}
-							else if (!strncmp(gameDir, "twhltower2", 10))
+							else if (!strncmp(gd, "twhltower2", 10))
 							{
 								if (twhltower2_map_name_to_thumbnail.find(map_name) != twhltower2_map_name_to_thumbnail.cend())
 								{
@@ -225,7 +235,7 @@ namespace discord_integration
 									presence.largeImageText = twhltower2_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "AoMDC", 5))
+							else if (!strncmp(gd, "aomdc", 5))
 							{
 								if (aomdc_map_name_to_thumbnail.find(map_name) != aomdc_map_name_to_thumbnail.cend())
 								{
@@ -245,7 +255,7 @@ namespace discord_integration
 										presence.largeImageText = "All Endings";
 								}
 							}
-							else if (!strncmp(gameDir, "hrp", 3))
+							else if (!strncmp(gd, "hrp", 3))
 							{
 								if (hlrats_parasomnia_map_name_to_thumbnail.find(map_name) != hlrats_parasomnia_map_name_to_thumbnail.cend())
 								{
@@ -253,7 +263,7 @@ namespace discord_integration
 									presence.largeImageText = hlrats_parasomnia_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "hl_urbicide", 11))
+							else if (!strncmp(gd, "hl_urbicide", 11))
 							{
 								if (urbicide_maps.find(map_name) != urbicide_maps.cend())
 								{
@@ -261,7 +271,7 @@ namespace discord_integration
 									presence.largeImageText = map_name;
 								}
 							}
-							else if (!strncmp(gameDir, "Hunger", 6))
+							else if (!strncmp(gd, "hunger", 6))
 							{
 								if (th_map_name_to_thumbnail.find(map_name) != th_map_name_to_thumbnail.cend())
 								{

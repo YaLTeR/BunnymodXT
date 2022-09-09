@@ -70,8 +70,7 @@ public:
 
 	void StudioAdjustViewmodelAttachments(Vector &vOrigin);
 
-	bool DoesGameDirMatch(const char *game);
-	bool DoesGameSubDirMatch(const char *game);
+	bool DoesGameDirMatch(const char *game, bool substr);
 
 	bool orig_forcehltv_found = false;
 	bool orig_righthand_not_found = false;
@@ -96,6 +95,8 @@ public:
 	void SetAngleSpeedCap(bool capped);
 
 	void SetSpeedScaling(bool scaled);
+
+	void FileBase(const char *in, char *out);
 
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};

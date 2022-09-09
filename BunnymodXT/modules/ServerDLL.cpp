@@ -776,25 +776,25 @@ void ServerDLL::FindStuff()
 				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x56C; // 6153: 0x568
 				offm_iClientFOV = 0x4C4; // 6153: 0x4C0
-				if (ClientDLL::GetInstance().DoesGameDirMatch("czeror")) {
+				if (ClientDLL::GetInstance().DoesGameDirMatch("czeror", true)) {
 					offm_rgAmmoLast = 0x554;
 					offm_iClientFOV = 0x8B0;
 					offFuncIsPlayer = 0xA8;
 					offFuncCenter = 0xDC;
 					offFuncObjectCaps = 0x18;
 				}
-				if (ClientDLL::GetInstance().DoesGameDirMatch("bshift") || ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless")) {
+				if (ClientDLL::GetInstance().DoesGameDirMatch("bshift", true)) {
 					offm_rgAmmoLast = 0x568;
 					offm_iClientFOV = 0x4C0;
 				}
-				if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike") || ClientDLL::GetInstance().DoesGameDirMatch("czero")) {
+				if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike", false) || ClientDLL::GetInstance().DoesGameDirMatch("czero", false)) {
 					offm_rgAmmoLast = 0x674;
 					offm_iClientFOV = 0x5C4;
 					offFuncIsPlayer = 0xA0;
 					offFuncCenter = 0xCC;
 					offFuncObjectCaps = 0x18;
 				}
-				if (ClientDLL::GetInstance().DoesGameDirMatch("tfc")) {
+				if (ClientDLL::GetInstance().DoesGameDirMatch("tfc", false)) {
 					offm_rgAmmoLast = 0x98C;
 					offm_iClientFOV = 0x8E0;
 					offFuncObjectCaps = 0x1C;
@@ -1833,7 +1833,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 		}
 	}
 
-	static bool is_czeror = ClientDLL::GetInstance().DoesGameSubDirMatch("czeror");
+	static bool is_czeror = ClientDLL::GetInstance().DoesGameDirMatch("czeror", true);
 
 	if (is_czeror && CVars::bxt_render_far_entities.GetBool())
 	{

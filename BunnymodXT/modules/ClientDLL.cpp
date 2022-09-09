@@ -994,24 +994,67 @@ void ClientDLL::StudioAdjustViewmodelAttachments(Vector &vOrigin)
 	vOrigin = last_vieworg + vOut;
 }
 
-bool ClientDLL::DoesGameDirMatch(const char *game)
+void ClientDLL::FileBase(const char *in, char *out)
 {
-	if (!pEngfuncs)
-		return false;
+	int len, start, end;
 
-	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
+	len = strlen(in);
 
-	return !std::strcmp(gameDir, game);
+	// scan backward for '.'
+	end = len - 1;
+	while (0 != end && in[end] != '.' && in[end] != '/' && in[end] != '\\')
+		end--;
+
+	if (in[end] != '.')		// no '.', copy to end
+		end = len - 1;
+	else
+		end--;			// Found ',', copy to left of '.'
+
+	// Scan backward for '/'
+	start = len - 1;
+	while (start >= 0 && in[start] != '/' && in[start] != '\\')
+		start--;
+
+	if (in[start] != '/' && in[start] != '\\')
+		start = 0;
+	else
+		start++;
+
+	// Length of new sting
+	len = end - start + 1;
+
+	// Copy partial string
+	strncpy(out, &in[start], len);
+	// Terminate it
+	out[len] = 0;
 }
 
-bool ClientDLL::DoesGameSubDirMatch(const char *game)
+bool ClientDLL::DoesGameDirMatch(const char *game, bool substr)
 {
 	if (!pEngfuncs)
 		return false;
 
 	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
+	char gd[1024];
 
-	return std::strstr(gameDir, game);
+	if (gameDir && gameDir[0])
+	{
+		FileBase(gameDir, gd);
+
+		unsigned char *gd_lw = (unsigned char *)gd;
+		while (*gd_lw) {
+			*gd_lw = tolower(*gd_lw);
+			gd_lw++;
+		}
+
+		if (substr) {
+			if (std::strstr(gd, game))
+				return true;
+		} else {
+			if (!std::strcmp(gd, game))
+				return true;
+		}
+	}
 }
 
 void ClientDLL::SetAngleSpeedCap(bool capped)

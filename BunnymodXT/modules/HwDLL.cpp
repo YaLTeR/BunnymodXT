@@ -4778,9 +4778,9 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Bounce = CVars::sv_bounce.GetFloat();
 	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
 
-	static bool is_paranoia = cl.DoesGameDirMatch("paranoia");
-	static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
-	static bool is_czero = cl.DoesGameDirMatch("czero");
+	static bool is_paranoia = cl.DoesGameDirMatch("paranoia", false);
+	static bool is_cstrike = cl.DoesGameDirMatch("cstrike", false);
+	static bool is_czero = cl.DoesGameDirMatch("czero", false);
 
 	if (is_paranoia)
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
@@ -5791,7 +5791,7 @@ HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap_Paint, int, paintAll)
 
 HOOK_DEF_3(HwDLL, int, __cdecl, DispatchDirectUserMsg, char*, pszName, int, iSize, void*, pBuf)
 {
-	if (ClientDLL::GetInstance().DoesGameSubDirMatch("czeror") && !std::strcmp(pszName, "InitHUD"))
+	if (ClientDLL::GetInstance().DoesGameDirMatch("czeror", true) && !std::strcmp(pszName, "InitHUD"))
 		return ORIG_DispatchDirectUserMsg(0, iSize, pBuf);
 	else
 		return ORIG_DispatchDirectUserMsg(pszName, iSize, pBuf);
@@ -5981,7 +5981,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawParticles)
 
 HOOK_DEF_0(HwDLL, int, __cdecl, BUsesSDLInput)
 {
-	if (ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless") || CVars::bxt_fix_mouse_horizontal_limit.GetBool())
+	if (ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless", false) || CVars::bxt_fix_mouse_horizontal_limit.GetBool())
 		return true;
 	else
 		return ORIG_BUsesSDLInput();

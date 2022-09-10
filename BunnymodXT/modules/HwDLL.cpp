@@ -1266,6 +1266,9 @@ void HwDLL::FindStuff()
 				case 2: // HL-WON-1712
 					pEngStudio = *reinterpret_cast<engine_studio_api_t**>(reinterpret_cast<uintptr_t>(ClientDLL_CheckStudioInterface) + 30);
 					break;
+				case 3: // CoF-5936
+					pEngStudio = *reinterpret_cast<engine_studio_api_t**>(reinterpret_cast<uintptr_t>(ClientDLL_CheckStudioInterface) + 48);
+					break;
 				}
 			});
 
@@ -1289,6 +1292,9 @@ void HwDLL::FindStuff()
 				case 3: // HL-WON-1712
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 1456);
 					break;
+				case 4: // CoF-5936
+					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 230);
+					break;
 				}
 			});
 
@@ -1311,6 +1317,10 @@ void HwDLL::FindStuff()
 				case 2: // HL-WON-1712
 					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 89);
 					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 84);
+					break;
+				case 3: // CoF-5936
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 118);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 113);
 					break;
 				}
 			});
@@ -1338,6 +1348,7 @@ void HwDLL::FindStuff()
 				switch (pattern - patterns::engine::Cbuf_Execute.cbegin())
 				{
 				case 0: // HL-SteamPipe-8183
+				case 3: // HL-SteamPipe-8308
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
 					break;
 				case 1: // HL-SteamPipe
@@ -1346,8 +1357,8 @@ void HwDLL::FindStuff()
 				case 2: // HL-NGHL
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 2) - offsetof(cmdbuf_t, cursize));
 					break;
-				case 3: // HL-SteamPipe-8308
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
+				case 4: // CoF-5936
+					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 21) - offsetof(cmdbuf_t, cursize));
 					break;
 				}
 			});
@@ -1364,6 +1375,9 @@ void HwDLL::FindStuff()
 				case 1: // HL-NGHL
 					cvar_vars = reinterpret_cast<cvar_t**>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cvar_RegisterVariable) + 122));
 					break;
+				case 2: // CoF-5936
+					cvar_vars = reinterpret_cast<cvar_t**>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cvar_RegisterVariable) + 183));
+					break;
 				}
 			});
 
@@ -1379,6 +1393,9 @@ void HwDLL::FindStuff()
 				case 1: // HL-4554
 					scr_fov_value = reinterpret_cast<float*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_SetFrustum) + 10));
 					break;
+				case 2: // CoF-5936
+					scr_fov_value = reinterpret_cast<float*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_SetFrustum) + 7));
+					break;
 				}
 			});
 
@@ -1386,10 +1403,17 @@ void HwDLL::FindStuff()
 			ORIG_SeedRandomNumberGenerator,
 			patterns::engine::SeedRandomNumberGenerator,
 			[&](auto pattern) {
-				ORIG_time = reinterpret_cast<_time>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 3)
-					+ reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 7
-				);
+				switch (pattern - patterns::engine::SeedRandomNumberGenerator.cbegin())
+				{
+				case 0: // HL-SteamPipe
+					ORIG_time = reinterpret_cast<_time>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 3)
+						+ reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 7);
+					break;
+				case 1: // CoF-5936
+					ORIG_time = reinterpret_cast<_time>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 6)
+						+ reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 10);
+					break;
+				}
 			});
 
 		auto fCL_Stop_f = FindAsync(
@@ -1401,9 +1425,9 @@ void HwDLL::FindStuff()
 				{
 				default:
 				case 0: // SteamPipe
+				case 2: // CoF-5936
 					offset = 25;
 					break;
-
 				case 1: // NGHL
 					offset = 22;
 					break;
@@ -1417,7 +1441,16 @@ void HwDLL::FindStuff()
 			SCR_DrawFPS,
 			patterns::engine::SCR_DrawFPS,
 			[&](auto pattern) {
-				host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(SCR_DrawFPS) + 21);
+				switch (pattern - patterns::engine::SCR_DrawFPS.cbegin())
+				{
+				default:
+				case 0: // HL-Steampipe
+					host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(SCR_DrawFPS) + 21);
+					break;
+				case 1: // CoF-5936
+					host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(SCR_DrawFPS) + 24);
+					break;
+				}
 			});
 
 		void *CL_Move;
@@ -1456,6 +1489,11 @@ void HwDLL::FindStuff()
 					offCmd_Argc = 25;
 					offCmd_Args = 78;
 					offCmd_Argv = 151;
+					break;
+				case 4: // CoF-5936
+					offCmd_Argc = 26;
+					offCmd_Args = 41;
+					offCmd_Argv = 180;
 				}
 
 				auto f = reinterpret_cast<uintptr_t>(Host_Tell_f);
@@ -1479,21 +1517,44 @@ void HwDLL::FindStuff()
 			patterns::engine::Host_AutoSave_f,
 			[&](auto pattern) {
 				auto f = reinterpret_cast<uintptr_t>(Host_AutoSave_f);
-				sv = *reinterpret_cast<void**>(f + 19);
-				offTime = 0x10;
-				offWorldmodel = 304;
-				offModels = 0x30950;
-				offNumEdicts = 0x3bc58;
-				offMaxEdicts = 0x3bc5c;
-				offEdicts = 0x3bc60;
-				ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
-					*reinterpret_cast<ptrdiff_t*>(f + 33)
-					+ (f + 37)
-					);
-				cls = *reinterpret_cast<void**>(f + 69);
-				svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
-				offEdict = *reinterpret_cast<ptrdiff_t*>(f + 122);
-				clientstate = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 86) - 0x2AF80);
+				switch (pattern - patterns::engine::Host_AutoSave_f.cbegin())
+				{
+				default:
+				case 0: // HL-Steampipe
+					sv = *reinterpret_cast<void**>(f + 19);
+					offTime = 0x10;
+					offWorldmodel = 304;
+					offModels = 0x30950;
+					offNumEdicts = 0x3bc58;
+					offMaxEdicts = 0x3bc5c;
+					offEdicts = 0x3bc60;
+					ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
+						*reinterpret_cast<ptrdiff_t*>(f + 33)
+						+ (f + 37)
+						);
+					cls = *reinterpret_cast<void**>(f + 69);
+					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
+					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 122);
+					clientstate = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 86) - 0x2AF80);
+					break;
+				case 1: // CoF-5936
+					sv = *reinterpret_cast<void**>(f + 50);
+					offTime = 0x10;
+					offWorldmodel = 304;
+					offModels = 0x41D50;
+					offNumEdicts = 0x52158;
+					offMaxEdicts = 0x5215C;
+					offEdicts = 0x52160;
+					ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
+						*reinterpret_cast<ptrdiff_t*>(f + 63)
+						+ (f + 67)
+						);
+					cls = *reinterpret_cast<void**>(f + 105);
+					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 79) - 8);
+					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 182);
+					clientstate = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 140) - 0x3BF88);
+					break;
+				}
 			});
 
 		void *MiddleOfSV_ReadClientMessage;
@@ -1527,6 +1588,12 @@ void HwDLL::FindStuff()
 					svmove = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 43);
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 39);
 					sv_player = *reinterpret_cast<edict_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 23);
+					break;
+				case 4: // CoF-5936.
+					host_client = *reinterpret_cast<client_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 17);
+					svmove = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 57);
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 53);
+					sv_player = *reinterpret_cast<edict_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 34);
 					break;
 				}
 			});
@@ -1573,6 +1640,11 @@ void HwDLL::FindStuff()
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 248)
 						+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 252);
 					break;
+				case 5: // CoF-5936
+					ORIG_SV_SpawnServer = reinterpret_cast<_SV_SpawnServer>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 335)
+						+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 339);
+					break;
 				}
 			});
 
@@ -1606,6 +1678,11 @@ void HwDLL::FindStuff()
 					ORIG_Cbuf_InsertTextLines = reinterpret_cast<_Cbuf_InsertTextLines>(
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 769)
 						+ reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 773);
+					break;
+				case 5: // CoF-5936.
+					ORIG_Cbuf_InsertTextLines = reinterpret_cast<_Cbuf_InsertTextLines>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 550)
+						+ reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 554);
 					break;
 				}
 			});
@@ -1651,6 +1728,12 @@ void HwDLL::FindStuff()
 						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 20);
 					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 72);
 					break;
+				case 3: // CoF-5936.
+					ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 19)
+						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 23);
+					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 149);
+					break;
 				}
 			});
 
@@ -1658,8 +1741,17 @@ void HwDLL::FindStuff()
 			ORIG_SV_SetMoveVars,
 			patterns::engine::SV_SetMoveVars,
 			[&](auto pattern) {
-				movevars = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(ORIG_SV_SetMoveVars) + 18);
-				offZmax = 0x38;
+				switch (pattern - patterns::engine::SV_SetMoveVars.cbegin())
+				{
+				case 0: // SteamPipe.
+					movevars = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(ORIG_SV_SetMoveVars) + 18);
+					offZmax = 0x38;
+					break;
+				case 1: // CoF-5936.
+					movevars = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(ORIG_SV_SetMoveVars) + 9);
+					offZmax = 0x38;
+					break;
+				}
 			}
 		);
 
@@ -1667,9 +1759,22 @@ void HwDLL::FindStuff()
 			ORIG_R_StudioCalcAttachments,
 			patterns::engine::R_StudioCalcAttachments,
 			[&](auto pattern) {
-				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 106)
-					+ reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 110);
+				switch (pattern - patterns::engine::R_StudioCalcAttachments.cbegin())
+				{
+				case 0: // SteamPipe.
+					ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 106)
+						+ reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 110);
+						break;
+				case 1: // CoF-5936.
+					ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 157)
+						+ reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 161);
+					break;
+				default:
+					assert(false);
+					break;
+				}
 			});
 
 		auto fR_StudioSetupBones = FindAsync(
@@ -1683,6 +1788,9 @@ void HwDLL::FindStuff()
 					break;
 				case 1: // 4554.
 					pstudiohdr = *reinterpret_cast<studiohdr_t***>(reinterpret_cast<uintptr_t>(ORIG_R_StudioSetupBones) + 7);
+					break;
+				case 2: // CoF-5936.
+					pstudiohdr = *reinterpret_cast<studiohdr_t***>(reinterpret_cast<uintptr_t>(ORIG_R_StudioSetupBones) + 16);
 					break;
 				default:
 					assert(false);
@@ -5140,7 +5248,13 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 void HwDLL::GetViewangles(float* va)
 {
 	if (clientstate) {
-		float *viewangles = reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(clientstate) + 0x2ABE4);
+		float *viewangles;
+
+		if (ClientDLL::GetInstance().DoesGameDirMatch("cryoffear"))
+			viewangles = reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(clientstate) + 0x3BBE8);
+		else
+			viewangles = reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(clientstate) + 0x2ABE4);
+
 		va[0] = viewangles[0];
 		va[1] = viewangles[1];
 		va[2] = viewangles[2];

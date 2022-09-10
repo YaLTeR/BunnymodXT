@@ -391,6 +391,7 @@ void ServerDLL::FindStuff()
 					break;
 				case 8:
 				case 9:
+				case 13:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 8);
 					break;
 				}
@@ -570,6 +571,14 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xC4;
 				offFuncObjectCaps = 0x18;
 				break;
+			case 26: // CoF-5936
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x25C0;
+				offm_iClientFOV = 0x250C;
+				offFuncIsPlayer = 0xD0;
+				offFuncCenter = 0xFC;
+				offFuncObjectCaps = 0x40;
+				break;
 			default:
 				assert(false);
 			}
@@ -646,6 +655,7 @@ void ServerDLL::FindStuff()
 			case 5:
 			case 6:
 			case 7:
+			case 8:
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;

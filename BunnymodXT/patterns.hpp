@@ -669,6 +669,16 @@ namespace patterns
 			"CoF-5936",
 			"55 8B EC 81 EC 04 01 00 00 83 7D ?? 00 74 ?? 8B 45 ?? 0F BE 08"
 		);
+
+		PATTERNS(Host_ValidSave,
+			"CoF-5936",
+			"55 8B EC 83 3D ?? ?? ?? ?? 01 74 ?? 33 C0"
+		);
+
+		PATTERNS(Host_ValidSave_Save_Lock_In_Cof_Byte,
+			"CoF-5936",
+			"74 ?? 33 C0 E9 ?? ?? ?? ?? 83 3D ?? ?? ?? ?? 00 75 14 68"
+		);
 	}
 
 	namespace server

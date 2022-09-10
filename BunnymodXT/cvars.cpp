@@ -40,6 +40,7 @@ namespace CVars
 	CVarWrapper bxt_hud_game_color("bxt_hud_game_color", "");
 	CVarWrapper bxt_disable_gamedir_check_in_demo("bxt_disable_gamedir_check_in_demo", "0");
 	CVarWrapper bxt_remove_fps_limit("bxt_remove_fps_limit", "0");
+	CVarWrapper bxt_disable_save_lock_in_cof("bxt_disable_save_lock_in_cof", "0");
 
 	CVarWrapper con_color;
 	CVarWrapper sv_cheats;
@@ -233,6 +234,7 @@ namespace CVars
 		&bxt_hud_game_color,
 		&bxt_disable_gamedir_check_in_demo,
 		&bxt_remove_fps_limit,
+		&bxt_disable_save_lock_in_cof,
 		&bxt_autojump_priority,
 		&con_color,
 		&sv_cheats,

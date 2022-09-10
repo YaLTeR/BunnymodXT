@@ -1055,6 +1055,8 @@ bool ClientDLL::DoesGameDirMatch(const char *game, bool substr)
 				return true;
 		}
 	}
+
+	return false;
 }
 
 void ClientDLL::SetAngleSpeedCap(bool capped)

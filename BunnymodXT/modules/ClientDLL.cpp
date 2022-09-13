@@ -1029,7 +1029,7 @@ void ClientDLL::FileBase(const char *in, char *out)
 	out[len] = 0;
 }
 
-bool ClientDLL::DoesGameDirMatch(const char *game, bool substr)
+bool ClientDLL::DoesGameDirMatch(const char *game)
 {
 	if (!pEngfuncs)
 		return false;
@@ -1046,17 +1046,31 @@ bool ClientDLL::DoesGameDirMatch(const char *game, bool substr)
 			*gd_lw = tolower(*gd_lw);
 			gd_lw++;
 		}
+	}
 
-		if (substr) {
-			if (std::strstr(gd, game))
-				return true;
-		} else {
-			if (!std::strcmp(gd, game))
-				return true;
+	return !std::strcmp(gd, game);
+}
+
+bool ClientDLL::DoesGameDirContain(const char *game)
+{
+	if (!pEngfuncs)
+		return false;
+
+	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
+	char gd[1024];
+
+	if (gameDir && gameDir[0])
+	{
+		FileBase(gameDir, gd);
+
+		unsigned char *gd_lw = (unsigned char *)gd;
+		while (*gd_lw) {
+			*gd_lw = tolower(*gd_lw);
+			gd_lw++;
 		}
 	}
 
-	return false;
+	return std::strstr(gd, game);
 }
 
 void ClientDLL::SetAngleSpeedCap(bool capped)

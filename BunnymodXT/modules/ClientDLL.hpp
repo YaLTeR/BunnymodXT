@@ -70,7 +70,8 @@ public:
 
 	void StudioAdjustViewmodelAttachments(Vector &vOrigin);
 
-	bool DoesGameDirMatch(const char *game, bool substr);
+	bool DoesGameDirMatch(const char *game);
+	bool DoesGameDirContain(const char *game);
 
 	bool orig_forcehltv_found = false;
 	bool orig_righthand_not_found = false;

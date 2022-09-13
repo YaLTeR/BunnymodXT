@@ -170,7 +170,11 @@ namespace discord_integration
 								if (gmc_map_name_to_thumbnail.find(map_name) != gmc_map_name_to_thumbnail.cend())
 								{
 									presence.largeImageKey = gmc_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = gmc_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+
+									if (!strncmp(presence.largeImageKey, "gmcchapter4", 11))
+										presence.largeImageText = "Rust";
+									else
+										presence.largeImageText = gmc_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
 							else if (!strncmp(gd, "czeror", 6))

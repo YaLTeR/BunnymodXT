@@ -338,7 +338,7 @@ namespace discord_integration
 				{
 					if (ClientDLL::GetInstance().pEngfuncs && ClientDLL::GetInstance().pEngfuncs->pDemoAPI->IsPlayingback()) {
 						presence.smallImageKey = "discord_brown";
-						presence.smallImageText = "Demo playback";
+						presence.smallImageText = "Watching a demo";
 					} else {
 						presence.smallImageKey = "discord_red";
 						presence.smallImageText = "Not running";
@@ -353,7 +353,7 @@ namespace discord_integration
 
 					if (ClientDLL::GetInstance().pEngfuncs && ClientDLL::GetInstance().pEngfuncs->pDemoAPI->IsPlayingback()) {
 						presence.smallImageKey = "discord_brown";
-						presence.smallImageText = "Demo playback";
+						presence.smallImageText = "Watching a demo";
 					} else {
 						presence.smallImageKey = "discord_yellow";
 						presence.smallImageText = "Timer stopped";

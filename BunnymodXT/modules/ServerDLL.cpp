@@ -12,6 +12,7 @@
 #include "../interprocess.hpp"
 #include "../runtime_data.hpp"
 #include "../custom_triggers.hpp"
+#include "../splits.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -1536,6 +1537,12 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_cof_enable_ducktap);
 	if (is_cof)
 		REG(bxt_cof_disable_save_lock);
+
+	REG(bxt_splits_print);
+	REG(bxt_splits_print_times_at_end);
+	REG(bxt_splits_autorecord_on_first_split);
+	REG(bxt_splits_start_timer_on_first_split);
+	REG(bxt_splits_end_on_last_split);
 	#undef REG
 }
 
@@ -2221,6 +2228,9 @@ void ServerDLL::DoAutoStopTasks()
 	Interprocess::WriteGameEnd(CustomHud::GetTime());
 	CustomHud::SaveTimeToDemo();
 	RuntimeData::Add(RuntimeData::GameEndMarker{});
+
+	if (CVars::bxt_splits_print_times_at_end.GetBool())
+		Splits::PrintAll();
 }
 
 void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float &b)

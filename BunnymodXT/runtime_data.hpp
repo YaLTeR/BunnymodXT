@@ -48,6 +48,13 @@ namespace RuntimeData
 		std::string command;
 	};
 
+	struct SplitMarker {
+		Vector corner_min;
+		Vector corner_max;
+		std::string name;
+		std::string map_name;
+	};
+
 	struct Edicts {
 		int edicts;
 	};
@@ -66,6 +73,7 @@ namespace RuntimeData
 	                            GameEndMarker,
 	                            LoadedModules,
 	                            CustomTriggerCommand,
+	                            SplitMarker,
 	                            Edicts,
 	                            PlayerHealth>;
 

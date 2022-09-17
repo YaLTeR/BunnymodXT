@@ -21,6 +21,7 @@
 #include "../git_revision.hpp"
 #include "../custom_triggers.hpp"
 #include "../simulation_ipc.hpp"
+#include "../splits.hpp"
 
 using namespace std::literals;
 
@@ -2903,17 +2904,23 @@ struct HwDLL::Cmd_BXT_Camera_Offset
 	}
 };
 
+void HwDLL::TimerStart()
+{
+	if (!CustomHud::GetCountingTime())
+	HwDLL::GetInstance().Called_Timer = true;
+
+	CustomHud::SaveTimeToDemo();
+	return CustomHud::SetCountingTime(true);
+}
+
 struct HwDLL::Cmd_BXT_Timer_Start
 {
 	NO_USAGE();
 
 	static void handler()
 	{
-		if (!CustomHud::GetCountingTime())
-			HwDLL::GetInstance().Called_Timer = true;
-
-		CustomHud::SaveTimeToDemo();
-		return CustomHud::SetCountingTime(true);
+		auto &hw = HwDLL::GetInstance();
+		return hw.TimerStart();
 	}
 };
 
@@ -2931,21 +2938,28 @@ struct HwDLL::Cmd_BXT_Timer_Stop
 	}
 };
 
+void HwDLL::TimerReset()
+{
+	const auto& gt = CustomHud::GetTime();
+	int total_time = (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds;
+
+	if (gt.milliseconds > 0 || total_time > 0)
+		HwDLL::GetInstance().Called_Timer = true;
+
+	CustomHud::SaveTimeToDemo();
+	CustomHud::SetInvalidRun(false);
+	Splits::Reset();
+	return CustomHud::ResetTime();
+}
+
 struct HwDLL::Cmd_BXT_Timer_Reset
 {
 	NO_USAGE();
 
 	static void handler()
 	{
-		const auto& gt = CustomHud::GetTime();
-		int total_time = (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds;
-
-		if (gt.milliseconds > 0 || total_time > 0)
-			HwDLL::GetInstance().Called_Timer = true;
-
-		CustomHud::SaveTimeToDemo();
-		CustomHud::SetInvalidRun(false);
-		return CustomHud::ResetTime();
+		auto &hw = HwDLL::GetInstance();
+		return hw.TimerReset();
 	}
 };
 
@@ -3944,6 +3958,403 @@ struct HwDLL::Cmd_BXT_Show_Bullets_Enemy_Clear
 	}
 };
 
+struct HwDLL::Cmd_BXT_Split
+{
+	USAGE("Usage: bxt_split <name>\n Tells BunnySplit to split by the specified map name, and prints to console the current time. Mostly intended to be used in scripts, or in custom triggers (these may not be valid in runs, check the rules for your game/category).\n");
+
+	// TODO: it should be possible to split without a map/split name, like when you right-click on LiveSplit and click on Split,
+	// but I don't think BunnySplit supports this
+
+	static void handler(const char* name)
+	{
+		Vector speed;
+		Vector origin;
+		const auto& player = HwDLL::GetInstance().GetPlayerEdict();
+		if (player)
+		{
+			speed = player->v.velocity;
+			origin = player->v.origin;
+		}
+		const auto& time = CustomHud::GetTime();
+
+		Splits::Split fake_split;
+		fake_split.set_name(name);
+		fake_split.set_time(time);
+		fake_split.set_speed(speed);
+		fake_split.set_origin(origin);
+
+		Splits::PrintSplitCompletion(fake_split);
+		Interprocess::WriteMapChange(time, name);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Add
+{
+	USAGE("Usage: bxt_splits_add <x1> <y1> <z1> <x2> <y2> <z2> [map_name] [name]\n Adds a split trigger in a form of axis-aligned cuboid with opposite corners at coordinates (x1, y1, z1) and (x2, y2, z2).\n");
+
+	static void handler(float x1, float y1, float z1, float x2, float y2, float z2)
+	{
+		Splits::splits.emplace_back(Vector(x1, y1, z1), Vector(x2, y2, z2));
+	}
+
+	static void handler(float x1, float y1, float z1, float x2, float y2, float z2, const char* map_name)
+	{
+		Splits::splits.emplace_back(Vector(x1, y1, z1), Vector(x2, y2, z2), std::string(map_name));
+	}
+
+	static void handler(float x1, float y1, float z1, float x2, float y2, float z2, const char* map_name, const char* split_name)
+	{
+		Splits::splits.emplace_back(Vector(x1, y1, z1), Vector(x2, y2, z2), std::string(map_name), std::string(split_name));
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Clear
+{
+	NO_USAGE()
+
+	static void handler()
+	{
+		Splits::splits.clear();
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Delete
+{
+	USAGE("Usage: bxt_splits_delete [id]\n Deletes the last placed split trigger.\n If an id is given, deletes the split trigger with the given id.\n");
+
+	static void handler()
+	{
+		if (Splits::splits.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			return;
+		}
+
+		Splits::splits.erase(--Splits::splits.end());
+	}
+
+	static void handler(const char* id_or_name)
+	{
+		// First try to find it by name, otherwise we'll try to find by id
+		const auto itr = std::find_if(Splits::splits.
+			begin(), Splits::splits.end(),
+			[&id_or_name](const Splits::Split& s) { return std::string(id_or_name) == s.get_name(); });
+
+		unsigned long idx = 0;
+		if (itr == Splits::splits.end())
+			idx = std::strtoul(id_or_name, nullptr, 10);
+		else
+			idx = std::abs(std::distance(Splits::splits.begin(), itr)) + 1;
+
+		if (idx == 0 || Splits::splits.size() < idx) {
+			HwDLL::GetInstance().ORIG_Con_Printf("There's no split with this name or id.\n");
+			return;
+		}
+
+		Splits::splits.erase(Splits::splits.begin() + (idx - 1));
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Export
+{
+	USAGE("Usage: bxt_splits_export [cmd|script]\n");
+
+	static void handler(const char* type)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		enum class ExportType {
+			CMD,
+			SCRIPT
+		} export_type;
+
+		if (!std::strcmp(type, "cmd")) {
+			export_type = ExportType::CMD;
+		} else if (!std::strcmp(type, "script")) {
+			export_type = ExportType::SCRIPT;
+		} else {
+			hw.ORIG_Con_Printf("%s", GET_USAGE());
+			return;
+		}
+
+		auto command_separator = (export_type == ExportType::SCRIPT) ? '\n' : ';';
+
+		if (Splits::splits.empty()) {
+			hw.ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			return;
+		}
+
+		bool first = true;
+		for (const auto& split : Splits::splits) {
+			auto corners = split.get_corner_positions();
+
+			std::ostringstream oss;
+
+			if (!first)
+				oss << command_separator;
+
+			oss << "bxt_splits_add " << std::fixed << std::setprecision(1)
+				<< corners.first.x << " " << corners.first.y << " " << corners.first.z << " "
+				<< corners.second.x << " " << corners.second.y << " " << corners.second.z;
+
+			if (!split.get_map().empty())
+				oss << command_separator << "bxt_splits_set_map \"" << split.get_map() << '\"';
+
+			if (!split.get_name().empty())
+				oss << command_separator << "bxt_splits_set_name \"" << split.get_name() << '\"';
+
+			// Note that by default a split always tracks horizontal speed. If this behaviour changes,
+			// we have to change this part too. If we always print the command regardless of the value,
+			// then the output command/script will be huge
+			if (!split.get_track_horizontal())
+				oss << command_separator << "bxt_splits_track_horizontal_speed 0";
+
+			if (split.get_track_vertical())
+				oss << command_separator << "bxt_splits_track_vertical_speed 1";
+
+			if (split.get_track_x())
+				oss << command_separator << "bxt_splits_track_x 1";
+
+			if (split.get_track_y())
+				oss << command_separator << "bxt_splits_track_y 1";
+
+			if (split.get_track_z())
+				oss << command_separator << "bxt_splits_track_z 1";
+
+			hw.ORIG_Con_Printf(oss.str().c_str());
+
+			first = false;
+		}
+
+		hw.ORIG_Con_Printf("\n");
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_List
+{
+	USAGE("Usage: bxt_splits_list [map_name]. You can specify a map name to list splits that are limited to that map.\n");
+
+	static void handler()
+	{
+		if (Splits::splits.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			return;
+		}
+		Splits::PrintList(Splits::splits);
+	}
+
+	static void handler(const char* map_name)
+	{
+		std::vector<Splits::Split> map_splits;
+		std::copy_if(Splits::splits.begin(), Splits::splits.end(), std::back_inserter(map_splits),
+			[&map_name](Splits::Split &s){ return std::string(map_name) == s.get_map(); } );
+
+		if (map_splits.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("There are no splits in the specified map.\n");
+			return;
+		}
+		Splits::PrintList(map_splits);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Print_Times
+{
+	NO_USAGE()
+
+	static void handler()
+	{
+		Splits::PrintAll();
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Set_Map
+{
+	USAGE("Usage: bxt_splits_set_map <name>\n Sets the last placed split's map (scope).\n bxt_splits_set_map <id> <name>\n Sets the map of a split with the given id.\n");
+
+	static void handler(const char* newMap)
+	{
+		if (Splits::splits.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			return;
+		}
+
+		Splits::splits.back().set_map(newMap);
+	}
+
+	static void handler(const char* idOrName, const char* newMap)
+	{
+		auto split = Splits::GetSplitByNameOrId(idOrName);
+		if (split)
+			split->set_map(newMap);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Set_Name
+{
+	USAGE("Usage: bxt_splits_set_name <name>\n Sets the last placed split's name.\n bxt_splits_set_name <id> <name>\n Sets the name of a split with the given id.\n");
+
+	static void handler(const char* newName)
+	{
+		if (Splits::splits.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			return;
+		}
+
+		Splits::splits.back().set_name(newName);
+	}
+
+	static void handler(const char* idOrName, const char* newName)
+	{
+		auto split = Splits::GetSplitByNameOrId(idOrName);
+		if (split)
+			split->set_name(newName);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Track_Horizontal_Speed
+{
+	USAGE("Usage: bxt_splits_track_horizontal_speed <0|1>\n Makes the last placed split account for the horizontal components of velocity when printing the speed.\n bxt_splits_track_horizontal_speed <split name or id> <0|1>\n Same but you can specify the split name or id instead.\n");
+
+	static void handler(int value)
+	{
+		if (Splits::splits.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			return;
+		}
+
+		Splits::splits.back().set_track_horizontal_speed(value);
+	}
+
+	static void handler(const char* idOrName, int value)
+	{
+		auto split = Splits::GetSplitByNameOrId(idOrName);
+		if (split)
+			split->set_track_horizontal_speed(value);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Track_Vertical_Speed
+{
+	USAGE("Usage: bxt_splits_track_vertical_speed <0|1>\n Makes the last placed split account for the vertical component of velocity when printing the speed.\n bxt_splits_track_vertical_speed <split name or id> <0|1>\n Same but you can specify the split name or id instead.\n");
+
+	static void handler(int value)
+	{
+		if (Splits::splits.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			return;
+		}
+
+		Splits::splits.back().set_track_vertical_speed(value);
+	}
+
+	static void handler(const char* idOrName, int value)
+	{
+		auto split = Splits::GetSplitByNameOrId(idOrName);
+		if (split)
+			split->set_track_vertical_speed(value);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Track_X
+{
+	USAGE("Usage: bxt_splits_track_x <0|1>\n Makes the last placed split account for the X component when printing your position.\n bxt_splits_track_x <split name or id> <0|1>\n Same but you can specify the split name or id instead.\n");
+
+	static void handler(int value)
+	{
+		if (Splits::splits.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			return;
+		}
+
+		Splits::splits.back().set_track_x(value);
+	}
+
+	static void handler(const char* idOrName, int value)
+	{
+		auto split = Splits::GetSplitByNameOrId(idOrName);
+		if (split)
+			split->set_track_x(value);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Track_Y
+{
+	USAGE("Usage: bxt_splits_track_y <0|1>\n Makes the last placed split account for the Y component when printing your position.\n bxt_splits_track_y <split name or id> <0|1>\n Same but you can specify the split name or id instead.\n");
+
+	static void handler(int value)
+	{
+		if (Splits::splits.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			return;
+		}
+
+		Splits::splits.back().set_track_y(value);
+	}
+
+	static void handler(const char* idOrName, int value)
+	{
+		auto split = Splits::GetSplitByNameOrId(idOrName);
+		if (split)
+			split->set_track_y(value);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Track_Z
+{
+	USAGE("Usage: bxt_splits_track_z <0|1>\n Makes the last placed split account for the Z component when printing your position.\n bxt_splits_track_z <split name or id> <0|1>\n Same but you can specify the split name or id instead.\n");
+
+	static void handler(int value)
+	{
+		if (Splits::splits.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			return;
+		}
+
+		Splits::splits.back().set_track_z(value);
+	}
+
+	static void handler(const char* idOrName, int value)
+	{
+		auto split = Splits::GetSplitByNameOrId(idOrName);
+		if (split)
+			split->set_track_z(value);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Place_Up
+{
+	NO_USAGE()
+
+	static void handler()
+	{
+		Splits::placing = false;
+	}
+
+	static void handler(const char *)
+	{
+		handler();
+	}
+};
+
+struct HwDLL::Cmd_BXT_Splits_Place_Down
+{
+	NO_USAGE()
+
+	static void handler()
+	{
+		auto trace = HwDLL::GetInstance().CameraTrace();
+
+		Splits::placing = true;
+		Vector start = trace.EndPos;
+		Splits::place_start = start;
+		Splits::splits.emplace_back(start, start);
+	}
+
+	static void handler(const char*)
+	{
+		handler();
+	}
+};
+
 extern "C" DLLEXPORT void bxt_tas_load_script_from_string(const char *script)
 {
 	auto& hw = HwDLL::GetInstance();
@@ -4269,6 +4680,27 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 
 	wrapper::Add<Cmd_BXT_Show_Bullets_Clear, Handler<>>("bxt_show_bullets_clear");
 	wrapper::Add<Cmd_BXT_Show_Bullets_Enemy_Clear, Handler<>>("bxt_show_bullets_enemy_clear");
+
+	wrapper::Add<Cmd_BXT_Split, Handler<const char*>>("bxt_split");
+	wrapper::Add<
+		Cmd_BXT_Splits_Add,
+		Handler<float, float, float, float, float, float>,
+		Handler<float, float, float, float, float, float, const char*>,
+		Handler<float, float, float, float, float, float, const char*, const char*>>("bxt_splits_add");
+	wrapper::Add<Cmd_BXT_Splits_Clear, Handler<>>("bxt_splits_clear");
+	wrapper::Add<Cmd_BXT_Splits_Delete, Handler<>, Handler<const char*>>("bxt_splits_delete");
+	wrapper::Add<Cmd_BXT_Splits_Export, Handler<const char*>>("bxt_splits_export");
+	wrapper::Add<Cmd_BXT_Splits_List, Handler<>, Handler<const char*>>("bxt_splits_list");
+	wrapper::Add<Cmd_BXT_Splits_Print_Times, Handler<>>("bxt_splits_print_times");
+	wrapper::Add<Cmd_BXT_Splits_Set_Map, Handler<const char*>, Handler<const char*, const char*>>("bxt_splits_set_map");
+	wrapper::Add<Cmd_BXT_Splits_Set_Name, Handler<const char*>, Handler<const char*, const char*>>("bxt_splits_set_name");
+	wrapper::Add<Cmd_BXT_Splits_Track_Horizontal_Speed, Handler<int>, Handler<const char*, int>>("bxt_splits_track_horizontal_speed");
+	wrapper::Add<Cmd_BXT_Splits_Track_Vertical_Speed, Handler<int>, Handler<const char*, int>>("bxt_splits_track_vertical_speed");
+	wrapper::Add<Cmd_BXT_Splits_Track_X, Handler<int>, Handler<const char*, int>>("bxt_splits_track_x");
+	wrapper::Add<Cmd_BXT_Splits_Track_Y, Handler<int>, Handler<const char*, int>>("bxt_splits_track_y");
+	wrapper::Add<Cmd_BXT_Splits_Track_Z, Handler<int>, Handler<const char*, int>>("bxt_splits_track_z");
+	wrapper::Add<Cmd_BXT_Splits_Place_Down, Handler<>, Handler<const char*>>("+bxt_splits_place");
+	wrapper::Add<Cmd_BXT_Splits_Place_Up, Handler<>, Handler<const char*>>("-bxt_splits_place");
 }
 
 void HwDLL::InsertCommands()
@@ -5194,7 +5626,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 {
 	RegisterCVarsAndCommandsIfNeeded();
 
-	UpdateCustomTriggers();
+	UpdateCustomTriggersAndSplits();
 
 	int *state = reinterpret_cast<int*>(cls);
 	int *paused = reinterpret_cast<int*>(sv)+1;
@@ -5621,7 +6053,7 @@ void HwDLL::SaveInitialDataToDemo()
 	CustomHud::SaveTimeToDemo();
 }
 
-void HwDLL::UpdateCustomTriggers()
+void HwDLL::UpdateCustomTriggersAndSplits()
 {
 	if (!svs || svs->num_clients < 1)
 		return;
@@ -5631,6 +6063,7 @@ void HwDLL::UpdateCustomTriggers()
 		return;
 
 	CustomTriggers::Update(pl->v.origin, (pl->v.flags & FL_DUCKING) != 0);
+	Splits::Update(pl->v.origin, (pl->v.flags & FL_DUCKING) != 0);
 }
 
 void HwDLL::FreeCamTick()

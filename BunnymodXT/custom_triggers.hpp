@@ -5,9 +5,6 @@ namespace CustomTriggers
 	// To be extended as new ways of defining the triggers are added.
 	class Trigger
 	{
-		// Opposite corners of an axis-aligned parallelepiped.
-		Vector corner_min, corner_max;
-
 		// The command to be executed.
 		std::string command;
 
@@ -17,7 +14,11 @@ namespace CustomTriggers
 		// Normalize the corners so corner_min has the min coordinates and corner_max the max ones.
 		void normalize();
 
-		void touch();
+	protected:
+		// Opposite corners of an axis-aligned parallelepiped.
+		Vector corner_min, corner_max;
+
+		virtual void touch();
 
 	public:
 		Trigger(Vector corner1, Vector corner2);

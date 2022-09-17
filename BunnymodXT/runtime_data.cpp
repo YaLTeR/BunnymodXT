@@ -39,6 +39,7 @@ namespace RuntimeData
 			GAME_END_MARKER,
 			LOADED_MODULES,
 			CUSTOM_TRIGGER_COMMAND,
+			SPLIT_MARKER,
 			EDICTS,
 			PLAYERHEALTH,
 		};
@@ -287,6 +288,19 @@ namespace RuntimeData
 				archive(c.corner_max.y);
 				archive(c.corner_max.z);
 				archive(c.command);
+			}
+
+			void operator()(const SplitMarker& m) const {
+				archive(RuntimeDataType::SPLIT_MARKER);
+
+				archive(m.corner_min.x);
+				archive(m.corner_min.y);
+				archive(m.corner_min.z);
+				archive(m.corner_max.x);
+				archive(m.corner_max.y);
+				archive(m.corner_max.z);
+				archive(m.name);
+				archive(m.map_name);
 			}
 
 			void operator()(const Edicts& e) const {

@@ -1,6 +1,8 @@
 #include "stdafx.hpp"
 
 #include "custom_triggers.hpp"
+#include "splits.hpp"
+
 #include "triangle_drawing.hpp"
 #include "triangle_utils.hpp"
 #include "modules.hpp"
@@ -362,6 +364,48 @@ namespace TriangleDrawing
 		const auto hit_vec = ServerDLL::GetInstance().GetBulletsPlayerTraceHit();
 
 		DrawBullets(pTriAPI, points_vec, hit_vec, 0, 200, 255);
+	}
+
+	static void DrawSplits(triangleapi_s *pTriAPI)
+	{
+		if (!CVars::bxt_show_splits.GetBool())
+			return;
+
+		pTriAPI->CullFace(TRI_NONE);
+
+		for (const auto& split : Splits::splits) {
+			if (!split.get_map().empty() && split.get_map() != HwDLL::GetInstance().lastLoadedMap)
+			{
+				// Discard splits that are not scoped to the current map
+				continue;
+			}
+
+			auto corner_positions = split.get_corner_positions();
+
+			pTriAPI->RenderMode(kRenderTransAdd);
+
+			if (!CVars::bxt_splits_color.IsEmpty()) {
+				unsigned r = 0, g = 0, b = 0, a = 0;
+				std::istringstream ss(CVars::bxt_splits_color.GetString());
+				ss >> r >> g >> b >> a;
+
+				static float triggerColor[4];
+				triggerColor[0] = r / 255.0f;
+				triggerColor[1] = g / 255.0f;
+				triggerColor[2] = b / 255.0f;
+				triggerColor[3] = a / 255.0f;
+
+				pTriAPI->Color4f(triggerColor[0], triggerColor[1], triggerColor[2], triggerColor[3]);
+			} else {
+				pTriAPI->Color4f(0.8f, 0.6f, 0.3f, 0.3f);
+			}
+
+			TriangleUtils::DrawAACuboid(pTriAPI, corner_positions.first, corner_positions.second);
+
+			pTriAPI->RenderMode(kRenderTransColor);
+			pTriAPI->Color4f(0.5f, 0.3f, 0.0f, 1.0f);
+			TriangleUtils::DrawAACuboidWireframe(pTriAPI, corner_positions.first, corner_positions.second);
+		}
 	}
 
 	static Vector perpendicular(const Vector &prev, const Vector &next) {
@@ -2277,6 +2321,7 @@ namespace TriangleDrawing
 		DrawAbsMinMax(pTriAPI);
 		DrawBulletsEnemyTrace(pTriAPI);
 		DrawBulletsPlayerTrace(pTriAPI);
+		DrawSplits(pTriAPI);
 
 		DrawTASEditor(pTriAPI);
 		ResetTASEditorCommands();

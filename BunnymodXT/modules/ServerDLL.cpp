@@ -260,6 +260,8 @@ void ServerDLL::Clear()
 	cantJumpNextTime.clear();
 	m_Intercepted = false;
 	WorldGraph = nullptr;
+	pCS_Stamina_Value = 0;
+	pCS_Bhopcap = 0;
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -378,6 +380,12 @@ void ServerDLL::FindStuff()
 	auto fPM_ClipVelocity = FindFunctionAsync(ORIG_PM_ClipVelocity, "PM_ClipVelocity", patterns::shared::PM_ClipVelocity);
 	auto fPM_WaterMove = FindFunctionAsync(ORIG_PM_WaterMove, "PM_WaterMove", patterns::shared::PM_WaterMove);
 	auto fCTriggerVolume__Spawn = FindAsync(ORIG_CTriggerVolume__Spawn,	patterns::server::CTriggerVolume__Spawn);
+	auto fCS_Stamina_Value = FindAsync(
+		pCS_Stamina_Value,
+		patterns::server::CS_Stamina_Value);
+	auto fCS_Bhopcap = FindAsync(
+		pCS_Bhopcap,
+		patterns::shared::Bhopcap_CS);
 
 	auto fCBasePlayer__ForceClientDllUpdate = FindAsync(
 		ORIG_CBasePlayer__ForceClientDllUpdate,
@@ -731,6 +739,7 @@ void ServerDLL::FindStuff()
 	{
 		auto pattern = fPM_Jump.get();
 		auto pattern2 = fPM_Jump_Bhopcap_Windows.get();
+		auto pattern3 = fCS_Bhopcap.get();
 		if (ORIG_PM_Jump) {
 			if (pattern == patterns::shared::PM_Jump.cend())
 				EngineDevMsg("[server dll] Found PM_Jump at %p.\n", ORIG_PM_Jump);
@@ -740,6 +749,9 @@ void ServerDLL::FindStuff()
 				EngineDevMsg("[server dll] Found the bhopcap pattern at %p.\n", reinterpret_cast<void*>(offBhopcap + reinterpret_cast<uintptr_t>(ORIG_PM_Jump) - 27));
 			if (pBhopcapWindows)
 				EngineDevMsg("[server dll] Found bhopcap jump instruction at %p (using the %s pattern).\n", pBhopcapWindows, pattern2->name());
+			if (pCS_Bhopcap)
+				EngineDevMsg("[server dll] Found bhopcap jump pattern at %p (using the %s pattern).\n", pCS_Bhopcap, pattern3->name());
+
 		} else {
 			EngineDevWarning("[server dll] Could not find PM_Jump.\n");
 			EngineWarning("Autojump is not available.\n");
@@ -763,6 +775,15 @@ void ServerDLL::FindStuff()
 				EngineDevWarning("[server dll] Could not find CTriggerVolume::Spawn.\n");
 				EngineWarning("trigger_transition entities will not be displayed.\n");
 			}
+		}
+	}
+
+	{
+		auto pattern = fCS_Stamina_Value.get();
+		if (pCS_Stamina_Value) {
+			EngineDevMsg("[client dll] Found the stamina value pattern at %p (using the %s pattern).\n", pCS_Stamina_Value, pattern->name());
+		} else {
+			EngineDevWarning("[client dll] Could not find the stamina value pattern.\n");
 		}
 	}
 
@@ -1185,6 +1206,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 	}
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
+	if (pCS_Stamina_Value)
+		REG(bxt_remove_stamina);
 	if (ORIG_CChangeLevel__UseChangeLevel && ORIG_CChangeLevel__TouchChangeLevel)
 		REG(bxt_disable_changelevel);
 	if (ORIG_PM_PlayerMove)
@@ -1221,6 +1244,28 @@ std::vector<const edict_t *> ServerDLL::GetUseableEntities(const Vector &origin,
 	}
 
 	return entities;
+}
+
+void ServerDLL::SetStamina(bool makeItZero)
+{
+	if (!pCS_Stamina_Value)
+		return;
+
+	if (makeItZero) {
+		if (*reinterpret_cast<byte*>(pCS_Stamina_Value + 2) == 0x43 &&
+			*reinterpret_cast<byte*>(pCS_Stamina_Value + 3) == 0x79 &&
+			*reinterpret_cast<byte*>(pCS_Stamina_Value + 4) == 0xA4 &&
+			*reinterpret_cast<byte*>(pCS_Stamina_Value + 5) == 0x44
+			)
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_Stamina_Value + 2), 4, reinterpret_cast<const byte*>("\x00\x00\x00\x00"));
+	} else {
+		if (*reinterpret_cast<byte*>(pCS_Stamina_Value + 2) == 0x0 &&
+			*reinterpret_cast<byte*>(pCS_Stamina_Value + 3) == 0x0 &&
+			*reinterpret_cast<byte*>(pCS_Stamina_Value + 4) == 0x0 &&
+			*reinterpret_cast<byte*>(pCS_Stamina_Value + 5) == 0x0
+			)
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_Stamina_Value + 2), 4, reinterpret_cast<const byte*>("\x43\x79\xA4\x44"));
+	}
 }
 
 HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
@@ -1260,6 +1305,20 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
 		else if (*reinterpret_cast<byte*>(pPMJump + offBhopcap) == 0x0F
 				&& *reinterpret_cast<byte*>(pPMJump + offBhopcap + 1) == 0x82)
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pPMJump + offBhopcap), 6, reinterpret_cast<const byte*>("\x90\x90\x90\x90\x90\x90"));
+	}
+
+	if (pCS_Bhopcap)
+	{
+		if (CVars::bxt_bhopcap.GetBool())
+		{
+			if (*reinterpret_cast<byte*>(pCS_Bhopcap + 11) == 0x83)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_Bhopcap + 11), 1, reinterpret_cast<const byte*>("\x82"));
+		}
+		else
+		{
+			if (*reinterpret_cast<byte*>(pCS_Bhopcap + 11) == 0x82)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_Bhopcap + 11), 1, reinterpret_cast<const byte*>("\x83"));
+		}
 	}
 
 	if (pCZDS_Velocity_Byte)

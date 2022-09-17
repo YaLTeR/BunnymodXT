@@ -90,6 +90,8 @@ public:
 	void ClearBulletsEnemyTrace();
 	void TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr);
 
+	void SetStamina(bool makeItZero);
+
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
 	ServerDLL(const ServerDLL&);
@@ -166,6 +168,9 @@ protected:
 	ptrdiff_t pAddToFullPack_PVS_Byte;
 	ptrdiff_t pBhopcapWindows;
 	byte originalBhopcapInsn[6];
+
+	ptrdiff_t pCS_Stamina_Value;
+	ptrdiff_t pCS_Bhopcap;
 
 	bool spirit_sdk = false;
 

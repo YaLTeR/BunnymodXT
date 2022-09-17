@@ -802,6 +802,11 @@ namespace patterns
 			"Echoes",
 			"55 8B EC 81 EC 10 01 00 00 89 8D ?? ?? ?? ?? 8D 4D"
 		);
+
+		PATTERNS(CS_Stamina_Value,
+			"CS-SteamPipe",
+			"00 00 43 79 A4 44"
+		);
 	}
 
 	namespace client
@@ -1028,6 +1033,11 @@ namespace patterns
 			"DSM-Demo-1",
 			"F3 0F 10 86 ?? ?? ?? ?? F3 0F 59 05 ?? ?? ?? ?? C7 86 ?? ?? ?? ?? FF FF FF FF 0F 2F D8 F3 0F 11 44 24 08 0F 83 ?? ?? ?? ?? F3 0F"
 		);
+
+		PATTERNS(Bhopcap_CS,
+			"CS-SteamPipe",
+			"D8 88 F4 01 00 00 D9 EE DF E9 0F 82 5D 02 00 00"
+			)
 
 		PATTERNS(PM_PlayerMove,
 			"HL-SteamPipe",

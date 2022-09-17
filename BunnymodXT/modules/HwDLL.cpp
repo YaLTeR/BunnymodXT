@@ -4804,7 +4804,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	if (is_cstrike || is_czero) {
 		vars.BhopcapMultiplier = 0.8f;
 		vars.BhopcapMaxspeedScale = 1.2f;
-		vars.HasStamina = true;
+		vars.HasStamina = !CVars::bxt_remove_stamina.GetBool();
 		vars.DuckTapSlow = true;
 	} else {
 		vars.BhopcapMultiplier = 0.65f;
@@ -5101,6 +5101,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	ClientDLL::GetInstance().SetAngleSpeedCap(CVars::bxt_anglespeed_cap.GetBool());
 
 	ClientDLL::GetInstance().SetSpeedScaling(CVars::bxt_speed_scaling.GetBool());
+
+	ServerDLL::GetInstance().SetStamina(CVars::bxt_remove_stamina.GetBool());
 
 	RuntimeData::SaveStored();
 

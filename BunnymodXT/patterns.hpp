@@ -1037,7 +1037,12 @@ namespace patterns
 		PATTERNS(Bhopcap_CS,
 			"CS-SteamPipe",
 			"D8 88 F4 01 00 00 D9 EE DF E9 0F 82 5D 02 00 00"
-			)
+		);
+
+		PATTERNS(Bhopcap_CS_Windows,
+			"CS-SteamPipe",
+			"7B 55 D9 44 24 00 D8 99 F4 01 00 00 DF E0 25 00 41 00 00"
+		);
 
 		PATTERNS(PM_PlayerMove,
 			"HL-SteamPipe",

@@ -171,6 +171,7 @@ protected:
 
 	ptrdiff_t pCS_Stamina_Value;
 	ptrdiff_t pCS_Bhopcap;
+	ptrdiff_t pCS_Bhopcap_Windows;
 
 	bool spirit_sdk = false;
 

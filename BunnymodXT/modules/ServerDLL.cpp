@@ -262,6 +262,7 @@ void ServerDLL::Clear()
 	WorldGraph = nullptr;
 	pCS_Stamina_Value = 0;
 	pCS_Bhopcap = 0;
+	pCS_Bhopcap_Windows = 0;
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -386,6 +387,9 @@ void ServerDLL::FindStuff()
 	auto fCS_Bhopcap = FindAsync(
 		pCS_Bhopcap,
 		patterns::shared::Bhopcap_CS);
+	auto fCS_Bhopcap_Windows = FindAsync(
+		pCS_Bhopcap_Windows,
+		patterns::shared::Bhopcap_CS_Windows);
 
 	auto fCBasePlayer__ForceClientDllUpdate = FindAsync(
 		ORIG_CBasePlayer__ForceClientDllUpdate,
@@ -740,6 +744,7 @@ void ServerDLL::FindStuff()
 		auto pattern = fPM_Jump.get();
 		auto pattern2 = fPM_Jump_Bhopcap_Windows.get();
 		auto pattern3 = fCS_Bhopcap.get();
+		auto pattern4 = fCS_Bhopcap_Windows.get();
 		if (ORIG_PM_Jump) {
 			if (pattern == patterns::shared::PM_Jump.cend())
 				EngineDevMsg("[server dll] Found PM_Jump at %p.\n", ORIG_PM_Jump);
@@ -750,7 +755,9 @@ void ServerDLL::FindStuff()
 			if (pBhopcapWindows)
 				EngineDevMsg("[server dll] Found bhopcap jump instruction at %p (using the %s pattern).\n", pBhopcapWindows, pattern2->name());
 			if (pCS_Bhopcap)
-				EngineDevMsg("[server dll] Found bhopcap jump pattern at %p (using the %s pattern).\n", pCS_Bhopcap, pattern3->name());
+				EngineDevMsg("[server dll] Found bhopcap jump pattern at %p (using the %s pattern) [Linux].\n", pCS_Bhopcap, pattern3->name());
+			if (pCS_Bhopcap_Windows)
+				EngineDevMsg("[server dll] Found bhopcap jump pattern at %p (using the %s pattern).\n", pCS_Bhopcap_Windows, pattern4->name());
 
 		} else {
 			EngineDevWarning("[server dll] Could not find PM_Jump.\n");
@@ -1318,6 +1325,20 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Jump)
 		{
 			if (*reinterpret_cast<byte*>(pCS_Bhopcap + 11) == 0x82)
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_Bhopcap + 11), 1, reinterpret_cast<const byte*>("\x83"));
+		}
+	}
+
+	if (pCS_Bhopcap_Windows)
+	{
+		if (CVars::bxt_bhopcap.GetBool())
+		{
+			if (*reinterpret_cast<byte*>(pCS_Bhopcap_Windows) == 0x7A)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_Bhopcap_Windows), 1, reinterpret_cast<const byte*>("\x7B"));
+		}
+		else
+		{
+			if (*reinterpret_cast<byte*>(pCS_Bhopcap_Windows) == 0x7B)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_Bhopcap_Windows), 1, reinterpret_cast<const byte*>("\x7A"));
 		}
 	}
 

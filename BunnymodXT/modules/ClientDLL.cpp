@@ -1451,6 +1451,9 @@ HOOK_DEF_2(ClientDLL, int, __cdecl, HUD_UpdateClientData, client_data_t*, pcldat
 		pEngfuncs->pfnGetScreenInfo = [](SCREENINFO *pscrinfo) { return 0; };
 	}
 
+	if (pEngfuncs && !pEngfuncs->pDemoAPI->IsPlayingback())
+		discord_integration::on_update_client_data();
+
 	const auto rv = ORIG_HUD_UpdateClientData(pcldata, flTime);
 
 	auto &hw = HwDLL::GetInstance();
@@ -1459,8 +1462,6 @@ HOOK_DEF_2(ClientDLL, int, __cdecl, HUD_UpdateClientData, client_data_t*, pcldat
 	if (norefresh && pEngfuncs) {
 		pEngfuncs->pfnGetScreenInfo = ORIG_GetScreenInfo;
 	}
-
-	discord_integration::on_update_client_data();
 
 	return rv;
 }

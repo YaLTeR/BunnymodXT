@@ -175,6 +175,12 @@
 	X(bxt_hud_stamina, "0") \
 	X(bxt_hud_stamina_offset, "") \
 	X(bxt_hud_stamina_anchor, "0.5 0") \
+	X(bxt_hud_split, "0") \
+	X(bxt_hud_split_speed, "0") \
+	X(bxt_hud_split_offset, "") \
+	X(bxt_hud_split_anchor, "") \
+	X(bxt_hud_split_duration, "1") \
+	X(bxt_hud_split_fadeout, "5") \
 	X(bxt_cross, "0") \
 	X(bxt_cross_color, "") \
 	X(bxt_cross_alpha, "") \
@@ -196,7 +202,14 @@
 	X(bxt_show_bullets, "0") \
 	X(bxt_show_bullets_enemy, "0") \
 	X(bxt_anglespeed_cap, "1") \
-	X(bxt_speed_scaling, "1")
+	X(bxt_speed_scaling, "1") \
+	X(bxt_show_splits, "1") \
+	X(bxt_splits_color, "") \
+	X(bxt_splits_print, "1") \
+	X(bxt_splits_print_times_at_end, "1") \
+	X(bxt_splits_autorecord_on_first_split, "") \
+	X(bxt_splits_start_timer_on_first_split, "0") \
+	X(bxt_splits_end_on_last_split, "0")
 
 class CVarWrapper
 {

@@ -958,6 +958,8 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_displacer_earth_targets);
 		REG(bxt_hud_useables);
 		REG(bxt_hud_useables_radius);
+		REG(bxt_show_splits);
+		REG(bxt_splits_color);
 	}
 
 	if (ORIG_V_CalcRefdef) {
@@ -1051,6 +1053,12 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_stamina);
 		REG(bxt_hud_stamina_offset);
 		REG(bxt_hud_stamina_anchor);
+		REG(bxt_hud_split);
+		REG(bxt_hud_split_speed);
+		REG(bxt_hud_split_offset);
+		REG(bxt_hud_split_anchor);
+		REG(bxt_hud_split_duration);
+		REG(bxt_hud_split_fadeout);
 	}
 
 	if (ORIG_HUD_Redraw) {

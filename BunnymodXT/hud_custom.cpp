@@ -7,6 +7,7 @@
 #include "interprocess.hpp"
 #include "runtime_data.hpp"
 #include "opengl_utils.hpp"
+#include "splits.hpp"
 
 #include <GL/gl.h>
 
@@ -355,6 +356,14 @@ namespace CustomHud
 			return DrawNumber(number, x, y, 240, 0, 0, fieldMinWidth);
 		else
 			return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2], fieldMinWidth);
+	}
+
+	static int DrawNumberTimer(int number, int x, int y, int r, int g, int b, int fieldMinWidth = 1)
+	{
+		if (invalidRun)
+			return DrawNumber(number, x, y, 240, 0, 0, fieldMinWidth);
+		else
+			return DrawNumber(number, x, y, r, g, b, fieldMinWidth);
 	}
 
 	static void DrawDecimalSeparator(int x, int y, int r, int g, int b)
@@ -1547,6 +1556,122 @@ namespace CustomHud
 		}
 	}
 
+	void DrawSplit(float flTime)
+	{
+		if (!CVars::bxt_hud_split.GetBool())
+			return;
+
+		if (Splits::splits.empty())
+			return;
+		
+		const auto split = Splits::last_reached;
+		if (!split || !split->get_reached())
+		{
+			// No splits have been touched yet
+			return;
+		}
+		const auto& splitTime = split->get_time();
+
+		auto fadeoutDuration = CVars::bxt_hud_split_fadeout.GetFloat();
+		const auto duration = CVars::bxt_hud_split_duration.GetFloat();
+		if (duration > 0)
+		{
+			const auto& currentTime = GetTime();
+			const auto splitTimeSeconds = (splitTime.hours * 60 * 60) + (splitTime.minutes * 60) + splitTime.seconds + (static_cast<float>(splitTime.milliseconds) / 1000);
+			const auto currentTimeSeconds = (currentTime.hours * 60 * 60) + (currentTime.minutes * 60) + currentTime.seconds + (static_cast<float>(currentTime.milliseconds) / 1000);
+
+			const auto drawTime = (duration + fadeoutDuration) - (currentTimeSeconds - splitTimeSeconds);
+			if (drawTime < 0)
+			{
+				// Drawing time expired, no more drawing until the next split
+				return;
+			}
+			if (fadeoutDuration > drawTime)
+				fadeoutDuration = drawTime;
+		}
+		else
+		{
+			// Since it's gonna be showing the split time permanently with full alpha, there's no fadeout to care about
+			fadeoutDuration = 0.0;
+		}
+
+		int x, y;
+		const auto distToNormalTimer = NumberHeight + 10;
+		if (CVars::bxt_hud_split_anchor.GetString().empty())
+		{
+			// No anchor specified. Draw it just below the normal timer
+			GetPosition(CVars::bxt_hud_split_offset, CVars::bxt_hud_timer_anchor, &x, &y, 0, distToNormalTimer);
+		}
+		else
+			GetPosition(CVars::bxt_hud_split_offset, CVars::bxt_hud_split_anchor, &x, &y, 0, 0);
+
+		auto r = hudColor[0],
+			 g = hudColor[1],
+			 b = hudColor[2];
+
+		if (fadeoutDuration > 0)
+		{
+			const auto factor = fadeoutDuration / CVars::bxt_hud_split_fadeout.GetFloat();
+			r = static_cast<int>(r * factor);
+			g = static_cast<int>(g * factor);
+			b = static_cast<int>(b * factor);
+		}
+
+		if (splitTime.hours)
+		{
+			x = DrawNumberTimer(splitTime.hours, x, y, r, g, b);
+			DrawColon(x, y);
+			x += NumberWidth;
+		}
+
+		if (splitTime.hours || splitTime.minutes)
+		{
+			int fieldMinWidth = (splitTime.hours && splitTime.minutes < 10) ? 2 : 1;
+			x = DrawNumberTimer(splitTime.minutes, x, y, r, g, b, fieldMinWidth);
+			DrawColon(x, y);
+			x += NumberWidth;
+		}
+
+		int fieldMinWidth = ((splitTime.hours || splitTime.minutes) && splitTime.seconds < 10) ? 2 : 1;
+		x = DrawNumberTimer(splitTime.seconds, x, y, r, g, b, fieldMinWidth);
+
+		DrawDecimalSeparator(x, y, r, g, b);
+		x += NumberWidth;
+
+		DrawNumberTimer(splitTime.milliseconds, x, y, r, g, b, 3);
+		
+		if (CVars::bxt_hud_split_speed.GetBool())
+		{
+			// TODO: create a "bxt_hud_split_speed_below_time" cvar and draw it by default next to the time instead of below?
+			// I'm not drawing it next to the time yet because I would like to put a separator like "|" between time and speed,
+			// and I have to figure out how to draw it nicely, similar to the dot or numbers and not like the text in bxt_hud_origin
+			const auto vecSpeed = split->get_speed();
+			double speed = 0.0;
+			if (split->get_track_horizontal())
+			{
+				if (split->get_track_vertical())
+					speed = vecSpeed.Length();
+				else
+					speed = vecSpeed.Length2D();
+			}
+			else if (split->get_track_vertical())
+				speed = vecSpeed.z;
+			else
+				return; // I guess they don't want to print the speed for this specific split
+
+			// Draw it below the split time, which can be right below the timer or elsewhere with its own anchor
+			if (CVars::bxt_hud_split_anchor.GetString().empty())
+				GetPosition(CVars::bxt_hud_split_offset, CVars::bxt_hud_timer_anchor, &x, &y, 0, distToNormalTimer + NumberHeight + 4);
+			else
+				GetPosition(CVars::bxt_hud_split_offset, CVars::bxt_hud_split_anchor, &x, &y, 0, NumberHeight);
+
+			DrawNumberTimer(static_cast<int>(trunc(speed)), x, y, r, g, b);
+		}
+
+		// TODO: draw whatever origin components (x,y,z) this split is tracking? might be too much data on screen,
+		// but we could make a cvar for it
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -1648,6 +1773,7 @@ namespace CustomHud
 		DrawEntities(flTime);
 		DrawCrosshair(flTime);
 		DrawStamina(flTime);
+		DrawSplit(flTime);
 
 		receivedAccurateInfo = false;
 		frame_bulk_selected = false;

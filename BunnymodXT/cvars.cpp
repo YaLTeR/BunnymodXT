@@ -73,6 +73,7 @@ namespace CVars
 	CVarWrapper bxt_render_far_entities("bxt_render_far_entities", "0");
 	CVarWrapper bxt_fire_on_mm_targetname("bxt_fire_on_mm_targetname", "");
 	CVarWrapper bxt_fire_on_mm_command("bxt_fire_on_mm_command", "");
+	CVarWrapper bxt_remove_stamina("bxt_remove_stamina", "0");
 
 	// Clientside CVars
 	CVarWrapper cl_righthand("cl_righthand", "0");
@@ -196,6 +197,7 @@ namespace CVars
 		&bxt_autopause,
 		&bxt_anglespeed_cap,
 		&bxt_speed_scaling,
+		&bxt_remove_stamina,
 		&bxt_interprocess_enable,
 		&bxt_fade_remove,
 		&bxt_skybox_remove,

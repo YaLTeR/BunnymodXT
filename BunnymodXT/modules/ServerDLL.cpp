@@ -2453,16 +2453,11 @@ void ServerDLL::ClearBulletsTrace() {
 
 HOOK_DEF_6(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionUse, void*, thisptr, int, edx, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
-	// trigger_endsection sends you to the menu, effectively stopping the demo,
-	// but not the timer and neither LiveSplit of course, so we have to do it here
-	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
-		if (pev && pev->targetname) {
-			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
-			//if (!std::strcmp(targetname, "tr_endchange")) {
-				//DoAutoStopTasks();
-			//}
-		}
+	// Smiley: HL mods may a player to switch between chapters with a manual select after disconnect, so don't stop timer if bxt_timer_autostop 1
+	// and, naz said that it would useful to have such a extra mode for auto-stopping in own custom campaigns to not make a code changes
+	if (CVars::bxt_timer_autostop.GetInt() == 2) {
+		DoAutoStopTasks();
+		return ORIG_CTriggerEndSection__EndSectionUse(thisptr, edx, pActivator, pCaller, useType, value);
 	}
 
 	return ORIG_CTriggerEndSection__EndSectionUse(thisptr, edx, pActivator, pCaller, useType, value);
@@ -2470,6 +2465,13 @@ HOOK_DEF_6(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionUse, void*
 
 HOOK_DEF_3(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionTouch, void*, thisptr, int, edx, void*, pOther)
 {
+	if (CVars::bxt_timer_autostop.GetInt() == 2) {
+		DoAutoStopTasks();
+		return ORIG_CTriggerEndSection__EndSectionTouch(thisptr, edx, pOther);
+	}
+
+	// trigger_endsection sends you to the menu, effectively stopping the demo,
+	// but not the timer and neither LiveSplit of course, so we have to do it here
 	if (HwDLL::GetInstance().ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {

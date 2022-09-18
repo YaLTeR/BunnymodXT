@@ -2455,14 +2455,30 @@ HOOK_DEF_6(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionUse, void*
 {
 	// trigger_endsection sends you to the menu, effectively stopping the demo,
 	// but not the timer and neither LiveSplit of course, so we have to do it here
-	DoAutoStopTasks();
+	if (HwDLL::GetInstance().ppGlobals) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->targetname) {
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+			//if (!std::strcmp(targetname, "tr_endchange")) {
+				//DoAutoStopTasks();
+			//}
+		}
+	}
 
 	return ORIG_CTriggerEndSection__EndSectionUse(thisptr, edx, pActivator, pCaller, useType, value);
 }
 
 HOOK_DEF_3(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionTouch, void*, thisptr, int, edx, void*, pOther)
 {
-	DoAutoStopTasks();
+	if (HwDLL::GetInstance().ppGlobals) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->targetname) {
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+			if (!std::strcmp(targetname, "tr_endchange")) {
+				DoAutoStopTasks();
+			}
+		}
+	}
 
 	return ORIG_CTriggerEndSection__EndSectionTouch(thisptr, edx, pOther);
 }

@@ -218,7 +218,7 @@ namespace patterns
 			"HL-NGHL",
 			"8B 44 24 14 83 EC 44 56 57 6A 00 50 A1 ?? ?? ?? ?? 8B 90 4C 02 00 00 8D 88 50 02 00 00 8B 44 24 64 51 8B 4C 24 64 52 8B 54 24 64 50 51 8D 44 24 20 52 50 E8",
 			"CoF-5936",
-			"55 8B EC 81 EC 08 01 00 00 56 57 8D 45 ?? 50 8B 4D 0C 51 E8 ?? ?? ?? ?? 83 C4 08 8D 95 ?? ?? ?? ?? 52 8D 85 ?? ?? ?? ?? 50 6A 00"
+			"55 8B EC 81 EC 88 00 00 00 56 57 6A 00"
 		);
 
 		PATTERNS(MiddleOfSV_ReadClientMessage,
@@ -675,9 +675,14 @@ namespace patterns
 			"55 8B EC 83 3D ?? ?? ?? ?? 01 74 ?? 33 C0"
 		);
 
-		PATTERNS(Host_ValidSave_Save_Lock_In_Cof_Byte,
+		PATTERNS(SaveGameSlot,
 			"CoF-5936",
-			"74 ?? 33 C0 E9 ?? ?? ?? ?? 83 3D ?? ?? ?? ?? 00 75 14 68"
+			"55 8B EC 81 EC 8C 02 00 00 E8 ?? ?? ?? ?? 89 45 FC"
+		);
+
+		PATTERNS(CL_HudMessage,
+			"CoF-5936",
+			"55 8B EC 8B 45 ?? 50 8B 4D ?? 51 E8 ?? ?? ?? ?? 83 C4 04"
 		);
 	}
 
@@ -946,6 +951,11 @@ namespace patterns
 		PATTERNS(CS_Stamina_Value,
 			"CS-SteamPipe",
 			"00 00 43 79 A4 44"
+		);
+
+		PATTERNS(PM_UnDuck,
+			"CoF-5936",
+			"53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC 81 EC B0 00 00 00"
 		);
 	}
 

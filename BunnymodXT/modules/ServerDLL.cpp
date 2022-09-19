@@ -141,7 +141,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CBaseEntity__FireBulletsPlayer_Linux, HOOKED_CBaseEntity__FireBulletsPlayer_Linux,
 			ORIG_CBaseButton__ButtonUse, HOOKED_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse, HOOKED_CTriggerEndSection__EndSectionUse,
-			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch);
+			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch,
+			ORIG_PM_UnDuck, HOOKED_PM_UnDuck);
 	}
 }
 
@@ -184,7 +185,8 @@ void ServerDLL::Unhook()
 			ORIG_CBaseMonster__Killed,
 			ORIG_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse,
-			ORIG_CTriggerEndSection__EndSectionTouch);
+			ORIG_CTriggerEndSection__EndSectionTouch,
+			ORIG_PM_UnDuck);
 	}
 
 	Clear();
@@ -244,6 +246,7 @@ void ServerDLL::Clear()
 	ORIG_CBaseButton__ButtonUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionTouch = nullptr;
+	ORIG_PM_UnDuck = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -289,8 +292,15 @@ bool ServerDLL::CanHook(const std::wstring& moduleFullName)
 	if (!IHookableDirFilter::CanHook(moduleFullName))
 		return false;
 
+	std::wstring folderName = GetFolderName(moduleFullName);
+
+	// HACK: In Cry of Fear client and server dlls are in the same directory.
+	// When we are going through cl_dlls skip every dll except hl.dll.
+	if (folderName == L"cl_dlls" && GetFileName(moduleFullName) != L"hl.dll")
+		return false;
+
 	// Filter out addons like metamod which may be located into a "dlls" folder under addons.
-	std::wstring pathToLiblist = moduleFullName.substr(0, moduleFullName.rfind(GetFolderName(moduleFullName))).append(L"liblist.gam");
+	std::wstring pathToLiblist = moduleFullName.substr(0, moduleFullName.rfind(folderName)).append(L"liblist.gam");
 
 	// If liblist.gam exists in the parent directory, then we're (hopefully) good.
 	struct wrapper {
@@ -641,6 +651,7 @@ void ServerDLL::FindStuff()
 	auto fCBaseMonster__Killed = FindAsync(ORIG_CBaseMonster__Killed, patterns::server::CBaseMonster__Killed);
 	auto fCChangeLevel__InTransitionVolume = FindAsync(ORIG_CChangeLevel__InTransitionVolume, patterns::server::CChangeLevel__InTransitionVolume);
 	auto fPM_CheckStuck = FindFunctionAsync(ORIG_PM_CheckStuck, "PM_CheckStuck", patterns::server::PM_CheckStuck);
+	auto fPM_UnDuck = FindAsync(ORIG_PM_UnDuck, patterns::server::PM_UnDuck);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -1231,6 +1242,16 @@ void ServerDLL::FindStuff()
 		}
 	}
 
+	{
+		auto pattern = fPM_UnDuck.get();
+		if (ORIG_PM_UnDuck) {
+			EngineDevMsg("[server dll] Found PM_UnDuck at %p (using the %s pattern).\n", ORIG_PM_UnDuck, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_UnDuck.\n");
+			EngineWarning("Enabling ducktap in Cry of Fear is not available.\n");
+		}
+	}
+
 	auto fCBaseEntity__FireBullets = FindAsync(ORIG_CBaseEntity__FireBullets, patterns::server::CBaseEntity__FireBullets);
 	auto fCBaseEntity__FireBulletsPlayer = FindAsync(ORIG_CBaseEntity__FireBulletsPlayer, patterns::server::CBaseEntity__FireBulletsPlayer);
 
@@ -1312,6 +1333,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_bullets);
 		REG(bxt_show_bullets_enemy);
 	}
+	if (ORIG_PM_UnDuck)
+		REG(bxt_cof_enable_ducktap);
 	#undef REG
 }
 
@@ -2687,4 +2710,17 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionTouch, voi
 	}
 
 	return ORIG_CTriggerEndSection__EndSectionTouch(thisptr, edx, pOther);
+}
+
+HOOK_DEF_0(ServerDLL, void, __cdecl, PM_UnDuck)
+{
+	if (ppmove && offFlags && offInDuck && CVars::bxt_cof_enable_ducktap.GetBool()) {
+		auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
+		int *flags = reinterpret_cast<int*>(pmove + offFlags);
+		bool *inDuck = reinterpret_cast<bool*>(pmove + offInDuck);
+		*flags |= FL_DUCKING;
+		*inDuck = false;
+	}
+
+	ORIG_PM_UnDuck();
 }

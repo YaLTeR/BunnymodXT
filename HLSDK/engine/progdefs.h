@@ -111,6 +111,7 @@ typedef struct entvars_s
 	float		friction;		// inverse elasticity of MOVETYPE_BOUNCE
 	
 	int			light_level;
+	byte		unknown[4];
 
 	int			sequence;		// animation sequence
 	int			gaitsequence;	// movement animation sequence for player (0 for none)
@@ -218,6 +219,9 @@ typedef struct entvars_s
 	edict_t		*euser2;
 	edict_t		*euser3;
 	edict_t		*euser4;
+
+	byte		unknown2[4];	// actual location unknown, required for pointer arithmetic
+								// to work when we iterate through edicts.
 } entvars_t;
 
 

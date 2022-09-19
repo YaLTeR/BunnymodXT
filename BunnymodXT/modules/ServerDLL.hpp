@@ -52,6 +52,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CBaseButton__ButtonUse, void* thisptr, int edx, void* pActivator, void* pCaller, int useType, float value)
 	HOOK_DECL(void, __fastcall, CTriggerEndSection__EndSectionUse, void* thisptr, int edx, void* pActivator, void* pCaller, int useType, float value)
 	HOOK_DECL(void, __fastcall, CTriggerEndSection__EndSectionTouch, void* thisptr, int edx, void* pOther)
+	HOOK_DECL(void, __cdecl, PM_UnDuck)
 
 public:
 	static ServerDLL& GetInstance()
@@ -98,7 +99,7 @@ public:
 	void SetStamina(bool makeItZero);
 
 private:
-	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
+	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};
 	ServerDLL(const ServerDLL&);
 	void operator=(const ServerDLL&);
 

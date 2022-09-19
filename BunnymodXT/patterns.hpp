@@ -599,7 +599,7 @@ namespace patterns
 
 		PATTERNS(ClientDLL_Init,
 			"HL-SteamPipe",
-			"55 8B EC 81 EC 00 02 00 00 68",
+			"55 8B EC 81 EC 00 02 00 00 68 ?? ?? ?? ?? 8D 85 ?? ?? ?? ?? 68",
 			"HL-4554",
 			"81 EC 00 04 00 00 8D 44 24 00 68 ?? 6D ?? ??",
 			"HL-NGHL",

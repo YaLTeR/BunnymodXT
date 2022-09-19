@@ -820,7 +820,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 
-	if (ORIG_PM_Jump)
+	if (ORIG_PM_Jump && !HwDLL::GetInstance().is_cof)
 		REG(bxt_autojump_prediction);
 
 	if (ORIG_PM_PreventMegaBunnyJumping || pBhopcapWindows)

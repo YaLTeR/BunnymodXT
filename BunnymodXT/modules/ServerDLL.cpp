@@ -1298,7 +1298,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 	REG(bxt_timer_autostop);
-	if (ORIG_PM_Jump) {
+	if (ORIG_PM_Jump && !HwDLL::GetInstance().is_cof) {
 		REG(bxt_autojump);
 		REG(bxt_autojump_priority);
 	}

@@ -327,6 +327,8 @@ public:
 
 	bool Called_Timer = false;
 
+	bool is_cof = false;
+
 	void ResetStateBeforeTASPlayback();
 	void StartTASPlayback();
 

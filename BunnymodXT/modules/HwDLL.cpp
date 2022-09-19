@@ -1555,6 +1555,7 @@ void HwDLL::FindStuff()
 					cls = *reinterpret_cast<void**>(f + 105);
 					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 79) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 182);
+					is_cof = true;
 					break;
 				}
 			});
@@ -6199,9 +6200,9 @@ HOOK_DEF_0(HwDLL, int, __cdecl, Host_ValidSave)
 
 HOOK_DEF_2(HwDLL, int, __cdecl, SaveGameSlot, const char*, pSaveName, const char*, pSaveComment)
 {
-	 auto rv = ORIG_SaveGameSlot(pSaveName, pSaveComment);
+	auto rv = ORIG_SaveGameSlot(pSaveName, pSaveComment);
 	// Cry of Fear-specific, draw "Saved..." on the screen.
-	if (ORIG_CL_HudMessage) 
+	if (ORIG_CL_HudMessage)
 		ORIG_CL_HudMessage("GAMESAVED");
 
 	return rv;

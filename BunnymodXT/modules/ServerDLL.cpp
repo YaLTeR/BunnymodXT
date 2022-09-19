@@ -132,7 +132,9 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CBaseEntity__FireBullets, HOOKED_CBaseEntity__FireBullets,
 			ORIG_CBaseEntity__FireBullets_Linux, HOOKED_CBaseEntity__FireBullets_Linux,
 			ORIG_CBaseEntity__FireBulletsPlayer, HOOKED_CBaseEntity__FireBulletsPlayer,
-			ORIG_CBaseEntity__FireBulletsPlayer_Linux, HOOKED_CBaseEntity__FireBulletsPlayer_Linux);
+			ORIG_CBaseEntity__FireBulletsPlayer_Linux, HOOKED_CBaseEntity__FireBulletsPlayer_Linux,
+			ORIG_CTriggerEndSection__EndSectionUse, HOOKED_CTriggerEndSection__EndSectionUse,
+			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch);
 	}
 }
 
@@ -171,7 +173,9 @@ void ServerDLL::Unhook()
 			ORIG_CBaseEntity__FireBullets_Linux,
 			ORIG_CBaseEntity__FireBulletsPlayer,
 			ORIG_CBaseEntity__FireBulletsPlayer_Linux,
-			ORIG_CBaseMonster__Killed);
+			ORIG_CBaseMonster__Killed,
+			ORIG_CTriggerEndSection__EndSectionUse,
+			ORIG_CTriggerEndSection__EndSectionTouch);
 	}
 
 	Clear();
@@ -225,6 +229,8 @@ void ServerDLL::Clear()
 	ORIG_CBaseEntity__FireBulletsPlayer = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer_Linux = nullptr;
 	ORIG_CChangeLevel__InTransitionVolume = nullptr;
+	ORIG_CTriggerEndSection__EndSectionUse = nullptr;
+	ORIG_CTriggerEndSection__EndSectionTouch = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -956,6 +962,18 @@ void ServerDLL::FindStuff()
 		} else {
 			EngineDevWarning("[server dll] Could not find CChangeLevel::UseChangeLevel and CChangeLevel::TouchChangeLevel.\n");
 			EngineWarning("bxt_disable_changelevel is not available.\n");
+		}
+	}
+
+	ORIG_CTriggerEndSection__EndSectionUse = reinterpret_cast<_CTriggerEndSection__EndSectionUse>(MemUtils::GetSymbolAddress(m_Handle, "?EndSectionUse@CTriggerEndSection@@QAEXPAVCBaseEntity@@0W4USE_TYPE@@M@Z"));
+	ORIG_CTriggerEndSection__EndSectionTouch = reinterpret_cast<_CTriggerEndSection__EndSectionTouch>(MemUtils::GetSymbolAddress(m_Handle, "?EndSectionTouch@CTriggerEndSection@@QAEXPAVCBaseEntity@@@Z"));
+	{
+		if (ORIG_CTriggerEndSection__EndSectionUse && ORIG_CTriggerEndSection__EndSectionTouch) {
+			EngineDevMsg("[server dll] Found CTriggerEndSection::EndSectionUse at %p.\n", ORIG_CTriggerEndSection__EndSectionUse);
+			EngineDevMsg("[server dll] Found CTriggerEndSection::EndSectionTouch at %p.\n", ORIG_CTriggerEndSection__EndSectionTouch);
+		} else {
+			EngineDevWarning("[server dll] Could not find CTriggerEndSection::EndSectionUse and CTriggerEndSection::EndSectionTouch.\n");
+			EngineWarning("trigger_endsection automatic timer stopping is not available (e.g.: for Hazard Course).\n");
 		}
 	}
 
@@ -2511,4 +2529,38 @@ void ServerDLL::ClearBulletsEnemyTrace() {
 void ServerDLL::ClearBulletsTrace() {
 	traceLineFireBulletsPlayer.clear();
 	traceLineFireBulletsPlayerHit.clear();
+}
+
+HOOK_DEF_6(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionUse, void*, thisptr, int, edx, void*, pActivator, void*, pCaller, int, useType, float, value)
+{
+	// Smiley: HL mods may a player to switch between chapters with a manual select after disconnect, so don't stop timer if bxt_timer_autostop 1
+	// and, naz said that it would useful to have such a extra mode for auto-stopping in own custom campaigns to not make a code changes
+	if (CVars::bxt_timer_autostop.GetInt() == 2) {
+		DoAutoStopTasks();
+		return ORIG_CTriggerEndSection__EndSectionUse(thisptr, edx, pActivator, pCaller, useType, value);
+	}
+
+	return ORIG_CTriggerEndSection__EndSectionUse(thisptr, edx, pActivator, pCaller, useType, value);
+}
+
+HOOK_DEF_3(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionTouch, void*, thisptr, int, edx, void*, pOther)
+{
+	if (CVars::bxt_timer_autostop.GetInt() == 2) {
+		DoAutoStopTasks();
+		return ORIG_CTriggerEndSection__EndSectionTouch(thisptr, edx, pOther);
+	}
+
+	// trigger_endsection sends you to the menu, effectively stopping the demo,
+	// but not the timer and neither LiveSplit of course, so we have to do it here
+	if (HwDLL::GetInstance().ppGlobals) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->targetname) {
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+			if (!std::strcmp(targetname, "tr_endchange")) {
+				DoAutoStopTasks();
+			}
+		}
+	}
+
+	return ORIG_CTriggerEndSection__EndSectionTouch(thisptr, edx, pOther);
 }

@@ -460,6 +460,7 @@ public:
 	HLStrafe::MovementVars GetMovementVars();
 
 	bool ducktap;
+	edict_t **sv_player;
 protected:
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
@@ -492,7 +493,6 @@ protected:
 	void *svmove;
 	void **ppmove;
 	client_t **host_client;
-	edict_t **sv_player;
 	char *sv_areanodes;
 	cmdbuf_t *cmd_text;
 	double *host_frametime;

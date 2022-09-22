@@ -1313,7 +1313,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_fire_on_stuck);
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
-	if (pCS_Stamina_Value)
+	if (pCS_Stamina_Value || HwDLL::GetInstance().is_cof)
 		REG(bxt_remove_stamina);
 	if (ORIG_CChangeLevel__UseChangeLevel && ORIG_CChangeLevel__TouchChangeLevel)
 		REG(bxt_disable_changelevel);
@@ -1528,6 +1528,15 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 			HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
 		}
 		not_stuck_prev_frame = !stuck_cur_frame;
+	}
+
+	if (HwDLL::GetInstance().is_cof && CVars::bxt_remove_stamina.GetBool())
+	{
+		void* classPtr = (*HwDLL::GetInstance().sv_player)->v.pContainingEntity->pvPrivateData;
+		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+		ptrdiff_t offm_fStamina = 0x21F0;
+		float* m_fStamina = reinterpret_cast<float*>(thisAddr + offm_fStamina);
+		*m_fStamina = 100.0;
 	}
 
 	if (!ppmove)

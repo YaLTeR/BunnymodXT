@@ -73,6 +73,8 @@ namespace CVars
 	CVarWrapper bxt_render_far_entities("bxt_render_far_entities", "0");
 	CVarWrapper bxt_fire_on_mm_targetname("bxt_fire_on_mm_targetname", "");
 	CVarWrapper bxt_fire_on_mm_command("bxt_fire_on_mm_command", "");
+	CVarWrapper bxt_fire_on_button_target("bxt_fire_on_button_target", "");
+	CVarWrapper bxt_fire_on_button_command("bxt_fire_on_button_command", "");
 	CVarWrapper bxt_remove_stamina("bxt_remove_stamina", "0");
 
 	// Clientside CVars
@@ -266,6 +268,8 @@ namespace CVars
 		&bxt_render_far_entities,
 		&bxt_fire_on_mm_targetname,
 		&bxt_fire_on_mm_command,
+		&bxt_fire_on_button_target,
+		&bxt_fire_on_button_command,
 		&bxt_show_triggers,
 		&bxt_show_triggers_legacy,
 		&bxt_collision_depth_map,

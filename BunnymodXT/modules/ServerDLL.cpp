@@ -133,6 +133,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CBaseEntity__FireBullets_Linux, HOOKED_CBaseEntity__FireBullets_Linux,
 			ORIG_CBaseEntity__FireBulletsPlayer, HOOKED_CBaseEntity__FireBulletsPlayer,
 			ORIG_CBaseEntity__FireBulletsPlayer_Linux, HOOKED_CBaseEntity__FireBulletsPlayer_Linux,
+			ORIG_CBaseButton__ButtonUse, HOOKED_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse, HOOKED_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch);
 	}
@@ -174,6 +175,7 @@ void ServerDLL::Unhook()
 			ORIG_CBaseEntity__FireBulletsPlayer,
 			ORIG_CBaseEntity__FireBulletsPlayer_Linux,
 			ORIG_CBaseMonster__Killed,
+			ORIG_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch);
 	}
@@ -229,6 +231,7 @@ void ServerDLL::Clear()
 	ORIG_CBaseEntity__FireBulletsPlayer = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer_Linux = nullptr;
 	ORIG_CChangeLevel__InTransitionVolume = nullptr;
+	ORIG_CBaseButton__ButtonUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionTouch = nullptr;
 	ppmove = nullptr;
@@ -965,6 +968,16 @@ void ServerDLL::FindStuff()
 		}
 	}
 
+	ORIG_CBaseButton__ButtonUse = reinterpret_cast<_CBaseButton__ButtonUse>(MemUtils::GetSymbolAddress(m_Handle, "?ButtonUse@CBaseButton@@QAEXPAVCBaseEntity@@0W4USE_TYPE@@M@Z"));
+	{
+		if (ORIG_CBaseButton__ButtonUse) {
+			EngineDevMsg("[server dll] Found CBaseButton::ButtonUse at %p.\n", ORIG_CBaseButton__ButtonUse);
+		}
+		else {
+			EngineDevWarning("[server dll] Could not find CBaseButton::ButtonUse.\n");
+		}
+	}
+
 	ORIG_CTriggerEndSection__EndSectionUse = reinterpret_cast<_CTriggerEndSection__EndSectionUse>(MemUtils::GetSymbolAddress(m_Handle, "?EndSectionUse@CTriggerEndSection@@QAEXPAVCBaseEntity@@0W4USE_TYPE@@M@Z"));
 	ORIG_CTriggerEndSection__EndSectionTouch = reinterpret_cast<_CTriggerEndSection__EndSectionTouch>(MemUtils::GetSymbolAddress(m_Handle, "?EndSectionTouch@CTriggerEndSection@@QAEXPAVCBaseEntity@@@Z"));
 	{
@@ -1242,6 +1255,10 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_CMultiManager__ManagerThink || ORIG_FireTargets_Linux) {
 		REG(bxt_fire_on_mm_targetname);
 		REG(bxt_fire_on_mm_command);
+	}
+	if (ORIG_CBaseButton__ButtonUse) {
+		REG(bxt_fire_on_button_target);
+		REG(bxt_fire_on_button_command);
 	}
 	if ((ORIG_CBaseEntity__FireBullets && ORIG_CBaseEntity__FireBulletsPlayer) || (ORIG_CBaseEntity__FireBullets_Linux && ORIG_CBaseEntity__FireBulletsPlayer_Linux)) {
 		REG(bxt_show_bullets);
@@ -2529,6 +2546,27 @@ void ServerDLL::ClearBulletsEnemyTrace() {
 void ServerDLL::ClearBulletsTrace() {
 	traceLineFireBulletsPlayer.clear();
 	traceLineFireBulletsPlayerHit.clear();
+}
+
+HOOK_DEF_6(ServerDLL, void, __fastcall, CBaseButton__ButtonUse, void*, thisptr, int, edx, void*, pActivator, void*, pCaller, int, useType, float, value)
+{
+	if (HwDLL::GetInstance().ppGlobals) {
+		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->target) {
+			const char* target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
+			if (!CVars::bxt_fire_on_button_target.IsEmpty() && !CVars::bxt_fire_on_button_command.IsEmpty()) {
+				if (!std::strcmp(target, CVars::bxt_fire_on_button_target.GetString().c_str()))
+				{
+					std::ostringstream ss;
+					ss << CVars::bxt_fire_on_button_command.GetString().c_str() << "\n";
+
+					HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+				}
+			}
+		}
+	}
+
+	return ORIG_CBaseButton__ButtonUse(thisptr, edx, pActivator, pCaller, useType, value);
 }
 
 HOOK_DEF_6(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionUse, void*, thisptr, int, edx, void*, pActivator, void*, pCaller, int, useType, float, value)

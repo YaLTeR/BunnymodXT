@@ -1530,13 +1530,13 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		not_stuck_prev_frame = !stuck_cur_frame;
 	}
 
-	if (HwDLL::GetInstance().is_cof && CVars::bxt_remove_stamina.GetBool())
+	if (HwDLL::GetInstance().is_cof)
 	{
 		void* classPtr = (*HwDLL::GetInstance().sv_player)->v.pContainingEntity->pvPrivateData;
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-		ptrdiff_t offm_fStamina = 0x21F0;
-		float* m_fStamina = reinterpret_cast<float*>(thisAddr + offm_fStamina);
-		*m_fStamina = 100.0;
+		ptrdiff_t offm_bInfiniteStamina = 0x21E8;
+		int* m_bInfiniteStamina = reinterpret_cast<int*>(thisAddr + offm_bInfiniteStamina);
+		*m_bInfiniteStamina = CVars::bxt_remove_stamina.GetBool() ? 1 : 0;
 	}
 
 	if (!ppmove)

@@ -107,6 +107,8 @@ protected:
 	_CBasePlayer__ForceClientDllUpdate ORIG_CBasePlayer__ForceClientDllUpdate;
 	typedef void(__cdecl *_CBasePlayer__ForceClientDllUpdate_Linux)(void *thisptr);
 	_CBasePlayer__ForceClientDllUpdate_Linux ORIG_CBasePlayer__ForceClientDllUpdate_Linux;
+	typedef int(__cdecl* _PM_CheckStuck)();
+	_PM_CheckStuck ORIG_PM_CheckStuck;
 	typedef void*(__cdecl *_PM_Ladder)();
 	_PM_Ladder ORIG_PM_Ladder;
 	typedef int(__cdecl *_CChangeLevel__InTransitionVolume)(void *pEntity, char *pVolumeName);

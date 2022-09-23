@@ -81,7 +81,7 @@ namespace CustomHud
 		float realyaw;
 		float health;
 		float armor;
-		
+
 		float stamina;
 	};
 	static FrameBulkStatus frame_bulk_status;
@@ -557,14 +557,25 @@ namespace CustomHud
 	{
 		if (CVars::bxt_hud_viewangles.GetBool())
 		{
+			const auto& cl = ClientDLL::GetInstance();
+
 			int x, y;
 			GetPosition(CVars::bxt_hud_viewangles_offset, CVars::bxt_hud_viewangles_anchor, &x, &y, -200, (si.iCharHeight * 10) + 2);
 
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
 			out.precision(precision);
-			out << "Pitch: " << player.viewangles[0] << "\n"
+
+			if (CVars::bxt_hud_viewangles.GetInt() == 2)
+			{
+				out << "Pitch: " << cl.last_viewangles[0] << "\n"
+				<< "Yaw: " << cl.last_viewangles[1];
+			}
+			else
+			{
+				out << "Pitch: " << player.viewangles[0] << "\n"
 				<< "Yaw: " << player.viewangles[1];
+			}
 
 			DrawMultilineString(x, y, out.str());
 		}

@@ -224,6 +224,7 @@ void ServerDLL::Clear()
 	ORIG_CTriggerSave__SaveTouch_Linux = nullptr;
 	ORIG_CChangeLevel__UseChangeLevel = nullptr;
 	ORIG_CChangeLevel__TouchChangeLevel = nullptr;
+	ORIG_PM_CheckStuck = nullptr;
 	ORIG_CBaseEntity__FireBullets = nullptr;
 	ORIG_CBaseEntity__FireBullets_Linux = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer = nullptr;
@@ -618,6 +619,7 @@ void ServerDLL::FindStuff()
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
 	auto fCBaseMonster__Killed = FindAsync(ORIG_CBaseMonster__Killed, patterns::server::CBaseMonster__Killed);
 	auto fCChangeLevel__InTransitionVolume = FindAsync(ORIG_CChangeLevel__InTransitionVolume, patterns::server::CChangeLevel__InTransitionVolume);
+	auto fPM_CheckStuck = FindFunctionAsync(ORIG_PM_CheckStuck, "PM_CheckStuck", patterns::server::PM_CheckStuck);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -1162,6 +1164,18 @@ void ServerDLL::FindStuff()
 	}
 
 	{
+		auto pattern = fPM_CheckStuck.get();
+		if (ORIG_PM_CheckStuck) {
+			if (pattern == patterns::server::PM_CheckStuck.cend())
+				EngineDevMsg("[server dll] Found PM_CheckStuck at %p.\n", ORIG_PM_CheckStuck);
+			else
+				EngineDevMsg("[server dll] Found PM_CheckStuck at %p (using the %s pattern).\n", ORIG_PM_CheckStuck, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_CheckStuck.\n");
+		}
+	}
+
+	{
 		auto pattern = fDispatchRestore.get();
 		if (pDispatchRestore) {
 			EngineDevMsg("[server dll] Found DispatchRestore at %p (using the %s pattern).\n", pDispatchRestore, pattern->name());
@@ -1229,6 +1243,10 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_triggers_legacy);
 		REG(bxt_render_far_entities);
 	}
+	if (ORIG_PM_CheckStuck) {
+		REG(bxt_stucksave);
+		REG(bxt_stucksave_command);
+	}
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
 	if (pCS_Stamina_Value)
@@ -1240,6 +1258,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_PM_PlayerMove && ORIG_PM_Jump)
 		REG(bxt_force_jumpless);
 	if (ORIG_CMultiManager__ManagerThink || ORIG_FireTargets_Linux) {
+		REG(bxt_fire_on_mm);
 		REG(bxt_fire_on_mm_targetname);
 		REG(bxt_fire_on_mm_command);
 	}
@@ -1426,6 +1445,14 @@ void ServerDLL::LogPlayerMove(bool pre, uintptr_t pmove) const
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 {
+	if (CVars::bxt_stucksave.GetBool() && !CVars::bxt_stucksave_command.IsEmpty() && ORIG_PM_CheckStuck())
+	{
+		std::ostringstream ss;
+		ss << CVars::bxt_stucksave_command.GetString().c_str() << "\n";
+
+		HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+	}
+
 	if (!ppmove)
 		return ORIG_PM_PlayerMove(server);
 
@@ -1808,7 +1835,7 @@ void ServerDLL::OnMultiManagerFired(const char *targetname)
 		DoAutoStopTasks();
 	}
 
-	if (!CVars::bxt_fire_on_mm_targetname.IsEmpty() && !CVars::bxt_fire_on_mm_command.IsEmpty()) {
+	if (CVars::bxt_fire_on_mm.GetBool() && !CVars::bxt_fire_on_mm_targetname.IsEmpty() && !CVars::bxt_fire_on_mm_command.IsEmpty()) {
 		if (!std::strcmp(targetname, CVars::bxt_fire_on_mm_targetname.GetString().c_str()))
 		{
 			std::ostringstream ss;

@@ -58,6 +58,8 @@ namespace CVars
 	CVarWrapper skill;
 
 	// Serverside CVars
+	CVarWrapper bxt_stucksave("bxt_stucksave", "0");
+	CVarWrapper bxt_stucksave_command("bxt_stucksave_command", "");
 	CVarWrapper bxt_autojump("bxt_autojump", "0");
 	CVarWrapper bxt_autojump_priority("bxt_autojump_priority", "1");
 	CVarWrapper bxt_bhopcap("bxt_bhopcap", "1");
@@ -71,6 +73,7 @@ namespace CVars
 	CVarWrapper bxt_force_duck("bxt_force_duck", "0");
 	CVarWrapper bxt_force_jumpless("bxt_force_jumpless", "0");
 	CVarWrapper bxt_render_far_entities("bxt_render_far_entities", "0");
+	CVarWrapper bxt_fire_on_mm("bxt_fire_on_mm", "0");
 	CVarWrapper bxt_fire_on_mm_targetname("bxt_fire_on_mm_targetname", "");
 	CVarWrapper bxt_fire_on_mm_command("bxt_fire_on_mm_command", "");
 	CVarWrapper bxt_remove_stamina("bxt_remove_stamina", "0");
@@ -243,6 +246,8 @@ namespace CVars
 		&fps_max,
 		&default_fov,
 		&skill,
+		&bxt_stucksave,
+		&bxt_stucksave_command,
 		&bxt_autojump,
 		&bxt_bhopcap,
 		&bxt_timer_autostop,
@@ -264,6 +269,7 @@ namespace CVars
 		&bxt_wallhack_alpha,
 		&bxt_novis,
 		&bxt_render_far_entities,
+		&bxt_fire_on_mm,
 		&bxt_fire_on_mm_targetname,
 		&bxt_fire_on_mm_command,
 		&bxt_show_triggers,

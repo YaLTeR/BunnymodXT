@@ -186,7 +186,6 @@ namespace CVars
 	extern CVarWrapper bxt_force_duck;
 	extern CVarWrapper bxt_force_jumpless;
 	extern CVarWrapper bxt_render_far_entities;
-	extern CVarWrapper bxt_fire_on_mm;
 	extern CVarWrapper bxt_fire_on_mm_targetname;
 	extern CVarWrapper bxt_fire_on_mm_command;
 	extern CVarWrapper bxt_remove_stamina;

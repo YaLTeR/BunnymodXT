@@ -1244,8 +1244,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_render_far_entities);
 	}
 	if (ORIG_PM_CheckStuck) {
-		REG(bxt_stucksave);
-		REG(bxt_stucksave_command);
+		REG(bxt_fire_on_stuck);
+		REG(bxt_fire_on_stuck_command);
 	}
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
@@ -1444,10 +1444,10 @@ void ServerDLL::LogPlayerMove(bool pre, uintptr_t pmove) const
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 {
-	if (CVars::bxt_stucksave.GetBool() && !CVars::bxt_stucksave_command.IsEmpty() && ORIG_PM_CheckStuck())
+	if (CVars::bxt_fire_on_stuck.GetBool() && !CVars::bxt_fire_on_stuck_command.IsEmpty() && ORIG_PM_CheckStuck())
 	{
 		std::ostringstream ss;
-		ss << CVars::bxt_stucksave_command.GetString().c_str() << "\n";
+		ss << CVars::bxt_fire_on_stuck_command.GetString().c_str() << "\n";
 
 		HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
 	}

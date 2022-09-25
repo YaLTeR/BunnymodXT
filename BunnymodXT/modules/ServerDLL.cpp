@@ -1243,10 +1243,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_triggers_legacy);
 		REG(bxt_render_far_entities);
 	}
-	if (ORIG_PM_CheckStuck) {
+	if (ORIG_PM_CheckStuck)
 		REG(bxt_fire_on_stuck);
-		REG(bxt_fire_on_stuck_command);
-	}
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
 	if (pCS_Stamina_Value)
@@ -1444,10 +1442,13 @@ void ServerDLL::LogPlayerMove(bool pre, uintptr_t pmove) const
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 {
-	if (CVars::bxt_fire_on_stuck.GetBool() && !CVars::bxt_fire_on_stuck_command.IsEmpty() && ORIG_PM_CheckStuck())
+	bool stuck_cur_frame = ORIG_PM_CheckStuck();
+	static bool not_stuck_prev_frame = false;
+
+	if (!CVars::bxt_fire_on_stuck.IsEmpty() && stuck_cur_frame && not_stuck_prev_frame)
 	{
 		std::ostringstream ss;
-		ss << CVars::bxt_fire_on_stuck_command.GetString().c_str() << "\n";
+		ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
 
 		HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
 	}
@@ -1520,6 +1521,8 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	}
 
 	CustomHud::UpdatePlayerInfo(velocity, origin);
+
+	not_stuck_prev_frame = !stuck_cur_frame;
 }
 
 HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal, float*, out, float, overbounce)

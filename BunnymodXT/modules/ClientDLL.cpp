@@ -1378,10 +1378,17 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Init)
 {
 	ORIG_HUD_Init();
 
-	if (!HwDLL::GetInstance().ORIG_Cvar_FindVar("cl_righthand"))
+	auto& hw = HwDLL::GetInstance();
+
+	if (!hw.ORIG_Cvar_FindVar("cl_righthand"))
 	{
 		orig_righthand_not_found = true;
-		HwDLL::GetInstance().RegisterCVar(CVars::cl_righthand);
+		hw.RegisterCVar(CVars::cl_righthand);
+	}
+
+	if (hw.is_cof)
+	{
+		hw.ORIG_Cmd_AddCommand("notarget", hw.ORIG_Host_Notarget_f);
 	}
 
 	CustomHud::Init();

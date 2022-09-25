@@ -26,6 +26,10 @@ namespace discord_integration
 		// Start timestamp
 		int64_t start_timestamp;
 
+		// Shortcuts for call ClientDLL or HwDLL functions
+		auto &cl = ClientDLL::GetInstance();
+		auto &hw = HwDLL::GetInstance();
+
 		// Class that handles tracking state changes.
 		class DiscordState {
 		public:
@@ -48,7 +52,7 @@ namespace discord_integration
 
 			inline static size_t get_map_name(char* dest, size_t count)
 			{
-				auto map_path = ClientDLL::GetInstance().pEngfuncs->pfnGetLevelName();
+				auto map_path = cl.pEngfuncs->pfnGetLevelName();
 
 				const char* slash = strrchr(map_path, '/');
 				if (!slash)
@@ -73,9 +77,9 @@ namespace discord_integration
 
 			inline void update_presence_if_dirty()
 			{
-				if (HwDLL::GetInstance().Called_Timer)
+				if (hw.Called_Timer)
 				{
-					HwDLL::GetInstance().Called_Timer = false;
+					hw.Called_Timer = false;
 
 					dirty = true;
 				}
@@ -106,27 +110,21 @@ namespace discord_integration
 
 				if (cur_state != game_state::NOT_PLAYING)
 				{
-					if (ClientDLL::GetInstance().pEngfuncs)
+					if (cl.pEngfuncs)
 					{
 						// Get the map name and icon.
 						get_map_name(map_name, ARRAYSIZE_HL(map_name));
 						if (map_name[0])
 						{
 							// Game directory
-							const char* gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+							const char* gameDir = cl.pEngfuncs->pfnGetGameDirectory();
 							char gd[1024];
 
-							// Adjust to lowercase
-							unsigned char *map_lw = (unsigned char *)map_name;
-							while (*map_lw) {
-								*map_lw = tolower(*map_lw);
-								map_lw++;
-							}
+							// Adjust map_name to lowercase
+							cl.ConvertToLowerCase(map_name);
 
-							if (gameDir && gameDir[0])
-								ClientDLL::GetInstance().FileBase(gameDir, gd);
+							cl.FileBase(gameDir, gd);
 
-							auto &hw = HwDLL::GetInstance();
 							if (hw.ORIG_build_number)
 								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s | Build: %i", map_name, gd, hw.ORIG_build_number());
 							else
@@ -135,11 +133,8 @@ namespace discord_integration
 							presence.largeImageText = map_name;
 							presence.details = buffer_details;
 
-							unsigned char *gd_lw = (unsigned char *)gd;
-							while (*gd_lw) {
-								*gd_lw = tolower(*gd_lw);
-								gd_lw++;
-							}
+							// Adjust gameDir to lowercase
+							cl.ConvertToLowerCase(gd);
 
 							if (!strncmp(gd, "valve", 5) || !strncmp(gd, "abh", 3) || !strncmp(gd, "glitchless", 10))
 							{
@@ -336,7 +331,7 @@ namespace discord_integration
 				}
 				else if ((gt.milliseconds == 0 && total_time == 0) && !CustomHud::GetCountingTime())
 				{
-					if (ClientDLL::GetInstance().pEngfuncs && ClientDLL::GetInstance().pEngfuncs->pDemoAPI->IsPlayingback()) {
+					if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback()) {
 						presence.smallImageKey = "discord_brown";
 						presence.smallImageText = "Watching a demo";
 					} else {
@@ -351,7 +346,7 @@ namespace discord_integration
 					snprintf(buffer_stop, sizeof(buffer_stop), "Timer stopped at %d:%02d:%02d.%03d", gt.hours, gt.minutes, gt.seconds, gt.milliseconds);
 					presence.state = buffer_stop;
 
-					if (ClientDLL::GetInstance().pEngfuncs && ClientDLL::GetInstance().pEngfuncs->pDemoAPI->IsPlayingback()) {
+					if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback()) {
 						presence.smallImageKey = "discord_brown";
 						presence.smallImageText = "Watching a demo";
 					} else {
@@ -381,20 +376,20 @@ namespace discord_integration
 
 		void handle_ready(const DiscordUser*)
 		{
-			if (ClientDLL::GetInstance().pEngfuncs)
-				ClientDLL::GetInstance().pEngfuncs->Con_Printf(const_cast<char*>("Connected to Discord.\n"));
+			if (cl.pEngfuncs)
+				cl.pEngfuncs->Con_Printf(const_cast<char*>("Connected to Discord.\n"));
 		}
 
 		void handle_errored(int error_code, const char* message)
 		{
-			if (ClientDLL::GetInstance().pEngfuncs)
-				ClientDLL::GetInstance().pEngfuncs->Con_Printf(const_cast<char*>("Discord error (%d): %s\n"), error_code, message);
+			if (cl.pEngfuncs)
+				cl.pEngfuncs->Con_Printf(const_cast<char*>("Discord error (%d): %s\n"), error_code, message);
 		}
 
 		void handle_disconnected(int error_code, const char* message)
 		{
-			if (ClientDLL::GetInstance().pEngfuncs)
-				ClientDLL::GetInstance().pEngfuncs->Con_Printf(const_cast<char*>("Disconnected from Discord (%d): %s\n"), error_code, message);
+			if (cl.pEngfuncs)
+				cl.pEngfuncs->Con_Printf(const_cast<char*>("Disconnected from Discord (%d): %s\n"), error_code, message);
 		}
 	}
 
@@ -430,7 +425,7 @@ namespace discord_integration
 		static float FPS_previous = FPS_current;
 
 		if (FPS_current != FPS_previous)
-			HwDLL::GetInstance().Called_Timer = true;
+			hw.Called_Timer = true;
 
 		FPS_previous = FPS_current;
 

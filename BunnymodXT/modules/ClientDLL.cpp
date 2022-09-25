@@ -1029,6 +1029,15 @@ void ClientDLL::FileBase(const char *in, char *out)
 	out[len] = 0;
 }
 
+void ClientDLL::ConvertToLowerCase(const char *str)
+{
+	unsigned char *str_lw = (unsigned char *)str;
+	while (*str_lw) {
+		*str_lw = tolower(*str_lw);
+		str_lw++;
+	}
+}
+
 bool ClientDLL::DoesGameDirMatch(const char *game)
 {
 	if (!pEngfuncs)
@@ -1040,12 +1049,7 @@ bool ClientDLL::DoesGameDirMatch(const char *game)
 	if (gameDir && gameDir[0])
 	{
 		FileBase(gameDir, gd);
-
-		unsigned char *gd_lw = (unsigned char *)gd;
-		while (*gd_lw) {
-			*gd_lw = tolower(*gd_lw);
-			gd_lw++;
-		}
+		ConvertToLowerCase(gd);
 	}
 
 	return !std::strcmp(gd, game);
@@ -1062,12 +1066,7 @@ bool ClientDLL::DoesGameDirContain(const char *game)
 	if (gameDir && gameDir[0])
 	{
 		FileBase(gameDir, gd);
-
-		unsigned char *gd_lw = (unsigned char *)gd;
-		while (*gd_lw) {
-			*gd_lw = tolower(*gd_lw);
-			gd_lw++;
-		}
+		ConvertToLowerCase(gd);
 	}
 
 	return std::strstr(gd, game);

@@ -98,6 +98,7 @@ public:
 	void SetSpeedScaling(bool scaled);
 
 	void FileBase(const char *in, char *out);
+	void ConvertToLowerCase(const char *str);
 
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};

@@ -112,12 +112,12 @@ namespace discord_integration
 				{
 					if (cl.pEngfuncs)
 					{
+						// Game directory.
+						const char* gameDir = cl.pEngfuncs->pfnGetGameDirectory();
 						// Get the map name and icon.
 						get_map_name(map_name, ARRAYSIZE_HL(map_name));
-						if (map_name[0])
+						if (gameDir && gameDir[0] && map_name[0])
 						{
-							// Game directory
-							const char* gameDir = cl.pEngfuncs->pfnGetGameDirectory();
 							char gd[1024];
 
 							// Adjust map_name to lowercase

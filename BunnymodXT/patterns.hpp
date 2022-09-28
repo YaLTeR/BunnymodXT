@@ -955,7 +955,9 @@ namespace patterns
 			"HL-Steampipe",
 			"83 EC 7C 8D 44 24 38 53 56 57 50 A1 ?? ?? ?? ?? 8D 48 38 51",
 			"HL-WON",
-			"83 EC 7C 8D 44 24 38 56 57 50 A1 ?? ?? ?? ?? 8D 48 38 51"
+			"83 EC 7C 8D 44 24 38 56 57 50 A1 ?? ?? ?? ?? 8D 48 38 51",
+			"CoF-5936",
+			"55 8B EC 81 EC 80 00 00 00 A1 ?? ?? ?? ?? 33 C5"
 		);
 
 		PATTERNS(CS_Stamina_Value,

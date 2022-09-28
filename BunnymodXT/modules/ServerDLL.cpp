@@ -226,6 +226,7 @@ void ServerDLL::Clear()
 	ORIG_CTriggerSave__SaveTouch_Linux = nullptr;
 	ORIG_CChangeLevel__UseChangeLevel = nullptr;
 	ORIG_CChangeLevel__TouchChangeLevel = nullptr;
+	ORIG_PM_CheckStuck = nullptr;
 	ORIG_CBaseEntity__FireBullets = nullptr;
 	ORIG_CBaseEntity__FireBullets_Linux = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer = nullptr;
@@ -621,6 +622,7 @@ void ServerDLL::FindStuff()
 	auto fCBasePlayer__CheatImpulseCommands = FindAsync(ORIG_CBasePlayer__CheatImpulseCommands, patterns::server::CBasePlayer__CheatImpulseCommands);
 	auto fCBaseMonster__Killed = FindAsync(ORIG_CBaseMonster__Killed, patterns::server::CBaseMonster__Killed);
 	auto fCChangeLevel__InTransitionVolume = FindAsync(ORIG_CChangeLevel__InTransitionVolume, patterns::server::CChangeLevel__InTransitionVolume);
+	auto fPM_CheckStuck = FindFunctionAsync(ORIG_PM_CheckStuck, "PM_CheckStuck", patterns::server::PM_CheckStuck);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -1175,6 +1177,18 @@ void ServerDLL::FindStuff()
 	}
 
 	{
+		auto pattern = fPM_CheckStuck.get();
+		if (ORIG_PM_CheckStuck) {
+			if (pattern == patterns::server::PM_CheckStuck.cend())
+				EngineDevMsg("[server dll] Found PM_CheckStuck at %p.\n", ORIG_PM_CheckStuck);
+			else
+				EngineDevMsg("[server dll] Found PM_CheckStuck at %p (using the %s pattern).\n", ORIG_PM_CheckStuck, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_CheckStuck.\n");
+		}
+	}
+
+	{
 		auto pattern = fDispatchRestore.get();
 		if (pDispatchRestore) {
 			EngineDevMsg("[server dll] Found DispatchRestore at %p (using the %s pattern).\n", pDispatchRestore, pattern->name());
@@ -1242,6 +1256,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_triggers_legacy);
 		REG(bxt_render_far_entities);
 	}
+	if (ORIG_PM_CheckStuck)
+		REG(bxt_fire_on_stuck);
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
 	if (pCS_Stamina_Value)
@@ -1443,6 +1459,17 @@ void ServerDLL::LogPlayerMove(bool pre, uintptr_t pmove) const
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 {
+	bool stuck_cur_frame = ORIG_PM_CheckStuck();
+	static bool not_stuck_prev_frame = false;
+
+	if (!CVars::bxt_fire_on_stuck.IsEmpty() && stuck_cur_frame && not_stuck_prev_frame)
+	{
+		std::ostringstream ss;
+		ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
+
+		HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+	}
+
 	if (!ppmove)
 		return ORIG_PM_PlayerMove(server);
 
@@ -1511,6 +1538,8 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	}
 
 	CustomHud::UpdatePlayerInfo(velocity, origin);
+
+	not_stuck_prev_frame = !stuck_cur_frame;
 }
 
 HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal, float*, out, float, overbounce)

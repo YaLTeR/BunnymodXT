@@ -58,6 +58,7 @@ namespace CVars
 	CVarWrapper skill;
 
 	// Serverside CVars
+	CVarWrapper bxt_fire_on_stuck("bxt_fire_on_stuck", "");
 	CVarWrapper bxt_autojump("bxt_autojump", "0");
 	CVarWrapper bxt_autojump_priority("bxt_autojump_priority", "1");
 	CVarWrapper bxt_bhopcap("bxt_bhopcap", "1");
@@ -245,6 +246,7 @@ namespace CVars
 		&fps_max,
 		&default_fov,
 		&skill,
+		&bxt_fire_on_stuck,
 		&bxt_autojump,
 		&bxt_bhopcap,
 		&bxt_timer_autostop,

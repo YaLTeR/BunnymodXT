@@ -803,6 +803,13 @@ namespace patterns
 			"55 8B EC 81 EC 10 01 00 00 89 8D ?? ?? ?? ?? 8D 4D"
 		);
 
+		PATTERNS(PM_CheckStuck,
+			"HL-Steampipe",
+			"83 EC 7C 8D 44 24 38 53 56 57 50 A1 ?? ?? ?? ?? 8D 48 38 51",
+			"HL-WON",
+			"83 EC 7C 8D 44 24 38 56 57 50 A1 ?? ?? ?? ?? 8D 48 38 51"
+		);
+
 		PATTERNS(CS_Stamina_Value,
 			"CS-SteamPipe",
 			"00 00 43 79 A4 44"

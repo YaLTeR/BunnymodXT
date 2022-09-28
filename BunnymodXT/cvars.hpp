@@ -171,6 +171,7 @@ namespace CVars
 	extern CVarWrapper skill;
 
 	// Serverside CVars
+	extern CVarWrapper bxt_fire_on_stuck;
 	extern CVarWrapper bxt_autojump;
 	extern CVarWrapper bxt_autojump_priority;
 	extern CVarWrapper bxt_bhopcap;

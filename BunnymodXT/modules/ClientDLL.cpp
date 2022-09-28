@@ -286,6 +286,7 @@ void ClientDLL::Clear()
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
+	offIUser1 = 0;
 	offBhopcap = 0;
 	pBhopcapWindows = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
@@ -318,6 +319,7 @@ void ClientDLL::FindStuff()
 		[&](auto pattern) {
 			offOldbuttons = 200;
 			offOnground = 224;
+			offIUser1 = 508;
 			if (pattern == patterns::shared::PM_Jump.cend()) // Linux.
 			{
 				void *bhopcapAddr;
@@ -992,24 +994,82 @@ void ClientDLL::StudioAdjustViewmodelAttachments(Vector &vOrigin)
 	vOrigin = last_vieworg + vOut;
 }
 
+void ClientDLL::FileBase(const char *in, char *out)
+{
+	int len, start, end;
+
+	len = strlen(in);
+
+	// scan backward for '.'
+	end = len - 1;
+	while (0 != end && in[end] != '.' && in[end] != '/' && in[end] != '\\')
+		end--;
+
+	if (in[end] != '.')		// no '.', copy to end
+		end = len - 1;
+	else
+		end--;			// Found ',', copy to left of '.'
+
+	// Scan backward for '/'
+	start = len - 1;
+	while (start >= 0 && in[start] != '/' && in[start] != '\\')
+		start--;
+
+	if (in[start] != '/' && in[start] != '\\')
+		start = 0;
+	else
+		start++;
+
+	// Length of new sting
+	len = end - start + 1;
+
+	// Copy partial string
+	strncpy(out, &in[start], len);
+	// Terminate it
+	out[len] = 0;
+}
+
+void ClientDLL::ConvertToLowerCase(const char *str)
+{
+	unsigned char *str_lw = (unsigned char *)str;
+	while (*str_lw) {
+		*str_lw = tolower(*str_lw);
+		str_lw++;
+	}
+}
+
 bool ClientDLL::DoesGameDirMatch(const char *game)
 {
 	if (!pEngfuncs)
 		return false;
 
 	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
+	char gd[1024];
 
-	return !std::strcmp(gameDir, game);
+	if (gameDir && gameDir[0])
+	{
+		FileBase(gameDir, gd);
+		ConvertToLowerCase(gd);
+	}
+
+	return !std::strcmp(gd, game);
 }
 
-bool ClientDLL::DoesGameSubDirMatch(const char *game)
+bool ClientDLL::DoesGameDirContain(const char *game)
 {
 	if (!pEngfuncs)
 		return false;
 
 	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
+	char gd[1024];
 
-	return std::strstr(gameDir, game);
+	if (gameDir && gameDir[0])
+	{
+		FileBase(gameDir, gd);
+		ConvertToLowerCase(gd);
+	}
+
+	return std::strstr(gd, game);
 }
 
 void ClientDLL::SetAngleSpeedCap(bool capped)
@@ -1339,6 +1399,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 {
 	ORIG_HUD_Frame(time);
 
+	static bool check_forcehltv = true;
 	if (check_forcehltv) {
 		check_forcehltv = false;
 		orig_forcehltv_found = HwDLL::GetInstance().ORIG_Cmd_FindCmd("dem_forcehltv");
@@ -1389,6 +1450,9 @@ HOOK_DEF_2(ClientDLL, int, __cdecl, HUD_UpdateClientData, client_data_t*, pcldat
 		pEngfuncs->pfnGetScreenInfo = [](SCREENINFO *pscrinfo) { return 0; };
 	}
 
+	if (pEngfuncs && !pEngfuncs->pDemoAPI->IsPlayingback())
+		discord_integration::on_update_client_data();
+
 	const auto rv = ORIG_HUD_UpdateClientData(pcldata, flTime);
 
 	auto &hw = HwDLL::GetInstance();
@@ -1397,8 +1461,6 @@ HOOK_DEF_2(ClientDLL, int, __cdecl, HUD_UpdateClientData, client_data_t*, pcldat
 	if (norefresh && pEngfuncs) {
 		pEngfuncs->pfnGetScreenInfo = ORIG_GetScreenInfo;
 	}
-
-	discord_integration::on_update_client_data();
 
 	return rv;
 }
@@ -1422,9 +1484,11 @@ HOOK_DEF_3(ClientDLL, void, __cdecl, VectorTransform, float*, in1, float*, in2, 
 
 HOOK_DEF_1(ClientDLL, void, __fastcall, StudioCalcAttachments, void*, thisptr)
 {
-	if (pEngfuncs && HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity)
+	auto& hw = HwDLL::GetInstance();
+
+	if (pEngfuncs && hw.pEngStudio)
 	{
-		auto currententity = HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity();
+		auto currententity = hw.pEngStudio->GetCurrentEntity();
 		if (currententity == pEngfuncs->GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
 			insideStudioCalcAttachmentsViewmodel = true;
 	}
@@ -1434,9 +1498,11 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, StudioCalcAttachments, void*, thisptr)
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, StudioCalcAttachments_Linux, void*, thisptr)
 {
-	if (pEngfuncs && HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity)
+	auto& hw = HwDLL::GetInstance();
+
+	if (pEngfuncs && hw.pEngStudio)
 	{
-		auto currententity = HwDLL::GetInstance().ORIG_studioapi_GetCurrentEntity();
+		auto currententity = hw.pEngStudio->GetCurrentEntity();
 		if (currententity == pEngfuncs->GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
 			insideStudioCalcAttachmentsViewmodel = true;
 	}
@@ -1568,7 +1634,13 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 
 HOOK_DEF_0(ClientDLL, int, __cdecl, CL_IsThirdPerson)
 {
-	if (pEngfuncs->pDemoAPI->IsPlayingback() && orig_forcehltv_found && pEngfuncs->IsSpectateOnly())
+	if (!ppmove || !pEngfuncs || !orig_forcehltv_found)
+		return ORIG_CL_IsThirdPerson();
+
+	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
+	int *iuser1 = reinterpret_cast<int*>(pmove + offIUser1);
+
+	if (pEngfuncs->pDemoAPI->IsPlayingback() && pEngfuncs->IsSpectateOnly() && (*iuser1 != 4))
 		return 1;
 
 	return ORIG_CL_IsThirdPerson();

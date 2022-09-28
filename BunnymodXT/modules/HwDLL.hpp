@@ -341,10 +341,10 @@ public:
 	_Cmd_FindCmd ORIG_Cmd_FindCmd;
 	typedef void(__cdecl *_Con_Printf) (const char* fmt, ...);
 	_Con_Printf ORIG_Con_Printf;
-	typedef cl_entity_t*(__cdecl *_studioapi_GetCurrentEntity) ();
-	_studioapi_GetCurrentEntity ORIG_studioapi_GetCurrentEntity;
 	typedef cvar_t*(__cdecl *_Cvar_FindVar) (const char* name);
 	_Cvar_FindVar ORIG_Cvar_FindVar;
+	typedef int(__cdecl *_build_number)();
+	_build_number ORIG_build_number;
 
 	HLStrafe::PlayerData GetPlayerData();
 
@@ -371,8 +371,6 @@ protected:
 	_PF_GetPhysicsKeyValue ORIG_PF_GetPhysicsKeyValue;
 	typedef void(__cdecl *_CL_RecordHUDCommand) (const char* cmdname);
 	_CL_RecordHUDCommand ORIG_CL_RecordHUDCommand;
-	typedef int(__cdecl *_build_number)();
-	_build_number ORIG_build_number;
 
 	void FindStuff();
 

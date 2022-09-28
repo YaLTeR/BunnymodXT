@@ -26,6 +26,10 @@ namespace discord_integration
 		// Start timestamp
 		int64_t start_timestamp;
 
+		// Shortcuts for call ClientDLL or HwDLL functions
+		auto &cl = ClientDLL::GetInstance();
+		auto &hw = HwDLL::GetInstance();
+
 		// Class that handles tracking state changes.
 		class DiscordState {
 		public:
@@ -48,7 +52,7 @@ namespace discord_integration
 
 			inline static size_t get_map_name(char* dest, size_t count)
 			{
-				auto map_path = ClientDLL::GetInstance().pEngfuncs->pfnGetLevelName();
+				auto map_path = cl.pEngfuncs->pfnGetLevelName();
 
 				const char* slash = strrchr(map_path, '/');
 				if (!slash)
@@ -73,9 +77,9 @@ namespace discord_integration
 
 			inline void update_presence_if_dirty()
 			{
-				if (HwDLL::GetInstance().Called_Timer)
+				if (hw.Called_Timer)
 				{
-					HwDLL::GetInstance().Called_Timer = false;
+					hw.Called_Timer = false;
 
 					dirty = true;
 				}
@@ -106,27 +110,33 @@ namespace discord_integration
 
 				if (cur_state != game_state::NOT_PLAYING)
 				{
-					if (ClientDLL::GetInstance().pEngfuncs)
+					if (cl.pEngfuncs)
 					{
+						// Game directory.
+						const char* gameDir = cl.pEngfuncs->pfnGetGameDirectory();
 						// Get the map name and icon.
 						get_map_name(map_name, ARRAYSIZE_HL(map_name));
-						if (map_name[0])
+						if (gameDir && gameDir[0] && map_name[0])
 						{
-							// Game directory
-							const char* gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+							char gd[1024];
 
-							// Adjust to lowercase
-							unsigned char *tptr = (unsigned char *)map_name;
-							while (*tptr) {
-								*tptr = tolower(*tptr);
-								tptr++;
-							}
+							// Adjust map_name to lowercase
+							cl.ConvertToLowerCase(map_name);
 
-							snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s", map_name, gameDir);
+							cl.FileBase(gameDir, gd);
+
+							if (hw.ORIG_build_number)
+								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s | Build: %i", map_name, gd, hw.ORIG_build_number());
+							else
+								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s", map_name, gd);
+
 							presence.largeImageText = map_name;
 							presence.details = buffer_details;
 
-							if (!strncmp(gameDir, "valve", 5) || !strncmp(gameDir, "abh", 3) || !strncmp(gameDir, "glitchless", 10))
+							// Adjust gameDir to lowercase
+							cl.ConvertToLowerCase(gd);
+
+							if (!strncmp(gd, "valve", 5) || !strncmp(gd, "abh", 3) || !strncmp(gd, "glitchless", 10))
 							{
 								if (hl1_map_name_to_thumbnail.find(map_name) != hl1_map_name_to_thumbnail.cend())
 								{
@@ -134,7 +144,7 @@ namespace discord_integration
 									presence.largeImageText = hl1_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "gearbox", 7))
+							else if (!strncmp(gd, "gearbox", 7))
 							{
 								if (op4_map_name_to_thumbnail.find(map_name) != op4_map_name_to_thumbnail.cend())
 								{
@@ -142,7 +152,7 @@ namespace discord_integration
 									presence.largeImageText = op4_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "bshift", 6))
+							else if (!strncmp(gd, "bshift", 6))
 							{
 								if (bs_map_name_to_thumbnail.find(map_name) != bs_map_name_to_thumbnail.cend())
 								{
@@ -150,15 +160,19 @@ namespace discord_integration
 									presence.largeImageText = bs_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "rewolf", 6))
+							else if (!strncmp(gd, "rewolf", 6))
 							{
 								if (gmc_map_name_to_thumbnail.find(map_name) != gmc_map_name_to_thumbnail.cend())
 								{
 									presence.largeImageKey = gmc_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = gmc_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+
+									if (!strncmp(presence.largeImageKey, "gmcchapter4", 11))
+										presence.largeImageText = "Rust";
+									else
+										presence.largeImageText = gmc_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "czeror", 6))
+							else if (!strncmp(gd, "czeror", 6))
 							{
 								if (czds_map_name_to_thumbnail.find(map_name) != czds_map_name_to_thumbnail.cend())
 								{
@@ -166,7 +180,7 @@ namespace discord_integration
 									presence.largeImageText = czds_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "wantedsp", 8))
+							else if (!strncmp(gd, "wantedsp", 8))
 							{
 								if (wanted_map_name_to_thumbnail.find(map_name) != wanted_map_name_to_thumbnail.cend())
 								{
@@ -174,7 +188,7 @@ namespace discord_integration
 									presence.largeImageText = wanted_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "echoes", 6))
+							else if (!strncmp(gd, "echoes", 6))
 							{
 								if (echoes_map_name_to_thumbnail.find(map_name) != echoes_map_name_to_thumbnail.cend())
 								{
@@ -182,7 +196,7 @@ namespace discord_integration
 									presence.largeImageText = echoes_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "caged_fgs", 9))
+							else if (!strncmp(gd, "caged_fgs", 9))
 							{
 								if (caged_map_name_to_thumbnail.find(map_name) != caged_map_name_to_thumbnail.cend())
 								{
@@ -190,7 +204,7 @@ namespace discord_integration
 									presence.largeImageText = caged_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "poke646", 7))
+							else if (!strncmp(gd, "poke646", 7))
 							{
 								if (poke646_map_name_to_thumbnail.find(map_name) != poke646_map_name_to_thumbnail.cend())
 								{
@@ -198,7 +212,7 @@ namespace discord_integration
 									presence.largeImageText = poke646_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "paranoia", 8))
+							else if (!strncmp(gd, "paranoia", 8))
 							{
 								if (paranoia_map_name_to_thumbnail.find(map_name) != paranoia_map_name_to_thumbnail.cend())
 								{
@@ -212,7 +226,7 @@ namespace discord_integration
 										presence.largeImageText = "Bunker";
 								}
 							}
-							else if (!strncmp(gameDir, "twhltower2", 10))
+							else if (!strncmp(gd, "twhltower2", 10))
 							{
 								if (twhltower2_map_name_to_thumbnail.find(map_name) != twhltower2_map_name_to_thumbnail.cend())
 								{
@@ -220,7 +234,7 @@ namespace discord_integration
 									presence.largeImageText = twhltower2_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "AoMDC", 5))
+							else if (!strncmp(gd, "aomdc", 5))
 							{
 								if (aomdc_map_name_to_thumbnail.find(map_name) != aomdc_map_name_to_thumbnail.cend())
 								{
@@ -240,7 +254,7 @@ namespace discord_integration
 										presence.largeImageText = "All Endings";
 								}
 							}
-							else if (!strncmp(gameDir, "hrp", 3))
+							else if (!strncmp(gd, "hrp", 3))
 							{
 								if (hlrats_parasomnia_map_name_to_thumbnail.find(map_name) != hlrats_parasomnia_map_name_to_thumbnail.cend())
 								{
@@ -248,7 +262,7 @@ namespace discord_integration
 									presence.largeImageText = hlrats_parasomnia_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
-							else if (!strncmp(gameDir, "hl_urbicide", 11))
+							else if (!strncmp(gd, "hl_urbicide", 11))
 							{
 								if (urbicide_maps.find(map_name) != urbicide_maps.cend())
 								{
@@ -256,7 +270,7 @@ namespace discord_integration
 									presence.largeImageText = map_name;
 								}
 							}
-							else if (!strncmp(gameDir, "Hunger", 6))
+							else if (!strncmp(gd, "hunger", 6))
 							{
 								if (th_map_name_to_thumbnail.find(map_name) != th_map_name_to_thumbnail.cend())
 								{
@@ -285,19 +299,19 @@ namespace discord_integration
 				switch (CVars::skill.GetInt())
 				{
 					case 1:
-						skillName = "| Easy";
+						skillName = "Easy";
 						break;
 					case 2:
-						skillName = "| Normal";
+						skillName = "Normal";
 						break;
 					case 3:
-						skillName = "| Hard";
+						skillName = "Hard";
 						break;
 					default:
 						skillName = "";
 				}
 
-				snprintf(buffer_state, sizeof(buffer_state), "%s | FPS: %.1f %s", state.c_str(), CVars::fps_max.GetFloat(), skillName);
+				snprintf(buffer_state, sizeof(buffer_state), "%s | FPS: %.1f | %s", state.c_str(), CVars::fps_max.GetFloat(), skillName);
 				presence.state = buffer_state;
 
 				if (CustomHud::GetCountingTime())
@@ -317,16 +331,29 @@ namespace discord_integration
 				}
 				else if ((gt.milliseconds == 0 && total_time == 0) && !CustomHud::GetCountingTime())
 				{
-					presence.smallImageKey = "discord_red";
-					presence.smallImageText = "Not running";
+					if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback()) {
+						presence.smallImageKey = "discord_brown";
+						presence.smallImageText = "Watching a demo";
+					} else {
+						presence.smallImageKey = "discord_red";
+						presence.smallImageText = "Not running";
+					}
+
 					presence.startTimestamp = current_timestamp;
 				}
 				else if ((gt.milliseconds > 0 || total_time > 0) && !CustomHud::GetCountingTime())
 				{
 					snprintf(buffer_stop, sizeof(buffer_stop), "Timer stopped at %d:%02d:%02d.%03d", gt.hours, gt.minutes, gt.seconds, gt.milliseconds);
 					presence.state = buffer_stop;
-					presence.smallImageKey = "discord_yellow";
-					presence.smallImageText = "Timer stopped";
+
+					if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback()) {
+						presence.smallImageKey = "discord_brown";
+						presence.smallImageText = "Watching a demo";
+					} else {
+						presence.smallImageKey = "discord_yellow";
+						presence.smallImageText = "Timer stopped";
+					}
+
 					presence.startTimestamp = 0;
 				}
 
@@ -349,20 +376,20 @@ namespace discord_integration
 
 		void handle_ready(const DiscordUser*)
 		{
-			if (ClientDLL::GetInstance().pEngfuncs)
-				ClientDLL::GetInstance().pEngfuncs->Con_Printf(const_cast<char*>("Connected to Discord.\n"));
+			if (cl.pEngfuncs)
+				cl.pEngfuncs->Con_Printf(const_cast<char*>("Connected to Discord.\n"));
 		}
 
 		void handle_errored(int error_code, const char* message)
 		{
-			if (ClientDLL::GetInstance().pEngfuncs)
-				ClientDLL::GetInstance().pEngfuncs->Con_Printf(const_cast<char*>("Discord error (%d): %s\n"), error_code, message);
+			if (cl.pEngfuncs)
+				cl.pEngfuncs->Con_Printf(const_cast<char*>("Discord error (%d): %s\n"), error_code, message);
 		}
 
 		void handle_disconnected(int error_code, const char* message)
 		{
-			if (ClientDLL::GetInstance().pEngfuncs)
-				ClientDLL::GetInstance().pEngfuncs->Con_Printf(const_cast<char*>("Disconnected from Discord (%d): %s\n"), error_code, message);
+			if (cl.pEngfuncs)
+				cl.pEngfuncs->Con_Printf(const_cast<char*>("Disconnected from Discord (%d): %s\n"), error_code, message);
 		}
 	}
 
@@ -398,7 +425,7 @@ namespace discord_integration
 		static float FPS_previous = FPS_current;
 
 		if (FPS_current != FPS_previous)
-			HwDLL::GetInstance().Called_Timer = true;
+			hw.Called_Timer = true;
 
 		FPS_previous = FPS_current;
 

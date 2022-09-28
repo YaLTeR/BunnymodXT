@@ -603,7 +603,6 @@ void HwDLL::Clear()
 	ORIG_VGuiWrap_Paint = nullptr;
 	ORIG_DispatchDirectUserMsg = nullptr;
 	ORIG_SV_SetMoveVars = nullptr;
-	ORIG_studioapi_GetCurrentEntity = nullptr;
 	ORIG_R_StudioCalcAttachments = nullptr;
 	ORIG_VectorTransform = nullptr;
 	ORIG_EmitWaterPolys = nullptr;
@@ -920,15 +919,6 @@ void HwDLL::FindStuff()
 			EngineWarning("[hw dll] Weapon special effects will be misplaced when using bxt_viewmodel_fov.\n");
 		}
 
-		ORIG_studioapi_GetCurrentEntity = reinterpret_cast<_studioapi_GetCurrentEntity>(MemUtils::GetSymbolAddress(m_Handle, "studioapi_GetCurrentEntity"));
-		if (ORIG_studioapi_GetCurrentEntity)
-			EngineDevMsg("[hw dll] Found studioapi_GetCurrentEntity at %p.\n", ORIG_studioapi_GetCurrentEntity);
-		else
-		{
-			EngineDevWarning("[hw dll] Could not find studioapi_GetCurrentEntity.\n");
-			EngineWarning("[hw dll] Weapon special effects will be misplaced when using bxt_viewmodel_fov.\n");
-		}
-
 		ORIG_CBaseUI__HideGameUI_Linux = reinterpret_cast<_CBaseUI__HideGameUI_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN7CBaseUI10HideGameUIEv"));
 		if (ORIG_CBaseUI__HideGameUI_Linux)
 			EngineDevMsg("[hw dll] Found CBaseUI::HideGameUI [Linux] at %p.\n", ORIG_CBaseUI__HideGameUI_Linux);
@@ -1227,7 +1217,6 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Key_Event)
 		DEF_FUTURE(SV_AddLinksToPM_)
 		DEF_FUTURE(SV_WriteEntitiesToClient)
-		DEF_FUTURE(studioapi_GetCurrentEntity)
 		DEF_FUTURE(VGuiWrap_Paint)
 		DEF_FUTURE(DispatchDirectUserMsg)
 		DEF_FUTURE(EmitWaterPolys)
@@ -2006,7 +1995,6 @@ void HwDLL::FindStuff()
 		GET_FUTURE(SV_WriteEntitiesToClient);
 		GET_FUTURE(VGuiWrap_Paint);
 		GET_FUTURE(DispatchDirectUserMsg);
-		GET_FUTURE(studioapi_GetCurrentEntity);
 		GET_FUTURE(EmitWaterPolys);
 		GET_FUTURE(S_StartDynamicSound);
 		GET_FUTURE(VGuiWrap2_NotifyOfServerConnect);
@@ -5805,9 +5793,7 @@ HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap_Paint, int, paintAll)
 
 HOOK_DEF_3(HwDLL, int, __cdecl, DispatchDirectUserMsg, char*, pszName, int, iSize, void*, pBuf)
 {
-	const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
-
-	if ((!std::strcmp(gameDir, "czeror") || !std::strcmp(gameDir, "czeror_cutsceneless")) && !std::strcmp(pszName, "InitHUD"))
+	if (ClientDLL::GetInstance().DoesGameDirContain("czeror") && !std::strcmp(pszName, "InitHUD"))
 		return ORIG_DispatchDirectUserMsg(0, iSize, pBuf);
 	else
 		return ORIG_DispatchDirectUserMsg(pszName, iSize, pBuf);
@@ -5829,8 +5815,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioCalcAttachments)
 {
 	const auto &cl = ClientDLL::GetInstance();
 
-	if (cl.pEngfuncs && ORIG_studioapi_GetCurrentEntity) {
-		auto currententity = ORIG_studioapi_GetCurrentEntity();
+	if (cl.pEngfuncs && pEngStudio) {
+		auto currententity = pEngStudio->GetCurrentEntity();
 		if (currententity == cl.pEngfuncs->GetViewModel() && NeedViewmodelAdjustments())
 			insideRStudioCalcAttachmentsViewmodel = true;
 	}
@@ -5886,9 +5872,9 @@ HOOK_DEF_3(HwDLL, void, __cdecl, VGuiWrap2_NotifyOfServerConnect, const char*, g
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioSetupBones)
 {
-	if (pstudiohdr && ORIG_studioapi_GetCurrentEntity) {
+	if (pstudiohdr && pEngStudio) {
 		auto& cl = ClientDLL::GetInstance();
-		auto currententity = ORIG_studioapi_GetCurrentEntity();
+		auto currententity = pEngStudio->GetCurrentEntity();
 		auto pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(*pstudiohdr) +
 			(*pstudiohdr)->seqindex) + currententity->curstate.sequence;
 
@@ -6005,9 +5991,9 @@ HOOK_DEF_0(HwDLL, int, __cdecl, BUsesSDLInput)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 {
-	if (ORIG_studioapi_GetCurrentEntity) {
+	if (pEngStudio) {
 		auto& cl = ClientDLL::GetInstance();
-		auto currententity = ORIG_studioapi_GetCurrentEntity();
+		auto currententity = pEngStudio->GetCurrentEntity();
 
 		int old_rendermode = currententity->curstate.rendermode;
 
@@ -6080,7 +6066,9 @@ HOOK_DEF_5(HwDLL, void, __cdecl, PF_traceline_DLL, const Vector*, v1, const Vect
 
 HOOK_DEF_1(HwDLL, qboolean, __cdecl, CL_CheckGameDirectory, char*, gamedir)
 {
-	if (ClientDLL::GetInstance().pEngfuncs->pDemoAPI->IsPlayingback() && CVars::bxt_disable_gamedir_check_in_demo.GetBool())
+	auto& cl = ClientDLL::GetInstance();
+
+	if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback() && CVars::bxt_disable_gamedir_check_in_demo.GetBool())
 		return true;
 	else
 		return ORIG_CL_CheckGameDirectory(gamedir);

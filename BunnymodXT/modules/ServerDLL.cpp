@@ -259,6 +259,7 @@ void ServerDLL::Clear()
 	pBhopcapWindows = 0;
 	pCZDS_Velocity_Byte = 0;
 	pAddToFullPack_PVS_Byte = 0;
+	pCoF_Noclip_Preventing_Check_Byte = 0;
 	offm_iClientFOV = 0;
 	offm_rgAmmoLast = 0;
 	maxAmmoSlots = 0;
@@ -641,6 +642,19 @@ void ServerDLL::FindStuff()
 			}
 		});
 
+	auto fCoF_Noclip_Preventing_Check_Byte = FindAsync(
+		pCoF_Noclip_Preventing_Check_Byte,
+		patterns::server::CoF_Noclip_Preventing_Check_Byte,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CoF_Noclip_Preventing_Check_Byte.cbegin()) {
+			case 0: // CoF-5936
+				pCoF_Noclip_Preventing_Check_Byte += 10;
+				break;
+			default:
+				assert(false);
+			}
+		});
+
 	auto fPM_WalkMove = FindFunctionAsync(ORIG_PM_WalkMove, "PM_WalkMove", patterns::shared::PM_WalkMove);
 	auto fPM_FlyMove = FindFunctionAsync(ORIG_PM_FlyMove, "PM_FlyMove", patterns::shared::PM_FlyMove);
 	auto fPM_AddToTouched = FindFunctionAsync(ORIG_PM_AddToTouched, "PM_AddToTouched", patterns::shared::PM_AddToTouched);
@@ -767,6 +781,12 @@ void ServerDLL::FindStuff()
 		} else {
 			EngineDevWarning("[server dll] Could not find AddToFullPack PVS Byte.\n");
 		}
+	}
+
+	{
+		auto pattern = fCoF_Noclip_Preventing_Check_Byte.get();
+		if (pCoF_Noclip_Preventing_Check_Byte)
+			EngineDevMsg("[server dll] Found noclip preventing check in CoF at %p (using the %s pattern).\n", pCoF_Noclip_Preventing_Check_Byte, pattern->name());
 	}
 
 	{
@@ -1514,6 +1534,8 @@ void ServerDLL::LogPlayerMove(bool pre, uintptr_t pmove) const
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 {
+	HwDLL &hwDLL = HwDLL::GetInstance();
+
 	bool stuck_cur_frame = false;
 	static bool not_stuck_prev_frame = false;
 
@@ -1525,14 +1547,22 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 			std::ostringstream ss;
 			ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
 
-			HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+			hwDLL.ORIG_Cbuf_InsertText(ss.str().c_str());
 		}
 		not_stuck_prev_frame = !stuck_cur_frame;
 	}
 
-	if (HwDLL::GetInstance().is_cof)
+	if (hwDLL.is_cof)
 	{
-		void* classPtr = (*HwDLL::GetInstance().sv_player)->v.pContainingEntity->pvPrivateData;
+		if (pCoF_Noclip_Preventing_Check_Byte)
+		{
+			if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0x75) && hwDLL.noclip_anglehack)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
+			else if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0xEB) && !hwDLL.noclip_anglehack)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\x75"));
+		}
+
+		void* classPtr = (*hwDLL.sv_player)->v.pContainingEntity->pvPrivateData;
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 		ptrdiff_t offm_bInfiniteStamina = 0x21E8;
 		int* m_bInfiniteStamina = reinterpret_cast<int*>(thisAddr + offm_bInfiniteStamina);
@@ -1582,7 +1612,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		ALERT(at_console, "Onground: %d; usehull: %d\n", *groundEntity, *reinterpret_cast<int*>(pmove + 0xBC));
 	}
 
-	HwDLL &hwDLL = HwDLL::GetInstance();
 	if (hwDLL.IsTASLogging()) {
 		hwDLL.logWriter.SetEntFriction(*reinterpret_cast<float *>(pmove + offEntFriction));
 		hwDLL.logWriter.SetEntGravity(*reinterpret_cast<float *>(pmove + offEntGravity));

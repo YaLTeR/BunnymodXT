@@ -181,6 +181,8 @@ protected:
 	ptrdiff_t pCS_Bhopcap;
 	ptrdiff_t pCS_Bhopcap_Windows;
 
+	ptrdiff_t pCoF_Noclip_Preventing_Check_Byte;
+
 	bool spirit_sdk = false;
 
 	bool callerIsWalkMove;

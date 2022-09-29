@@ -590,6 +590,7 @@ void HwDLL::Clear()
 	ORIG_Cmd_FindCmd = nullptr;
 	ORIG_Cmd_AddCommand = nullptr;
 	ORIG_Host_Notarget_f = nullptr;
+	ORIG_Host_Noclip_f = nullptr;
 	ORIG_Cmd_AddMallocCommand = nullptr;
 	ORIG_Cmd_Argc = nullptr;
 	ORIG_Cmd_Args = nullptr;
@@ -677,6 +678,7 @@ void HwDLL::Clear()
 	offZmax = 0;
 	pHost_FilterTime_FPS_Cap_Byte = 0;
 	cofSaveHack = nullptr;
+	noclip_anglehack = nullptr;
 	frametime_remainder = nullptr;
 	pstudiohdr = nullptr;
 	scr_fov_value = nullptr;
@@ -1812,6 +1814,13 @@ void HwDLL::FindStuff()
 				cofSaveHack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(ORIG_Host_ValidSave) + 21);
 			});
 
+		auto fHost_Noclip_f = FindAsync(
+			ORIG_Host_Noclip_f,
+			patterns::engine::Host_Noclip_f,
+			[&](auto pattern) {
+				noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(ORIG_Host_Noclip_f) + 123);
+			});
+
 		{
 			auto pattern = fClientDLL_CheckStudioInterface.get();
 			if (ClientDLL_CheckStudioInterface) {
@@ -2058,6 +2067,17 @@ void HwDLL::FindStuff()
 			} else {
 				EngineDevWarning("[hw dll] Could not find Host_ValidSave.\n");
 				EngineWarning("[hw dll] Quick saving in Cry of Fear is not available.\n");
+			}
+		}
+
+		{
+			auto pattern = fHost_Noclip_f.get();
+			if (ORIG_Host_Noclip_f) {
+				EngineDevMsg("[hw dll] Found Host_Noclip_f at %p (using the %s pattern).\n", ORIG_Host_Noclip_f, pattern->name());
+				EngineDevMsg("[hw dll] Found noclip_anglehack at %p.\n", noclip_anglehack);
+			} else {
+				EngineDevWarning("[hw dll] Could not find Host_Noclip_f.\n");
+				EngineWarning("[hw dll] Enabling noclip in Cry of Fear is not available.\n");
 			}
 		}
 

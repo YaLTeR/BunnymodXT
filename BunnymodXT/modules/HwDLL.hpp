@@ -351,6 +351,8 @@ public:
 	_Cmd_AddCommand ORIG_Cmd_AddCommand;
 	typedef void(__cdecl* _Host_Notarget_f) ();
 	_Host_Notarget_f ORIG_Host_Notarget_f;
+	typedef void(__cdecl* _Host_Noclip_f) ();
+	_Host_Noclip_f ORIG_Host_Noclip_f;
 
 	HLStrafe::PlayerData GetPlayerData();
 
@@ -465,6 +467,7 @@ public:
 
 	bool ducktap;
 	edict_t **sv_player;
+	bool *noclip_anglehack;
 protected:
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);

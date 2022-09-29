@@ -1472,6 +1472,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 
 			HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
 		}
+		not_stuck_prev_frame = !stuck_cur_frame;
 	}
 
 	if (!ppmove)
@@ -1542,9 +1543,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	}
 
 	CustomHud::UpdatePlayerInfo(velocity, origin);
-
-	if (ORIG_PM_CheckStuck)
-		not_stuck_prev_frame = !stuck_cur_frame;
 }
 
 HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal, float*, out, float, overbounce)

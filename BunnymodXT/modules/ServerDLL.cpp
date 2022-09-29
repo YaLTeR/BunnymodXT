@@ -1459,15 +1459,20 @@ void ServerDLL::LogPlayerMove(bool pre, uintptr_t pmove) const
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 {
-	bool stuck_cur_frame = ORIG_PM_CheckStuck();
+	bool stuck_cur_frame = false;
 	static bool not_stuck_prev_frame = false;
 
-	if (!CVars::bxt_fire_on_stuck.IsEmpty() && stuck_cur_frame && not_stuck_prev_frame)
+	if (ORIG_PM_CheckStuck)
 	{
-		std::ostringstream ss;
-		ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
+		stuck_cur_frame = ORIG_PM_CheckStuck();
+		if (!CVars::bxt_fire_on_stuck.IsEmpty() && stuck_cur_frame && not_stuck_prev_frame)
+		{
+			std::ostringstream ss;
+			ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
 
-		HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+			HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+		}
+		not_stuck_prev_frame = !stuck_cur_frame;
 	}
 
 	if (!ppmove)
@@ -1538,8 +1543,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	}
 
 	CustomHud::UpdatePlayerInfo(velocity, origin);
-
-	not_stuck_prev_frame = !stuck_cur_frame;
 }
 
 HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal, float*, out, float, overbounce)

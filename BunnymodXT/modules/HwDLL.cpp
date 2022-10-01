@@ -4001,7 +4001,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_remove_fps_limit);
 
 	if (ORIG_Host_ValidSave && cofSaveHack)
-		RegisterCVar(CVars::bxt_disable_save_lock_in_cof);
+		RegisterCVar(CVars::bxt_cof_disable_save_lock);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -6218,7 +6218,7 @@ HOOK_DEF_1(HwDLL, qboolean, __cdecl, CL_CheckGameDirectory, char*, gamedir)
 HOOK_DEF_0(HwDLL, int, __cdecl, Host_ValidSave)
 {
 	if (cofSaveHack) {
-		*cofSaveHack = CVars::bxt_disable_save_lock_in_cof.GetBool() ? 1 : 0;
+		*cofSaveHack = CVars::bxt_cof_disable_save_lock.GetBool() ? 1 : 0;
 	}
 
 	return ORIG_Host_ValidSave();

@@ -153,7 +153,7 @@ namespace CVars
 	extern CVarWrapper bxt_hud_game_color;
 	extern CVarWrapper bxt_disable_gamedir_check_in_demo;
 	extern CVarWrapper bxt_remove_fps_limit;
-	extern CVarWrapper bxt_disable_save_lock_in_cof;
+	extern CVarWrapper bxt_cof_disable_save_lock;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_cheats;

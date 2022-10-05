@@ -699,21 +699,25 @@ namespace CustomHud
 					inJump = false;
 
 					// add 16*2 because of player size can reach the edge of the block up to 16 unit
-					jumpDistance = length(player.origin[0] - prevOrigin[0], player.origin[1] - prevOrigin[1]) + 32.0;
+					double distance = length(player.origin[0] - prevOrigin[0], player.origin[1] - prevOrigin[1]) + 32.0;
 
-					// +18f in case normal jump to duck
-					if (player.origin[2] == prevOrigin[2] || (player.origin[2] + 18.0f) == prevOrigin[2])
+					if (distance > 150.0 || distance < 290.0) // from uq_jumpstats default
 					{
-						fadingFrom[0] = 0;
-						fadingFrom[1] = 255;
-						fadingFrom[2] = 0;
-					} else {
-						fadingFrom[0] = 255;
-						fadingFrom[1] = 0;
-						fadingFrom[2] = 0;
-					}
+						// +18f in case normal jump to duck
+						if (player.origin[2] == prevOrigin[2] || trunc(player.origin[2] + 18.0f - prevOrigin[2]) == 0.0f)
+						{
+							fadingFrom[0] = 0;
+							fadingFrom[1] = 255;
+							fadingFrom[2] = 0;
+						} else {
+							fadingFrom[0] = 255;
+							fadingFrom[1] = 0;
+							fadingFrom[2] = 0;
+						}
 
-					passedTime = 0.0;
+						jumpDistance = distance;
+						passedTime = 0.0;
+					}
 				}
 				else if (player.origin[2] == prevPlayerOrigin[2])
 				{

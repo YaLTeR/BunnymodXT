@@ -878,6 +878,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_jumpspeed);
 		REG(bxt_hud_jumpspeed_offset);
 		REG(bxt_hud_jumpspeed_anchor);
+		REG(bxt_hud_jumpdistance);
+		REG(bxt_hud_jumpdistance_offset);
+		REG(bxt_hud_jumpdistance_anchor);
 		REG(bxt_hud_health);
 		REG(bxt_hud_health_offset);
 		REG(bxt_hud_health_anchor);

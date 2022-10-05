@@ -661,6 +661,95 @@ namespace CustomHud
 		vecCopy(player.velocity, prevVel);
 	}
 
+	static void DrawJumpDistance(float flTime)
+	{
+		static float prevOrigin[3] = { 0.0f, 0.0f, 0.0f };
+		static float prevPlayerOrigin[3] = { 0.0f, 0.0f, 0.0f };
+		static float prevVel[3] = { 0.0f, 0.0f, 0.0f };
+
+		if (CVars::bxt_hud_jumpdistance.GetBool())
+		{
+			static bool inJump = false;
+			static float lastTime = flTime;
+			static double passedTime = FADE_DURATION_JUMPSPEED;
+			static int fadingFrom[3] = { hudColor[0], hudColor[1], hudColor[2] };
+			static double jumpDistance = 0.0;
+
+			int r = hudColor[0],
+				g = hudColor[1],
+				b = hudColor[2];
+
+			if (FADE_DURATION_JUMPSPEED > 0.0f)
+			{
+				// 1 = jumpdistance will update when velocity is reasonably positive
+				// not 1 = jumpdistance will update when velocity changes, eg just falling
+				if (!inJump && (
+					((CVars::bxt_hud_jumpdistance.GetInt() == 1 ?
+						player.velocity[2] > 0.0f : player.velocity[2] != 0.0f) && prevVel[2] == 0.0f) ||
+					(player.velocity[2] > 0.0f && prevVel[2] < 0.0f)))
+				{
+					inJump = true;
+
+					// by the time the instantaneous velocity is here
+					// there is already displacement, which is in the previous frame
+					vecCopy(prevPlayerOrigin, prevOrigin);
+				}
+				else if (inJump && ((player.velocity[2] == 0.0f && prevVel[2] < 0.0f)))
+				{
+					inJump = false;
+
+					// add 16*2 because of player size can reach the edge of the block up to 16 unit
+					jumpDistance = length(player.origin[0] - prevOrigin[0], player.origin[1] - prevOrigin[1]) + 32.0;
+
+					// +18f in case normal jump to duck
+					if (player.origin[2] == prevOrigin[2] || (player.origin[2] + 18.0f) == prevOrigin[2])
+					{
+						fadingFrom[0] = 0;
+						fadingFrom[1] = 255;
+						fadingFrom[2] = 0;
+					} else {
+						fadingFrom[0] = 255;
+						fadingFrom[1] = 0;
+						fadingFrom[2] = 0;
+					}
+
+					passedTime = 0.0;
+				}
+				else if (player.origin[2] == prevPlayerOrigin[2])
+				{
+					// walking
+					inJump = false;
+				}
+
+				// Can be negative if we went back in time (for example, loaded a save).
+				double timeDelta = std::max(flTime - lastTime, 0.0f);
+				passedTime += timeDelta;
+
+				// Check for Inf, NaN, etc.
+				if (passedTime > FADE_DURATION_JUMPSPEED || !std::isnormal(passedTime)) {
+					passedTime = FADE_DURATION_JUMPSPEED;
+				}
+
+				float colorVel[3] = { hudColor[0] - fadingFrom[0] / FADE_DURATION_JUMPSPEED,
+				                      hudColor[1] - fadingFrom[1] / FADE_DURATION_JUMPSPEED,
+				                      hudColor[2] - fadingFrom[2] / FADE_DURATION_JUMPSPEED };
+				r = static_cast<int>(hudColor[0] - colorVel[0] * (FADE_DURATION_JUMPSPEED - passedTime));
+				g = static_cast<int>(hudColor[1] - colorVel[1] * (FADE_DURATION_JUMPSPEED - passedTime));
+				b = static_cast<int>(hudColor[2] - colorVel[2] * (FADE_DURATION_JUMPSPEED - passedTime));
+
+				lastTime = flTime;
+			}
+
+			int x, y;
+			GetPosition(CVars::bxt_hud_jumpdistance_offset, CVars::bxt_hud_jumpdistance_anchor, &x, &y, 0, -4 * NumberHeight);
+			DrawNumber(static_cast<int>(trunc(jumpDistance)), x, y, r, g, b);
+		}
+
+		vecCopy(player.origin, prevPlayerOrigin);
+		vecCopy(player.velocity, prevVel);
+	}
+
+
 	void DrawTimer(float flTime)
 	{
 		if (CVars::bxt_hud_timer.GetBool())
@@ -1558,6 +1647,7 @@ namespace CustomHud
 		DrawViewangles(flTime);
 		DrawSpeedometer(flTime);
 		DrawJumpspeed(flTime);
+		DrawJumpDistance(flTime);
 		DrawTimer(flTime);
 		DrawDistance(flTime);
 		DrawEntityInfo(flTime);

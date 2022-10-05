@@ -252,6 +252,9 @@ namespace CVars
 	extern CVarWrapper bxt_hud_jumpspeed;
 	extern CVarWrapper bxt_hud_jumpspeed_offset;
 	extern CVarWrapper bxt_hud_jumpspeed_anchor;
+	extern CVarWrapper bxt_hud_jumpdistance;
+	extern CVarWrapper bxt_hud_jumpdistance_offset;
+	extern CVarWrapper bxt_hud_jumpdistance_anchor;
 	extern CVarWrapper bxt_hud_health;
 	extern CVarWrapper bxt_hud_health_offset;
 	extern CVarWrapper bxt_hud_health_anchor;

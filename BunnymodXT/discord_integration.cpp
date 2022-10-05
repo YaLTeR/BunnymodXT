@@ -50,26 +50,6 @@ namespace discord_integration
 				}
 			}
 
-			inline static size_t get_map_name(char* dest, size_t count)
-			{
-				auto map_path = cl.pEngfuncs->pfnGetLevelName();
-
-				const char* slash = strrchr(map_path, '/');
-				if (!slash)
-					slash = map_path - 1;
-
-				const char* dot = strrchr(map_path, '.');
-				if (!dot)
-					dot = map_path + strlen(map_path);
-
-				size_t bytes_to_copy = std::min(count - 1, static_cast<size_t>(dot - slash - 1));
-
-				strncpy(dest, slash + 1, bytes_to_copy);
-				dest[bytes_to_copy] = '\0';
-
-				return bytes_to_copy;
-			}
-
 			inline game_state get_game_state() const
 			{
 				return cur_state;
@@ -115,7 +95,7 @@ namespace discord_integration
 						// Game directory.
 						const char* gameDir = cl.pEngfuncs->pfnGetGameDirectory();
 						// Get the map name and icon.
-						get_map_name(map_name, ARRAYSIZE_HL(map_name));
+						cl.GetMapName(map_name, ARRAYSIZE_HL(map_name));
 						if (gameDir && gameDir[0] && map_name[0])
 						{
 							char gd[1024];

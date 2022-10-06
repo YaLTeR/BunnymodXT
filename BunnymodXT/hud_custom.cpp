@@ -692,7 +692,7 @@ namespace CustomHud
 				// add 16*2 because of player size can reach the edge of the block up to 16 unit
 				double distance = length(player.origin[0] - prevOrigin[0], player.origin[1] - prevOrigin[1]) + 32.0;
 
-				if ((distance > 150.0 && distance < 290.0) || CVars::bxt_hud_jumpdistance.GetInt() != 1) // from uq_jumpstats default
+				if (distance > 150.0 || CVars::bxt_hud_jumpdistance.GetInt() != 1) // from uq_jumpstats default
 				{
 					jumpDistance = distance;
 				}

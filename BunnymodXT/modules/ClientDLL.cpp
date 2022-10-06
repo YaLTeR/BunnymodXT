@@ -1107,6 +1107,21 @@ bool ClientDLL::DoesMapNameMatch(const char *map)
 	return !std::strcmp(map_name, map);
 }
 
+bool ClientDLL::DoesMapNameContain(const char *map)
+{
+	if (!pEngfuncs)
+		return false;
+
+	char map_name[64];
+
+	GetMapName(map_name, ARRAYSIZE_HL(map_name));
+
+	if (map_name[0])
+		ConvertToLowerCase(map_name);
+
+	return std::strstr(map_name, map);
+}
+
 void ClientDLL::SetAngleSpeedCap(bool capped)
 {
 	if (!pCS_AngleSpeedCap && !pCS_AngleSpeedCap_Linux) {

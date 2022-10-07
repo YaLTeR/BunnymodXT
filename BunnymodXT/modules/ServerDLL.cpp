@@ -1895,7 +1895,9 @@ void ServerDLL::OnMultiManagerFired(const char *targetname)
 		|| (!std::strcmp(targetname, "spawn_garg_sci_mm") && cl.DoesGameDirMatch("steamlink")) // Uplink
 		|| (!std::strcmp(targetname, "fc_mm1") && cl.DoesGameDirMatch("hc")) // Hazardous Course 2
 		|| (!std::strcmp(targetname, "medicosprey") && cl.DoesGameDirMatch("visitors")) // Visitors
-		|| (!std::strcmp(targetname, "change_mm") && cl.DoesGameDirMatch("wantedsp") && cl.DoesMapNameMatch("want36"))) { // Wanted
+		|| (!std::strcmp(targetname, "change_mm") && cl.DoesGameDirMatch("wantedsp") && cl.DoesMapNameMatch("want36")) // Wanted
+		|| (!std::strcmp(targetname, "multiend1") && cl.DoesGameDirMatch("cryoffear") && !cl.DoesMapNameContain("cof_suicide")) // Cry of Fear (Ending 1, 2, 3)
+		|| (!std::strcmp(targetname, "multicrash") && cl.DoesGameDirMatch("cryoffear"))) { // Cry of Fear (Ending 5)
 		DoAutoStopTasks();
 	}
 

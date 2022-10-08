@@ -99,7 +99,11 @@ public:
 	void SetStamina(bool makeItZero);
 
 private:
-	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};
+	#ifdef COF_BUILD
+		ServerDLL() : IHookableDirFilter({ L"cl_dlls"}) {};
+	#else
+		ServerDLL() : IHookableDirFilter({ L"dlls"}) {};
+	#endif
 	ServerDLL(const ServerDLL&);
 	void operator=(const ServerDLL&);
 

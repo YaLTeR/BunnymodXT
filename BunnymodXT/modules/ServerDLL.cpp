@@ -1921,6 +1921,12 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 		if (pev && pev->targetname) {
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			OnMultiManagerFired(targetname);
+
+			if (HwDLL::GetInstance().is_cof) {
+				auto m_index = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + 228);
+				if (!std::strcmp(targetname, "whensimondies") && (m_index == 2)) // Cry of Fear (Ending 4)
+					DoAutoStopTasks();
+			}
 		}
 	}
 

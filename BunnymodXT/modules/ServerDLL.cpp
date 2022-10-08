@@ -1320,6 +1320,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 	REG(bxt_timer_autostop);
+	// Smiley: bxt_autojump is illegal in CoF since it doesn't take stamina for jumps, use +bxt_tas_autojump instead
 	if (ORIG_PM_Jump && !HwDLL::GetInstance().is_cof) {
 		REG(bxt_autojump);
 		REG(bxt_autojump_priority);

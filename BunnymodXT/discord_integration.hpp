@@ -4,6 +4,7 @@
 #include <string_view>
 #include <unordered_set>
 #include "modules/ClientDLL.hpp"
+#include "modules/ServerDLL.hpp"
 #include "modules/HwDLL.hpp"
 #include "cvars.hpp"
 #include "hud_custom.hpp"
@@ -226,7 +227,7 @@ namespace discord_integration
 			{"bschapter3", "Captive Freight"},
 			{"bschapter4", "Focal Point"},
 			{"bschapter5", "Power Struggle"},
-			{"bschapter6", "Captive Freight & A Leap of Faith"},
+			{"bschapter6", "Captive Freight"},
 			{"bschapter7", "Outro"},
 			{"bschapter8", "Hazard Course"},
 			{"bschapter9", "Living Quarters Outbound"},

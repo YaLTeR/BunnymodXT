@@ -73,6 +73,10 @@ public:
 	bool DoesGameDirMatch(const char *game);
 	bool DoesGameDirContain(const char *game);
 
+	size_t GetMapName(char* dest, size_t count);
+	bool DoesMapNameMatch(const char *map);
+	bool DoesMapNameContain(const char *map);
+
 	bool orig_forcehltv_found = false;
 	bool orig_righthand_not_found = false;
 

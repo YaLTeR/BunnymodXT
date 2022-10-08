@@ -30,6 +30,11 @@ extern "C" void __cdecl _ZN11COFGeneWorm10DyingThinkEv(void* thisptr)
 	return ServerDLL::HOOKED_COFGeneWorm__DyingThink_Linux(thisptr);
 }
 
+extern "C" void __cdecl _ZN10CBreakable3DieEv(void* thisptr)
+{
+	return ServerDLL::HOOKED_CBreakable__Die_Linux(thisptr);
+}
+
 extern "C" void __cdecl _Z11FireTargetsPKcP11CBaseEntityS2_8USE_TYPEf(char* targetName, void* pActivator, void* pCaller, int useType, float value)
 {
      return ServerDLL::HOOKED_FireTargets_Linux(targetName, pActivator, pCaller, useType, value);
@@ -115,6 +120,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CNihilanth__DyingThink, HOOKED_CNihilanth__DyingThink,
 			ORIG_COFGeneWorm__DyingThink, HOOKED_COFGeneWorm__DyingThink,
 			ORIG_CApache__DyingThink, HOOKED_CApache__DyingThink,
+			ORIG_CBreakable__Die, HOOKED_CBreakable__Die,
 			ORIG_CBaseDoor__DoorGoUp, HOOKED_CBaseDoor__DoorGoUp,
 			ORIG_CBaseDoor__DoorHitTop, HOOKED_CBaseDoor__DoorHitTop,
 			ORIG_CMultiManager__ManagerThink, HOOKED_CMultiManager__ManagerThink,
@@ -157,6 +163,7 @@ void ServerDLL::Unhook()
 			ORIG_CNihilanth__DyingThink,
 			ORIG_COFGeneWorm__DyingThink,
 			ORIG_CApache__DyingThink,
+			ORIG_CBreakable__Die,
 			ORIG_CBaseDoor__DoorGoUp,
 			ORIG_CBaseDoor__DoorHitTop,
 			ORIG_CMultiManager__ManagerThink,
@@ -202,6 +209,8 @@ void ServerDLL::Clear()
 	ORIG_COFGeneWorm__DyingThink = nullptr;
 	ORIG_COFGeneWorm__DyingThink_Linux = nullptr;
 	ORIG_CApache__DyingThink = nullptr;
+	ORIG_CBreakable__Die = nullptr;
+	ORIG_CBreakable__Die_Linux = nullptr;
 	ORIG_CBaseDoor__DoorGoUp = nullptr;
 	ORIG_CBaseDoor__DoorHitTop = nullptr;
 	ORIG_CBaseMonster__Killed = nullptr;
@@ -1065,6 +1074,19 @@ void ServerDLL::FindStuff()
 		EngineWarning("They Hunger Episode 3 automatic timer stopping is not available.\n");
 	}
 
+	ORIG_CBreakable__Die = reinterpret_cast<_CBreakable__Die>(MemUtils::GetSymbolAddress(m_Handle, "?Die@CBreakable@@QAEXXZ"));
+	if (ORIG_CBreakable__Die) {
+		EngineDevMsg("[server dll] Found CBreakable::Die at %p.\n", ORIG_CBreakable__Die);
+	} else {
+		ORIG_CBreakable__Die_Linux = reinterpret_cast<_CBreakable__Die_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN10CBreakable3DieEv"));
+		if (ORIG_CBreakable__Die_Linux) {
+			EngineDevMsg("[server dll] Found CBreakable::Die [Linux] at %p.\n", ORIG_CBreakable__Die_Linux);
+		} else {
+			EngineDevWarning("[server dll] Could not find CBreakable::Die.\n");
+			EngineWarning("Automatic timer stopping in Counter-Strike: Condition Zero Deleted Scenes is not available.\n");
+		}
+	}
+
 	ORIG_CBaseDoor__DoorGoUp = reinterpret_cast<_CBaseDoor__DoorGoUp>(MemUtils::GetSymbolAddress(m_Handle, "?DoorGoUp@CBaseDoor@@QAEXXZ"));
 	if (ORIG_CBaseDoor__DoorGoUp) {
 		EngineDevMsg("[server dll] Found CBaseDoor::DoorGoUp at %p.\n", ORIG_CBaseDoor__DoorGoUp);
@@ -1733,7 +1755,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
-			if (!std::strcmp(targetname, "sheriffs_chppr")) {
+			if (!std::strcmp(targetname, "sheriffs_chppr") && ClientDLL::GetInstance().DoesGameDirContain("hunger")) { // They Hunger Episode 3
 				DoAutoStopTasks();
 			}
 		}
@@ -1742,13 +1764,43 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 	return ORIG_CApache__DyingThink(thisptr);
 }
 
+HOOK_DEF_2(ServerDLL, void, __fastcall, CBreakable__Die, void*, thisptr, int, edx)
+{
+	if (HwDLL::GetInstance().ppGlobals) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->target) {
+			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
+			if (!std::strcmp(target, "BLOOOM") && ClientDLL::GetInstance().DoesGameDirContain("czeror")) { // CSCZDS
+				DoAutoStopTasks();
+			}
+		}
+	}
+
+	return ORIG_CBreakable__Die(thisptr, edx);
+}
+
+HOOK_DEF_1(ServerDLL, void, __cdecl, CBreakable__Die_Linux, void*, thisptr)
+{
+	if (HwDLL::GetInstance().ppGlobals) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->target) {
+			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
+			if (!std::strcmp(target, "BLOOOM") && ClientDLL::GetInstance().DoesGameDirContain("czeror")) {
+				DoAutoStopTasks();
+			}
+		}
+	}
+
+	return ORIG_CBreakable__Die_Linux(thisptr);
+}
+
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->target) {
 			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
-			if (!std::strcmp(target, "oil_spouts1_mm")) {
+			if (!std::strcmp(target, "oil_spouts1_mm") && ClientDLL::GetInstance().DoesGameDirContain("hunger")) { // They Hunger Episode 2
 				DoAutoStopTasks();
 			}
 		}
@@ -1766,12 +1818,8 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 			void *classPtr = pPlayer->pvPrivateData;
 			char pVolumeName[] = "lm15";
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
-			const char *gameDir = "";
 
-			if (ClientDLL::GetInstance().pEngfuncs)
-				gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
-
-			if (!std::strcmp(targetname, "rocket_dr") && !std::strcmp(gameDir, "lm_txp")
+			if (!std::strcmp(targetname, "rocket_dr") && ClientDLL::GetInstance().DoesGameDirMatch("lm_txp") // The Xeno Project
 				&& ORIG_CChangeLevel__InTransitionVolume(classPtr, pVolumeName))
 				DoAutoStopTasks();
 		}
@@ -1786,11 +1834,7 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, in
 		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->classname) {
 			const char* classname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->classname;
-			const char* gameDir = "";
-			if (ClientDLL::GetInstance().pEngfuncs)
-				gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
-			if ((!std::strcmp(classname, "monster_ramone") && !std::strcmp(gameDir, "wantedsp"))
-				|| (!std::strcmp(classname, "monster_gargantua") && !std::strcmp(gameDir, "tetsu0_cot"))) {
+			if (!std::strcmp(classname, "monster_gargantua") && ClientDLL::GetInstance().DoesGameDirMatch("tetsu0_cot")) {
 				DoAutoStopTasks();
 			}
 		}
@@ -1832,28 +1876,28 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 
 void ServerDLL::OnMultiManagerFired(const char *targetname)
 {
-	const char *gameDir = "";
-	if (ClientDLL::GetInstance().pEngfuncs)
-		gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+	auto &cl = ClientDLL::GetInstance();
 
-	if(!std::strcmp(targetname, "roll_the_credits")
-		|| !std::strcmp(targetname, "youwinmulti")
-		|| !std::strcmp(targetname, "previctory_mm")
-		|| !std::strcmp(targetname, "stairscene_mngr")
-		|| !std::strcmp(targetname, "boot_radio_seq")
-		|| !std::strcmp(targetname, "BLOOOM") // CSCZDS
-		|| (!std::strcmp(targetname, "telmm") && !std::strcmp(gameDir, "biglolly")) // Big Lolly
-		|| (!std::strcmp(targetname, "mm_player_camera1") && !std::strcmp(gameDir, "htc")) // HTC
-		|| (!std::strcmp(targetname, "multimanager_1") && !std::strcmp(gameDir, "construction")) // Construction
-		|| (!std::strcmp(targetname, "the_endgame_mm") && !std::strcmp(gameDir, "gloom")) // The Gloom
-		|| (!std::strcmp(targetname, "endbox_mm0") && !std::strcmp(gameDir, "echoes")) // Echoes
-		|| (!std::strcmp(targetname, "sendmm") && !std::strcmp(gameDir, "MINIMICUS"))  // Minimicus
-		|| (!std::strcmp(targetname, "kill2") && !std::strcmp(gameDir, "before")) // Before
-		|| (!std::strcmp(targetname, "tele_in") && !std::strcmp(gameDir, "plague")) // Plague
-		|| (!std::strcmp(targetname, "exit_seq") && !std::strcmp(gameDir, "timeline2")) // Timeline 2
-		|| (!std::strcmp(targetname, "spawn_garg_sci_mm") && !std::strcmp(gameDir, "SteamLink")) // Uplink
-		|| (!std::strcmp(targetname, "fc_mm1") && !std::strcmp(gameDir, "hc")) // Hazardous Course 2
-		|| (!std::strcmp(targetname, "medicosprey") && !std::strcmp(gameDir, "visitors"))) { // Visitors
+	if ((!std::strcmp(targetname, "roll_the_credits") && cl.DoesGameDirContain("bshift")) // Blue Shift
+		|| (!std::strcmp(targetname, "youwinmulti") && cl.DoesGameDirContain("rewolf")) // Gunman Chronicles
+		|| (!std::strcmp(targetname, "previctory_mm") && cl.DoesGameDirContain("decay")) // Decay
+		|| (!std::strcmp(targetname, "stairscene_mngr") && cl.DoesGameDirContain("hunger")) // They Hunger Episode 1
+		|| (!std::strcmp(targetname, "boot_radio_seq") && cl.DoesGameDirContain("gearbox")) // Opposing Force: Boot Camp
+		|| (!std::strcmp(targetname, "telmm") && cl.DoesGameDirMatch("biglolly")) // Big Lolly
+		|| (!std::strcmp(targetname, "mm_player_camera1") && cl.DoesGameDirMatch("htc")) // HTC
+		|| (!std::strcmp(targetname, "multimanager_1") && cl.DoesGameDirMatch("construction")) // Construction
+		|| (!std::strcmp(targetname, "the_endgame_mm") && cl.DoesGameDirMatch("gloom")) // The Gloom
+		|| (!std::strcmp(targetname, "endbox_mm0") && cl.DoesGameDirContain("echoes")) // Echoes
+		|| (!std::strcmp(targetname, "sendmm") && cl.DoesGameDirMatch("minimicus"))  // Minimicus
+		|| (!std::strcmp(targetname, "kill2") && cl.DoesGameDirMatch("before")) // Before
+		|| (!std::strcmp(targetname, "tele_in") && cl.DoesGameDirMatch("plague")) // Plague
+		|| (!std::strcmp(targetname, "exit_seq") && cl.DoesGameDirMatch("timeline2") && cl.DoesMapNameMatch("ice29")) // Timeline 2
+		|| (!std::strcmp(targetname, "spawn_garg_sci_mm") && cl.DoesGameDirMatch("steamlink")) // Uplink
+		|| (!std::strcmp(targetname, "fc_mm1") && cl.DoesGameDirMatch("hc")) // Hazardous Course 2
+		|| (!std::strcmp(targetname, "medicosprey") && cl.DoesGameDirMatch("visitors")) // Visitors
+		|| (!std::strcmp(targetname, "change_mm") && cl.DoesGameDirMatch("wantedsp") && cl.DoesMapNameMatch("want36")) // Wanted
+		|| (!std::strcmp(targetname, "multiend1") && cl.DoesGameDirMatch("cryoffear") && !cl.DoesMapNameContain("cof_suicide")) // Cry of Fear (Ending 1, 2, 3)
+		|| (!std::strcmp(targetname, "multicrash") && cl.DoesGameDirMatch("cryoffear"))) { // Cry of Fear (Ending 5)
 		DoAutoStopTasks();
 	}
 

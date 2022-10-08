@@ -1075,6 +1075,56 @@ bool ClientDLL::DoesGameDirContain(const char *game)
 	return std::strstr(gd, game);
 }
 
+size_t ClientDLL::GetMapName(char* dest, size_t count)
+{
+	auto map_path = pEngfuncs->pfnGetLevelName();
+
+	const char* slash = strrchr(map_path, '/');
+	if (!slash)
+		slash = map_path - 1;
+
+	const char* dot = strrchr(map_path, '.');
+	if (!dot)
+		dot = map_path + strlen(map_path);
+
+	size_t bytes_to_copy = std::min(count - 1, static_cast<size_t>(dot - slash - 1));
+
+	strncpy(dest, slash + 1, bytes_to_copy);
+	dest[bytes_to_copy] = '\0';
+
+	return bytes_to_copy;
+}
+
+bool ClientDLL::DoesMapNameMatch(const char *map)
+{
+	if (!pEngfuncs)
+		return false;
+
+	char map_name[64];
+
+	GetMapName(map_name, ARRAYSIZE_HL(map_name));
+
+	if (map_name[0])
+		ConvertToLowerCase(map_name);
+
+	return !std::strcmp(map_name, map);
+}
+
+bool ClientDLL::DoesMapNameContain(const char *map)
+{
+	if (!pEngfuncs)
+		return false;
+
+	char map_name[64];
+
+	GetMapName(map_name, ARRAYSIZE_HL(map_name));
+
+	if (map_name[0])
+		ConvertToLowerCase(map_name);
+
+	return std::strstr(map_name, map);
+}
+
 void ClientDLL::SetAngleSpeedCap(bool capped)
 {
 	if (!pCS_AngleSpeedCap && !pCS_AngleSpeedCap_Linux) {

@@ -137,6 +137,9 @@ namespace CVars
 	CVarWrapper bxt_hud_jumpspeed("bxt_hud_jumpspeed", "0");
 	CVarWrapper bxt_hud_jumpspeed_offset("bxt_hud_jumpspeed_offset", "");
 	CVarWrapper bxt_hud_jumpspeed_anchor("bxt_hud_jumpspeed_anchor", "0.5 1");
+	CVarWrapper bxt_hud_jumpdistance("bxt_hud_jumpdistance", "0");
+	CVarWrapper bxt_hud_jumpdistance_offset("bxt_hud_jumpdistance_offset", "");
+	CVarWrapper bxt_hud_jumpdistance_anchor("bxt_hud_jumpdistance_anchor", "0.5 1");
 	CVarWrapper bxt_hud_health("bxt_hud_health", "0");
 	CVarWrapper bxt_hud_health_offset("bxt_hud_health_offset", "");
 	CVarWrapper bxt_hud_health_anchor("bxt_hud_health_anchor", "0.5 1");
@@ -319,6 +322,9 @@ namespace CVars
 		&bxt_hud_jumpspeed,
 		&bxt_hud_jumpspeed_offset,
 		&bxt_hud_jumpspeed_anchor,
+		&bxt_hud_jumpdistance,
+		&bxt_hud_jumpdistance_offset,
+		&bxt_hud_jumpdistance_anchor,
 		&bxt_hud_health,
 		&bxt_hud_health_offset,
 		&bxt_hud_health_anchor,

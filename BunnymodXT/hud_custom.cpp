@@ -661,6 +661,58 @@ namespace CustomHud
 		vecCopy(player.velocity, prevVel);
 	}
 
+	static void DrawJumpDistance(float flTime)
+	{
+		static float prevOrigin[3] = { 0.0f, 0.0f, 0.0f };
+		static float prevPlayerOrigin[3] = { 0.0f, 0.0f, 0.0f };
+		static float prevVel[3] = { 0.0f, 0.0f, 0.0f };
+
+		if (CVars::bxt_hud_jumpdistance.GetBool())
+		{
+			static bool inJump = false;
+			static double jumpDistance = 0.0;
+
+			// 1 = jumpdistance will update when velocity is reasonably positive
+			// not 1 = jumpdistance will update when velocity changes, eg just falling
+			if (!inJump && (
+				(((CVars::bxt_hud_jumpdistance.GetInt() == 1) ?
+					player.velocity[2] > 0.0f : player.velocity[2] != 0.0f) && prevVel[2] == 0.0f) ||
+				(player.velocity[2] > 0.0f && prevVel[2] < 0.0f)))
+			{
+				inJump = true;
+
+				// by the time the instantaneous velocity is here
+				// there is already displacement, which is in the previous frame
+				vecCopy(prevPlayerOrigin, prevOrigin);
+			}
+			else if (inJump && ((player.velocity[2] == 0.0f && prevVel[2] < 0.0f)))
+			{
+				inJump = false;
+
+				// add 16*2 because of player size can reach the edge of the block up to 16 unit
+				double distance = length(player.origin[0] - prevOrigin[0], player.origin[1] - prevOrigin[1]) + 32.0;
+
+				if (distance > 150.0 || CVars::bxt_hud_jumpdistance.GetInt() != 1) // from uq_jumpstats default
+				{
+					jumpDistance = distance;
+				}
+			}
+			else if (player.origin[2] == prevPlayerOrigin[2])
+			{
+				// walking
+				inJump = false;
+			}
+
+			int x, y;
+			GetPosition(CVars::bxt_hud_jumpdistance_offset, CVars::bxt_hud_jumpdistance_anchor, &x, &y, 0, -4 * NumberHeight);
+			DrawNumber(static_cast<int>(trunc(jumpDistance)), x, y, hudColor[0], hudColor[1], hudColor[2]);
+		}
+
+		vecCopy(player.origin, prevPlayerOrigin);
+		vecCopy(player.velocity, prevVel);
+	}
+
+
 	void DrawTimer(float flTime)
 	{
 		if (CVars::bxt_hud_timer.GetBool())
@@ -1558,6 +1610,7 @@ namespace CustomHud
 		DrawViewangles(flTime);
 		DrawSpeedometer(flTime);
 		DrawJumpspeed(flTime);
+		DrawJumpDistance(flTime);
 		DrawTimer(flTime);
 		DrawDistance(flTime);
 		DrawEntityInfo(flTime);

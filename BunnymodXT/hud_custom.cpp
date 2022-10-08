@@ -1514,19 +1514,10 @@ namespace CustomHud
 			out.precision(precision);
 			out << "Stamina: ";
 
-			auto& hw = HwDLL::GetInstance();
-			if (!hw.is_cof) {
-				if (frame_bulk_selected)
-					out << frame_bulk_status.stamina;
-				else
-					out << player.stamina;
-			} else {
-				void* classPtr = (*hw.sv_player)->v.pContainingEntity->pvPrivateData;
-				uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-				ptrdiff_t offm_fStamina = 0x21F0;
-				float* m_fStamina = reinterpret_cast<float*>(thisAddr + offm_fStamina);
-				out << *m_fStamina;
-			}
+			if (frame_bulk_selected)
+				out << frame_bulk_status.stamina;
+			else
+				out << player.stamina;
 
 			DrawString(x, y, out.str().c_str());
 		}

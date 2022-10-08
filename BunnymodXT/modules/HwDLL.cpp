@@ -5291,7 +5291,16 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	health = pl->v.health;
 	armorvalue = pl->v.armorvalue;
 	waterlevel = pl->v.waterlevel;
-	stamina = pl->v.fuser2;
+
+	if (is_cof) {
+		void* classPtr = (*sv_player)->v.pContainingEntity->pvPrivateData;
+		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+		ptrdiff_t offm_fStamina = 0x21F0;
+		float* m_fStamina = reinterpret_cast<float*>(thisAddr + offm_fStamina);
+		stamina = *m_fStamina;
+	} else {
+		stamina = pl->v.fuser2;
+	}
 
 	return true;
 }

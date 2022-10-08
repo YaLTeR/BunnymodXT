@@ -26,8 +26,9 @@ namespace discord_integration
 		// Start timestamp
 		int64_t start_timestamp;
 
-		// Shortcuts for call ClientDLL or HwDLL functions
+		// Shortcuts for call Client, Server or HwDLL functions
 		auto &cl = ClientDLL::GetInstance();
+		auto &sv = ServerDLL::GetInstance();
 		auto &hw = HwDLL::GetInstance();
 
 		// Class that handles tracking state changes.
@@ -116,7 +117,7 @@ namespace discord_integration
 							// Adjust gameDir to lowercase
 							cl.ConvertToLowerCase(gd);
 
-							if (!strncmp(gd, "valve", 5) || !strncmp(gd, "abh", 3) || !strncmp(gd, "glitchless", 10))
+							if (!strncmp(gd, "valve", 5) || !strcmp(gd, "abh") || !strncmp(gd, "glitchless", 10))
 							{
 								if (hl1_map_name_to_thumbnail.find(map_name) != hl1_map_name_to_thumbnail.cend())
 								{
@@ -137,7 +138,12 @@ namespace discord_integration
 								if (bs_map_name_to_thumbnail.find(map_name) != bs_map_name_to_thumbnail.cend())
 								{
 									presence.largeImageKey = bs_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = bs_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+
+									int state;
+									if (!strcmp(map_name, "ba_teleport2") && sv.GetGlobalState("powercomplete"s, state) && state == 1)
+										presence.largeImageText = "A Leap of Faith";
+									else
+										presence.largeImageText = bs_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 								}
 							}
 							else if (!strncmp(gd, "rewolf", 6))

@@ -675,7 +675,7 @@ namespace CustomHud
 			// 1 = jumpdistance will update when velocity is reasonably positive
 			// not 1 = jumpdistance will update when velocity changes, eg just falling
 			if (!inJump && (
-				((CVars::bxt_hud_jumpdistance.GetInt() == 1 ?
+				(((CVars::bxt_hud_jumpdistance.GetInt() == 1) ?
 					player.velocity[2] > 0.0f : player.velocity[2] != 0.0f) && prevVel[2] == 0.0f) ||
 				(player.velocity[2] > 0.0f && prevVel[2] < 0.0f)))
 			{

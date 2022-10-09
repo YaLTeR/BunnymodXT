@@ -588,7 +588,6 @@ void HwDLL::Clear()
 	ORIG_Cvar_DirectSet = nullptr;
 	ORIG_Cvar_FindVar = nullptr;
 	ORIG_Cmd_FindCmd = nullptr;
-	ORIG_Cmd_AddCommand = nullptr;
 	ORIG_Host_Notarget_f = nullptr;
 	ORIG_Host_Noclip_f = nullptr;
 	ORIG_Cmd_AddMallocCommand = nullptr;
@@ -1196,7 +1195,6 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cvar_DirectSet)
 		DEF_FUTURE(Cvar_FindVar)
 		DEF_FUTURE(Cmd_FindCmd)
-		DEF_FUTURE(Cmd_AddCommand)
 		DEF_FUTURE(Host_Notarget_f)
 		DEF_FUTURE(Cbuf_InsertText)
 		DEF_FUTURE(Cbuf_AddText)
@@ -2161,7 +2159,6 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Draw_FillRGBA);
 		GET_FUTURE(PF_traceline_DLL);
 		GET_FUTURE(CL_CheckGameDirectory);
-		GET_FUTURE(Cmd_AddCommand);
 		GET_FUTURE(Host_Notarget_f);
 		GET_FUTURE(SaveGameSlot);
 		GET_FUTURE(CL_HudMessage);
@@ -4021,6 +4018,12 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 
 	using CmdWrapper::Handler;
 	typedef CmdWrapper::CmdWrapper<CmdFuncs> wrapper;
+
+	if (is_cof)
+	{
+		CmdFuncs::AddCommand("noclip", ORIG_Host_Noclip_f);
+		CmdFuncs::AddCommand("notarget", ORIG_Host_Notarget_f);
+	}
 
 	wrapper::Add<Cmd_BXT_TAS_LoadScript, Handler<const char *>>("bxt_tas_loadscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportScript, Handler<const char *>>("bxt_tas_exportscript");

@@ -347,8 +347,6 @@ public:
 	_Cvar_FindVar ORIG_Cvar_FindVar;
 	typedef int(__cdecl *_build_number)();
 	_build_number ORIG_build_number;
-	typedef void(__cdecl* _Cmd_AddCommand) (const char* cmd_name, xcommand_t function);
-	_Cmd_AddCommand ORIG_Cmd_AddCommand;
 	typedef void(__cdecl* _Host_Notarget_f) ();
 	_Host_Notarget_f ORIG_Host_Notarget_f;
 	typedef void(__cdecl* _Host_Noclip_f) ();

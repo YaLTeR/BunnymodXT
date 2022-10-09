@@ -1387,12 +1387,6 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Init)
 		hw.RegisterCVar(CVars::cl_righthand);
 	}
 
-	if (hw.is_cof)
-	{
-		hw.ORIG_Cmd_AddCommand("notarget", hw.ORIG_Host_Notarget_f);
-		hw.ORIG_Cmd_AddCommand("noclip", hw.ORIG_Host_Noclip_f);
-	}
-
 	CustomHud::Init();
 }
 

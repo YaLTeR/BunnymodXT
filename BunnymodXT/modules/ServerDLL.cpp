@@ -141,7 +141,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CBaseEntity__FireBulletsPlayer_Linux, HOOKED_CBaseEntity__FireBulletsPlayer_Linux,
 			ORIG_CBaseButton__ButtonUse, HOOKED_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse, HOOKED_CTriggerEndSection__EndSectionUse,
-			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch);
+			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch,
+			ORIG_PM_UnDuck, HOOKED_PM_UnDuck);
 	}
 }
 
@@ -184,7 +185,8 @@ void ServerDLL::Unhook()
 			ORIG_CBaseMonster__Killed,
 			ORIG_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse,
-			ORIG_CTriggerEndSection__EndSectionTouch);
+			ORIG_CTriggerEndSection__EndSectionTouch,
+			ORIG_PM_UnDuck);
 	}
 
 	Clear();
@@ -244,6 +246,7 @@ void ServerDLL::Clear()
 	ORIG_CBaseButton__ButtonUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionTouch = nullptr;
+	ORIG_PM_UnDuck = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -256,6 +259,7 @@ void ServerDLL::Clear()
 	pBhopcapWindows = 0;
 	pCZDS_Velocity_Byte = 0;
 	pAddToFullPack_PVS_Byte = 0;
+	pCoF_Noclip_Preventing_Check_Byte = 0;
 	offm_iClientFOV = 0;
 	offm_rgAmmoLast = 0;
 	maxAmmoSlots = 0;
@@ -289,8 +293,17 @@ bool ServerDLL::CanHook(const std::wstring& moduleFullName)
 	if (!IHookableDirFilter::CanHook(moduleFullName))
 		return false;
 
+	std::wstring folderName = GetFolderName(moduleFullName);
+
+	#ifdef COF_BUILD
+	// HACK: In Cry of Fear client and server dlls are in the same directory.
+	// When we are going through cl_dlls skip every dll except hl.dll.
+	if (folderName == L"cl_dlls" && GetFileName(moduleFullName) != L"hl.dll")
+		return false;
+	#endif
+
 	// Filter out addons like metamod which may be located into a "dlls" folder under addons.
-	std::wstring pathToLiblist = moduleFullName.substr(0, moduleFullName.rfind(GetFolderName(moduleFullName))).append(L"liblist.gam");
+	std::wstring pathToLiblist = moduleFullName.substr(0, moduleFullName.rfind(folderName)).append(L"liblist.gam");
 
 	// If liblist.gam exists in the parent directory, then we're (hopefully) good.
 	struct wrapper {
@@ -391,6 +404,7 @@ void ServerDLL::FindStuff()
 					break;
 				case 8:
 				case 9:
+				case 13:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 8);
 					break;
 				}
@@ -570,6 +584,14 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xC4;
 				offFuncObjectCaps = 0x18;
 				break;
+			case 26: // CoF-5936
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x25C0;
+				offm_iClientFOV = 0x250C;
+				offFuncIsPlayer = 0xD0;
+				offFuncCenter = 0xFC;
+				offFuncObjectCaps = 0x40;
+				break;
 			default:
 				assert(false);
 			}
@@ -622,6 +644,19 @@ void ServerDLL::FindStuff()
 			}
 		});
 
+	auto fCoF_Noclip_Preventing_Check_Byte = FindAsync(
+		pCoF_Noclip_Preventing_Check_Byte,
+		patterns::server::CoF_Noclip_Preventing_Check_Byte,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CoF_Noclip_Preventing_Check_Byte.cbegin()) {
+			case 0: // CoF-5936
+				pCoF_Noclip_Preventing_Check_Byte += 10;
+				break;
+			default:
+				assert(false);
+			}
+		});
+
 	auto fPM_WalkMove = FindFunctionAsync(ORIG_PM_WalkMove, "PM_WalkMove", patterns::shared::PM_WalkMove);
 	auto fPM_FlyMove = FindFunctionAsync(ORIG_PM_FlyMove, "PM_FlyMove", patterns::shared::PM_FlyMove);
 	auto fPM_AddToTouched = FindFunctionAsync(ORIG_PM_AddToTouched, "PM_AddToTouched", patterns::shared::PM_AddToTouched);
@@ -632,6 +667,7 @@ void ServerDLL::FindStuff()
 	auto fCBaseMonster__Killed = FindAsync(ORIG_CBaseMonster__Killed, patterns::server::CBaseMonster__Killed);
 	auto fCChangeLevel__InTransitionVolume = FindAsync(ORIG_CChangeLevel__InTransitionVolume, patterns::server::CChangeLevel__InTransitionVolume);
 	auto fPM_CheckStuck = FindFunctionAsync(ORIG_PM_CheckStuck, "PM_CheckStuck", patterns::server::PM_CheckStuck);
+	auto fPM_UnDuck = FindAsync(ORIG_PM_UnDuck, patterns::server::PM_UnDuck);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -646,6 +682,7 @@ void ServerDLL::FindStuff()
 			case 5:
 			case 6:
 			case 7:
+			case 8:
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;
@@ -746,6 +783,12 @@ void ServerDLL::FindStuff()
 		} else {
 			EngineDevWarning("[server dll] Could not find AddToFullPack PVS Byte.\n");
 		}
+	}
+
+	{
+		auto pattern = fCoF_Noclip_Preventing_Check_Byte.get();
+		if (pCoF_Noclip_Preventing_Check_Byte)
+			EngineDevMsg("[server dll] Found noclip preventing check in CoF at %p (using the %s pattern).\n", pCoF_Noclip_Preventing_Check_Byte, pattern->name());
 	}
 
 	{
@@ -1221,6 +1264,16 @@ void ServerDLL::FindStuff()
 		}
 	}
 
+	{
+		auto pattern = fPM_UnDuck.get();
+		if (ORIG_PM_UnDuck) {
+			EngineDevMsg("[server dll] Found PM_UnDuck at %p (using the %s pattern).\n", ORIG_PM_UnDuck, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_UnDuck.\n");
+			EngineWarning("Enabling ducktap in Cry of Fear is not available.\n");
+		}
+	}
+
 	auto fCBaseEntity__FireBullets = FindAsync(ORIG_CBaseEntity__FireBullets, patterns::server::CBaseEntity__FireBullets);
 	auto fCBaseEntity__FireBulletsPlayer = FindAsync(ORIG_CBaseEntity__FireBulletsPlayer, patterns::server::CBaseEntity__FireBulletsPlayer);
 
@@ -1267,7 +1320,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 	REG(bxt_timer_autostop);
-	if (ORIG_PM_Jump) {
+	// Smiley: bxt_autojump is illegal in CoF since it doesn't take stamina for jumps, use +bxt_tas_autojump instead
+	if (ORIG_PM_Jump && !HwDLL::GetInstance().is_cof) {
 		REG(bxt_autojump);
 		REG(bxt_autojump_priority);
 	}
@@ -1282,7 +1336,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_fire_on_stuck);
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
-	if (pCS_Stamina_Value)
+	if (pCS_Stamina_Value || HwDLL::GetInstance().is_cof)
 		REG(bxt_remove_stamina);
 	if (ORIG_CChangeLevel__UseChangeLevel && ORIG_CChangeLevel__TouchChangeLevel)
 		REG(bxt_disable_changelevel);
@@ -1302,6 +1356,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_bullets);
 		REG(bxt_show_bullets_enemy);
 	}
+	if (ORIG_PM_UnDuck)
+		REG(bxt_cof_enable_ducktap);
 	#undef REG
 }
 
@@ -1481,6 +1537,8 @@ void ServerDLL::LogPlayerMove(bool pre, uintptr_t pmove) const
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 {
+	HwDLL &hwDLL = HwDLL::GetInstance();
+
 	bool stuck_cur_frame = false;
 	static bool not_stuck_prev_frame = false;
 
@@ -1492,9 +1550,26 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 			std::ostringstream ss;
 			ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
 
-			HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+			hwDLL.ORIG_Cbuf_InsertText(ss.str().c_str());
 		}
 		not_stuck_prev_frame = !stuck_cur_frame;
+	}
+
+	if (hwDLL.is_cof)
+	{
+		if (pCoF_Noclip_Preventing_Check_Byte)
+		{
+			if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0x75) && hwDLL.noclip_anglehack)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
+			else if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0xEB) && !hwDLL.noclip_anglehack)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\x75"));
+		}
+
+		void* classPtr = (*hwDLL.sv_player)->v.pContainingEntity->pvPrivateData;
+		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+		ptrdiff_t offm_bInfiniteStamina = 0x21E8;
+		int* m_bInfiniteStamina = reinterpret_cast<int*>(thisAddr + offm_bInfiniteStamina);
+		*m_bInfiniteStamina = CVars::bxt_remove_stamina.GetBool() ? 1 : 0;
 	}
 
 	if (!ppmove)
@@ -1540,7 +1615,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		ALERT(at_console, "Onground: %d; usehull: %d\n", *groundEntity, *reinterpret_cast<int*>(pmove + 0xBC));
 	}
 
-	HwDLL &hwDLL = HwDLL::GetInstance();
 	if (hwDLL.IsTASLogging()) {
 		hwDLL.logWriter.SetEntFriction(*reinterpret_cast<float *>(pmove + offEntFriction));
 		hwDLL.logWriter.SetEntGravity(*reinterpret_cast<float *>(pmove + offEntGravity));
@@ -1850,6 +1924,12 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 		if (pev && pev->targetname) {
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			OnMultiManagerFired(targetname);
+
+			if (HwDLL::GetInstance().is_cof) {
+				auto m_index = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + 228);
+				if (!std::strcmp(targetname, "whensimondies") && (m_index == 2)) // Cry of Fear (Ending 4)
+					DoAutoStopTasks();
+			}
 		}
 	}
 
@@ -2677,4 +2757,17 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionTouch, voi
 	}
 
 	return ORIG_CTriggerEndSection__EndSectionTouch(thisptr, edx, pOther);
+}
+
+HOOK_DEF_0(ServerDLL, void, __cdecl, PM_UnDuck)
+{
+	if (ppmove && offFlags && offInDuck && CVars::bxt_cof_enable_ducktap.GetBool()) {
+		auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
+		int *flags = reinterpret_cast<int*>(pmove + offFlags);
+		bool *inDuck = reinterpret_cast<bool*>(pmove + offInDuck);
+		*flags |= FL_DUCKING;
+		*inDuck = false;
+	}
+
+	ORIG_PM_UnDuck();
 }

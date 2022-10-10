@@ -112,6 +112,10 @@ typedef struct entvars_s
 	
 	int			light_level;
 
+	#ifdef COF_BUILD
+	byte		unknown[4];
+	#endif
+
 	int			sequence;		// animation sequence
 	int			gaitsequence;	// movement animation sequence for player (0 for none)
 	float		frame;			// % playback position in animation sequences (0..255)
@@ -218,6 +222,11 @@ typedef struct entvars_s
 	edict_t		*euser2;
 	edict_t		*euser3;
 	edict_t		*euser4;
+
+	#ifdef COF_BUILD
+	byte		unknown2[4];	// actual location unknown, required for pointer arithmetic
+								// to work when we iterate through edicts.
+	#endif
 } entvars_t;
 
 

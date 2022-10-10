@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 3.12)
 
+option(COF "Set COF_BUILD preprocessor flag if enabled" OFF)
+
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
 if (NOT CMAKE_GENERATOR MATCHES "Visual Studio .+")
@@ -53,6 +55,10 @@ if (MSVC)
 	if (CMAKE_GENERATOR_TOOLSET MATCHES "_xp")
 		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:threadSafeInit-")
 	endif ()
+
+	if (COF)
+		add_definitions(-DCOF_BUILD)
+	endif()
 else ()
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium-m -mfpmath=387 -mno-sse -g -Wall -Wextra -Wno-unused-parameter")
 

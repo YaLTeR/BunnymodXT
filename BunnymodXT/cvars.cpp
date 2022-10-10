@@ -40,6 +40,7 @@ namespace CVars
 	CVarWrapper bxt_hud_game_color("bxt_hud_game_color", "");
 	CVarWrapper bxt_disable_gamedir_check_in_demo("bxt_disable_gamedir_check_in_demo", "0");
 	CVarWrapper bxt_remove_fps_limit("bxt_remove_fps_limit", "0");
+	CVarWrapper bxt_cof_disable_save_lock("bxt_cof_disable_save_lock", "0");
 
 	CVarWrapper con_color;
 	CVarWrapper sv_cheats;
@@ -77,6 +78,7 @@ namespace CVars
 	CVarWrapper bxt_fire_on_button_target("bxt_fire_on_button_target", "");
 	CVarWrapper bxt_fire_on_button_command("bxt_fire_on_button_command", "");
 	CVarWrapper bxt_remove_stamina("bxt_remove_stamina", "0");
+	CVarWrapper bxt_cof_enable_ducktap("bxt_cof_enable_ducktap", "0");
 
 	// Clientside CVars
 	CVarWrapper cl_righthand("cl_righthand", "0");
@@ -233,6 +235,7 @@ namespace CVars
 		&bxt_hud_game_color,
 		&bxt_disable_gamedir_check_in_demo,
 		&bxt_remove_fps_limit,
+		&bxt_cof_disable_save_lock,
 		&bxt_autojump_priority,
 		&con_color,
 		&sv_cheats,
@@ -275,6 +278,7 @@ namespace CVars
 		&bxt_fire_on_mm_command,
 		&bxt_fire_on_button_target,
 		&bxt_fire_on_button_command,
+		&bxt_cof_enable_ducktap,
 		&bxt_show_triggers,
 		&bxt_show_triggers_legacy,
 		&bxt_collision_depth_map,

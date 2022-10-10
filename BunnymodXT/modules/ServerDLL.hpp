@@ -52,6 +52,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CBaseButton__ButtonUse, void* thisptr, int edx, void* pActivator, void* pCaller, int useType, float value)
 	HOOK_DECL(void, __fastcall, CTriggerEndSection__EndSectionUse, void* thisptr, int edx, void* pActivator, void* pCaller, int useType, float value)
 	HOOK_DECL(void, __fastcall, CTriggerEndSection__EndSectionTouch, void* thisptr, int edx, void* pOther)
+	HOOK_DECL(void, __cdecl, PM_UnDuck)
 
 public:
 	static ServerDLL& GetInstance()
@@ -98,7 +99,11 @@ public:
 	void SetStamina(bool makeItZero);
 
 private:
-	ServerDLL() : IHookableDirFilter({ L"dlls" }) {};
+	#ifdef COF_BUILD
+		ServerDLL() : IHookableDirFilter({ L"cl_dlls"}) {};
+	#else
+		ServerDLL() : IHookableDirFilter({ L"dlls"}) {};
+	#endif
 	ServerDLL(const ServerDLL&);
 	void operator=(const ServerDLL&);
 
@@ -179,6 +184,8 @@ protected:
 	ptrdiff_t pCS_Stamina_Value;
 	ptrdiff_t pCS_Bhopcap;
 	ptrdiff_t pCS_Bhopcap_Windows;
+
+	ptrdiff_t pCoF_Noclip_Preventing_Check_Byte;
 
 	bool spirit_sdk = false;
 

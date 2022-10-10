@@ -75,6 +75,8 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, Draw_FillRGBA, int x, int y, int w, int h, int r, int g, int b, int a)
 	HOOK_DECL(void, __cdecl, PF_traceline_DLL, const Vector* v1, const Vector* v2, int fNoMonsters, edict_t* pentToSkip, TraceResult* ptr)
 	HOOK_DECL(qboolean, __cdecl, CL_CheckGameDirectory, char *gamedir)
+	HOOK_DECL(int, __cdecl, Host_ValidSave)
+	HOOK_DECL(int, __cdecl, SaveGameSlot, const char* pSaveName, const char* pSaveComment)
 
 	struct cmdbuf_t
 	{
@@ -163,8 +165,6 @@ public:
 	void SetPlayerOrigin(float origin[3]);
 	void SetPlayerVelocity(float velocity[3]);
 	bool TryGettingAccurateInfo(float origin[3], float velocity[3], float& health, float& armorvalue, int& waterlevel, float& stamina);
-	void GetViewangles(float* va);
-	void SetViewangles(float* va);
 
 	inline bool NeedViewmodelAdjustments()
 	{
@@ -327,6 +327,8 @@ public:
 
 	bool Called_Timer = false;
 
+	bool is_cof = false;
+
 	void ResetStateBeforeTASPlayback();
 	void StartTASPlayback();
 
@@ -345,6 +347,10 @@ public:
 	_Cvar_FindVar ORIG_Cvar_FindVar;
 	typedef int(__cdecl *_build_number)();
 	_build_number ORIG_build_number;
+	typedef void(__cdecl* _Host_Notarget_f) ();
+	_Host_Notarget_f ORIG_Host_Notarget_f;
+	typedef void(__cdecl* _Host_Noclip_f) ();
+	_Host_Noclip_f ORIG_Host_Noclip_f;
 
 	HLStrafe::PlayerData GetPlayerData();
 
@@ -361,8 +367,6 @@ protected:
 	_Cmd_Args ORIG_Cmd_Args;
 	typedef char*(__cdecl *_Cmd_Argv) (unsigned n);
 	_Cmd_Argv ORIG_Cmd_Argv;
-	typedef void(__cdecl *_hudGetViewAngles) (float* va);
-	_hudGetViewAngles ORIG_hudGetViewAngles;
 	typedef pmtrace_t(__cdecl *_PM_PlayerTrace) (const float* start, const float* end, int traceFlags, int ignore_pe);
 	_PM_PlayerTrace ORIG_PM_PlayerTrace;
 	typedef void(__cdecl *_SV_AddLinksToPM) (char* node, float* origin);
@@ -371,6 +375,8 @@ protected:
 	_PF_GetPhysicsKeyValue ORIG_PF_GetPhysicsKeyValue;
 	typedef void(__cdecl *_CL_RecordHUDCommand) (const char* cmdname);
 	_CL_RecordHUDCommand ORIG_CL_RecordHUDCommand;
+	typedef void(__cdecl *_CL_HudMessage) (const char *pMessage);
+	_CL_HudMessage ORIG_CL_HudMessage;
 
 	void FindStuff();
 
@@ -458,6 +464,8 @@ public:
 	HLStrafe::MovementVars GetMovementVars();
 
 	bool ducktap;
+	edict_t **sv_player;
+	bool *noclip_anglehack;
 protected:
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
@@ -478,7 +486,6 @@ protected:
 	bool insideHost_Reload_f;
 
 	void *cls;
-	void *clientstate;
 	void *sv;
 	ptrdiff_t offTime;
 	ptrdiff_t offWorldmodel;
@@ -491,7 +498,6 @@ protected:
 	void *svmove;
 	void **ppmove;
 	client_t **host_client;
-	edict_t **sv_player;
 	char *sv_areanodes;
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
@@ -503,6 +509,7 @@ protected:
 	studiohdr_t **pstudiohdr;
 	float *scr_fov_value;
 	ptrdiff_t pHost_FilterTime_FPS_Cap_Byte;
+	bool *cofSaveHack;
 
 	int framesTillExecuting;
 	bool executing;

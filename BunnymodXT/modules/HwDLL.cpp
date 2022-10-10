@@ -387,6 +387,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Host_Changelevel2_f);
 			MemUtils::MarkAsExecutable(ORIG_SCR_BeginLoadingPlaque);
 			MemUtils::MarkAsExecutable(ORIG_Host_FilterTime);
+			MemUtils::MarkAsExecutable(ORIG_Host_ValidSave);
 			MemUtils::MarkAsExecutable(ORIG_V_FadeAlpha);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawSkyBox);
 			MemUtils::MarkAsExecutable(ORIG_SCR_UpdateScreen);
@@ -427,6 +428,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
 			MemUtils::MarkAsExecutable(ORIG_PF_traceline_DLL);
 			MemUtils::MarkAsExecutable(ORIG_CL_CheckGameDirectory);
+			MemUtils::MarkAsExecutable(ORIG_SaveGameSlot);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -442,6 +444,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Host_Changelevel2_f, HOOKED_Host_Changelevel2_f,
 			ORIG_SCR_BeginLoadingPlaque, HOOKED_SCR_BeginLoadingPlaque,
 			ORIG_Host_FilterTime, HOOKED_Host_FilterTime,
+			ORIG_Host_ValidSave, HOOKED_Host_ValidSave,
 			ORIG_V_FadeAlpha, HOOKED_V_FadeAlpha,
 			ORIG_R_DrawSkyBox, HOOKED_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen, HOOKED_SCR_UpdateScreen,
@@ -481,7 +484,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
 			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
 			ORIG_PF_traceline_DLL, HOOKED_PF_traceline_DLL,
-			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory);
+			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory,
+			ORIG_SaveGameSlot, HOOKED_SaveGameSlot);
 	}
 }
 
@@ -502,6 +506,7 @@ void HwDLL::Unhook()
 			ORIG_Host_Changelevel2_f,
 			ORIG_SCR_BeginLoadingPlaque,
 			ORIG_Host_FilterTime,
+			ORIG_Host_ValidSave,
 			ORIG_V_FadeAlpha,
 			ORIG_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen,
@@ -541,7 +546,8 @@ void HwDLL::Unhook()
 			ORIG_DrawCrosshair,
 			ORIG_Draw_FillRGBA,
 			ORIG_PF_traceline_DLL,
-			ORIG_CL_CheckGameDirectory);
+			ORIG_CL_CheckGameDirectory,
+			ORIG_SaveGameSlot);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -562,6 +568,7 @@ void HwDLL::Clear()
 	ORIG_Host_Changelevel2_f = nullptr;
 	ORIG_SCR_BeginLoadingPlaque = nullptr;
 	ORIG_Host_FilterTime = nullptr;
+	ORIG_Host_ValidSave = nullptr;
 	ORIG_V_FadeAlpha = nullptr;
 	ORIG_R_DrawSkyBox = nullptr;
 	ORIG_SCR_UpdateScreen = nullptr;
@@ -581,11 +588,12 @@ void HwDLL::Clear()
 	ORIG_Cvar_DirectSet = nullptr;
 	ORIG_Cvar_FindVar = nullptr;
 	ORIG_Cmd_FindCmd = nullptr;
+	ORIG_Host_Notarget_f = nullptr;
+	ORIG_Host_Noclip_f = nullptr;
 	ORIG_Cmd_AddMallocCommand = nullptr;
 	ORIG_Cmd_Argc = nullptr;
 	ORIG_Cmd_Args = nullptr;
 	ORIG_Cmd_Argv = nullptr;
-	ORIG_hudGetViewAngles = nullptr;
 	ORIG_PM_PlayerTrace = nullptr;
 	ORIG_SV_AddLinksToPM = nullptr;
 	ORIG_PF_GetPhysicsKeyValue = nullptr;
@@ -628,6 +636,8 @@ void HwDLL::Clear()
 	ORIG_Draw_FillRGBA = nullptr;
 	ORIG_PF_traceline_DLL = nullptr;
 	ORIG_CL_CheckGameDirectory = nullptr;
+	ORIG_CL_HudMessage = nullptr;
+	ORIG_SaveGameSlot = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -645,7 +655,6 @@ void HwDLL::Clear()
 	insideHost_Loadgame_f = false;
 	insideHost_Reload_f = false;
 	cls = nullptr;
-	clientstate = nullptr;
 	sv = nullptr;
 	lastRecordedHealth = 0;
 	offTime = 0;
@@ -667,6 +676,8 @@ void HwDLL::Clear()
 	movevars = nullptr;
 	offZmax = 0;
 	pHost_FilterTime_FPS_Cap_Byte = 0;
+	cofSaveHack = nullptr;
+	noclip_anglehack = nullptr;
 	frametime_remainder = nullptr;
 	pstudiohdr = nullptr;
 	scr_fov_value = nullptr;
@@ -871,12 +882,6 @@ void HwDLL::FindStuff()
 		} else
 			EngineDevWarning("[hw dll] Could not find movevars.\n");
 
-		ORIG_hudGetViewAngles = reinterpret_cast<_hudGetViewAngles>(MemUtils::GetSymbolAddress(m_Handle, "hudGetViewAngles"));
-		if (ORIG_hudGetViewAngles)
-			EngineDevMsg("[hw dll] Found hudGetViewAngles at %p.\n", ORIG_hudGetViewAngles);
-		else
-			EngineDevWarning("[hw dll] Could not find hudGetViewAngles.\n");
-
 		ORIG_SV_AddLinksToPM = reinterpret_cast<_SV_AddLinksToPM>(MemUtils::GetSymbolAddress(m_Handle, "SV_AddLinksToPM"));
 		if (ORIG_SV_AddLinksToPM)
 			EngineDevMsg("[hw dll] Found SV_AddLinksToPM at %p.\n", ORIG_SV_AddLinksToPM);
@@ -967,7 +972,7 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find CL_CheckGameDirectory.\n");
 
-		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_hudGetViewAngles || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
+		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
 		#define FIND(f) \
@@ -1190,6 +1195,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cvar_DirectSet)
 		DEF_FUTURE(Cvar_FindVar)
 		DEF_FUTURE(Cmd_FindCmd)
+		DEF_FUTURE(Host_Notarget_f)
 		DEF_FUTURE(Cbuf_InsertText)
 		DEF_FUTURE(Cbuf_AddText)
 		DEF_FUTURE(Cmd_AddMallocCommand)
@@ -1233,6 +1239,8 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Draw_FillRGBA)
 		DEF_FUTURE(PF_traceline_DLL)
 		DEF_FUTURE(CL_CheckGameDirectory)
+		DEF_FUTURE(SaveGameSlot)
+		DEF_FUTURE(CL_HudMessage)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1266,6 +1274,9 @@ void HwDLL::FindStuff()
 				case 2: // HL-WON-1712
 					pEngStudio = *reinterpret_cast<engine_studio_api_t**>(reinterpret_cast<uintptr_t>(ClientDLL_CheckStudioInterface) + 30);
 					break;
+				case 3: // CoF-5936
+					pEngStudio = *reinterpret_cast<engine_studio_api_t**>(reinterpret_cast<uintptr_t>(ClientDLL_CheckStudioInterface) + 48);
+					break;
 				}
 			});
 
@@ -1289,6 +1300,9 @@ void HwDLL::FindStuff()
 				case 3: // HL-WON-1712
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 1456);
 					break;
+				case 4: // CoF-5936
+					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 230);
+					break;
 				}
 			});
 
@@ -1311,6 +1325,10 @@ void HwDLL::FindStuff()
 				case 2: // HL-WON-1712
 					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 89);
 					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 84);
+					break;
+				case 3: // CoF-5936
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 118);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 113);
 					break;
 				}
 			});
@@ -1338,6 +1356,7 @@ void HwDLL::FindStuff()
 				switch (pattern - patterns::engine::Cbuf_Execute.cbegin())
 				{
 				case 0: // HL-SteamPipe-8183
+				case 3: // HL-SteamPipe-8308
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
 					break;
 				case 1: // HL-SteamPipe
@@ -1346,8 +1365,8 @@ void HwDLL::FindStuff()
 				case 2: // HL-NGHL
 					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 2) - offsetof(cmdbuf_t, cursize));
 					break;
-				case 3: // HL-SteamPipe-8308
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
+				case 4: // CoF-5936
+					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 21) - offsetof(cmdbuf_t, cursize));
 					break;
 				}
 			});
@@ -1364,6 +1383,9 @@ void HwDLL::FindStuff()
 				case 1: // HL-NGHL
 					cvar_vars = reinterpret_cast<cvar_t**>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cvar_RegisterVariable) + 122));
 					break;
+				case 2: // CoF-5936
+					cvar_vars = reinterpret_cast<cvar_t**>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cvar_RegisterVariable) + 183));
+					break;
 				}
 			});
 
@@ -1379,6 +1401,9 @@ void HwDLL::FindStuff()
 				case 1: // HL-4554
 					scr_fov_value = reinterpret_cast<float*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_SetFrustum) + 10));
 					break;
+				case 2: // CoF-5936
+					scr_fov_value = reinterpret_cast<float*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_SetFrustum) + 7));
+					break;
 				}
 			});
 
@@ -1386,10 +1411,17 @@ void HwDLL::FindStuff()
 			ORIG_SeedRandomNumberGenerator,
 			patterns::engine::SeedRandomNumberGenerator,
 			[&](auto pattern) {
-				ORIG_time = reinterpret_cast<_time>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 3)
-					+ reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 7
-				);
+				switch (pattern - patterns::engine::SeedRandomNumberGenerator.cbegin())
+				{
+				case 0: // HL-SteamPipe
+					ORIG_time = reinterpret_cast<_time>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 3)
+						+ reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 7);
+					break;
+				case 1: // CoF-5936
+					ORIG_time = reinterpret_cast<_time>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 6)
+						+ reinterpret_cast<uintptr_t>(ORIG_SeedRandomNumberGenerator) + 10);
+					break;
+				}
 			});
 
 		auto fCL_Stop_f = FindAsync(
@@ -1401,9 +1433,9 @@ void HwDLL::FindStuff()
 				{
 				default:
 				case 0: // SteamPipe
+				case 2: // CoF-5936
 					offset = 25;
 					break;
-
 				case 1: // NGHL
 					offset = 22;
 					break;
@@ -1417,7 +1449,16 @@ void HwDLL::FindStuff()
 			SCR_DrawFPS,
 			patterns::engine::SCR_DrawFPS,
 			[&](auto pattern) {
-				host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(SCR_DrawFPS) + 21);
+				switch (pattern - patterns::engine::SCR_DrawFPS.cbegin())
+				{
+				default:
+				case 0: // HL-Steampipe
+					host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(SCR_DrawFPS) + 21);
+					break;
+				case 1: // CoF-5936
+					host_frametime = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(SCR_DrawFPS) + 24);
+					break;
+				}
 			});
 
 		void *CL_Move;
@@ -1456,6 +1497,11 @@ void HwDLL::FindStuff()
 					offCmd_Argc = 25;
 					offCmd_Args = 78;
 					offCmd_Argv = 151;
+					break;
+				case 4: // CoF-5936
+					offCmd_Argc = 26;
+					offCmd_Args = 41;
+					offCmd_Argv = 180;
 				}
 
 				auto f = reinterpret_cast<uintptr_t>(Host_Tell_f);
@@ -1479,21 +1525,43 @@ void HwDLL::FindStuff()
 			patterns::engine::Host_AutoSave_f,
 			[&](auto pattern) {
 				auto f = reinterpret_cast<uintptr_t>(Host_AutoSave_f);
-				sv = *reinterpret_cast<void**>(f + 19);
-				offTime = 0x10;
-				offWorldmodel = 304;
-				offModels = 0x30950;
-				offNumEdicts = 0x3bc58;
-				offMaxEdicts = 0x3bc5c;
-				offEdicts = 0x3bc60;
-				ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
-					*reinterpret_cast<ptrdiff_t*>(f + 33)
-					+ (f + 37)
-					);
-				cls = *reinterpret_cast<void**>(f + 69);
-				svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
-				offEdict = *reinterpret_cast<ptrdiff_t*>(f + 122);
-				clientstate = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 86) - 0x2AF80);
+				switch (pattern - patterns::engine::Host_AutoSave_f.cbegin())
+				{
+				default:
+				case 0: // HL-Steampipe
+					sv = *reinterpret_cast<void**>(f + 19);
+					offTime = 0x10;
+					offWorldmodel = 304;
+					offModels = 0x30950;
+					offNumEdicts = 0x3bc58;
+					offMaxEdicts = 0x3bc5c;
+					offEdicts = 0x3bc60;
+					ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
+						*reinterpret_cast<ptrdiff_t*>(f + 33)
+						+ (f + 37)
+						);
+					cls = *reinterpret_cast<void**>(f + 69);
+					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
+					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 122);
+					break;
+				case 1: // CoF-5936
+					sv = *reinterpret_cast<void**>(f + 50);
+					offTime = 0x10;
+					offWorldmodel = 304;
+					offModels = 0x41D50;
+					offNumEdicts = 0x52158;
+					offMaxEdicts = 0x5215C;
+					offEdicts = 0x52160;
+					ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
+						*reinterpret_cast<ptrdiff_t*>(f + 63)
+						+ (f + 67)
+						);
+					cls = *reinterpret_cast<void**>(f + 105);
+					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 79) - 8);
+					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 182);
+					is_cof = true;
+					break;
+				}
 			});
 
 		void *MiddleOfSV_ReadClientMessage;
@@ -1527,6 +1595,12 @@ void HwDLL::FindStuff()
 					svmove = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 43);
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 39);
 					sv_player = *reinterpret_cast<edict_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 23);
+					break;
+				case 4: // CoF-5936.
+					host_client = *reinterpret_cast<client_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 17);
+					svmove = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 57);
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 53);
+					sv_player = *reinterpret_cast<edict_t***>(reinterpret_cast<uintptr_t>(MiddleOfSV_ReadClientMessage) + 34);
 					break;
 				}
 			});
@@ -1573,6 +1647,11 @@ void HwDLL::FindStuff()
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 248)
 						+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 252);
 					break;
+				case 5: // CoF-5936
+					ORIG_SV_SpawnServer = reinterpret_cast<_SV_SpawnServer>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 335)
+						+ reinterpret_cast<uintptr_t>(ORIG_Host_Changelevel2_f) + 339);
+					break;
 				}
 			});
 
@@ -1606,6 +1685,11 @@ void HwDLL::FindStuff()
 					ORIG_Cbuf_InsertTextLines = reinterpret_cast<_Cbuf_InsertTextLines>(
 						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 769)
 						+ reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 773);
+					break;
+				case 5: // CoF-5936.
+					ORIG_Cbuf_InsertTextLines = reinterpret_cast<_Cbuf_InsertTextLines>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 550)
+						+ reinterpret_cast<uintptr_t>(ORIG_Cmd_Exec_f) + 554);
 					break;
 				}
 			});
@@ -1651,6 +1735,12 @@ void HwDLL::FindStuff()
 						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 20);
 					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 72);
 					break;
+				case 3: // CoF-5936.
+					ORIG_Cmd_TokenizeString = reinterpret_cast<_Cmd_TokenizeString>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 19)
+						+ reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 23);
+					cmd_alias = *reinterpret_cast<cmdalias_t**>(reinterpret_cast<uintptr_t>(Cmd_ExecuteString) + 149);
+					break;
 				}
 			});
 
@@ -1658,8 +1748,17 @@ void HwDLL::FindStuff()
 			ORIG_SV_SetMoveVars,
 			patterns::engine::SV_SetMoveVars,
 			[&](auto pattern) {
-				movevars = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(ORIG_SV_SetMoveVars) + 18);
-				offZmax = 0x38;
+				switch (pattern - patterns::engine::SV_SetMoveVars.cbegin())
+				{
+				case 0: // SteamPipe.
+					movevars = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(ORIG_SV_SetMoveVars) + 18);
+					offZmax = 0x38;
+					break;
+				case 1: // CoF-5936.
+					movevars = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(ORIG_SV_SetMoveVars) + 9);
+					offZmax = 0x38;
+					break;
+				}
 			}
 		);
 
@@ -1667,9 +1766,22 @@ void HwDLL::FindStuff()
 			ORIG_R_StudioCalcAttachments,
 			patterns::engine::R_StudioCalcAttachments,
 			[&](auto pattern) {
-				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 106)
-					+ reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 110);
+				switch (pattern - patterns::engine::R_StudioCalcAttachments.cbegin())
+				{
+				case 0: // SteamPipe.
+					ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 106)
+						+ reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 110);
+						break;
+				case 1: // CoF-5936.
+					ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+						*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 157)
+						+ reinterpret_cast<uintptr_t>(ORIG_R_StudioCalcAttachments) + 161);
+					break;
+				default:
+					assert(false);
+					break;
+				}
 			});
 
 		auto fR_StudioSetupBones = FindAsync(
@@ -1684,10 +1796,27 @@ void HwDLL::FindStuff()
 				case 1: // 4554.
 					pstudiohdr = *reinterpret_cast<studiohdr_t***>(reinterpret_cast<uintptr_t>(ORIG_R_StudioSetupBones) + 7);
 					break;
+				case 2: // CoF-5936.
+					pstudiohdr = *reinterpret_cast<studiohdr_t***>(reinterpret_cast<uintptr_t>(ORIG_R_StudioSetupBones) + 16);
+					break;
 				default:
 					assert(false);
 					break;
 				}
+			});
+
+		auto fHost_ValidSave = FindAsync(
+			ORIG_Host_ValidSave,
+			patterns::engine::Host_ValidSave,
+			[&](auto pattern) {
+				cofSaveHack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(ORIG_Host_ValidSave) + 21);
+			});
+
+		auto fHost_Noclip_f = FindAsync(
+			ORIG_Host_Noclip_f,
+			patterns::engine::Host_Noclip_f,
+			[&](auto pattern) {
+				noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(ORIG_Host_Noclip_f) + 123);
 			});
 
 		{
@@ -1768,7 +1897,6 @@ void HwDLL::FindStuff()
 			if (Host_AutoSave_f) {
 				EngineDevMsg("[hw dll] Found Host_AutoSave_f at %p (using the %s pattern).\n", Host_AutoSave_f, pattern->name());
 				EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
-				EngineDevMsg("[hw dll] Found clientstate at %p.\n", clientstate);
 				EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
 				EngineDevMsg("[hw dll] Found svs at %p.\n", svs);
 				EngineDevMsg("[hw dll] Found Con_Printf at %p.\n", ORIG_Con_Printf);
@@ -1929,6 +2057,28 @@ void HwDLL::FindStuff()
 			}
 		}
 
+		{
+			auto pattern = fHost_ValidSave.get();
+			if (ORIG_Host_ValidSave) {
+				EngineDevMsg("[hw dll] Found Host_ValidSave at %p (using the %s pattern).\n", ORIG_Host_ValidSave, pattern->name());
+				EngineDevMsg("[hw dll] Found cof_savehack at %p.\n", cofSaveHack);
+			} else {
+				EngineDevWarning("[hw dll] Could not find Host_ValidSave.\n");
+				EngineWarning("[hw dll] Quick saving in Cry of Fear is not available.\n");
+			}
+		}
+
+		{
+			auto pattern = fHost_Noclip_f.get();
+			if (ORIG_Host_Noclip_f) {
+				EngineDevMsg("[hw dll] Found Host_Noclip_f at %p (using the %s pattern).\n", ORIG_Host_Noclip_f, pattern->name());
+				EngineDevMsg("[hw dll] Found noclip_anglehack at %p.\n", noclip_anglehack);
+			} else {
+				EngineDevWarning("[hw dll] Could not find Host_Noclip_f.\n");
+				EngineWarning("[hw dll] Enabling noclip in Cry of Fear is not available.\n");
+			}
+		}
+
 		#define GET_FUTURE(future_name) \
 			{ \
 				auto pattern = f##future_name.get(); \
@@ -2009,6 +2159,9 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Draw_FillRGBA);
 		GET_FUTURE(PF_traceline_DLL);
 		GET_FUTURE(CL_CheckGameDirectory);
+		GET_FUTURE(Host_Notarget_f);
+		GET_FUTURE(SaveGameSlot);
+		GET_FUTURE(CL_HudMessage);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -2507,7 +2660,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Origin_And_Angles
 		auto &hw = HwDLL::GetInstance();
 		auto &cl = ClientDLL::GetInstance();
 		float angles[3];
-		hw.GetViewangles(angles);
+		cl.pEngfuncs->GetViewAngles(angles);
 		hw.ORIG_Con_Printf("bxt_set_angles %f %f %f;", angles[0], angles[1], angles[2]);
 		if (CVars::bxt_hud_origin.GetInt() == 2)
 			hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", cl.last_vieworg[0], cl.last_vieworg[1], cl.last_vieworg[2]);
@@ -2582,22 +2735,22 @@ struct HwDLL::Cmd_BXT_Set_Angles
 
 	static void handler(float x, float y)
 	{
-		auto &hw = HwDLL::GetInstance();
+		auto &cl = ClientDLL::GetInstance();
 		float vec[3];
 		vec[0] = x;
 		vec[1] = y;
 		vec[2] = 0.0f;
-		hw.SetViewangles(vec);
+		cl.pEngfuncs->SetViewAngles(vec);
 	}
 
 	static void handler(float x, float y, float z)
 	{
-		auto &hw = HwDLL::GetInstance();
+		auto &cl = ClientDLL::GetInstance();
 		float vec[3];
 		vec[0] = x;
 		vec[1] = y;
 		vec[2] = z;
-		hw.SetViewangles(vec);
+		cl.pEngfuncs->SetViewAngles(vec);
 	}
 };
 
@@ -3844,6 +3997,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_disable_gamedir_check_in_demo);
 	RegisterCVar(CVars::bxt_remove_fps_limit);
 
+	if (ORIG_Host_ValidSave && cofSaveHack)
+		RegisterCVar(CVars::bxt_cof_disable_save_lock);
+
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
 
@@ -3862,6 +4018,12 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 
 	using CmdWrapper::Handler;
 	typedef CmdWrapper::CmdWrapper<CmdFuncs> wrapper;
+
+	if (is_cof)
+	{
+		CmdFuncs::AddCommand("noclip", ORIG_Host_Noclip_f);
+		CmdFuncs::AddCommand("notarget", ORIG_Host_Notarget_f);
+	}
 
 	wrapper::Add<Cmd_BXT_TAS_LoadScript, Handler<const char *>>("bxt_tas_loadscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportScript, Handler<const char *>>("bxt_tas_exportscript");
@@ -4006,7 +4168,7 @@ void HwDLL::InsertCommands()
 						}
 
 						// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
-						GetViewangles(player.Viewangles);
+						ClientDLL::GetInstance().pEngfuncs->GetViewAngles(player.Viewangles);
 						//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
 					}
 				}
@@ -4590,7 +4752,7 @@ void HwDLL::InsertCommands()
 					}
 
 					// Hope the viewangles aren't changed in ClientDLL's HUD_UpdateClientData() (that happens later in Host_Frame()).
-					GetViewangles(player.Viewangles);
+					ClientDLL::GetInstance().pEngfuncs->GetViewAngles(player.Viewangles);
 					//ORIG_Con_Printf("Player viewangles: %f %f %f\n", player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]);
 				}
 			}
@@ -4719,7 +4881,7 @@ HLStrafe::PlayerData HwDLL::GetPlayerData()
 		player.HasLJModule = false;
 	}
 
-	GetViewangles(player.Viewangles);
+	ClientDLL::GetInstance().pEngfuncs->GetViewAngles(player.Viewangles);
 
 	return player;
 }
@@ -5132,27 +5294,18 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	health = pl->v.health;
 	armorvalue = pl->v.armorvalue;
 	waterlevel = pl->v.waterlevel;
-	stamina = pl->v.fuser2;
+
+	if (is_cof) {
+		void* classPtr = (*sv_player)->v.pContainingEntity->pvPrivateData;
+		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+		ptrdiff_t offm_fStamina = 0x21F0;
+		float* m_fStamina = reinterpret_cast<float*>(thisAddr + offm_fStamina);
+		stamina = *m_fStamina;
+	} else {
+		stamina = pl->v.fuser2;
+	}
 
 	return true;
-}
-
-void HwDLL::GetViewangles(float* va)
-{
-	if (clientstate) {
-		float *viewangles = reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(clientstate) + 0x2ABE4);
-		va[0] = viewangles[0];
-		va[1] = viewangles[1];
-		va[2] = viewangles[2];
-	} else
-		ORIG_hudGetViewAngles(va);
-}
-
-void HwDLL::SetViewangles(float* va)
-{
-	if (ClientDLL::GetInstance().pEngfuncs) {
-		ClientDLL::GetInstance().pEngfuncs->SetViewAngles(va);
-	}
 }
 
 HLStrafe::TraceResult HwDLL::PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull, bool extendDistanceLimit)
@@ -6072,4 +6225,23 @@ HOOK_DEF_1(HwDLL, qboolean, __cdecl, CL_CheckGameDirectory, char*, gamedir)
 		return true;
 	else
 		return ORIG_CL_CheckGameDirectory(gamedir);
+}
+
+HOOK_DEF_0(HwDLL, int, __cdecl, Host_ValidSave)
+{
+	if (cofSaveHack) {
+		*cofSaveHack = CVars::bxt_cof_disable_save_lock.GetBool() ? 1 : 0;
+	}
+
+	return ORIG_Host_ValidSave();
+}
+
+HOOK_DEF_2(HwDLL, int, __cdecl, SaveGameSlot, const char*, pSaveName, const char*, pSaveComment)
+{
+	auto rv = ORIG_SaveGameSlot(pSaveName, pSaveComment);
+	// Cry of Fear-specific, draw "Saved..." on the screen.
+	if (ORIG_CL_HudMessage)
+		ORIG_CL_HudMessage("GAMESAVED");
+
+	return rv;
 }

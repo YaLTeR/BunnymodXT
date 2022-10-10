@@ -424,7 +424,7 @@ namespace CustomHud
 	void GetAccurateInfo()
 	{
 		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.health, player.armorvalue, player.waterlevel, player.stamina);
-		HwDLL::GetInstance().GetViewangles(player.viewangles);
+		ClientDLL::GetInstance().pEngfuncs->GetViewAngles(player.viewangles);
 	}
 
 	static void UpdateColors()

@@ -153,6 +153,7 @@ namespace CVars
 	extern CVarWrapper bxt_hud_game_color;
 	extern CVarWrapper bxt_disable_gamedir_check_in_demo;
 	extern CVarWrapper bxt_remove_fps_limit;
+	extern CVarWrapper bxt_cof_disable_save_lock;
 
 	extern CVarWrapper con_color;
 	extern CVarWrapper sv_cheats;
@@ -190,6 +191,7 @@ namespace CVars
 	extern CVarWrapper bxt_fire_on_button_target;
 	extern CVarWrapper bxt_fire_on_button_command;
 	extern CVarWrapper bxt_remove_stamina;
+	extern CVarWrapper bxt_cof_enable_ducktap;
 
 	// Clientside CVars
 	extern CVarWrapper cl_righthand;

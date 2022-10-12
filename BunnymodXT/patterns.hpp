@@ -1009,7 +1009,7 @@ namespace patterns
 			"Halfquake-Trilogy",
 			"55 8B EC 83 EC 18 83 65 ?? 00",
 			"Reissues",
-			"55 8B EC 83 EC 10 56 57 8B 7D 08",
+			"55 8B EC 83 EC 10 56 57 8B 7D 08 C7 45",
 			"CoF-5936",
 			"55 8B EC 83 EC 10 53 56 8B 75 ?? 57 C7 45 ?? 00 00 00 00"
 		);
@@ -1044,7 +1044,7 @@ namespace patterns
 			"CStrike-Latest",
 			"83 EC 48 53 55 8B E9 56 57 8B 4D 30 8B 55 44",
 			"CoF-5936",
-			"55 8B EC 83 EC 4C A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56"
+			"55 8B EC 83 EC 4C A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 57 8B"
 		);
 
 		PATTERNS(CStudioModelRenderer__StudioRenderModel,
@@ -1106,7 +1106,7 @@ namespace patterns
 			"AoMDC",
 			"55 8B EC 83 EC 74 53 56 57 89 4D ?? A1 ?? ?? ?? ?? 83 E0 20",
 			"Halfquake-Trilogy",
-			"55 8B EC 83 EC 1C 56 8B F1",
+			"55 8B EC 83 EC 1C 56 8B F1 83 BE",
 			"TWHL-Tower-2",
 			"55 8B EC 83 EC 14 53 56 8B F1"
 		);
@@ -1267,7 +1267,7 @@ namespace patterns
 			"Halfquake-Trilogy",
 			"55 8B EC 81 EC D0 00 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 8B 0D ?? ?? ?? ?? 33 C0 8D 51 20 F3 0F 10 4A F4 F3 0F 10 02 83 C2 04 F3 0F 59 89 68 54 04 00 F3 0F 59 81 6C 54 04 00",
 			"CoF-5936",
-			"53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC 81 EC F0 00 00 00"
+			"53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC 81 EC F0 00 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC 8B 0D"
 		);
 
 		PATTERNS(PM_Ladder,

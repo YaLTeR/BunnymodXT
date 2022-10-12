@@ -192,6 +192,7 @@ namespace CVars
 	extern CVarWrapper bxt_fire_on_button_command;
 	extern CVarWrapper bxt_remove_stamina;
 	extern CVarWrapper bxt_cof_enable_ducktap;
+	extern CVarWrapper bxt_cof_slowdown_if_use_on_ground;
 
 	// Clientside CVars
 	extern CVarWrapper cl_righthand;

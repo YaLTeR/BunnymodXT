@@ -1569,7 +1569,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 		ptrdiff_t offm_bInfiniteStamina = 0x21E8;
 		bool* m_bInfiniteStamina = reinterpret_cast<bool*>(thisAddr + offm_bInfiniteStamina);
-		*m_bInfiniteStamina = CVars::bxt_remove_stamina.GetBool() ? true : false;
+		*m_bInfiniteStamina = CVars::bxt_remove_stamina.GetBool();
 	}
 
 	if (!ppmove)

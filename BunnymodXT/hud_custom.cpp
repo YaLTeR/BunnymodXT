@@ -697,7 +697,7 @@ namespace CustomHud
 					jumpDistance = distance;
 				}
 			}
-			else if (player.origin[2] == prevPlayerOrigin[2])
+			else if (inJump && player.origin[2] == prevPlayerOrigin[2])
 			{
 				// walking
 				inJump = false;

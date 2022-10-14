@@ -487,6 +487,22 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory,
 			ORIG_SaveGameSlot, HOOKED_SaveGameSlot);
 	}
+
+	#ifdef _WIN32
+		#ifdef COF_BUILD
+		if (!is_cof) {
+			ClientDLL::GetInstance().pEngfuncs = nullptr;
+			ServerDLL::GetInstance().pEngfuncs = nullptr;
+			MessageBox(NULL, "Loaded Bunnymod XT (CoF version) in non-CoF game! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
+		}
+		#else
+		if (is_cof) {
+			ClientDLL::GetInstance().pEngfuncs = nullptr;
+			ServerDLL::GetInstance().pEngfuncs = nullptr;
+			MessageBox(NULL, "Loaded BunnymodXT (HL version) in CoF! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
+		}
+		#endif
+	#endif
 }
 
 void HwDLL::Unhook()

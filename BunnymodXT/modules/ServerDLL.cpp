@@ -142,6 +142,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CBaseButton__ButtonUse, HOOKED_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse, HOOKED_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch,
+			ORIG_PM_Duck, HOOKED_PM_Duck,
 			ORIG_PM_UnDuck, HOOKED_PM_UnDuck);
 	}
 }
@@ -186,6 +187,7 @@ void ServerDLL::Unhook()
 			ORIG_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch,
+			ORIG_PM_Duck,
 			ORIG_PM_UnDuck);
 	}
 
@@ -246,6 +248,7 @@ void ServerDLL::Clear()
 	ORIG_CBaseButton__ButtonUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionTouch = nullptr;
+	ORIG_PM_Duck = nullptr;
 	ORIG_PM_UnDuck = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
@@ -667,6 +670,7 @@ void ServerDLL::FindStuff()
 	auto fCBaseMonster__Killed = FindAsync(ORIG_CBaseMonster__Killed, patterns::server::CBaseMonster__Killed);
 	auto fCChangeLevel__InTransitionVolume = FindAsync(ORIG_CChangeLevel__InTransitionVolume, patterns::server::CChangeLevel__InTransitionVolume);
 	auto fPM_CheckStuck = FindFunctionAsync(ORIG_PM_CheckStuck, "PM_CheckStuck", patterns::server::PM_CheckStuck);
+	auto fPM_Duck = FindFunctionAsync(ORIG_PM_Duck, "PM_Duck", patterns::server::PM_Duck);
 	auto fPM_UnDuck = FindAsync(ORIG_PM_UnDuck, patterns::server::PM_UnDuck);
 
 	auto fCGraph__InitGraph = FindAsync(
@@ -851,9 +855,9 @@ void ServerDLL::FindStuff()
 	{
 		auto pattern = fCS_Stamina_Value.get();
 		if (pCS_Stamina_Value) {
-			EngineDevMsg("[client dll] Found the stamina value pattern at %p (using the %s pattern).\n", pCS_Stamina_Value, pattern->name());
+			EngineDevMsg("[server dll] Found the stamina value pattern at %p (using the %s pattern).\n", pCS_Stamina_Value, pattern->name());
 		} else {
-			EngineDevWarning("[client dll] Could not find the stamina value pattern.\n");
+			EngineDevWarning("[server dll] Could not find the stamina value pattern.\n");
 		}
 	}
 
@@ -1254,6 +1258,18 @@ void ServerDLL::FindStuff()
 	}
 
 	{
+		auto pattern = fPM_Duck.get();
+		if (ORIG_PM_Duck) {
+			if (pattern == patterns::server::PM_Duck.cend())
+				EngineDevMsg("[server dll] Found PM_Duck at %p.\n", ORIG_PM_Duck);
+			else
+				EngineDevMsg("[server dll] Found PM_Duck at %p (using the %s pattern).\n", ORIG_PM_Duck, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find PM_Duck.\n");
+		}
+	}
+
+	{
 		auto pattern = fDispatchRestore.get();
 		if (pDispatchRestore) {
 			EngineDevMsg("[server dll] Found DispatchRestore at %p (using the %s pattern).\n", pDispatchRestore, pattern->name());
@@ -1356,6 +1372,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_bullets);
 		REG(bxt_show_bullets_enemy);
 	}
+	if (ORIG_PM_Duck && HwDLL::GetInstance().is_cof)
+		REG(bxt_cof_slowdown_if_use_on_ground);
 	if (ORIG_PM_UnDuck)
 		REG(bxt_cof_enable_ducktap);
 	#undef REG
@@ -2757,6 +2775,24 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionTouch, voi
 	}
 
 	return ORIG_CTriggerEndSection__EndSectionTouch(thisptr, edx, pOther);
+}
+
+HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Duck)
+{
+	ORIG_PM_Duck();
+
+	if (ppmove && CVars::bxt_cof_slowdown_if_use_on_ground.GetBool()) {
+		auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
+		int *onground = reinterpret_cast<int*>(pmove + offOnground);
+		usercmd_t *cmd = reinterpret_cast<usercmd_t*>(pmove + offCmd);
+		float *velocity = reinterpret_cast<float*>(pmove + offVelocity);
+
+		if ((*onground != -1) && (cmd->buttons & IN_USE)) {
+			velocity[0] *= 0.3f;
+			velocity[1] *= 0.3f;
+			velocity[2] *= 0.3f;
+		}
+	}
 }
 
 HOOK_DEF_0(ServerDLL, void, __cdecl, PM_UnDuck)

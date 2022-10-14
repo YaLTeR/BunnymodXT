@@ -1322,9 +1322,9 @@ namespace CustomHud
 			out << "Vel: " << frame_bulk_status.vel << '\n';
 			out << "Z Vel: " << frame_bulk_status.zvel << '\n';
 
-			out << "X Pos: " << frame_bulk_status.pos[0] << "\n"
-				<< "Y Pos: " << frame_bulk_status.pos[1] << "\n"
-				<< "Z Pos: " << frame_bulk_status.pos[2];
+			out << "X Pos: " << frame_bulk_status.pos[0] << '\n'
+				<< "Y Pos: " << frame_bulk_status.pos[1] << '\n'
+				<< "Z Pos: " << frame_bulk_status.pos[2] << '\n';
 
 			out << "Health: " << frame_bulk_status.health << '\n';
 			out << "Armor: " << frame_bulk_status.armor << '\n';

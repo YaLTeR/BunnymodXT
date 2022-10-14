@@ -77,6 +77,8 @@ namespace CustomHud
 
 		float vel;
 		float zvel;
+		float xpos;
+		float ypos;
 		float zpos;
 		float realyaw;
 		float health;
@@ -544,9 +546,18 @@ namespace CustomHud
 			}
 			else
 			{
-				out << "X: " << player.origin[0] << "\n"
-					<< "Y: " << player.origin[1] << "\n"
-					<< "Z: " << player.origin[2];
+				if (frame_bulk_selected)
+				{
+					out << "X: " << frame_bulk_status.xpos << "\n"
+						<< "Y: " << frame_bulk_status.ypos << "\n"
+						<< "Z: " << frame_bulk_status.zpos;
+				}
+				else
+				{
+					out << "X: " << player.origin[0] << "\n"
+						<< "Y: " << player.origin[1] << "\n"
+						<< "Z: " << player.origin[2];
+				}
 			}
 
 			DrawMultilineString(x, y, out.str());
@@ -1321,7 +1332,6 @@ namespace CustomHud
 
 			out << "Vel: " << frame_bulk_status.vel << '\n';
 			out << "Z Vel: " << frame_bulk_status.zvel << '\n';
-			out << "Z Pos: " << frame_bulk_status.zpos << '\n';
 
 			out << "Health: " << frame_bulk_status.health << '\n';
 			out << "Armor: " << frame_bulk_status.armor << '\n';
@@ -1746,13 +1756,15 @@ namespace CustomHud
 		return si;
 	}
 
-	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor, const float& player_stamina)
+	void UpdateTASEditorStatus(const HLTAS::Frame& frame_bulk, const float& player_vel, const float& player_zvel, const float& player_xpos, const float& player_ypos, const float& player_zpos, const float& player_realyaw, const float& player_health, const float& player_armor, const float& player_stamina)
 	{
 		frame_bulk_selected = true;
 		frame_bulk_status = FrameBulkStatus{};
 
 		frame_bulk_status.vel = player_vel;
 		frame_bulk_status.zvel = player_zvel;
+		frame_bulk_status.xpos = player_xpos;
+		frame_bulk_status.ypos = player_ypos;
 		frame_bulk_status.zpos = player_zpos;
 		frame_bulk_status.realyaw = player_realyaw;
 

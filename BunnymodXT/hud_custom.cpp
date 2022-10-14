@@ -613,7 +613,7 @@ namespace CustomHud
 				if ((player.velocity[2] != 0.0f && prevVel[2] == 0.0f)
 					|| (player.velocity[2] > 0.0f && prevVel[2] < 0.0f))
 				{
-					double difference = length(player.velocity[0], player.velocity[1]) - jumpSpeed;
+					double difference = length(prevVel[0], prevVel[1]) - jumpSpeed;
 					if (difference != 0.0f)
 					{
 						if (difference > 0.0f)
@@ -630,7 +630,7 @@ namespace CustomHud
 						}
 
 						passedTime = 0.0;
-						jumpSpeed = length(player.velocity[0], player.velocity[1]);
+						jumpSpeed = length(prevVel[0], prevVel[1]);
 					}
 				}
 

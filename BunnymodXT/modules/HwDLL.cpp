@@ -499,7 +499,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 		if (is_cof) {
 			ClientDLL::GetInstance().pEngfuncs = nullptr;
 			ServerDLL::GetInstance().pEngfuncs = nullptr;
-			MessageBox(NULL, "Loaded BunnymodXT (HL edition) to CoF game! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
+			MessageBox(NULL, "Loaded BunnymodXT (HL version) in CoF! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
 		}
 		#endif
 	#endif

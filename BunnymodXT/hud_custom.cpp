@@ -641,7 +641,7 @@ namespace CustomHud
 						}
 
 						passedTime = 0.0;
-						jumpSpeed = length(player.velocity[0], player.velocity[1]);
+						jumpSpeed = length(prevVel[0], prevVel[1]);
 					}
 				}
 

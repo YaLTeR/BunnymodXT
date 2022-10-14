@@ -1678,7 +1678,7 @@ namespace TriangleDrawing
 
 				float current_player_vel = 0;
 				float current_player_zvel = 0;
-				float current_player_zpos = 0;
+				float current_player_pos[3] = {0, 0, 0};
 				float current_player_realyaw = 0;
 
 				float current_player_health = 0;
@@ -1692,7 +1692,9 @@ namespace TriangleDrawing
 
 					current_player_vel = std::hypotf(current_player_vels[0], current_player_vels[1]);
 					current_player_zvel = current_player_vels[2];
-					current_player_zpos = current_player_data.Origin[2];
+					current_player_pos[0] = current_player_data.Origin[0];
+					current_player_pos[1] = current_player_data.Origin[1];
+					current_player_pos[2] = current_player_data.Origin[2];
 					current_player_realyaw = current_player_data.Viewangles[1];
 
 					current_player_health = input.player_health_datas[closest_edge_frame];
@@ -1704,7 +1706,7 @@ namespace TriangleDrawing
 				// Update the HUD status before any changes, since that's the state that was visualized earlier.
 				CustomHud::UpdateTASEditorStatus(
 					frame_bulk,
-					current_player_vel, current_player_zvel, current_player_zpos,
+					current_player_vel, current_player_zvel, current_player_pos,
 					current_player_realyaw,
 					current_player_health, current_player_armor, current_player_stamina);
 

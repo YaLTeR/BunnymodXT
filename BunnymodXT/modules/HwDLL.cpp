@@ -4235,6 +4235,8 @@ void HwDLL::InsertCommands()
 						player.InDuckAnimation = (pl->v.bInDuck != 0);
 						player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 						player.StaminaTime = pl->v.fuser2;
+						player.WaterLevel = pl->v.waterlevel;
+						player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 						if (ORIG_PF_GetPhysicsKeyValue) {
 							auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));
@@ -4823,6 +4825,8 @@ void HwDLL::InsertCommands()
 					player.InDuckAnimation = (pl->v.bInDuck != 0);
 					player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 					player.StaminaTime = pl->v.fuser2;
+					player.WaterLevel = pl->v.waterlevel;
+					player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 					if (ORIG_PF_GetPhysicsKeyValue) {
 						auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));
@@ -4842,8 +4846,7 @@ void HwDLL::InsertCommands()
 			auto playerCopy = HLStrafe::PlayerData(player); // Our copy that we will mess with.
 			auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false);
 			auto postype = GetPositionType(playerCopy, traceFunc);
-			if (postype == HLStrafe::PositionType::GROUND) {
-				if (ducktap) {
+			if (ducktap && postype == HLStrafe::PositionType::GROUND) {
 					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {
 						// This should check against the next frame's origin but meh.
 						const float VEC_HULL_MIN[3] = { -16, -16, -36 };
@@ -4856,9 +4859,8 @@ void HwDLL::InsertCommands()
 						if (!tr.StartSolid)
 							Duck = true;
 					}
-				} else if (autojump && !currentKeys.Jump.IsDown()) {
-					Jump = true;
-				}
+			} else if (autojump && !currentKeys.Jump.IsDown() && (postype != HLStrafe::PositionType::AIR || !player.Walking)) {
+				Jump = true;
 			} else if (jumpbug && postype == HLStrafe::PositionType::AIR) {
 				if (player.Ducking) {
 					// Predict what will happen if we unduck.
@@ -4953,6 +4955,8 @@ HLStrafe::PlayerData HwDLL::GetPlayerData()
 	player.InDuckAnimation = (pl->v.bInDuck != 0);
 	player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 	player.StaminaTime = pl->v.fuser2;
+	player.WaterLevel = pl->v.waterlevel;
+	player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 	if (ORIG_PF_GetPhysicsKeyValue) {
 		auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));

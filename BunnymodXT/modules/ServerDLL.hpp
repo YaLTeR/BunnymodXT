@@ -99,12 +99,10 @@ public:
 
 	void SetStamina(bool makeItZero);
 
+	bool is_cof_155 = false;
+
 private:
-	#ifdef COF_BUILD
-		ServerDLL() : IHookableDirFilter({ L"cl_dlls"}) {};
-	#else
-		ServerDLL() : IHookableDirFilter({ L"dlls"}) {};
-	#endif
+	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};
 	ServerDLL(const ServerDLL&);
 	void operator=(const ServerDLL&);
 
@@ -191,6 +189,8 @@ protected:
 	ptrdiff_t pCS_Bhopcap_Windows;
 
 	ptrdiff_t pCoF_Noclip_Preventing_Check_Byte;
+	ptrdiff_t pCBasePlayerJump_OldButtons_Check_Byte;
+	ptrdiff_t offm_bInfiniteStamina;
 
 	bool spirit_sdk = false;
 

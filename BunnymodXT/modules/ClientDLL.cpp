@@ -357,6 +357,7 @@ void ClientDLL::FindStuff()
 					break;
 				case 12:
 				case 6:
+				case 14:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 24);
 					break;
 				case 7:
@@ -424,6 +425,11 @@ void ClientDLL::FindStuff()
 				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 77)
 					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 81);
+				break;
+			case 8: // CoF-Mod-155
+				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 111)
+					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 115);
 				break;
 			default:
 				assert(false);
@@ -820,8 +826,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 
-	// Smiley: bxt_autojump is illegal in CoF since it doesn't take stamina for jumps, use +bxt_tas_autojump instead
-	if (ORIG_PM_Jump && !HwDLL::GetInstance().is_cof)
+	if (ORIG_PM_Jump)
 		REG(bxt_autojump_prediction);
 
 	if (ORIG_PM_PreventMegaBunnyJumping || pBhopcapWindows)

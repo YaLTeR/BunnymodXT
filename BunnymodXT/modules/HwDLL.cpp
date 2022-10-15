@@ -692,6 +692,7 @@ void HwDLL::Clear()
 	movevars = nullptr;
 	offZmax = 0;
 	pHost_FilterTime_FPS_Cap_Byte = 0;
+	offm_fStamina = 0;
 	cofSaveHack = nullptr;
 	noclip_anglehack = nullptr;
 	frametime_remainder = nullptr;
@@ -1211,6 +1212,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cvar_DirectSet)
 		DEF_FUTURE(Cvar_FindVar)
 		DEF_FUTURE(Cmd_FindCmd)
+		DEF_FUTURE(Host_Noclip_f)
 		DEF_FUTURE(Host_Notarget_f)
 		DEF_FUTURE(Cbuf_InsertText)
 		DEF_FUTURE(Cbuf_AddText)
@@ -1828,11 +1830,21 @@ void HwDLL::FindStuff()
 				cofSaveHack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(ORIG_Host_ValidSave) + 21);
 			});
 
-		auto fHost_Noclip_f = FindAsync(
-			ORIG_Host_Noclip_f,
-			patterns::engine::Host_Noclip_f,
+		void *CL_RegisterResources;
+		auto fCL_RegisterResources = FindAsync(
+			CL_RegisterResources,
+			patterns::engine::CL_RegisterResources,
 			[&](auto pattern) {
-				noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(ORIG_Host_Noclip_f) + 123);
+				switch (pattern - patterns::engine::CL_RegisterResources.cbegin())
+				{
+				default:
+				case 0: // CoF-5936.
+					noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 216);
+					break;
+				case 1: // Steampipe.
+					noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 237);
+					break;
+				}
 			});
 
 		{
@@ -1905,6 +1917,16 @@ void HwDLL::FindStuff()
 				EngineDevMsg("[hw dll] Found scr_fov_value at %p.\n", scr_fov_value);
 			} else {
 				EngineDevWarning("[hw dll] Could not find R_SetFrustum.\n");
+			}
+		}
+
+		{
+			auto pattern = fCL_RegisterResources.get();
+			if (CL_RegisterResources) {
+				EngineDevMsg("[hw dll] Found CL_RegisterResources at %p (using the %s pattern).\n", CL_RegisterResources, pattern->name());
+				EngineDevMsg("[hw dll] Found noclip_anglehack at %p.\n", noclip_anglehack);
+			} else {
+				EngineDevWarning("[hw dll] Could not find CL_RegisterResources.\n");
 			}
 		}
 
@@ -2084,17 +2106,6 @@ void HwDLL::FindStuff()
 			}
 		}
 
-		{
-			auto pattern = fHost_Noclip_f.get();
-			if (ORIG_Host_Noclip_f) {
-				EngineDevMsg("[hw dll] Found Host_Noclip_f at %p (using the %s pattern).\n", ORIG_Host_Noclip_f, pattern->name());
-				EngineDevMsg("[hw dll] Found noclip_anglehack at %p.\n", noclip_anglehack);
-			} else {
-				EngineDevWarning("[hw dll] Could not find Host_Noclip_f.\n");
-				EngineWarning("[hw dll] Enabling noclip in Cry of Fear is not available.\n");
-			}
-		}
-
 		#define GET_FUTURE(future_name) \
 			{ \
 				auto pattern = f##future_name.get(); \
@@ -2175,6 +2186,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Draw_FillRGBA);
 		GET_FUTURE(PF_traceline_DLL);
 		GET_FUTURE(CL_CheckGameDirectory);
+		GET_FUTURE(Host_Noclip_f);
 		GET_FUTURE(Host_Notarget_f);
 		GET_FUTURE(SaveGameSlot);
 		GET_FUTURE(CL_HudMessage);
@@ -4012,9 +4024,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_force_clear);
 	RegisterCVar(CVars::bxt_disable_gamedir_check_in_demo);
 	RegisterCVar(CVars::bxt_remove_fps_limit);
-
-	if (ORIG_Host_ValidSave && cofSaveHack)
-		RegisterCVar(CVars::bxt_cof_disable_save_lock);
+	RegisterCVar(CVars::bxt_cof_disable_save_lock);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -5314,10 +5324,15 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	armorvalue = pl->v.armorvalue;
 	waterlevel = pl->v.waterlevel;
 
-	if (is_cof) {
+	if (is_cof || ServerDLL::GetInstance().is_cof_155) {
 		void* classPtr = (*sv_player)->v.pContainingEntity->pvPrivateData;
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-		ptrdiff_t offm_fStamina = 0x21F0;
+
+		if (is_cof)
+			offm_fStamina = 0x21F0;
+		else if (ServerDLL::GetInstance().is_cof_155)
+			offm_fStamina = 0x20A4;
+
 		float* m_fStamina = reinterpret_cast<float*>(thisAddr + offm_fStamina);
 		stamina = *m_fStamina;
 	} else {
@@ -5593,15 +5608,13 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 	if (pHost_FilterTime_FPS_Cap_Byte)
 	{
-		if (CVars::bxt_remove_fps_limit.GetBool())
-		{
-			if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75)
-				is_0x75 = true;
+		if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75)
+			is_0x75 = true;
 
-			if (((*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x7E) && CVars::sv_cheats.GetBool()) || (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75))
-				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
-		}
-		else if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0xEB)
+		if ((((*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x7E) && CVars::sv_cheats.GetBool()) || (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75)) && CVars::bxt_remove_fps_limit.GetBool())
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
+
+		if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0xEB && ((!is_0x75 && !CVars::sv_cheats.GetBool()) || !CVars::bxt_remove_fps_limit.GetBool()))
 		{
 			if (is_0x75)
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\x75"));

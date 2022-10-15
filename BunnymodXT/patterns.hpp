@@ -694,6 +694,13 @@ namespace patterns
 			"CoF-5936",
 			"55 8B EC 83 EC 24 83 3D ?? ?? ?? ?? 01"
 		);
+
+		PATTERNS(CL_RegisterResources,
+			"CoF-5936",
+			"55 8B EC 51 83 3D ?? ?? ?? ?? 00 75 ?? 83 3D ?? ?? ?? ?? 02",
+			"HL-Steampipe",
+			"55 8B EC A1 ?? ?? ?? ?? 57 85 C0 0F 85"
+		);
 	}
 
 	namespace server
@@ -765,7 +772,9 @@ namespace patterns
 			"TFC-Latest",
 			"8B 91 90 08 00 00 83 C8 FF 80 CA C0 89 81 B8 08 00 00 89 91 90 08 00 00 33 D2 89 81 BC 08 00 00 89 81 50 0E 00 00 89 91 94 08 00 00 89 91 10 07 00 00 C7 81 88 08 00 00 01 00 00 00",
 			"CoF-5936",
-			"A1 ?? ?? ?? ?? BA ?? ?? ?? ?? 2B 90 ?? ?? ?? ?? 81 89 ?? ?? ?? ?? C0 00 00 00 8B 01 89 91 28 06 00 00 C7 81 F8 24 00 00 FF FF FF FF"
+			"A1 ?? ?? ?? ?? BA ?? ?? ?? ?? 2B 90 ?? ?? ?? ?? 81 89 ?? ?? ?? ?? C0 00 00 00 8B 01 89 91 28 06 00 00 C7 81 F8 24 00 00 FF FF FF FF",
+			"CoF-Mod-155",
+			"55 8B EC 83 EC 44 53 56 57 89 4D ?? A1 ?? ?? ?? ?? B9 ?? ?? ?? ?? 2B 88 ?? ?? ?? ?? 8B 55 ?? 89 8A ?? ?? ?? ?? 8B 45 FC"
 		);
 
 		PATTERNS(CBasePlayer__TakeDamage,
@@ -796,7 +805,9 @@ namespace patterns
 			"TFC-Latest",
 			"83 EC 30 53 55 8B 5C 24 48 56 57 8B F9 33 ED C7 44 24 24 01 00 00 00",
 			"CoF-5936",
-			"55 8B EC 83 EC 2C 53 56 57 8B F9 80 BF A4 1E 00 00 00 0F 85 92 04 00 00"
+			"55 8B EC 83 EC 2C 53 56 57 8B F9 80 BF A4 1E 00 00 00 0F 85 92 04 00 00",
+			"CoF-Mod-155",
+			"55 8B EC 81 EC BC 00 00 00 53 56 57 89 4D ?? 8B 45 ?? 0F B6 88"
 		);
 
 		PATTERNS(CBasePlayer__GiveNamedItem,
@@ -822,7 +833,9 @@ namespace patterns
 			"TFC-Latest",
 			"8B 44 24 ?? 53 55 56 8B 50 ?? 8B F1 57 33 ED 8B 8A A4 01 00 00 8B F9 81 E7 00 02 00 00 74 3B 8B 82 9C 01 00 00 85 C0 74 31 8D 98 80 00 00 00 8B 46 04",
 			"CoF-5936",
-			"55 8B EC 83 E4 F8 83 EC 0C 8B 55 08 53 56 57 8B 7A 04 8B F1 C7 44 24 0C 00 00 00 00 F7 87 A8 01 00 00 00 02 00 00 74 5C 8B 87 A0 01 00 00 85 C0"
+			"55 8B EC 83 E4 F8 83 EC 0C 8B 55 08 53 56 57 8B 7A 04 8B F1 C7 44 24 0C 00 00 00 00 F7 87 A8 01 00 00 00 02 00 00 74 5C 8B 87 A0 01 00 00 85 C0",
+			"CoF-Mod-155",
+			"55 8B EC 83 EC 54 53 56 57 89 4D ?? 8B 45 ?? 8B 48 ?? 89 4D ?? C7 45 ?? 00 00 00 00"
 		);
 
 		PATTERNS(DispatchRestore,
@@ -899,7 +912,9 @@ namespace patterns
 			"TFC-Latest",
 			"83 EC 5C 56 68 ?? ?? ?? ?? 8B F1 FF 15 ?? ?? ?? ?? DC 1D ?? ?? ?? ?? 83 C4 04 DF E0 F6 C4 44 0F 8B ?? ?? ?? ?? 8B 44 24",
 			"CoF-5936",
-			"55 8B EC A1 ?? ?? ?? ?? 81 EC 88 00 00 00 8B 90 98 00 00 00 8B 40 0C 53 03 C2 BA ?? ?? ?? ?? 57"
+			"55 8B EC A1 ?? ?? ?? ?? 81 EC 88 00 00 00 8B 90 98 00 00 00 8B 40 0C 53 03 C2 BA ?? ?? ?? ?? 57",
+			"CoF-Mod-155",
+			"55 8B EC 81 EC 50 01 00 00 53 56 57 89 4D ?? 68 ?? ?? ?? ?? A1 ?? ?? ?? ?? 8B 88"
 		);
 
 		PATTERNS(CZDS_Velocity_Byte,
@@ -944,7 +959,9 @@ namespace patterns
 			"Echoes",
 			"55 8B EC 81 EC 80 01 00 00",
 			"CoF-5936",
-			"55 8B EC 81 EC 80 00 00 00 A1 ?? ?? ?? ?? 53"
+			"55 8B EC 81 EC 80 00 00 00 A1 ?? ?? ?? ?? 53",
+			"CoF-Mod-155",
+			"55 8B EC 81 EC 84 01 00 00"
 		);
 
 		PATTERNS(CBaseEntity__FireBulletsPlayer,
@@ -953,7 +970,9 @@ namespace patterns
 			"Echoes",
 			"55 8B EC 81 EC 10 01 00 00 89 8D ?? ?? ?? ?? 8D 4D",
 			"CoF-5936",
-			"55 8B EC 83 EC 7C 53 56 8B F1"
+			"55 8B EC 83 EC 7C 53 56 8B F1",
+			"CoF-Mod-155",
+			"55 8B EC 81 EC 44 01 00 00 53 56 57 89 4D ?? C7 45 ?? 00 00 00 00"
 		);
 
 		PATTERNS(PM_CheckStuck,
@@ -962,7 +981,9 @@ namespace patterns
 			"HL-WON",
 			"83 EC 7C 8D 44 24 38 56 57 50 A1 ?? ?? ?? ?? 8D 48 38 51",
 			"CoF-5936",
-			"55 8B EC 81 EC 80 00 00 00 A1 ?? ?? ?? ?? 33 C5"
+			"55 8B EC 81 EC 80 00 00 00 A1 ?? ?? ?? ?? 33 C5",
+			"CoF-Mod-155",
+			"55 8B EC 81 EC D8 00 00 00 53 56 57 8D 45"
 		);
 
 		PATTERNS(CS_Stamina_Value,
@@ -979,12 +1000,23 @@ namespace patterns
 
 		PATTERNS(PM_UnDuck,
 			"CoF-5936",
-			"53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC 81 EC B0 00 00 00"
+			"53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC 81 EC B0 00 00 00",
+			"CoF-Mod-155",
+			"55 8B EC 81 EC 1C 01 00 00 53 56 57 A1"
 		);
 
 		PATTERNS(CoF_Noclip_Preventing_Check_Byte,
 			"CoF-5936",
-			"8B 47 04 83 B8 ?? ?? ?? ?? 08 75 0D"
+			"8B 47 04 83 B8 ?? ?? ?? ?? 08 75 0D",
+			"CoF-Mod-155",
+			"8B 48 04 83 B9 ?? ?? ?? ?? 08 75 10"
+		);
+
+		PATTERNS(CBasePlayerJump_OldButtons_Check_Byte,
+			"CoF-Mod-155",
+			"8B 45 ?? 8B 88 ?? ?? ?? ?? 83 E1 02 75 ?? E9",
+			"CoF-5936",
+			"0F 85 ?? ?? ?? ?? F6 86 B0 22 00 00 02 0F 84 0C 02 00 00"
 		);
 	}
 
@@ -1006,7 +1038,9 @@ namespace patterns
 			"Reissues",
 			"55 56 8B F1 8B 4E 44 8B 91 D4 00 00 00 83 FA 04 7E 1D 8B 46 30 FF B0 94 0B 00 00 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 59 6A FF E8 ?? ?? ?? ?? 8B 81 D8 00 00 00 33 ED",
 			"CoF-5936",
-			"55 8B EC 51 53 56 8B F1 57 8B 46 44 8B 88 D4 00 00 00 83 F9 04 7F 6C 8B B8 D8 00 00 00 33"
+			"55 8B EC 51 53 56 8B F1 57 8B 46 44 8B 88 D4 00 00 00 83 F9 04 7F 6C 8B B8 D8 00 00 00 33",
+			"CoF-Mod-155",
+			"56 8B F1 8B 46 44 8B 90 D4 00 00 00 83 FA 04 7E 1F 8B 4E 30 8B 91 94 0B 00 00 52 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 08 6A FF E8"
 		);
 
 		PATTERNS(EV_GetDefaultShellInfo,
@@ -1023,7 +1057,9 @@ namespace patterns
 			"Reissues",
 			"55 8B EC 83 EC 10 56 57 8B 7D 08 C7 45",
 			"CoF-5936",
-			"55 8B EC 83 EC 10 53 56 8B 75 ?? 57 C7 45 ?? 00 00 00 00"
+			"55 8B EC 83 EC 10 53 56 8B 75 ?? 57 C7 45 ?? 00 00 00 00",
+			"CoF-Mod-155",
+			"83 EC 0C 53 55 56 57 8B 7C 24 ?? 8B 77 04 83 FE 01"
 		);
 
 		PATTERNS(CStudioModelRenderer__StudioSetupBones,
@@ -1056,7 +1092,9 @@ namespace patterns
 			"CStrike-Latest",
 			"83 EC 48 53 55 8B E9 56 57 8B 4D 30 8B 55 44",
 			"CoF-5936",
-			"55 8B EC 83 EC 4C A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 57 8B"
+			"55 8B EC 83 EC 4C A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 57 8B",
+			"CoF-Mod-155",
+			"83 EC 44 53 8B D9 8B 43 30 8B 4B 44 8B 90"
 		);
 
 		PATTERNS(CStudioModelRenderer__StudioRenderModel,
@@ -1105,7 +1143,7 @@ namespace patterns
 			"TWHL-Tower-2",
 			"55 8B EC 83 EC 54 83 65 ?? 00",
 			"CStrike-Latest",
-			"83 EC 50 53 55 56 8B"
+			"83 EC 50 53 55 56 8B D1"
 		);
 
 		PATTERNS(CHudHealth__DrawDamage,
@@ -1189,7 +1227,9 @@ namespace patterns
 			"HL-SWEET",
 			"55 8B EC 83 EC 14 53 56 57 C7 45 ?? 00 00 00 00 C7 45 ?? 00 00 00 00",
 			"CoF-5936",
-			"55 8B EC 83 E4 F8 8B 0D ?? ?? ?? ?? 83 EC 08 F3 0F 10 81 14 02 00 00 0F 2E 05 ?? ?? ?? ?? 53 56 9F F6 C4 44 0F 8A DC 03 00 00 83 B9 D0 00 00 00 00 74 0D"
+			"55 8B EC 83 E4 F8 8B 0D ?? ?? ?? ?? 83 EC 08 F3 0F 10 81 14 02 00 00 0F 2E 05 ?? ?? ?? ?? 53 56 9F F6 C4 44 0F 8A DC 03 00 00 83 B9 D0 00 00 00 00 74 0D",
+			"CoF-Mod-155",
+			"55 8B EC 83 EC 58 53 56 57 C7 45 ?? 00 00 00 00 C7 45 ?? 00 00 00 00 A1"
 		);
 
 		PATTERNS(PM_PreventMegaBunnyJumping,
@@ -1249,7 +1289,9 @@ namespace patterns
 			"CStrike-Latest",
 			"83 EC 10 A1 ?? ?? ?? ?? 8B 4C 24 14 53 56 57 33 FF 89 48 04 E8 ?? ?? ?? ?? 8B 15 ?? ?? ?? ?? 33 C9 89 BA 8C 54 04 00 A1 ?? ?? ?? ?? 8A 88 5A 54 04 00 89",
 			"CoF-5936",
-			"55 8B EC 8B 0D ?? ?? ?? ?? 8B 45 08 57 33 FF 89 41 04 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 89 B8 90 54 04 00 8B 0D ?? ?? ?? ?? 0F B6 81 5A 54 04 00"
+			"55 8B EC 8B 0D ?? ?? ?? ?? 8B 45 08 57 33 FF 89 41 04 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 89 B8 90 54 04 00 8B 0D ?? ?? ?? ?? 0F B6 81 5A 54 04 00",
+			"CoF-Mod-155",
+			"55 8B EC 83 EC 48 53 56 57 C7 45 ?? 00 00 00 00 A1 ?? ?? ?? ?? 8B 4D 08 89 48 04 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? C7 80 8C 54 04 00 00 00 00 00"
 		);
 
 		PATTERNS(PM_ClipVelocity,
@@ -1264,7 +1306,9 @@ namespace patterns
 			"Halfquake-Trilogy",
 			"55 8B EC 53 56 8B 75 0C 33 C0 40 33 C9 0F 57 C0 57 F3 0F 10 4E 08 0F 2F C8 0F 47 C8 0F 2E C8 9F F6 C4 44 7A 03 83 C9 02",
 			"CoF-5936",
-			"55 8B EC 8B 55 0C 33 C9 0F 57 C0 B8 01 00 00 00 F3 0F 10 62 08 0F 2F E0 0F 47 C8 0F 2E E0 9F F6 C4 44 7A 03 83 C9 02"
+			"55 8B EC 8B 55 0C 33 C9 0F 57 C0 B8 01 00 00 00 F3 0F 10 62 08 0F 2F E0 0F 47 C8 0F 2E E0 9F F6 C4 44 7A 03 83 C9 02",
+			"CoF-Mod-155",
+			"55 8B EC 83 EC 54 53 56 57 8B 45 0C 8B 48 08 89 4D F4 C7 45 EC 00 00 00 00 D9 45 F4 D8 1D ?? ?? ?? ?? DF E0 F6 C4 41 75 09 8B 45 EC 83 C8 01 89 45 EC"
 		);
 
 		PATTERNS(PM_WaterMove,
@@ -1279,7 +1323,9 @@ namespace patterns
 			"Halfquake-Trilogy",
 			"55 8B EC 81 EC D0 00 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 8B 0D ?? ?? ?? ?? 33 C0 8D 51 20 F3 0F 10 4A F4 F3 0F 10 02 83 C2 04 F3 0F 59 89 68 54 04 00 F3 0F 59 81 6C 54 04 00",
 			"CoF-5936",
-			"53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC 81 EC F0 00 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC 8B 0D"
+			"53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC 81 EC F0 00 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC 8B 0D",
+			"CoF-Mod-155",
+			"55 8B EC 81 EC 1C 01 00 00 53 56 57 C7 45 ?? 00 00 00 00 EB 09 8B 45 FC 83 C0 01 89 45 FC 83 7D FC 03"
 		);
 
 		PATTERNS(PM_Ladder,
@@ -1292,7 +1338,9 @@ namespace patterns
 			"Halfquake-Trilogy",
 			"55 8B EC 83 EC 14 A1 ?? ?? ?? ?? 33 C5 89 45 FC A1 ?? ?? ?? ?? 53 56 33 F6 57 39 B0 50 0F 02 00 0F 8E 9E 00 00 00",
 			"CoF-5936",
-			"55 8B EC 83 EC 10 A1 ?? ?? ?? ?? 33 C5 89 45 ?? A1 ?? ?? ?? ?? 53 56 57 33 FF 39 B8 50 0F 02 00 0F 8E BA 00 00 00"
+			"55 8B EC 83 EC 10 A1 ?? ?? ?? ?? 33 C5 89 45 ?? A1 ?? ?? ?? ?? 53 56 57 33 FF 39 B8 50 0F 02 00 0F 8E BA 00 00 00",
+			"CoF-Mod-155",
+			"55 8B EC 83 EC 5C 53 56 57 C7 45 ?? 00 00 00 00 EB ?? 8B 45 FC 83 C0 01 89 45 FC A1 ?? ?? ?? ?? 8B 4D FC"
 		);
 
 		PATTERNS(PM_WalkMove,
@@ -1307,7 +1355,9 @@ namespace patterns
 			"CStrike-Latest",
 			"8B 0D ?? ?? ?? ?? 81 EC ?? ?? ?? ?? D9 81 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? DF E0 25 ?? ?? ?? ?? 75",
 			"CoF-5936",
-			"53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC 81 EC FC 00 00 00"
+			"53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC 81 EC FC 00 00 00",
+			"CoF-Mod-155",
+			"55 8B EC 81 EC D8 01 00 00 53 56 57 A1 ?? ?? ?? ?? 8B 88 68 54 04 00 89 4D E0 A1 ?? ?? ?? ?? 8B 88"
 		);
 
 		PATTERNS(PM_FlyMove,
@@ -1324,7 +1374,9 @@ namespace patterns
 			"CStrike-Latest",
 			"81 EC 54 01 00 00 53 8B 1D ?? ?? ?? ?? 55 33 ED 8B 43 5C 8B 4B 60 8B 53 64 89 44 24 14 89 44 24 30 8B 43 10 56 57 89 6C 24 10 89 4C 24 20 89 54 24 24",
 			"CoF-5936",
-			"53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC 81 EC 58 01 00 00"
+			"53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B ?? 89 6C 24 ?? 8B EC 81 EC 58 01 00 00",
+			"CoF-Mod-155",
+			"55 8B EC 81 EC 68 01 00 00 53 56 57 C7 45 ?? 04 00 00 00 C7 85 ?? ?? ?? ?? 00 00 00 00 C7 45 ?? 00 00 00 00 A1"
 		);
 
 		PATTERNS(PM_AddToTouched,
@@ -1337,7 +1389,9 @@ namespace patterns
 			"Halfquake-Trilogy",
 			"55 8B EC 83 EC 48 A1 ?? ?? ?? ?? 33 C5 89 45 FC 56 57 6A 11 59 8D 75 08 33 C0 8D 7D B8 F3 A5 8B 0D ?? ?? ?? ?? 8B 91 8C 54 04 00 85 D2 7E 15 8B 7D E8 8D B1 C0 54 04 00",
 			"CoF-5936",
-			"55 8B EC 83 EC 78 A1 ?? ?? ?? ?? 33 C5 89 45 FC 0F 10 45 08 53 8B 5D 48 33 C0 0F 11 45 A8 56 0F 10 45 18 8B 35 ?? ?? ?? ?? 57 0F 11 45 98 0F 10 45 28 8B 96 90 54 04 00"
+			"55 8B EC 83 EC 78 A1 ?? ?? ?? ?? 33 C5 89 45 FC 0F 10 45 08 53 8B 5D 48 33 C0 0F 11 45 A8 56 0F 10 45 18 8B 35 ?? ?? ?? ?? 57 0F 11 45 98 0F 10 45 28 8B 96 90 54 04 00",
+			"CoF-Mod-155",
+			"55 8B EC 83 EC 48 53 56 57 C7 45 ?? 00 00 00 00 C7 45 ?? 00 00 00 00 EB ?? 8B 45 ?? 83 C0 01 89 45 ?? A1 ?? ?? ?? ?? 8B 4D FC"
 		);
 	}
 }

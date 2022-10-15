@@ -225,6 +225,8 @@ void ServerDLL::Clear()
 	ORIG_CTriggerVolume__Spawn_Linux = nullptr;
 	ORIG_CBasePlayer__ForceClientDllUpdate = nullptr;
 	ORIG_CBasePlayer__ForceClientDllUpdate_Linux = nullptr;
+	ORIG_CBasePlayer__GiveNamedItem = nullptr;
+	ORIG_CBasePlayer__GiveNamedItem_Linux = nullptr;
 	ORIG_ClientCommand = nullptr;
 	ORIG_CPushable__Move = nullptr;
 	ORIG_CPushable__Move_Linux = nullptr;
@@ -672,6 +674,7 @@ void ServerDLL::FindStuff()
 	auto fPM_CheckStuck = FindFunctionAsync(ORIG_PM_CheckStuck, "PM_CheckStuck", patterns::server::PM_CheckStuck);
 	auto fPM_Duck = FindFunctionAsync(ORIG_PM_Duck, "PM_Duck", patterns::server::PM_Duck);
 	auto fPM_UnDuck = FindAsync(ORIG_PM_UnDuck, patterns::server::PM_UnDuck);
+	auto fCBasePlayer__GiveNamedItem = FindAsync(ORIG_CBasePlayer__GiveNamedItem, patterns::server::CBasePlayer__GiveNamedItem);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -898,6 +901,20 @@ void ServerDLL::FindStuff()
 			} else {
 				EngineDevWarning("[server dll] Could not find CBasePlayer::ForceClientDllUpdate.\n");
 				EngineWarning("Ammo HUD reset prevention is not available.\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fCBasePlayer__GiveNamedItem.get();
+		if (ORIG_CBasePlayer__GiveNamedItem) {
+			EngineDevMsg("[server dll] Found CBasePlayer::GiveNamedItem at %p (using the %s pattern).\n", ORIG_CBasePlayer__GiveNamedItem, pattern->name());
+		} else {
+			ORIG_CBasePlayer__GiveNamedItem_Linux = reinterpret_cast<_CBasePlayer__GiveNamedItem_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer13GiveNamedItemEPKc"));
+			if (ORIG_CBasePlayer__GiveNamedItem_Linux) {
+				EngineDevMsg("[server dll] Found CBasePlayer::GiveNamedItem [Linux] at %p.\n", ORIG_CBasePlayer__GiveNamedItem_Linux);
+			} else {
+				EngineDevWarning("[server dll] Could not find CBasePlayer::GiveNamedItem.\n");
 			}
 		}
 	}
@@ -2220,37 +2237,39 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CTriggerVolume__Spawn_Linux, void*, thisptr
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 {
-#ifdef _WIN32
-	if (!ORIG_CBasePlayer__ForceClientDllUpdate) {
+	if (!pEngfuncs) {
 		ORIG_ClientCommand(pEntity);
 		return;
 	}
-#else
-	if (!ORIG_CBasePlayer__ForceClientDllUpdate_Linux) {
-		ORIG_ClientCommand(pEntity);
-		return;
-	}
-#endif
 
 	const char *cmd = pEngfuncs->pfnCmd_Argv(0);
-	if (std::strcmp(cmd, "fullupdate") != 0) {
+	void* classPtr = pEntity->v.pContainingEntity->pvPrivateData;
+	uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+
+	if ((std::strcmp(cmd, "fullupdate") == 0) && (ORIG_CBasePlayer__ForceClientDllUpdate || ORIG_CBasePlayer__ForceClientDllUpdate_Linux)) {
+		int* m_iClientFOV = reinterpret_cast<int*>(thisAddr + offm_iClientFOV);
+		int* m_rgAmmoLast = reinterpret_cast<int*>(thisAddr + offm_rgAmmoLast);
+		*m_iClientFOV = -1;
+		for (int i = 0; i < maxAmmoSlots; i++)
+			m_rgAmmoLast[i] = -1;
+
+		#ifdef _WIN32
+			ORIG_CBasePlayer__ForceClientDllUpdate(classPtr);
+		#else
+			ORIG_CBasePlayer__ForceClientDllUpdate_Linux(classPtr);
+		#endif
+	}
+	else if ((std::strcmp(cmd, "give") == 0) && (ORIG_CBasePlayer__GiveNamedItem || ORIG_CBasePlayer__GiveNamedItem_Linux) && CVars::sv_cheats.GetBool()) {
+		int iszItem = pEngfuncs->pfnAllocString(pEngfuncs->pfnCmd_Argv(1)); // Make a copy of the classname
+		#ifdef _WIN32
+			ORIG_CBasePlayer__GiveNamedItem(classPtr, 0, HwDLL::GetInstance().GetString(iszItem));
+		#else
+			ORIG_CBasePlayer__GiveNamedItem_Linux(classPtr, HwDLL::GetInstance().GetString(iszItem));
+		#endif
+	} else {
 		ORIG_ClientCommand(pEntity);
 		return;
 	}
-
-	void *classPtr = pEntity->v.pContainingEntity->pvPrivateData;
-	uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-	int *m_iClientFOV = reinterpret_cast<int *>(thisAddr + offm_iClientFOV);
-	int *m_rgAmmoLast = reinterpret_cast<int *>(thisAddr + offm_rgAmmoLast);
-	*m_iClientFOV = -1;
-	for (int i = 0; i < maxAmmoSlots; i++)
-		m_rgAmmoLast[i] = -1;
-
-#ifdef _WIN32
-	ORIG_CBasePlayer__ForceClientDllUpdate(classPtr);
-#else
-	ORIG_CBasePlayer__ForceClientDllUpdate_Linux(classPtr);
-#endif
 }
 
 bool ServerDLL::IsPlayerMovingPushable(const entvars_t *pevPushable, const entvars_t *pevToucher, int push) const

@@ -122,6 +122,10 @@ protected:
 	_PM_Ladder ORIG_PM_Ladder;
 	typedef int(__cdecl *_CChangeLevel__InTransitionVolume)(void *pEntity, char *pVolumeName);
 	_CChangeLevel__InTransitionVolume ORIG_CChangeLevel__InTransitionVolume;
+	typedef void(__fastcall *_CBasePlayer__GiveNamedItem)(void *thisptr, int edx, const char *pszName);
+	_CBasePlayer__GiveNamedItem ORIG_CBasePlayer__GiveNamedItem;
+	typedef void(__cdecl *_CBasePlayer__GiveNamedItem_Linux)(void *thisptr, const char *pszName);
+	_CBasePlayer__GiveNamedItem_Linux ORIG_CBasePlayer__GiveNamedItem_Linux;
 
 	typedef bool (__fastcall *_IsPlayer)(void *thisptr);
 	typedef void (__fastcall *_Center)(void *thisptr, int edx, Vector *center);

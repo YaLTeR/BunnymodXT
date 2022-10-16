@@ -613,7 +613,19 @@ namespace CustomHud
 				if ((player.velocity[2] != 0.0f && prevVel[2] == 0.0f)
 					|| (player.velocity[2] > 0.0f && prevVel[2] < 0.0f))
 				{
-					double difference = length(prevVel[0], prevVel[1]) - jumpSpeed;
+					double speed = length(prevVel[0], prevVel[1]);
+					if (CVars::bxt_bhopcap.GetBool())
+					{
+						HLStrafe::MovementVars vars = HwDLL::GetInstance().GetMovementVars();
+						auto maxscaledspeed = vars.BhopcapMaxspeedScale * vars.Maxspeed;
+						if (maxscaledspeed > 0) {
+							auto xyz_speed = length(prevVel[0], prevVel[1], prevVel[2]);
+							if (xyz_speed > maxscaledspeed)
+								speed *= (maxscaledspeed / xyz_speed) * vars.BhopcapMultiplier;
+						}
+					}
+
+					double difference = speed - jumpSpeed;
 					if (difference != 0.0f)
 					{
 						if (difference > 0.0f)
@@ -630,7 +642,7 @@ namespace CustomHud
 						}
 
 						passedTime = 0.0;
-						jumpSpeed = length(prevVel[0], prevVel[1]);
+						jumpSpeed = speed;
 					}
 				}
 

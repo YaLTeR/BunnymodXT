@@ -2237,7 +2237,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CTriggerVolume__Spawn_Linux, void*, thisptr
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 {
-	if (!pEngfuncs) {
+	if (!pEngfuncs || !pEntity->pvPrivateData) {
 		ORIG_ClientCommand(pEntity);
 		return;
 	}

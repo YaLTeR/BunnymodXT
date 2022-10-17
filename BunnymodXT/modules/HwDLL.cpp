@@ -5590,15 +5590,13 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 	if (pHost_FilterTime_FPS_Cap_Byte)
 	{
-		if (CVars::bxt_remove_fps_limit.GetBool())
-		{
-			if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75)
-				is_0x75 = true;
+		if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75)
+			is_0x75 = true;
 
-			if (((*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x7E) && CVars::sv_cheats.GetBool()) || (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75))
-				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
-		}
-		else if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0xEB)
+		if ((((*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x7E) && CVars::sv_cheats.GetBool()) || (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0x75)) && CVars::bxt_remove_fps_limit.GetBool())
+			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
+
+		if (*reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte) == 0xEB && ((!is_0x75 && !CVars::sv_cheats.GetBool()) || !CVars::bxt_remove_fps_limit.GetBool()))
 		{
 			if (is_0x75)
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\x75"));

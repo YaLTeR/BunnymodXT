@@ -18,3 +18,4 @@ enum class EventType : unsigned char {
 
 #define MQ_NAME "BunnymodXT-TASView"
 #define BUNNYSPLIT_PIPE_NAME "BunnymodXT-BunnySplit"
+#define BUNNYSPLIT_MQ_NAME "BunnymodXT-BunnySplit"

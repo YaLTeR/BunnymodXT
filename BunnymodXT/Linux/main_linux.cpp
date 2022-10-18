@@ -94,6 +94,7 @@ static __attribute__((constructor(1337))) void Construct()
 	_EngineDevWarning = PrintDevWarning;
 
 	Interprocess::Initialize();
+	Interprocess::InitBunnySplitPipe();
 
 	Hooks::AddToHookedModules(&HwDLL::GetInstance());
 	Hooks::AddToHookedModules(&ClientDLL::GetInstance());
@@ -111,4 +112,5 @@ static __attribute__((destructor(1337))) void Destruct()
 		fclose(logfile);
 
 	Interprocess::Shutdown();
+	Interprocess::ShutdownBunnySplitPipe();
 }

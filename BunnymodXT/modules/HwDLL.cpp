@@ -1844,6 +1844,9 @@ void HwDLL::FindStuff()
 				case 1: // Steampipe.
 					noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 237);
 					break;
+				case 2: // 4554.
+					noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 204);
+					break;
 				}
 			});
 

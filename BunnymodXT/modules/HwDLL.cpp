@@ -4959,6 +4959,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	static bool is_paranoia = cl.DoesGameDirMatch("paranoia");
 	static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
 	static bool is_czero = cl.DoesGameDirMatch("czero");
+	static bool is_tfc = cl.DoesGameDirMatch("tfc");
 
 	if (is_paranoia)
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
@@ -4975,8 +4976,10 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	} else {
 		vars.BhopcapMultiplier = 0.65f;
 		vars.BhopcapMaxspeedScale = 1.7f;
-		vars.UseSlow = true;
 	}
+
+	if (!is_cstrike && !is_czero && !is_tfc)
+		vars.UseSlow = true;
 
 	if (svs->num_clients >= 1) {
 		edict_t *pl = GetPlayerEdict();

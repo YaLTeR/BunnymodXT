@@ -293,6 +293,7 @@ void ServerDLL::Clear()
 	pCS_Bhopcap = 0;
 	pCS_Bhopcap_Windows = 0;
 	offm_bInfiniteStamina = 0;
+	offm_iPlayerSaveLock = 0;
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -429,6 +430,23 @@ void ServerDLL::FindStuff()
 	auto fCS_Bhopcap_Windows = FindAsync(
 		pCS_Bhopcap_Windows,
 		patterns::shared::Bhopcap_CS_Windows);
+
+	auto fCBaseEntity__FireBullets = FindAsync(ORIG_CBaseEntity__FireBullets, patterns::server::CBaseEntity__FireBullets);
+	auto fCBaseEntity__FireBulletsPlayer = FindAsync(
+		ORIG_CBaseEntity__FireBulletsPlayer,
+		patterns::server::CBaseEntity__FireBulletsPlayer,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CBaseEntity__FireBulletsPlayer.cbegin()) {
+				case 3: // CoF-Mod-155
+					is_cof_155 = true;
+					break;
+				case 4: // CoF-Mod-10
+					is_cof_10 = true;
+					break;
+				default:
+					assert(false);
+				}
+		});
 
 	auto fCBasePlayer__ForceClientDllUpdate = FindAsync(
 		ORIG_CBasePlayer__ForceClientDllUpdate,
@@ -600,8 +618,13 @@ void ServerDLL::FindStuff()
 				break;
 			case 27: // CoF-Mod-155
 				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x2464;
-				offm_iClientFOV = 0x23B0;
+				if (is_cof_155) {
+					offm_rgAmmoLast = 0x2464;
+					offm_iClientFOV = 0x23B0;
+				} else if (is_cof_10) {
+					offm_rgAmmoLast = 0x23FC;
+					offm_iClientFOV = 0x2348;
+				}
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
@@ -1339,20 +1362,6 @@ void ServerDLL::FindStuff()
 		}
 	}
 
-	auto fCBaseEntity__FireBullets = FindAsync(ORIG_CBaseEntity__FireBullets, patterns::server::CBaseEntity__FireBullets);
-	auto fCBaseEntity__FireBulletsPlayer = FindAsync(
-		ORIG_CBaseEntity__FireBulletsPlayer,
-		patterns::server::CBaseEntity__FireBulletsPlayer,
-		[&](auto pattern) {
-			switch (pattern - patterns::server::CBaseEntity__FireBulletsPlayer.cbegin()) {
-				case 3: // CoF-Mod-155
-					is_cof_155 = true;
-					break;
-				default:
-					assert(false);
-				}
-		});
-
 	{
 		auto pattern = fCBaseEntity__FireBullets.get();
 		if (ORIG_CBaseEntity__FireBullets) {
@@ -1411,7 +1420,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_fire_on_stuck);
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
-	if (pCS_Stamina_Value || HwDLL::GetInstance().is_cof || is_cof_155)
+	if (pCS_Stamina_Value || HwDLL::GetInstance().is_cof || is_cof_155 || is_cof_10)
 		REG(bxt_remove_stamina);
 	if (ORIG_CChangeLevel__UseChangeLevel && ORIG_CChangeLevel__TouchChangeLevel)
 		REG(bxt_disable_changelevel);
@@ -1431,7 +1440,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_bullets);
 		REG(bxt_show_bullets_enemy);
 	}
-	if (ORIG_PM_Duck && (HwDLL::GetInstance().is_cof || is_cof_155))
+	if (ORIG_PM_Duck && (HwDLL::GetInstance().is_cof || is_cof_155 || is_cof_10))
 		REG(bxt_cof_slowdown_if_use_on_ground);
 	if (ORIG_PM_UnDuck)
 		REG(bxt_cof_enable_ducktap);
@@ -1632,7 +1641,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		not_stuck_prev_frame = !stuck_cur_frame;
 	}
 
-	if (hwDLL.is_cof || is_cof_155)
+	if (hwDLL.is_cof || is_cof_155 || is_cof_10)
 	{
 		if (pCoF_Noclip_Preventing_Check_Byte)
 		{
@@ -1652,7 +1661,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 13, reinterpret_cast<const byte*>("\xF6\x86\xB0\x22\x00\x00\x02\x0F\x84\x0C\x02\x00\x00"));
 			}
 
-			if (is_cof_155)
+			if (is_cof_155 || is_cof_10)
 			{
 				if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0x75) && CVars::bxt_autojump.GetBool())
 					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
@@ -1669,17 +1678,23 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 			offm_bInfiniteStamina = 0x21E8;
 		else if (is_cof_155)
 			offm_bInfiniteStamina = 0x209C;
+		else if (is_cof_10)
+			offm_bInfiniteStamina = 0x2034;
 
 		bool* m_bInfiniteStamina = reinterpret_cast<bool*>(thisAddr + offm_bInfiniteStamina);
 		*m_bInfiniteStamina = CVars::bxt_remove_stamina.GetBool();
 
 		// Disable save lock for CoF (Mod version)
-		if (is_cof_155) {
-			ptrdiff_t offm_iPlayerSaveLock = 0x4B8;
+		if (is_cof_155 || is_cof_10) { // FIX ME (1.55): https://github.com/YaLTeR/BunnymodXT/issues/347
+			if (is_cof_155)
+				offm_iPlayerSaveLock = 0x4B8;
+			else if (is_cof_10)
+				offm_iPlayerSaveLock = 0x468;
+
 			int* m_iPlayerSaveLock = reinterpret_cast<int*>(thisAddr + offm_iPlayerSaveLock);
 			static bool reset_playersavelock = false;
 
-			if ((*m_iPlayerSaveLock != 1337) && CVars::bxt_cof_disable_save_lock.GetBool()) {
+			if ((*m_iPlayerSaveLock != 1337) && CVars::bxt_cof_disable_save_lock.GetBool() && ((is_cof_155 && CVars::sv_cheats.GetBool()) || is_cof_10)) {
 				*m_iPlayerSaveLock = 1337;
 				reset_playersavelock = true;
 			}
@@ -2045,12 +2060,12 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 			const char *targetname = hw.ppGlobals->pStringBase + pev->targetname;
 			OnMultiManagerFired(targetname);
 
-			if (hw.is_cof || is_cof_155) {
+			if (hw.is_cof || is_cof_155 || is_cof_10) {
 				ptrdiff_t offm_index;
 
 				if (hw.is_cof)
 					offm_index = 228;
-				else if (is_cof_155)
+				else if (is_cof_155 || is_cof_10)
 					offm_index = 224;
 
 				auto m_index = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + offm_index);

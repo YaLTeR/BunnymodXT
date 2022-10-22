@@ -5327,7 +5327,7 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	armorvalue = pl->v.armorvalue;
 	waterlevel = pl->v.waterlevel;
 
-	if (is_cof || ServerDLL::GetInstance().is_cof_155) {
+	if (is_cof || ServerDLL::GetInstance().is_cof_155 || ServerDLL::GetInstance().is_cof_10) {
 		void* classPtr = (*sv_player)->v.pContainingEntity->pvPrivateData;
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 
@@ -5335,6 +5335,8 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 			offm_fStamina = 0x21F0;
 		else if (ServerDLL::GetInstance().is_cof_155)
 			offm_fStamina = 0x20A4;
+		else if (ServerDLL::GetInstance().is_cof_10)
+			offm_fStamina = 0x203C;
 
 		float* m_fStamina = reinterpret_cast<float*>(thisAddr + offm_fStamina);
 		stamina = *m_fStamina;

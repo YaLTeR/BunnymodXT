@@ -100,6 +100,7 @@ public:
 	void SetStamina(bool makeItZero);
 
 	bool is_cof_155 = false;
+	bool is_cof_10 = false;
 
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};
@@ -191,6 +192,7 @@ protected:
 	ptrdiff_t pCoF_Noclip_Preventing_Check_Byte;
 	ptrdiff_t pCBasePlayerJump_OldButtons_Check_Byte;
 	ptrdiff_t offm_bInfiniteStamina;
+	ptrdiff_t offm_iPlayerSaveLock;
 
 	bool spirit_sdk = false;
 

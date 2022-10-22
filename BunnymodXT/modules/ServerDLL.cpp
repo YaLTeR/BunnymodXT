@@ -142,6 +142,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CBaseButton__ButtonUse, HOOKED_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse, HOOKED_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch,
+			ORIG_ShiftMonsters, HOOKED_ShiftMonsters,
 			ORIG_PM_Duck, HOOKED_PM_Duck,
 			ORIG_PM_UnDuck, HOOKED_PM_UnDuck);
 	}
@@ -187,6 +188,7 @@ void ServerDLL::Unhook()
 			ORIG_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch,
+			ORIG_ShiftMonsters,
 			ORIG_PM_Duck,
 			ORIG_PM_UnDuck);
 	}
@@ -250,6 +252,7 @@ void ServerDLL::Clear()
 	ORIG_CBaseButton__ButtonUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionTouch = nullptr;
+	ORIG_ShiftMonsters = nullptr;
 	ORIG_PM_Duck = nullptr;
 	ORIG_PM_UnDuck = nullptr;
 	ppmove = nullptr;
@@ -724,6 +727,7 @@ void ServerDLL::FindStuff()
 	auto fPM_Duck = FindFunctionAsync(ORIG_PM_Duck, "PM_Duck", patterns::server::PM_Duck);
 	auto fPM_UnDuck = FindAsync(ORIG_PM_UnDuck, patterns::server::PM_UnDuck);
 	auto fCBasePlayer__GiveNamedItem = FindAsync(ORIG_CBasePlayer__GiveNamedItem, patterns::server::CBasePlayer__GiveNamedItem);
+	auto fShiftMonsters = FindAsync(ORIG_ShiftMonsters, patterns::server::ShiftMonsters);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -1353,6 +1357,16 @@ void ServerDLL::FindStuff()
 	}
 
 	{
+		auto pattern = fShiftMonsters.get();
+		if (ORIG_ShiftMonsters) {
+			EngineDevMsg("[server dll] Found ShiftMonsters at %p (using the %s pattern).\n", ORIG_ShiftMonsters, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find ShiftMonsters.\n");
+			EngineWarning("Fixing monster origin after loading save in Cry of Fear is not available.\n");
+		}
+	}
+
+	{
 		auto pattern = fPM_UnDuck.get();
 		if (ORIG_PM_UnDuck) {
 			EngineDevMsg("[server dll] Found PM_UnDuck at %p (using the %s pattern).\n", ORIG_PM_UnDuck, pattern->name());
@@ -1685,7 +1699,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		*m_bInfiniteStamina = CVars::bxt_remove_stamina.GetBool();
 
 		// Disable save lock for CoF (Mod version)
-		if (is_cof_155 || is_cof_10) { // FIX ME (1.55): https://github.com/YaLTeR/BunnymodXT/issues/347
+		if (is_cof_155 || is_cof_10) {
 			if (is_cof_155)
 				offm_iPlayerSaveLock = 0x4B8;
 			else if (is_cof_10)
@@ -1694,7 +1708,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 			int* m_iPlayerSaveLock = reinterpret_cast<int*>(thisAddr + offm_iPlayerSaveLock);
 			static bool reset_playersavelock = false;
 
-			if ((*m_iPlayerSaveLock != 1337) && CVars::bxt_cof_disable_save_lock.GetBool() && ((is_cof_155 && CVars::sv_cheats.GetBool()) || is_cof_10)) {
+			if ((*m_iPlayerSaveLock != 1337) && CVars::bxt_cof_disable_save_lock.GetBool()) {
 				*m_iPlayerSaveLock = 1337;
 				reset_playersavelock = true;
 			}
@@ -2932,4 +2946,12 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_UnDuck)
 	}
 
 	ORIG_PM_UnDuck();
+}
+
+HOOK_DEF_1(ServerDLL, void, __cdecl, ShiftMonsters, Vector, origin)
+{
+	if (CVars::bxt_cof_disable_save_lock.GetBool())
+		return;
+	else
+		return ORIG_ShiftMonsters(origin);
 }

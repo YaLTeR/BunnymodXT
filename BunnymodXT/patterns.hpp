@@ -1024,6 +1024,13 @@ namespace patterns
 			"CoF-5936",
 			"0F 85 ?? ?? ?? ?? F6 86 B0 22 00 00 02 0F 84 0C 02 00 00"
 		);
+
+		PATTERNS(ShiftMonsters,
+			"CoF-5936",
+			"55 8B EC 56 51 8D 45 08 ?? 04 ?? 00 00 80 44 50 6A 00 E8",
+			"CoF-Mod-155",
+			"55 8B EC 83 EC 48 53 56 57 C7 45 ?? 00 00 00 00 68"
+		);
 	}
 
 	namespace client

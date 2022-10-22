@@ -54,6 +54,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CTriggerEndSection__EndSectionTouch, void* thisptr, int edx, void* pOther)
 	HOOK_DECL(void, __cdecl, PM_Duck)
 	HOOK_DECL(void, __cdecl, PM_UnDuck)
+	HOOK_DECL(void, __cdecl, ShiftMonsters, Vector origin)
 
 public:
 	static ServerDLL& GetInstance()

@@ -193,7 +193,6 @@ protected:
 	ptrdiff_t pCoF_Noclip_Preventing_Check_Byte;
 	ptrdiff_t pCBasePlayerJump_OldButtons_Check_Byte;
 	ptrdiff_t offm_bInfiniteStamina;
-	ptrdiff_t offm_iPlayerSaveLock;
 
 	bool spirit_sdk = false;
 

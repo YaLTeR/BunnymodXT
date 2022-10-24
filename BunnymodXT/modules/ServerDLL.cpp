@@ -296,7 +296,6 @@ void ServerDLL::Clear()
 	pCS_Bhopcap = 0;
 	pCS_Bhopcap_Windows = 0;
 	offm_bInfiniteStamina = 0;
-	offm_iPlayerSaveLock = 0;
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -1699,12 +1698,8 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		*m_bInfiniteStamina = CVars::bxt_remove_stamina.GetBool();
 
 		// Disable save lock for CoF (Mod version)
-		if (is_cof_155 || is_cof_10) {
-			if (is_cof_155)
-				offm_iPlayerSaveLock = 0x4B8;
-			else if (is_cof_10)
-				offm_iPlayerSaveLock = 0x468;
-
+		if (is_cof_155) {
+			ptrdiff_t offm_iPlayerSaveLock = 0x4B8;
 			int* m_iPlayerSaveLock = reinterpret_cast<int*>(thisAddr + offm_iPlayerSaveLock);
 			static bool reset_playersavelock = false;
 

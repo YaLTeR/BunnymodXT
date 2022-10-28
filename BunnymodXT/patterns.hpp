@@ -799,6 +799,11 @@ namespace patterns
 			"55 8B EC 83 EC 2C 53 56 57 8B F9 80 BF A4 1E 00 00 00 0F 85 92 04 00 00"
 		);
 
+		PATTERNS(CBasePlayer__GiveNamedItem,
+			"CStrike-Latest",
+			"8B 44 24 ?? 56 57 8B F9 8B 0D ?? ?? ?? ?? 2B 81 ?? ?? ?? ?? 50 E8"
+		);
+
 		PATTERNS(CPushable__Move,
 			"HL-SteamPipe",
 			"53 56 8B F1 8B 4C 24 0C 57 33 DB 8B 79 04 8B 87 A4 01 00 00 F6 C4 02 74 3A 8B 87 9C 01 00 00 85 C0 74 30 8D 90 80 00 00 00 8B 46 04",

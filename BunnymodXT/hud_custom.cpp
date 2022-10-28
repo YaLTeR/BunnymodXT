@@ -603,6 +603,7 @@ namespace CustomHud
 			static double passedTime = FADE_DURATION_JUMPSPEED;
 			static int fadingFrom[3] = { hudColor[0], hudColor[1], hudColor[2] };
 			static double jumpSpeed = 0.0;
+			bool ducktap = false;
 
 			int r = hudColor[0],
 				g = hudColor[1],
@@ -610,11 +611,12 @@ namespace CustomHud
 
 			if (FADE_DURATION_JUMPSPEED > 0.0f)
 			{
-				if ((player.velocity[2] != 0.0f && prevVel[2] == 0.0f)
+				if ((ducktap = (player.velocity[2] < 0.0f && prevVel[2] == 0.0f)) 
+					|| (player.velocity[2] != 0.0f && prevVel[2] == 0.0f)
 					|| (player.velocity[2] > 0.0f && prevVel[2] < 0.0f))
 				{
 					double speed = length(prevVel[0], prevVel[1]);
-					if (CVars::bxt_bhopcap.GetBool())
+					if (CVars::bxt_bhopcap.GetBool() && !ducktap)
 					{
 						HLStrafe::MovementVars vars = HwDLL::GetInstance().GetMovementVars();
 						auto maxscaledspeed = vars.BhopcapMaxspeedScale * vars.Maxspeed;

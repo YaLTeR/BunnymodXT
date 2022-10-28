@@ -614,7 +614,9 @@ namespace CustomHud
 					|| (player.velocity[2] > 0.0f && prevVel[2] < 0.0f))
 				{
 					double speed = length(prevVel[0], prevVel[1]);
-					if (CVars::bxt_bhopcap.GetBool())
+					bool is_ducktap = player.velocity[2] < 0.0f && prevVel[2] == 0.0f;
+
+					if (CVars::bxt_bhopcap.GetBool() && !is_ducktap && player.waterlevel == 0)
 					{
 						HLStrafe::MovementVars vars = HwDLL::GetInstance().GetMovementVars();
 						auto maxscaledspeed = vars.BhopcapMaxspeedScale * vars.Maxspeed;

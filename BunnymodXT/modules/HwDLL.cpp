@@ -429,6 +429,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_PF_traceline_DLL);
 			MemUtils::MarkAsExecutable(ORIG_CL_CheckGameDirectory);
 			MemUtils::MarkAsExecutable(ORIG_SaveGameSlot);
+			MemUtils::MarkAsExecutable(ORIG_SCR_NetGraph);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -445,6 +446,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_SCR_BeginLoadingPlaque, HOOKED_SCR_BeginLoadingPlaque,
 			ORIG_Host_FilterTime, HOOKED_Host_FilterTime,
 			ORIG_Host_ValidSave, HOOKED_Host_ValidSave,
+			ORIG_SCR_NetGraph, HOOKED_SCR_NetGraph,
 			ORIG_V_FadeAlpha, HOOKED_V_FadeAlpha,
 			ORIG_R_DrawSkyBox, HOOKED_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen, HOOKED_SCR_UpdateScreen,
@@ -523,6 +525,7 @@ void HwDLL::Unhook()
 			ORIG_SCR_BeginLoadingPlaque,
 			ORIG_Host_FilterTime,
 			ORIG_Host_ValidSave,
+			ORIG_SCR_NetGraph,
 			ORIG_V_FadeAlpha,
 			ORIG_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen,
@@ -585,6 +588,7 @@ void HwDLL::Clear()
 	ORIG_SCR_BeginLoadingPlaque = nullptr;
 	ORIG_Host_FilterTime = nullptr;
 	ORIG_Host_ValidSave = nullptr;
+	ORIG_SCR_NetGraph = nullptr;
 	ORIG_V_FadeAlpha = nullptr;
 	ORIG_R_DrawSkyBox = nullptr;
 	ORIG_SCR_UpdateScreen = nullptr;
@@ -654,6 +658,9 @@ void HwDLL::Clear()
 	ORIG_CL_CheckGameDirectory = nullptr;
 	ORIG_CL_HudMessage = nullptr;
 	ORIG_SaveGameSlot = nullptr;
+	ORIG_SCR_NetGraph = nullptr;
+	ORIG_VGuiWrap2_IsGameUIVisible = nullptr;
+	ORIG_SCR_DrawPause = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1258,6 +1265,9 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(CL_CheckGameDirectory)
 		DEF_FUTURE(SaveGameSlot)
 		DEF_FUTURE(CL_HudMessage)
+		DEF_FUTURE(SCR_NetGraph)
+		DEF_FUTURE(VGuiWrap2_IsGameUIVisible)
+		DEF_FUTURE(SCR_DrawPause)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -2192,6 +2202,9 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Host_Notarget_f);
 		GET_FUTURE(SaveGameSlot);
 		GET_FUTURE(CL_HudMessage);
+		GET_FUTURE(SCR_NetGraph);
+		GET_FUTURE(VGuiWrap2_IsGameUIVisible);
+		GET_FUTURE(SCR_DrawPause);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -6273,4 +6286,13 @@ HOOK_DEF_2(HwDLL, int, __cdecl, SaveGameSlot, const char*, pSaveName, const char
 		ORIG_CL_HudMessage("GAMESAVED");
 
 	return rv;
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, SCR_NetGraph)
+{
+	ORIG_SCR_NetGraph();
+
+	// Cry of Fear-specific, draw "PAUSED" on the screen.
+	if ((ORIG_VGuiWrap2_IsGameUIVisible && ORIG_SCR_DrawPause) && ORIG_VGuiWrap2_IsGameUIVisible() == 0)
+		ORIG_SCR_DrawPause();
 }

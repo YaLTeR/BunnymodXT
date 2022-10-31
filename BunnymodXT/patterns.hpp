@@ -963,9 +963,7 @@ namespace patterns
 			"CoF-5936",
 			"55 8B EC 81 EC 80 00 00 00 A1 ?? ?? ?? ?? 53",
 			"CoF-Mod-155",
-			"55 8B EC 81 EC 84 01 00 00",
-			"CoF-Mod-10",
-			"55 8B EC 81 EC 78 01 00 00 53 56 57 89 4D ?? 8D 4D"
+			"55 8B EC 81 EC 84 01 00 00"
 		);
 
 		PATTERNS(CBaseEntity__FireBulletsPlayer,
@@ -976,9 +974,7 @@ namespace patterns
 			"CoF-5936",
 			"55 8B EC 83 EC 7C 53 56 8B F1",
 			"CoF-Mod-155",
-			"55 8B EC 81 EC 44 01 00 00 53 56 57 89 4D ?? C7 45 ?? 00 00 00 00",
-			"CoF-Mod-10",
-			"55 8B EC 81 EC 38 01 00 00 53 56 57 89 4D ?? C7 45 ?? 00 00 00 00"
+			"55 8B EC 81 EC 44 01 00 00 53 56 57 89 4D ?? C7 45 ?? 00 00 00 00"
 		);
 
 		PATTERNS(PM_CheckStuck,

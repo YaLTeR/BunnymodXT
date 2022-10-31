@@ -327,7 +327,7 @@ public:
 
 	bool Called_Timer = false;
 
-	bool is_cof = false;
+	bool is_cof_steam = false; // Cry of Fear-specific
 
 	void ResetStateBeforeTASPlayback();
 	void StartTASPlayback();
@@ -509,8 +509,7 @@ protected:
 	studiohdr_t **pstudiohdr;
 	float *scr_fov_value;
 	ptrdiff_t pHost_FilterTime_FPS_Cap_Byte;
-	ptrdiff_t offm_fStamina;
-	bool *cofSaveHack;
+	bool *cofSaveHack; // Cry of Fear-specific
 
 	int framesTillExecuting;
 	bool executing;

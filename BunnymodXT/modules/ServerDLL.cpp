@@ -295,7 +295,12 @@ void ServerDLL::Clear()
 	pCS_Stamina_Value = 0;
 	pCS_Bhopcap = 0;
 	pCS_Bhopcap_Windows = 0;
+
+	// Cry of Fear-specific
 	offm_bInfiniteStamina = 0;
+	offm_fStamina = 0;
+	offm_pClientActiveItem = 0;
+	offm_old_iAmmo = 0;
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -440,10 +445,13 @@ void ServerDLL::FindStuff()
 		[&](auto pattern) {
 			switch (pattern - patterns::server::CBaseEntity__FireBulletsPlayer.cbegin()) {
 				case 3: // CoF-Mod-155
-					is_cof_155 = true;
-					break;
-				case 4: // CoF-Mod-10
-					is_cof_10 = true;
+					offm_rgAmmoLast = 0x2464;
+					offm_iClientFOV = 0x23B0;
+					offm_fStamina = 0x20A4;
+					offm_bInfiniteStamina = 0x209C;
+					offm_pClientActiveItem = 0x23D4;
+					offm_old_iAmmo = 284;
+					is_cof = true;
 					break;
 				default:
 					assert(false);
@@ -617,16 +625,14 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offm_fStamina = 0x21F0;
+				offm_bInfiniteStamina = 0x21E8;
+				offm_pClientActiveItem = 0x2530;
+				offm_old_iAmmo = 288;
+				is_cof = true;
 				break;
-			case 27: // CoF-Mod-155
+			case 27: // CoF-Mod
 				maxAmmoSlots = MAX_AMMO_SLOTS;
-				if (is_cof_155) {
-					offm_rgAmmoLast = 0x2464;
-					offm_iClientFOV = 0x23B0;
-				} else if (is_cof_10) {
-					offm_rgAmmoLast = 0x23FC;
-					offm_iClientFOV = 0x2348;
-				}
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
@@ -1433,7 +1439,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_fire_on_stuck);
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
-	if (pCS_Stamina_Value || HwDLL::GetInstance().is_cof || is_cof_155 || is_cof_10)
+	if (pCS_Stamina_Value || is_cof)
 		REG(bxt_remove_stamina);
 	if (ORIG_CChangeLevel__UseChangeLevel && ORIG_CChangeLevel__TouchChangeLevel)
 		REG(bxt_disable_changelevel);
@@ -1453,10 +1459,12 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_bullets);
 		REG(bxt_show_bullets_enemy);
 	}
-	if (ORIG_PM_Duck && (HwDLL::GetInstance().is_cof || is_cof_155 || is_cof_10))
+	if (ORIG_PM_Duck && is_cof)
 		REG(bxt_cof_slowdown_if_use_on_ground);
-	if (ORIG_PM_UnDuck)
+	if (ORIG_PM_UnDuck && is_cof)
 		REG(bxt_cof_enable_ducktap);
+	if (is_cof)
+		REG(bxt_cof_disable_save_lock);
 	#undef REG
 }
 
@@ -1654,7 +1662,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		not_stuck_prev_frame = !stuck_cur_frame;
 	}
 
-	if (hwDLL.is_cof || is_cof_155 || is_cof_10)
+	if (is_cof)
 	{
 		if (pCoF_Noclip_Preventing_Check_Byte)
 		{
@@ -1666,16 +1674,12 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 
 		if (pCBasePlayerJump_OldButtons_Check_Byte)
 		{
-			if (hwDLL.is_cof)
-			{
+			if (offm_rgAmmoLast == 0x25C0) { // CoF-5936
 				if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0xF6) && CVars::bxt_autojump.GetBool())
 					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 13, reinterpret_cast<const byte*>("\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90"));
 				else if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0x90) && !CVars::bxt_autojump.GetBool())
 					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 13, reinterpret_cast<const byte*>("\xF6\x86\xB0\x22\x00\x00\x02\x0F\x84\x0C\x02\x00\x00"));
-			}
-
-			if (is_cof_155 || is_cof_10)
-			{
+			} else { // CoF-Mod
 				if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0x75) && CVars::bxt_autojump.GetBool())
 					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
 				else if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0xEB) && !CVars::bxt_autojump.GetBool())
@@ -1687,18 +1691,11 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 
 		// Infinite Stamina
-		if (hwDLL.is_cof)
-			offm_bInfiniteStamina = 0x21E8;
-		else if (is_cof_155)
-			offm_bInfiniteStamina = 0x209C;
-		else if (is_cof_10)
-			offm_bInfiniteStamina = 0x2034;
-
 		bool* m_bInfiniteStamina = reinterpret_cast<bool*>(thisAddr + offm_bInfiniteStamina);
 		*m_bInfiniteStamina = CVars::bxt_remove_stamina.GetBool();
 
 		// Disable save lock for CoF (Mod version)
-		if (is_cof_155) {
+		if (offm_rgAmmoLast == 0x2464) { // CoF-Mod-155
 			ptrdiff_t offm_iPlayerSaveLock = 0x4B8;
 			int* m_iPlayerSaveLock = reinterpret_cast<int*>(thisAddr + offm_iPlayerSaveLock);
 			static bool reset_playersavelock = false;
@@ -2069,12 +2066,12 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 			const char *targetname = hw.ppGlobals->pStringBase + pev->targetname;
 			OnMultiManagerFired(targetname);
 
-			if (hw.is_cof || is_cof_155 || is_cof_10) {
+			if (is_cof) {
 				ptrdiff_t offm_index;
 
-				if (hw.is_cof)
+				if (hw.is_cof_steam)
 					offm_index = 228;
-				else if (is_cof_155 || is_cof_10)
+				else
 					offm_index = 224;
 
 				auto m_index = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + offm_index);
@@ -2365,6 +2362,13 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 	if ((std::strcmp(cmd, "fullupdate") == 0) && (ORIG_CBasePlayer__ForceClientDllUpdate || ORIG_CBasePlayer__ForceClientDllUpdate_Linux)) {
 		int* m_iClientFOV = reinterpret_cast<int*>(thisAddr + offm_iClientFOV);
 		int* m_rgAmmoLast = reinterpret_cast<int*>(thisAddr + offm_rgAmmoLast);
+
+		if (is_cof) {
+			uintptr_t *m_pClientActiveItem = reinterpret_cast<uintptr_t*>(thisAddr + offm_pClientActiveItem);
+			int *old_m_iAmmo = reinterpret_cast<int*>(*m_pClientActiveItem + offm_old_iAmmo);
+			*old_m_iAmmo = -1;
+		}
+
 		*m_iClientFOV = -1;
 		for (int i = 0; i < maxAmmoSlots; i++)
 			m_rgAmmoLast[i] = -1;
@@ -2945,6 +2949,7 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_UnDuck)
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, ShiftMonsters, Vector, origin)
 {
+	// Cry of Fear-specific, fix monsters teleport to their spawn points.
 	if (CVars::bxt_cof_disable_save_lock.GetBool())
 		return;
 	else

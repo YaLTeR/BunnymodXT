@@ -490,13 +490,13 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 
 	#ifdef _WIN32
 		#ifdef COF_BUILD
-		if (!is_cof) {
+		if (!is_cof_steam) {
 			ClientDLL::GetInstance().pEngfuncs = nullptr;
 			ServerDLL::GetInstance().pEngfuncs = nullptr;
 			MessageBox(NULL, "Loaded Bunnymod XT (CoF version) in non-CoF game! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
 		}
 		#else
-		if (is_cof) {
+		if (is_cof_steam) {
 			ClientDLL::GetInstance().pEngfuncs = nullptr;
 			ServerDLL::GetInstance().pEngfuncs = nullptr;
 			MessageBox(NULL, "Loaded BunnymodXT (HL version) in CoF! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
@@ -692,7 +692,6 @@ void HwDLL::Clear()
 	movevars = nullptr;
 	offZmax = 0;
 	pHost_FilterTime_FPS_Cap_Byte = 0;
-	offm_fStamina = 0;
 	cofSaveHack = nullptr;
 	noclip_anglehack = nullptr;
 	frametime_remainder = nullptr;
@@ -1577,7 +1576,7 @@ void HwDLL::FindStuff()
 					cls = *reinterpret_cast<void**>(f + 105);
 					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 79) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 182);
-					is_cof = true;
+					is_cof_steam = true;
 					break;
 				}
 			});
@@ -4027,7 +4026,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_force_clear);
 	RegisterCVar(CVars::bxt_disable_gamedir_check_in_demo);
 	RegisterCVar(CVars::bxt_remove_fps_limit);
-	RegisterCVar(CVars::bxt_cof_disable_save_lock);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -4048,7 +4046,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	using CmdWrapper::Handler;
 	typedef CmdWrapper::CmdWrapper<CmdFuncs> wrapper;
 
-	if (is_cof)
+	if (is_cof_steam)
 	{
 		CmdFuncs::AddCommand("noclip", ORIG_Host_Noclip_f);
 		CmdFuncs::AddCommand("notarget", ORIG_Host_Notarget_f);
@@ -5327,18 +5325,10 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	armorvalue = pl->v.armorvalue;
 	waterlevel = pl->v.waterlevel;
 
-	if (is_cof || ServerDLL::GetInstance().is_cof_155 || ServerDLL::GetInstance().is_cof_10) {
+	if (ServerDLL::GetInstance().is_cof) {
 		void* classPtr = (*sv_player)->v.pContainingEntity->pvPrivateData;
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-
-		if (is_cof)
-			offm_fStamina = 0x21F0;
-		else if (ServerDLL::GetInstance().is_cof_155)
-			offm_fStamina = 0x20A4;
-		else if (ServerDLL::GetInstance().is_cof_10)
-			offm_fStamina = 0x203C;
-
-		float* m_fStamina = reinterpret_cast<float*>(thisAddr + offm_fStamina);
+		float* m_fStamina = reinterpret_cast<float*>(thisAddr + ServerDLL::GetInstance().offm_fStamina);
 		stamina = *m_fStamina;
 	} else {
 		stamina = pl->v.fuser2;

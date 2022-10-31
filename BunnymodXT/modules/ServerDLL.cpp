@@ -2364,9 +2364,12 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 		int* m_rgAmmoLast = reinterpret_cast<int*>(thisAddr + offm_rgAmmoLast);
 
 		if (is_cof) {
-			uintptr_t *m_pClientActiveItem = reinterpret_cast<uintptr_t*>(thisAddr + offm_pClientActiveItem);
-			int *old_m_iAmmo = reinterpret_cast<int*>(*m_pClientActiveItem + offm_old_iAmmo);
-			*old_m_iAmmo = -1;
+			void** m_pActiveItem = reinterpret_cast<void**>(thisAddr + (offm_pClientActiveItem - 4));
+			if (*m_pActiveItem != NULL) {
+				uintptr_t* m_pClientActiveItem = reinterpret_cast<uintptr_t*>(thisAddr + offm_pClientActiveItem);
+				int* old_m_iAmmo = reinterpret_cast<int*>(*m_pClientActiveItem + offm_old_iAmmo);
+				*old_m_iAmmo = -1;
+			}
 		}
 
 		*m_iClientFOV = -1;

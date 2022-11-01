@@ -1669,9 +1669,9 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	{
 		if (pCoF_Noclip_Preventing_Check_Byte)
 		{
-			if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0x75) && hwDLL.noclip_anglehack)
+			if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0x75) && (*hwDLL.noclip_anglehack))
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
-			else if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0xEB) && !hwDLL.noclip_anglehack)
+			else if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0xEB) && !(*hwDLL.noclip_anglehack))
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\x75"));
 		}
 

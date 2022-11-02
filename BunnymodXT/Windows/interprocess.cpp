@@ -188,9 +188,10 @@ namespace Interprocess
 		AddTimeToBuffer(buf.data() + 2, time);
 
 		if (CVars::_bxt_bunnysplit_time_update_frequency.GetFloat() > 0.0f) {
-			static auto last_time = std::chrono::steady_clock::now() - std::chrono::milliseconds(static_cast<long long>(1000 / CVars::_bxt_bunnysplit_time_update_frequency.GetFloat()) + 1);
+			auto ms = static_cast<long long>(1000 / CVars::_bxt_bunnysplit_time_update_frequency.GetFloat());
+			static auto last_time = std::chrono::steady_clock::now() - std::chrono::milliseconds(ms + 1);
 			auto now = std::chrono::steady_clock::now();
-			if (now >= last_time + std::chrono::milliseconds(static_cast<long long>(1000 / CVars::_bxt_bunnysplit_time_update_frequency.GetFloat()))) {
+			if (now >= last_time + std::chrono::milliseconds(ms)) {
 				WriteBunnySplit(buf);
 				last_time = now;
 			}

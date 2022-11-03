@@ -476,7 +476,11 @@ namespace patterns
 
 		PATTERNS(DispatchDirectUserMsg,
 			"HL-SteamPipe",
-			"55 8B EC 53 56 8B 35 ?? ?? ?? ?? 33 DB"
+			"55 8B EC 53 56 8B 35 ?? ?? ?? ?? 33 DB 85 F6 74 ?? 57",
+			"HL-4554",
+			"53 56 8B 35 ?? ?? ?? ?? 33 DB 85 F6 74 ?? 55 8B 6C 24 18",
+			"CoF-5936",
+			"55 8B EC 83 EC 10 C7 45 ?? 00 00 00 00 C7 45 ?? 00 00 00 00 A1"
 		);
 
 		PATTERNS(SV_SetMoveVars,

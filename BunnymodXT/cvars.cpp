@@ -83,6 +83,7 @@ namespace CVars
 
 	// Clientside CVars
 	CVarWrapper cl_righthand("cl_righthand", "0");
+	CVarWrapper bxt_hide_other_players("bxt_hide_other_players", "0");
 	CVarWrapper bxt_disable_hud("bxt_disable_hud", "0");
 	CVarWrapper bxt_disable_nightvision_sprite("bxt_disable_nightvision_sprite", "0");
 	CVarWrapper bxt_autojump_prediction("bxt_autojump_prediction", "0");
@@ -267,6 +268,7 @@ namespace CVars
 		&bxt_disable_autosave,
 		&bxt_disable_changelevel,
 		&bxt_disable_hud,
+		&bxt_hide_other_players,
 		&bxt_disable_nightvision_sprite,
 		&bxt_show_custom_triggers,
 		&bxt_triggers_color,

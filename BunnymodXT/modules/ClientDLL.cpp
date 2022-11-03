@@ -937,6 +937,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_HUD_AddEntity) {
 		REG(bxt_show_hidden_entities_clientside);
+		REG(bxt_hide_other_players);
 	}
 
 	if (ORIG_ScaleColors) {
@@ -1690,6 +1691,15 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 		if (ent->curstate.rendermode != kRenderNormal)
 			ent->curstate.renderamt = 255;
 	}
+
+	if (!ppmove || !pEngfuncs)
+		return ORIG_HUD_AddEntity(type, ent, modelname);
+
+	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
+	int* iuser2 = reinterpret_cast<int*>(pmove + (offIUser1 + 4));
+
+	if (CVars::bxt_hide_other_players.GetBool() && ent->player && pEngfuncs->pDemoAPI->IsPlayingback() && ent->index != *iuser2)
+		return 0;
 
 	return ORIG_HUD_AddEntity(type, ent, modelname);
 }

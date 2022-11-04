@@ -5586,12 +5586,10 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 	auto &hw = HwDLL::GetInstance();
 
-	static bool is_0x7E_on_init = false;
 	if (pHost_FilterTime_FPS_Cap_Byte)
 	{
 		const auto pByte = *reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte);
-		if (pByte == 0x7E)
-			is_0x7E_on_init = true;
+		static bool is_0x7E_on_init = (pByte == 0x7E);
 
 		if (CVars::bxt_remove_fps_limit.GetBool() && ((pByte == 0x7E && CVars::sv_cheats.GetBool()) || pByte == 0x75))
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pHost_FilterTime_FPS_Cap_Byte), 1, reinterpret_cast<const byte*>("\xEB"));

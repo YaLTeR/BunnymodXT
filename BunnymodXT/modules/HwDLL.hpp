@@ -288,6 +288,7 @@ public:
 	bool tas_editor_toggle_attack2;
 	bool tas_editor_toggle_reload;
 	bool tas_editor_set_change_to_target_yaw;
+	bool tas_editor_set_change_to_target_yaw_offset;
 	bool tas_editor_set_change_to_yaw;
 	bool tas_editor_set_change_to_pitch;
 	bool tas_editor_set_run_point_and_save;

@@ -104,6 +104,10 @@ void EditedInput::simulate() {
 					strafe_state.ChangeTargetYawFinalValue = frame_bulk.GetChangeFinalValue();
 					strafe_state.ChangeTargetYawOver = frame_bulk.GetChangeOver();
 					break;
+				case HLTAS::ChangeTarget::TARGET_YAW_OFFSET:
+					strafe_state.ChangeTargetYawOffsetValue = frame_bulk.GetChangeFinalValue();
+					strafe_state.ChangeTargetYawOffsetOver = frame_bulk.GetChangeOver();
+					break;
 				default:
 					assert(false);
 					break;

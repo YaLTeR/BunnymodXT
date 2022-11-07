@@ -77,6 +77,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(qboolean, __cdecl, CL_CheckGameDirectory, char *gamedir)
 	HOOK_DECL(int, __cdecl, Host_ValidSave)
 	HOOK_DECL(int, __cdecl, SaveGameSlot, const char* pSaveName, const char* pSaveComment)
+	HOOK_DECL(void, __cdecl, SCR_NetGraph)
 
 	struct cmdbuf_t
 	{
@@ -327,7 +328,7 @@ public:
 
 	bool Called_Timer = false;
 
-	bool is_cof = false;
+	bool is_cof_steam = false; // Cry of Fear-specific
 
 	void ResetStateBeforeTASPlayback();
 	void StartTASPlayback();
@@ -377,6 +378,10 @@ protected:
 	_CL_RecordHUDCommand ORIG_CL_RecordHUDCommand;
 	typedef void(__cdecl *_CL_HudMessage) (const char *pMessage);
 	_CL_HudMessage ORIG_CL_HudMessage;
+	typedef int(__cdecl *_VGuiWrap2_IsGameUIVisible) ();
+	_VGuiWrap2_IsGameUIVisible ORIG_VGuiWrap2_IsGameUIVisible;
+	typedef void(__cdecl *_SCR_DrawPause) ();
+	_SCR_DrawPause ORIG_SCR_DrawPause;
 
 	void FindStuff();
 
@@ -509,7 +514,7 @@ protected:
 	studiohdr_t **pstudiohdr;
 	float *scr_fov_value;
 	ptrdiff_t pHost_FilterTime_FPS_Cap_Byte;
-	bool *cofSaveHack;
+	bool *cofSaveHack; // Cry of Fear-specific
 
 	int framesTillExecuting;
 	bool executing;

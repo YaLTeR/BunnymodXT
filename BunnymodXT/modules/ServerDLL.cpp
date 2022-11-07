@@ -142,6 +142,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CBaseButton__ButtonUse, HOOKED_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse, HOOKED_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch,
+			ORIG_ShiftMonsters, HOOKED_ShiftMonsters,
 			ORIG_PM_Duck, HOOKED_PM_Duck,
 			ORIG_PM_UnDuck, HOOKED_PM_UnDuck);
 	}
@@ -187,6 +188,7 @@ void ServerDLL::Unhook()
 			ORIG_CBaseButton__ButtonUse,
 			ORIG_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch,
+			ORIG_ShiftMonsters,
 			ORIG_PM_Duck,
 			ORIG_PM_UnDuck);
 	}
@@ -250,6 +252,7 @@ void ServerDLL::Clear()
 	ORIG_CBaseButton__ButtonUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionTouch = nullptr;
+	ORIG_ShiftMonsters = nullptr;
 	ORIG_PM_Duck = nullptr;
 	ORIG_PM_UnDuck = nullptr;
 	ppmove = nullptr;
@@ -265,6 +268,7 @@ void ServerDLL::Clear()
 	pCZDS_Velocity_Byte = 0;
 	pAddToFullPack_PVS_Byte = 0;
 	pCoF_Noclip_Preventing_Check_Byte = 0;
+	pCBasePlayerJump_OldButtons_Check_Byte = 0;
 	offm_iClientFOV = 0;
 	offm_rgAmmoLast = 0;
 	maxAmmoSlots = 0;
@@ -291,6 +295,12 @@ void ServerDLL::Clear()
 	pCS_Stamina_Value = 0;
 	pCS_Bhopcap = 0;
 	pCS_Bhopcap_Windows = 0;
+
+	// Cry of Fear-specific
+	offm_bInfiniteStamina = 0;
+	offm_fStamina = 0;
+	offm_pClientActiveItem = 0;
+	offm_old_iAmmo = 0;
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -300,12 +310,10 @@ bool ServerDLL::CanHook(const std::wstring& moduleFullName)
 
 	std::wstring folderName = GetFolderName(moduleFullName);
 
-	#ifdef COF_BUILD
 	// HACK: In Cry of Fear client and server dlls are in the same directory.
 	// When we are going through cl_dlls skip every dll except hl.dll.
 	if (folderName == L"cl_dlls" && GetFileName(moduleFullName) != L"hl.dll")
 		return false;
-	#endif
 
 	// Filter out addons like metamod which may be located into a "dlls" folder under addons.
 	std::wstring pathToLiblist = moduleFullName.substr(0, moduleFullName.rfind(folderName)).append(L"liblist.gam");
@@ -402,6 +410,7 @@ void ServerDLL::FindStuff()
 					break;
 				case 12:
 				case 6:
+				case 14:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 24);
 					break;
 				case 7:
@@ -411,6 +420,9 @@ void ServerDLL::FindStuff()
 				case 9:
 				case 13:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 8);
+					break;
+				case 15:
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 9);
 					break;
 				}
 			}
@@ -428,6 +440,26 @@ void ServerDLL::FindStuff()
 	auto fCS_Bhopcap_Windows = FindAsync(
 		pCS_Bhopcap_Windows,
 		patterns::shared::Bhopcap_CS_Windows);
+
+	auto fCBaseEntity__FireBullets = FindAsync(ORIG_CBaseEntity__FireBullets, patterns::server::CBaseEntity__FireBullets);
+	auto fCBaseEntity__FireBulletsPlayer = FindAsync(
+		ORIG_CBaseEntity__FireBulletsPlayer,
+		patterns::server::CBaseEntity__FireBulletsPlayer,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CBaseEntity__FireBulletsPlayer.cbegin()) {
+				case 3: // CoF-Mod-155
+					offm_rgAmmoLast = 0x2464;
+					offm_iClientFOV = 0x23B0;
+					offm_fStamina = 0x20A4;
+					offm_bInfiniteStamina = 0x209C;
+					offm_pClientActiveItem = 0x23D4;
+					offm_old_iAmmo = 284;
+					is_cof = true;
+					break;
+				default:
+					assert(false);
+				}
+		});
 
 	auto fCBasePlayer__ForceClientDllUpdate = FindAsync(
 		ORIG_CBasePlayer__ForceClientDllUpdate,
@@ -596,6 +628,17 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offm_fStamina = 0x21F0;
+				offm_bInfiniteStamina = 0x21E8;
+				offm_pClientActiveItem = 0x2530;
+				offm_old_iAmmo = 288;
+				is_cof = true;
+				break;
+			case 27: // CoF-Mod
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offFuncIsPlayer = 0xD0;
+				offFuncCenter = 0xFC;
+				offFuncObjectCaps = 0x40;
 				break;
 			default:
 				assert(false);
@@ -655,7 +698,24 @@ void ServerDLL::FindStuff()
 		[&](auto pattern) {
 			switch (pattern - patterns::server::CoF_Noclip_Preventing_Check_Byte.cbegin()) {
 			case 0: // CoF-5936
+			case 1: // CoF-Mod-155
 				pCoF_Noclip_Preventing_Check_Byte += 10;
+				break;
+			default:
+				assert(false);
+			}
+		});
+
+	auto fCBasePlayerJump_OldButtons_Check_Byte = FindAsync(
+		pCBasePlayerJump_OldButtons_Check_Byte,
+		patterns::server::CBasePlayerJump_OldButtons_Check_Byte,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CBasePlayerJump_OldButtons_Check_Byte.cbegin()) {
+			case 0: // CoF-Mod-155
+				pCBasePlayerJump_OldButtons_Check_Byte += 12;
+				break;
+			case 1: // CoF-5936
+				pCBasePlayerJump_OldButtons_Check_Byte += 6;
 				break;
 			default:
 				assert(false);
@@ -675,6 +735,7 @@ void ServerDLL::FindStuff()
 	auto fPM_Duck = FindFunctionAsync(ORIG_PM_Duck, "PM_Duck", patterns::server::PM_Duck);
 	auto fPM_UnDuck = FindAsync(ORIG_PM_UnDuck, patterns::server::PM_UnDuck);
 	auto fCBasePlayer__GiveNamedItem = FindAsync(ORIG_CBasePlayer__GiveNamedItem, patterns::server::CBasePlayer__GiveNamedItem);
+	auto fShiftMonsters = FindAsync(ORIG_ShiftMonsters, patterns::server::ShiftMonsters);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -796,6 +857,12 @@ void ServerDLL::FindStuff()
 		auto pattern = fCoF_Noclip_Preventing_Check_Byte.get();
 		if (pCoF_Noclip_Preventing_Check_Byte)
 			EngineDevMsg("[server dll] Found noclip preventing check in CoF at %p (using the %s pattern).\n", pCoF_Noclip_Preventing_Check_Byte, pattern->name());
+	}
+
+	{
+		auto pattern = fCBasePlayerJump_OldButtons_Check_Byte.get();
+		if (pCBasePlayerJump_OldButtons_Check_Byte)
+			EngineDevMsg("[server dll] Found oldbuttons check from CBasePlayer::Jump at %p (using the %s pattern).\n", pCBasePlayerJump_OldButtons_Check_Byte, pattern->name());
 	}
 
 	{
@@ -1298,6 +1365,16 @@ void ServerDLL::FindStuff()
 	}
 
 	{
+		auto pattern = fShiftMonsters.get();
+		if (ORIG_ShiftMonsters) {
+			EngineDevMsg("[server dll] Found ShiftMonsters at %p (using the %s pattern).\n", ORIG_ShiftMonsters, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find ShiftMonsters.\n");
+			EngineWarning("Fixing monster origin after loading save in Cry of Fear is not available.\n");
+		}
+	}
+
+	{
 		auto pattern = fPM_UnDuck.get();
 		if (ORIG_PM_UnDuck) {
 			EngineDevMsg("[server dll] Found PM_UnDuck at %p (using the %s pattern).\n", ORIG_PM_UnDuck, pattern->name());
@@ -1306,9 +1383,6 @@ void ServerDLL::FindStuff()
 			EngineWarning("Enabling ducktap in Cry of Fear is not available.\n");
 		}
 	}
-
-	auto fCBaseEntity__FireBullets = FindAsync(ORIG_CBaseEntity__FireBullets, patterns::server::CBaseEntity__FireBullets);
-	auto fCBaseEntity__FireBulletsPlayer = FindAsync(ORIG_CBaseEntity__FireBulletsPlayer, patterns::server::CBaseEntity__FireBulletsPlayer);
 
 	{
 		auto pattern = fCBaseEntity__FireBullets.get();
@@ -1353,8 +1427,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 
 	#define REG(cvar) HwDLL::GetInstance().RegisterCVar(CVars::cvar)
 	REG(bxt_timer_autostop);
-	// Smiley: bxt_autojump is illegal in CoF since it doesn't take stamina for jumps, use +bxt_tas_autojump instead
-	if (ORIG_PM_Jump && !HwDLL::GetInstance().is_cof) {
+	if (ORIG_PM_Jump) {
 		REG(bxt_autojump);
 		REG(bxt_autojump_priority);
 	}
@@ -1369,7 +1442,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_fire_on_stuck);
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
 		REG(bxt_disable_autosave);
-	if (pCS_Stamina_Value || HwDLL::GetInstance().is_cof)
+	if (pCS_Stamina_Value || is_cof)
 		REG(bxt_remove_stamina);
 	if (ORIG_CChangeLevel__UseChangeLevel && ORIG_CChangeLevel__TouchChangeLevel)
 		REG(bxt_disable_changelevel);
@@ -1389,10 +1462,12 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_bullets);
 		REG(bxt_show_bullets_enemy);
 	}
-	if (ORIG_PM_Duck && HwDLL::GetInstance().is_cof)
+	if (ORIG_PM_Duck && is_cof)
 		REG(bxt_cof_slowdown_if_use_on_ground);
-	if (ORIG_PM_UnDuck)
+	if (ORIG_PM_UnDuck && is_cof)
 		REG(bxt_cof_enable_ducktap);
+	if (is_cof)
+		REG(bxt_cof_disable_save_lock);
 	#undef REG
 }
 
@@ -1590,21 +1665,53 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		not_stuck_prev_frame = !stuck_cur_frame;
 	}
 
-	if (hwDLL.is_cof)
+	if (is_cof)
 	{
 		if (pCoF_Noclip_Preventing_Check_Byte)
 		{
-			if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0x75) && hwDLL.noclip_anglehack)
+			if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0x75) && (*hwDLL.noclip_anglehack))
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
-			else if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0xEB) && !hwDLL.noclip_anglehack)
+			else if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0xEB) && !(*hwDLL.noclip_anglehack))
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\x75"));
+		}
+
+		if (pCBasePlayerJump_OldButtons_Check_Byte)
+		{
+			if (offm_rgAmmoLast == 0x25C0) { // CoF-5936
+				if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0xF6) && CVars::bxt_autojump.GetBool())
+					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 13, reinterpret_cast<const byte*>("\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90"));
+				else if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0x90) && !CVars::bxt_autojump.GetBool())
+					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 13, reinterpret_cast<const byte*>("\xF6\x86\xB0\x22\x00\x00\x02\x0F\x84\x0C\x02\x00\x00"));
+			} else { // CoF-Mod
+				if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0x75) && CVars::bxt_autojump.GetBool())
+					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
+				else if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0xEB) && !CVars::bxt_autojump.GetBool())
+					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 1, reinterpret_cast<const byte*>("\x75"));
+			}
 		}
 
 		void* classPtr = (*hwDLL.sv_player)->v.pContainingEntity->pvPrivateData;
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-		ptrdiff_t offm_bInfiniteStamina = 0x21E8;
+
+		// Infinite Stamina
 		bool* m_bInfiniteStamina = reinterpret_cast<bool*>(thisAddr + offm_bInfiniteStamina);
 		*m_bInfiniteStamina = CVars::bxt_remove_stamina.GetBool();
+
+		// Disable save lock for CoF (Mod version)
+		if (offm_rgAmmoLast == 0x2464) { // CoF-Mod-155
+			ptrdiff_t offm_iPlayerSaveLock = 0x4B8;
+			int* m_iPlayerSaveLock = reinterpret_cast<int*>(thisAddr + offm_iPlayerSaveLock);
+			static bool reset_playersavelock = false;
+
+			if ((*m_iPlayerSaveLock != 1337) && CVars::bxt_cof_disable_save_lock.GetBool()) {
+				*m_iPlayerSaveLock = 1337;
+				reset_playersavelock = true;
+			}
+			else if ((*m_iPlayerSaveLock == 1337) && !CVars::bxt_cof_disable_save_lock.GetBool() && reset_playersavelock) {
+				*m_iPlayerSaveLock = 0;
+				reset_playersavelock = false;
+			}
+		}
 	}
 
 	if (!ppmove)
@@ -1954,14 +2061,23 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, in
 
 HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, thisptr, int, edx)
 {
-	if (HwDLL::GetInstance().ppGlobals) {
+	auto &hw = HwDLL::GetInstance();
+
+	if (hw.ppGlobals) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
-			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+			const char *targetname = hw.ppGlobals->pStringBase + pev->targetname;
 			OnMultiManagerFired(targetname);
 
-			if (HwDLL::GetInstance().is_cof) {
-				auto m_index = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + 228);
+			if (is_cof) {
+				ptrdiff_t offm_index;
+
+				if (hw.is_cof_steam)
+					offm_index = 228;
+				else
+					offm_index = 224;
+
+				auto m_index = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + offm_index);
 				if (!std::strcmp(targetname, "whensimondies") && (m_index == 2)) // Cry of Fear (Ending 4)
 					DoAutoStopTasks();
 			}
@@ -2249,6 +2365,16 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 	if ((std::strcmp(cmd, "fullupdate") == 0) && (ORIG_CBasePlayer__ForceClientDllUpdate || ORIG_CBasePlayer__ForceClientDllUpdate_Linux)) {
 		int* m_iClientFOV = reinterpret_cast<int*>(thisAddr + offm_iClientFOV);
 		int* m_rgAmmoLast = reinterpret_cast<int*>(thisAddr + offm_rgAmmoLast);
+
+		if (is_cof) {
+			void** m_pActiveItem = reinterpret_cast<void**>(thisAddr + (offm_pClientActiveItem - 4));
+			if (*m_pActiveItem != NULL) {
+				uintptr_t* m_pClientActiveItem = reinterpret_cast<uintptr_t*>(thisAddr + offm_pClientActiveItem);
+				int* old_m_iAmmo = reinterpret_cast<int*>(*m_pClientActiveItem + offm_old_iAmmo);
+				*old_m_iAmmo = -1;
+			}
+		}
+
 		*m_iClientFOV = -1;
 		for (int i = 0; i < maxAmmoSlots; i++)
 			m_rgAmmoLast[i] = -1;
@@ -2825,4 +2951,13 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_UnDuck)
 	}
 
 	ORIG_PM_UnDuck();
+}
+
+HOOK_DEF_1(ServerDLL, void, __cdecl, ShiftMonsters, Vector, origin)
+{
+	// Cry of Fear-specific, fix monsters teleport to their spawn points.
+	if (CVars::bxt_cof_disable_save_lock.GetBool())
+		return;
+	else
+		return ORIG_ShiftMonsters(origin);
 }

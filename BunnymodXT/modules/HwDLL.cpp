@@ -429,6 +429,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_PF_traceline_DLL);
 			MemUtils::MarkAsExecutable(ORIG_CL_CheckGameDirectory);
 			MemUtils::MarkAsExecutable(ORIG_SaveGameSlot);
+			MemUtils::MarkAsExecutable(ORIG_SCR_NetGraph);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -445,6 +446,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_SCR_BeginLoadingPlaque, HOOKED_SCR_BeginLoadingPlaque,
 			ORIG_Host_FilterTime, HOOKED_Host_FilterTime,
 			ORIG_Host_ValidSave, HOOKED_Host_ValidSave,
+			ORIG_SCR_NetGraph, HOOKED_SCR_NetGraph,
 			ORIG_V_FadeAlpha, HOOKED_V_FadeAlpha,
 			ORIG_R_DrawSkyBox, HOOKED_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen, HOOKED_SCR_UpdateScreen,
@@ -490,13 +492,13 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 
 	#ifdef _WIN32
 		#ifdef COF_BUILD
-		if (!is_cof) {
+		if (!is_cof_steam) {
 			ClientDLL::GetInstance().pEngfuncs = nullptr;
 			ServerDLL::GetInstance().pEngfuncs = nullptr;
 			MessageBox(NULL, "Loaded Bunnymod XT (CoF version) in non-CoF game! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
 		}
 		#else
-		if (is_cof) {
+		if (is_cof_steam) {
 			ClientDLL::GetInstance().pEngfuncs = nullptr;
 			ServerDLL::GetInstance().pEngfuncs = nullptr;
 			MessageBox(NULL, "Loaded BunnymodXT (HL version) in CoF! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
@@ -523,6 +525,7 @@ void HwDLL::Unhook()
 			ORIG_SCR_BeginLoadingPlaque,
 			ORIG_Host_FilterTime,
 			ORIG_Host_ValidSave,
+			ORIG_SCR_NetGraph,
 			ORIG_V_FadeAlpha,
 			ORIG_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen,
@@ -585,6 +588,7 @@ void HwDLL::Clear()
 	ORIG_SCR_BeginLoadingPlaque = nullptr;
 	ORIG_Host_FilterTime = nullptr;
 	ORIG_Host_ValidSave = nullptr;
+	ORIG_SCR_NetGraph = nullptr;
 	ORIG_V_FadeAlpha = nullptr;
 	ORIG_R_DrawSkyBox = nullptr;
 	ORIG_SCR_UpdateScreen = nullptr;
@@ -654,6 +658,9 @@ void HwDLL::Clear()
 	ORIG_CL_CheckGameDirectory = nullptr;
 	ORIG_CL_HudMessage = nullptr;
 	ORIG_SaveGameSlot = nullptr;
+	ORIG_SCR_NetGraph = nullptr;
+	ORIG_VGuiWrap2_IsGameUIVisible = nullptr;
+	ORIG_SCR_DrawPause = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1211,6 +1218,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cvar_DirectSet)
 		DEF_FUTURE(Cvar_FindVar)
 		DEF_FUTURE(Cmd_FindCmd)
+		DEF_FUTURE(Host_Noclip_f)
 		DEF_FUTURE(Host_Notarget_f)
 		DEF_FUTURE(Cbuf_InsertText)
 		DEF_FUTURE(Cbuf_AddText)
@@ -1257,6 +1265,9 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(CL_CheckGameDirectory)
 		DEF_FUTURE(SaveGameSlot)
 		DEF_FUTURE(CL_HudMessage)
+		DEF_FUTURE(SCR_NetGraph)
+		DEF_FUTURE(VGuiWrap2_IsGameUIVisible)
+		DEF_FUTURE(SCR_DrawPause)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1575,7 +1586,7 @@ void HwDLL::FindStuff()
 					cls = *reinterpret_cast<void**>(f + 105);
 					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 79) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 182);
-					is_cof = true;
+					is_cof_steam = true;
 					break;
 				}
 			});
@@ -1828,11 +1839,24 @@ void HwDLL::FindStuff()
 				cofSaveHack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(ORIG_Host_ValidSave) + 21);
 			});
 
-		auto fHost_Noclip_f = FindAsync(
-			ORIG_Host_Noclip_f,
-			patterns::engine::Host_Noclip_f,
+		void *CL_RegisterResources;
+		auto fCL_RegisterResources = FindAsync(
+			CL_RegisterResources,
+			patterns::engine::CL_RegisterResources,
 			[&](auto pattern) {
-				noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(ORIG_Host_Noclip_f) + 123);
+				switch (pattern - patterns::engine::CL_RegisterResources.cbegin())
+				{
+				default:
+				case 0: // CoF-5936.
+					noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 216);
+					break;
+				case 1: // Steampipe.
+					noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 237);
+					break;
+				case 2: // 4554.
+					noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 204);
+					break;
+				}
 			});
 
 		{
@@ -1905,6 +1929,16 @@ void HwDLL::FindStuff()
 				EngineDevMsg("[hw dll] Found scr_fov_value at %p.\n", scr_fov_value);
 			} else {
 				EngineDevWarning("[hw dll] Could not find R_SetFrustum.\n");
+			}
+		}
+
+		{
+			auto pattern = fCL_RegisterResources.get();
+			if (CL_RegisterResources) {
+				EngineDevMsg("[hw dll] Found CL_RegisterResources at %p (using the %s pattern).\n", CL_RegisterResources, pattern->name());
+				EngineDevMsg("[hw dll] Found noclip_anglehack at %p.\n", noclip_anglehack);
+			} else {
+				EngineDevWarning("[hw dll] Could not find CL_RegisterResources.\n");
 			}
 		}
 
@@ -2084,17 +2118,6 @@ void HwDLL::FindStuff()
 			}
 		}
 
-		{
-			auto pattern = fHost_Noclip_f.get();
-			if (ORIG_Host_Noclip_f) {
-				EngineDevMsg("[hw dll] Found Host_Noclip_f at %p (using the %s pattern).\n", ORIG_Host_Noclip_f, pattern->name());
-				EngineDevMsg("[hw dll] Found noclip_anglehack at %p.\n", noclip_anglehack);
-			} else {
-				EngineDevWarning("[hw dll] Could not find Host_Noclip_f.\n");
-				EngineWarning("[hw dll] Enabling noclip in Cry of Fear is not available.\n");
-			}
-		}
-
 		#define GET_FUTURE(future_name) \
 			{ \
 				auto pattern = f##future_name.get(); \
@@ -2175,9 +2198,13 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Draw_FillRGBA);
 		GET_FUTURE(PF_traceline_DLL);
 		GET_FUTURE(CL_CheckGameDirectory);
+		GET_FUTURE(Host_Noclip_f);
 		GET_FUTURE(Host_Notarget_f);
 		GET_FUTURE(SaveGameSlot);
 		GET_FUTURE(CL_HudMessage);
+		GET_FUTURE(SCR_NetGraph);
+		GET_FUTURE(VGuiWrap2_IsGameUIVisible);
+		GET_FUTURE(SCR_DrawPause);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -4013,9 +4040,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_disable_gamedir_check_in_demo);
 	RegisterCVar(CVars::bxt_remove_fps_limit);
 
-	if (ORIG_Host_ValidSave && cofSaveHack)
-		RegisterCVar(CVars::bxt_cof_disable_save_lock);
-
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
 
@@ -4035,7 +4059,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	using CmdWrapper::Handler;
 	typedef CmdWrapper::CmdWrapper<CmdFuncs> wrapper;
 
-	if (is_cof)
+	if (is_cof_steam)
 	{
 		CmdFuncs::AddCommand("noclip", ORIG_Host_Noclip_f);
 		CmdFuncs::AddCommand("notarget", ORIG_Host_Notarget_f);
@@ -5314,11 +5338,10 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	armorvalue = pl->v.armorvalue;
 	waterlevel = pl->v.waterlevel;
 
-	if (is_cof) {
+	if (ServerDLL::GetInstance().is_cof) {
 		void* classPtr = (*sv_player)->v.pContainingEntity->pvPrivateData;
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-		ptrdiff_t offm_fStamina = 0x21F0;
-		float* m_fStamina = reinterpret_cast<float*>(thisAddr + offm_fStamina);
+		float* m_fStamina = reinterpret_cast<float*>(thisAddr + ServerDLL::GetInstance().offm_fStamina);
 		stamina = *m_fStamina;
 	} else {
 		stamina = pl->v.fuser2;
@@ -6259,4 +6282,13 @@ HOOK_DEF_2(HwDLL, int, __cdecl, SaveGameSlot, const char*, pSaveName, const char
 		ORIG_CL_HudMessage("GAMESAVED");
 
 	return rv;
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, SCR_NetGraph)
+{
+	ORIG_SCR_NetGraph();
+
+	// Cry of Fear-specific, draw "PAUSED" on the screen.
+	if ((ORIG_VGuiWrap2_IsGameUIVisible && ORIG_SCR_DrawPause) && ORIG_VGuiWrap2_IsGameUIVisible() == 0)
+		ORIG_SCR_DrawPause();
 }

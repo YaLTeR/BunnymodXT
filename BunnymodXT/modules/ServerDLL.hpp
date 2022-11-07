@@ -54,6 +54,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CTriggerEndSection__EndSectionTouch, void* thisptr, int edx, void* pOther)
 	HOOK_DECL(void, __cdecl, PM_Duck)
 	HOOK_DECL(void, __cdecl, PM_UnDuck)
+	HOOK_DECL(void, __cdecl, ShiftMonsters, Vector origin)
 
 public:
 	static ServerDLL& GetInstance()
@@ -99,12 +100,11 @@ public:
 
 	void SetStamina(bool makeItZero);
 
+	bool is_cof = false; // Cry of Fear-specific
+	ptrdiff_t offm_fStamina; // Cry of Fear-specific
+
 private:
-	#ifdef COF_BUILD
-		ServerDLL() : IHookableDirFilter({ L"cl_dlls"}) {};
-	#else
-		ServerDLL() : IHookableDirFilter({ L"dlls"}) {};
-	#endif
+	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};
 	ServerDLL(const ServerDLL&);
 	void operator=(const ServerDLL&);
 
@@ -190,7 +190,12 @@ protected:
 	ptrdiff_t pCS_Bhopcap;
 	ptrdiff_t pCS_Bhopcap_Windows;
 
-	ptrdiff_t pCoF_Noclip_Preventing_Check_Byte;
+	ptrdiff_t pCBasePlayerJump_OldButtons_Check_Byte;
+
+	ptrdiff_t pCoF_Noclip_Preventing_Check_Byte; // Cry of Fear-specific
+	ptrdiff_t offm_bInfiniteStamina; // Cry of Fear-specific
+	ptrdiff_t offm_pClientActiveItem; // Cry of Fear-specific
+	ptrdiff_t offm_old_iAmmo; // Cry of Fear-specific
 
 	bool spirit_sdk = false;
 

@@ -196,6 +196,7 @@ namespace CVars
 
 	// Clientside CVars
 	extern CVarWrapper cl_righthand;
+	extern CVarWrapper bxt_remove_punchangles;
 	extern CVarWrapper bxt_hide_other_players;
 	extern CVarWrapper bxt_anglespeed_cap;
 	extern CVarWrapper bxt_speed_scaling;

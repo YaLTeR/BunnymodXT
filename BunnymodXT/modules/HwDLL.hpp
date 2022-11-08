@@ -288,6 +288,8 @@ public:
 	bool tas_editor_toggle_attack1;
 	bool tas_editor_toggle_attack2;
 	bool tas_editor_toggle_reload;
+	bool tas_editor_set_frametime;
+	std::string tas_editor_set_frametime_time;
 	bool tas_editor_set_change_to_target_yaw;
 	bool tas_editor_set_change_to_yaw;
 	bool tas_editor_set_change_to_pitch;
@@ -441,6 +443,7 @@ protected:
 	struct Cmd_Plus_BXT_TAS_Editor_Insert_Point;
 	struct Cmd_Minus_BXT_TAS_Editor_Insert_Point;
 	struct Cmd_BXT_TAS_Editor_Toggle;
+	struct Cmd_BXT_TAS_Editor_Set_Frametime;
 	struct Cmd_BXT_TAS_Editor_Set_Change_Type;
 	struct Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save;
 	struct Cmd_BXT_TAS_Editor_Set_Yaw;

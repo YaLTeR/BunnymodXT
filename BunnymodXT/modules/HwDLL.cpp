@@ -1,6 +1,7 @@
 #include "../stdafx.hpp"
 
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/lexical_cast.hpp>
 #include <cerrno>
 #include <GL/gl.h>
 #include "../sptlib-wrapper.hpp"
@@ -775,6 +776,7 @@ void HwDLL::Clear()
 	tas_editor_toggle_attack1 = false;
 	tas_editor_toggle_attack2 = false;
 	tas_editor_toggle_reload = false;
+	tas_editor_set_frametime = false;
 	tas_editor_set_yaw = false;
 	tas_editor_set_pitch = false;
 	tas_editor_set_repeats = false;
@@ -3578,6 +3580,23 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Set_Frametime
+{
+	USAGE("Usage: bxt_tas_editor_set_frametime <frametime>\n Sets frametime on the currently selected point.\n");
+
+	static void handler(const char *value)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		if (boost::lexical_cast<double>(value) <= 0.f) {
+			hw.ORIG_Con_Printf("Frametime must be greater than 0.\n");
+		} else {
+			hw.tas_editor_set_frametime = true;
+			hw.tas_editor_set_frametime_time = value;
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Editor_Set_Change_Type
 {
 	USAGE("Usage: bxt_tas_editor_set_change_type <type>\n Set type of change for a point in the camera editor. Valid types are target_yaw, yaw, pitch.\n");
@@ -4132,6 +4151,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Yaw, Handler<>>("bxt_tas_editor_unset_yaw");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Commands, Handler<const char*>>("bxt_tas_editor_set_commands");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Repeats, Handler<int>>("bxt_tas_editor_set_repeats");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Frametime, Handler<const char*>>("bxt_tas_editor_set_frametime");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Pitch, Handler<float>>("bxt_tas_editor_set_pitch");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Yaw, Handler<float>>("bxt_tas_editor_set_yaw");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Left_Right_Count, Handler<unsigned long>>("bxt_tas_editor_set_left_right_count");

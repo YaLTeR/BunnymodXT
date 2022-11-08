@@ -2067,6 +2067,11 @@ namespace TriangleDrawing
 					stale_index = closest_edge_prev_frame_bulk_index;
 				}
 
+				if (hw.tas_editor_set_frametime) {
+					frame_bulk.Frametime = hw.tas_editor_set_frametime_time;
+					stale_index = closest_edge_prev_frame_bulk_index;
+				}
+
 				if (hw.tas_editor_set_yaw
 						// If we're strafing, then if we can set the yaw it should already be present.
 						// If we're not strafing, then we can set the yaw.
@@ -2192,6 +2197,7 @@ namespace TriangleDrawing
 		hw.tas_editor_toggle_attack1 = false;
 		hw.tas_editor_toggle_attack2 = false;
 		hw.tas_editor_toggle_reload = false;
+		hw.tas_editor_set_frametime = false;
 		hw.tas_editor_set_change_to_target_yaw = false;
 		hw.tas_editor_set_change_to_yaw = false;
 		hw.tas_editor_set_change_to_pitch = false;

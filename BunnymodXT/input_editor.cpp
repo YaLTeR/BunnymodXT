@@ -64,6 +64,8 @@ void EditedInput::simulate() {
 		std::placeholders::_3
 	);
 
+	const auto point_contents_func = ClientDLL::GetInstance().pEngfuncs->PM_PointContents;
+
 	size_t total_frames = frame_bulk_starts[first_frame_bulk];
 
 	auto player = *(player_datas.cend() - 1);
@@ -153,6 +155,7 @@ void EditedInput::simulate() {
 				hw.Buttons,
 				hw.ButtonsPresent,
 				trace_func,
+				point_contents_func,
 				hw.hlstrafe_version
 			);
 

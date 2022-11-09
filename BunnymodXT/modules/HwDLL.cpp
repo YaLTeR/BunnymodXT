@@ -4235,7 +4235,6 @@ void HwDLL::InsertCommands()
 						player.InDuckAnimation = (pl->v.bInDuck != 0);
 						player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 						player.StaminaTime = pl->v.fuser2;
-						player.WaterLevel = pl->v.waterlevel;
 						player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 						if (ORIG_PF_GetPhysicsKeyValue) {
@@ -4336,7 +4335,16 @@ void HwDLL::InsertCommands()
 				});
 
 				StartTracing();
-				auto p = HLStrafe::MainFunc(player, movement_vars, f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::UnsafePlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), hlstrafe_version);
+				auto p = HLStrafe::MainFunc(
+					player,
+					movement_vars,
+					f,
+					StrafeState,
+					Buttons,
+					ButtonsPresent,
+					std::bind(&HwDLL::UnsafePlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+					ClientDLL::GetInstance().pEngfuncs->PM_PointContents,
+					hlstrafe_version);
 				StopTracing();
 
 				PrevFractions = { p.fractions[0], p.fractions[1], p.fractions[2], p.fractions[3] };
@@ -4825,7 +4833,6 @@ void HwDLL::InsertCommands()
 					player.InDuckAnimation = (pl->v.bInDuck != 0);
 					player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 					player.StaminaTime = pl->v.fuser2;
-					player.WaterLevel = pl->v.waterlevel;
 					player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 					if (ORIG_PF_GetPhysicsKeyValue) {
@@ -4845,7 +4852,8 @@ void HwDLL::InsertCommands()
 
 			auto playerCopy = HLStrafe::PlayerData(player); // Our copy that we will mess with.
 			auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false);
-			auto postype = GetPositionType(playerCopy, traceFunc);
+			auto pointContentsFunc = ClientDLL::GetInstance().pEngfuncs->PM_PointContents;
+			auto postype = GetPositionType(playerCopy, traceFunc, pointContentsFunc);
 			if (ducktap && postype == HLStrafe::PositionType::GROUND) {
 					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {
 						// This should check against the next frame's origin but meh.
@@ -4868,7 +4876,7 @@ void HwDLL::InsertCommands()
 					playerCopy.InDuckAnimation = false;
 					playerCopy.DuckTime = 0;
 
-					auto nextPostype = HLStrafe::GetPositionType(playerCopy, traceFunc);
+					auto nextPostype = HLStrafe::GetPositionType(playerCopy, traceFunc, pointContentsFunc);
 					if (nextPostype == HLStrafe::PositionType::GROUND) {
 						// Jumpbug if we're about to land.
 						Jump = true;
@@ -4876,7 +4884,7 @@ void HwDLL::InsertCommands()
 					}
 				} else {
 					auto vars = GetMovementVars();
-					auto nextPostype = HLStrafe::Move(playerCopy, vars, postype, vars.Maxspeed, traceFunc);
+					auto nextPostype = HLStrafe::Move(playerCopy, vars, postype, vars.Maxspeed, traceFunc, pointContentsFunc);
 					if (nextPostype == HLStrafe::PositionType::GROUND) {
 						// Duck to prepare for the Jumpbug.
 						Duck = true;
@@ -4955,7 +4963,6 @@ HLStrafe::PlayerData HwDLL::GetPlayerData()
 	player.InDuckAnimation = (pl->v.bInDuck != 0);
 	player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 	player.StaminaTime = pl->v.fuser2;
-	player.WaterLevel = pl->v.waterlevel;
 	player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 	if (ORIG_PF_GetPhysicsKeyValue) {

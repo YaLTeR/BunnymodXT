@@ -2683,6 +2683,15 @@ struct HwDLL::Cmd_BXT_CH_Get_Origin_And_Angles
 		else
 			hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", (*hw.sv_player)->v.origin[0], (*hw.sv_player)->v.origin[1], (*hw.sv_player)->v.origin[2]);
 	}
+
+	static void handler(int value)
+	{
+		auto &hw = HwDLL::GetInstance();
+		auto &cl = ClientDLL::GetInstance();
+		float angles[3];
+		cl.pEngfuncs->GetViewAngles(angles);
+		hw.ORIG_Con_Printf("bxt_cam_fixed %f %f %f %f %f %f\n", cl.last_vieworg[0], cl.last_vieworg[1], cl.last_vieworg[2], angles[0], angles[1], angles[2]);
+	}
 };
 
 struct HwDLL::Cmd_BXT_CH_Set_Origin
@@ -4049,7 +4058,10 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Check_Position, Handler<float, float, float>>("_bxt_tas_check_position");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Health, Handler<float>>("bxt_ch_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Armor, Handler<float>>("bxt_ch_set_armor");
-	wrapper::AddCheat<Cmd_BXT_CH_Get_Origin_And_Angles, Handler<>>("bxt_ch_get_pos");
+	wrapper::AddCheat<
+		Cmd_BXT_CH_Get_Origin_And_Angles, 
+		Handler<>,
+		Handler<int>>("bxt_ch_get_pos");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin_Offset, Handler<float, float, float>>("bxt_ch_set_pos_offset");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Velocity, Handler<float, float, float>>("bxt_ch_set_vel");

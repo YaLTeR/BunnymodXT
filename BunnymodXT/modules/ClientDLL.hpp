@@ -44,6 +44,7 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(void, __cdecl, CHudFlashlight__drawNightVision_Linux, void* thisptr)
 	HOOK_DECL(bool, __fastcall, CHud__DrawHudNightVision, void *thisptr, int edx, float flTime)
 	HOOK_DECL(bool, __cdecl, CHud__DrawHudNightVision_Linux, void *thisptr, float flTime)
+	HOOK_DECL(void, __cdecl, V_PunchAxis, int axis, float punch)
 
 public:
 	static ClientDLL& GetInstance()

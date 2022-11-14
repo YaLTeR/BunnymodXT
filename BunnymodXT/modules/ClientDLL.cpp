@@ -130,6 +130,11 @@ extern "C" bool __cdecl _ZN4CHud18DrawHudNightVisionEf(void *thisptr, float flTi
 {
 	return ClientDLL::HOOKED_CHud__DrawHudNightVision_Linux(thisptr, flTime);
 }
+
+extern "C" void __cdecl _Z11V_PunchAxisif(int axis, float punch)
+{
+	return ClientDLL::HOOKED_V_PunchAxis(axis, punch);
+}
 #endif
 
 void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -180,6 +185,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CL_IsThirdPerson, HOOKED_CL_IsThirdPerson,
 			ORIG_CStudioModelRenderer__StudioRenderModel, HOOKED_CStudioModelRenderer__StudioRenderModel,
 			ORIG_ScaleColors, HOOKED_ScaleColors,
+			ORIG_V_PunchAxis, HOOKED_V_PunchAxis,
 			ORIG_HistoryResource__DrawAmmoHistory, HOOKED_HistoryResource__DrawAmmoHistory,
 			ORIG_CHudHealth__DrawDamage, HOOKED_CHudHealth__DrawDamage,
 			ORIG_CHudHealth__DrawPain, HOOKED_CHudHealth__DrawPain,
@@ -219,6 +225,7 @@ void ClientDLL::Unhook()
 			ORIG_CL_IsThirdPerson,
 			ORIG_CStudioModelRenderer__StudioRenderModel,
 			ORIG_ScaleColors,
+			ORIG_V_PunchAxis,
 			ORIG_HistoryResource__DrawAmmoHistory,
 			ORIG_CHudHealth__DrawDamage,
 			ORIG_CHudHealth__DrawPain,
@@ -259,6 +266,7 @@ void ClientDLL::Clear()
 	ORIG_CStudioModelRenderer__StudioRenderModel = nullptr;
 	ORIG_CStudioModelRenderer__StudioRenderModel_Linux = nullptr;
 	ORIG_ScaleColors = nullptr;
+	ORIG_V_PunchAxis = nullptr;
 	ORIG_HistoryResource__DrawAmmoHistory = nullptr;
 	ORIG_HistoryResource__DrawAmmoHistory_Linux = nullptr;
 	ORIG_CHudHealth__DrawDamage = nullptr;
@@ -460,6 +468,7 @@ void ClientDLL::FindStuff()
 		ORIG_CStudioModelRenderer__StudioRenderModel,
 		patterns::client::CStudioModelRenderer__StudioRenderModel);
 	auto fScaleColors = FindAsync(ORIG_ScaleColors, patterns::client::ScaleColors);
+	auto fV_PunchAxis = FindAsync(ORIG_V_PunchAxis, patterns::client::V_PunchAxis);
 	auto fHistoryResource__DrawAmmoHistory = FindAsync(
 		ORIG_HistoryResource__DrawAmmoHistory,
 		patterns::client::HistoryResource__DrawAmmoHistory);
@@ -685,6 +694,21 @@ void ClientDLL::FindStuff()
 			} else {
 				EngineDevWarning("[client dll] Could not find ScaleColors.\n");
 				EngineWarning("[client dll] Changing HUD color for ammo history and damage icons is not available.\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fV_PunchAxis.get();
+		if (ORIG_V_PunchAxis) {
+			EngineDevMsg("[client dll] Found V_PunchAxis at %p (using the %s pattern).\n", ORIG_V_PunchAxis, pattern->name());
+		}
+		else {
+			ORIG_V_PunchAxis = reinterpret_cast<_V_PunchAxis>(MemUtils::GetSymbolAddress(m_Handle, "_Z11V_PunchAxisif"));
+			if (ORIG_V_PunchAxis) {
+				EngineDevMsg("[client dll] Found V_PunchAxis at %p.\n", ORIG_V_PunchAxis);
+			} else {
+				EngineDevWarning("[client dll] Could not find V_PunchAxis.\n");
 			}
 		}
 	}
@@ -962,6 +986,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (pCS_SpeedScaling || pCS_SpeedScaling_Linux) {
 		REG(bxt_speed_scaling);
+	}
+	if (ORIG_V_PunchAxis) {
+		REG(bxt_remove_punchangles);
 	}
 	#undef REG
 }
@@ -1296,6 +1323,12 @@ HOOK_DEF_2(ClientDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int,
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 {
+	if (CVars::bxt_remove_punchangles.GetBool() && CVars::sv_cheats.GetBool()) {
+		pparams->punchangle[0] = 0.0f;
+		pparams->punchangle[1] = 0.0f;
+		pparams->punchangle[2] = 0.0f;
+	}
+
 	CustomHud::UpdatePlayerInfoInaccurate(pparams->simvel, pparams->simorg);
 
 	const HwDLL &hwDLL = HwDLL::GetInstance();
@@ -1876,4 +1909,12 @@ HOOK_DEF_2(ClientDLL, bool, __cdecl, CHud__DrawHudNightVision_Linux, void*, this
 	insideDrawNightVision = false;
 
 	return ret;
+}
+
+HOOK_DEF_2(ClientDLL, void, __cdecl, V_PunchAxis, int, axis, float, punch)
+{
+	if (CVars::bxt_remove_punchangles.GetBool() && CVars::sv_cheats.GetBool())
+		return;
+
+	ORIG_V_PunchAxis(axis, punch);
 }

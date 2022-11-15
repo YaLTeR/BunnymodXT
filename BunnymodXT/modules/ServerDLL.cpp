@@ -2128,7 +2128,8 @@ void ServerDLL::OnMultiManagerFired(const char *targetname)
 		|| (!std::strcmp(targetname, "medicosprey") && cl.DoesGameDirMatch("visitors")) // Visitors
 		|| (!std::strcmp(targetname, "change_mm") && cl.DoesGameDirMatch("wantedsp") && cl.DoesMapNameMatch("want36")) // Wanted
 		|| (!std::strcmp(targetname, "multiend1") && cl.DoesGameDirMatch("cryoffear") && !cl.DoesMapNameContain("cof_suicide")) // Cry of Fear (Ending 1, 2, 3)
-		|| (!std::strcmp(targetname, "multicrash") && cl.DoesGameDirMatch("cryoffear"))) { // Cry of Fear (Ending 5)
+		|| (!std::strcmp(targetname, "multicrash") && cl.DoesGameDirMatch("cryoffear")) // Cry of Fear (Ending 5)
+		|| (!std::strcmp(targetname, "multicoopend") && cl.DoesGameDirMatch("cryoffear"))) { // Cry of Fear (Co-op)
 		DoAutoStopTasks();
 	}
 

@@ -457,7 +457,7 @@ void ServerDLL::FindStuff()
 					is_cof = true;
 					break;
 				default:
-					assert(false);
+					break;
 				}
 		});
 

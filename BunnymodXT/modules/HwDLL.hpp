@@ -28,6 +28,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, SCR_BeginLoadingPlaque)
 	HOOK_DECL(int, __cdecl, Host_FilterTime, float timePassed)
 	HOOK_DECL(int, __cdecl, V_FadeAlpha)
+	HOOK_DECL(void, __cdecl, V_ApplyShake, float *origin, float *angles, float factor)
 	HOOK_DECL(void, __cdecl, R_DrawSkyBox)
 	HOOK_DECL(void, __cdecl, SCR_UpdateScreen)
 	HOOK_DECL(void, __cdecl, SV_Frame)

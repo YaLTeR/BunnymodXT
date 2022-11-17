@@ -128,6 +128,7 @@ namespace CVars
 	extern CVarWrapper bxt_autopause;
 	extern CVarWrapper bxt_interprocess_enable;
 	extern CVarWrapper bxt_fade_remove;
+	extern CVarWrapper bxt_shake_remove;
 	extern CVarWrapper bxt_skybox_remove;
 	extern CVarWrapper bxt_water_remove;
 	extern CVarWrapper bxt_stop_demo_on_changelevel;

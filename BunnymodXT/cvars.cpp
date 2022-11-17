@@ -14,6 +14,7 @@ namespace CVars
 	CVarWrapper bxt_taslog_filename("bxt_taslog_filename", "taslogger.log");
 	CVarWrapper bxt_autopause("bxt_autopause", "0");
 	CVarWrapper bxt_interprocess_enable("bxt_interprocess_enable", "0");
+	CVarWrapper bxt_shake_remove("bxt_shake_remove", "0");
 	CVarWrapper bxt_fade_remove("bxt_fade_remove", "0");
 	CVarWrapper bxt_skybox_remove("bxt_skybox_remove", "0");
 	CVarWrapper bxt_water_remove("bxt_water_remove", "0");
@@ -211,6 +212,7 @@ namespace CVars
 		&bxt_remove_stamina,
 		&bxt_interprocess_enable,
 		&bxt_fade_remove,
+		&bxt_shake_remove,
 		&bxt_skybox_remove,
 		&bxt_water_remove,
 		&bxt_stop_demo_on_changelevel,

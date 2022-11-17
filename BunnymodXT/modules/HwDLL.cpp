@@ -58,6 +58,11 @@ extern "C" int __cdecl V_FadeAlpha()
 	return HwDLL::HOOKED_V_FadeAlpha();
 }
 
+extern "C" void __cdecl V_ApplyShake(float *origin, float *angles, float factor)
+{
+	return HwDLL::HOOKED_V_ApplyShake(origin, angles, factor);
+}
+
 extern "C" void __cdecl R_DrawSkyBox()
 {
 	return HwDLL::HOOKED_R_DrawSkyBox();
@@ -382,12 +387,12 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Host_Changelevel2_f);
 			MemUtils::MarkAsExecutable(ORIG_SCR_BeginLoadingPlaque);
 			MemUtils::MarkAsExecutable(ORIG_Host_FilterTime);
-			MemUtils::MarkAsExecutable(ORIG_Host_ValidSave);
 			MemUtils::MarkAsExecutable(ORIG_V_FadeAlpha);
+			MemUtils::MarkAsExecutable(ORIG_V_ApplyShake);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawSkyBox);
 			MemUtils::MarkAsExecutable(ORIG_SCR_UpdateScreen);
-			MemUtils::MarkAsExecutable(ORIG_SV_SpawnServer);
 			MemUtils::MarkAsExecutable(ORIG_SV_Frame);
+			MemUtils::MarkAsExecutable(ORIG_SV_SpawnServer);
 			MemUtils::MarkAsExecutable(ORIG_CL_Stop_f);
 			MemUtils::MarkAsExecutable(ORIG_Host_Loadgame_f);
 			MemUtils::MarkAsExecutable(ORIG_Host_Reload_f);
@@ -405,8 +410,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap_Paint);
 			MemUtils::MarkAsExecutable(ORIG_DispatchDirectUserMsg);
 			MemUtils::MarkAsExecutable(ORIG_SV_SetMoveVars);
-			MemUtils::MarkAsExecutable(ORIG_R_StudioCalcAttachments);
 			MemUtils::MarkAsExecutable(ORIG_VectorTransform);
+			MemUtils::MarkAsExecutable(ORIG_R_StudioCalcAttachments);
 			MemUtils::MarkAsExecutable(ORIG_EmitWaterPolys);
 			MemUtils::MarkAsExecutable(ORIG_S_StartDynamicSound);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_NotifyOfServerConnect);
@@ -422,6 +427,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
 			MemUtils::MarkAsExecutable(ORIG_PF_traceline_DLL);
 			MemUtils::MarkAsExecutable(ORIG_CL_CheckGameDirectory);
+			MemUtils::MarkAsExecutable(ORIG_Host_ValidSave);
 			MemUtils::MarkAsExecutable(ORIG_SaveGameSlot);
 			MemUtils::MarkAsExecutable(ORIG_SCR_NetGraph);
 		}
@@ -442,6 +448,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Host_ValidSave, HOOKED_Host_ValidSave,
 			ORIG_SCR_NetGraph, HOOKED_SCR_NetGraph,
 			ORIG_V_FadeAlpha, HOOKED_V_FadeAlpha,
+			ORIG_V_ApplyShake, HOOKED_V_ApplyShake,
 			ORIG_R_DrawSkyBox, HOOKED_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen, HOOKED_SCR_UpdateScreen,
 			ORIG_SV_SpawnServer, HOOKED_SV_SpawnServer,
@@ -520,6 +527,7 @@ void HwDLL::Unhook()
 			ORIG_Host_ValidSave,
 			ORIG_SCR_NetGraph,
 			ORIG_V_FadeAlpha,
+			ORIG_V_ApplyShake,
 			ORIG_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen,
 			ORIG_SV_SpawnServer,
@@ -582,6 +590,7 @@ void HwDLL::Clear()
 	ORIG_Host_ValidSave = nullptr;
 	ORIG_SCR_NetGraph = nullptr;
 	ORIG_V_FadeAlpha = nullptr;
+	ORIG_V_ApplyShake = nullptr;
 	ORIG_R_DrawSkyBox = nullptr;
 	ORIG_SCR_UpdateScreen = nullptr;
 	ORIG_SV_Frame = nullptr;
@@ -1045,6 +1054,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find V_FadeAlpha.\n");
 
+		ORIG_V_ApplyShake = reinterpret_cast<_V_ApplyShake>(MemUtils::GetSymbolAddress(m_Handle, "V_ApplyShake"));
+		if (ORIG_V_ApplyShake)
+			EngineDevMsg("[hw dll] Found V_ApplyShake at %p.\n", ORIG_V_ApplyShake);
+		else
+			EngineDevWarning("[hw dll] Could not find V_ApplyShake.\n");
+
 		ORIG_R_DrawSkyBox = reinterpret_cast<_R_DrawSkyBox>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawSkyBox"));
 		if (ORIG_R_DrawSkyBox) {
 			EngineDevMsg("[hw dll] Found R_DrawSkyBox at %p.\n", ORIG_R_DrawSkyBox);
@@ -1214,6 +1229,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(PM_PlayerTrace)
 		DEF_FUTURE(Host_FilterTime)
 		DEF_FUTURE(V_FadeAlpha)
+		DEF_FUTURE(V_ApplyShake)
 		DEF_FUTURE(R_DrawSkyBox)
 		DEF_FUTURE(SCR_UpdateScreen)
 		DEF_FUTURE(PF_GetPhysicsKeyValue)
@@ -2154,6 +2170,7 @@ void HwDLL::FindStuff()
 			}
 		GET_FUTURE(Host_FilterTime);
 		GET_FUTURE(V_FadeAlpha);
+		GET_FUTURE(V_ApplyShake);
 		GET_FUTURE(R_DrawSkyBox);
 		GET_FUTURE(SV_Frame);
 		GET_FUTURE(VGuiWrap2_ConDPrintf);
@@ -3989,6 +4006,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_bhopcap);
 	RegisterCVar(CVars::bxt_interprocess_enable);
 	RegisterCVar(CVars::bxt_fade_remove);
+	RegisterCVar(CVars::bxt_shake_remove);
 	RegisterCVar(CVars::bxt_skybox_remove);
 	RegisterCVar(CVars::bxt_water_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
@@ -5656,6 +5674,14 @@ HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 		return 0;
 	else
 		return ORIG_V_FadeAlpha();
+}
+
+HOOK_DEF_3(HwDLL, void, __cdecl, V_ApplyShake, float*, origin, float*, angles, float, factor)
+{
+	if (CVars::bxt_shake_remove.GetBool() && CVars::sv_cheats.GetBool())
+		return;
+
+	ORIG_V_ApplyShake(origin, angles, factor);
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawSkyBox)

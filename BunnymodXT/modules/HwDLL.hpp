@@ -65,7 +65,6 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __fastcall, CBaseUI__HideGameUI, void *thisptr)
 	HOOK_DECL(void, __cdecl, CBaseUI__HideGameUI_Linux, void *thisptr)
 	HOOK_DECL(void, __cdecl, R_DrawWorld)
-	HOOK_DECL(void, __cdecl, R_DrawEntitiesOnList)
 	HOOK_DECL(void, __cdecl, R_DrawParticles)
 	HOOK_DECL(int, __cdecl, BUsesSDLInput)
 	HOOK_DECL(void, __cdecl, R_StudioRenderModel)

@@ -1320,6 +1320,8 @@ namespace CustomHud
 				out << "  " << action.first << '\n';
 			}
 
+			out << "Frametime: " << frame_bulk_status.frametime << '\n';
+
 			if (frame_bulk_status.pitch_present) {
 				out << "Pitch: " << frame_bulk_status.pitch << "\n";
 			}
@@ -1344,14 +1346,6 @@ namespace CustomHud
 
 			out << "Health: " << frame_bulk_status.health << '\n';
 			out << "Armor: " << frame_bulk_status.armor << '\n';
-
-			if (!(!frame_bulk_status.frametime.compare("0.010000001") ||
-					!frame_bulk_status.frametime.compare("0.001") || 
-					!frame_bulk_status.frametime.compare("0.002") || 
-					!frame_bulk_status.frametime.compare("0.004")
-					)) {
-				out << "Frametime: " << frame_bulk_status.frametime << '\n';
-			}
 		} else {
 			out << " no frame bulk selected";
 		}

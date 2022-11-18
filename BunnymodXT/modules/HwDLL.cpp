@@ -1,7 +1,6 @@
 #include "../stdafx.hpp"
 
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/lexical_cast.hpp>
 #include <cerrno>
 #include <GL/gl.h>
 #include "../sptlib-wrapper.hpp"
@@ -3588,7 +3587,7 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Frametime
 	{
 		auto& hw = HwDLL::GetInstance();
 
-		if (boost::lexical_cast<double>(value) <= 0.f) {
+		if (std::atof(value) <= 0.f) {
 			hw.ORIG_Con_Printf("Frametime must be greater than 0.\n");
 		} else {
 			hw.tas_editor_set_frametime = true;

@@ -1733,14 +1733,17 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 			ent->curstate.renderamt = 255;
 	}
 
-	if (!ppmove || !pEngfuncs)
-		return ORIG_HUD_AddEntity(type, ent, modelname);
-
-	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
-	int* iuser2 = reinterpret_cast<int*>(pmove + (offIUser1 + 4));
-
-	if (CVars::bxt_hide_other_players.GetBool() && ent->player && pEngfuncs->pDemoAPI->IsPlayingback() && ent->index != *iuser2)
+	if (CVars::bxt_show_only_viewmodel_and_player.GetBool() && CVars::sv_cheats.GetBool() && !ent->player)
 		return 0;
+
+	if (ppmove && pEngfuncs)
+	{
+		auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
+		int* iuser2 = reinterpret_cast<int*>(pmove + (offIUser1 + 4));
+
+		if (CVars::bxt_hide_other_players.GetBool() && ent->player && pEngfuncs->pDemoAPI->IsPlayingback() && ent->index != *iuser2)
+			return 0;
+	}
 
 	return ORIG_HUD_AddEntity(type, ent, modelname);
 }

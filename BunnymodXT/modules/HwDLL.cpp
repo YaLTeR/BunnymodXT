@@ -58,6 +58,11 @@ extern "C" int __cdecl V_FadeAlpha()
 	return HwDLL::HOOKED_V_FadeAlpha();
 }
 
+extern "C" void __cdecl V_ApplyShake(float *origin, float *angles, float factor)
+{
+	return HwDLL::HOOKED_V_ApplyShake(origin, angles, factor);
+}
+
 extern "C" void __cdecl R_DrawSkyBox()
 {
 	return HwDLL::HOOKED_R_DrawSkyBox();
@@ -267,11 +272,6 @@ extern "C" void __cdecl R_DrawWorld()
 	HwDLL::HOOKED_R_DrawWorld();
 }
 
-extern "C" void __cdecl R_DrawEntitiesOnList()
-{
-	HwDLL::HOOKED_R_DrawEntitiesOnList();
-}
-
 extern "C" void __cdecl R_DrawParticles()
 {
 	HwDLL::HOOKED_R_DrawParticles();
@@ -387,12 +387,12 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Host_Changelevel2_f);
 			MemUtils::MarkAsExecutable(ORIG_SCR_BeginLoadingPlaque);
 			MemUtils::MarkAsExecutable(ORIG_Host_FilterTime);
-			MemUtils::MarkAsExecutable(ORIG_Host_ValidSave);
 			MemUtils::MarkAsExecutable(ORIG_V_FadeAlpha);
+			MemUtils::MarkAsExecutable(ORIG_V_ApplyShake);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawSkyBox);
 			MemUtils::MarkAsExecutable(ORIG_SCR_UpdateScreen);
-			MemUtils::MarkAsExecutable(ORIG_SV_SpawnServer);
 			MemUtils::MarkAsExecutable(ORIG_SV_Frame);
+			MemUtils::MarkAsExecutable(ORIG_SV_SpawnServer);
 			MemUtils::MarkAsExecutable(ORIG_CL_Stop_f);
 			MemUtils::MarkAsExecutable(ORIG_Host_Loadgame_f);
 			MemUtils::MarkAsExecutable(ORIG_Host_Reload_f);
@@ -410,15 +410,14 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap_Paint);
 			MemUtils::MarkAsExecutable(ORIG_DispatchDirectUserMsg);
 			MemUtils::MarkAsExecutable(ORIG_SV_SetMoveVars);
-			MemUtils::MarkAsExecutable(ORIG_R_StudioCalcAttachments);
 			MemUtils::MarkAsExecutable(ORIG_VectorTransform);
+			MemUtils::MarkAsExecutable(ORIG_R_StudioCalcAttachments);
 			MemUtils::MarkAsExecutable(ORIG_EmitWaterPolys);
 			MemUtils::MarkAsExecutable(ORIG_S_StartDynamicSound);
 			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_NotifyOfServerConnect);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioSetupBones);
 			MemUtils::MarkAsExecutable(ORIG_CBaseUI__HideGameUI);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawWorld);
-			MemUtils::MarkAsExecutable(ORIG_R_DrawEntitiesOnList);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawParticles);
 			MemUtils::MarkAsExecutable(ORIG_BUsesSDLInput);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioRenderModel);
@@ -428,6 +427,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
 			MemUtils::MarkAsExecutable(ORIG_PF_traceline_DLL);
 			MemUtils::MarkAsExecutable(ORIG_CL_CheckGameDirectory);
+			MemUtils::MarkAsExecutable(ORIG_Host_ValidSave);
 			MemUtils::MarkAsExecutable(ORIG_SaveGameSlot);
 			MemUtils::MarkAsExecutable(ORIG_SCR_NetGraph);
 		}
@@ -448,6 +448,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Host_ValidSave, HOOKED_Host_ValidSave,
 			ORIG_SCR_NetGraph, HOOKED_SCR_NetGraph,
 			ORIG_V_FadeAlpha, HOOKED_V_FadeAlpha,
+			ORIG_V_ApplyShake, HOOKED_V_ApplyShake,
 			ORIG_R_DrawSkyBox, HOOKED_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen, HOOKED_SCR_UpdateScreen,
 			ORIG_SV_SpawnServer, HOOKED_SV_SpawnServer,
@@ -477,7 +478,6 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_StudioSetupBones, HOOKED_R_StudioSetupBones,
 			ORIG_CBaseUI__HideGameUI, HOOKED_CBaseUI__HideGameUI,
 			ORIG_R_DrawWorld, HOOKED_R_DrawWorld,
-			ORIG_R_DrawEntitiesOnList, HOOKED_R_DrawEntitiesOnList,
 			ORIG_R_DrawParticles, HOOKED_R_DrawParticles,
 			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput,
 			ORIG_R_StudioRenderModel, HOOKED_R_StudioRenderModel,
@@ -527,6 +527,7 @@ void HwDLL::Unhook()
 			ORIG_Host_ValidSave,
 			ORIG_SCR_NetGraph,
 			ORIG_V_FadeAlpha,
+			ORIG_V_ApplyShake,
 			ORIG_R_DrawSkyBox,
 			ORIG_SCR_UpdateScreen,
 			ORIG_SV_SpawnServer,
@@ -556,7 +557,6 @@ void HwDLL::Unhook()
 			ORIG_R_StudioSetupBones,
 			ORIG_CBaseUI__HideGameUI,
 			ORIG_R_DrawWorld,
-			ORIG_R_DrawEntitiesOnList,
 			ORIG_R_DrawParticles,
 			ORIG_BUsesSDLInput,
 			ORIG_R_StudioRenderModel,
@@ -590,6 +590,7 @@ void HwDLL::Clear()
 	ORIG_Host_ValidSave = nullptr;
 	ORIG_SCR_NetGraph = nullptr;
 	ORIG_V_FadeAlpha = nullptr;
+	ORIG_V_ApplyShake = nullptr;
 	ORIG_R_DrawSkyBox = nullptr;
 	ORIG_SCR_UpdateScreen = nullptr;
 	ORIG_SV_Frame = nullptr;
@@ -646,7 +647,6 @@ void HwDLL::Clear()
 	ORIG_CBaseUI__HideGameUI = nullptr;
 	ORIG_CBaseUI__HideGameUI_Linux = nullptr;
 	ORIG_R_DrawWorld = nullptr;
-	ORIG_R_DrawEntitiesOnList = nullptr;
 	ORIG_R_DrawParticles = nullptr;
 	ORIG_BUsesSDLInput = nullptr;
 	ORIG_R_StudioRenderModel = nullptr;
@@ -1054,6 +1054,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find V_FadeAlpha.\n");
 
+		ORIG_V_ApplyShake = reinterpret_cast<_V_ApplyShake>(MemUtils::GetSymbolAddress(m_Handle, "V_ApplyShake"));
+		if (ORIG_V_ApplyShake)
+			EngineDevMsg("[hw dll] Found V_ApplyShake at %p.\n", ORIG_V_ApplyShake);
+		else
+			EngineDevWarning("[hw dll] Could not find V_ApplyShake.\n");
+
 		ORIG_R_DrawSkyBox = reinterpret_cast<_R_DrawSkyBox>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawSkyBox"));
 		if (ORIG_R_DrawSkyBox) {
 			EngineDevMsg("[hw dll] Found R_DrawSkyBox at %p.\n", ORIG_R_DrawSkyBox);
@@ -1179,12 +1185,6 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find R_DrawWorld.\n");
 
-		ORIG_R_DrawEntitiesOnList = reinterpret_cast<_R_DrawEntitiesOnList>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawEntitiesOnList"));
-		if (ORIG_R_DrawEntitiesOnList)
-			EngineDevMsg("[hw dll] Found R_DrawEntitiesOnList at %p.\n", ORIG_R_DrawEntitiesOnList);
-		else
-			EngineDevWarning("[hw dll] Could not find R_DrawEntitiesOnList.\n");
-
 		ORIG_R_DrawParticles = reinterpret_cast<_R_DrawParticles>(MemUtils::GetSymbolAddress(m_Handle, "R_DrawParticles"));
 		if (ORIG_R_DrawParticles)
 			EngineDevMsg("[hw dll] Found R_DrawParticles at %p.\n", ORIG_R_DrawParticles);
@@ -1229,6 +1229,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(PM_PlayerTrace)
 		DEF_FUTURE(Host_FilterTime)
 		DEF_FUTURE(V_FadeAlpha)
+		DEF_FUTURE(V_ApplyShake)
 		DEF_FUTURE(R_DrawSkyBox)
 		DEF_FUTURE(SCR_UpdateScreen)
 		DEF_FUTURE(PF_GetPhysicsKeyValue)
@@ -1254,7 +1255,6 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(VGuiWrap2_NotifyOfServerConnect)
 		DEF_FUTURE(CBaseUI__HideGameUI)
 		DEF_FUTURE(R_DrawWorld)
-		DEF_FUTURE(R_DrawEntitiesOnList)
 		DEF_FUTURE(R_DrawParticles)
 		DEF_FUTURE(BUsesSDLInput)
 		DEF_FUTURE(R_StudioRenderModel)
@@ -2170,6 +2170,7 @@ void HwDLL::FindStuff()
 			}
 		GET_FUTURE(Host_FilterTime);
 		GET_FUTURE(V_FadeAlpha);
+		GET_FUTURE(V_ApplyShake);
 		GET_FUTURE(R_DrawSkyBox);
 		GET_FUTURE(SV_Frame);
 		GET_FUTURE(VGuiWrap2_ConDPrintf);
@@ -2189,7 +2190,6 @@ void HwDLL::FindStuff()
 		GET_FUTURE(VGuiWrap2_NotifyOfServerConnect);
 		GET_FUTURE(CBaseUI__HideGameUI);
 		GET_FUTURE(R_DrawWorld);
-		GET_FUTURE(R_DrawEntitiesOnList);
 		GET_FUTURE(R_DrawParticles);
 		GET_FUTURE(BUsesSDLInput);
 		GET_FUTURE(R_StudioRenderModel);
@@ -4006,6 +4006,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_bhopcap);
 	RegisterCVar(CVars::bxt_interprocess_enable);
 	RegisterCVar(CVars::bxt_fade_remove);
+	RegisterCVar(CVars::bxt_shake_remove);
 	RegisterCVar(CVars::bxt_skybox_remove);
 	RegisterCVar(CVars::bxt_water_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
@@ -4018,7 +4019,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_duration);
 	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_multiplier);
 	RegisterCVar(CVars::bxt_disable_vgui);
-	RegisterCVar(CVars::bxt_show_only_viewmodel);
+	RegisterCVar(CVars::bxt_show_only_viewmodel_and_player);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
 	RegisterCVar(CVars::bxt_wallhack_alpha);
@@ -4036,7 +4037,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_viewmodel_disable_idle);
 	RegisterCVar(CVars::bxt_viewmodel_disable_equip);
 	RegisterCVar(CVars::bxt_viewmodel_semitransparent);
-	RegisterCVar(CVars::bxt_clear_green);
+	RegisterCVar(CVars::bxt_clear_color);
 	RegisterCVar(CVars::bxt_fix_mouse_horizontal_limit);
 	RegisterCVar(CVars::bxt_force_clear);
 	RegisterCVar(CVars::bxt_disable_gamedir_check_in_demo);
@@ -5675,6 +5676,14 @@ HOOK_DEF_0(HwDLL, int, __cdecl, V_FadeAlpha)
 		return ORIG_V_FadeAlpha();
 }
 
+HOOK_DEF_3(HwDLL, void, __cdecl, V_ApplyShake, float*, origin, float*, angles, float, factor)
+{
+	if (CVars::bxt_shake_remove.GetBool() && CVars::sv_cheats.GetBool())
+		return;
+
+	ORIG_V_ApplyShake(origin, angles, factor);
+}
+
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawSkyBox)
 {
 	if (CVars::sv_cheats.GetBool() && (CVars::bxt_skybox_remove.GetBool() || CVars::bxt_wallhack.GetBool()))
@@ -5932,11 +5941,20 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel.GetBool()))) {
-		if (CVars::bxt_clear_green.GetBool())
-			glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
-		else
+	if (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel_and_player.GetBool()))) {
+		if (!CVars::bxt_clear_color.IsEmpty()) {
+			unsigned r = 0, g = 0, b = 0;
+			std::istringstream ss(CVars::bxt_clear_color.GetString());
+			ss >> r >> g >> b;
+
+			static float clearColor[3];
+			clearColor[0] = r / 255.0f;
+			clearColor[1] = g / 255.0f;
+			clearColor[2] = b / 255.0f;
+			glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0f);
+		} else {
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		}
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 	ORIG_R_Clear();
@@ -6152,23 +6170,15 @@ HOOK_DEF_1(HwDLL, void, __cdecl, CBaseUI__HideGameUI_Linux, void*, thisptr)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawWorld)
 {
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel.GetBool())
+	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel_and_player.GetBool())
 		return;
 
 	ORIG_R_DrawWorld();
 }
 
-HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawEntitiesOnList)
-{
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel.GetBool())
-		return;
-
-	ORIG_R_DrawEntitiesOnList();
-}
-
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawParticles)
 {
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel.GetBool())
+	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel_and_player.GetBool())
 		return;
 
 	ORIG_R_DrawParticles();

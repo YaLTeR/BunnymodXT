@@ -128,6 +128,7 @@ namespace CVars
 	extern CVarWrapper bxt_autopause;
 	extern CVarWrapper bxt_interprocess_enable;
 	extern CVarWrapper bxt_fade_remove;
+	extern CVarWrapper bxt_shake_remove;
 	extern CVarWrapper bxt_skybox_remove;
 	extern CVarWrapper bxt_water_remove;
 	extern CVarWrapper bxt_stop_demo_on_changelevel;
@@ -140,13 +141,13 @@ namespace CVars
 	extern CVarWrapper bxt_tas_write_log;
 	extern CVarWrapper bxt_tas_playback_speed;
 	extern CVarWrapper bxt_disable_vgui;
-	extern CVarWrapper bxt_show_only_viewmodel;
+	extern CVarWrapper bxt_show_only_viewmodel_and_player;
 	extern CVarWrapper bxt_force_zmax;
 	extern CVarWrapper bxt_viewmodel_fov;
 	extern CVarWrapper bxt_viewmodel_disable_idle;
 	extern CVarWrapper bxt_viewmodel_disable_equip;
 	extern CVarWrapper bxt_viewmodel_semitransparent;
-	extern CVarWrapper bxt_clear_green;
+	extern CVarWrapper bxt_clear_color;
 	extern CVarWrapper bxt_force_fov;
 	extern CVarWrapper bxt_force_clear;
 	extern CVarWrapper bxt_fix_mouse_horizontal_limit;

@@ -14,6 +14,7 @@ namespace CVars
 	CVarWrapper bxt_taslog_filename("bxt_taslog_filename", "taslogger.log");
 	CVarWrapper bxt_autopause("bxt_autopause", "0");
 	CVarWrapper bxt_interprocess_enable("bxt_interprocess_enable", "0");
+	CVarWrapper bxt_shake_remove("bxt_shake_remove", "0");
 	CVarWrapper bxt_fade_remove("bxt_fade_remove", "0");
 	CVarWrapper bxt_skybox_remove("bxt_skybox_remove", "0");
 	CVarWrapper bxt_water_remove("bxt_water_remove", "0");
@@ -27,13 +28,13 @@ namespace CVars
 	CVarWrapper bxt_tas_write_log("bxt_tas_write_log", "0");
 	CVarWrapper bxt_tas_playback_speed("bxt_tas_playback_speed", "1");
 	CVarWrapper bxt_disable_vgui("bxt_disable_vgui", "0");
-	CVarWrapper bxt_show_only_viewmodel("bxt_show_only_viewmodel", "0");
+	CVarWrapper bxt_show_only_viewmodel_and_player("bxt_show_only_viewmodel_and_player", "0");
 	CVarWrapper bxt_force_zmax("bxt_force_zmax", "0");
 	CVarWrapper bxt_viewmodel_fov("bxt_viewmodel_fov", "0");
 	CVarWrapper bxt_viewmodel_disable_idle("bxt_viewmodel_disable_idle", "0");
 	CVarWrapper bxt_viewmodel_disable_equip("bxt_viewmodel_disable_equip", "0");
 	CVarWrapper bxt_viewmodel_semitransparent("bxt_viewmodel_semitransparent", "0");
-	CVarWrapper bxt_clear_green("bxt_clear_green", "0");
+	CVarWrapper bxt_clear_color("bxt_clear_color", "");
 	CVarWrapper bxt_force_fov("bxt_force_fov", "0");
 	CVarWrapper bxt_force_clear("bxt_force_clear", "0");
 	CVarWrapper bxt_fix_mouse_horizontal_limit("bxt_fix_mouse_horizontal_limit", "0");
@@ -211,6 +212,7 @@ namespace CVars
 		&bxt_remove_stamina,
 		&bxt_interprocess_enable,
 		&bxt_fade_remove,
+		&bxt_shake_remove,
 		&bxt_skybox_remove,
 		&bxt_water_remove,
 		&bxt_stop_demo_on_changelevel,
@@ -223,7 +225,7 @@ namespace CVars
 		&bxt_tas_write_log,
 		&bxt_tas_playback_speed,
 		&bxt_disable_vgui,
-		&bxt_show_only_viewmodel,
+		&bxt_show_only_viewmodel_and_player,
 		&bxt_force_zmax,
 		&bxt_force_duck,
 		&bxt_force_jumpless,
@@ -231,7 +233,7 @@ namespace CVars
 		&bxt_viewmodel_disable_idle,
 		&bxt_viewmodel_disable_equip,
 		&bxt_viewmodel_semitransparent,
-		&bxt_clear_green,
+		&bxt_clear_color,
 		&bxt_force_fov,
 		&bxt_force_clear,
 		&bxt_fix_mouse_horizontal_limit,

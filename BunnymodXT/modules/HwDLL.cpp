@@ -430,6 +430,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_CL_CheckGameDirectory);
 			MemUtils::MarkAsExecutable(ORIG_SaveGameSlot);
 			MemUtils::MarkAsExecutable(ORIG_SCR_NetGraph);
+			MemUtils::MarkAsExecutable(ORIG_Host_Shutdown);
+			MemUtils::MarkAsExecutable(ORIG_ReleaseEntityDlls);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -487,7 +489,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
 			ORIG_PF_traceline_DLL, HOOKED_PF_traceline_DLL,
 			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory,
-			ORIG_SaveGameSlot, HOOKED_SaveGameSlot);
+			ORIG_SaveGameSlot, HOOKED_SaveGameSlot,
+			ORIG_ReleaseEntityDlls, HOOKED_ReleaseEntityDlls,
+			ORIG_Host_Shutdown, HOOKED_Host_Shutdown);
 	}
 
 	#ifdef _WIN32
@@ -566,7 +570,9 @@ void HwDLL::Unhook()
 			ORIG_Draw_FillRGBA,
 			ORIG_PF_traceline_DLL,
 			ORIG_CL_CheckGameDirectory,
-			ORIG_SaveGameSlot);
+			ORIG_SaveGameSlot,
+			ORIG_ReleaseEntityDlls,
+			ORIG_Host_Shutdown);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -661,6 +667,8 @@ void HwDLL::Clear()
 	ORIG_SCR_NetGraph = nullptr;
 	ORIG_VGuiWrap2_IsGameUIVisible = nullptr;
 	ORIG_SCR_DrawPause = nullptr;
+	ORIG_Host_Shutdown = nullptr;
+	ORIG_ReleaseEntityDlls = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1268,6 +1276,8 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SCR_NetGraph)
 		DEF_FUTURE(VGuiWrap2_IsGameUIVisible)
 		DEF_FUTURE(SCR_DrawPause)
+		DEF_FUTURE(Host_Shutdown)
+		DEF_FUTURE(ReleaseEntityDlls)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -2205,6 +2215,8 @@ void HwDLL::FindStuff()
 		GET_FUTURE(SCR_NetGraph);
 		GET_FUTURE(VGuiWrap2_IsGameUIVisible);
 		GET_FUTURE(SCR_DrawPause);
+		GET_FUTURE(Host_Shutdown);
+		GET_FUTURE(ReleaseEntityDlls);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -6293,4 +6305,17 @@ HOOK_DEF_0(HwDLL, void, __cdecl, SCR_NetGraph)
 	// Cry of Fear-specific, draw "PAUSED" on the screen.
 	if ((ORIG_VGuiWrap2_IsGameUIVisible && ORIG_SCR_DrawPause) && ORIG_VGuiWrap2_IsGameUIVisible() == 0)
 		ORIG_SCR_DrawPause();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, Host_Shutdown)
+{
+	ORIG_Host_Shutdown();
+	Unhook();
+	SDL::GetInstance().Unhook();
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, ReleaseEntityDlls)
+{
+	ServerDLL::GetInstance().Unhook();
+	ORIG_ReleaseEntityDlls();
 }

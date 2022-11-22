@@ -270,6 +270,14 @@ namespace discord_integration
 										presence.largeImageText = "They Hunger Episode 3";
 								}
 							}
+							else if (!strncmp(gd, "cryoffear", 9))
+							{
+								if (cof_map_name_to_thumbnail.find(map_name) != cof_map_name_to_thumbnail.cend())
+								{
+									presence.largeImageKey = cof_map_name_to_thumbnail.find(map_name)->second.data();
+									presence.largeImageText = cof_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+								}
+							}
 						}
 					}
 				}

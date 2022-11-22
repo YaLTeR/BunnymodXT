@@ -29,7 +29,7 @@ namespace discord_integration
 		void on_frame();
 
 		// Chapters
-		const std::unordered_map<std::string_view, std::string> hl1_thumbnail_to_chapter = {
+		const std::unordered_map<std::string_view, std::string_view> hl1_thumbnail_to_chapter = {
 			{"hl1chapter1", "Anomalous Materials"},
 			{"hl1chapter2", "Unforeseen Consequences"},
 			{"hl1chapter3", "Office Complex"},
@@ -52,7 +52,7 @@ namespace discord_integration
 			{"hl1chapter20", "Black Mesa Inbound"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> hl1_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> hl1_map_name_to_thumbnail = {
 			{"c1a0", "hl1chapter1"},
 			{"c1a0a", "hl1chapter1"},
 			{"c1a0b", "hl1chapter1"},
@@ -158,7 +158,7 @@ namespace discord_integration
 			{"c0a0e", "hl1chapter20"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> op4_thumbnail_to_chapter = {
+		const std::unordered_map<std::string_view, std::string_view> op4_thumbnail_to_chapter = {
 			{"op4chapter1", "Welcome To Black Mesa"},
 			{"op4chapter2", "We Are Pulling Out"},
 			{"op4chapter3", "Missing In Action"},
@@ -175,7 +175,7 @@ namespace discord_integration
 			{"op4chapter14", "Incoming"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> op4_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> op4_map_name_to_thumbnail = {
 			{"of1a1", "op4chapter1"},
 			{"of1a2", "op4chapter1"},
 			{"of1a3", "op4chapter1"},
@@ -221,7 +221,7 @@ namespace discord_integration
 			{"of0a0", "op4chapter14"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> bs_thumbnail_to_chapter = {
+		const std::unordered_map<std::string_view, std::string_view> bs_thumbnail_to_chapter = {
 			{"bschapter1", "Insecurity"},
 			{"bschapter2", "Duty Calls"},
 			{"bschapter3", "Captive Freight"},
@@ -233,7 +233,7 @@ namespace discord_integration
 			{"bschapter9", "Living Quarters Outbound"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> bs_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> bs_map_name_to_thumbnail = {
 			{"ba_security1", "bschapter1"},
 			{"ba_security2", "bschapter1"},
 			{"ba_maint", "bschapter1"},
@@ -274,7 +274,7 @@ namespace discord_integration
 			{"ba_security1", "bschapter9"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> gmc_thumbnail_to_chapter = {
+		const std::unordered_map<std::string_view, std::string_view> gmc_thumbnail_to_chapter = {
 			{"gmcchapter1", "City"},
 			{"gmcchapter2", "Mayan"},
 			{"gmcchapter3", "Cinematic"},
@@ -285,7 +285,7 @@ namespace discord_integration
 			{"gmcchapter9", "Tram Part"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> gmc_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> gmc_map_name_to_thumbnail = {
 			{"city2a", "gmcchapter1"},
 			{"city2b", "gmcchapter1"},
 			{"city3a", "gmcchapter1"},
@@ -355,7 +355,7 @@ namespace discord_integration
 			{"city1b", "gmcchapter9"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> czds_thumbnail_to_chapter = {
+		const std::unordered_map<std::string_view, std::string_view> czds_thumbnail_to_chapter = {
 			{"czdschapter1", "Recoil"},
 			{"czdschapter2", "Lost Cause"},
 			{"czdschapter3", "Secret War"},
@@ -377,7 +377,7 @@ namespace discord_integration
 			{"czdschapter19", "CT Training"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> czds_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> czds_map_name_to_thumbnail = {
 			{"cz_recoil-intro", "czdschapter1"},
 			{"cz_recoil", "czdschapter1"},
 			{"cz_recoil2", "czdschapter1"},
@@ -452,7 +452,7 @@ namespace discord_integration
 			{"cz_train03", "czdschapter19"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> wanted_thumbnail_to_chapter = {
+		const std::unordered_map<std::string_view, std::string_view> wanted_thumbnail_to_chapter = {
 			{"wantchapter1", "Redrock Creek"},
 			{"wantchapter2", "The Journey"},
 			{"wantchapter3", "Breypass"},
@@ -465,7 +465,7 @@ namespace discord_integration
 			{"wantchapter10", "Training Ranch"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> wanted_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> wanted_map_name_to_thumbnail = {
 			{"want1", "wantchapter1"},
 			{"want2", "wantchapter2"},
 			{"want3", "wantchapter2"},
@@ -511,7 +511,7 @@ namespace discord_integration
 			{"wanttr", "wantchapter10"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> echoes_thumbnail_to_chapter = {
+		const std::unordered_map<std::string_view, std::string_view> echoes_thumbnail_to_chapter = {
 			{"echoeschapter1", "Foundation"},
 			{"echoeschapter2", "Collapse"},
 			{"echoeschapter3", "Ruin"},
@@ -524,7 +524,7 @@ namespace discord_integration
 			{"echoeschapter10", "Intro"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> echoes_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> echoes_map_name_to_thumbnail = {
 			{"echoes01", "echoeschapter1"},
 			{"echoes01a", "echoeschapter1"},
 			{"echoes02", "echoeschapter1"},
@@ -556,7 +556,7 @@ namespace discord_integration
 			{"echoes00", "echoeschapter10"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> caged_thumbnail_to_chapter = {
+		const std::unordered_map<std::string_view, std::string_view> caged_thumbnail_to_chapter = {
 			{"cagedchapter1", "Scheduled Termination"},
 			{"cagedchapter2", "Turret Unwellness"},
 			{"cagedchapter3", "The Yard"},
@@ -566,7 +566,7 @@ namespace discord_integration
 			{"cagedchapter6", "Epilogue: 24 Hours Earlier"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> caged_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> caged_map_name_to_thumbnail = {
 			{"caged_1", "cagedchapter1"},
 			{"caged_1b", "cagedchapter2"},
 			{"caged_1c", "cagedchapter2"},
@@ -577,7 +577,7 @@ namespace discord_integration
 			{"caged_5", "cagedchapter6"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> poke646_thumbnail_to_chapter = {
+		const std::unordered_map<std::string_view, std::string_view> poke646_thumbnail_to_chapter = {
 			{"poke646chapter1", "Audion Industries"},
 			{"poke646chapter2", "The Sewers"},
 			{"poke646chapter3", "Nation City Library"},
@@ -586,7 +586,7 @@ namespace discord_integration
 			{"poke646chapter6", "Boot Camp and Training Area"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> poke646_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> poke646_map_name_to_thumbnail = {
 			{"po_intro", "poke646chapter1"},
 			{"po_aud01", "poke646chapter1"},
 			{"po_aud02", "poke646chapter1"},
@@ -616,7 +616,7 @@ namespace discord_integration
 			{"po_haz03", "poke646chapter6"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> paranoia_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> paranoia_map_name_to_thumbnail = {
 			{"p_army1", "paranoiachapter1"},
 			{"p_army2", "paranoiachapter1"},
 			{"p_army3", "paranoiachapter1"},
@@ -670,7 +670,7 @@ namespace discord_integration
 			{"p_bunk17", "paranoiachapter3k"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> twhltower2_thumbnail_to_chapter = {
+		const std::unordered_map<std::string_view, std::string_view> twhltower2_thumbnail_to_chapter = {
 			{"tower2chapter1", "Start"},
 			{"tower2chapter2", "Pest Control"},
 			{"tower2chapter3", "Phantom Lab"},
@@ -699,7 +699,7 @@ namespace discord_integration
 			{"tower2chapter26", "Cenodrome XL"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> twhltower2_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> twhltower2_map_name_to_thumbnail = {
 			{"tower2_start", "tower2chapter1"},
 			{"tower2_jamaican", "tower2chapter2"},
 			{"tower2_dolmo", "tower2chapter3"},
@@ -728,7 +728,7 @@ namespace discord_integration
 			{"tower2_credits", "tower2chapter26"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> aomdc_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> aomdc_map_name_to_thumbnail = {
 			{"training", "aomdcchapter1"},
 			{"intro", "aomdcchapter2"},
 			{"nightmare", "aomdcchapter3"},
@@ -780,7 +780,7 @@ namespace discord_integration
 			{"4mother", "aomdcchapter30"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> aomdc_map_name_to_chapter_misc = {
+		const std::unordered_map<std::string_view, std::string_view> aomdc_map_name_to_chapter_misc = {
 			{"training", "Training"},
 			{"city3", "Ending 2, 3 or 4"},
 			{"1end", "Ending 1"},
@@ -788,7 +788,7 @@ namespace discord_integration
 			{"3end", "Ending 3"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> hlrats_parasomnia_thumbnail_to_chapter = {
+		const std::unordered_map<std::string_view, std::string_view> hlrats_parasomnia_thumbnail_to_chapter = {
 			{"hrpchapter1", "My El Dorado"},
 			{"hrpchapter2", "Road to Perdition"},
 			{"hrpchapter3", "No Vacancy"},
@@ -801,7 +801,7 @@ namespace discord_integration
 			{"hrpchapter10", "Half-Rats School"},
 		};
 
-		const std::unordered_map<std::string_view, std::string> hlrats_parasomnia_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> hlrats_parasomnia_map_name_to_thumbnail = {
 			{"para1", "hrpchapter1"},
 			{"para2", "hrpchapter2"},
 			{"para3", "hrpchapter2"},
@@ -844,7 +844,7 @@ namespace discord_integration
 			"urbicide11"s
 		};
 
-		const std::unordered_map<std::string_view, std::string> th_map_name_to_thumbnail = {
+		const std::unordered_map<std::string_view, std::string_view> th_map_name_to_thumbnail = {
 			{"thintro", "thchapter1"},
 			{"they1", "thchapter1a"},
 			{"they2", "thchapter1b"},
@@ -903,5 +903,177 @@ namespace discord_integration
 			{"they54", "thchapter3g"},
 			{"they55", "thchapter3p"},
 			{"they56", "thchapter3p"},
+		};
+
+		const std::unordered_map<std::string_view, std::string_view> cof_thumbnail_to_chapter = {
+			{"cofchapter1", "Start"},
+			{"cofchapter2", "Apartments"},
+			{"cofchapter3", "Basement"},
+			{"cofchapter4", "Sewer"},
+			{"cofchapter5", "City"},
+			{"cofchapter6", "Park"},
+			{"cofchapter7", "Roofs"},
+			{"cofchapter8", "Harbor"},
+			{"cofchapter9", "College (Outside)"},
+			{"cofchapter9a", "College (Inside)"},
+			{"cofchapter10", "Subway station"},
+			{"cofchapter10a", "Subway"},
+			{"cofchapter11", "Subway tunnel"},
+			{"cofchapter12", "Buscity"},
+			{"cofchapter13", "Sewer 2"},
+			{"cofchapter14", "Train"},
+			{"cofchapter15", "Bridge"},
+			{"cofchapter16", "Forest"},
+			{"cofchapter17", "Mental hospital"},
+			{"cofchapter18", "Attic"},
+			{"cofchapter19", "Mental hospital 2"},
+			{"cofchapter20", "Forest (Day)"},
+			{"cofchapter21", "Lake"},
+			{"cofchapter22", "Village"},
+			{"cofchapter23", "Ending 1, 2 or 3"},
+			{"cofchapter23a", "Ending 4"},
+			{"cofchapter23b", "Ending 5"},
+			{"cofchapter24", "Start (Manhunt)"},
+			{"cofchapter25", "Alley (Manhunt)"},
+			{"cofchapter26", "Subway (Manhunt)"},
+			{"cofchapter27", "Gas station (Manhunt)"},
+			{"cofchapter28", "Mental hospital (Manhunt)"},
+			{"cofchapter29", "Cabin (Manhunt)"},
+		};
+
+		const std::unordered_map<std::string_view, std::string_view> cof_map_name_to_thumbnail = {
+			{"c_intro", "cofchapter1"},
+			{"c_nightmare", "cofchapter1"},
+			{"c_start", "cofchapter1"},
+			{"c_start2", "cofchapter1"},
+			{"c_apartment1", "cofchapter2"},
+			{"c_apartment2", "cofchapter2"},
+			{"c_apartment5", "cofchapter2"},
+			{"c_apartment3", "cofchapter2"},
+			{"c_apartment4", "cofchapter2"},
+			{"c_apartmentsick", "cofchapter2"},
+			{"c_basement", "cofchapter3"},
+			{"c_sewer", "cofchapter4"},
+			{"c_sewer2", "cofchapter4"},
+			{"c_sewer3", "cofchapter4"},
+			{"c_city", "cofchapter5"},
+			{"c_city2", "cofchapter5"},
+			{"c_park", "cofchapter6"},
+			{"c_park2", "cofchapter6"},
+			{"c_park3", "cofchapter7"},
+			{"c_roofs", "cofchapter7"},
+			{"c_roofs2", "cofchapter7"},
+			{"c_stad", "cofchapter10"},
+			{"c_hamn", "cofchapter10"},
+			{"c_hamn2", "cofchapter8"},
+			{"c_hamn3", "cofchapter9"},
+			{"c_college1", "cofchapter9a"},
+			{"c_college2", "cofchapter9a"},
+			{"c_college1dark", "cofchapter9a"},
+			{"c_subway1st1", "cofchapter10a"},
+			{"c_subtunnel1", "cofchapter11"},
+			{"c_subtunnel2", "cofchapter11"},
+			{"c_subway2st1", "cofchapter10a"},
+			{"c_buscity", "cofchapter12"},
+			{"c_avlopp", "cofchapter13"},
+			{"c_apartment3sick", "cofchapter2"},
+			{"c_apartment4sick", "cofchapter2"},
+			{"c_down", "cofchapter2"},
+			{"c_buscity2", "cofchapter7"},
+			{"c_subway2st2", "cofchapter10a"},
+			{"c_subway2st3", "cofchapter10a"},
+			{"c_subwaysick1", "cofchapter10a"},
+			{"c_subwaysick2", "cofchapter10a"},
+			{"c_trainscene", "cofchapter14"},
+			{"c_trainride", "cofchapter14"},
+			{"c_trainride2", "cofchapter14"},
+			{"c_broscene", "cofchapter14"},
+			{"c_bridge", "cofchapter15"},
+			{"c_forest1", "cofchapter16"},
+			{"c_forest2", "cofchapter16"},
+			{"c_forest3", "cofchapter16"},
+			{"c_forest4", "cofchapter16"},
+			{"c_forest5", "cofchapter16"},
+			{"c_forest6", "cofchapter16"},
+			{"c_forest7", "cofchapter16"},
+			{"c_asylum1dark", "cofchapter17"},
+			{"c_asylum2dark", "cofchapter17"},
+			{"c_asylumb", "cofchapter17"},
+			{"c_asylum2", "cofchapter17"},
+			{"c_asylum1", "cofchapter17"},
+			{"c_attic", "cofchapter18"},
+			{"c_asylum1day", "cofchapter19"},
+			{"c_forestday", "cofchapter20"},
+			{"c_lake", "cofchapter21"},
+			{"c_fsewer1", "cofchapter21"},
+			{"c_village1", "cofchapter22"},
+			{"c_village2", "cofchapter22"},
+			{"c_village3", "cofchapter22"},
+			{"c_ending4", "cofchapter23a"},
+			{"c_ending4b", "cofchapter23a"},
+			{"c_ending1", "cofchapter23"},
+			{"c_ending1b", "cofchapter23"},
+			{"c_ending1c", "cofchapter23"},
+			{"c_ending2", "cofchapter23"},
+			{"c_ending2b", "cofchapter23"},
+			{"c_ending2c", "cofchapter23"},
+			{"c_ending3", "cofchapter23"},
+			{"c_ending3b", "cofchapter23"},
+			{"c_ending3c", "cofchapter23"},
+			{"c_ending5", "cofchapter23b"},
+			{"c_ending5b", "cofchapter23b"},
+			{"c_ending5c", "cofchapter23b"},
+			{"cof_campaign_01", "cofchapter22"},
+			{"c_cof_village2", "cofchapter22"},
+			{"c_cof_village1", "cofchapter22"},
+			{"c_cof_fsewer1", "cofchapter22"},
+			{"c_cof_lake", "cofchapter21"},
+			{"c_cof_forestday", "cofchapter20"},
+			{"c_cof_asylum1day", "cofchapter19"},
+			{"cof_campaign_01_p2", "cofchapter17"},
+			{"c_cof_asylum1", "cofchapter17"},
+			{"c_cof_forest7", "cofchapter16"},
+			{"c_cof_forest6", "cofchapter16"},
+			{"c_cof_forest5", "cofchapter16"},
+			{"c_cof_forest4", "cofchapter16"},
+			{"c_cof_forest3", "cofchapter16"},
+			{"c_cof_forest2", "cofchapter16"},
+			{"c_cof_forest1", "cofchapter16"},
+			{"c_cof_bridge", "cofchapter15"},
+			{"cof_campaign_01_p3", "cofchapter14"},
+			{"c_cof_trainride", "cofchapter14"},
+			{"c_cof_subway2st3", "cofchapter10a"},
+			{"c_cof_subway2st2", "cofchapter10a"},
+			{"c_cof_subway2st1", "cofchapter10a"},
+			{"c_cof_buscity", "cofchapter12"},
+			{"c_cof_city", "cofchapter5"},
+			{"cof_campaign_01_p4", "cofchapter5"},
+			{"c_cof_park", "cofchapter6"},
+			{"c_cof_park2", "cofchapter6"},
+			{"c_cof_stad", "cofchapter10"},
+			{"c_cof_subway1st1", "cofchapter10a"},
+			{"c_cof_coopend", "cofchapter10"},
+			{"cof_manhunt_campaign", "cofchapter24"},
+			{"c_cof_alley", "cofchapter25"},
+			{"c_cof_street", "cofchapter25"},
+			{"c_cof_subway1", "cofchapter26"},
+			{"c_cof_subway2", "cofchapter10a"},
+			{"c_cof_subway3", "cofchapter11"},
+			{"c_cof_gasstation", "cofchapter27"},
+			{"c_cof_truckride", "cofchapter27"},
+			{"c_cof_foresttrail1", "cofchapter16"},
+			{"c_cof_hospital", "cofchapter28"},
+			{"c_cof_foresttrail2", "cofchapter16"},
+			{"c_cof_foresttrail3", "cofchapter16"},
+			{"c_cof_cabin", "cofchapter29"},
+			{"c_doc_city", "cofchapter5"},
+			{"c_doc_sewer3", "cofchapter4"},
+			{"c_doc_sewer2", "cofchapter4"},
+			{"c_doc_sewer", "cofchapter4"},
+			{"c_doc_basement", "cofchapter3"},
+			{"c_doc_appark", "cofchapter2"},
+			{"c_doc_apartment4sick", "cofchapter2"},
+			{"c_doc_apartment3sick", "cofchapter2"},
+			{"c_doc_ending", "cofchapter2"},
 		};
 }

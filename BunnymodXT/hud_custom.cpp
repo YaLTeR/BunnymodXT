@@ -83,6 +83,8 @@ namespace CustomHud
 		float armor;
 
 		float stamina;
+
+		std::string frametime;
 	};
 	static FrameBulkStatus frame_bulk_status;
 	static bool frame_bulk_selected;
@@ -1318,6 +1320,8 @@ namespace CustomHud
 				out << "  " << action.first << '\n';
 			}
 
+			out << "Frametime: " << frame_bulk_status.frametime << '\n';
+
 			if (frame_bulk_status.pitch_present) {
 				out << "Pitch: " << frame_bulk_status.pitch << "\n";
 			}
@@ -1825,5 +1829,7 @@ namespace CustomHud
 		frame_bulk_status.armor = player_armor;
 
 		frame_bulk_status.stamina = player_stamina;
+
+		frame_bulk_status.frametime = frame_bulk.Frametime;
 	}
 }

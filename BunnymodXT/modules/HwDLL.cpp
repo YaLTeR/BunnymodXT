@@ -4343,7 +4343,7 @@ void HwDLL::InsertCommands()
 					Buttons,
 					ButtonsPresent,
 					std::bind(&HwDLL::UnsafePlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-					ClientDLL::GetInstance().pEngfuncs->PM_PointContents,
+					std::bind(*(ClientDLL::GetInstance().pEngfuncs->PM_PointContents), std::placeholders::_1, nullptr),
 					hlstrafe_version);
 				StopTracing();
 
@@ -4852,7 +4852,7 @@ void HwDLL::InsertCommands()
 
 			auto playerCopy = HLStrafe::PlayerData(player); // Our copy that we will mess with.
 			auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false);
-			auto pointContentsFunc = ClientDLL::GetInstance().pEngfuncs->PM_PointContents;
+			auto pointContentsFunc = std::bind(*(ClientDLL::GetInstance().pEngfuncs->PM_PointContents), std::placeholders::_1, nullptr);
 			auto postype = GetPositionType(playerCopy, traceFunc, pointContentsFunc);
 			if (ducktap && postype == HLStrafe::PositionType::GROUND) {
 					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {

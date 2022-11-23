@@ -64,7 +64,11 @@ void EditedInput::simulate() {
 		std::placeholders::_3
 	);
 
-	const auto point_contents_func = ClientDLL::GetInstance().pEngfuncs->PM_PointContents;
+	const auto point_contents_func = std::bind(
+		*(ClientDLL::GetInstance().pEngfuncs->PM_PointContents),
+		std::placeholders::_1,
+		nullptr
+	);
 
 	size_t total_frames = frame_bulk_starts[first_frame_bulk];
 

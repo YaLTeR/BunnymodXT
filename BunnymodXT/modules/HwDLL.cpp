@@ -3553,7 +3553,7 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 
 struct HwDLL::Cmd_BXT_TAS_Editor_Set_Change_Type
 {
-	USAGE("Usage: bxt_tas_editor_set_change_type <type>\n Set type of change for a point in the camera editor. Valid types are target_yaw, target_yaw_offest, yaw, pitch.\n");
+	USAGE("Usage: bxt_tas_editor_set_change_type <type>\n Set type of change for a point in the camera editor. Valid types are target_yaw, target_yaw_offset, yaw, pitch.\n");
 
 	static void handler(const char *what)
 	{

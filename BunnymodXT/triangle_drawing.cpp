@@ -747,6 +747,7 @@ namespace TriangleDrawing
 						switch (line.GetChangeTarget()) {
 							case HLTAS::ChangeTarget::YAW:
 							case HLTAS::ChangeTarget::TARGET_YAW:
+							case HLTAS::ChangeTarget::TARGET_YAW_OFFSET:
 								next_angles[0] = 0;
 								break;
 							default:
@@ -767,6 +768,7 @@ namespace TriangleDrawing
 						switch (line.GetChangeTarget()) {
 							case HLTAS::ChangeTarget::YAW:
 							case HLTAS::ChangeTarget::TARGET_YAW:
+							case HLTAS::ChangeTarget::TARGET_YAW_OFFSET:
 								angles[0] = 0;
 								angles[1] = line.GetChangeFinalValue();
 								break;
@@ -990,6 +992,7 @@ namespace TriangleDrawing
 					switch (target) {
 						case HLTAS::ChangeTarget::YAW:
 						case HLTAS::ChangeTarget::TARGET_YAW:
+						case HLTAS::ChangeTarget::TARGET_YAW_OFFSET:
 							viewangles[1] = frame_bulk.GetChangeFinalValue();
 
 							if (other_frame_bulk_index)
@@ -1056,6 +1059,7 @@ namespace TriangleDrawing
 					switch (frame_bulk.GetChangeTarget()) {
 						case HLTAS::ChangeTarget::YAW:
 						case HLTAS::ChangeTarget::TARGET_YAW:
+						case HLTAS::ChangeTarget::TARGET_YAW_OFFSET:
 							new_target = cl.last_viewangles[1];
 							new_other_target = cl.last_viewangles[0];
 							break;
@@ -1100,7 +1104,7 @@ namespace TriangleDrawing
 				SDL::GetInstance().SetRelativeMouseMode(false);
 			}
 
-			if (selection.frame_bulk_index > 0 && (hw.tas_editor_set_change_to_target_yaw || hw.tas_editor_set_change_to_yaw || hw.tas_editor_set_change_to_pitch)) {
+			if (selection.frame_bulk_index > 0 && (hw.tas_editor_set_change_to_target_yaw || hw.tas_editor_set_change_to_target_yaw_offset || hw.tas_editor_set_change_to_yaw || hw.tas_editor_set_change_to_pitch)) {
 				auto& frame_bulk = input.frame_bulks[selection.frame_bulk_index];
 				if (frame_bulk.ChangePresent) {
 					const auto it = std::find_if(key_frames.begin(), key_frames.end(), [&](const KeyFrame& item){
@@ -1113,6 +1117,13 @@ namespace TriangleDrawing
 								frame_bulk.SetChangeFinalValue(player_datas[it->frame].Viewangles[1]);
 
 							frame_bulk.SetChangeTarget(HLTAS::ChangeTarget::TARGET_YAW);
+							stale_index = selection.frame_bulk_index;
+						}
+						if (hw.tas_editor_set_change_to_target_yaw_offset && target != HLTAS::ChangeTarget::TARGET_YAW_OFFSET) {
+							if (target == HLTAS::ChangeTarget::PITCH)
+								frame_bulk.SetChangeFinalValue(player_datas[it->frame].Viewangles[1]);
+
+							frame_bulk.SetChangeTarget(HLTAS::ChangeTarget::TARGET_YAW_OFFSET);
 							stale_index = selection.frame_bulk_index;
 						}
 						if (hw.tas_editor_set_change_to_yaw && target != HLTAS::ChangeTarget::YAW) {
@@ -2199,6 +2210,7 @@ namespace TriangleDrawing
 		hw.tas_editor_toggle_reload = false;
 		hw.tas_editor_set_frametime = false;
 		hw.tas_editor_set_change_to_target_yaw = false;
+		hw.tas_editor_set_change_to_target_yaw_offset = false;
 		hw.tas_editor_set_change_to_yaw = false;
 		hw.tas_editor_set_change_to_pitch = false;
 		hw.tas_editor_set_yaw = false;

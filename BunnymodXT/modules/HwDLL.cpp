@@ -3600,12 +3600,14 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Frametime
 
 struct HwDLL::Cmd_BXT_TAS_Editor_Set_Change_Type
 {
-	USAGE("Usage: bxt_tas_editor_set_change_type <type>\n Set type of change for a point in the camera editor. Valid types are target_yaw, yaw, pitch.\n");
+	USAGE("Usage: bxt_tas_editor_set_change_type <type>\n Set type of change for a point in the camera editor. Valid types are target_yaw, target_yaw_offset, yaw, pitch.\n");
 
 	static void handler(const char *what)
 	{
 		if (!strcmp(what, "target_yaw")) {
 			HwDLL::GetInstance().tas_editor_set_change_to_target_yaw = true;
+		} else if (!strcmp(what, "target_yaw_offset")) {
+			HwDLL::GetInstance().tas_editor_set_change_to_target_yaw_offset = true;
 		} else if (!strcmp(what, "yaw")) {
 			HwDLL::GetInstance().tas_editor_set_change_to_yaw = true;
 		} else if (!strcmp(what, "pitch")) {
@@ -4737,6 +4739,10 @@ void HwDLL::InsertCommands()
 				case HLTAS::ChangeTarget::TARGET_YAW:
 					StrafeState.ChangeTargetYawFinalValue = f.GetChangeFinalValue();
 					StrafeState.ChangeTargetYawOver = f.GetChangeOver();
+					break;
+				case HLTAS::ChangeTarget::TARGET_YAW_OFFSET:
+					StrafeState.ChangeTargetYawOffsetValue = f.GetChangeFinalValue();
+					StrafeState.ChangeTargetYawOffsetOver = f.GetChangeOver();
 					break;
 				default:
 					assert(false);

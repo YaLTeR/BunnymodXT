@@ -1,5 +1,12 @@
 #pragma once
 
+#define FIND_WRAPPER(name) CVarWrapper name;
+#define DEFINE_WRAPPER(name, string) CVarWrapper name(#name, string);
+#define ADD_TO_FIND_LIST(name) &name,
+#define ADD_TO_DEFINE_LIST(name, string) &name,
+#define EXTERN_FIND_WRAPPER(name) extern CVarWrapper name;
+#define EXTERN_DEFINE_WRAPPER(name, string) extern CVarWrapper name;
+
 class CVarWrapper
 {
 public:

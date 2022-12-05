@@ -78,6 +78,8 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(int, __cdecl, Host_ValidSave)
 	HOOK_DECL(int, __cdecl, SaveGameSlot, const char* pSaveName, const char* pSaveComment)
 	HOOK_DECL(void, __cdecl, SCR_NetGraph)
+	HOOK_DECL(void, __cdecl, Host_Shutdown)
+	HOOK_DECL(void, __cdecl, ReleaseEntityDlls)
 
 	struct cmdbuf_t
 	{

@@ -161,6 +161,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_UpdateClientData), reinterpret_cast<void*>(HOOKED_HUD_UpdateClientData));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_AddEntity), reinterpret_cast<void*>(HOOKED_HUD_AddEntity));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_CL_IsThirdPerson), reinterpret_cast<void*>(HOOKED_CL_IsThirdPerson));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Shutdown), reinterpret_cast<void*>(HOOKED_HUD_Shutdown));
 
 	if (needToIntercept)
 	{
@@ -178,6 +179,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_HUD_Key_Event, HOOKED_HUD_Key_Event,
 			ORIG_HUD_UpdateClientData, HOOKED_HUD_UpdateClientData,
 			ORIG_HUD_AddEntity, HOOKED_HUD_AddEntity,
+			ORIG_HUD_Shutdown, HOOKED_HUD_Shutdown,
 			ORIG_EV_GetDefaultShellInfo, HOOKED_EV_GetDefaultShellInfo,
 			ORIG_StudioCalcAttachments, HOOKED_StudioCalcAttachments,
 			ORIG_VectorTransform, HOOKED_VectorTransform,
@@ -218,6 +220,7 @@ void ClientDLL::Unhook()
 			ORIG_HUD_Key_Event,
 			ORIG_HUD_UpdateClientData,
 			ORIG_HUD_AddEntity,
+			ORIG_HUD_Shutdown,
 			ORIG_EV_GetDefaultShellInfo,
 			ORIG_StudioCalcAttachments,
 			ORIG_VectorTransform,
@@ -244,6 +247,7 @@ void ClientDLL::Unhook()
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_UpdateClientData));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_AddEntity));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_CL_IsThirdPerson));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Shutdown));
 
 	Clear();
 }
@@ -291,6 +295,7 @@ void ClientDLL::Clear()
 	ORIG_IN_ActivateMouse = nullptr;
 	ORIG_IN_DeactivateMouse = nullptr;
 	ORIG_CL_IsThirdPerson = nullptr;
+	ORIG_HUD_Shutdown = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -578,6 +583,13 @@ void ClientDLL::FindStuff()
 		EngineDevMsg("[client dll] Found CL_IsThirdPerson at %p.\n", ORIG_CL_IsThirdPerson);
 	} else {
 		EngineDevWarning("[client dll] Could not find CL_IsThirdPerson.\n");
+	}
+
+	ORIG_HUD_Shutdown = reinterpret_cast<_HUD_Shutdown>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Shutdown"));
+	if (ORIG_HUD_Shutdown) {
+		EngineDevMsg("[client dll] Found HUD_Shutdown at %p.\n", ORIG_HUD_Shutdown);
+	} else {
+		EngineDevWarning("[client dll] Could not find HUD_Shutdown.\n");
 	}
 
 	bool noBhopcap = false;
@@ -1920,4 +1932,10 @@ HOOK_DEF_2(ClientDLL, void, __cdecl, V_PunchAxis, int, axis, float, punch)
 		return;
 
 	ORIG_V_PunchAxis(axis, punch);
+}
+
+HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Shutdown)
+{
+	ORIG_HUD_Shutdown();
+	Unhook();
 }

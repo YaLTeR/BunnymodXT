@@ -97,15 +97,19 @@ namespace discord_integration
 						const char* gameDir = cl.pEngfuncs->pfnGetGameDirectory();
 						// Get the map name and icon.
 						cl.GetMapName(map_name, ARRAYSIZE_HL(map_name));
-						if (gameDir && gameDir[0] && map_name[0] && hw.ORIG_build_number)
+						if (gameDir && gameDir[0] && map_name[0])
 						{
 							char gd[1024];
 
 							// Adjust map_name to lowercase
 							cl.ConvertToLowerCase(map_name);
+
 							cl.FileBase(gameDir, gd);
 
-							snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s | Build: %i", map_name, gd, hw.ORIG_build_number());
+							if (hw.ORIG_build_number)
+								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s | Build: %i", map_name, gd, hw.ORIG_build_number());
+							else
+								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s", map_name, gd);
 
 							presence.largeImageText = map_name;
 							presence.details = buffer_details;

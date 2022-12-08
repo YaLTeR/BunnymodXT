@@ -194,8 +194,11 @@ protected:
 
 	ptrdiff_t pCoF_Noclip_Preventing_Check_Byte; // Cry of Fear-specific
 	ptrdiff_t offm_bInfiniteStamina; // Cry of Fear-specific
-	ptrdiff_t offm_pClientActiveItem; // Cry of Fear-specific
 	ptrdiff_t offm_old_iAmmo; // Cry of Fear-specific
+	ptrdiff_t offm_iPlayerSaveLock; // Cry of Fear-specific
+
+	ptrdiff_t offm_pClientActiveItem;
+	ptrdiff_t offm_CMultiManager_index;
 
 	bool spirit_sdk = false;
 

@@ -295,12 +295,14 @@ void ServerDLL::Clear()
 	pCS_Stamina_Value = 0;
 	pCS_Bhopcap = 0;
 	pCS_Bhopcap_Windows = 0;
+	offm_pClientActiveItem = 0;
+	offm_CMultiManager_index = 0;
 
 	// Cry of Fear-specific
 	offm_bInfiniteStamina = 0;
 	offm_fStamina = 0;
-	offm_pClientActiveItem = 0;
 	offm_old_iAmmo = 0;
+	offm_iPlayerSaveLock = 0;
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -442,24 +444,7 @@ void ServerDLL::FindStuff()
 		patterns::shared::Bhopcap_CS_Windows);
 
 	auto fCBaseEntity__FireBullets = FindAsync(ORIG_CBaseEntity__FireBullets, patterns::server::CBaseEntity__FireBullets);
-	auto fCBaseEntity__FireBulletsPlayer = FindAsync(
-		ORIG_CBaseEntity__FireBulletsPlayer,
-		patterns::server::CBaseEntity__FireBulletsPlayer,
-		[&](auto pattern) {
-			switch (pattern - patterns::server::CBaseEntity__FireBulletsPlayer.cbegin()) {
-				case 3: // CoF-Mod-155
-					offm_rgAmmoLast = 0x2464;
-					offm_iClientFOV = 0x23B0;
-					offm_fStamina = 0x20A4;
-					offm_bInfiniteStamina = 0x209C;
-					offm_pClientActiveItem = 0x23D4;
-					offm_old_iAmmo = 284;
-					is_cof = true;
-					break;
-				default:
-					break;
-				}
-		});
+	auto fCBaseEntity__FireBulletsPlayer = FindAsync(ORIG_CBaseEntity__FireBulletsPlayer, patterns::server::CBaseEntity__FireBulletsPlayer);
 
 	auto fCBasePlayer__ForceClientDllUpdate = FindAsync(
 		ORIG_CBasePlayer__ForceClientDllUpdate,
@@ -632,13 +617,23 @@ void ServerDLL::FindStuff()
 				offm_bInfiniteStamina = 0x21E8;
 				offm_pClientActiveItem = 0x2530;
 				offm_old_iAmmo = 288;
+				offm_CMultiManager_index = 228;
 				is_cof = true;
 				break;
-			case 27: // CoF-Mod
+			case 27: // CoF-Mod-155
 				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offm_rgAmmoLast = 0x2464;
+				offm_iClientFOV = 0x23B0;
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offm_fStamina = 0x20A4;
+				offm_bInfiniteStamina = 0x209C;
+				offm_pClientActiveItem = 0x23D4;
+				offm_old_iAmmo = 284;
+				offm_iPlayerSaveLock = 0x4B8;
+				offm_CMultiManager_index = 224;
+				is_cof = true;
 				break;
 			case 28: // CSCZDS-3939
 				maxAmmoSlots = MAX_AMMO_SLOTS;
@@ -1706,8 +1701,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		*m_bInfiniteStamina = CVars::bxt_remove_stamina.GetBool();
 
 		// Disable save lock for CoF (Mod version)
-		if (offm_rgAmmoLast == 0x2464) { // CoF-Mod-155
-			ptrdiff_t offm_iPlayerSaveLock = 0x4B8;
+		if (offm_iPlayerSaveLock) {
 			int* m_iPlayerSaveLock = reinterpret_cast<int*>(thisAddr + offm_iPlayerSaveLock);
 			static bool reset_playersavelock = false;
 
@@ -2077,15 +2071,8 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 			const char *targetname = hw.ppGlobals->pStringBase + pev->targetname;
 			OnMultiManagerFired(targetname);
 
-			if (is_cof) {
-				ptrdiff_t offm_index;
-
-				if (hw.is_cof_steam)
-					offm_index = 228;
-				else
-					offm_index = 224;
-
-				auto m_index = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + offm_index);
+			if (offm_CMultiManager_index) {
+				auto m_index = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + offm_CMultiManager_index);
 				if (!std::strcmp(targetname, "whensimondies") && (m_index == 2)) // Cry of Fear (Ending 4)
 					DoAutoStopTasks();
 			}

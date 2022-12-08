@@ -1,4 +1,5 @@
 #include "stdafx.hpp"
+
 #include "cvars.hpp"
 
 #define FIND_WRAPPER(name) CVarWrapper name;

@@ -190,13 +190,6 @@
 	X(bxt_anglespeed_cap, "1") \
 	X(bxt_speed_scaling, "1")
 
-#define FIND_WRAPPER(name) CVarWrapper name;
-#define DEFINE_WRAPPER(name, string) CVarWrapper name(#name, string);
-#define ADD_TO_FIND_LIST(name) &name,
-#define ADD_TO_DEFINE_LIST(name, string) &name,
-#define EXTERN_FIND_WRAPPER(name) extern CVarWrapper name;
-#define EXTERN_DEFINE_WRAPPER(name, string) extern CVarWrapper name;
-
 class CVarWrapper
 {
 public:
@@ -311,6 +304,9 @@ inline void CVarWrapper::Set(const char* string)
 	m_CVar->string = const_cast<char*>(m_String);
 	m_CVar->value = static_cast<float>(std::atof(m_String));
 }
+
+#define EXTERN_FIND_WRAPPER(name) extern CVarWrapper name;
+#define EXTERN_DEFINE_WRAPPER(name, string) extern CVarWrapper name;
 
 namespace CVars
 {

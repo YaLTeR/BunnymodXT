@@ -640,6 +640,14 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				break;
+			case 28: // CSCZDS-3939
+				maxAmmoSlots = MAX_AMMO_SLOTS;
+				offFuncIsPlayer = 0xA8;
+				offFuncCenter = 0xDC;
+				offFuncObjectCaps = 0x18;
+				offm_rgAmmoLast = 0x53C;
+				offm_iClientFOV = 0x898;
+				break;
 			default:
 				assert(false);
 			}

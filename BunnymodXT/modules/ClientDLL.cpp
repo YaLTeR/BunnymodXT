@@ -131,6 +131,16 @@ extern "C" bool __cdecl _ZN4CHud18DrawHudNightVisionEf(void *thisptr, float flTi
 	return ClientDLL::HOOKED_CHud__DrawHudNightVision_Linux(thisptr, flTime);
 }
 
+extern "C" bool __cdecl _ZN4CHud18DrawHudFiberCameraEf(void *thisptr, float flTime)
+{
+	return ClientDLL::HOOKED_CHud__DrawHudFiberCamera_Linux(thisptr, flTime);
+}
+
+extern "C" int __cdecl _ZN9CHudIcons4DrawEf(void *thisptr, float flTime)
+{
+	return ClientDLL::HOOKED_CHudIcons__Draw_Linux(thisptr, flTime);
+}
+
 extern "C" void __cdecl _Z11V_PunchAxisif(int axis, float punch)
 {
 	return ClientDLL::HOOKED_V_PunchAxis(axis, punch);
@@ -192,7 +202,9 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CHudHealth__DrawDamage, HOOKED_CHudHealth__DrawDamage,
 			ORIG_CHudHealth__DrawPain, HOOKED_CHudHealth__DrawPain,
 			ORIG_CHudFlashlight__drawNightVision, HOOKED_CHudFlashlight__drawNightVision,
-			ORIG_CHud__DrawHudNightVision, HOOKED_CHud__DrawHudNightVision);
+			ORIG_CHud__DrawHudNightVision, HOOKED_CHud__DrawHudNightVision,
+			ORIG_CHud__DrawHudFiberCamera, HOOKED_CHud__DrawHudFiberCamera,
+			ORIG_CHudIcons__Draw, HOOKED_CHudIcons__Draw);
 	}
 
 	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
@@ -233,7 +245,9 @@ void ClientDLL::Unhook()
 			ORIG_CHudHealth__DrawDamage,
 			ORIG_CHudHealth__DrawPain,
 			ORIG_CHudFlashlight__drawNightVision,
-			ORIG_CHud__DrawHudNightVision);
+			ORIG_CHud__DrawHudNightVision,
+			ORIG_CHud__DrawHudFiberCamera,
+			ORIG_CHudIcons__Draw);
 	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -281,6 +295,10 @@ void ClientDLL::Clear()
 	ORIG_CHudFlashlight__drawNightVision_Linux = nullptr;
 	ORIG_CHud__DrawHudNightVision = nullptr;
 	ORIG_CHud__DrawHudNightVision_Linux = nullptr;
+	ORIG_CHud__DrawHudFiberCamera = nullptr;
+	ORIG_CHud__DrawHudFiberCamera_Linux = nullptr;
+	ORIG_CHudIcons__Draw = nullptr;
+	ORIG_CHudIcons__Draw_Linux = nullptr;
 	ORIG_V_CalcRefdef = nullptr;
 	ORIG_HUD_Init = nullptr;
 	ORIG_HUD_VidInit = nullptr;
@@ -489,6 +507,12 @@ void ClientDLL::FindStuff()
 	auto fCHud__DrawHudNightVision = FindAsync(
 		ORIG_CHud__DrawHudNightVision,
 		patterns::client::CHud__DrawHudNightVision);
+	auto fCHud__DrawHudFiberCamera = FindAsync(
+		ORIG_CHud__DrawHudFiberCamera,
+		patterns::client::CHud__DrawHudFiberCamera);
+	auto fCHudIcons__Draw = FindAsync(
+		ORIG_CHudIcons__Draw,
+		patterns::client::CHudIcons__Draw);
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
@@ -792,6 +816,34 @@ void ClientDLL::FindStuff()
 				EngineDevMsg("[client dll] Found CHud::DrawHudNightVision [Linux] at %p.\n", ORIG_CHud__DrawHudNightVision_Linux);
 			} else {
 				EngineDevWarning("[client dll] Could not find CHud::DrawHudNightVision [Linux].\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fCHud__DrawHudFiberCamera.get();
+		if (ORIG_CHud__DrawHudFiberCamera) {
+			EngineDevMsg("[client dll] Found CHud::DrawHudFiberCamera at %p (using the %s pattern).\n", ORIG_CHud__DrawHudFiberCamera, pattern->name());
+		} else {
+			ORIG_CHud__DrawHudFiberCamera_Linux = reinterpret_cast<_CHud__DrawHudFiberCamera_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN4CHud18DrawHudFiberCameraEf"));
+			if (ORIG_CHud__DrawHudFiberCamera_Linux) {
+				EngineDevMsg("[client dll] Found CHud::DrawHudFiberCamera [Linux] at %p.\n", ORIG_CHud__DrawHudFiberCamera_Linux);
+			} else {
+				EngineDevWarning("[client dll] Could not find CHud::DrawHudFiberCamera [Linux].\n");
+			}
+		}
+	}
+
+	{
+		auto pattern = fCHudIcons__Draw.get();
+		if (ORIG_CHudIcons__Draw) {
+			EngineDevMsg("[client dll] Found CHudIcons::Draw at %p (using the %s pattern).\n", ORIG_CHudIcons__Draw, pattern->name());
+		} else {
+			ORIG_CHudIcons__Draw_Linux = reinterpret_cast<_CHudIcons__Draw_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN9CHudIcons4DrawEf"));
+			if (ORIG_CHudIcons__Draw_Linux) {
+				EngineDevMsg("[client dll] Found CHudIcons::Draw [Linux] at %p.\n", ORIG_CHudIcons__Draw_Linux);
+			} else {
+				EngineDevWarning("[client dll] Could not find CHudIcons::Draw [Linux].\n");
 			}
 		}
 	}
@@ -1922,6 +1974,42 @@ HOOK_DEF_2(ClientDLL, bool, __cdecl, CHud__DrawHudNightVision_Linux, void*, this
 	insideDrawNightVision = true;
 	auto ret = ORIG_CHud__DrawHudNightVision_Linux(thisptr, flTime);
 	insideDrawNightVision = false;
+
+	return ret;
+}
+
+HOOK_DEF_3(ClientDLL, bool, __fastcall, CHud__DrawHudFiberCamera, void*, thisptr, int, edx, float, flTime)
+{
+	insideDrawFiberCameraCZDS = true;
+	auto ret = ORIG_CHud__DrawHudFiberCamera(thisptr, edx, flTime);
+	insideDrawFiberCameraCZDS = false;
+
+	return ret;
+}
+
+HOOK_DEF_2(ClientDLL, bool, __cdecl, CHud__DrawHudFiberCamera_Linux, void*, thisptr, float, flTime)
+{
+	insideDrawFiberCameraCZDS = true;
+	auto ret = ORIG_CHud__DrawHudFiberCamera_Linux(thisptr, flTime);
+	insideDrawFiberCameraCZDS = false;
+
+	return ret;
+}
+
+HOOK_DEF_3(ClientDLL, int, __fastcall, CHudIcons__Draw, void*, thisptr, int, edx, float, flTime)
+{
+	insideDrawHudIconsCZDS = true;
+	auto ret = ORIG_CHudIcons__Draw(thisptr, edx, flTime);
+	insideDrawHudIconsCZDS = false;
+
+	return ret;
+}
+
+HOOK_DEF_2(ClientDLL, int, __cdecl, CHudIcons__Draw_Linux, void*, thisptr, float, flTime)
+{
+	insideDrawHudIconsCZDS = true;
+	auto ret = ORIG_CHudIcons__Draw_Linux(thisptr, flTime);
+	insideDrawHudIconsCZDS = false;
 
 	return ret;
 }

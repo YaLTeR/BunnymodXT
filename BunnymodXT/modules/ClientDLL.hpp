@@ -44,6 +44,10 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(void, __cdecl, CHudFlashlight__drawNightVision_Linux, void* thisptr)
 	HOOK_DECL(bool, __fastcall, CHud__DrawHudNightVision, void *thisptr, int edx, float flTime)
 	HOOK_DECL(bool, __cdecl, CHud__DrawHudNightVision_Linux, void *thisptr, float flTime)
+	HOOK_DECL(bool, __fastcall, CHud__DrawHudFiberCamera, void *thisptr, int edx, float flTime)
+	HOOK_DECL(bool, __cdecl, CHud__DrawHudFiberCamera_Linux, void *thisptr, float flTime)
+	HOOK_DECL(int, __fastcall, CHudIcons__Draw, void *thisptr, int edx, float flTime)
+	HOOK_DECL(int, __cdecl, CHudIcons__Draw_Linux, void *thisptr, float flTime)
 	HOOK_DECL(void, __cdecl, V_PunchAxis, int axis, float punch)
 	HOOK_DECL(void, __cdecl, HUD_Shutdown)
 
@@ -91,6 +95,8 @@ public:
 	bool insideDrawHealthDamage = false;
 	bool insideDrawHealthPain = false;
 	bool insideDrawNightVision = false;
+	bool insideDrawFiberCameraCZDS = false;
+	bool insideDrawHudIconsCZDS = false;
 
 	unsigned short last_buttons;
 

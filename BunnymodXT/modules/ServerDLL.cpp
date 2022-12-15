@@ -1499,6 +1499,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_AddToFullPack) {
 		REG(bxt_show_hidden_entities);
 		REG(bxt_show_triggers_legacy);
+		REG(bxt_show_triggers_legacy_alpha);
 		REG(bxt_render_far_entities);
 	}
 	if (ORIG_PM_CheckStuck)
@@ -2218,7 +2219,55 @@ void ServerDLL::DoAutoStopTasks()
 	RuntimeData::Add(RuntimeData::GameEndMarker{});
 }
 
-void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a)
+void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float &b)
+{
+	assert(std::strncmp(classname, "trigger_", 8) == 0);
+
+	classname += 8;
+	if (std::strcmp(classname, "changelevel") == 0) {
+		// Bright green
+		r = 79;
+		g = 255;
+		b = 10;
+	} else if (std::strcmp(classname, "hurt") == 0) {
+		// Red
+		r = 255;
+		g = 0;
+		b = 0;
+	} else if (std::strcmp(classname, "multiple") == 0) {
+		// Blue
+		r = 0;
+		g = 0;
+		b = 255;
+	} else if (std::strcmp(classname, "once") == 0) {
+		// Cyan
+		r = 0;
+		g = 255;
+		b = 255;
+	} else if (std::strcmp(classname, "push") == 0) {
+		// Bright yellow
+		r = 255;
+		g = 255;
+		b = 0;
+	} else if (std::strcmp(classname, "teleport") == 0) {
+		// Dull green
+		r = 81;
+		g = 147;
+		b = 49;
+	} else if (std::strcmp(classname, "transition") == 0) {
+		// Magenta
+		r = 203;
+		g = 103;
+		b = 212;
+	} else {
+		// White
+		r = 255;
+		g = 255;
+		b = 255;
+	}
+}
+
+void ServerDLL::GetTriggerAlpha(const char *classname, bool inactive, bool additive, float &a)
 {
 	assert(std::strncmp(classname, "trigger_", 8) == 0);
 
@@ -2229,55 +2278,10 @@ void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool addit
 	};
 
 	classname += 8;
-	if (std::strcmp(classname, "changelevel") == 0) {
-		// Bright green
-		r = 79;
-		g = 255;
-		b = 10;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "hurt") == 0) {
-		// Red
-		r = 255;
-		g = 0;
-		b = 0;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "multiple") == 0) {
-		// Blue
-		r = 0;
-		g = 0;
-		b = 255;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "once") == 0) {
-		// Cyan
-		r = 0;
-		g = 255;
-		b = 255;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "push") == 0) {
-		// Bright yellow
-		r = 255;
-		g = 255;
-		b = 0;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "teleport") == 0) {
-		// Dull green
-		r = 81;
-		g = 147;
-		b = 49;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "transition") == 0) {
-		// Magenta
-		r = 203;
-		g = 103;
-		b = 212;
+	if (std::strcmp(classname, "transition") == 0)
 		a = additive ? 50.0f : 120.0f;
-	} else {
-		// White
-		r = 255;
-		g = 255;
-		b = 255;
+	else
 		a = common_alphas[inactive][additive];
-	}
 }
 
 HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state, int, e, edict_t*, ent, edict_t*, host, int, hostflags, int, player, unsigned char*, pSet)
@@ -2358,12 +2362,10 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	}
 	else if (is_trigger && CVars::bxt_show_triggers_legacy.GetBool()) {
 		ent->v.effects &= ~EF_NODRAW;
+		ent->v.renderamt = 0;
 		ent->v.rendermode = kRenderTransColor;
-		if (ent->v.solid == SOLID_NOT && std::strcmp(classname + 8, "transition") != 0)
-			ent->v.renderfx = kRenderNormal;
-		else
-			ent->v.renderfx = kRenderFxPulseFast;
-		GetTriggerColor(classname, ent->v.solid == SOLID_NOT, false, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z, ent->v.renderamt);
+		ent->v.renderfx = kRenderFxTrigger;
+		GetTriggerColor(classname, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z);
 	}
 
 	auto ret = ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);

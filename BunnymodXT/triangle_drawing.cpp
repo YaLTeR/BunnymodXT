@@ -160,7 +160,7 @@ namespace TriangleDrawing
 
 	static void DrawTriggers(triangleapi_s *pTriAPI)
 	{
-		if (!CVars::bxt_show_triggers.GetBool() || CVars::bxt_show_triggers_legacy.GetBool())
+		if (!CVars::bxt_show_triggers.GetBool())
 			return;
 
 		pTriAPI->RenderMode(kRenderTransAdd);
@@ -188,7 +188,8 @@ namespace TriangleDrawing
 				// Offset to make each surface look slightly different
 				const float offset = i * float(M_PI) / 7;
 				float r, g, b, a;
-				ServerDLL::GetTriggerColor(classname, !active, true, r, g, b, a);
+				ServerDLL::GetTriggerColor(classname, r, g, b);
+				ServerDLL::GetTriggerAlpha(classname, !active, true, a);
 				r /= 255.0f;
 				g /= 255.0f;
 				b /= 255.0f;

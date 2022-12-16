@@ -4320,6 +4320,20 @@ void HwDLL::InsertCommands()
 					}
 				}
 
+				if (StrafeState.Parameters.Parameters.LookAt.Entity != -1) {
+					edict_t *edicts;
+
+					GetEdicts(&edicts);
+
+					const edict_t *ent = edicts + StrafeState.Parameters.Parameters.LookAt.Entity;
+					const entvars_t *pev = &(ent->v);
+					Vector origin = pev->origin + ((pev->mins + pev->maxs) / 2.f);
+
+					StrafeState.TargetYawLookAtOrigin[0] = origin[0];
+					StrafeState.TargetYawLookAtOrigin[1] = origin[1];
+					StrafeState.TargetYawLookAtOrigin[2] = origin[2];
+				}
+
 				simulation_ipc::send_simulated_frame_to_server(simulation_ipc::SimulatedFrame {
 					CVars::_bxt_tas_script_generation.GetUint(),
 					movementFrameCounter++,

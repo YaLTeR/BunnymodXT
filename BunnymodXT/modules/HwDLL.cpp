@@ -4235,6 +4235,7 @@ void HwDLL::InsertCommands()
 						player.InDuckAnimation = (pl->v.bInDuck != 0);
 						player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 						player.StaminaTime = pl->v.fuser2;
+						player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 						if (ORIG_PF_GetPhysicsKeyValue) {
 							auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));
@@ -4334,7 +4335,16 @@ void HwDLL::InsertCommands()
 				});
 
 				StartTracing();
-				auto p = HLStrafe::MainFunc(player, movement_vars, f, StrafeState, Buttons, ButtonsPresent, std::bind(&HwDLL::UnsafePlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), hlstrafe_version);
+				auto p = HLStrafe::MainFunc(
+					player,
+					movement_vars,
+					f,
+					StrafeState,
+					Buttons,
+					ButtonsPresent,
+					std::bind(&HwDLL::UnsafePlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+					std::bind(*(ClientDLL::GetInstance().pEngfuncs->PM_PointContents), std::placeholders::_1, nullptr),
+					hlstrafe_version);
 				StopTracing();
 
 				PrevFractions = { p.fractions[0], p.fractions[1], p.fractions[2], p.fractions[3] };
@@ -4823,6 +4833,7 @@ void HwDLL::InsertCommands()
 					player.InDuckAnimation = (pl->v.bInDuck != 0);
 					player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 					player.StaminaTime = pl->v.fuser2;
+					player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 					if (ORIG_PF_GetPhysicsKeyValue) {
 						auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));
@@ -4841,9 +4852,9 @@ void HwDLL::InsertCommands()
 
 			auto playerCopy = HLStrafe::PlayerData(player); // Our copy that we will mess with.
 			auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false);
-			auto postype = GetPositionType(playerCopy, traceFunc);
-			if (postype == HLStrafe::PositionType::GROUND) {
-				if (ducktap) {
+			auto pointContentsFunc = std::bind(*(ClientDLL::GetInstance().pEngfuncs->PM_PointContents), std::placeholders::_1, nullptr);
+			auto postype = GetPositionType(playerCopy, traceFunc, pointContentsFunc);
+			if (ducktap && postype == HLStrafe::PositionType::GROUND) {
 					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {
 						// This should check against the next frame's origin but meh.
 						const float VEC_HULL_MIN[3] = { -16, -16, -36 };
@@ -4856,9 +4867,8 @@ void HwDLL::InsertCommands()
 						if (!tr.StartSolid)
 							Duck = true;
 					}
-				} else if (autojump && !currentKeys.Jump.IsDown()) {
-					Jump = true;
-				}
+			} else if (autojump && !currentKeys.Jump.IsDown() && (postype != HLStrafe::PositionType::AIR || !player.Walking)) {
+				Jump = true;
 			} else if (jumpbug && postype == HLStrafe::PositionType::AIR) {
 				if (player.Ducking) {
 					// Predict what will happen if we unduck.
@@ -4866,7 +4876,7 @@ void HwDLL::InsertCommands()
 					playerCopy.InDuckAnimation = false;
 					playerCopy.DuckTime = 0;
 
-					auto nextPostype = HLStrafe::GetPositionType(playerCopy, traceFunc);
+					auto nextPostype = HLStrafe::GetPositionType(playerCopy, traceFunc, pointContentsFunc);
 					if (nextPostype == HLStrafe::PositionType::GROUND) {
 						// Jumpbug if we're about to land.
 						Jump = true;
@@ -4874,7 +4884,7 @@ void HwDLL::InsertCommands()
 					}
 				} else {
 					auto vars = GetMovementVars();
-					auto nextPostype = HLStrafe::Move(playerCopy, vars, postype, vars.Maxspeed, traceFunc);
+					auto nextPostype = HLStrafe::Move(playerCopy, vars, postype, vars.Maxspeed, traceFunc, pointContentsFunc);
 					if (nextPostype == HLStrafe::PositionType::GROUND) {
 						// Duck to prepare for the Jumpbug.
 						Duck = true;
@@ -4953,6 +4963,7 @@ HLStrafe::PlayerData HwDLL::GetPlayerData()
 	player.InDuckAnimation = (pl->v.bInDuck != 0);
 	player.DuckTime = static_cast<float>(pl->v.flDuckTime);
 	player.StaminaTime = pl->v.fuser2;
+	player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 	if (ORIG_PF_GetPhysicsKeyValue) {
 		auto slj = std::atoi(ORIG_PF_GetPhysicsKeyValue(pl, "slj"));

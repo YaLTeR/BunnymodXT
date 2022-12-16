@@ -190,7 +190,7 @@ typedef struct cl_enginefuncs_s
 	void						( *V_CalcShake )			( void );
 	void						( *V_ApplyShake )			( float *origin, float *angles, float factor );
 
-	int							( *PM_PointContents )		( float *point, int *truecontents );
+	int							( *PM_PointContents )		( const float *point, int *truecontents );
 	int							( *PM_WaterEntity )			( float *p );
 	struct pmtrace_s			*( *PM_TraceLine )			( float *start, float *end, int flags, int usehull, int ignore_pe );
 

@@ -1033,6 +1033,11 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_HUD_AddEntity) {
 		REG(bxt_show_hidden_entities_clientside);
+		REG(bxt_show_only_players);
+		REG(bxt_disable_brush_entities);
+		REG(bxt_disable_sprite_entities);
+		REG(bxt_disable_studio_entities);
+		REG(bxt_disable_player_corpses);
 		REG(bxt_hide_other_players);
 	}
 
@@ -1813,13 +1818,25 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 	if ((CVars::bxt_show_only_players.GetBool() && CVars::sv_cheats.GetBool() && !ent->player) || (CVars::bxt_disable_world.GetBool() && !CVars::sv_cheats.GetBool() && ent->player))
 		return 0;
 
-	if (ppmove && pEngfuncs)
-	{
-		auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
-		int* iuser2 = reinterpret_cast<int*>(pmove + (offIUser1 + 4));
+	if (CVars::bxt_disable_brush_entities.GetBool() && (ent->model->type == mod_brush || ent->player) && (ent->curstate.rendermode != kRenderTransColor && ent->curstate.renderfx != kRenderFxTrigger))
+		return 0;
 
-		if (CVars::bxt_hide_other_players.GetBool() && ent->player && pEngfuncs->pDemoAPI->IsPlayingback() && ent->index != *iuser2)
+	if ((CVars::bxt_disable_sprite_entities.GetBool() && ent->model->type == mod_sprite) || (CVars::bxt_disable_studio_entities.GetBool() && ent->model->type == mod_studio))
+		return 0;
+
+	if (pEngfuncs)
+	{
+		if (CVars::bxt_disable_player_corpses.GetBool() && ent->curstate.renderfx == kRenderFxDeadPlayer && pEngfuncs->pDemoAPI->IsPlayingback())
 			return 0;
+
+		if (ppmove)
+		{
+			auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
+			int* iuser2 = reinterpret_cast<int*>(pmove + (offIUser1 + 4));
+
+			if (CVars::bxt_hide_other_players.GetBool() && ent->player && pEngfuncs->pDemoAPI->IsPlayingback() && ent->index != *iuser2)
+				return 0;
+		}
 	}
 
 	return ORIG_HUD_AddEntity(type, ent, modelname);

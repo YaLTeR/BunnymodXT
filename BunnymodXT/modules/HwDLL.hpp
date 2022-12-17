@@ -297,6 +297,13 @@ public:
 	bool tas_editor_set_change_to_yaw;
 	bool tas_editor_set_change_to_pitch;
 	bool tas_editor_set_run_point_and_save;
+	bool tas_editor_set_target_yaw_velocity;
+	bool tas_editor_set_target_yaw_velocity_lock;
+	bool tas_editor_set_target_yaw_look_at;
+	unsigned int tas_editor_set_target_yaw_look_at_entity;
+	float tas_editor_set_target_yaw_look_at_x;
+	float tas_editor_set_target_yaw_look_at_y;
+	float tas_editor_set_target_yaw_look_at_z;
 	bool tas_editor_set_yaw;
 	float tas_editor_set_yaw_yaw;
 	bool tas_editor_set_pitch;
@@ -448,6 +455,7 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Toggle;
 	struct Cmd_BXT_TAS_Editor_Set_Frametime;
 	struct Cmd_BXT_TAS_Editor_Set_Change_Type;
+	struct Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type;
 	struct Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save;
 	struct Cmd_BXT_TAS_Editor_Set_Yaw;
 	struct Cmd_BXT_TAS_Editor_Set_Pitch;

@@ -1810,7 +1810,7 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 	if (ent->curstate.rendermode == kRenderTransColor && ent->curstate.renderfx == kRenderFxTrigger && CVars::bxt_show_triggers_legacy.GetBool())
 		ent->curstate.renderamt = std::clamp(CVars::bxt_show_triggers_legacy_alpha.GetInt(), 0, 255);
 
-	if (CVars::bxt_show_only_viewmodel_and_player.GetBool() && CVars::sv_cheats.GetBool() && !ent->player)
+	if ((CVars::bxt_show_only_players.GetBool() && CVars::sv_cheats.GetBool() && !ent->player) || (CVars::bxt_disable_world.GetBool() && !CVars::sv_cheats.GetBool() && ent->player))
 		return 0;
 
 	if (ppmove && pEngfuncs)

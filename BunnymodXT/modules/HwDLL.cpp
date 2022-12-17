@@ -4120,7 +4120,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_duration);
 	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_multiplier);
 	RegisterCVar(CVars::bxt_disable_vgui);
-	RegisterCVar(CVars::bxt_show_only_viewmodel_and_player);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
 	RegisterCVar(CVars::bxt_wallhack_alpha);
@@ -4143,6 +4142,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_force_clear);
 	RegisterCVar(CVars::bxt_disable_gamedir_check_in_demo);
 	RegisterCVar(CVars::bxt_remove_fps_limit);
+	RegisterCVar(CVars::bxt_disable_world);
+	RegisterCVar(CVars::bxt_disable_particles);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -5828,7 +5829,7 @@ HOOK_DEF_3(HwDLL, void, __cdecl, V_ApplyShake, float*, origin, float*, angles, f
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawSkyBox)
 {
-	if (CVars::sv_cheats.GetBool() && (CVars::bxt_skybox_remove.GetBool() || CVars::bxt_wallhack.GetBool()))
+	if (CVars::bxt_skybox_remove.GetBool() || (CVars::sv_cheats.GetBool() && CVars::bxt_wallhack.GetBool()))
 		return;
 
 	ORIG_R_DrawSkyBox();
@@ -6094,7 +6095,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel_and_player.GetBool()))) {
+	if (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool() || CVars::bxt_disable_world.GetBool() || CVars::bxt_skybox_remove.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool()))) {
 		if (!CVars::bxt_clear_color.IsEmpty()) {
 			unsigned r = 0, g = 0, b = 0;
 			std::istringstream ss(CVars::bxt_clear_color.GetString());
@@ -6323,7 +6324,7 @@ HOOK_DEF_1(HwDLL, void, __cdecl, CBaseUI__HideGameUI_Linux, void*, thisptr)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawWorld)
 {
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel_and_player.GetBool())
+	if (CVars::bxt_disable_world.GetBool())
 		return;
 
 	ORIG_R_DrawWorld();
@@ -6331,7 +6332,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawWorld)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawParticles)
 {
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel_and_player.GetBool())
+	if (CVars::bxt_disable_particles.GetBool())
 		return;
 
 	ORIG_R_DrawParticles();

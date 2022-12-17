@@ -4322,16 +4322,19 @@ void HwDLL::InsertCommands()
 
 				if (StrafeState.Parameters.Parameters.LookAt.Entity != 0) {
 					edict_t *edicts;
+					const int numEdicts = GetEdicts(&edicts);
 
-					GetEdicts(&edicts);
+					if (StrafeState.Parameters.Parameters.LookAt.Entity >= numEdicts) {
+						StrafeState.Parameters.Parameters.LookAt.Entity = 0;
+					} else {				
+						const edict_t *ent = edicts + StrafeState.Parameters.Parameters.LookAt.Entity;
+						const entvars_t *pev = &(ent->v);
+						Vector origin = pev->origin + ((pev->mins + pev->maxs) / 2.f);
 
-					const edict_t *ent = edicts + StrafeState.Parameters.Parameters.LookAt.Entity;
-					const entvars_t *pev = &(ent->v);
-					Vector origin = pev->origin + ((pev->mins + pev->maxs) / 2.f);
-
-					StrafeState.TargetYawLookAtOrigin[0] = origin[0];
-					StrafeState.TargetYawLookAtOrigin[1] = origin[1];
-					StrafeState.TargetYawLookAtOrigin[2] = origin[2];
+						StrafeState.TargetYawLookAtOrigin[0] = origin[0];
+						StrafeState.TargetYawLookAtOrigin[1] = origin[1];
+						StrafeState.TargetYawLookAtOrigin[2] = origin[2];
+					}
 				}
 
 				simulation_ipc::send_simulated_frame_to_server(simulation_ipc::SimulatedFrame {

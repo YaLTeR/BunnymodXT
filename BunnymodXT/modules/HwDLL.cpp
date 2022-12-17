@@ -4320,7 +4320,7 @@ void HwDLL::InsertCommands()
 					}
 				}
 
-				if (StrafeState.Parameters.Parameters.LookAt.Entity != -1) {
+				if (StrafeState.Parameters.Parameters.LookAt.Entity != 0) {
 					edict_t *edicts;
 
 					GetEdicts(&edicts);

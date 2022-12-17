@@ -1818,7 +1818,7 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 	if ((CVars::bxt_show_only_players.GetBool() && CVars::sv_cheats.GetBool() && !ent->player) || (CVars::bxt_disable_world.GetBool() && !CVars::sv_cheats.GetBool() && ent->player))
 		return 0;
 
-	if (CVars::bxt_disable_brush_entities.GetBool() && (ent->model->type == mod_brush || ent->player) && (ent->curstate.rendermode != kRenderTransColor && ent->curstate.renderfx != kRenderFxTrigger))
+	if (CVars::bxt_disable_brush_entities.GetBool() && ((!CVars::sv_cheats.GetBool() && ent->player) || (ent->model->type == mod_brush && ent->curstate.rendermode != kRenderTransColor && ent->curstate.renderfx != kRenderFxTrigger)))
 		return 0;
 
 	if ((CVars::bxt_disable_sprite_entities.GetBool() && ent->model->type == mod_sprite) || (CVars::bxt_disable_studio_entities.GetBool() && ent->model->type == mod_studio))

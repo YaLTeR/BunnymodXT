@@ -1246,15 +1246,25 @@ void ClientDLL::SetSpeedScaling(bool scaled)
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling + 19), 1, reinterpret_cast<const byte*>("\x75"));
 		else if (pCS_SpeedScaling_Linux
 			&& *reinterpret_cast<byte*>(pCS_SpeedScaling_Linux + 2) == 0xE9
-			&& *reinterpret_cast<byte*>(pCS_SpeedScaling_Linux + 3) == 0x62)
-			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling_Linux + 2), 4, reinterpret_cast<const byte*>("\x0F\x86\x61\xFE"));
+			&& *reinterpret_cast<byte*>(pCS_SpeedScaling_Linux + 3) == 0x62) {
+			if (*reinterpret_cast<byte*>(pCS_SpeedScaling_Linux + 4) == 0xFE)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling_Linux + 2), 4, reinterpret_cast<const byte*>("\x0F\x86\x61\xFE"));
+			else // csczds byte
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling_Linux + 2), 4, reinterpret_cast<const byte*>("\x0F\x86\x5D\xFD"));
+		}
+
 	} else {
 		if (pCS_SpeedScaling && *reinterpret_cast<byte*>(pCS_SpeedScaling + 19) == 0x75)
 			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling + 19), 1, reinterpret_cast<const byte*>("\xEB"));
 		else if (pCS_SpeedScaling_Linux
 			&& *reinterpret_cast<byte*>(pCS_SpeedScaling_Linux + 2) == 0x0F
-			&& *reinterpret_cast<byte*>(pCS_SpeedScaling_Linux + 3) == 0x86)
-			MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling_Linux + 2), 4, reinterpret_cast<const byte*>("\xE9\x62\xFE\xFF"));
+			&& *reinterpret_cast<byte*>(pCS_SpeedScaling_Linux + 3) == 0x86) {
+			if (*reinterpret_cast<byte*>(pCS_SpeedScaling_Linux + 4) == 0x61)
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling_Linux + 2), 4, reinterpret_cast<const byte*>("\xE9\x62\xFE\xFF"));
+			else
+				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCS_SpeedScaling_Linux + 2), 4, reinterpret_cast<const byte*>("\xE9\x5E\xFD\xFF"));
+		}
+
 	}
 }
 

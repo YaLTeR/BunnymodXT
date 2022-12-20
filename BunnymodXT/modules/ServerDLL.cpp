@@ -2221,55 +2221,65 @@ void ServerDLL::DoAutoStopTasks()
 
 void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float &b)
 {
-	assert(std::strncmp(classname, "trigger_", 8) == 0);
+	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+	if (!is_trigger && !is_ladder)
+		return;
 
-	classname += 8;
-	if (std::strcmp(classname, "changelevel") == 0) {
+	if (std::strcmp(classname, "trigger_changelevel") == 0) {
 		// Bright green
 		r = 79;
 		g = 255;
 		b = 10;
-	} else if (std::strcmp(classname, "hurt") == 0) {
+	} else if (std::strcmp(classname, "trigger_hurt") == 0) {
 		// Red
 		r = 255;
 		g = 0;
 		b = 0;
-	} else if (std::strcmp(classname, "multiple") == 0) {
+	} else if (std::strcmp(classname, "trigger_multiple") == 0) {
 		// Blue
 		r = 0;
 		g = 0;
 		b = 255;
-	} else if (std::strcmp(classname, "once") == 0) {
+	} else if (std::strcmp(classname, "trigger_once") == 0) {
 		// Cyan
 		r = 0;
 		g = 255;
 		b = 255;
-	} else if (std::strcmp(classname, "push") == 0) {
+	} else if (std::strcmp(classname, "trigger_push") == 0) {
 		// Bright yellow
 		r = 255;
 		g = 255;
 		b = 0;
-	} else if (std::strcmp(classname, "teleport") == 0) {
+	} else if (std::strcmp(classname, "trigger_teleport") == 0) {
 		// Dull green
 		r = 81;
 		g = 147;
 		b = 49;
-	} else if (std::strcmp(classname, "transition") == 0) {
+	} else if (std::strcmp(classname, "trigger_transition") == 0) {
 		// Magenta
 		r = 203;
 		g = 103;
 		b = 212;
-	} else {
+	} else if (std::strncmp(classname, "trigger_", 8) == 0) {
 		// White
 		r = 255;
 		g = 255;
+		b = 255;
+	} else if (std::strcmp(classname, "func_ladder") == 0) {
+		// Sky
+		r = 102;
+		g = 178;
 		b = 255;
 	}
 }
 
 void ServerDLL::GetTriggerAlpha(const char *classname, bool inactive, bool additive, float &a)
 {
-	assert(std::strncmp(classname, "trigger_", 8) == 0);
+	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+	if (!is_trigger && !is_ladder)
+		return;
 
 	// The alpha should be lower in additive modes.
 	constexpr std::array<std::array<float, 2>, 2> common_alphas{
@@ -2277,8 +2287,7 @@ void ServerDLL::GetTriggerAlpha(const char *classname, bool inactive, bool addit
 		std::array<float, 2>{ 50.0f, 20.0f }
 	};
 
-	classname += 8;
-	if (std::strcmp(classname, "transition") == 0)
+	if (std::strcmp(classname, "trigger_transition") == 0)
 		a = additive ? 50.0f : 120.0f;
 	else
 		a = common_alphas[inactive][additive];
@@ -2332,6 +2341,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 
 	const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + ent->v.classname;
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
 
 	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool()) {
 		bool show = ent->v.rendermode != kRenderNormal && ent->v.rendermode != kRenderGlow;
@@ -2360,8 +2370,9 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 				ent->v.rendermode = kRenderTransTexture;
 		}
 	}
-	else if (is_trigger && CVars::bxt_show_triggers_legacy.GetBool()) {
-		ent->v.effects &= ~EF_NODRAW;
+	else if ((is_trigger || is_ladder) && CVars::bxt_show_triggers_legacy.GetBool()) {
+		if (is_trigger)
+			ent->v.effects &= ~EF_NODRAW;
 		ent->v.renderamt = 0;
 		ent->v.rendermode = kRenderTransColor;
 		ent->v.renderfx = kRenderFxTrigger;

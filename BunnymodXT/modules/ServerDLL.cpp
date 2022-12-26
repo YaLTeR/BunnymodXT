@@ -2358,11 +2358,11 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 	void* classPtr = pEntity->v.pContainingEntity->pvPrivateData;
 	uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 
-	if ((std::strcmp(cmd, "fullupdate") == 0) && (ORIG_CBasePlayer__ForceClientDllUpdate || ORIG_CBasePlayer__ForceClientDllUpdate_Linux)) {
+	if ((std::strcmp(cmd, "fullupdate") == 0) && offm_iClientFOV && offm_rgAmmoLast) {
 		int* m_iClientFOV = reinterpret_cast<int*>(thisAddr + offm_iClientFOV);
 		int* m_rgAmmoLast = reinterpret_cast<int*>(thisAddr + offm_rgAmmoLast);
 
-		if (is_cof) {
+		if (is_cof && offm_pClientActiveItem && offm_old_iAmmo) {
 			void** m_pActiveItem = reinterpret_cast<void**>(thisAddr + (offm_pClientActiveItem - 4));
 			if (*m_pActiveItem != NULL) {
 				uintptr_t* m_pClientActiveItem = reinterpret_cast<uintptr_t*>(thisAddr + offm_pClientActiveItem);

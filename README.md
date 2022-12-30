@@ -40,7 +40,7 @@ Use the [Bunnymod XT Launcher](https://github.com/YaLTeR/bxt-launcher).
 
 Building on Windows requires
 
-- Visual Studio 2017 or 2019
+- Visual Studio 2019 or 2022
 - [Boost](http://www.boost.org/)
 - [Rust](https://rustup.rs/)
   - The `i686-pc-windows-msvc` target must be installed. You can do that using `rustup target add i686-pc-windows-msvc`.

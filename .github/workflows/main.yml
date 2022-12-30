@@ -3,6 +3,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
   schedule:
     - cron: '0 0 1 * *' # Monthly
 
@@ -16,7 +17,7 @@ jobs:
         configuration: [Release, Debug]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
         # We need the full history to find the tag
@@ -32,12 +33,10 @@ jobs:
         sudo apt-get install g++-multilib libboost-dev mesa-common-dev ninja-build libgl-dev:i386
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
-        target: i686-unknown-linux-gnu
-        override: true
+      run: |
+        rustup toolchain install stable --profile minimal
+        rustup override set stable
+        rustup target add i686-unknown-linux-gnu
 
     - name: Generate the build system
       run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.configuration }}
@@ -45,7 +44,7 @@ jobs:
     - name: Build
       run: cmake --build build
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: BunnymodXT-${{ runner.os }}-${{ matrix.configuration }}
         path: build/libBunnymodXT.so
@@ -73,7 +72,7 @@ jobs:
       options: --privileged
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
         # We need the full history to find the tag
@@ -108,7 +107,7 @@ jobs:
             archive-filename: '3-BunnymodXT-CoF-Windows.7z'
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
         # We need the full history to find the tag
@@ -118,12 +117,10 @@ jobs:
     - run: git fetch --force --tags
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: stable
-        target: i686-pc-windows-msvc
-        override: true
+      run: |
+        rustup toolchain install stable --profile minimal
+        rustup override set stable
+        rustup target add i686-pc-windows-msvc
 
     - name: Install Boost
       id: install-boost
@@ -139,7 +136,7 @@ jobs:
     - name: Build
       run: cmake --build build --config ${{ matrix.configuration }} -j $env:NUMBER_OF_PROCESSORS
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: BunnymodXT${{ matrix.artifact-label }}-${{ runner.os }}-${{ matrix.configuration }}
         path: build\${{ matrix.configuration }}\BunnymodXT.dll

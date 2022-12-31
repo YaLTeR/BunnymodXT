@@ -3638,8 +3638,6 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type
 
 		if (!strcmp(what, "velocity_lock")) {
 			hw.tas_editor_set_target_yaw_velocity_lock = true;
-		} else if (!strcmp(what, "velocity")) {
-			hw.tas_editor_set_target_yaw_velocity = true;
 		} else {
 			unsigned int entity;
 			float x, y, z;
@@ -3656,6 +3654,7 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type
 				}
 			} else if (sscanf(what, "look_at %f %f %f", &x, &y, &z) == 3) {
 				hw.tas_editor_set_target_yaw_look_at = true;
+				hw.tas_editor_set_target_yaw_look_at_entity = 0;
 				hw.tas_editor_set_target_yaw_look_at_x = x;
 				hw.tas_editor_set_target_yaw_look_at_y = y;
 				hw.tas_editor_set_target_yaw_look_at_z = z;
@@ -4372,6 +4371,10 @@ void HwDLL::InsertCommands()
 						StrafeState.TargetYawLookAtOrigin[1] = origin[1];
 						StrafeState.TargetYawLookAtOrigin[2] = origin[2];
 					}
+				} else {
+					StrafeState.TargetYawLookAtOrigin[0] = 0;
+					StrafeState.TargetYawLookAtOrigin[1] = 0;
+					StrafeState.TargetYawLookAtOrigin[2] = 0;
 				}
 
 				simulation_ipc::send_simulated_frame_to_server(simulation_ipc::SimulatedFrame {

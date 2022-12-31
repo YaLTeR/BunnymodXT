@@ -297,7 +297,6 @@ public:
 	bool tas_editor_set_change_to_yaw;
 	bool tas_editor_set_change_to_pitch;
 	bool tas_editor_set_run_point_and_save;
-	bool tas_editor_set_target_yaw_velocity;
 	bool tas_editor_set_target_yaw_velocity_lock;
 	bool tas_editor_set_target_yaw_look_at;
 	unsigned int tas_editor_set_target_yaw_look_at_entity;

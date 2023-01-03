@@ -3495,6 +3495,23 @@ struct HwDLL::Cmd_Minus_BXT_TAS_Editor_Insert_Point
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Force_Mark_As_Stale
+{
+	USAGE("Usage: bxt_tas_editor_force_mark_as_stale\n Forces every framebulk to be stale.\n");
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+		auto& frame_bulks = hw.tas_editor_input.frame_bulks;
+
+		if (hw.tas_editor_mode == TASEditorMode::EDIT) {
+			if (frame_bulks.size() > 0) {
+				hw.tas_editor_input.mark_as_stale(0);
+			}
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 {
 	USAGE("Usage: bxt_tas_editor_toggle <what>\n Toggles a function on the currently selected point. You can toggle:\n"
@@ -4213,6 +4230,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Last_Point, Handler<>>("bxt_tas_editor_delete_last_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Point, Handler<>>("bxt_tas_editor_delete_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Insert_Point, Handler<>>("bxt_tas_editor_insert_point");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Force_Mark_As_Stale, Handler<>>("bxt_tas_editor_force_mark_as_stale");
 	wrapper::Add<Cmd_Plus_BXT_TAS_Editor_Insert_Point, Handler<>, Handler<int>>("+bxt_tas_editor_insert_point");
 	wrapper::Add<Cmd_Minus_BXT_TAS_Editor_Insert_Point, Handler<>, Handler<int>>("-bxt_tas_editor_insert_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Save, Handler<>>("bxt_tas_editor_save");

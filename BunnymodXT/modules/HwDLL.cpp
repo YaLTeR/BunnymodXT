@@ -4212,7 +4212,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>>("bxt_print_entities");
-	
+
 	wrapper::Add<Cmd_BXT_TAS_Editor_Force_Mark_As_Stale, Handler<>>("bxt_tas_editor_force_mark_as_stale");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Apply_Smoothing, Handler<>>("bxt_tas_editor_apply_smoothing");
 	wrapper::Add<Cmd_BXT_TAS_Optim_Init, Handler<>>("bxt_tas_optim_init");

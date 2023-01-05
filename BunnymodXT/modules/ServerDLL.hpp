@@ -172,7 +172,7 @@ protected:
 
 	ptrdiff_t offm_iClientFOV;
 	ptrdiff_t offm_rgAmmoLast;
-	int maxAmmoSlots;
+	int maxAmmoSlots = MAX_AMMO_SLOTS;
 
 	void *WorldGraph = nullptr;
 	size_t size_CNode;
@@ -201,6 +201,7 @@ protected:
 	ptrdiff_t offm_CMultiManager_index;
 
 	bool spirit_sdk = false;
+	bool is_czeror = false;
 
 	bool callerIsWalkMove;
 	bool callerIsFlyMove;

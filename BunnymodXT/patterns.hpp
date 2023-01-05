@@ -1128,7 +1128,7 @@ namespace patterns
 
 		PATTERNS(CStudioModelRenderer__StudioSetupBones,
 			"HL-SteamPipe",
-			"83 EC 48 53 8B D9 55 56 8B 43 30 8B 4B 44",
+			"83 EC ?? 53 8B D9 55 56 8B 43 30 8B 4B 44",
 			"HL-WON",
 			"83 EC 48 53 55 56 8B F1 57 8B 46 30 8B 4E 44",
 			"CSCZDS",
@@ -1152,13 +1152,15 @@ namespace patterns
 			"Reissues",
 			"55 8B EC 83 EC 48 53 56 8B F1 57",
 			"AVP2",
-			"55 8B EC 81 EC A0 00 00 00 53 56 57 89 4D",
+			"55 8B EC 81 EC A0 00 00 00 53 56 57 89 4D FC 8B 45 FC 8B 48 30",
 			"CStrike-Latest",
 			"83 EC 48 53 55 8B E9 56 57 8B 4D 30 8B 55 44",
 			"CoF-5936",
 			"55 8B EC 83 EC 4C A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 57 8B",
 			"CoF-Mod-155",
-			"83 EC 44 53 8B D9 8B 43 30 8B 4B 44 8B 90"
+			"83 EC 44 53 8B D9 8B 43 30 8B 4B 44 8B 90",
+			"DayOfDefeat",
+			"83 EC 44 53 8B D9 55 56 8B 4B 38 8B 53 4C"
 		);
 
 		PATTERNS(CStudioModelRenderer__StudioRenderModel,

@@ -335,6 +335,8 @@ void ClientDLL::Clear()
 	pCS_SpeedScaling = 0;
 	pCS_SpeedScaling_Linux = 0;
 	offVectorTransform = 0;
+	offpCurrentEntity = 0;
+	offpStudioHeader = 0;
 }
 
 void ClientDLL::FindStuff()
@@ -420,6 +422,40 @@ void ClientDLL::FindStuff()
 			}
 		});
 
+	auto fCStudioModelRenderer__StudioSetupBones = FindAsync(
+		ORIG_CStudioModelRenderer__StudioSetupBones,
+		patterns::client::CStudioModelRenderer__StudioSetupBones,
+		[&](auto pattern) {
+			switch (pattern - patterns::client::CStudioModelRenderer__StudioSetupBones.cbegin()) {
+			case 0: // HL-SteamPipe
+			case 1: // HL-WON
+			case 2: // CSCZDS
+			case 3: // HL-Restored
+			case 4: // Echoes
+			case 5: // They Hunger Trilogy
+			case 6: // PARANOIA
+			case 7: // AoMDC
+			case 8: // TWHL-Tower-2
+			case 9: // Invasion
+			case 10: // Halfquake-Trilogy
+			case 11: // Reissues
+			case 12: // AVP2
+			case 13: // CStrike-Latest
+			case 14: // CoF-5936
+			case 15: // CoF-Mod-155
+				offpCurrentEntity = 48;
+				offpStudioHeader = 68;
+				break;
+			case 16: // DayOfDefeat
+				offpCurrentEntity = 56;
+				offpStudioHeader = 76;
+				break;
+			default:
+				assert(false);
+				break;
+			}
+		});
+
 	auto fCStudioModelRenderer__StudioCalcAttachments = FindAsync(
 		ORIG_CStudioModelRenderer__StudioCalcAttachments,
 		patterns::client::CStudioModelRenderer__StudioCalcAttachments,
@@ -472,9 +508,6 @@ void ClientDLL::FindStuff()
 		pCS_SpeedScaling_Linux,
 		patterns::client::CS_SpeedScaling_Linux);
 	auto fEV_GetDefaultShellInfo = FindAsync(ORIG_EV_GetDefaultShellInfo, patterns::client::EV_GetDefaultShellInfo);
-	auto fCStudioModelRenderer__StudioSetupBones = FindAsync(
-		ORIG_CStudioModelRenderer__StudioSetupBones,
-		patterns::client::CStudioModelRenderer__StudioSetupBones);
 	auto fCStudioModelRenderer__StudioRenderModel = FindAsync(
 		ORIG_CStudioModelRenderer__StudioRenderModel,
 		patterns::client::CStudioModelRenderer__StudioRenderModel);
@@ -1713,8 +1746,8 @@ HOOK_DEF_11(ClientDLL, void, __cdecl, EV_GetDefaultShellInfo, event_args_t*, arg
 
 HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioSetupBones, void*, thisptr)
 {
-	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + 48);
-	auto pStudioHeader = *reinterpret_cast<studiohdr_t**>(reinterpret_cast<uintptr_t>(thisptr) + 68);
+	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpCurrentEntity);
+	auto pStudioHeader = *reinterpret_cast<studiohdr_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpStudioHeader);
 	auto pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(pStudioHeader) +
 		pStudioHeader->seqindex) + pCurrentEntity->curstate.sequence;
 
@@ -1754,8 +1787,18 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioSetupBones, 
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linux, void*, thisptr)
 {
-	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + 44);
-	auto pStudioHeader = *reinterpret_cast<studiohdr_t**>(reinterpret_cast<uintptr_t>(thisptr) + 64);
+	ptrdiff_t offpCurrentEntity_Linux;
+	ptrdiff_t offpStudioHeader_Linux;
+	if (DoesGameDirMatch("dod")) {
+		offpCurrentEntity_Linux = 52;
+		offpStudioHeader_Linux = 72;
+	} else {
+		offpCurrentEntity_Linux = 44;
+		offpStudioHeader_Linux = 64;
+	}
+
+	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpCurrentEntity_Linux);
+	auto pStudioHeader = *reinterpret_cast<studiohdr_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpStudioHeader_Linux);
 	auto pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(pStudioHeader) +
 		pStudioHeader->seqindex) + pCurrentEntity->curstate.sequence;
 
@@ -1831,7 +1874,13 @@ HOOK_DEF_0(ClientDLL, int, __cdecl, CL_IsThirdPerson)
 
 HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel, void*, thisptr)
 {
-	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + 48);
+	if (offpCurrentEntity == 0)
+	{
+		ORIG_CStudioModelRenderer__StudioRenderModel(thisptr);
+		return;
+	}
+
+	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpCurrentEntity);
 
 	int old_rendermode = pCurrentEntity->curstate.rendermode;
 
@@ -1851,7 +1900,13 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel,
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Linux, void*, thisptr)
 {
-	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + 44);
+	ptrdiff_t offpCurrentEntity_Linux;
+	if (DoesGameDirMatch("dod"))
+		offpCurrentEntity_Linux = 52;
+	else
+		offpCurrentEntity_Linux = 44;
+
+	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpCurrentEntity_Linux);
 
 	int old_rendermode = pCurrentEntity->curstate.rendermode;
 

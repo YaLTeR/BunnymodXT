@@ -67,7 +67,7 @@ extern "C" int __cdecl HUD_UpdateClientData(client_data_t* pcldata, float flTime
 
 extern "C" void __cdecl _ZN20CStudioModelRenderer21StudioCalcAttachmentsEv(void *thisptr)
 {
-	return ClientDLL::HOOKED_StudioCalcAttachments_Linux(thisptr);
+	return ClientDLL::HOOKED_CStudioModelRenderer__StudioCalcAttachments_Linux(thisptr);
 }
 
 extern "C" void __cdecl _Z15VectorTransformPKfPA4_fPf(float *in1, float *in2, float *out)
@@ -191,7 +191,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_HUD_AddEntity, HOOKED_HUD_AddEntity,
 			ORIG_HUD_Shutdown, HOOKED_HUD_Shutdown,
 			ORIG_EV_GetDefaultShellInfo, HOOKED_EV_GetDefaultShellInfo,
-			ORIG_StudioCalcAttachments, HOOKED_StudioCalcAttachments,
+			ORIG_CStudioModelRenderer__StudioCalcAttachments, HOOKED_CStudioModelRenderer__StudioCalcAttachments,
 			ORIG_VectorTransform, HOOKED_VectorTransform,
 			ORIG_CStudioModelRenderer__StudioSetupBones, HOOKED_CStudioModelRenderer__StudioSetupBones,
 			ORIG_CL_IsThirdPerson, HOOKED_CL_IsThirdPerson,
@@ -234,7 +234,7 @@ void ClientDLL::Unhook()
 			ORIG_HUD_AddEntity,
 			ORIG_HUD_Shutdown,
 			ORIG_EV_GetDefaultShellInfo,
-			ORIG_StudioCalcAttachments,
+			ORIG_CStudioModelRenderer__StudioCalcAttachments,
 			ORIG_VectorTransform,
 			ORIG_CStudioModelRenderer__StudioSetupBones,
 			ORIG_CL_IsThirdPerson,
@@ -277,8 +277,8 @@ void ClientDLL::Clear()
 	ORIG_PM_Move = nullptr;
 	ORIG_VectorTransform = nullptr;
 	ORIG_EV_GetDefaultShellInfo = nullptr;
-	ORIG_StudioCalcAttachments = nullptr;
-	ORIG_StudioCalcAttachments_Linux = nullptr;
+	ORIG_CStudioModelRenderer__StudioCalcAttachments = nullptr;
+	ORIG_CStudioModelRenderer__StudioCalcAttachments_Linux = nullptr;
 	ORIG_CStudioModelRenderer__StudioSetupBones = nullptr;
 	ORIG_CStudioModelRenderer__StudioSetupBones_Linux = nullptr;
 	ORIG_CStudioModelRenderer__StudioRenderModel = nullptr;
@@ -334,6 +334,7 @@ void ClientDLL::Clear()
 	pCS_AngleSpeedCap_Linux = 0;
 	pCS_SpeedScaling = 0;
 	pCS_SpeedScaling_Linux = 0;
+	offVectorTransform = 0;
 }
 
 void ClientDLL::FindStuff()
@@ -419,51 +420,38 @@ void ClientDLL::FindStuff()
 			}
 		});
 
-	auto fStudioCalcAttachments = FindAsync(
-		ORIG_StudioCalcAttachments,
-		patterns::client::StudioCalcAttachments,
+	auto fCStudioModelRenderer__StudioCalcAttachments = FindAsync(
+		ORIG_CStudioModelRenderer__StudioCalcAttachments,
+		patterns::client::CStudioModelRenderer__StudioCalcAttachments,
 		[&](auto pattern) {
-			switch (pattern - patterns::client::StudioCalcAttachments.cbegin()) {
+			switch (pattern - patterns::client::CStudioModelRenderer__StudioCalcAttachments.cbegin()) {
 			case 0: // HL-WON-1712
 			case 1: // CSCZDS
-				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 101)
-					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 105);
+				offVectorTransform = 101;
 				break;
 			case 2: // Echoes
-				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 187)
-					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 191);
+				offVectorTransform = 187;
 				break;
 			case 3: // AoMDC
-				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 190)
-					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 194);
+				offVectorTransform = 190;
 				break;
 			case 4: // TWHL-Tower-2
-				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 100)
-					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 104);
+				offVectorTransform = 100;
 				break;
 			case 5: // Halfquake-Trilogy
-				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 70)
-					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 74);
+				offVectorTransform = 70;
 				break;
 			case 6: // Reissues
-				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 97)
-					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 101);
+				offVectorTransform = 97;
 				break;
 			case 7: // CoF-5936
-				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 77)
-					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 81);
+				offVectorTransform = 77;
 				break;
 			case 8: // CoF-Mod-155
-				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
-					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 111)
-					+ reinterpret_cast<uintptr_t>(ORIG_StudioCalcAttachments) + 115);
+				offVectorTransform = 111;
+				break;
+			case 9: // Decay
+				offVectorTransform = 188;
 				break;
 			default:
 				assert(false);
@@ -670,19 +658,24 @@ void ClientDLL::FindStuff()
 	}
 
 	{
-		auto pattern = fStudioCalcAttachments.get();
-		if (ORIG_StudioCalcAttachments) {
-			EngineDevMsg("[client dll] Found StudioCalcAttachment at %p (using the %s pattern).\n", ORIG_StudioCalcAttachments, pattern->name());
-			if (ORIG_VectorTransform)
+		auto pattern = fCStudioModelRenderer__StudioCalcAttachments.get();
+		if (ORIG_CStudioModelRenderer__StudioCalcAttachments) {
+			EngineDevMsg("[client dll] Found CStudioModelRenderer::StudioCalcAttachments at %p (using the %s pattern).\n", ORIG_CStudioModelRenderer__StudioCalcAttachments, pattern->name());
+			if (offVectorTransform) {
+				ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(
+					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_CStudioModelRenderer__StudioCalcAttachments) + offVectorTransform)
+					+ reinterpret_cast<uintptr_t>(ORIG_CStudioModelRenderer__StudioCalcAttachments) + offVectorTransform + 4
+				);
 				EngineDevMsg("[client dll] Found VectorTransform at %p.\n", ORIG_VectorTransform);
+			}
 		} else {
-			ORIG_StudioCalcAttachments_Linux = reinterpret_cast<_StudioCalcAttachments_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN20CStudioModelRenderer21StudioCalcAttachmentsEv"));
+			ORIG_CStudioModelRenderer__StudioCalcAttachments_Linux = reinterpret_cast<_CStudioModelRenderer__StudioCalcAttachments_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN20CStudioModelRenderer21StudioCalcAttachmentsEv"));
 			ORIG_VectorTransform = reinterpret_cast<_VectorTransform>(MemUtils::GetSymbolAddress(m_Handle, "_Z15VectorTransformPKfPA4_fPf"));
-			if (ORIG_StudioCalcAttachments_Linux && ORIG_VectorTransform) {
-				EngineDevMsg("[client dll] Found StudioCalcAttachments_Linux at %p.\n", ORIG_StudioCalcAttachments_Linux);
+			if (ORIG_CStudioModelRenderer__StudioCalcAttachments_Linux && ORIG_VectorTransform) {
+				EngineDevMsg("[client dll] Found CStudioModelRenderer::StudioCalcAttachments [Linux] at %p.\n", ORIG_CStudioModelRenderer__StudioCalcAttachments_Linux);
 				EngineDevMsg("[client dll] Found VectorTransform at %p.\n", ORIG_VectorTransform);
 			} else {
-				EngineDevWarning("[client dll] Could not find StudioCalcAttachments.\n");
+				EngineDevWarning("[client dll] Could not find CStudioModelRenderer::StudioCalcAttachments.\n");
 				EngineDevWarning("[client dll] Could not find VectorTransform.\n");
 				EngineWarning("[client dll] Special effects of weapons will be misplaced when bxt_viewmodel_fov is used.\n");
 			}
@@ -1660,7 +1653,7 @@ HOOK_DEF_3(ClientDLL, void, __cdecl, VectorTransform, float*, in1, float*, in2, 
 	}
 }
 
-HOOK_DEF_1(ClientDLL, void, __fastcall, StudioCalcAttachments, void*, thisptr)
+HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioCalcAttachments, void*, thisptr)
 {
 	auto& hw = HwDLL::GetInstance();
 
@@ -1670,11 +1663,11 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, StudioCalcAttachments, void*, thisptr)
 		if (currententity == pEngfuncs->GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
 			insideStudioCalcAttachmentsViewmodel = true;
 	}
-	ORIG_StudioCalcAttachments(thisptr);
+	ORIG_CStudioModelRenderer__StudioCalcAttachments(thisptr);
 	insideStudioCalcAttachmentsViewmodel = false;
 }
 
-HOOK_DEF_1(ClientDLL, void, __cdecl, StudioCalcAttachments_Linux, void*, thisptr)
+HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioCalcAttachments_Linux, void*, thisptr)
 {
 	auto& hw = HwDLL::GetInstance();
 
@@ -1684,7 +1677,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, StudioCalcAttachments_Linux, void*, thisptr
 		if (currententity == pEngfuncs->GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
 			insideStudioCalcAttachmentsViewmodel = true;
 	}
-	ORIG_StudioCalcAttachments_Linux(thisptr);
+	ORIG_CStudioModelRenderer__StudioCalcAttachments_Linux(thisptr);
 	insideStudioCalcAttachmentsViewmodel = false;
 }
 

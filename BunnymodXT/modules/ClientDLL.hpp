@@ -151,4 +151,7 @@ protected:
 
 	bool insideKeyEvent;
 	bool insideStudioCalcAttachmentsViewmodel;
+
+	ptrdiff_t offpCurrentEntity;
+	ptrdiff_t offpStudioHeader;
 };

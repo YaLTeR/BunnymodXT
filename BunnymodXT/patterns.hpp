@@ -1070,15 +1070,15 @@ namespace patterns
 
 	namespace client
 	{
-		PATTERNS(StudioCalcAttachments,
+		PATTERNS(CStudioModelRenderer__StudioCalcAttachments,
 			"HL-WON",
-			"55 57 8B F9 8B 4F 44 8B 91 D4 00 00 00 83 FA 04 7E 1F 8B 47 30 8B 88 94 0B 00 00 51 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 08 6A FF E8 ?? ?? ?? ?? 8B 81 D8 00 00 00 33 ED",
+			"55 57 8B F9 8B 4F ?? 8B 91 D4 00 00 00 83 FA 04 7E 1F 8B 47 ?? 8B 88 94 0B 00 00 51 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 08 6A FF E8 ?? ?? ?? ?? 8B 81 D8 00 00 00 33 ED",
 			"CSCZDS",
 			"57 8B F9 8B 4F 44 8B 91 D4 00 00 00 83 FA 04 7E 1F 8B 47 30 8B 88 94 0B 00 00 51 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 08 6A FF E8 ?? ?? ?? ?? 8B 81 D8 00 00 00 55",
 			"Echoes",
 			"55 8B EC 83 EC 0C 89 4D ?? 8B 45 ?? 8B 48 ?? 83 B9 ?? ?? ?? ?? 04",
 			"AoMDC",
-			"55 8B EC 83 EC 4C 53 56 57 89 4D ?? 8B 45 ?? 8B 48 ?? 83 B9 ?? ?? ?? ?? 04",
+			"55 8B EC 83 EC 4C 53 56 57 89 4D FC 8B 45 FC 8B 48 44 83 B9 D4 00 00 00 04 7E 22 8B 55 FC 8B 42 30 8B 88 94 0B 00 00 51",
 			"TWHL-Tower-2",
 			"56 8B F1 8B 46 44 8B 90 D4 00 00 00 83 FA 04 7E 1D 8B 46 30 FF B0 94 0B 00 00 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 59 59 6A FF E8 ?? ?? ?? ?? 8B 4E 44 8B 81 D8 00 00 00 53",
 			"Halfquake-Trilogy",
@@ -1088,7 +1088,9 @@ namespace patterns
 			"CoF-5936",
 			"55 8B EC 51 53 56 8B F1 57 8B 46 44 8B 88 D4 00 00 00 83 F9 04 7F 6C 8B B8 D8 00 00 00 33",
 			"CoF-Mod-155",
-			"56 8B F1 8B 46 44 8B 90 D4 00 00 00 83 FA 04 7E 1F 8B 4E 30 8B 91 94 0B 00 00 52 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 08 6A FF E8"
+			"56 8B F1 8B 46 44 8B 90 D4 00 00 00 83 FA 04 7E 1F 8B 4E 30 8B 91 94 0B 00 00 52 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 83 C4 08 6A FF E8",
+			"Decay",
+			"55 8B EC 83 EC 4C 53 56 57 89 4D FC 8B 45 FC 8B 48 44 83 B9 D4 00 00 00 04 7E 22 8B 45 FC 8B 48 30 8B 91 94 0B 00 00 52"
 		);
 
 		PATTERNS(EV_GetDefaultShellInfo,

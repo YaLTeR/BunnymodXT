@@ -271,7 +271,6 @@ void ServerDLL::Clear()
 	pCBasePlayerJump_OldButtons_Check_Byte = 0;
 	offm_iClientFOV = 0;
 	offm_rgAmmoLast = 0;
-	maxAmmoSlots = 0;
 	offEntFriction = 0;
 	offEntGravity = 0;
 	offPunchangles = 0;
@@ -451,38 +450,83 @@ void ServerDLL::FindStuff()
 		patterns::server::CBasePlayer__ForceClientDllUpdate,
 		[&](auto pattern) {
 			switch (pattern - patterns::server::CBasePlayer__ForceClientDllUpdate.cbegin()) {
-			case 0:  // HL-SteamPipe
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 25: // HL-SWEET
+			case 0: // HL-WON
+				offm_rgAmmoLast = 0x50C;
+				offm_iClientFOV = 0x464;
+				break;
+			case 1: // HL-SteamPipe
 				offm_rgAmmoLast = 0x554;
 				offm_iClientFOV = 0x4AC;
 				break;
-			case 1:  // OpposingForce
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 2: // HL-SteamPipe-8684
+				offm_rgAmmoLast = 0x558;
+				offm_iClientFOV = 0x4B0;
+				break;
+			case 3: // OP4-WON
+				offm_rgAmmoLast = 0x5C0;
+				offm_iClientFOV = 0x4A4;
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
+				break;
+			case 4: // OpposingForce
 				offm_rgAmmoLast = 0x604;
 				offm_iClientFOV = 0x4E0;
 				offFuncIsPlayer = 0xA0;
 				offFuncCenter = 0xCC;
 				break;
-			case 19: // TheGate
-			case 2:  // HazardousCourse2
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x540;
-				offm_iClientFOV = 0x498;
+			case 5: // OP4-8684
+				offm_rgAmmoLast = 0x608;
+				offm_iClientFOV = 0x4E4;
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
 				break;
-			case 3:  // Gunman
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 6: // Gunman
 				offm_rgAmmoLast = 0x53C;
 				offm_iClientFOV = 0x47C;
 				offFuncCenter = 0xCC;
 				break;
-			case 4:  // HL-SteamPipe-8308
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x558;
-				offm_iClientFOV = 0x4B0;
+			case 7: // CSCZDS
+				offm_rgAmmoLast = 0x53C;
+				offm_iClientFOV = 0x898;
+				offFuncIsPlayer = 0xA8;
+				offFuncCenter = 0xDC;
+				offFuncObjectCaps = 0x18;
+				is_czeror = true;
 				break;
-			case 5: // TWHL-Tower-2
-			case 6: // Halfquake Trilogy
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 8: // CSCZDS-8684
+				offm_rgAmmoLast = 0x540;
+				offm_iClientFOV = 0x89C;
+				offFuncIsPlayer = 0xA8;
+				offFuncCenter = 0xDC;
+				offFuncObjectCaps = 0x18;
+				is_czeror = true;
+				break;
+			case 9: // AoMDC
+				offm_rgAmmoLast = 0x578;
+				offm_iClientFOV = 0x4D0;
+				break;
+			case 10: // PARANOIA
+				offm_rgAmmoLast = 0x62C;
+				offm_iClientFOV = 0x584;
+				offFuncIsPlayer = 0xD0;
+				offFuncCenter = 0xFC;
+				offFuncObjectCaps = 0x40;
+				break;
+			case 11: // CStrike-Latest
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
+				offFuncObjectCaps = 0x18;
+				break;
+			case 12: // TFC-8684
+				offm_rgAmmoLast = 0x978;
+				offm_iClientFOV = 0x8CC;
+				offFuncIsPlayer = 0x98;
+				offFuncCenter = 0xC4;
+				offFuncObjectCaps = 0x18;
+				break;
+			case 13: // TWHL-Tower-2
+			case 14: // Halfquake Trilogy
 				offm_rgAmmoLast = 0x5F4;
 				offm_iClientFOV = 0x548;
 				offFuncIsPlayer = 0xD4;
@@ -490,8 +534,7 @@ void ServerDLL::FindStuff()
 				offFuncObjectCaps = 0x44;
 				spirit_sdk = true;
 				break;
-			case 7: // Echoes
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 15: // Echoes
 				offm_rgAmmoLast = 0x5F4;
 				offm_iClientFOV = 0x548;
 				offFuncIsPlayer = 0xCC;
@@ -499,129 +542,95 @@ void ServerDLL::FindStuff()
 				offFuncObjectCaps = 0x3C;
 				spirit_sdk = true;
 				break;
-			case 8: // Decay
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 16: // Decay
 				offm_rgAmmoLast = 0x544;
 				offm_iClientFOV = 0x49C;
 				break;
-			case 9: // AoMDC
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x578;
-				offm_iClientFOV = 0x4D0;
-				break;
-			case 10: // PARANOIA
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x62C;
-				offm_iClientFOV = 0x584;
-				offFuncIsPlayer = 0xD0;
-				offFuncCenter = 0xFC;
-				offFuncObjectCaps = 0x40;
-				break;
-			case 11: // OP4-8684
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x608;
-				offm_iClientFOV = 0x4E4;
-				offFuncIsPlayer = 0xA0;
-				offFuncCenter = 0xCC;
-				break;
-			case 22: // HL-SWEET
-			case 12: // HL-WON
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x50C;
-				offm_iClientFOV = 0x464;
-				break;
-			case 13: // OP4-WON
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x5C0;
-				offm_iClientFOV = 0x4A4;
-				offFuncIsPlayer = 0xA0;
-				offFuncCenter = 0xCC;
-				break;
-			case 14: // CSCZDS
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 22: // TheGate
+			case 17: // HazardousCourse2
 				offm_rgAmmoLast = 0x540;
-				offm_iClientFOV = 0x89C;
-				offFuncIsPlayer = 0xA8;
-				offFuncCenter = 0xDC;
-				offFuncObjectCaps = 0x18;
+				offm_iClientFOV = 0x498;
 				break;
-			case 15: // Black-Ops
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 18: // Black-Ops
 				offm_rgAmmoLast = 0x554;
 				offm_iClientFOV = 0x4AC;
 				offFuncIsPlayer = 0xA4;
 				offFuncCenter = 0xD0;
 				break;
-			case 16: // Invasion
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 19: // Invasion
 				offm_rgAmmoLast = 0x514;
 				offm_iClientFOV = 0x46C;
 				break;
-			case 17: // Arctic-Incident
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 20: // Arctic-Incident
 				offm_rgAmmoLast = 0x5B8;
 				offm_iClientFOV = 0x510;
 				offFuncIsPlayer = 0xCC;
 				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
 				break;
-			case 18: // HL-Delta
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 21: // HL-Delta
 				offm_rgAmmoLast = 0x5C8;
 				offm_iClientFOV = 0x51C;
 				offFuncIsPlayer = 0xCC;
 				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
 				break;
-			case 20: // OPBT
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 23: // OPBT
 				offm_rgAmmoLast = 0x65C;
 				offm_iClientFOV = 0x5A4;
 				break;
-			case 21: // Parasomnia
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 24: // Parasomnia
 				offm_rgAmmoLast = 0x564;
 				offm_iClientFOV = 0x4B8;
 				offFuncIsPlayer = 0x98;
 				offFuncCenter = 0xC4;
 				break;
-			case 23: // AVP2
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 26: // AVP2
 				offm_rgAmmoLast = 0x550;
 				offm_iClientFOV = 0x4A8;
 				break;
-			case 24: // CStrike-Latest
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x660;
-				offm_iClientFOV = 0x5B0;
-				offFuncIsPlayer = 0xA0;
-				offFuncCenter = 0xCC;
-				offFuncObjectCaps = 0x18;
-				break;
-			case 25: // TFC-Latest
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x978;
-				offm_iClientFOV = 0x8CC;
-				offFuncIsPlayer = 0x98;
-				offFuncCenter = 0xC4;
-				offFuncObjectCaps = 0x18;
-				break;
-			case 26: // CoF-5936
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offm_rgAmmoLast = 0x25C0;
-				offm_iClientFOV = 0x250C;
+			case 27: // CoF-Mod-11
+				offm_rgAmmoLast = 0x23FC;
+				offm_iClientFOV = 0x2348;
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
-				offm_fStamina = 0x21F0;
-				offm_bInfiniteStamina = 0x21E8;
-				offm_pClientActiveItem = 0x2530;
-				offm_old_iAmmo = 288;
-				offm_CMultiManager_index = 228;
+				offm_fStamina = 0x203C;
+				offm_bInfiniteStamina = 0x2034;
+				offm_pClientActiveItem = 0x236C;
+				offm_old_iAmmo = 284;
+				offm_CMultiManager_index = 224;
 				is_cof = true;
 				break;
-			case 27: // CoF-Mod-155
-				maxAmmoSlots = MAX_AMMO_SLOTS;
+			case 28: // CoF-Mod-12
+				offm_rgAmmoLast = 0x244C;
+				offm_iClientFOV = 0x2398;
+				offFuncIsPlayer = 0xD0;
+				offFuncCenter = 0xFC;
+				offFuncObjectCaps = 0x40;
+				offm_fStamina = 0x208C;
+				offm_bInfiniteStamina = 0x2084;
+				offm_pClientActiveItem = 0x23BC;
+				offm_old_iAmmo = 284;
+				offm_iPlayerSaveLock = 0x4A8;
+				offm_CMultiManager_index = 224;
+				is_cof = true;
+				break;
+			case 29: // CoF-Mod-135
+				offm_rgAmmoLast = 0x2460;
+				offm_iClientFOV = 0x23AC;
+				offFuncIsPlayer = 0xD0;
+				offFuncCenter = 0xFC;
+				offFuncObjectCaps = 0x40;
+				offm_fStamina = 0x20A0;
+				offm_bInfiniteStamina = 0x2098;
+				offm_pClientActiveItem = 0x23D0;
+				offm_old_iAmmo = 284;
+				offm_iPlayerSaveLock = 0x4B4;
+				offm_CMultiManager_index = 224;
+				is_cof = true;
+				break;
+			case 30: // CoF-Mod-155
 				offm_rgAmmoLast = 0x2464;
 				offm_iClientFOV = 0x23B0;
 				offFuncIsPlayer = 0xD0;
@@ -635,13 +644,40 @@ void ServerDLL::FindStuff()
 				offm_CMultiManager_index = 224;
 				is_cof = true;
 				break;
-			case 28: // CSCZDS-3939
-				maxAmmoSlots = MAX_AMMO_SLOTS;
-				offFuncIsPlayer = 0xA8;
-				offFuncCenter = 0xDC;
-				offFuncObjectCaps = 0x18;
-				offm_rgAmmoLast = 0x53C;
-				offm_iClientFOV = 0x898;
+			case 31: // CoF-Steam-Release
+				offm_rgAmmoLast = 0x2474;
+				offm_iClientFOV = 0x23C0;
+				offFuncIsPlayer = 0xD0;
+				offFuncCenter = 0xFC;
+				offFuncObjectCaps = 0x40;
+				offm_fStamina = 0x20B4;
+				offm_bInfiniteStamina = 0x20AC;
+				offm_pClientActiveItem = 0x23E4;
+				offm_old_iAmmo = 288;
+				offm_CMultiManager_index = 228;
+				is_cof = true;
+				break;
+			case 32: // CoF-Steam-Latest
+				offm_rgAmmoLast = 0x25C0;
+				offm_iClientFOV = 0x250C;
+				offFuncIsPlayer = 0xD0;
+				offFuncCenter = 0xFC;
+				offFuncObjectCaps = 0x40;
+				offm_fStamina = 0x21F0;
+				offm_bInfiniteStamina = 0x21E8;
+				offm_pClientActiveItem = 0x2530;
+				offm_old_iAmmo = 288;
+				offm_CMultiManager_index = 228;
+				is_cof = true;
+				break;
+			case 33: // DayOfDefeat-Latest
+				offFuncIsPlayer = 0xB4;
+				offFuncCenter = 0xE0;
+				offFuncObjectCaps = 0x20;
+				break;
+			case 34: // DeathmatchClassic-Latest
+				offm_rgAmmoLast = 0x520;
+				offm_iClientFOV = 0x478;
 				break;
 			default:
 				assert(false);
@@ -757,7 +793,10 @@ void ServerDLL::FindStuff()
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;
-				size_CNode = 0x58;
+				if (is_czeror)
+					size_CNode = 0x60;
+				else
+					size_CNode = 0x58;
 				break;
 			default:
 				assert(false);
@@ -941,31 +980,37 @@ void ServerDLL::FindStuff()
 		} else {
 			ORIG_CBasePlayer__ForceClientDllUpdate_Linux = reinterpret_cast<_CBasePlayer__ForceClientDllUpdate_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer20ForceClientDllUpdateEv"));
 			if (ORIG_CBasePlayer__ForceClientDllUpdate_Linux) {
-				maxAmmoSlots = MAX_AMMO_SLOTS;
 				offm_rgAmmoLast = 0x56C; // 6153: 0x568
 				offm_iClientFOV = 0x4C4; // 6153: 0x4C0
 				if (ClientDLL::GetInstance().DoesGameDirContain("czeror")) {
-					offm_rgAmmoLast = 0x554;
-					offm_iClientFOV = 0x8B0;
+					offm_rgAmmoLast = 0x554; // 6153: 0x550
+					offm_iClientFOV = 0x8B0; // 6153: 0x8AC
 					offFuncIsPlayer = 0xA8;
 					offFuncCenter = 0xDC;
 					offFuncObjectCaps = 0x18;
 				}
 				if (ClientDLL::GetInstance().DoesGameDirContain("bshift")) {
-					offm_rgAmmoLast = 0x568;
-					offm_iClientFOV = 0x4C0;
+					offm_rgAmmoLast = 0x568; // 8684: 0x56C
+					offm_iClientFOV = 0x4C0; // 8684: 0x4C4
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike") || ClientDLL::GetInstance().DoesGameDirMatch("czero")) {
-					offm_rgAmmoLast = 0x674;
-					offm_iClientFOV = 0x5C4;
 					offFuncIsPlayer = 0xA0;
 					offFuncCenter = 0xCC;
 					offFuncObjectCaps = 0x18;
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("tfc")) {
-					offm_rgAmmoLast = 0x98C;
-					offm_iClientFOV = 0x8E0;
+					offm_rgAmmoLast = 0x98C; // 6153: 0x988
+					offm_iClientFOV = 0x8E0; // 6153: 0x8DC
 					offFuncObjectCaps = 0x1C;
+				}
+				if (ClientDLL::GetInstance().DoesGameDirMatch("dod")) {
+					offFuncIsPlayer = 0xB4;
+					offFuncCenter = 0xE0;
+					offFuncObjectCaps = 0x20;
+				}
+				if (ClientDLL::GetInstance().DoesGameDirContain("dmc")) {
+					offm_rgAmmoLast = 0x534;
+					offm_iClientFOV = 0x48C;
 				}
 				EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate [Linux] at %p.\n", ORIG_CBasePlayer__ForceClientDllUpdate_Linux);
 			} else {
@@ -1032,7 +1077,10 @@ void ServerDLL::FindStuff()
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;
-				size_CNode = 0x58;
+				if (ClientDLL::GetInstance().DoesGameDirContain("czeror"))
+					size_CNode = 0x60;
+				else
+					size_CNode = 0x58;
 
 				EngineDevMsg("[server dll] Found CGraph::InitGraph [Linux] at %p.\n", ORIG_CGraph__InitGraph_Linux);
 			} else {
@@ -1191,7 +1239,6 @@ void ServerDLL::FindStuff()
 		ORIG_COFGeneWorm__DyingThink_Linux = reinterpret_cast<_COFGeneWorm__DyingThink_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11COFGeneWorm10DyingThinkEv"));
 		if (ORIG_COFGeneWorm__DyingThink_Linux) {
 			EngineDevMsg("[server dll] Found COFGeneWorm::DyingThink [Linux] at %p.\n", ORIG_COFGeneWorm__DyingThink_Linux);
-			maxAmmoSlots = MAX_AMMO_SLOTS;
 			offm_rgAmmoLast = 0x61c; // 6153: 0x618
 			offm_iClientFOV = 0x4f8; // 6153: 0x4f4
 		} else {
@@ -2251,9 +2298,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 		}
 	}
 
-	static bool is_czeror = ClientDLL::GetInstance().DoesGameDirContain("czeror");
-
-	if (is_czeror && CVars::bxt_render_far_entities.GetBool())
+	if (ClientDLL::GetInstance().DoesGameDirContain("czeror") && CVars::bxt_render_far_entities.GetBool())
 	{
 		ent->v.flags |= FL_IMMUNE_LAVA; // Because the PVS check in AddToFullPack points to '524288' flags bit
 		ent->v.iuser1 = 1; // Similar to above explanation

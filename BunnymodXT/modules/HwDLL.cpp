@@ -3630,7 +3630,7 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Change_Type
 
 struct HwDLL::Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type
 {
-	USAGE("Usage: bxt_tas_editor_set_target_yaw_type <type>\n Set type of target_yaw for a point in the camera editor. Valid types (currently supported) are velocity_lock, look_at, and velocity.\n");
+	USAGE("Usage: bxt_tas_editor_set_target_yaw_type <type>\n Set type of target_yaw for a point in the camera editor. Valid types (currently supported) are velocity_lock and look_at [entity <index>] [<x> <y> <z>].\n");
 
 	static void handler(const char *what)
 	{
@@ -3646,6 +3646,9 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type
 			if (scan_entity) {
 				hw.tas_editor_set_target_yaw_look_at = true;
 				hw.tas_editor_set_target_yaw_look_at_entity = entity;
+				hw.tas_editor_set_target_yaw_look_at_x = 0;
+				hw.tas_editor_set_target_yaw_look_at_y = 0;
+				hw.tas_editor_set_target_yaw_look_at_z = 0;
 
 				if (scan_entity == 4) {
 					hw.tas_editor_set_target_yaw_look_at_x = x;

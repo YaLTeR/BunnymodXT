@@ -723,8 +723,10 @@ namespace TriangleDrawing
 							break;
 						case HLTAS::ConstraintsType::YAW:
 						case HLTAS::ConstraintsType::YAW_RANGE:
-						case HLTAS::ConstraintsType::LOOK_AT:
 							pTriAPI->Color4f(0, 1, 1, 1);
+							break;
+						case HLTAS::ConstraintsType::LOOK_AT:
+							pTriAPI->Color4f(1, 0, 1, 1);
 							break;
 					}
 

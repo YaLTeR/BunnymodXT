@@ -4356,7 +4356,10 @@ void HwDLL::InsertCommands()
 					}
 				}
 
-				if (StrafeState.Parameters.Parameters.LookAt.Entity != 0) {
+				StrafeState.TargetYawLookAtOrigin[0] = 0;
+				StrafeState.TargetYawLookAtOrigin[1] = 0;
+				StrafeState.TargetYawLookAtOrigin[2] = 0;
+				if (StrafeState.Parameters.Parameters.LookAt.Entity > 0) {
 					edict_t *edicts;
 					const int numEdicts = GetEdicts(&edicts);
 
@@ -4371,10 +4374,6 @@ void HwDLL::InsertCommands()
 						StrafeState.TargetYawLookAtOrigin[1] = origin[1];
 						StrafeState.TargetYawLookAtOrigin[2] = origin[2];
 					}
-				} else {
-					StrafeState.TargetYawLookAtOrigin[0] = 0;
-					StrafeState.TargetYawLookAtOrigin[1] = 0;
-					StrafeState.TargetYawLookAtOrigin[2] = 0;
 				}
 
 				simulation_ipc::send_simulated_frame_to_server(simulation_ipc::SimulatedFrame {

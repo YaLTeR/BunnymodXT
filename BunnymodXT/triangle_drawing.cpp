@@ -725,6 +725,9 @@ namespace TriangleDrawing
 						case HLTAS::ConstraintsType::YAW_RANGE:
 							pTriAPI->Color4f(0, 1, 1, 1);
 							break;
+						case HLTAS::ConstraintsType::LOOK_AT:
+							pTriAPI->Color4f(1, 0, 1, 1);
+							break;
 					}
 
 					Vector next_angles = player_datas[frame + 1].Viewangles;
@@ -1102,6 +1105,26 @@ namespace TriangleDrawing
 
 				ClientDLL::GetInstance().SetMouseState(false);
 				SDL::GetInstance().SetRelativeMouseMode(false);
+			}
+
+			// hover over single "target_yaw" and change type
+			if (selection.frame_bulk_index > 0 && (hw.tas_editor_set_target_yaw_velocity_lock || hw.tas_editor_set_target_yaw_look_at)) {
+				auto& frame_bulk = input.frame_bulks[selection.frame_bulk_index];
+				if (frame_bulk.AlgorithmParametersPresent) {
+					auto parameters = HLTAS::AlgorithmParameters {};
+					if (hw.tas_editor_set_target_yaw_look_at) {
+						parameters.Type = HLTAS::ConstraintsType::LOOK_AT;
+						parameters.Parameters.LookAt.Entity = hw.tas_editor_set_target_yaw_look_at_entity;
+						parameters.Parameters.LookAt.X = hw.tas_editor_set_target_yaw_look_at_x;
+						parameters.Parameters.LookAt.Y = hw.tas_editor_set_target_yaw_look_at_y;
+						parameters.Parameters.LookAt.Z = hw.tas_editor_set_target_yaw_look_at_z;
+					} else if (hw.tas_editor_set_target_yaw_velocity_lock) {
+						parameters.Type = HLTAS::ConstraintsType::VELOCITY_LOCK;
+					}
+
+					frame_bulk.SetAlgorithmParameters(parameters);
+					stale_index = selection.frame_bulk_index;
+				}
 			}
 
 			if (selection.frame_bulk_index > 0 && (hw.tas_editor_set_change_to_target_yaw || hw.tas_editor_set_change_to_target_yaw_offset || hw.tas_editor_set_change_to_yaw || hw.tas_editor_set_change_to_pitch)) {
@@ -2213,6 +2236,8 @@ namespace TriangleDrawing
 		hw.tas_editor_set_change_to_target_yaw_offset = false;
 		hw.tas_editor_set_change_to_yaw = false;
 		hw.tas_editor_set_change_to_pitch = false;
+		hw.tas_editor_set_target_yaw_velocity_lock = false;
+		hw.tas_editor_set_target_yaw_look_at = false;
 		hw.tas_editor_set_yaw = false;
 		hw.tas_editor_set_pitch = false;
 		hw.tas_editor_set_repeats = false;

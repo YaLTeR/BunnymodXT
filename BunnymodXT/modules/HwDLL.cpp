@@ -3628,6 +3628,41 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Change_Type
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type
+{
+	USAGE("Usage: bxt_tas_editor_set_target_yaw_type <type>\n Set type of target_yaw for a point in the camera editor. Valid types (currently supported) are velocity_lock and look_at [entity <index>] [<x> <y> <z>].\n");
+
+	static void handler(const char *what)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		if (!strcmp(what, "velocity_lock")) {
+			hw.tas_editor_set_target_yaw_velocity_lock = true;
+		} else {
+			unsigned int entity;
+			float x = 0, y = 0, z = 0;
+
+			int scan_entity = sscanf(what, "look_at entity %d %f %f %f", &entity, &x, &y, &z);
+			if (scan_entity) {
+				hw.tas_editor_set_target_yaw_look_at = true;
+				hw.tas_editor_set_target_yaw_look_at_entity = entity;
+
+				if (scan_entity == 4) {
+					hw.tas_editor_set_target_yaw_look_at_x = x;
+					hw.tas_editor_set_target_yaw_look_at_y = y;
+					hw.tas_editor_set_target_yaw_look_at_z = z;
+				}
+			} else if (sscanf(what, "look_at %f %f %f", &x, &y, &z) == 3) {
+				hw.tas_editor_set_target_yaw_look_at = true;
+				hw.tas_editor_set_target_yaw_look_at_entity = 0;
+				hw.tas_editor_set_target_yaw_look_at_x = x;
+				hw.tas_editor_set_target_yaw_look_at_y = y;
+				hw.tas_editor_set_target_yaw_look_at_z = z;
+			}
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_FreeCam
 {
 	USAGE("Usage: bxt_freecam <0|1>\n Enables the freecam mode. Most useful when paused with bxt_unlock_camera_during_pause 1.\n");
@@ -4173,6 +4208,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Left_Right_Count, Handler<unsigned long>>("bxt_tas_editor_set_left_right_count");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Toggle, Handler<const char*>>("bxt_tas_editor_toggle");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Change_Type, Handler<const char*>>("bxt_tas_editor_set_change_type");
+	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type, Handler<const char*>>("bxt_tas_editor_set_target_yaw_type");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save, Handler<>>("bxt_tas_editor_set_run_point_and_save");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Last_Point, Handler<>>("bxt_tas_editor_delete_last_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Point, Handler<>>("bxt_tas_editor_delete_point");
@@ -4317,6 +4353,26 @@ void HwDLL::InsertCommands()
 
 						if (++i == pushables.size())
 							break;
+					}
+				}
+
+				StrafeState.TargetYawLookAtOrigin[0] = 0;
+				StrafeState.TargetYawLookAtOrigin[1] = 0;
+				StrafeState.TargetYawLookAtOrigin[2] = 0;
+				if (StrafeState.Parameters.Parameters.LookAt.Entity > 0) {
+					edict_t *edicts;
+					const int numEdicts = GetEdicts(&edicts);
+
+					if (StrafeState.Parameters.Parameters.LookAt.Entity >= (unsigned int) numEdicts) {
+						StrafeState.Parameters.Parameters.LookAt.Entity = 0;
+					} else {				
+						const edict_t *ent = edicts + StrafeState.Parameters.Parameters.LookAt.Entity;
+						const entvars_t *pev = &(ent->v);
+						Vector origin = pev->origin + ((pev->mins + pev->maxs) / 2.f);
+
+						StrafeState.TargetYawLookAtOrigin[0] = origin[0];
+						StrafeState.TargetYawLookAtOrigin[1] = origin[1];
+						StrafeState.TargetYawLookAtOrigin[2] = origin[2];
 					}
 				}
 

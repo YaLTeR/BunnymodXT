@@ -451,7 +451,7 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Insert_Point;
 	struct Cmd_Plus_BXT_TAS_Editor_Insert_Point;
 	struct Cmd_Minus_BXT_TAS_Editor_Insert_Point;
-	struct Cmd_BXT_TAS_Editor_Force_Mark_As_Stale;
+	struct Cmd_BXT_TAS_Editor_Resimulate;
 	struct Cmd_BXT_TAS_Editor_Toggle;
 	struct Cmd_BXT_TAS_Editor_Set_Frametime;
 	struct Cmd_BXT_TAS_Editor_Set_Change_Type;

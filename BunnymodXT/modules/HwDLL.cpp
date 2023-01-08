@@ -3640,15 +3640,12 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type
 			hw.tas_editor_set_target_yaw_velocity_lock = true;
 		} else {
 			unsigned int entity;
-			float x, y, z;
+			float x = 0, y = 0, z = 0;
 
 			int scan_entity = sscanf(what, "look_at entity %d %f %f %f", &entity, &x, &y, &z);
 			if (scan_entity) {
 				hw.tas_editor_set_target_yaw_look_at = true;
 				hw.tas_editor_set_target_yaw_look_at_entity = entity;
-				hw.tas_editor_set_target_yaw_look_at_x = 0;
-				hw.tas_editor_set_target_yaw_look_at_y = 0;
-				hw.tas_editor_set_target_yaw_look_at_z = 0;
 
 				if (scan_entity == 4) {
 					hw.tas_editor_set_target_yaw_look_at_x = x;

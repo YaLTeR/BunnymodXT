@@ -1708,33 +1708,15 @@ void ServerDLL::LogPlayerMove(bool pre, uintptr_t pmove) const
 		hwDLL.logWriter.EndPostPlayer();
 }
 
-HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
+void ServerDLL::CoFChanges()
 {
-	HwDLL &hwDLL = HwDLL::GetInstance();
-
-	bool stuck_cur_frame = false;
-	static bool not_stuck_prev_frame = false;
-
-	if (ORIG_PM_CheckStuck)
-	{
-		stuck_cur_frame = ORIG_PM_CheckStuck();
-		if (!CVars::bxt_fire_on_stuck.IsEmpty() && stuck_cur_frame && not_stuck_prev_frame)
-		{
-			std::ostringstream ss;
-			ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
-
-			hwDLL.ORIG_Cbuf_InsertText(ss.str().c_str());
-		}
-		not_stuck_prev_frame = !stuck_cur_frame;
-	}
-
 	if (is_cof)
 	{
 		if (pCoF_Noclip_Preventing_Check_Byte)
 		{
-			if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0x75) && (*hwDLL.noclip_anglehack))
+			if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0x75) && (*HwDLL::GetInstance().noclip_anglehack))
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
-			else if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0xEB) && !(*hwDLL.noclip_anglehack))
+			else if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0xEB) && !(*HwDLL::GetInstance().noclip_anglehack))
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\x75"));
 		}
 
@@ -1753,7 +1735,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 			}
 		}
 
-		void* classPtr = (*hwDLL.sv_player)->v.pContainingEntity->pvPrivateData;
+		void* classPtr = (*HwDLL::GetInstance().sv_player)->v.pContainingEntity->pvPrivateData;
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 
 		// Infinite Stamina
@@ -1775,6 +1757,29 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 			}
 		}
 	}
+}
+
+HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
+{
+	HwDLL &hwDLL = HwDLL::GetInstance();
+
+	bool stuck_cur_frame = false;
+	static bool not_stuck_prev_frame = false;
+
+	if (ORIG_PM_CheckStuck)
+	{
+		stuck_cur_frame = ORIG_PM_CheckStuck();
+		if (!CVars::bxt_fire_on_stuck.IsEmpty() && stuck_cur_frame && not_stuck_prev_frame)
+		{
+			std::ostringstream ss;
+			ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
+
+			hwDLL.ORIG_Cbuf_InsertText(ss.str().c_str());
+		}
+		not_stuck_prev_frame = !stuck_cur_frame;
+	}
+
+	CoFChanges();
 
 	if (!ppmove)
 		return ORIG_PM_PlayerMove(server);

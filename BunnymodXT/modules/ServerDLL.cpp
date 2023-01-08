@@ -589,34 +589,47 @@ void ServerDLL::FindStuff()
 				offm_rgAmmoLast = 0x550;
 				offm_iClientFOV = 0x4A8;
 				break;
-			case 27: // CoF-Mod-11
-				offm_rgAmmoLast = 0x23FC;
-				offm_iClientFOV = 0x2348;
+			case 27: // CoF-Mod-10
+				offm_rgAmmoLast = 0x2440;
+				offm_iClientFOV = 0x238C;
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
-				offm_fStamina = 0x203C;
-				offm_bInfiniteStamina = 0x2034;
-				offm_pClientActiveItem = 0x236C;
+				offm_fStamina = 0x2080;
+				offm_bInfiniteStamina = 0x2078;
+				offm_pClientActiveItem = 0x23B0;
 				offm_old_iAmmo = 284;
 				offm_CMultiManager_index = 224;
 				is_cof = true;
 				break;
-			case 28: // CoF-Mod-12
-				offm_rgAmmoLast = 0x244C;
-				offm_iClientFOV = 0x2398;
+			case 28: // CoF-Mod-11
+				offm_rgAmmoLast = 0x2444;
+				offm_iClientFOV = 0x2390;
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
-				offm_fStamina = 0x208C;
-				offm_bInfiniteStamina = 0x2084;
-				offm_pClientActiveItem = 0x23BC;
+				offm_fStamina = 0x2084;
+				offm_bInfiniteStamina = 0x207C;
+				offm_pClientActiveItem = 0x23B4;
+				offm_old_iAmmo = 284;
+				offm_CMultiManager_index = 224;
+				is_cof = true;
+				break;
+			case 29: // CoF-Mod-12
+				offm_rgAmmoLast = 0x2450;
+				offm_iClientFOV = 0x239C;
+				offFuncIsPlayer = 0xD0;
+				offFuncCenter = 0xFC;
+				offFuncObjectCaps = 0x40;
+				offm_fStamina = 0x2090;
+				offm_bInfiniteStamina = 0x2088;
+				offm_pClientActiveItem = 0x23C0;
 				offm_old_iAmmo = 284;
 				offm_iPlayerSaveLock = 0x4A8;
 				offm_CMultiManager_index = 224;
 				is_cof = true;
 				break;
-			case 29: // CoF-Mod-135
+			case 30: // CoF-Mod-13-135
 				offm_rgAmmoLast = 0x2460;
 				offm_iClientFOV = 0x23AC;
 				offFuncIsPlayer = 0xD0;
@@ -630,7 +643,7 @@ void ServerDLL::FindStuff()
 				offm_CMultiManager_index = 224;
 				is_cof = true;
 				break;
-			case 30: // CoF-Mod-155
+			case 31: // CoF-Mod-14-155
 				offm_rgAmmoLast = 0x2464;
 				offm_iClientFOV = 0x23B0;
 				offFuncIsPlayer = 0xD0;
@@ -644,7 +657,7 @@ void ServerDLL::FindStuff()
 				offm_CMultiManager_index = 224;
 				is_cof = true;
 				break;
-			case 31: // CoF-Steam-Release
+			case 32: // CoF-Steam-Release
 				offm_rgAmmoLast = 0x2474;
 				offm_iClientFOV = 0x23C0;
 				offFuncIsPlayer = 0xD0;
@@ -657,7 +670,7 @@ void ServerDLL::FindStuff()
 				offm_CMultiManager_index = 228;
 				is_cof = true;
 				break;
-			case 32: // CoF-Steam-Latest
+			case 33: // CoF-Steam-Latest
 				offm_rgAmmoLast = 0x25C0;
 				offm_iClientFOV = 0x250C;
 				offFuncIsPlayer = 0xD0;
@@ -670,12 +683,12 @@ void ServerDLL::FindStuff()
 				offm_CMultiManager_index = 228;
 				is_cof = true;
 				break;
-			case 33: // DayOfDefeat-Latest
+			case 34: // DayOfDefeat-Latest
 				offFuncIsPlayer = 0xB4;
 				offFuncCenter = 0xE0;
 				offFuncObjectCaps = 0x20;
 				break;
-			case 34: // DeathmatchClassic-Latest
+			case 35: // DeathmatchClassic-Latest
 				offm_rgAmmoLast = 0x520;
 				offm_iClientFOV = 0x478;
 				break;

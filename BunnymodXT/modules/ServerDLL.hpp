@@ -142,6 +142,7 @@ protected:
 	bool IsPlayerMovingPushable(const entvars_t *pevPushable, const entvars_t *pevToucher, int push) const;
 
 	void DoWouldCrashMessage();
+	void CoFChanges();
 
 	void **ppmove;
 	ptrdiff_t offPlayerIndex;

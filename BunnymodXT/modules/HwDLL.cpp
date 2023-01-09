@@ -3495,6 +3495,23 @@ struct HwDLL::Cmd_Minus_BXT_TAS_Editor_Insert_Point
 	}
 };
 
+struct HwDLL::Cmd_BXT_TAS_Editor_Resimulate
+{
+	USAGE("Usage: bxt_tas_editor_resimulate\n Forces simulator client to resimulate.\n");
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+		auto& frame_bulks = hw.tas_editor_input.frame_bulks;
+
+		if (hw.tas_editor_mode == TASEditorMode::EDIT) {
+			if (frame_bulks.size() > 0) {
+				hw.tas_editor_input.mark_as_stale(0);
+			}
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Editor_Toggle
 {
 	USAGE("Usage: bxt_tas_editor_toggle <what>\n Toggles a function on the currently selected point. You can toggle:\n"
@@ -4196,6 +4213,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>>("bxt_print_entities");
 
+	wrapper::Add<Cmd_BXT_TAS_Editor_Resimulate, Handler<>>("bxt_tas_editor_resimulate");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Apply_Smoothing, Handler<>>("bxt_tas_editor_apply_smoothing");
 	wrapper::Add<Cmd_BXT_TAS_Optim_Init, Handler<>>("bxt_tas_optim_init");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Unset_Pitch, Handler<>>("bxt_tas_editor_unset_pitch");

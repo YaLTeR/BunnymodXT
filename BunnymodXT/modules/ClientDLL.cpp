@@ -1746,6 +1746,12 @@ HOOK_DEF_11(ClientDLL, void, __cdecl, EV_GetDefaultShellInfo, event_args_t*, arg
 
 HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioSetupBones, void*, thisptr)
 {
+	if ((offpCurrentEntity == 0) || (offpStudioHeader == 0))
+	{
+		ORIG_CStudioModelRenderer__StudioSetupBones(thisptr);
+		return;
+	}
+
 	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpCurrentEntity);
 	auto pStudioHeader = *reinterpret_cast<studiohdr_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpStudioHeader);
 	auto pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(pStudioHeader) +

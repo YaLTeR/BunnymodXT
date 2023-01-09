@@ -1021,7 +1021,7 @@ void ServerDLL::FindStuff()
 					offFuncCenter = 0xE0;
 					offFuncObjectCaps = 0x20;
 				}
-				if (ClientDLL::GetInstance().DoesGameDirContain("dmc")) {
+				if (ClientDLL::GetInstance().DoesGameDirMatch("dmc")) {
 					offm_rgAmmoLast = 0x534;
 					offm_iClientFOV = 0x48C;
 				}

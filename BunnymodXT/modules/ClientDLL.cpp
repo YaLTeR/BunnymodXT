@@ -940,6 +940,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_viewmodel_ofs_right);
 		REG(bxt_viewmodel_ofs_up);
 		REG(bxt_viewmodel_bob_angled);
+		REG(bxt_remove_punchangles);
 	}
 
 	if (ORIG_HUD_Init)
@@ -1050,9 +1051,6 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (pCS_SpeedScaling || pCS_SpeedScaling_Linux) {
 		REG(bxt_speed_scaling);
-	}
-	if (ORIG_V_PunchAxis) {
-		REG(bxt_remove_punchangles);
 	}
 	#undef REG
 }

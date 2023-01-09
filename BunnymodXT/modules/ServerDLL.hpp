@@ -82,7 +82,8 @@ public:
 
 	static void DoAutoStopTasks();
 
-	static void GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a);
+	static void GetTriggerColor(const char *classname, float &r, float &g, float &b);
+	static void GetTriggerAlpha(const char *classname, bool inactive, bool additive, float &a);
 
 	TraceResult TraceLine(const float v1[3], const float v2[3], int fNoMonsters, edict_t *pentToSkip) const;
 

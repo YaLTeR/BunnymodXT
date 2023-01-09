@@ -706,6 +706,7 @@ enum
 	kRenderFxExplode,			// Scale up really big!
 	kRenderFxGlowShell,			// Glowing Shell
 	kRenderFxClampMinScale,		// Keep this sprite from getting very small (SPRITES only!)
+	kRenderFxTrigger = 241,		// Smiley: Generated value from random.org
 };
 
 

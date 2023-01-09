@@ -160,7 +160,7 @@ namespace TriangleDrawing
 
 	static void DrawTriggers(triangleapi_s *pTriAPI)
 	{
-		if (!CVars::bxt_show_triggers.GetBool() || CVars::bxt_show_triggers_legacy.GetBool())
+		if (!CVars::bxt_show_triggers.GetBool())
 			return;
 
 		pTriAPI->RenderMode(kRenderTransAdd);
@@ -175,7 +175,10 @@ namespace TriangleDrawing
 				continue;
 
 			const char *classname = HwDLL::GetInstance().GetString(ent->v.classname);
-			if (std::strncmp(classname, "trigger_", 8) != 0)
+			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+			bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+
+			if (!is_trigger && !is_ladder)
 				continue;
 
 			const model_t *model = HwDLL::GetInstance().GetModelByIndex(ent->v.modelindex);
@@ -188,7 +191,8 @@ namespace TriangleDrawing
 				// Offset to make each surface look slightly different
 				const float offset = i * float(M_PI) / 7;
 				float r, g, b, a;
-				ServerDLL::GetTriggerColor(classname, !active, true, r, g, b, a);
+				ServerDLL::GetTriggerColor(classname, r, g, b);
+				ServerDLL::GetTriggerAlpha(classname, !active, true, a);
 				r /= 255.0f;
 				g /= 255.0f;
 				b /= 255.0f;

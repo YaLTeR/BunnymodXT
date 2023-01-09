@@ -1499,6 +1499,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_AddToFullPack) {
 		REG(bxt_show_hidden_entities);
 		REG(bxt_show_triggers_legacy);
+		REG(bxt_show_triggers_legacy_alpha);
 		REG(bxt_render_far_entities);
 	}
 	if (ORIG_PM_CheckStuck)
@@ -2218,9 +2219,80 @@ void ServerDLL::DoAutoStopTasks()
 	RuntimeData::Add(RuntimeData::GameEndMarker{});
 }
 
-void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool additive, float &r, float &g, float &b, float &a)
+void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float &b)
 {
-	assert(std::strncmp(classname, "trigger_", 8) == 0);
+	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+	if (!is_trigger && !is_ladder)
+		return;
+
+	if (is_ladder)
+	{
+		// Sky
+		r = 102;
+		g = 178;
+		b = 255;
+	}
+	else if (is_trigger)
+	{
+		classname += 8;
+		if (std::strcmp(classname, "changelevel") == 0) {
+			// Bright green
+			r = 79;
+			g = 255;
+			b = 10;
+		}
+		else if (std::strcmp(classname, "hurt") == 0) {
+			// Red
+			r = 255;
+			g = 0;
+			b = 0;
+		}
+		else if (std::strcmp(classname, "multiple") == 0) {
+			// Blue
+			r = 0;
+			g = 0;
+			b = 255;
+		}
+		else if (std::strcmp(classname, "once") == 0) {
+			// Cyan
+			r = 0;
+			g = 255;
+			b = 255;
+		}
+		else if (std::strcmp(classname, "push") == 0) {
+			// Bright yellow
+			r = 255;
+			g = 255;
+			b = 0;
+		}
+		else if (std::strcmp(classname, "teleport") == 0) {
+			// Dull green
+			r = 81;
+			g = 147;
+			b = 49;
+		}
+		else if (std::strcmp(classname, "transition") == 0) {
+			// Magenta
+			r = 203;
+			g = 103;
+			b = 212;
+		}
+		else {
+			// White
+			r = 255;
+			g = 255;
+			b = 255;
+		}
+	}
+}
+
+void ServerDLL::GetTriggerAlpha(const char *classname, bool inactive, bool additive, float &a)
+{
+	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+	if (!is_trigger && !is_ladder)
+		return;
 
 	// The alpha should be lower in additive modes.
 	constexpr std::array<std::array<float, 2>, 2> common_alphas{
@@ -2228,56 +2300,10 @@ void ServerDLL::GetTriggerColor(const char *classname, bool inactive, bool addit
 		std::array<float, 2>{ 50.0f, 20.0f }
 	};
 
-	classname += 8;
-	if (std::strcmp(classname, "changelevel") == 0) {
-		// Bright green
-		r = 79;
-		g = 255;
-		b = 10;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "hurt") == 0) {
-		// Red
-		r = 255;
-		g = 0;
-		b = 0;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "multiple") == 0) {
-		// Blue
-		r = 0;
-		g = 0;
-		b = 255;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "once") == 0) {
-		// Cyan
-		r = 0;
-		g = 255;
-		b = 255;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "push") == 0) {
-		// Bright yellow
-		r = 255;
-		g = 255;
-		b = 0;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "teleport") == 0) {
-		// Dull green
-		r = 81;
-		g = 147;
-		b = 49;
-		a = common_alphas[inactive][additive];
-	} else if (std::strcmp(classname, "transition") == 0) {
-		// Magenta
-		r = 203;
-		g = 103;
-		b = 212;
+	if (std::strcmp(classname, "trigger_transition") == 0)
 		a = additive ? 50.0f : 120.0f;
-	} else {
-		// White
-		r = 255;
-		g = 255;
-		b = 255;
+	else
 		a = common_alphas[inactive][additive];
-	}
 }
 
 HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state, int, e, edict_t*, ent, edict_t*, host, int, hostflags, int, player, unsigned char*, pSet)
@@ -2328,6 +2354,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 
 	const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + ent->v.classname;
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
 
 	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool()) {
 		bool show = ent->v.rendermode != kRenderNormal && ent->v.rendermode != kRenderGlow;
@@ -2356,14 +2383,12 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 				ent->v.rendermode = kRenderTransTexture;
 		}
 	}
-	else if (is_trigger && CVars::bxt_show_triggers_legacy.GetBool()) {
+	else if ((is_trigger || is_ladder) && CVars::bxt_show_triggers_legacy.GetBool()) {
 		ent->v.effects &= ~EF_NODRAW;
+		ent->v.renderamt = 0;
 		ent->v.rendermode = kRenderTransColor;
-		if (ent->v.solid == SOLID_NOT && std::strcmp(classname + 8, "transition") != 0)
-			ent->v.renderfx = kRenderNormal;
-		else
-			ent->v.renderfx = kRenderFxPulseFast;
-		GetTriggerColor(classname, ent->v.solid == SOLID_NOT, false, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z, ent->v.renderamt);
+		ent->v.renderfx = kRenderFxTrigger;
+		GetTriggerColor(classname, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z);
 	}
 
 	auto ret = ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);

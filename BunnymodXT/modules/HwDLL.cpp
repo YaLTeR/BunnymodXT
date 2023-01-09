@@ -160,6 +160,11 @@ extern "C" void __cdecl R_DrawViewModel()
 	HwDLL::HOOKED_R_DrawViewModel();
 }
 
+extern "C" void __cdecl R_PreDrawViewModel()
+{
+	HwDLL::HOOKED_R_PreDrawViewModel();
+}
+
 extern "C" byte *__cdecl Mod_LeafPVS(mleaf_t *leaf, model_t *model)
 {
 	return HwDLL::HOOKED_Mod_LeafPVS(leaf, model);
@@ -404,6 +409,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_R_DrawSequentialPoly);
 			MemUtils::MarkAsExecutable(ORIG_R_Clear);
 			MemUtils::MarkAsExecutable(ORIG_R_DrawViewModel);
+			MemUtils::MarkAsExecutable(ORIG_R_PreDrawViewModel);
 			MemUtils::MarkAsExecutable(ORIG_Mod_LeafPVS);
 			MemUtils::MarkAsExecutable(ORIG_SV_AddLinksToPM_);
 			MemUtils::MarkAsExecutable(ORIG_SV_WriteEntitiesToClient);
@@ -466,6 +472,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_R_DrawSequentialPoly, HOOKED_R_DrawSequentialPoly,
 			ORIG_R_Clear, HOOKED_R_Clear,
 			ORIG_R_DrawViewModel, HOOKED_R_DrawViewModel,
+			ORIG_R_PreDrawViewModel, HOOKED_R_PreDrawViewModel,
 			ORIG_Mod_LeafPVS, HOOKED_Mod_LeafPVS,
 			ORIG_SV_AddLinksToPM_, HOOKED_SV_AddLinksToPM_,
 			ORIG_SV_WriteEntitiesToClient, HOOKED_SV_WriteEntitiesToClient,
@@ -547,6 +554,7 @@ void HwDLL::Unhook()
 			ORIG_R_DrawSequentialPoly,
 			ORIG_R_Clear,
 			ORIG_R_DrawViewModel,
+			ORIG_R_PreDrawViewModel,
 			ORIG_Mod_LeafPVS,
 			ORIG_SV_AddLinksToPM_,
 			ORIG_SV_WriteEntitiesToClient,
@@ -632,6 +640,7 @@ void HwDLL::Clear()
 	ORIG_R_DrawSequentialPoly = nullptr;
 	ORIG_R_Clear = nullptr;
 	ORIG_R_DrawViewModel = nullptr;
+	ORIG_R_PreDrawViewModel = nullptr;
 	ORIG_Mod_LeafPVS = nullptr;
 	ORIG_SV_AddLinksToPM_ = nullptr;
 	ORIG_SV_WriteEntitiesToClient = nullptr;
@@ -1133,6 +1142,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find R_DrawViewModel.\n");
 
+		ORIG_R_PreDrawViewModel = reinterpret_cast<_R_PreDrawViewModel>(MemUtils::GetSymbolAddress(m_Handle, "R_PreDrawViewModel"));
+		if (ORIG_R_PreDrawViewModel)
+			EngineDevMsg("[hw dll] Found R_PreDrawViewModel at %p.\n", ORIG_R_PreDrawViewModel);
+		else
+			EngineDevWarning("[hw dll] Could not find R_PreDrawViewModel.\n");
+
 		ORIG_Mod_LeafPVS = reinterpret_cast<_Mod_LeafPVS>(MemUtils::GetSymbolAddress(m_Handle, "Mod_LeafPVS"));
 		if (ORIG_Mod_LeafPVS) {
 			EngineDevMsg("[hw dll] Found Mod_LeafPVS at %p.\n", ORIG_Mod_LeafPVS);
@@ -1251,6 +1266,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(R_DrawSequentialPoly)
 		DEF_FUTURE(R_Clear)
 		DEF_FUTURE(R_DrawViewModel)
+		DEF_FUTURE(R_PreDrawViewModel)
 		DEF_FUTURE(Mod_LeafPVS)
 		DEF_FUTURE(CL_RecordHUDCommand)
 		DEF_FUTURE(CL_Record_f)
@@ -2190,6 +2206,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(R_DrawSequentialPoly);
 		GET_FUTURE(R_Clear);
 		GET_FUTURE(R_DrawViewModel);
+		GET_FUTURE(R_PreDrawViewModel);
 		GET_FUTURE(Mod_LeafPVS);
 		GET_FUTURE(PF_GetPhysicsKeyValue);
 		GET_FUTURE(SV_AddLinksToPM_);
@@ -4103,7 +4120,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_duration);
 	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_multiplier);
 	RegisterCVar(CVars::bxt_disable_vgui);
-	RegisterCVar(CVars::bxt_show_only_viewmodel_and_player);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
 	RegisterCVar(CVars::bxt_wallhack_alpha);
@@ -4126,12 +4142,17 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_force_clear);
 	RegisterCVar(CVars::bxt_disable_gamedir_check_in_demo);
 	RegisterCVar(CVars::bxt_remove_fps_limit);
+	RegisterCVar(CVars::bxt_disable_world);
+	RegisterCVar(CVars::bxt_disable_particles);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
 
 	if (ORIG_R_DrawViewModel)
 		RegisterCVar(CVars::bxt_viewmodel_fov);
+
+	if (ORIG_R_DrawViewModel && ORIG_R_PreDrawViewModel)
+		RegisterCVar(CVars::bxt_remove_viewmodel);
 
 	CVars::sv_cheats.Assign(FindCVar("sv_cheats"));
 	CVars::fps_max.Assign(FindCVar("fps_max"));
@@ -5808,7 +5829,7 @@ HOOK_DEF_3(HwDLL, void, __cdecl, V_ApplyShake, float*, origin, float*, angles, f
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawSkyBox)
 {
-	if (CVars::sv_cheats.GetBool() && (CVars::bxt_skybox_remove.GetBool() || CVars::bxt_wallhack.GetBool()))
+	if (CVars::bxt_skybox_remove.GetBool() || (CVars::sv_cheats.GetBool() && CVars::bxt_wallhack.GetBool()))
 		return;
 
 	ORIG_R_DrawSkyBox();
@@ -6036,6 +6057,9 @@ HOOK_DEF_2(HwDLL, void, __cdecl, R_DrawSequentialPoly, msurface_t *, surf, int, 
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawViewModel)
 {
+	if (CVars::bxt_remove_viewmodel.GetBool())
+		return;
+
 	// If the current's frame FOV is not default_fov, we are zoomed in, in that case don't override frustum
 	if (NeedViewmodelAdjustments())
 	{
@@ -6059,11 +6083,19 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawViewModel)
 	ORIG_R_DrawViewModel();
 }
 
+HOOK_DEF_0(HwDLL, void, __cdecl, R_PreDrawViewModel)
+{
+	if (CVars::bxt_remove_viewmodel.GetBool())
+		return;
+
+	ORIG_R_PreDrawViewModel();
+}
+
 HOOK_DEF_0(HwDLL, void, __cdecl, R_Clear)
 {
 	// This is needed or everything will look washed out or with unintended
 	// motion blur.
-	if (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool() || CVars::bxt_skybox_remove.GetBool() || CVars::bxt_show_only_viewmodel_and_player.GetBool()))) {
+	if (CVars::bxt_water_remove.GetBool() || CVars::bxt_force_clear.GetBool() || CVars::bxt_disable_world.GetBool() || CVars::bxt_skybox_remove.GetBool() || (CVars::sv_cheats.GetBool() && (CVars::bxt_wallhack.GetBool()))) {
 		if (!CVars::bxt_clear_color.IsEmpty()) {
 			unsigned r = 0, g = 0, b = 0;
 			std::istringstream ss(CVars::bxt_clear_color.GetString());
@@ -6292,7 +6324,7 @@ HOOK_DEF_1(HwDLL, void, __cdecl, CBaseUI__HideGameUI_Linux, void*, thisptr)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawWorld)
 {
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel_and_player.GetBool())
+	if (CVars::bxt_disable_world.GetBool())
 		return;
 
 	ORIG_R_DrawWorld();
@@ -6300,7 +6332,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawWorld)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawParticles)
 {
-	if (CVars::sv_cheats.GetBool() && CVars::bxt_show_only_viewmodel_and_player.GetBool())
+	if (CVars::bxt_disable_particles.GetBool())
 		return;
 
 	ORIG_R_DrawParticles();

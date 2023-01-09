@@ -41,7 +41,7 @@
 	X(bxt_tas_write_log, "0") \
 	X(bxt_tas_playback_speed, "1") \
 	X(bxt_disable_vgui, "0") \
-	X(bxt_show_only_viewmodel_and_player, "0") \
+	X(bxt_show_only_players, "0") \
 	X(bxt_force_zmax, "0") \
 	X(bxt_viewmodel_fov, "0") \
 	X(bxt_viewmodel_disable_idle, "0") \
@@ -55,6 +55,9 @@
 	X(bxt_disable_gamedir_check_in_demo, "0") \
 	X(bxt_remove_fps_limit, "0") \
 	X(bxt_cof_disable_save_lock, "0") \
+	X(bxt_remove_viewmodel, "0") \
+	X(bxt_disable_world, "0") \
+	X(bxt_disable_particles, "0") \
 	X(bxt_fire_on_stuck, "") \
 	X(bxt_autojump, "0") \
 	X(bxt_autojump_priority, "1") \
@@ -63,6 +66,7 @@
 	X(bxt_show_hidden_entities, "0") \
 	X(bxt_show_hidden_entities_clientside, "0") \
 	X(bxt_show_triggers_legacy, "0") \
+	X(bxt_show_triggers_legacy_alpha, "120") \
 	X(bxt_show_pickup_bbox, "0") \
 	X(bxt_disable_autosave, "0") \
 	X(bxt_disable_changelevel, "0") \
@@ -78,6 +82,10 @@
 	X(bxt_cof_slowdown_if_use_on_ground, "0") \
 	X(cl_righthand, "0") \
 	X(bxt_remove_punchangles, "0") \
+	X(bxt_disable_brush_entities, "0") \
+	X(bxt_disable_sprite_entities, "0") \
+	X(bxt_disable_studio_entities, "0") \
+	X(bxt_disable_player_corpses, "0") \
 	X(bxt_hide_other_players, "0") \
 	X(bxt_disable_hud, "0") \
 	X(bxt_disable_nightvision_sprite, "0") \

@@ -2226,51 +2226,64 @@ void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float
 	if (!is_trigger && !is_ladder)
 		return;
 
-	if (std::strcmp(classname, "trigger_changelevel") == 0) {
-		// Bright green
-		r = 79;
-		g = 255;
-		b = 10;
-	} else if (std::strcmp(classname, "trigger_hurt") == 0) {
-		// Red
-		r = 255;
-		g = 0;
-		b = 0;
-	} else if (std::strcmp(classname, "trigger_multiple") == 0) {
-		// Blue
-		r = 0;
-		g = 0;
-		b = 255;
-	} else if (std::strcmp(classname, "trigger_once") == 0) {
-		// Cyan
-		r = 0;
-		g = 255;
-		b = 255;
-	} else if (std::strcmp(classname, "trigger_push") == 0) {
-		// Bright yellow
-		r = 255;
-		g = 255;
-		b = 0;
-	} else if (std::strcmp(classname, "trigger_teleport") == 0) {
-		// Dull green
-		r = 81;
-		g = 147;
-		b = 49;
-	} else if (std::strcmp(classname, "trigger_transition") == 0) {
-		// Magenta
-		r = 203;
-		g = 103;
-		b = 212;
-	} else if (std::strncmp(classname, "trigger_", 8) == 0) {
-		// White
-		r = 255;
-		g = 255;
-		b = 255;
-	} else if (std::strcmp(classname, "func_ladder") == 0) {
+	if (is_ladder)
+	{
 		// Sky
 		r = 102;
 		g = 178;
 		b = 255;
+	}
+	else if (is_trigger)
+	{
+		classname += 8;
+		if (std::strcmp(classname, "changelevel") == 0) {
+			// Bright green
+			r = 79;
+			g = 255;
+			b = 10;
+		}
+		else if (std::strcmp(classname, "hurt") == 0) {
+			// Red
+			r = 255;
+			g = 0;
+			b = 0;
+		}
+		else if (std::strcmp(classname, "multiple") == 0) {
+			// Blue
+			r = 0;
+			g = 0;
+			b = 255;
+		}
+		else if (std::strcmp(classname, "once") == 0) {
+			// Cyan
+			r = 0;
+			g = 255;
+			b = 255;
+		}
+		else if (std::strcmp(classname, "push") == 0) {
+			// Bright yellow
+			r = 255;
+			g = 255;
+			b = 0;
+		}
+		else if (std::strcmp(classname, "teleport") == 0) {
+			// Dull green
+			r = 81;
+			g = 147;
+			b = 49;
+		}
+		else if (std::strcmp(classname, "transition") == 0) {
+			// Magenta
+			r = 203;
+			g = 103;
+			b = 212;
+		}
+		else {
+			// White
+			r = 255;
+			g = 255;
+			b = 255;
+		}
 	}
 }
 
@@ -2371,8 +2384,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 		}
 	}
 	else if ((is_trigger || is_ladder) && CVars::bxt_show_triggers_legacy.GetBool()) {
-		if (is_trigger)
-			ent->v.effects &= ~EF_NODRAW;
+		ent->v.effects &= ~EF_NODRAW;
 		ent->v.renderamt = 0;
 		ent->v.rendermode = kRenderTransColor;
 		ent->v.renderfx = kRenderFxTrigger;

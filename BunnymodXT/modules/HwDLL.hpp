@@ -478,6 +478,7 @@ protected:
 	struct Cmd_BXT_Show_Bullets_Clear;
 	struct Cmd_BXT_Show_Bullets_Enemy_Clear;
 	struct Cmd_BXT_Split;
+	struct Cmd_BXT_Split_On;
 	struct Cmd_BXT_Splits_Add;
 	struct Cmd_BXT_Splits_Clear;
 	struct Cmd_BXT_Splits_Delete;

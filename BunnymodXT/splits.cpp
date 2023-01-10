@@ -28,6 +28,39 @@ namespace Splits
 		, reached(false)
 		, time()
 		, speed()
+		, targets_entity(false)
+	{
+	}
+
+	Split::Split(std::string targetname)
+		: Trigger(Vector(0, 0, 0), Vector(0, 0, 0))
+		, map_name()
+		, name(targetname)
+		, track_horizontal_speed(true)
+		, track_vertical_speed(false)
+		, track_x(false)
+		, track_y(false)
+		, track_z(false)
+		, reached(false)
+		, time()
+		, speed()
+		, targets_entity(true)
+	{
+	}
+
+	Split::Split(std::string targetname, std::string map_name)
+		: Trigger(Vector(0, 0, 0), Vector(0, 0, 0))
+		, map_name(map_name)
+		, name(targetname)
+		, track_horizontal_speed(true)
+		, track_vertical_speed(false)
+		, track_x(false)
+		, track_y(false)
+		, track_z(false)
+		, reached(false)
+		, time()
+		, speed()
+		, targets_entity(true)
 	{
 	}
 
@@ -43,6 +76,7 @@ namespace Splits
 		, reached(false)
 		, time()
 		, speed()
+		, targets_entity(false)
 	{
 	}
 
@@ -58,6 +92,7 @@ namespace Splits
 		, reached(false)
 		, time()
 		, speed()
+		, targets_entity(false)
 	{
 	}
 
@@ -73,6 +108,7 @@ namespace Splits
 		, reached(false)
 		, time()
 		, speed()
+		, targets_entity(false)
 	{
 	}
 
@@ -194,7 +230,33 @@ namespace Splits
 		origin = value;
 	}
 
+	bool Split::get_targets_entity() const
+	{
+		return targets_entity;
+	}
+
+	void Split::set_targets_entity(bool value)
+	{
+		targets_entity = value;
+	}
+
 	void Split::touch()
+	{
+		if (targets_entity)
+			return;
+
+		activate();
+	}
+
+	void Activate(const char* idOrName)
+	{
+		const auto split = Splits::GetSplitByNameOrId(idOrName, false);
+		if (split && !split->get_reached() && split->get_targets_entity()) {
+			split->activate();
+		}
+	}
+
+	void Split::activate()
 	{
 		if (placing)
 			return;
@@ -275,6 +337,11 @@ namespace Splits
 
 	Split* GetSplitByNameOrId(const char* idOrName)
 	{
+		return GetSplitByNameOrId(idOrName, true);
+	}
+
+	Split* GetSplitByNameOrId(const char* idOrName, bool warnIfMissing)
+	{
 		auto itr = std::find_if(splits.begin(), splits.end(),
 			[&idOrName](const Split& s) { return std::string(idOrName) == s.get_name(); });
 
@@ -285,7 +352,9 @@ namespace Splits
 			idx = std::abs(std::distance(splits.begin(), itr)) + 1;
 
 		if (idx == 0 || splits.size() < idx) {
-			HwDLL::GetInstance().ORIG_Con_Printf("There's no split with this name or id.\n");
+			if (warnIfMissing)
+				HwDLL::GetInstance().ORIG_Con_Printf("There's no split with this name or id.\n");
+
 			return nullptr;
 		}
 

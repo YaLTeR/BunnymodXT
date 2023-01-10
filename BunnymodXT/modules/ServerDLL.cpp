@@ -122,6 +122,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_COFGeneWorm__DyingThink, HOOKED_COFGeneWorm__DyingThink,
 			ORIG_CApache__DyingThink, HOOKED_CApache__DyingThink,
 			ORIG_CBreakable__Die, HOOKED_CBreakable__Die,
+			ORIG_CBaseDoor__DoorActivate, HOOKED_CBaseDoor__DoorActivate,
 			ORIG_CBaseDoor__DoorGoUp, HOOKED_CBaseDoor__DoorGoUp,
 			ORIG_CBaseDoor__DoorHitTop, HOOKED_CBaseDoor__DoorHitTop,
 			ORIG_CMultiManager__ManagerThink, HOOKED_CMultiManager__ManagerThink,
@@ -141,6 +142,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CBaseEntity__FireBulletsPlayer, HOOKED_CBaseEntity__FireBulletsPlayer,
 			ORIG_CBaseEntity__FireBulletsPlayer_Linux, HOOKED_CBaseEntity__FireBulletsPlayer_Linux,
 			ORIG_CBaseButton__ButtonUse, HOOKED_CBaseButton__ButtonUse,
+			ORIG_CBaseButton__ButtonTriggerAndWait, HOOKED_CBaseButton__ButtonTriggerAndWait,
 			ORIG_CTriggerEndSection__EndSectionUse, HOOKED_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch,
 			ORIG_ShiftMonsters, HOOKED_ShiftMonsters,
@@ -168,6 +170,7 @@ void ServerDLL::Unhook()
 			ORIG_COFGeneWorm__DyingThink,
 			ORIG_CApache__DyingThink,
 			ORIG_CBreakable__Die,
+			ORIG_CBaseDoor__DoorActivate,
 			ORIG_CBaseDoor__DoorGoUp,
 			ORIG_CBaseDoor__DoorHitTop,
 			ORIG_CMultiManager__ManagerThink,
@@ -187,6 +190,7 @@ void ServerDLL::Unhook()
 			ORIG_CBaseEntity__FireBulletsPlayer_Linux,
 			ORIG_CBaseMonster__Killed,
 			ORIG_CBaseButton__ButtonUse,
+			ORIG_CBaseButton__ButtonTriggerAndWait,
 			ORIG_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch,
 			ORIG_ShiftMonsters,
@@ -218,6 +222,7 @@ void ServerDLL::Clear()
 	ORIG_CApache__DyingThink = nullptr;
 	ORIG_CBreakable__Die = nullptr;
 	ORIG_CBreakable__Die_Linux = nullptr;
+	ORIG_CBaseDoor__DoorActivate = nullptr;
 	ORIG_CBaseDoor__DoorGoUp = nullptr;
 	ORIG_CBaseDoor__DoorHitTop = nullptr;
 	ORIG_CBaseMonster__Killed = nullptr;
@@ -251,6 +256,7 @@ void ServerDLL::Clear()
 	ORIG_CBaseEntity__FireBulletsPlayer_Linux = nullptr;
 	ORIG_CChangeLevel__InTransitionVolume = nullptr;
 	ORIG_CBaseButton__ButtonUse = nullptr;
+	ORIG_CBaseButton__ButtonTriggerAndWait = nullptr;
 	ORIG_CTriggerEndSection__EndSectionUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionTouch = nullptr;
 	ORIG_ShiftMonsters = nullptr;
@@ -789,6 +795,7 @@ void ServerDLL::FindStuff()
 	auto fPM_UnDuck = FindAsync(ORIG_PM_UnDuck, patterns::server::PM_UnDuck);
 	auto fCBasePlayer__GiveNamedItem = FindAsync(ORIG_CBasePlayer__GiveNamedItem, patterns::server::CBasePlayer__GiveNamedItem);
 	auto fShiftMonsters = FindAsync(ORIG_ShiftMonsters, patterns::server::ShiftMonsters);
+	auto fCBaseDoor__DoorActivate = FindAsync(ORIG_CBaseDoor__DoorActivate, patterns::server::CBaseDoor__DoorActivate);
 
 	auto fCGraph__InitGraph = FindAsync(
 		ORIG_CGraph__InitGraph,
@@ -1174,7 +1181,7 @@ void ServerDLL::FindStuff()
 			EngineWarning("bxt_disable_changelevel is not available.\n");
 		}
 	}
-
+	
 	ORIG_CBaseButton__ButtonUse = reinterpret_cast<_CBaseButton__ButtonUse>(MemUtils::GetSymbolAddress(m_Handle, "?ButtonUse@CBaseButton@@QAEXPAVCBaseEntity@@0W4USE_TYPE@@M@Z"));
 	{
 		if (ORIG_CBaseButton__ButtonUse) {
@@ -1182,6 +1189,17 @@ void ServerDLL::FindStuff()
 		}
 		else {
 			EngineDevWarning("[server dll] Could not find CBaseButton::ButtonUse.\n");
+		}
+	}
+
+	ORIG_CBaseButton__ButtonTriggerAndWait = reinterpret_cast<_CBaseButton__ButtonTriggerAndWait>(MemUtils::GetSymbolAddress(m_Handle, "?TriggerAndWait@CBaseButton@@QAEXXZ"));
+	{
+		if (ORIG_CBaseButton__ButtonTriggerAndWait) {
+			EngineDevMsg("[server dll] Found CBaseButton::TriggerAndWait at %p.\n", ORIG_CBaseButton__ButtonTriggerAndWait);
+		}
+		else {
+			EngineDevWarning("[server dll] Could not find CBaseButton::TriggerAndWait.\n");
+			EngineWarning("Using a func_button's target name to split through bxt_split_on <target_name> may not work.\n");
 		}
 	}
 
@@ -1279,6 +1297,19 @@ void ServerDLL::FindStuff()
 		} else {
 			EngineDevWarning("[server dll] Could not find CBreakable::Die.\n");
 			EngineWarning("Automatic timer stopping in Counter-Strike: Condition Zero Deleted Scenes is not available.\n");
+		}
+	}
+
+	{
+		auto pattern = fCBaseDoor__DoorActivate.get();
+		if (ORIG_CBaseDoor__DoorActivate) {
+			if (pattern == patterns::server::CBaseDoor__DoorActivate.cend())
+				EngineDevMsg("[server dll] Found CBaseDoor::DoorActivate at %p.\n", ORIG_CBaseDoor__DoorActivate);
+			else
+				EngineDevMsg("[server dll] Found CBaseDoor::DoorActivate at %p (using the %s pattern).\n", ORIG_CBaseDoor__DoorActivate, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find CBaseDoor::DoorActivate.\n");
+			EngineWarning("Splitting on door activation is not available.\n");
 		}
 	}
 
@@ -2085,6 +2116,20 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CBreakable__Die_Linux, void*, thisptr)
 	return ORIG_CBreakable__Die_Linux(thisptr);
 }
 
+HOOK_DEF_2(ServerDLL, int, __fastcall, CBaseDoor__DoorActivate, void*, thisptr, int, edx)
+{
+	auto isActivated = ORIG_CBaseDoor__DoorActivate(thisptr, edx);
+
+	if (isActivated && HwDLL::GetInstance().ppGlobals) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->targetname) {
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+			Splits::Activate(targetname);
+		}
+	}
+	return isActivated;
+}
+
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
@@ -2166,7 +2211,11 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 			// We first need to check if the pCaller is a multi_manager since FireTargets can be called by anyone
 			if (!std::strcmp(classname, "multi_manager")) {
 				OnMultiManagerFired(targetname);
+			} else {
+				// Fire any splitter that matches this fired entity's name
+				Splits::Activate(targetname);
 			}
+
 		}
 	}
 
@@ -2210,6 +2259,12 @@ void ServerDLL::OnMultiManagerFired(const char *targetname)
 			HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
 		}
 	}
+
+	// Fire any splitter that matches this multimanager name
+	// This is also repeated in FireTargets for non-multimanagers, because there may be multimanagers
+	// that are triggered by other means that are not FireTargets. So there may be some overlap but
+	// we cover more cases this way
+	Splits::Activate(targetname);
 }
 
 void ServerDLL::DoAutoStopTasks()
@@ -2965,21 +3020,50 @@ HOOK_DEF_6(ServerDLL, void, __fastcall, CBaseButton__ButtonUse, void*, thisptr, 
 {
 	if (HwDLL::GetInstance().ppGlobals) {
 		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
-		if (pev && pev->target) {
-			const char* target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
-			if (!CVars::bxt_fire_on_button_target.IsEmpty() && !CVars::bxt_fire_on_button_command.IsEmpty()) {
-				if (!std::strcmp(target, CVars::bxt_fire_on_button_target.GetString().c_str()))
-				{
-					std::ostringstream ss;
-					ss << CVars::bxt_fire_on_button_command.GetString().c_str() << "\n";
+		if (pev) {
+			if (pev->target) {
+				const char* target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
+				if (!CVars::bxt_fire_on_button_target.IsEmpty() && !CVars::bxt_fire_on_button_command.IsEmpty()) {
+					if (!std::strcmp(target, CVars::bxt_fire_on_button_target.GetString().c_str()))
+					{
+						std::ostringstream ss;
+						ss << CVars::bxt_fire_on_button_command.GetString().c_str() << "\n";
 
-					HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+						HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+					}
 				}
+			}
+			if (pev->targetname)
+			{
+				// Fire any splitter that matches this button's name
+				// TODO: check for this button's availability, it may not be usable yet, like the button in the test chamber,
+				// that only works after the master entity has been triggered
+				const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+				Splits::Activate(targetname);
 			}
 		}
 	}
 
 	return ORIG_CBaseButton__ButtonUse(thisptr, edx, pActivator, pCaller, useType, value);
+}
+
+HOOK_DEF_2(ServerDLL, void, __fastcall, CBaseButton__ButtonTriggerAndWait, void*, thisptr, int, edx)
+{
+	if (HwDLL::GetInstance().ppGlobals) {
+		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->target) {
+			// Fire any splitter that matches this button's target's name. This one compared to ButtonUse, should
+			// already have the button's master entity triggered and the button should already be enabled, so it's
+			// better than the ButtonUse in that regard, but it doesn't get called for every button...
+			
+			// TODO: check for this button's availability, it may not be usable yet, like the button in the test chamber,
+			// that only works after the master entity has been triggered
+			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
+			Splits::Activate(target);
+		}
+	}
+
+	return ORIG_CBaseButton__ButtonTriggerAndWait(thisptr, edx);
 }
 
 HOOK_DEF_6(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionUse, void*, thisptr, int, edx, void*, pActivator, void*, pCaller, int, useType, float, value)

@@ -3984,6 +3984,21 @@ struct HwDLL::Cmd_BXT_Split
 	}
 };
 
+struct HwDLL::Cmd_BXT_Split_On
+{
+	USAGE("Usage: bxt_split_on <target_name> [map_name]\n Tells BunnySplit to split when activating an entity by the specified name, and prints to console the current time.\n");
+
+	static void handler(const char* targetname)
+	{
+		Splits::splits.emplace_back(std::string(targetname));
+	}
+
+	static void handler(const char* targetname, const char* map_name)
+	{
+		Splits::splits.emplace_back(std::string(targetname), std::string(map_name));
+	}
+};
+
 struct HwDLL::Cmd_BXT_Splits_Add
 {
 	USAGE("Usage: bxt_splits_add <x1> <y1> <z1> <x2> <y2> <z2> [map_name] [name]\n Adds a split trigger in a form of axis-aligned cuboid with opposite corners at coordinates (x1, y1, z1) and (x2, y2, z2).\n");
@@ -4088,34 +4103,38 @@ struct HwDLL::Cmd_BXT_Splits_Export
 			if (!first)
 				oss << command_separator;
 
-			oss << "bxt_splits_add " << std::fixed << std::setprecision(1)
-				<< corners.first.x << " " << corners.first.y << " " << corners.first.z << " "
-				<< corners.second.x << " " << corners.second.y << " " << corners.second.z;
+			if (split.get_targets_entity()) {
+				oss << "bxt_split_on " << split.get_name() << " " << split.get_map();
+			} else {
+				oss << "bxt_splits_add " << std::fixed << std::setprecision(1)
+					<< corners.first.x << " " << corners.first.y << " " << corners.first.z << " "
+					<< corners.second.x << " " << corners.second.y << " " << corners.second.z;
 
-			if (!split.get_map().empty())
-				oss << command_separator << "bxt_splits_set_map \"" << split.get_map() << '\"';
+				if (!split.get_map().empty())
+					oss << command_separator << "bxt_splits_set_map \"" << split.get_map() << '\"';
 
-			if (!split.get_name().empty())
-				oss << command_separator << "bxt_splits_set_name \"" << split.get_name() << '\"';
+				if (!split.get_name().empty())
+					oss << command_separator << "bxt_splits_set_name \"" << split.get_name() << '\"';
 
-			// Note that by default a split always tracks horizontal speed. If this behaviour changes,
-			// we have to change this part too. If we always print the command regardless of the value,
-			// then the output command/script will be huge
-			if (!split.get_track_horizontal())
-				oss << command_separator << "bxt_splits_track_horizontal_speed 0";
+				// Note that by default a split always tracks horizontal speed. If this behaviour changes,
+				// we have to change this part too. If we always print the command regardless of the value,
+				// then the output command/script will be huge
+				if (!split.get_track_horizontal())
+					oss << command_separator << "bxt_splits_track_horizontal_speed 0";
 
-			if (split.get_track_vertical())
-				oss << command_separator << "bxt_splits_track_vertical_speed 1";
+				if (split.get_track_vertical())
+					oss << command_separator << "bxt_splits_track_vertical_speed 1";
 
-			if (split.get_track_x())
-				oss << command_separator << "bxt_splits_track_x 1";
+				if (split.get_track_x())
+					oss << command_separator << "bxt_splits_track_x 1";
 
-			if (split.get_track_y())
-				oss << command_separator << "bxt_splits_track_y 1";
+				if (split.get_track_y())
+					oss << command_separator << "bxt_splits_track_y 1";
 
-			if (split.get_track_z())
-				oss << command_separator << "bxt_splits_track_z 1";
+				if (split.get_track_z())
+					oss << command_separator << "bxt_splits_track_z 1";
 
+			}
 			hw.ORIG_Con_Printf(oss.str().c_str());
 
 			first = false;
@@ -4678,6 +4697,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Show_Bullets_Enemy_Clear, Handler<>>("bxt_show_bullets_enemy_clear");
 
 	wrapper::Add<Cmd_BXT_Split, Handler<const char*>>("bxt_split");
+	wrapper::Add<Cmd_BXT_Split_On, Handler<const char*>, Handler<const char*, const char*>>("bxt_split_on");
 	wrapper::Add<
 		Cmd_BXT_Splits_Add,
 		Handler<float, float, float, float, float, float>,

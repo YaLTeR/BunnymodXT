@@ -1085,6 +1085,11 @@ namespace patterns
 			"CoF-Mod-155",
 			"55 8B EC 83 EC 48 53 56 57 C7 45 ?? 00 00 00 00 68 ?? ?? ?? ?? 8D"
 		);
+
+		PATTERNS(CBaseDoor__DoorActivate,
+			"HL-WON",
+			"51 56 8B F1 57 8D BE ?? ?? ?? ??"
+		);
 	}
 
 	namespace client

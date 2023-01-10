@@ -36,9 +36,13 @@ namespace Splits
 		Interprocess::Time time;
 		Vector speed;
 		Vector origin;
+
+		bool targets_entity;
 		
 	public:
 		Split(); // For bxt_split and changelevel triggers
+		Split(std::string name);
+		Split(std::string name, std::string map_name);
 		Split(Vector corner1, Vector corner2);
 		Split(Vector corner1, Vector corner2, std::string map_name);
 		Split(Vector corner1, Vector corner2, std::string map_name, std::string name);
@@ -77,6 +81,11 @@ namespace Splits
 
 		const Vector get_origin() const;
 		void set_origin(Vector value);
+		
+		bool get_targets_entity() const;
+		void set_targets_entity(bool value);
+
+		void activate();
 
 	protected:
 		void touch(); // override
@@ -90,7 +99,10 @@ namespace Splits
 	extern bool placing;
 	extern Split* last_reached;
 
+	void Activate(const char* id_or_name);
+
 	Split* GetSplitByNameOrId(const char* id_or_name);
+	Split* GetSplitByNameOrId(const char* id_or_name, bool warn);
 	const std::string GetSummary(Split& split);
 
 	void PrintAll();

@@ -506,7 +506,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 		if (!is_cof_steam) {
 			ClientDLL::GetInstance().pEngfuncs = nullptr;
 			ServerDLL::GetInstance().pEngfuncs = nullptr;
-			MessageBox(NULL, "Loaded Bunnymod XT (CoF steam version) in non-CoF game! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
+			MessageBox(NULL, "Loaded Bunnymod XT (CoF Steam version) in non-CoF game! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
 		}
 		#else
 		if (is_cof_steam) {

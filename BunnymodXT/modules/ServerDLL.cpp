@@ -1007,6 +1007,8 @@ void ServerDLL::FindStuff()
 					offm_iClientFOV = 0x4C0; // 8684: 0x4C4
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike") || ClientDLL::GetInstance().DoesGameDirMatch("czero")) {
+					offm_rgAmmoLast = 0x674;
+					offm_iClientFOV = 0x5C4;
 					offFuncIsPlayer = 0xA0;
 					offFuncCenter = 0xCC;
 					offFuncObjectCaps = 0x18;
@@ -1017,6 +1019,8 @@ void ServerDLL::FindStuff()
 					offFuncObjectCaps = 0x1C;
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("dod")) {
+					offm_rgAmmoLast = 0x4F8; // 6153: 0x4F4
+					offm_iClientFOV = 0x448; // 6153: 0x444
 					offFuncIsPlayer = 0xB4;
 					offFuncCenter = 0xE0;
 					offFuncObjectCaps = 0x20;

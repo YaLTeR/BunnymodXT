@@ -3675,6 +3675,9 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type
 		} else {
 			unsigned int entity;
 			float x = 0, y = 0, z = 0;
+			hw.tas_editor_set_target_yaw_look_at_x = 0;
+			hw.tas_editor_set_target_yaw_look_at_y = 0;
+			hw.tas_editor_set_target_yaw_look_at_z = 0;
 
 			int scan_entity = sscanf(what, "look_at entity %d %f %f %f", &entity, &x, &y, &z);
 			if (scan_entity) {

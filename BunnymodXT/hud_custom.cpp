@@ -867,7 +867,7 @@ namespace CustomHud
 						out << "Monsters: Can open" << '\n';
 				}
 
-				if ((strstr(classname, "func_door") != NULL) || (strncmp(classname, "func_rotating", 13) == NULL) || (strncmp(classname, "func_train", 10) == NULL))
+				if ((strstr(classname, "func_door") != NULL) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
 					out << "Damage: " << ent->v.dmg << '\n';
 
 				if (CVars::bxt_hud_entity_info.GetInt() == 2)

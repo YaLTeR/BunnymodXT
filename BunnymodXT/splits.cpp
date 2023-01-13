@@ -345,7 +345,7 @@ namespace Splits
 	Split* GetSplitByNameOrId(const char* idOrName, bool warnIfMissing)
 	{
 		auto itr = std::find_if(splits.begin(), splits.end(),
-			[&idOrName](const Split& s) { return std::string(idOrName) == s.get_name(); });
+			[&idOrName](const Split& s) { return !strcmp(idOrName, s.get_name().c_str()); });
 
 		unsigned long idx = 0;
 		if (itr == splits.end())

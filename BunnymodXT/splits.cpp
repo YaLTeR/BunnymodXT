@@ -351,7 +351,7 @@ namespace Splits
 		if (itr == splits.end())
 			idx = std::strtoul(idOrName, nullptr, 10);
 		else
-			idx = std::abs(std::distance(splits.begin(), itr)) + 1;
+			idx = itr - Splits::splits.begin() + 1;
 
 		if (idx == 0 || splits.size() < idx) {
 			if (warnIfMissing)

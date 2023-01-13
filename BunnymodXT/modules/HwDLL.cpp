@@ -4053,7 +4053,7 @@ struct HwDLL::Cmd_BXT_Splits_Delete
 		if (itr == Splits::splits.end())
 			idx = std::strtoul(id_or_name, nullptr, 10);
 		else
-			idx = std::abs(std::distance(Splits::splits.begin(), itr)) + 1;
+			idx = itr - Splits::splits.begin() + 1;
 
 		if (idx == 0 || Splits::splits.size() < idx) {
 			HwDLL::GetInstance().ORIG_Con_Printf("There's no split with this name or id.\n");

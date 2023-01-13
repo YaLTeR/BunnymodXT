@@ -4051,7 +4051,7 @@ struct HwDLL::Cmd_BXT_Splits_Delete
 	{
 		// First try to find it by name, otherwise we'll try to find by id
 		const auto itr = std::find_if(Splits::splits.begin(), Splits::splits.end(),
-			[&id_or_name](const Splits::Split& s) { return std::string(id_or_name) == s.get_name(); });
+			[&id_or_name](const Splits::Split& s) { return !strcmp(id_or_name, s.get_name().c_str()); });
 
 		unsigned long idx = 0;
 		if (itr == Splits::splits.end())
@@ -4164,7 +4164,7 @@ struct HwDLL::Cmd_BXT_Splits_List
 	{
 		std::vector<Splits::Split> map_splits;
 		std::copy_if(Splits::splits.begin(), Splits::splits.end(), std::back_inserter(map_splits),
-			[&map_name](Splits::Split &s){ return std::string(map_name) == s.get_map(); } );
+			[&map_name](Splits::Split &s){ return !strcmp(map_name, s.get_map().c_str()); } );
 
 		if (map_splits.empty()) {
 			HwDLL::GetInstance().ORIG_Con_Printf("There are no splits in the specified map.\n");

@@ -267,6 +267,16 @@ namespace Splits
 			return;
 		}
 
+		if (reached)
+		{
+			// We've already passed through this split, so don't do anything if player goes back through it
+			// If they want to start over, they have to reset the timer
+			// TODO: maybe add a cvar to clear the split times (Reset()) when reaching the last split, in case
+			// someone has a circuit-like map with laps where they want to keep splitting on the same splits
+			// but without resetting the timer
+			return;
+		}
+
 		bool found_non_reached = false;
 		bool found_reached = false;
 		for (size_t i = 0; i < splits.size(); ++i)
@@ -278,16 +288,6 @@ namespace Splits
 				found_reached = true;
 			else
 				found_non_reached = true;
-		}
-
-		if (reached)
-		{
-			// We've already passed through this split, so don't do anything if player goes back through it
-			// If they want to start over, they have to reset the timer
-			// TODO: maybe add a cvar to clear the split times (Reset()) when reaching the last split, in case
-			// someone has a circuit-like map with laps where they want to keep splitting on the same splits
-			// but without resetting the timer
-			return;
 		}
 
 		if (!found_reached)

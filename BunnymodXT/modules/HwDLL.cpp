@@ -2907,7 +2907,7 @@ struct HwDLL::Cmd_BXT_Camera_Offset
 void HwDLL::TimerStart()
 {
 	if (!CustomHud::GetCountingTime())
-	HwDLL::GetInstance().Called_Timer = true;
+		HwDLL::GetInstance().Called_Timer = true;
 
 	CustomHud::SaveTimeToDemo();
 	return CustomHud::SetCountingTime(true);
@@ -4050,8 +4050,7 @@ struct HwDLL::Cmd_BXT_Splits_Delete
 	static void handler(const char* id_or_name)
 	{
 		// First try to find it by name, otherwise we'll try to find by id
-		const auto itr = std::find_if(Splits::splits.
-			begin(), Splits::splits.end(),
+		const auto itr = std::find_if(Splits::splits.begin(), Splits::splits.end(),
 			[&id_or_name](const Splits::Split& s) { return std::string(id_or_name) == s.get_name(); });
 
 		unsigned long idx = 0;

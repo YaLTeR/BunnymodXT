@@ -1088,7 +1088,7 @@ namespace patterns
 
 		PATTERNS(CBaseDoor__DoorActivate,
 			"HL-WON",
-			"51 56 8B F1 57 8D BE ?? ?? ?? ??"
+			"51 56 8B F1 57 8D BE"
 		);
 	}
 

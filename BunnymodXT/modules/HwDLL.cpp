@@ -4114,26 +4114,26 @@ struct HwDLL::Cmd_BXT_Splits_Export
 
 				if (!split.get_name().empty())
 					oss << command_separator << "bxt_splits_set_name \"" << split.get_name() << '\"';
-
-				// Note that by default a split always tracks horizontal speed. If this behaviour changes,
-				// we have to change this part too. If we always print the command regardless of the value,
-				// then the output command/script will be huge
-				if (!split.get_track_horizontal())
-					oss << command_separator << "bxt_splits_track_horizontal_speed 0";
-
-				if (split.get_track_vertical())
-					oss << command_separator << "bxt_splits_track_vertical_speed 1";
-
-				if (split.get_track_x())
-					oss << command_separator << "bxt_splits_track_x 1";
-
-				if (split.get_track_y())
-					oss << command_separator << "bxt_splits_track_y 1";
-
-				if (split.get_track_z())
-					oss << command_separator << "bxt_splits_track_z 1";
-
 			}
+
+			// Note that by default a split always tracks horizontal speed. If this behaviour changes,
+			// we have to change this part too. If we always print the command regardless of the value,
+			// then the output command/script will be huge
+			if (!split.get_track_horizontal())
+				oss << command_separator << "bxt_splits_track_horizontal_speed 0";
+
+			if (split.get_track_vertical())
+				oss << command_separator << "bxt_splits_track_vertical_speed 1";
+
+			if (split.get_track_x())
+				oss << command_separator << "bxt_splits_track_x 1";
+
+			if (split.get_track_y())
+				oss << command_separator << "bxt_splits_track_y 1";
+
+			if (split.get_track_z())
+				oss << command_separator << "bxt_splits_track_z 1";
+
 			hw.ORIG_Con_Printf(oss.str().c_str());
 
 			first = false;

@@ -1181,7 +1181,7 @@ void ServerDLL::FindStuff()
 			EngineWarning("bxt_disable_changelevel is not available.\n");
 		}
 	}
-	
+
 	ORIG_CBaseButton__ButtonUse = reinterpret_cast<_CBaseButton__ButtonUse>(MemUtils::GetSymbolAddress(m_Handle, "?ButtonUse@CBaseButton@@QAEXPAVCBaseEntity@@0W4USE_TYPE@@M@Z"));
 	{
 		if (ORIG_CBaseButton__ButtonUse) {
@@ -2215,7 +2215,6 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 				// Fire any splitter that matches this fired entity's name
 				Splits::Activate(targetname);
 			}
-
 		}
 	}
 

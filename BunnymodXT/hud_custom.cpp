@@ -1565,12 +1565,12 @@ namespace CustomHud
 			return;
 		
 		const auto split = Splits::last_reached;
-		if (!split || !split->get_reached())
+		if (!split || !split->reached)
 		{
 			// No splits have been touched yet
 			return;
 		}
-		const auto& splitTime = split->get_time();
+		const auto& splitTime = split->time;
 
 		auto fadeoutDuration = CVars::bxt_hud_split_fadeout.GetFloat();
 		const auto duration = CVars::bxt_hud_split_duration.GetFloat();
@@ -1645,16 +1645,16 @@ namespace CustomHud
 			// TODO: create a "bxt_hud_split_speed_below_time" cvar and draw it by default next to the time instead of below?
 			// I'm not drawing it next to the time yet because I would like to put a separator like "|" between time and speed,
 			// and I have to figure out how to draw it nicely, similar to the dot or numbers and not like the text in bxt_hud_origin
-			const auto vecSpeed = split->get_speed();
+			const auto vecSpeed = split->speed;
 			double speed = 0.0;
-			if (split->get_track_horizontal())
+			if (split->track_horizontal_speed)
 			{
-				if (split->get_track_vertical())
+				if (split->track_vertical_speed)
 					speed = vecSpeed.Length();
 				else
 					speed = vecSpeed.Length2D();
 			}
-			else if (split->get_track_vertical())
+			else if (split->track_vertical_speed)
 				speed = vecSpeed.z;
 			else
 				return; // I guess they don't want to print the speed for this specific split

@@ -7,6 +7,7 @@ namespace Splits
 {
 	class Split : public CustomTriggers::Trigger
 	{
+	public:
 		// If non-empty, it means this split is scoped to a single map, and
 		// it won't work outside of it. If empty, it's applied on every map
 		std::string map_name;
@@ -38,8 +39,7 @@ namespace Splits
 		Vector origin;
 
 		bool targets_entity;
-		
-	public:
+
 		Split(); // For bxt_split and changelevel triggers
 		Split(std::string name);
 		Split(std::string name, std::string map_name);
@@ -48,42 +48,6 @@ namespace Splits
 		Split(Vector corner1, Vector corner2, std::string map_name, std::string name);
 
 		void set_command(std::string new_command); // override
-
-		const std::string& get_name() const;
-		void set_name(std::string new_name);
-		
-		const std::string& get_map() const;
-		void set_map(std::string new_map);
-		
-		bool get_track_horizontal() const;
-		void set_track_horizontal_speed(bool value);
-		
-		bool get_track_vertical() const;
-		void set_track_vertical_speed(bool value);
-		
-		bool get_track_x() const;
-		void set_track_x(bool value);
-		
-		bool get_track_y() const;
-		void set_track_y(bool value);
-		
-		bool get_track_z() const;
-		void set_track_z(bool value);
-		
-		bool get_reached() const;
-		void set_reached(bool value);
-		
-		const Interprocess::Time& get_time() const;
-		void set_time(Interprocess::Time value);
-
-		const Vector get_speed() const;
-		void set_speed(Vector value);
-
-		const Vector get_origin() const;
-		void set_origin(Vector value);
-		
-		bool get_targets_entity() const;
-		void set_targets_entity(bool value);
 
 		void activate();
 

@@ -16,12 +16,12 @@ namespace Splits
 
 		// Whether this split is gonna account for the horizontal and/or vertical components
 		// of velocity when printing the speed at this split. Sometimes you just want to know
-		// the vertical speed, because you go through the split trigger as you're falling down
+		// the vertical speed, because you go through the split as you're falling down
 		bool track_horizontal_speed;
 		bool track_vertical_speed;
 
 		// Whether this split will print the different components of the position where you touch
-		// the split trigger. e.g.: if there's a split trigger right after a door that opens upwards
+		// the split trigger/entity. e.g.: if there's a split right after a door that opens upwards
 		// and you usually try to go under the door with some speed as soon as the you can fit through
 		// the gap, then the height (Z) at which you touch the trigger can be useful data, thus you can
 		// tell if that specific part was optimal or not
@@ -29,10 +29,10 @@ namespace Splits
 		bool track_y;
 		bool track_z;
 
-		// Whether the player already went through this split trigger
+		// Whether the player already went through this split
 		bool reached;
 		
-		// Time, speed and position at which the player got to this split trigger
+		// Time, speed and position at which the player got to this split
 		Interprocess::Time time;
 		Vector speed;
 		Vector origin;

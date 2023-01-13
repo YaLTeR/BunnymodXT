@@ -4031,12 +4031,12 @@ struct HwDLL::Cmd_BXT_Splits_Clear
 
 struct HwDLL::Cmd_BXT_Splits_Delete
 {
-	USAGE("Usage: bxt_splits_delete [id]\n Deletes the last placed split trigger.\n If an id is given, deletes the split trigger with the given id.\n");
+	USAGE("Usage: bxt_splits_delete [id]\n Deletes the last placed split.\n If an id is given, deletes the split with the given id.\n");
 
 	static void handler()
 	{
 		if (Splits::splits.empty()) {
-			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any splits.\n");
 			return;
 		}
 
@@ -4090,7 +4090,7 @@ struct HwDLL::Cmd_BXT_Splits_Export
 		auto command_separator = (export_type == ExportType::SCRIPT) ? '\n' : ';';
 
 		if (Splits::splits.empty()) {
-			hw.ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			hw.ORIG_Con_Printf("You haven't placed any splits.\n");
 			return;
 		}
 
@@ -4151,7 +4151,7 @@ struct HwDLL::Cmd_BXT_Splits_List
 	static void handler()
 	{
 		if (Splits::splits.empty()) {
-			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any splits.\n");
 			return;
 		}
 		Splits::PrintList(Splits::splits);
@@ -4188,7 +4188,7 @@ struct HwDLL::Cmd_BXT_Splits_Set_Map
 	static void handler(const char* newMap)
 	{
 		if (Splits::splits.empty()) {
-			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any splits.\n");
 			return;
 		}
 
@@ -4210,7 +4210,7 @@ struct HwDLL::Cmd_BXT_Splits_Set_Name
 	static void handler(const char* newName)
 	{
 		if (Splits::splits.empty()) {
-			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any splits.\n");
 			return;
 		}
 
@@ -4232,7 +4232,7 @@ struct HwDLL::Cmd_BXT_Splits_Track_Horizontal_Speed
 	static void handler(int value)
 	{
 		if (Splits::splits.empty()) {
-			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any splits.\n");
 			return;
 		}
 
@@ -4254,7 +4254,7 @@ struct HwDLL::Cmd_BXT_Splits_Track_Vertical_Speed
 	static void handler(int value)
 	{
 		if (Splits::splits.empty()) {
-			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any splits.\n");
 			return;
 		}
 
@@ -4276,7 +4276,7 @@ struct HwDLL::Cmd_BXT_Splits_Track_X
 	static void handler(int value)
 	{
 		if (Splits::splits.empty()) {
-			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any splits.\n");
 			return;
 		}
 
@@ -4298,7 +4298,7 @@ struct HwDLL::Cmd_BXT_Splits_Track_Y
 	static void handler(int value)
 	{
 		if (Splits::splits.empty()) {
-			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any splits.\n");
 			return;
 		}
 
@@ -4320,7 +4320,7 @@ struct HwDLL::Cmd_BXT_Splits_Track_Z
 	static void handler(int value)
 	{
 		if (Splits::splits.empty()) {
-			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any split triggers.\n");
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any splits.\n");
 			return;
 		}
 

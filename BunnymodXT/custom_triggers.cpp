@@ -36,19 +36,19 @@ namespace CustomTriggers
 	}
 
 	Trigger::Trigger(Vector corner1, Vector corner2)
-		: corner_min(corner1)
-		, corner_max(corner2)
-		, command()
+		: command()
 		, player_touching(false)
+		, corner_min(corner1)
+		, corner_max(corner2)
 	{
 		normalize();
 	}
 
 	Trigger::Trigger(Vector corner1, Vector corner2, std::string command)
-		: corner_min(corner1)
-		, corner_max(corner2)
-		, command(command)
+		: command(command)
 		, player_touching(false)
+		, corner_min(corner1)
+		, corner_max(corner2)
 	{
 		normalize();
 	}

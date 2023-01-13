@@ -7,12 +7,12 @@ namespace Splits
 {
 	class Split : public CustomTriggers::Trigger
 	{
-		// Split name that can be matched with the list of "maps" provided in BunnySplit
-		std::string name;
-
 		// If non-empty, it means this split is scoped to a single map, and
 		// it won't work outside of it. If empty, it's applied on every map
 		std::string map_name;
+
+		// Split name that can be matched with the list of "maps" provided in BunnySplit
+		std::string name;
 
 		// Whether this split is gonna account for the horizontal and/or vertical components
 		// of velocity when printing the speed at this split. Sometimes you just want to know

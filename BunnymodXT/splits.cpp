@@ -122,126 +122,6 @@ namespace Splits
 		// because this is just a more specific kind of trigger
 	}
 
-	const std::string& Split::get_name() const
-	{
-		return name;
-	}
-
-	void Split::set_name(std::string new_map)
-	{
-		name = std::move(new_map);
-	}
-
-	const std::string& Split::get_map() const
-	{
-		return map_name;
-	}
-
-	void Split::set_map(std::string new_map)
-	{
-		map_name = std::move(new_map);
-	}
-
-	bool Split::get_track_horizontal() const
-	{
-		return track_horizontal_speed;
-	}
-
-	void Split::set_track_horizontal_speed(bool value)
-	{
-		track_horizontal_speed = value;
-	}
-
-	bool Split::get_track_vertical() const
-	{
-		return track_vertical_speed;
-	}
-
-	void Split::set_track_vertical_speed(bool value)
-	{
-		track_vertical_speed = value;
-	}
-
-	bool Split::get_track_x() const
-	{
-		return track_x;
-	}
-
-	void Split::set_track_x(bool value)
-	{
-		track_x = value;
-	}
-
-	bool Split::get_track_y() const
-	{
-		return track_y;
-	}
-
-	void Split::set_track_y(bool value)
-	{
-		track_y = value;
-	}
-
-	bool Split::get_track_z() const
-	{
-		return track_z;
-	}
-
-	void Split::set_track_z(bool value)
-	{
-		track_z = value;
-	}
-
-	bool Split::get_reached() const
-	{
-		return reached;
-	}
-
-	void Split::set_reached(bool value)
-	{
-		reached = value;
-	}
-
-	const Interprocess::Time& Split::get_time() const
-	{
-		return time;
-	}
-
-	void Split::set_time(Interprocess::Time value)
-	{
-		time = value;
-	}
-
-	const Vector Split::get_speed() const
-	{
-		return speed;
-	}
-
-	void Split::set_speed(Vector value)
-	{
-		speed = value;
-	}
-
-	const Vector Split::get_origin() const
-	{
-		return origin;
-	}
-
-	void Split::set_origin(Vector value)
-	{
-		origin = value;
-	}
-
-	bool Split::get_targets_entity() const
-	{
-		return targets_entity;
-	}
-
-	void Split::set_targets_entity(bool value)
-	{
-		targets_entity = value;
-	}
-
 	void Split::touch()
 	{
 		if (targets_entity)
@@ -253,7 +133,7 @@ namespace Splits
 	void Activate(const char* idOrName)
 	{
 		const auto split = Splits::GetSplitByNameOrId(idOrName, false);
-		if (split && !split->get_reached() && split->get_targets_entity()) {
+		if (split && !split->reached && split->targets_entity) {
 			split->activate();
 		}
 	}
@@ -286,7 +166,7 @@ namespace Splits
 			if (&splits[i] == this)
 				continue; // ignore the one we've just touched
 
-			if (splits[i].get_reached())
+			if (splits[i].reached)
 				found_reached = true;
 			else
 				found_non_reached = true;
@@ -318,13 +198,13 @@ namespace Splits
 
 		last_reached = this;
 
-		set_reached(true);
-		set_time(CustomHud::GetTime());
+		reached = true;
+		time = CustomHud::GetTime();
 		const auto& player = HwDLL::GetInstance().GetPlayerEdict();
 		if (player)
 		{
-			set_speed(player->v.velocity);
-			set_origin(player->v.origin);
+			speed = player->v.velocity;
+			origin = player->v.origin;
 		}
 
 		if (CVars::bxt_splits_print.GetBool())
@@ -345,7 +225,7 @@ namespace Splits
 	Split* GetSplitByNameOrId(const char* idOrName, bool warnIfMissing)
 	{
 		auto itr = std::find_if(splits.begin(), splits.end(),
-			[&idOrName](const Split& s) { return !strcmp(idOrName, s.get_name().c_str()); });
+			[&idOrName](const Split& s) { return !strcmp(idOrName, s.name.c_str()); });
 
 		unsigned long idx = 0;
 		if (itr == splits.end())
@@ -367,11 +247,11 @@ namespace Splits
 	{
 		const auto dataSeparator = " | ";
 
-		auto name     = split.get_name();
-		auto map_name = split.get_map();
+		auto name     = split.name;
+		auto map_name = split.map_name;
 
-		const auto time  = split.get_time();
-		const auto speed = split.get_speed();
+		const auto time  = split.time;
+		const auto speed = split.speed;
 
 		if (name.empty())
 			name = "(unnamed)";
@@ -408,24 +288,24 @@ namespace Splits
 		}
 		oss << static_cast<int>(time.milliseconds);
 
-		if (split.get_track_horizontal())
+		if (split.track_horizontal_speed)
 		{
-			if (split.get_track_vertical())
+			if (split.track_vertical_speed)
 				oss << dataSeparator << speed.Length() << " u/s 3D";
 			else
 				oss << dataSeparator << speed.Length2D() << " u/s horiz.";
 		}
-		else if (split.get_track_vertical())
+		else if (split.track_vertical_speed)
 			oss << dataSeparator << speed.z <<" u/s vert.";
 
-		if (split.get_track_x())
-			oss << dataSeparator << "x = " << split.get_origin().x;
+		if (split.track_x)
+			oss << dataSeparator << "x = " << split.origin.x;
 
-		if (split.get_track_y())
-			oss << dataSeparator << "y = " << split.get_origin().y;
+		if (split.track_y)
+			oss << dataSeparator << "y = " << split.origin.y;
 
-		if (split.get_track_z())
-			oss << dataSeparator << "z = " << split.get_origin().z;
+		if (split.track_z)
+			oss << dataSeparator << "z = " << split.origin.z;
 
 		oss << dataSeparator << name << dataSeparator << map_name;
 
@@ -439,7 +319,7 @@ namespace Splits
 
 		std::vector<Splits::Split> completedSplits;
 		std::copy_if(Splits::splits.begin(), Splits::splits.end(), std::back_inserter(completedSplits),
-			[&](Splits::Split &s){ return s.get_reached(); } );
+			[&](Splits::Split &s){ return s.reached; } );
 
 		if (completedSplits.empty())
 		{
@@ -462,27 +342,27 @@ namespace Splits
 			const auto corners = split.get_corner_positions();
 
 			std::ostringstream oss;
-			oss << i + 1 << ": `" << split.get_name() << "` - `" << split.get_map() << "` - ("
+			oss << i + 1 << ": `" << split.name << "` - `" << split.map_name << "` - ("
 				<< corners.first.x << ", " << corners.first.y << ", " << corners.first.z << ") | ("
 				<< corners.second.x << ", " << corners.second.y << ", " << corners.second.z << ")";
 
-			if (split.get_track_horizontal())
+			if (split.track_horizontal_speed)
 			{
-				if (split.get_track_vertical())
+				if (split.track_vertical_speed)
 					oss << " - 3D";
 				else
 					oss << " - horizontal";
 			}
-			else if (split.get_track_vertical())
+			else if (split.track_vertical_speed)
 				oss << " - vertical";
 
-			if (split.get_track_x())
+			if (split.track_x)
 				oss << " - tracking X";
 
-			if (split.get_track_y())
+			if (split.track_y)
 				oss << " - tracking Y";
 
-			if (split.get_track_z())
+			if (split.track_z)
 				oss << " - tracking Z";
 
 			oss << "\n";
@@ -500,10 +380,10 @@ namespace Splits
 	{
 		for (auto& split : splits)
 		{
-			split.set_reached(false);
-			split.set_time(Interprocess::Time{});
-			split.set_speed(Vector(0, 0, 0));
-			split.set_origin(Vector(0, 0, 0));
+			split.reached = false;
+			split.time = Interprocess::Time{};
+			split.speed = Vector(0, 0, 0);
+			split.origin = Vector(0, 0, 0);
 		}
 		last_reached = nullptr;
 		printed_on_end = false;

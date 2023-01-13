@@ -3974,10 +3974,10 @@ struct HwDLL::Cmd_BXT_Split
 		const auto& time = CustomHud::GetTime();
 
 		Splits::Split fake_split;
-		fake_split.set_name(name);
-		fake_split.set_time(time);
-		fake_split.set_speed(speed);
-		fake_split.set_origin(origin);
+		fake_split.name = std::move(name);
+		fake_split.time = time;
+		fake_split.speed = speed;
+		fake_split.origin = origin;
 
 		Splits::PrintSplitCompletion(fake_split);
 		Interprocess::WriteMapChange(time, name);
@@ -4050,7 +4050,7 @@ struct HwDLL::Cmd_BXT_Splits_Delete
 			return;
 
 		const auto it = std::find_if(Splits::splits.begin(), Splits::splits.end(), [&split](const Splits::Split& s) {
-			return split->get_name() == s.get_name();
+			return split->name == s.name;
 		});
 
 		if (it != Splits::splits.end())
@@ -4096,36 +4096,36 @@ struct HwDLL::Cmd_BXT_Splits_Export
 			if (!first)
 				oss << command_separator;
 
-			if (split.get_targets_entity()) {
-				oss << "bxt_split_on " << split.get_name() << " " << split.get_map();
+			if (split.targets_entity) {
+				oss << "bxt_split_on_entity " << split.name << " " << split.map_name;
 			} else {
-				oss << "bxt_splits_add " << std::fixed << std::setprecision(1)
+				oss << "bxt_splits_add_trigger " << std::fixed << std::setprecision(1)
 					<< corners.first.x << " " << corners.first.y << " " << corners.first.z << " "
 					<< corners.second.x << " " << corners.second.y << " " << corners.second.z;
 
-				if (!split.get_map().empty())
-					oss << command_separator << "bxt_splits_set_map \"" << split.get_map() << '\"';
+				if (!split.map_name.empty())
+					oss << command_separator << "bxt_splits_set_map \"" << split.map_name << '\"';
 
-				if (!split.get_name().empty())
-					oss << command_separator << "bxt_splits_set_name \"" << split.get_name() << '\"';
+				if (!split.name.empty())
+					oss << command_separator << "bxt_splits_set_name \"" << split.name << '\"';
 			}
 
 			// Note that by default a split always tracks horizontal speed. If this behaviour changes,
 			// we have to change this part too. If we always print the command regardless of the value,
 			// then the output command/script will be huge
-			if (!split.get_track_horizontal())
+			if (!split.track_horizontal_speed)
 				oss << command_separator << "bxt_splits_track_horizontal_speed 0";
 
-			if (split.get_track_vertical())
+			if (split.track_vertical_speed)
 				oss << command_separator << "bxt_splits_track_vertical_speed 1";
 
-			if (split.get_track_x())
+			if (split.track_x)
 				oss << command_separator << "bxt_splits_track_x 1";
 
-			if (split.get_track_y())
+			if (split.track_y)
 				oss << command_separator << "bxt_splits_track_y 1";
 
-			if (split.get_track_z())
+			if (split.track_z)
 				oss << command_separator << "bxt_splits_track_z 1";
 
 			hw.ORIG_Con_Printf(oss.str().c_str());
@@ -4154,7 +4154,7 @@ struct HwDLL::Cmd_BXT_Splits_List
 	{
 		std::vector<Splits::Split> map_splits;
 		std::copy_if(Splits::splits.begin(), Splits::splits.end(), std::back_inserter(map_splits),
-			[&map_name](Splits::Split &s){ return !strcmp(map_name, s.get_map().c_str()); } );
+			[&map_name](Splits::Split &s){ return !strcmp(map_name, s.map_name.c_str()); } );
 
 		if (map_splits.empty()) {
 			HwDLL::GetInstance().ORIG_Con_Printf("There are no splits in the specified map.\n");
@@ -4185,14 +4185,14 @@ struct HwDLL::Cmd_BXT_Splits_Set_Map
 			return;
 		}
 
-		Splits::splits.back().set_map(newMap);
+		Splits::splits.back().map_name = std::move(newMap);
 	}
 
 	static void handler(const char* idOrName, const char* newMap)
 	{
 		auto split = Splits::GetSplitByNameOrId(idOrName);
 		if (split)
-			split->set_map(newMap);
+			split->map_name = std::move(newMap);
 	}
 };
 
@@ -4207,14 +4207,14 @@ struct HwDLL::Cmd_BXT_Splits_Set_Name
 			return;
 		}
 
-		Splits::splits.back().set_name(newName);
+		Splits::splits.back().name = std::move(newName);
 	}
 
 	static void handler(const char* idOrName, const char* newName)
 	{
 		auto split = Splits::GetSplitByNameOrId(idOrName);
 		if (split)
-			split->set_name(newName);
+			split->name = std::move(newName);
 	}
 };
 
@@ -4229,14 +4229,14 @@ struct HwDLL::Cmd_BXT_Splits_Track_Horizontal_Speed
 			return;
 		}
 
-		Splits::splits.back().set_track_horizontal_speed(value);
+		Splits::splits.back().track_horizontal_speed = value;
 	}
 
 	static void handler(const char* idOrName, int value)
 	{
 		auto split = Splits::GetSplitByNameOrId(idOrName);
 		if (split)
-			split->set_track_horizontal_speed(value);
+			split->track_horizontal_speed = value;
 	}
 };
 
@@ -4251,14 +4251,14 @@ struct HwDLL::Cmd_BXT_Splits_Track_Vertical_Speed
 			return;
 		}
 
-		Splits::splits.back().set_track_vertical_speed(value);
+		Splits::splits.back().track_vertical_speed = value;
 	}
 
 	static void handler(const char* idOrName, int value)
 	{
 		auto split = Splits::GetSplitByNameOrId(idOrName);
 		if (split)
-			split->set_track_vertical_speed(value);
+			split->track_vertical_speed = value;
 	}
 };
 
@@ -4273,14 +4273,14 @@ struct HwDLL::Cmd_BXT_Splits_Track_X
 			return;
 		}
 
-		Splits::splits.back().set_track_x(value);
+		Splits::splits.back().track_x = value;
 	}
 
 	static void handler(const char* idOrName, int value)
 	{
 		auto split = Splits::GetSplitByNameOrId(idOrName);
 		if (split)
-			split->set_track_x(value);
+			split->track_x = value;
 	}
 };
 
@@ -4295,14 +4295,14 @@ struct HwDLL::Cmd_BXT_Splits_Track_Y
 			return;
 		}
 
-		Splits::splits.back().set_track_y(value);
+		Splits::splits.back().track_y = value;
 	}
 
 	static void handler(const char* idOrName, int value)
 	{
 		auto split = Splits::GetSplitByNameOrId(idOrName);
 		if (split)
-			split->set_track_y(value);
+			split->track_y = value;
 	}
 };
 
@@ -4317,14 +4317,14 @@ struct HwDLL::Cmd_BXT_Splits_Track_Z
 			return;
 		}
 
-		Splits::splits.back().set_track_z(value);
+		Splits::splits.back().track_z = value;
 	}
 
 	static void handler(const char* idOrName, int value)
 	{
 		auto split = Splits::GetSplitByNameOrId(idOrName);
 		if (split)
-			split->set_track_z(value);
+			split->track_z = value;
 	}
 };
 

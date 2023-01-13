@@ -374,7 +374,7 @@ namespace TriangleDrawing
 		pTriAPI->CullFace(TRI_NONE);
 
 		for (const auto& split : Splits::splits) {
-			if (!split.get_map().empty() && split.get_map() != HwDLL::GetInstance().lastLoadedMap)
+			if (!split.map_name.empty() && split.map_name != HwDLL::GetInstance().lastLoadedMap)
 			{
 				// Discard splits that are not scoped to the current map
 				continue;

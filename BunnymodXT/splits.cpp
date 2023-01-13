@@ -16,6 +16,8 @@ namespace Splits
 
 	Split* last_reached = nullptr;
 
+	bool printed_on_end = false;
+
 	Split::Split()
 		: Trigger(Vector(0, 0, 0), Vector(0, 0, 0))
 		, map_name()
@@ -504,6 +506,7 @@ namespace Splits
 			split.set_origin(Vector(0, 0, 0));
 		}
 		last_reached = nullptr;
+		printed_on_end = false;
 	}
 
 	void Update(const Vector& player_position, bool ducking)

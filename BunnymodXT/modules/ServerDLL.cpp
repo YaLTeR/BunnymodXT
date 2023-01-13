@@ -2279,8 +2279,12 @@ void ServerDLL::DoAutoStopTasks()
 	CustomHud::SaveTimeToDemo();
 	RuntimeData::Add(RuntimeData::GameEndMarker{});
 
-	if (CVars::bxt_splits_print_times_at_end.GetBool())
+	if (CVars::bxt_splits_print_times_at_end.GetBool() && !Splits::printed_on_end)
+	{
+		// Print all the splits data at the end of the run, and avoid printing it more than once
 		Splits::PrintAll();
+		Splits::printed_on_end = true;
+	}
 }
 
 void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float &b)

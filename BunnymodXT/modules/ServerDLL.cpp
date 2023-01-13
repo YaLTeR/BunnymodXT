@@ -3062,9 +3062,6 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CBaseButton__ButtonTriggerAndWait, void*
 			// Fire any splitter that matches this button's target's name. This one compared to ButtonUse, should
 			// already have the button's master entity triggered and the button should already be enabled, so it's
 			// better than the ButtonUse in that regard, but it doesn't get called for every button...
-			
-			// TODO: check for this button's availability, it may not be usable yet, like the button in the test chamber,
-			// that only works after the master entity has been triggered
 			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
 			Splits::Activate(target);
 		}

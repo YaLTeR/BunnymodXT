@@ -98,6 +98,7 @@ namespace Splits
 	extern Vector place_start;
 	extern bool placing;
 	extern Split* last_reached;
+	extern bool printed_on_end;
 
 	void Activate(const char* id_or_name);
 

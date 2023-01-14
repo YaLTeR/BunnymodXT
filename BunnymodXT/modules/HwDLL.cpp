@@ -3988,9 +3988,9 @@ struct HwDLL::Cmd_BXT_Split
 	}
 };
 
-struct HwDLL::Cmd_BXT_Split_On
+struct HwDLL::Cmd_BXT_Splits_Add_Entity
 {
-	USAGE("Usage: bxt_split_on <target_name> [map_name]\n Tells BunnySplit to split when activating an entity by the specified name, and prints to console the current time.\n");
+	USAGE("Usage: bxt_splits_add_entity <target_name> [map_name]\n Tells BunnySplit to split when activating an entity by the specified name, and prints to console the current time.\n");
 
 	static void handler(const char* targetname)
 	{
@@ -4003,9 +4003,9 @@ struct HwDLL::Cmd_BXT_Split_On
 	}
 };
 
-struct HwDLL::Cmd_BXT_Splits_Add
+struct HwDLL::Cmd_BXT_Splits_Add_Trigger
 {
-	USAGE("Usage: bxt_splits_add <x1> <y1> <z1> <x2> <y2> <z2> [map_name] [name]\n Adds a split trigger in a form of axis-aligned cuboid with opposite corners at coordinates (x1, y1, z1) and (x2, y2, z2).\n");
+	USAGE("Usage: bxt_splits_add_trigger <x1> <y1> <z1> <x2> <y2> <z2> [map_name] [name]\n Adds a split trigger in a form of axis-aligned cuboid with opposite corners at coordinates (x1, y1, z1) and (x2, y2, z2).\n");
 
 	static void handler(float x1, float y1, float z1, float x2, float y2, float z2)
 	{
@@ -4101,7 +4101,7 @@ struct HwDLL::Cmd_BXT_Splits_Export
 				oss << command_separator;
 
 			if (split.targets_entity) {
-				oss << "bxt_split_on_entity " << split.name << " " << split.map_name;
+				oss << "bxt_splits_add_entity " << split.name << " " << split.map_name;
 			} else {
 				oss << "bxt_splits_add_trigger " << std::fixed << std::setprecision(1)
 					<< corners.first.x << " " << corners.first.y << " " << corners.first.z << " "
@@ -4694,12 +4694,12 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Show_Bullets_Enemy_Clear, Handler<>>("bxt_show_bullets_enemy_clear");
 
 	wrapper::Add<Cmd_BXT_Split, Handler<const char*>>("bxt_split");
-	wrapper::Add<Cmd_BXT_Split_On, Handler<const char*>, Handler<const char*, const char*>>("bxt_split_on");
+	wrapper::Add<Cmd_BXT_Splits_Add_Entity, Handler<const char*>, Handler<const char*, const char*>>("bxt_splits_add_entity");
 	wrapper::Add<
-		Cmd_BXT_Splits_Add,
+		Cmd_BXT_Splits_Add_Trigger,
 		Handler<float, float, float, float, float, float>,
 		Handler<float, float, float, float, float, float, const char*>,
-		Handler<float, float, float, float, float, float, const char*, const char*>>("bxt_splits_add");
+		Handler<float, float, float, float, float, float, const char*, const char*>>("bxt_splits_add_trigger");
 	wrapper::Add<Cmd_BXT_Splits_Clear, Handler<>>("bxt_splits_clear");
 	wrapper::Add<Cmd_BXT_Splits_Delete, Handler<>, Handler<const char*>>("bxt_splits_delete");
 	wrapper::Add<Cmd_BXT_Splits_Export, Handler<const char*>>("bxt_splits_export");

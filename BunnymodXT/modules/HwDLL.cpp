@@ -4364,7 +4364,7 @@ struct HwDLL::Cmd_BXT_Splits_Place_Down
 		Splits::placing = true;
 		Vector start = trace.EndPos;
 		Splits::place_start = start;
-		Splits::splits.emplace_back(start, start);
+		Splits::splits.emplace_back(start, start, HwDLL::GetInstance().lastLoadedMap);
 	}
 
 	static void handler(const char*)

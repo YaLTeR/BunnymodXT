@@ -425,6 +425,9 @@ void ServerDLL::FindStuff()
 				case 15:
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 9);
 					break;
+				case 16: // AG-67-Server
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 52);
+					break;
 				}
 			}
 		});
@@ -692,6 +695,10 @@ void ServerDLL::FindStuff()
 				offm_rgAmmoLast = 0x520;
 				offm_iClientFOV = 0x478;
 				break;
+			case 36: // AG-67-Server
+				offm_rgAmmoLast = 0x564;
+				offm_iClientFOV = 0x4BC;
+				break;
 			default:
 				assert(false);
 			}
@@ -738,6 +745,9 @@ void ServerDLL::FindStuff()
 				break;
 			case 3: // Counter-Strike 1.6
 				pAddToFullPack_PVS_Byte += 17;
+				break;
+			case 4: // AG-67-Server
+				pAddToFullPack_PVS_Byte += 155;
 				break;
 			default:
 				assert(false);
@@ -803,6 +813,7 @@ void ServerDLL::FindStuff()
 			case 6:
 			case 7:
 			case 8:
+			case 9:  // AG-67-Server
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;
@@ -850,6 +861,11 @@ void ServerDLL::FindStuff()
 				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity - 0x1a1);
 				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity + 0x2b);
 				break;
+			case 4: // AG-67-Server
+				offNihilanthLevel = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity + 0x4a6);
+				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity + 0x4c7);
+				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity + 0x47b);
+				break;
 			default:
 				assert(false);
 			}
@@ -862,6 +878,7 @@ void ServerDLL::FindStuff()
 		[&](auto pattern) {
 			switch (pattern - patterns::server::CNihilanth__EmitSphere.cbegin()) {
 			case 0: // HL-SteamPipe-Linux
+			case 3: // AG-67-Server
 				offNihilanthSpheres = *reinterpret_cast<ptrdiff_t*>(pCNihilanth__EmitSphere + 0x2f);
 				break;
 			case 1: // HL-SteamPipe

@@ -793,23 +793,31 @@ namespace CustomHud
 			SetupTraceVectors(view, end);
 
 			const auto tr = ServerDLL::GetInstance().TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
-			double hdist = std::hypot(tr.vecEndPos[0] - view[0], tr.vecEndPos[1] - view[1]);
-			double vdist = tr.vecEndPos[2] - view[2];
-			double hvdist = std::sqrt((tr.vecEndPos[0] - view[0]) * (tr.vecEndPos[0] - view[0])
-				+ (tr.vecEndPos[1] - view[1]) * (tr.vecEndPos[1] - view[1])
-				+ (tr.vecEndPos[2] - view[2]) * (tr.vecEndPos[2] - view[2]));
-
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
 			out.precision(precision);
-			out << "Distance:\n"
-				<< "H: " << hdist << "\n"
-				<< "V: " << vdist << "\n"
-				<< "HV: " << hvdist << "\n"
-				<< "X: " << tr.vecEndPos[0] << "\n"
+
+			out << "Distance:\n";
+
+			if (CVars::bxt_hud_distance.GetInt() == 2)
+			{
+				out << "X: " << tr.vecEndPos[0] << "\n"
 				<< "Y: " << tr.vecEndPos[1] << "\n"
-				<< "Z: " << tr.vecEndPos[2]
-				;
+				<< "Z: " << tr.vecEndPos[2];
+			}
+			else
+			{
+				double hdist = std::hypot(tr.vecEndPos[0] - view[0], tr.vecEndPos[1] - view[1]);
+				double vdist = tr.vecEndPos[2] - view[2];
+				double hvdist = std::sqrt((tr.vecEndPos[0] - view[0]) * (tr.vecEndPos[0] - view[0])
+					+ (tr.vecEndPos[1] - view[1]) * (tr.vecEndPos[1] - view[1])
+					+ (tr.vecEndPos[2] - view[2]) * (tr.vecEndPos[2] - view[2]));
+				
+				out << "H: " << hdist << "\n"
+				<< "V: " << vdist << "\n"
+				<< "HV: " << hvdist;
+			}
+
 			DrawMultilineString(x, y, out.str());
 		}
 	}

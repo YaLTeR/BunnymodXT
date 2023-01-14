@@ -805,7 +805,11 @@ namespace CustomHud
 			out << "Distance:\n"
 				<< "H: " << hdist << "\n"
 				<< "V: " << vdist << "\n"
-				<< "HV: " << hvdist;
+				<< "HV: " << hvdist << "\n"
+				<< "X: " << tr.vecEndPos[0] << "\n"
+				<< "Y: " << tr.vecEndPos[1] << "\n"
+				<< "Z: " << tr.vecEndPos[2]
+				;
 			DrawMultilineString(x, y, out.str());
 		}
 	}

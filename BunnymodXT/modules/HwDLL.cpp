@@ -4049,16 +4049,22 @@ struct HwDLL::Cmd_BXT_Splits_Delete
 
 	static void handler(const char* id_or_name)
 	{
-		auto split = Splits::GetSplitByNameOrId(id_or_name, true);
-		if (!split)
+		// First try to find it by name, otherwise we'll try to find by id
+		const auto itr = std::find_if(Splits::splits.begin(), Splits::splits.end(),
+			[&id_or_name](const Splits::Split& s) { return !strcmp(id_or_name, s.name.c_str()); });
+
+		unsigned long idx = 0;
+		if (itr == Splits::splits.end())
+			idx = std::strtoul(id_or_name, nullptr, 10);
+		else
+			idx = itr - Splits::splits.begin() + 1;
+
+		if (idx == 0 || Splits::splits.size() < idx) {
+			HwDLL::GetInstance().ORIG_Con_Printf("There's no split with this name or id.\n");
 			return;
+		}
 
-		const auto it = std::find_if(Splits::splits.begin(), Splits::splits.end(), [&split](const Splits::Split& s) {
-			return split->name == s.name;
-		});
-
-		if (it != Splits::splits.end())
-			Splits::splits.erase(it);
+		Splits::splits.erase(Splits::splits.begin() + (idx - 1));
 	}
 };
 

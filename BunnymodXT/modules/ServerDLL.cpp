@@ -1199,7 +1199,7 @@ void ServerDLL::FindStuff()
 		}
 		else {
 			EngineDevWarning("[server dll] Could not find CBaseButton::TriggerAndWait.\n");
-			EngineWarning("Using a func_button's target name to split through bxt_split_on <target_name> may not work.\n");
+			EngineWarning("Using a func_button's target name to split through bxt_splits_add_entity <target_name> may not work.\n");
 		}
 	}
 

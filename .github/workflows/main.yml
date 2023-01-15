@@ -103,8 +103,8 @@ jobs:
             archive-filename: '1-BunnymodXT-Windows.7z'
 
           - cof: 'ON'
-            artifact-label: '-CoF'
-            archive-filename: '3-BunnymodXT-CoF-Windows.7z'
+            artifact-label: '-CoFSteam'
+            archive-filename: '3-BunnymodXT-CoFSteam-Windows.7z'
 
     steps:
     - uses: actions/checkout@v3

@@ -2737,7 +2737,7 @@ struct HwDLL::Cmd_BXT_Get_Origin_And_Angles
 		cl.pEngfuncs->GetViewAngles(angles);
 
 		float view[3], end[3];
-		ClientDLL::GetInstance().SetupTraceVectors(view, end);
+		cl.SetupTraceVectors(view, end);
 		const auto tr = sv.TraceLine(view, end, 0, hw.GetPlayerEdict());
 
 		hw.ORIG_Con_Printf("bxt_set_angles %f %f %f;", angles[0], angles[1], angles[2]);

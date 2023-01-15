@@ -39,9 +39,9 @@ namespace RuntimeData
 			GAME_END_MARKER,
 			LOADED_MODULES,
 			CUSTOM_TRIGGER_COMMAND,
-			SPLIT_MARKER,
 			EDICTS,
 			PLAYERHEALTH,
+			SPLIT_MARKER,
 		};
 
 		// Encrypting filter.
@@ -290,6 +290,18 @@ namespace RuntimeData
 				archive(c.command);
 			}
 
+			void operator()(const Edicts& e) const {
+				archive(RuntimeDataType::EDICTS);
+
+				archive(e.edicts);
+			}
+
+			void operator()(const PlayerHealth& p) const {
+				archive(RuntimeDataType::PLAYERHEALTH);
+
+				archive(p.health);
+			}
+
 			void operator()(const SplitMarker& m) const {
 				archive(RuntimeDataType::SPLIT_MARKER);
 
@@ -301,18 +313,6 @@ namespace RuntimeData
 				archive(m.corner_max.z);
 				archive(m.name);
 				archive(m.map_name);
-			}
-
-			void operator()(const Edicts& e) const {
-				archive(RuntimeDataType::EDICTS);
-
-				archive(e.edicts);
-			}
-
-			void operator()(const PlayerHealth& p) const {
-				archive(RuntimeDataType::PLAYERHEALTH);
-
-				archive(p.health);
 			}
 
 		private:

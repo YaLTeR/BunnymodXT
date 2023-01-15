@@ -764,24 +764,6 @@ namespace CustomHud
 		}
 	}
 
-	static void SetupTraceVectors(float start[3], float end[3])
-	{
-		const auto& cl = ClientDLL::GetInstance();
-
-		auto view = cl.last_vieworg;
-		Vector forward, right, up;
-		cl.pEngfuncs->pfnAngleVectors(cl.last_viewangles, forward, right, up);
-
-		Vector end_ = view + forward * 8192;
-
-		start[0] = view[0];
-		start[1] = view[1];
-		start[2] = view[2];
-		end[0] = end_[0];
-		end[1] = end_[1];
-		end[2] = end_[2];
-	}
-
 	void DrawDistance(float flTime)
 	{
 		if (CVars::bxt_hud_distance.GetBool())
@@ -790,34 +772,22 @@ namespace CustomHud
 			GetPosition(CVars::bxt_hud_distance_offset, CVars::bxt_hud_distance_anchor, &x, &y, -200, (si.iCharHeight * 13) + 3);
 
 			float view[3], end[3];
-			SetupTraceVectors(view, end);
+			ClientDLL::GetInstance().SetupTraceVectors(view, end);
 
 			const auto tr = ServerDLL::GetInstance().TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+			double hdist = std::hypot(tr.vecEndPos[0] - view[0], tr.vecEndPos[1] - view[1]);
+			double vdist = tr.vecEndPos[2] - view[2];
+			double hvdist = std::sqrt((tr.vecEndPos[0] - view[0]) * (tr.vecEndPos[0] - view[0])
+				+ (tr.vecEndPos[1] - view[1]) * (tr.vecEndPos[1] - view[1])
+				+ (tr.vecEndPos[2] - view[2]) * (tr.vecEndPos[2] - view[2]));
+
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
 			out.precision(precision);
-
-			out << "Distance:\n";
-
-			if (CVars::bxt_hud_distance.GetInt() == 2)
-			{
-				out << "X: " << tr.vecEndPos[0] << "\n"
-				<< "Y: " << tr.vecEndPos[1] << "\n"
-				<< "Z: " << tr.vecEndPos[2];
-			}
-			else
-			{
-				double hdist = std::hypot(tr.vecEndPos[0] - view[0], tr.vecEndPos[1] - view[1]);
-				double vdist = tr.vecEndPos[2] - view[2];
-				double hvdist = std::sqrt((tr.vecEndPos[0] - view[0]) * (tr.vecEndPos[0] - view[0])
-					+ (tr.vecEndPos[1] - view[1]) * (tr.vecEndPos[1] - view[1])
-					+ (tr.vecEndPos[2] - view[2]) * (tr.vecEndPos[2] - view[2]));
-				
-				out << "H: " << hdist << "\n"
-				<< "V: " << vdist << "\n"
-				<< "HV: " << hvdist;
-			}
-
+			out << "Distance:\n"
+					<< "H: " << hdist << "\n"
+					<< "V: " << vdist << "\n"
+					<< "HV: " << hvdist;
 			DrawMultilineString(x, y, out.str());
 		}
 	}
@@ -833,7 +803,7 @@ namespace CustomHud
 			const auto& sv = ServerDLL::GetInstance();
 
 			float view[3], end[3];
-			SetupTraceVectors(view, end);
+			ClientDLL::GetInstance().SetupTraceVectors(view, end);
 
 			const auto tr = sv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
 
@@ -917,7 +887,7 @@ namespace CustomHud
 		selfgaussable = false;
 
 		float start[3], end[3];
-		SetupTraceVectors(start, end);
+		ClientDLL::GetInstance().SetupTraceVectors(start, end);
 
 		auto tr = ServerDLL::GetInstance().TraceLine(start, end, 0, HwDLL::GetInstance().GetPlayerEdict());
 

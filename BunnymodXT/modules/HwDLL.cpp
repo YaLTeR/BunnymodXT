@@ -2724,7 +2724,7 @@ struct HwDLL::Cmd_BXT_CH_Set_Armor
 	}
 };
 
-struct HwDLL::Cmd_BXT_CH_Get_Origin_And_Angles
+struct HwDLL::Cmd_BXT_Get_Origin_And_Angles
 {
 	NO_USAGE();
 
@@ -2732,8 +2732,14 @@ struct HwDLL::Cmd_BXT_CH_Get_Origin_And_Angles
 	{
 		auto &hw = HwDLL::GetInstance();
 		auto &cl = ClientDLL::GetInstance();
+		auto &sv = ServerDLL::GetInstance();
 		float angles[3];
 		cl.pEngfuncs->GetViewAngles(angles);
+
+		float view[3], end[3];
+		ClientDLL::GetInstance().SetupTraceVectors(view, end);
+		const auto tr = sv.TraceLine(view, end, 0, hw.GetPlayerEdict());
+
 		hw.ORIG_Con_Printf("bxt_set_angles %f %f %f;", angles[0], angles[1], angles[2]);
 		if (CVars::bxt_hud_origin.GetInt() == 2)
 			hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", cl.last_vieworg[0], cl.last_vieworg[1], cl.last_vieworg[2]);
@@ -2741,6 +2747,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Origin_And_Angles
 			hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", (*hw.sv_player)->v.origin[0], (*hw.sv_player)->v.origin[1], (*hw.sv_player)->v.origin[2]);
 
 		hw.ORIG_Con_Printf("bxt_cam_fixed %f %f %f %f %f %f\n", cl.last_vieworg[0], cl.last_vieworg[1], cl.last_vieworg[2], angles[0], angles[1], angles[2]);
+		hw.ORIG_Con_Printf("Traced point origin: %f %f %f\n", tr.vecEndPos[0], tr.vecEndPos[1], tr.vecEndPos[2]);
 	}
 };
 
@@ -4185,7 +4192,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Check_Position, Handler<float, float, float>>("_bxt_tas_check_position");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Health, Handler<float>>("bxt_ch_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Armor, Handler<float>>("bxt_ch_set_armor");
-	wrapper::AddCheat<Cmd_BXT_CH_Get_Origin_And_Angles, Handler<>>("bxt_ch_get_pos");
+	wrapper::Add<Cmd_BXT_Get_Origin_And_Angles, Handler<>>("bxt_get_pos");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin_Offset, Handler<float, float, float>>("bxt_ch_set_pos_offset");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Velocity, Handler<float, float, float>>("bxt_ch_set_vel");

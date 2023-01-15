@@ -410,7 +410,7 @@ protected:
 	struct Cmd_BXT_CH_Set_Origin_Offset;
 	struct Cmd_BXT_CH_Set_Velocity;
 	struct Cmd_BXT_CH_Set_Velocity_Angles;
-	struct Cmd_BXT_CH_Get_Origin_And_Angles;
+	struct Cmd_BXT_Get_Origin_And_Angles;
 	struct Cmd_Multiwait;
 	struct Cmd_BXT_Camera_Fixed;
 	struct Cmd_BXT_Camera_Clear;

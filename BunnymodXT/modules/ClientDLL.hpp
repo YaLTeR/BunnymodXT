@@ -112,6 +112,8 @@ public:
 	void FileBase(const char *in, char *out);
 	void ConvertToLowerCase(const char *str);
 
+	void SetupTraceVectors(float start[3], float end[3]);
+
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};
 	ClientDLL(const ClientDLL&);

@@ -86,7 +86,7 @@ jobs:
     - uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v3
       with:
         manifest-path: build-aux/flatpak/rs.bxt.BunnymodXT.json
-        cache-key: flatpak-builder-${{ github.sha }}
+        cache: false
 
   build-windows:
     name: Build on Windows (${{ matrix.configuration }}, COF=${{ matrix.cof }})

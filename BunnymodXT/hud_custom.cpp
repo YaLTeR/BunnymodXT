@@ -785,9 +785,9 @@ namespace CustomHud
 			out.setf(std::ios::fixed);
 			out.precision(precision);
 			out << "Distance:\n"
-					<< "H: " << hdist << "\n"
-					<< "V: " << vdist << "\n"
-					<< "HV: " << hvdist;
+				<< "H: " << hdist << "\n"
+				<< "V: " << vdist << "\n"
+				<< "HV: " << hvdist;
 			DrawMultilineString(x, y, out.str());
 		}
 	}

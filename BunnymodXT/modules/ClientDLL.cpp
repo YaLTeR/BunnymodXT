@@ -1357,6 +1357,22 @@ void ClientDLL::SetSpeedScaling(bool scaled)
 	}
 }
 
+void ClientDLL::SetupTraceVectors(float start[3], float end[3])
+{
+	auto view = last_vieworg;
+	Vector forward, right, up;
+	pEngfuncs->pfnAngleVectors(last_viewangles, forward, right, up);
+
+	Vector end_ = view + forward * 8192;
+
+	start[0] = view[0];
+	start[1] = view[1];
+	start[2] = view[2];
+	end[0] = end_[0];
+	end[1] = end_[1];
+	end[2] = end_[2];
+}
+
 HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
 {
 	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);

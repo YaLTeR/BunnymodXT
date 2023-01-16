@@ -5410,7 +5410,7 @@ void HwDLL::InsertCommands()
 			auto playerCopy = HLStrafe::PlayerData(player); // Our copy that we will mess with.
 			auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false);
 			auto pointContentsFunc = std::bind(*(ClientDLL::GetInstance().pEngfuncs->PM_PointContents), std::placeholders::_1, nullptr);
-			auto postype = GetPositionType(playerCopy, traceFunc, pointContentsFunc);
+			auto postype = GetPositionType(playerCopy, traceFunc, pointContentsFunc, HLStrafe::MAX_SUPPORTED_VERSION);
 			if (ducktap && postype == HLStrafe::PositionType::GROUND) {
 					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {
 						// This should check against the next frame's origin but meh.
@@ -5433,7 +5433,7 @@ void HwDLL::InsertCommands()
 					playerCopy.InDuckAnimation = false;
 					playerCopy.DuckTime = 0;
 
-					auto nextPostype = HLStrafe::GetPositionType(playerCopy, traceFunc, pointContentsFunc);
+					auto nextPostype = HLStrafe::GetPositionType(playerCopy, traceFunc, pointContentsFunc, HLStrafe::MAX_SUPPORTED_VERSION);
 					if (nextPostype == HLStrafe::PositionType::GROUND) {
 						// Jumpbug if we're about to land.
 						Jump = true;
@@ -5441,7 +5441,7 @@ void HwDLL::InsertCommands()
 					}
 				} else {
 					auto vars = GetMovementVars();
-					auto nextPostype = HLStrafe::Move(playerCopy, vars, postype, vars.Maxspeed, traceFunc, pointContentsFunc);
+					auto nextPostype = HLStrafe::Move(playerCopy, vars, postype, vars.Maxspeed, traceFunc, pointContentsFunc, HLStrafe::MAX_SUPPORTED_VERSION);
 					if (nextPostype == HLStrafe::PositionType::GROUND) {
 						// Duck to prepare for the Jumpbug.
 						Duck = true;

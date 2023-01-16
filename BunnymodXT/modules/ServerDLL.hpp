@@ -57,6 +57,8 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, PM_Duck)
 	HOOK_DECL(void, __cdecl, PM_UnDuck)
 	HOOK_DECL(void, __cdecl, ShiftMonsters, Vector origin)
+	HOOK_DECL(void, __fastcall, CBasePlayer__ViewPunch, void* thisptr, int edx, float p, float y, float r)
+	HOOK_DECL(void, __fastcall, CBasePlayer__Jump, void* thisptr)
 
 public:
 	static ServerDLL& GetInstance()
@@ -194,7 +196,7 @@ protected:
 	ptrdiff_t pCS_Bhopcap;
 	ptrdiff_t pCS_Bhopcap_Windows;
 
-	ptrdiff_t pCBasePlayerJump_OldButtons_Check_Byte;
+	ptrdiff_t pCBasePlayer__Jump_OldButtons_Check_Byte;
 
 	ptrdiff_t pCoF_Noclip_Preventing_Check_Byte; // Cry of Fear-specific
 	ptrdiff_t offm_bInfiniteStamina; // Cry of Fear-specific
@@ -224,4 +226,6 @@ protected:
 	std::deque<bool> traceLineFireBulletsPlayerHit;
 	std::deque<std::array<Vector, 2>> traceLineFireBullets;
 	std::deque<bool> traceLineFireBulletsHit;
+
+	bool insideCBasePlayerJump = false;
 };

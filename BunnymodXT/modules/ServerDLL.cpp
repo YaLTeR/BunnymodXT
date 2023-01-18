@@ -143,6 +143,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CBaseEntity__FireBulletsPlayer_Linux, HOOKED_CBaseEntity__FireBulletsPlayer_Linux,
 			ORIG_CBaseButton__ButtonUse, HOOKED_CBaseButton__ButtonUse,
 			ORIG_CBaseButton__ButtonTriggerAndWait, HOOKED_CBaseButton__ButtonTriggerAndWait,
+			ORIG_CBasePlayer__ViewPunch, HOOKED_CBasePlayer__ViewPunch,
+			ORIG_CBasePlayer__Jump, HOOKED_CBasePlayer__Jump,
 			ORIG_CTriggerEndSection__EndSectionUse, HOOKED_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch,
 			ORIG_ShiftMonsters, HOOKED_ShiftMonsters,
@@ -191,6 +193,8 @@ void ServerDLL::Unhook()
 			ORIG_CBaseMonster__Killed,
 			ORIG_CBaseButton__ButtonUse,
 			ORIG_CBaseButton__ButtonTriggerAndWait,
+			ORIG_CBasePlayer__ViewPunch,
+			ORIG_CBasePlayer__Jump,
 			ORIG_CTriggerEndSection__EndSectionUse,
 			ORIG_CTriggerEndSection__EndSectionTouch,
 			ORIG_ShiftMonsters,
@@ -257,6 +261,8 @@ void ServerDLL::Clear()
 	ORIG_CChangeLevel__InTransitionVolume = nullptr;
 	ORIG_CBaseButton__ButtonUse = nullptr;
 	ORIG_CBaseButton__ButtonTriggerAndWait = nullptr;
+	ORIG_CBasePlayer__ViewPunch = nullptr;
+	ORIG_CBasePlayer__Jump = nullptr;
 	ORIG_CTriggerEndSection__EndSectionUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionTouch = nullptr;
 	ORIG_ShiftMonsters = nullptr;
@@ -275,7 +281,7 @@ void ServerDLL::Clear()
 	pCZDS_Velocity_Byte = 0;
 	pAddToFullPack_PVS_Byte = 0;
 	pCoF_Noclip_Preventing_Check_Byte = 0;
-	pCBasePlayerJump_OldButtons_Check_Byte = 0;
+	pCBasePlayer__Jump_OldButtons_Check_Byte = 0;
 	offm_iClientFOV = 0;
 	offm_rgAmmoLast = 0;
 	offEntFriction = 0;
@@ -765,16 +771,16 @@ void ServerDLL::FindStuff()
 			}
 		});
 
-	auto fCBasePlayerJump_OldButtons_Check_Byte = FindAsync(
-		pCBasePlayerJump_OldButtons_Check_Byte,
-		patterns::server::CBasePlayerJump_OldButtons_Check_Byte,
+	auto fCBasePlayer__Jump_OldButtons_Check_Byte = FindAsync(
+		pCBasePlayer__Jump_OldButtons_Check_Byte,
+		patterns::server::CBasePlayer__Jump_OldButtons_Check_Byte,
 		[&](auto pattern) {
-			switch (pattern - patterns::server::CBasePlayerJump_OldButtons_Check_Byte.cbegin()) {
+			switch (pattern - patterns::server::CBasePlayer__Jump_OldButtons_Check_Byte.cbegin()) {
 			case 0: // CoF-Mod-155
-				pCBasePlayerJump_OldButtons_Check_Byte += 12;
+				pCBasePlayer__Jump_OldButtons_Check_Byte += 12;
 				break;
 			case 1: // CoF-5936
-				pCBasePlayerJump_OldButtons_Check_Byte += 6;
+				pCBasePlayer__Jump_OldButtons_Check_Byte += 6;
 				break;
 			default:
 				assert(false);
@@ -795,6 +801,8 @@ void ServerDLL::FindStuff()
 	auto fPM_UnDuck = FindAsync(ORIG_PM_UnDuck, patterns::server::PM_UnDuck);
 	auto fCBasePlayer__GiveNamedItem = FindAsync(ORIG_CBasePlayer__GiveNamedItem, patterns::server::CBasePlayer__GiveNamedItem);
 	auto fShiftMonsters = FindAsync(ORIG_ShiftMonsters, patterns::server::ShiftMonsters);
+	auto fCBasePlayer__ViewPunch = FindAsync(ORIG_CBasePlayer__ViewPunch, patterns::server::CBasePlayer__ViewPunch);
+	auto fCBasePlayer__Jump = FindAsync(ORIG_CBasePlayer__Jump, patterns::server::CBasePlayer__Jump);
 	auto fCBaseDoor__DoorActivate = FindAsync(ORIG_CBaseDoor__DoorActivate, patterns::server::CBaseDoor__DoorActivate);
 
 	auto fCGraph__InitGraph = FindAsync(
@@ -923,9 +931,9 @@ void ServerDLL::FindStuff()
 	}
 
 	{
-		auto pattern = fCBasePlayerJump_OldButtons_Check_Byte.get();
-		if (pCBasePlayerJump_OldButtons_Check_Byte)
-			EngineDevMsg("[server dll] Found oldbuttons check from CBasePlayer::Jump at %p (using the %s pattern).\n", pCBasePlayerJump_OldButtons_Check_Byte, pattern->name());
+		auto pattern = fCBasePlayer__Jump_OldButtons_Check_Byte.get();
+		if (pCBasePlayer__Jump_OldButtons_Check_Byte)
+			EngineDevMsg("[server dll] Found oldbuttons check from CBasePlayer::Jump at %p (using the %s pattern).\n", pCBasePlayer__Jump_OldButtons_Check_Byte, pattern->name());
 	}
 
 	{
@@ -1474,6 +1482,24 @@ void ServerDLL::FindStuff()
 	}
 
 	{
+		auto pattern = fCBasePlayer__ViewPunch.get();
+		if (ORIG_CBasePlayer__ViewPunch) {
+			EngineDevMsg("[server dll] Found CBasePlayer::ViewPunch at %p (using the %s pattern).\n", ORIG_CBasePlayer__ViewPunch, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find CBasePlayer::ViewPunch.\n");
+		}
+	}
+
+	{
+		auto pattern = fCBasePlayer__Jump.get();
+		if (ORIG_CBasePlayer__Jump) {
+			EngineDevMsg("[server dll] Found CBasePlayer::Jump at %p (using the %s pattern).\n", ORIG_CBasePlayer__Jump, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find CBasePlayer::Jump.\n");
+		}
+	}
+
+	{
 		auto pattern = fPM_UnDuck.get();
 		if (ORIG_PM_UnDuck) {
 			EngineDevMsg("[server dll] Found PM_UnDuck at %p (using the %s pattern).\n", ORIG_PM_UnDuck, pattern->name());
@@ -1568,6 +1594,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_cof_enable_ducktap);
 	if (is_cof)
 		REG(bxt_cof_disable_save_lock);
+	if (ORIG_CBasePlayer__ViewPunch && is_cof)
+		REG(bxt_cof_disable_viewpunch_from_jump);
 
 	REG(bxt_splits_print);
 	REG(bxt_splits_print_times_at_end);
@@ -1763,18 +1791,18 @@ void ServerDLL::CoFChanges()
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\x75"));
 		}
 
-		if (pCBasePlayerJump_OldButtons_Check_Byte)
+		if (pCBasePlayer__Jump_OldButtons_Check_Byte)
 		{
 			if (offm_rgAmmoLast == 0x25C0) { // CoF-5936
-				if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0xF6) && CVars::bxt_autojump.GetBool())
-					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 13, reinterpret_cast<const byte*>("\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90"));
-				else if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0x90) && !CVars::bxt_autojump.GetBool())
-					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 13, reinterpret_cast<const byte*>("\xF6\x86\xB0\x22\x00\x00\x02\x0F\x84\x0C\x02\x00\x00"));
+				if ((*reinterpret_cast<byte*>(pCBasePlayer__Jump_OldButtons_Check_Byte) == 0xF6) && CVars::bxt_autojump.GetBool())
+					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayer__Jump_OldButtons_Check_Byte), 13, reinterpret_cast<const byte*>("\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90"));
+				else if ((*reinterpret_cast<byte*>(pCBasePlayer__Jump_OldButtons_Check_Byte) == 0x90) && !CVars::bxt_autojump.GetBool())
+					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayer__Jump_OldButtons_Check_Byte), 13, reinterpret_cast<const byte*>("\xF6\x86\xB0\x22\x00\x00\x02\x0F\x84\x0C\x02\x00\x00"));
 			} else { // CoF-Mod
-				if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0x75) && CVars::bxt_autojump.GetBool())
-					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
-				else if ((*reinterpret_cast<byte*>(pCBasePlayerJump_OldButtons_Check_Byte) == 0xEB) && !CVars::bxt_autojump.GetBool())
-					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayerJump_OldButtons_Check_Byte), 1, reinterpret_cast<const byte*>("\x75"));
+				if ((*reinterpret_cast<byte*>(pCBasePlayer__Jump_OldButtons_Check_Byte) == 0x75) && CVars::bxt_autojump.GetBool())
+					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayer__Jump_OldButtons_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
+				else if ((*reinterpret_cast<byte*>(pCBasePlayer__Jump_OldButtons_Check_Byte) == 0xEB) && !CVars::bxt_autojump.GetBool())
+					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayer__Jump_OldButtons_Check_Byte), 1, reinterpret_cast<const byte*>("\x75"));
 			}
 		}
 
@@ -3142,4 +3170,19 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ShiftMonsters, Vector, origin)
 		return;
 	else
 		return ORIG_ShiftMonsters(origin);
+}
+
+HOOK_DEF_5(ServerDLL, void, __fastcall, CBasePlayer__ViewPunch, void*, thisptr, int, edx, float, p, float, y, float, r)
+{
+	if (CVars::bxt_cof_disable_viewpunch_from_jump.GetBool() && insideCBasePlayerJump)
+		return;
+
+	ORIG_CBasePlayer__ViewPunch(thisptr, edx, p, y, r);
+}
+
+HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__Jump, void*, thisptr)
+{
+	insideCBasePlayerJump = true;
+	ORIG_CBasePlayer__Jump(thisptr);
+	insideCBasePlayerJump = false;
 }

@@ -25,6 +25,20 @@
 
 using namespace std::literals;
 
+// Callbacks for bxt-rs.
+struct on_tas_playback_frame_data {
+	unsigned strafe_cycle_frame_count;
+	std::array<float, 4> prev_predicted_trace_fractions;
+	std::array<float, 4> prev_predicted_trace_normal_zs;
+};
+
+// Change the variable name if you change the parameters!
+// This way outdated bxt-rs will be unable to find the variable, instead of crashing due to mismatching parameters.
+extern "C" {
+	// Return value != 0 means stop TAS playback.
+	DLLEXPORT int (*bxt_on_tas_playback_frame)(on_tas_playback_frame_data data);
+}
+
 // Linux hooks.
 #ifndef _WIN32
 #include <dlfcn.h>
@@ -5278,12 +5292,6 @@ void HwDLL::InsertCommands()
 
 				resulting_frame.SetRepeats(1);
 
-				auto c = f.Commands;
-				if (!c.empty()) {
-					c += '\n';
-					ORIG_Cbuf_InsertText(c.c_str());
-				}
-
 				if (svs->num_clients >= 1) {
 					edict_t *pl = GetPlayerEdict();
 					if (pl) {
@@ -5415,6 +5423,27 @@ void HwDLL::InsertCommands()
 					armor,
 					pushables,
 				});
+
+				if (bxt_on_tas_playback_frame) {
+					const auto stop = bxt_on_tas_playback_frame(on_tas_playback_frame_data {
+						StrafeState.StrafeCycleFrameCount,
+						PrevFractions,
+						PrevNormalzs,
+					});
+					if (stop) {
+						ResetStateBeforeTASPlayback();
+						break;
+					}
+				}
+
+				// Insert commands now that we know we aren't stopping this frame,
+				// but before the movement commands below. This is intentional, so that
+				// it's possible to override TAS movement with custom commands.
+				auto c = f.Commands;
+				if (!c.empty()) {
+					c += '\n';
+					ORIG_Cbuf_InsertText(c.c_str());
+				}
 
 				StartTracing();
 				auto p = HLStrafe::MainFunc(

@@ -105,8 +105,6 @@ static __attribute__((constructor(1337))) void Construct()
 // Destructor priority must be the same as constructor.
 static __attribute__((destructor(1337))) void Destruct()
 {
-	Hooks::Free();
-
 	if (logfile)
 		fclose(logfile);
 

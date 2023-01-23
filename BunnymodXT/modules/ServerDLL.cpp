@@ -805,33 +805,6 @@ void ServerDLL::FindStuff()
 	auto fCBasePlayer__Jump = FindAsync(ORIG_CBasePlayer__Jump, patterns::server::CBasePlayer__Jump);
 	auto fCBaseDoor__DoorActivate = FindAsync(ORIG_CBaseDoor__DoorActivate, patterns::server::CBaseDoor__DoorActivate);
 
-	auto fCGraph__InitGraph = FindAsync(
-		ORIG_CGraph__InitGraph,
-		patterns::server::CGraph__InitGraph,
-		[&](auto pattern) {
-			switch (pattern - patterns::server::CGraph__InitGraph.cbegin()) {
-			case 0:  // HL-SteamPipe
-			case 1:
-			case 2:
-			case 3:
-			case 4:
-			case 5:
-			case 6:
-			case 7:
-			case 8:
-				offm_pNodes = 0x0C;
-				offm_vecOrigin = 0x00;
-				offm_cNodes = 0x18;
-				if (is_czeror)
-					size_CNode = 0x60;
-				else
-					size_CNode = 0x58;
-				break;
-			default:
-				assert(false);
-			}
-		});
-
 	uintptr_t pDispatchRestore;
 	auto fDispatchRestore = FindAsync(
 		pDispatchRestore,
@@ -1052,6 +1025,33 @@ void ServerDLL::FindStuff()
 			}
 		}
 	}
+
+	auto fCGraph__InitGraph = FindAsync(
+		ORIG_CGraph__InitGraph,
+		patterns::server::CGraph__InitGraph,
+		[&](auto pattern) {
+			switch (pattern - patterns::server::CGraph__InitGraph.cbegin()) {
+			case 0:  // HL-SteamPipe
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+				offm_pNodes = 0x0C;
+				offm_vecOrigin = 0x00;
+				offm_cNodes = 0x18;
+				if (is_czeror)
+					size_CNode = 0x60;
+				else
+					size_CNode = 0x58;
+				break;
+			default:
+				assert(false);
+			}
+		});
 
 	{
 		auto pattern = fCBasePlayer__GiveNamedItem.get();

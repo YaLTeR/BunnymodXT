@@ -1596,6 +1596,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_cof_disable_save_lock);
 	if (ORIG_CBasePlayer__ViewPunch && is_cof)
 		REG(bxt_cof_disable_viewpunch_from_jump);
+	if (ORIG_ShiftMonsters && is_cof)
+		REG(bxt_cof_disable_monsters_teleport_to_spawn_after_load);
 
 	REG(bxt_splits_print);
 	REG(bxt_splits_print_times_at_end);
@@ -3166,7 +3168,7 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_UnDuck)
 HOOK_DEF_1(ServerDLL, void, __cdecl, ShiftMonsters, Vector, origin)
 {
 	// Cry of Fear-specific, fix monsters teleport to their spawn points.
-	if (CVars::bxt_cof_disable_save_lock.GetBool())
+	if (CVars::bxt_cof_disable_monsters_teleport_to_spawn_after_load.GetBool())
 		return;
 	else
 		return ORIG_ShiftMonsters(origin);

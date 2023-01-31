@@ -519,9 +519,10 @@ namespace CustomHud
 			auto vel_gain = v_forward * flDamage * 5;
 			auto ups = static_cast<int>(trunc(length(vel_gain[0], vel_gain[1])));
 
-			out << "Server time: " << time << "\n"
-				<< "Qgauss dmg: " << flDamage << "\n"
-				<< "Qgauss boost: " << ups;
+			out << "Server time: " << time << "\n";
+
+			if (CVars::bxt_hud_quickgauss.GetInt() != 2)
+				out << "Qgauss dmg: " << flDamage << "\n" << "Qgauss boost: " << ups;
 
 			DrawMultilineString(x, y, out.str());
 		}

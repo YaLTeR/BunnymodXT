@@ -1168,7 +1168,9 @@ namespace CustomHud
 			const float aspect_ratio = (float)si.iHeight / (float)si.iWidth;
 
 			float fov_getfloat;
-			if (CVars::bxt_force_fov.GetFloat() >= 1.0)
+			if (CVars::bxt_collision_depth_map_fov.GetFloat() >= 1.0)
+				fov_getfloat = CVars::bxt_collision_depth_map_fov.GetFloat();
+			else if (CVars::bxt_force_fov.GetFloat() >= 1.0)
 				fov_getfloat = CVars::bxt_force_fov.GetFloat();
 			else
 				fov_getfloat = CVars::default_fov.GetFloat();

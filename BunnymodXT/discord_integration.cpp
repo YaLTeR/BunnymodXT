@@ -89,22 +89,29 @@ namespace discord_integration
 				const auto& gt = CustomHud::GetTime();
 				int total_time = (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds;
 
-				if (cur_state != game_state::NOT_PLAYING)
+				if (cl.pEngfuncs)
 				{
-					if (cl.pEngfuncs)
+					char gd[1024];
+					// Game directory.
+					const char* gameDir = cl.pEngfuncs->pfnGetGameDirectory();
+					if (gameDir && gameDir[0])
 					{
-						// Game directory.
-						const char* gameDir = cl.pEngfuncs->pfnGetGameDirectory();
+						cl.FileBase(gameDir, gd);
+						if (hw.ORIG_build_number)
+							snprintf(buffer_details, sizeof(buffer_details), "Game: %s | Build: %i", gd, hw.ORIG_build_number());
+						else
+							snprintf(buffer_details, sizeof(buffer_details), "Game: %s", gd);
+						presence.details = buffer_details;
+					}
+
+					if (cur_state != game_state::NOT_PLAYING)
+					{
 						// Get the map name and icon.
 						cl.GetMapName(map_name, ARRAYSIZE_HL(map_name));
 						if (gameDir && gameDir[0] && map_name[0])
 						{
-							char gd[1024];
-
 							// Adjust map_name to lowercase
 							cl.ConvertToLowerCase(map_name);
-
-							cl.FileBase(gameDir, gd);
 
 							if (hw.ORIG_build_number)
 								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s | Build: %i", map_name, gd, hw.ORIG_build_number());

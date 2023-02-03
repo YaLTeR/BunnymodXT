@@ -1104,6 +1104,10 @@ namespace patterns
 			"CoF-5936",
 			"55 8B EC 83 EC 0C 56 8B F1 8B 0D"
 		);
+
+		// PATTERNS(U_Random,
+			
+		// )
 	}
 
 	namespace client

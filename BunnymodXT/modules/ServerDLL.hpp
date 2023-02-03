@@ -220,6 +220,10 @@ protected:
 
 	std::unordered_map<int, bool> cantJumpNextTime;
 
+	void *pU_Random;
+	ptrdiff_t offglSeed;
+	ptrdiff_t offseed_table;
+
 	unsigned long fireBulletsPlayer_count = 0;
 	unsigned long fireBullets_count = 0;
 	std::deque<std::array<Vector, 2>> traceLineFireBulletsPlayer;

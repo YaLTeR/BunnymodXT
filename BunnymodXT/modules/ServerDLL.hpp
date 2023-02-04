@@ -108,6 +108,8 @@ public:
 	bool is_cof = false; // Cry of Fear-specific
 	ptrdiff_t offm_fStamina; // Cry of Fear-specific
 
+	void FireBulletsPlayer_Predict(unsigned int static_glSeed, unsigned int *seed_table, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, unsigned long cShots, int shared_rand);
+
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};
 	ServerDLL(const ServerDLL&);
@@ -221,7 +223,6 @@ protected:
 	std::unordered_map<int, bool> cantJumpNextTime;
 
 	void *pU_Random;
-	void *pgpGlobals;
 	ptrdiff_t offglSeed;
 	ptrdiff_t offseed_table;
 

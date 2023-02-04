@@ -310,7 +310,6 @@ void ServerDLL::Clear()
 	offm_pClientActiveItem = 0;
 	offm_CMultiManager_index = 0;
 	pU_Random = nullptr;
-	pgpGlobals = nullptr;
 	offglSeed = 0;
 	offseed_table = 0;
 
@@ -1271,12 +1270,10 @@ void ServerDLL::FindStuff()
 	ORIG_CNihilanth__DyingThink = reinterpret_cast<_CNihilanth__DyingThink>(MemUtils::GetSymbolAddress(m_Handle, "?DyingThink@CNihilanth@@QAEXXZ"));
 	if (ORIG_CNihilanth__DyingThink) {
 		EngineDevMsg("[server dll] Found CNihilanth::DyingThink at %p.\n", ORIG_CNihilanth__DyingThink);
-		pgpGlobals = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ORIG_CNihilanth__DyingThink) + 0x1);
 	} else {
 		ORIG_CNihilanth__DyingThink_Linux = reinterpret_cast<_CNihilanth__DyingThink_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN10CNihilanth10DyingThinkEv"));
 		if (ORIG_CNihilanth__DyingThink_Linux) {
 			EngineDevMsg("[server dll] Found CNihilanth::DyingThink [Linux] at %p.\n", ORIG_CNihilanth__DyingThink_Linux);
-			pgpGlobals = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ORIG_CNihilanth__DyingThink_Linux) + 0xc);
 		} else {
 			EngineDevWarning("[server dll] Could not find CNihilanth::DyingThink.\n");
 			EngineWarning("Nihilanth automatic timer stopping is not available.\n");
@@ -3076,10 +3073,11 @@ float SUTIL_SharedRandomFloat(unsigned int& static_glSeed, unsigned int *seed_ta
 	}
 }
 
-void FireBulletsPlayer_Predict(unsigned int static_glSeed, unsigned int *seed_table, unsigned long cShots, int shared_rand)
+void ServerDLL::FireBulletsPlayer_Predict(unsigned int static_glSeed, unsigned int *seed_table, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, unsigned long cShots, int shared_rand)
 {
-	// Vector vecRight = gpGlobals->v_right;
-	// Vector vecUp = gpGlobals->v_up;
+	auto &hw = HwDLL::GetInstance();
+	Vector vecRight = hw.ppGlobals->v_right;
+	Vector vecUp = hw.ppGlobals->v_up;  
 	float x, y, z;
 
 	for ( unsigned long iShot = 1; iShot <= cShots; iShot++ )
@@ -3089,6 +3087,16 @@ void FireBulletsPlayer_Predict(unsigned int static_glSeed, unsigned int *seed_ta
 		x = SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + iShot, -0.5, 0.5 ) + SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 1 + iShot ) , -0.5, 0.5 );
 		y = SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 2 + iShot ), -0.5, 0.5 ) + SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 3 + iShot ), -0.5, 0.5 );
 		z = x * x + y * y;
+
+		Vector vecDir = vecDirShooting +
+						x * vecSpread.x * vecRight +
+						y * vecSpread.y * vecUp;
+		Vector vecEnd;
+
+		vecEnd = vecSrc + vecDir * 8192;
+
+		const auto tr = TraceLine(vecSrc, vecEnd, 0, HwDLL::GetInstance().GetPlayerEdict());
+		std::printf("%f %f %f\n", tr.vecEndPos[0], tr.vecEndPos[1], tr.vecEndPos[2]);
 	}
 
 	std::printf("predicted %u\n", static_glSeed);
@@ -3108,7 +3116,7 @@ HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,voi
 	auto static_glSeed = **reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offglSeed);
 	auto seed_table = *reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offseed_table);
 	std::printf("before %u\n", static_glSeed);
-	FireBulletsPlayer_Predict(static_glSeed, seed_table, cShots, shared_rand);
+	FireBulletsPlayer_Predict(static_glSeed, seed_table, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand);
 	auto ret = ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	// just in case
 	std::printf("after %u\n", **reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offglSeed));

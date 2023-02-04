@@ -310,6 +310,7 @@ void ServerDLL::Clear()
 	offm_pClientActiveItem = 0;
 	offm_CMultiManager_index = 0;
 	pU_Random = nullptr;
+	pgpGlobals = nullptr;
 	offglSeed = 0;
 	offseed_table = 0;
 
@@ -807,6 +808,7 @@ void ServerDLL::FindStuff()
 	auto fCBasePlayer__ViewPunch = FindAsync(ORIG_CBasePlayer__ViewPunch, patterns::server::CBasePlayer__ViewPunch);
 	auto fCBasePlayer__Jump = FindAsync(ORIG_CBasePlayer__Jump, patterns::server::CBasePlayer__Jump);
 	auto fCBaseDoor__DoorActivate = FindAsync(ORIG_CBaseDoor__DoorActivate, patterns::server::CBaseDoor__DoorActivate);
+	auto fU_Random = FindFunctionAsync(pU_Random, "U_Random", patterns::server::U_Random);
 
 	uintptr_t pDispatchRestore;
 	auto fDispatchRestore = FindAsync(
@@ -1269,11 +1271,13 @@ void ServerDLL::FindStuff()
 	ORIG_CNihilanth__DyingThink = reinterpret_cast<_CNihilanth__DyingThink>(MemUtils::GetSymbolAddress(m_Handle, "?DyingThink@CNihilanth@@QAEXXZ"));
 	if (ORIG_CNihilanth__DyingThink) {
 		EngineDevMsg("[server dll] Found CNihilanth::DyingThink at %p.\n", ORIG_CNihilanth__DyingThink);
+		pgpGlobals = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ORIG_CNihilanth__DyingThink) + 0x1);
 	} else {
 		ORIG_CNihilanth__DyingThink_Linux = reinterpret_cast<_CNihilanth__DyingThink_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN10CNihilanth10DyingThinkEv"));
-		if (ORIG_CNihilanth__DyingThink_Linux)
+		if (ORIG_CNihilanth__DyingThink_Linux) {
 			EngineDevMsg("[server dll] Found CNihilanth::DyingThink [Linux] at %p.\n", ORIG_CNihilanth__DyingThink_Linux);
-		else {
+			pgpGlobals = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ORIG_CNihilanth__DyingThink_Linux) + 0xc);
+		} else {
 			EngineDevWarning("[server dll] Could not find CNihilanth::DyingThink.\n");
 			EngineWarning("Nihilanth automatic timer stopping is not available.\n");
 		}
@@ -1543,14 +1547,21 @@ void ServerDLL::FindStuff()
 	}
 
 	{
-		pU_Random = reinterpret_cast<void*>(MemUtils::GetSymbolAddress(m_Handle, "_Z8U_Randomv"));
+		auto pattern = fU_Random.get();
 		if (pU_Random) {
-			EngineDevMsg("[server dll] Found U_Random [Linux] at %p\n", pU_Random);
+			EngineDevMsg("[server dll] Found U_Random at %p (using the %s pattern).\n", pU_Random, pattern->name());
 			offglSeed = 0x2;
-			offseed_table = 0x16;
+			offseed_table = 0x22;
 		} else {
-			EngineDevWarning("[server dll] Could not find U_Random.\n");
-			EngineWarning("TAS bullet spread prediction is not available.\n");
+			pU_Random = reinterpret_cast<void*>(MemUtils::GetSymbolAddress(m_Handle, "_Z8U_Randomv"));
+			if (pU_Random) {
+				EngineDevMsg("[server dll] Found U_Random [Linux] at %p\n", pU_Random);
+				offglSeed = 0x2;
+				offseed_table = 0x16;
+			} else {
+				EngineDevWarning("[server dll] Could not find U_Random.\n");
+				EngineWarning("TAS bullet spread prediction is not available.\n");
+			}
 		}
 	}
 

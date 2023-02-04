@@ -221,6 +221,7 @@ protected:
 	std::unordered_map<int, bool> cantJumpNextTime;
 
 	void *pU_Random;
+	void *pgpGlobals;
 	ptrdiff_t offglSeed;
 	ptrdiff_t offseed_table;
 

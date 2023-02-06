@@ -6917,9 +6917,12 @@ HOOK_DEF_0(HwDLL, void, __cdecl, SCR_NetGraph)
 {
 	ORIG_SCR_NetGraph();
 
-	// Cry of Fear-specific, draw "PAUSED" on the screen.
-	if ((ORIG_VGuiWrap2_IsGameUIVisible && ORIG_SCR_DrawPause) && ORIG_VGuiWrap2_IsGameUIVisible() == 0)
-		ORIG_SCR_DrawPause();
+	// Draw "PAUSED" on the screen in pre-Steampipe builds.
+	if (ORIG_VGuiWrap2_IsGameUIVisible && ORIG_SCR_DrawPause)
+	{
+		if (ORIG_VGuiWrap2_IsGameUIVisible() == 0)
+			ORIG_SCR_DrawPause();
+	}
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Host_Shutdown)

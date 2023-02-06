@@ -2863,6 +2863,91 @@ struct HwDLL::Cmd_BXT_Set_Angles
 	}
 };
 
+struct HwDLL::Cmd_BXT_CH_Get_Velocity
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		const auto& vel = (*hw.sv_player)->v.velocity;
+		hw.ORIG_Con_Printf("Velocity: X = %f; Y = %f; Z = %f\n", vel.x, vel.y, vel.z);
+		hw.ORIG_Con_Printf("Velocity (XY): %f\n", vel.Length2D());
+		hw.ORIG_Con_Printf("Velocity (XYZ): %f\n", vel.Length());
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Get_BaseVelocity
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		const auto& basevel = (*hw.sv_player)->v.basevelocity;
+		hw.ORIG_Con_Printf("Basevelocity: X = %f; Y = %f; Z = %f\n", basevel.x, basevel.y, basevel.z);
+		hw.ORIG_Con_Printf("Basevelocity (XY): %f\n", basevel.Length2D());
+		hw.ORIG_Con_Printf("Basevelocity (XYZ): %f\n", basevel.Length());
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Get_Movetype
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		const auto& mvtype = (*hw.sv_player)->v.movetype;
+		hw.ORIG_Con_Printf("Movetype: %d (%s)\n", mvtype, hw.GetMovetypeName(mvtype));
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Get_MaxHealth
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.ORIG_Con_Printf("Max health: %f\n", (*hw.sv_player)->v.max_health);
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Get_Health_And_Armor
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.ORIG_Con_Printf("Health: %f; Armor: %f\n", (*hw.sv_player)->v.health, (*hw.sv_player)->v.armorvalue);
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Get_Waterlevel
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.ORIG_Con_Printf("Waterlevel: %d\n", (*hw.sv_player)->v.waterlevel);
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Get_PunchAngle
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		const auto& punch = (*hw.sv_player)->v.punchangle;
+		hw.ORIG_Con_Printf("Punchangle: X = %f; Y = %f; Z = %f\n", punch.x, punch.y, punch.z);
+	}
+};
+
 struct HwDLL::Cmd_Multiwait
 {
 	USAGE("Usage: w [number of waits]\n");
@@ -3004,6 +3089,16 @@ struct HwDLL::Cmd_BXT_Get_ClientMaxSpeed
 	{
 		if (ClientDLL::GetInstance().pEngfuncs)
 			HwDLL::GetInstance().ORIG_Con_Printf("Client maxspeed: %f\n", ClientDLL::GetInstance().pEngfuncs->GetClientMaxspeed());
+	}
+};
+
+struct HwDLL::Cmd_BXT_Get_ServerTime
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		HwDLL::GetInstance().ORIG_Con_Printf("Server time: %f\n", ServerDLL::GetInstance().GetTime());
 	}
 };
 
@@ -4652,6 +4747,13 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin_Offset, Handler<float, float, float>>("bxt_ch_set_pos_offset");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Velocity, Handler<float, float, float>>("bxt_ch_set_vel");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_BaseVelocity, Handler<>>("bxt_ch_get_basevel");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_Movetype, Handler<>>("bxt_ch_get_movetype");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_MaxHealth, Handler<>>("bxt_ch_get_maxhealth");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_Health_And_Armor, Handler<>>("bxt_ch_get_health_and_armor");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_Waterlevel, Handler<>>("bxt_ch_get_waterlevel");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_PunchAngle, Handler<>>("bxt_ch_get_punchangle");
 	wrapper::AddCheat<
 		Cmd_BXT_CH_Set_Velocity_Angles,
 		Handler<float>,
@@ -4660,6 +4762,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Cmd_BXT_Set_Angles,
 		Handler<float, float>,
 		Handler<float, float, float>>("bxt_set_angles");
+	wrapper::Add<Cmd_BXT_Get_ServerTime, Handler<>>("bxt_get_servertime");
+	wrapper::Add<Cmd_BXT_Get_ClientMaxSpeed, Handler<>>("bxt_get_clientmaxspeed");
 	wrapper::Add<
 		Cmd_Multiwait,
 		Handler<>,
@@ -4670,7 +4774,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Timer_Start, Handler<>>("bxt_timer_start");
 	wrapper::Add<Cmd_BXT_Timer_Stop, Handler<>>("bxt_timer_stop");
 	wrapper::Add<Cmd_BXT_Timer_Reset, Handler<>>("bxt_timer_reset");
-	wrapper::Add<Cmd_BXT_Get_ClientMaxSpeed, Handler<>>("bxt_get_clientmaxspeed");
 	wrapper::Add<Cmd_BXT_Get_Origin_And_Angles, Handler<>>("bxt_get_pos");
 	wrapper::Add<Cmd_BXT_TAS_Autojump_Down, Handler<>, Handler<const char*>>("+bxt_tas_autojump");
 	wrapper::Add<Cmd_BXT_TAS_Autojump_Up, Handler<>, Handler<const char*>>("-bxt_tas_autojump");
@@ -5674,6 +5777,26 @@ void HwDLL::KeyUp(Key& key)
 	std::ostringstream ss;
 	ss << '-' << key.Name << '\n';
 	ORIG_Cbuf_InsertText(ss.str().c_str());
+}
+
+const char* HwDLL::GetMovetypeName(int moveType)
+{
+	switch (moveType)
+	{
+		case MOVETYPE_NONE:             return "None";
+		case MOVETYPE_WALK:             return "Walk";
+		case MOVETYPE_STEP:             return "Step";
+		case MOVETYPE_FLY:              return "Fly";
+		case MOVETYPE_TOSS:             return "Toss";
+		case MOVETYPE_PUSH:             return "Push";
+		case MOVETYPE_NOCLIP:           return "Noclip";
+		case MOVETYPE_FLYMISSILE:       return "Fly-missle";
+		case MOVETYPE_BOUNCE:           return "Bounce";
+		case MOVETYPE_BOUNCEMISSILE:    return "Bounce-missle";
+		case MOVETYPE_FOLLOW:           return "Follow";
+		case MOVETYPE_PUSHSTEP:         return "Push-step";
+		default:                        return "Unknown";
+	}
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)

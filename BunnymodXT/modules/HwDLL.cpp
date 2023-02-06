@@ -2948,6 +2948,28 @@ struct HwDLL::Cmd_BXT_CH_Get_PunchAngle
 	}
 };
 
+struct HwDLL::Cmd_BXT_CH_Get_Gravity
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.ORIG_Con_Printf("Gravity: %f\n", (*hw.sv_player)->v.gravity);
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Get_Friction
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		hw.ORIG_Con_Printf("Friction: %f\n", (*hw.sv_player)->v.friction);
+	}
+};
+
 struct HwDLL::Cmd_Multiwait
 {
 	USAGE("Usage: w [number of waits]\n");
@@ -4754,6 +4776,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Health_And_Armor, Handler<>>("bxt_ch_get_health_and_armor");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Waterlevel, Handler<>>("bxt_ch_get_waterlevel");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_PunchAngle, Handler<>>("bxt_ch_get_punchangle");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_Friction, Handler<>>("bxt_ch_get_friction");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_Gravity, Handler<>>("bxt_ch_get_gravity");
 	wrapper::AddCheat<
 		Cmd_BXT_CH_Set_Velocity_Angles,
 		Handler<float>,

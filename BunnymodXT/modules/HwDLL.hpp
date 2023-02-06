@@ -421,6 +421,8 @@ protected:
 	struct Cmd_BXT_CH_Get_Health_And_Armor;
 	struct Cmd_BXT_CH_Get_Waterlevel;
 	struct Cmd_BXT_CH_Get_PunchAngle;
+	struct Cmd_BXT_CH_Get_Gravity;
+	struct Cmd_BXT_CH_Get_Friction;
 	struct Cmd_BXT_Get_Origin_And_Angles;
 	struct Cmd_BXT_Get_ClientMaxSpeed;
 	struct Cmd_BXT_Get_ServerTime;

@@ -3073,12 +3073,29 @@ float SUTIL_SharedRandomFloat(unsigned int& static_glSeed, unsigned int *seed_ta
 	}
 }
 
-void ServerDLL::FireBulletsPlayer_Predict(unsigned int static_glSeed, unsigned int *seed_table, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, unsigned long cShots, int shared_rand)
+float dot(Vector a, Vector b)
+{
+	return a.x*b.x + a.y*b.y; 
+}
+
+float length(Vector a)
+{
+	return std::sqrt(dot(a, a));
+}
+
+bool ServerDLL::FireBulletsPlayer_Predict(float result[3], Vector vecSrc, Vector vecDirShooting, Vector vecSpread, unsigned long cShots, int shared_rand)
 {
 	auto &hw = HwDLL::GetInstance();
 	Vector vecRight = hw.ppGlobals->v_right;
-	Vector vecUp = hw.ppGlobals->v_up;  
-	float x, y, z;
+	Vector vecUp = hw.ppGlobals->v_up;
+	float x, y;
+	// const double M_PI = 3.14159265358979323846;
+	const double M_RAD2DEG = 180 / M_PI;
+	std::printf("pitch %f yaw %f\n", std::acos(vecUp.z) * M_RAD2DEG, std::asin(vecRight.x) * M_RAD2DEG);
+
+	auto static_glSeed = **reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offglSeed);
+	auto seed_table = *reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offseed_table);
+	auto previous_glSeed = static_glSeed;
 
 	for ( unsigned long iShot = 1; iShot <= cShots; iShot++ )
 	{
@@ -3086,7 +3103,7 @@ void ServerDLL::FireBulletsPlayer_Predict(unsigned int static_glSeed, unsigned i
 		// get circular gaussian spread
 		x = SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + iShot, -0.5, 0.5 ) + SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 1 + iShot ) , -0.5, 0.5 );
 		y = SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 2 + iShot ), -0.5, 0.5 ) + SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 3 + iShot ), -0.5, 0.5 );
-		z = x * x + y * y;
+		// z = x * x + y * y;
 
 		Vector vecDir = vecDirShooting +
 						x * vecSpread.x * vecRight +
@@ -3094,12 +3111,32 @@ void ServerDLL::FireBulletsPlayer_Predict(unsigned int static_glSeed, unsigned i
 		Vector vecEnd;
 
 		vecEnd = vecSrc + vecDir * 8192;
+		Vector line = Vector(vecEnd) - vecSrc;
+		Vector view_offset = Vector(hw.StrafeState.Parameters.Parameters.LookAt.X, hw.StrafeState.Parameters.Parameters.LookAt.Y, hw.StrafeState.Parameters.Parameters.LookAt.Z);
+		Vector view = Vector(hw.StrafeState.TargetYawLookAtOrigin) + view_offset - vecSrc;
 
-		const auto tr = TraceLine(vecSrc, vecEnd, 0, HwDLL::GetInstance().GetPlayerEdict());
-		std::printf("%f %f %f\n", tr.vecEndPos[0], tr.vecEndPos[1], tr.vecEndPos[2]);
+		float out_yaw = std::asin(vecRight.x);
+		float out_pitch = std::acos(vecUp.z);
+
+		float diff_yaw = std::acos(dot(line, view) / (length(line) * length(view)));
+		if (std::atan2(line.y, line.x) > std::atan2(view.y, view.x))
+			out_yaw -= diff_yaw;
+		else
+			out_yaw += diff_yaw;
+
+		line.x = length(line);
+		line.y = line.z;
+		view.x = length(view);
+		view.y = view.z;
+		float diff_pitch = std::acos(dot(line, view) / (length(line) * length(view)));
+		if (std::atan2(line.y, line.x) < std::atan2(view.y, view.x))
+			out_pitch -= diff_pitch;
+		else
+			out_pitch += diff_pitch;
+		// std::printf("out %f %f\n", out_pitch * M_RAD2DEG, out_yaw * M_RAD2DEG);
 	}
 
-	std::printf("predicted %u\n", static_glSeed);
+	return static_glSeed == previous_glSeed;
 }
 
 HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, thisptr, int, edx, float, param1, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand)
@@ -3113,13 +3150,10 @@ HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, 
 HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand)
 {
 	fireBulletsPlayer_count = cShots;
-	auto static_glSeed = **reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offglSeed);
-	auto seed_table = *reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offseed_table);
-	std::printf("before %u\n", static_glSeed);
-	FireBulletsPlayer_Predict(static_glSeed, seed_table, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand);
+	float view[3];
+	FireBulletsPlayer_Predict(view, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand);
 	auto ret = ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	// just in case
-	std::printf("after %u\n", **reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offglSeed));
 	fireBulletsPlayer_count = 0;
 	return ret;
 }

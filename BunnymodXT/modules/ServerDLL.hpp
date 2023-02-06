@@ -108,7 +108,7 @@ public:
 	bool is_cof = false; // Cry of Fear-specific
 	ptrdiff_t offm_fStamina; // Cry of Fear-specific
 
-	void FireBulletsPlayer_Predict(unsigned int static_glSeed, unsigned int *seed_table, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, unsigned long cShots, int shared_rand);
+	bool FireBulletsPlayer_Predict(float result[3], Vector vecSrc, Vector vecDirShooting, Vector vecSpread, unsigned long cShots, int shared_rand);
 
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};

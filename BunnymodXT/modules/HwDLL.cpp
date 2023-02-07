@@ -823,25 +823,7 @@ void HwDLL::Clear()
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
-		hlstrafe_version = HLStrafe::MAX_SUPPORTED_VERSION;
-		demoName.clear();
-		saveName.clear();
-		frametime0ms.clear();
-		runningFrames = false;
-		wasRunningFrames = false;
-		currentFramebulk = 0;
-		totalFramebulks = 0;
-		totalFrames = 0;
-		StrafeState = HLStrafe::CurrentState();
-		PrevStrafeState = HLStrafe::CurrentState();
-		PrevFractions = {1, 0, 0, 0 };
-		PrevNormalzs = {0, 0, 0, 0 };
-		SharedRNGSeedPresent = false;
-		SharedRNGSeed = 0;
-		ButtonsPresent = false;
-		exportFilename.clear();
-		exportResult.Clear();
-		libTASExportFile.close();
+		ResetTASPlaybackState();
 	}
 }
 

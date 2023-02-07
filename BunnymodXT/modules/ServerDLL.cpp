@@ -3,6 +3,7 @@
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
+#include <util.hpp>
 #include "ServerDLL.hpp"
 #include "ClientDLL.hpp"
 #include "HwDLL.hpp"
@@ -3050,7 +3051,7 @@ float SUTIL_SharedRandomFloat(unsigned int& static_glSeed, unsigned int *seed_ta
 {
 	unsigned int range;
 
-	SU_Srand(static_glSeed, seed_table, (int)seed + *(int *)&low + *(int *)&high );
+	SU_Srand(static_glSeed, seed_table, (int)seed + (int) low + (int) high );
 
 	SU_Random(static_glSeed, seed_table);
 	SU_Random(static_glSeed, seed_table);
@@ -3073,25 +3074,12 @@ float SUTIL_SharedRandomFloat(unsigned int& static_glSeed, unsigned int *seed_ta
 	}
 }
 
-float dot(Vector a, Vector b)
-{
-	return a.x*b.x + a.y*b.y; 
-}
-
-float length(Vector a)
-{
-	return std::sqrt(dot(a, a));
-}
-
 bool ServerDLL::FireBulletsPlayer_Predict(float result[3], Vector vecSrc, Vector vecDirShooting, Vector vecSpread, unsigned long cShots, int shared_rand)
 {
 	auto &hw = HwDLL::GetInstance();
 	Vector vecRight = hw.ppGlobals->v_right;
 	Vector vecUp = hw.ppGlobals->v_up;
 	float x, y;
-	// const double M_PI = 3.14159265358979323846;
-	const double M_RAD2DEG = 180 / M_PI;
-	std::printf("pitch %f yaw %f\n", std::acos(vecUp.z) * M_RAD2DEG, std::asin(vecRight.x) * M_RAD2DEG);
 
 	auto static_glSeed = **reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offglSeed);
 	auto seed_table = *reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offseed_table);
@@ -3099,11 +3087,8 @@ bool ServerDLL::FireBulletsPlayer_Predict(float result[3], Vector vecSrc, Vector
 
 	for ( unsigned long iShot = 1; iShot <= cShots; iShot++ )
 	{
-		//Use player's random seed.
-		// get circular gaussian spread
 		x = SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + iShot, -0.5, 0.5 ) + SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 1 + iShot ) , -0.5, 0.5 );
 		y = SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 2 + iShot ), -0.5, 0.5 ) + SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 3 + iShot ), -0.5, 0.5 );
-		// z = x * x + y * y;
 
 		Vector vecDir = vecDirShooting +
 						x * vecSpread.x * vecRight +
@@ -3111,29 +3096,10 @@ bool ServerDLL::FireBulletsPlayer_Predict(float result[3], Vector vecSrc, Vector
 		Vector vecEnd;
 
 		vecEnd = vecSrc + vecDir * 8192;
-		Vector line = Vector(vecEnd) - vecSrc;
-		Vector view_offset = Vector(hw.StrafeState.Parameters.Parameters.LookAt.X, hw.StrafeState.Parameters.Parameters.LookAt.Y, hw.StrafeState.Parameters.Parameters.LookAt.Z);
-		Vector view = Vector(hw.StrafeState.TargetYawLookAtOrigin) + view_offset - vecSrc;
 
-		float out_yaw = std::asin(vecRight.x);
-		float out_pitch = std::acos(vecUp.z);
-
-		float diff_yaw = std::acos(dot(line, view) / (length(line) * length(view)));
-		if (std::atan2(line.y, line.x) > std::atan2(view.y, view.x))
-			out_yaw -= diff_yaw;
-		else
-			out_yaw += diff_yaw;
-
-		line.x = length(line);
-		line.y = line.z;
-		view.x = length(view);
-		view.y = view.z;
-		float diff_pitch = std::acos(dot(line, view) / (length(line) * length(view)));
-		if (std::atan2(line.y, line.x) < std::atan2(view.y, view.x))
-			out_pitch -= diff_pitch;
-		else
-			out_pitch += diff_pitch;
-		// std::printf("out %f %f\n", out_pitch * M_RAD2DEG, out_yaw * M_RAD2DEG);
+		result[0] = vecEnd.x;
+		result[1] = vecEnd.y;
+		result[2] = vecEnd.z;
 	}
 
 	return static_glSeed == previous_glSeed;
@@ -3150,8 +3116,49 @@ HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, 
 HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand)
 {
 	fireBulletsPlayer_count = cShots;
-	float view[3];
-	FireBulletsPlayer_Predict(view, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand);
+	float end[3];
+
+	if (FireBulletsPlayer_Predict(end, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand))
+	{
+		auto &hw = HwDLL::GetInstance();
+		float view[3];
+		float src[3] = {vecSrc.x, vecSrc.y, vecSrc.z};
+		float view_offset[3] = {
+			static_cast<float>(hw.StrafeState.Parameters.Parameters.LookAt.X), 
+			static_cast<float>(hw.StrafeState.Parameters.Parameters.LookAt.Y), 
+			static_cast<float>(hw.StrafeState.Parameters.Parameters.LookAt.Z)};
+		HLStrafe::VecAdd<float, float, 3>(hw.StrafeState.TargetYawLookAtOrigin, view_offset, view);
+		HLStrafe::VecSubtract<float, float, 3>(view, src, view);
+		HLStrafe::VecSubtract<float, float, 3>(end, src, end);
+
+		auto curr_yaw = std::asin(hw.ppGlobals->v_right.x);
+		auto curr_pitch = std::acos(hw.ppGlobals->v_up.z);
+		auto diff_yaw = std::acos(
+			HLStrafe::DotProduct<float, float, 2>(end, view) / (HLStrafe::Length<float, 2>(end) * HLStrafe::Length<float, 2>(view)));
+
+		if (HLStrafe::Atan2(end[1], end[0]) > HLStrafe::Atan2(view[1], view[0]))
+			curr_yaw -= diff_yaw;
+		else
+			curr_yaw += diff_yaw;
+
+		end[0] = HLStrafe::Length<float, 2>(end);
+		end[1] = end[2];
+		view[0] = HLStrafe::Length<float, 2>(view);
+		view[1] = view[2];
+
+		auto diff_pitch = std::acos(HLStrafe::DotProduct<float, float, 2>(end, view) / (HLStrafe::Length<float, 2>(end) * HLStrafe::Length<float, 2>(view)));
+		if (HLStrafe::Atan2(end[1], end[0]) < HLStrafe::Atan2(view[1], view[0]))
+			curr_pitch -= diff_pitch;
+		else
+			curr_pitch += diff_pitch;
+
+		// std::printf("out %f %f\n", curr_pitch * HLStrafe::M_RAD2DEG, curr_yaw * HLStrafe::M_RAD2DEG);
+		hw.LookAtActionViewangles[0] = curr_pitch * HLStrafe::M_RAD2DEG;
+		hw.LookAtActionViewangles[1] = curr_yaw * HLStrafe::M_RAD2DEG;
+		hw.LookAtActionSplit = true;
+
+	}
+
 	auto ret = ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	// just in case
 	fireBulletsPlayer_count = 0;

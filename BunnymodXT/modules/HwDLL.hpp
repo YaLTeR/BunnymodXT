@@ -593,13 +593,13 @@ protected:
 	std::string saveName;
 public:
 	std::string frametime0ms;
+	size_t currentFramebulk;
+	size_t currentRepeat;
 protected:
 	bool runningFrames;
 	bool wasRunningFrames;
-	size_t currentFramebulk;
 	size_t preExecFramebulk = 0;
 	size_t totalFramebulks;
-	size_t currentRepeat;
 	size_t movementFrameCounter;
 	bool thisFrameIs0ms;
 	bool SharedRNGSeedPresent;
@@ -714,4 +714,10 @@ protected:
 	bool insideHideGameUI;
 
 	bool extendPlayerTraceDistanceLimit;
+
+public:
+	bool LookAtActionSplit;
+	float LookAtActionViewangles[2];
+	size_t LookAtActionBulk;
+	size_t LookAtActionRepeat;
 };

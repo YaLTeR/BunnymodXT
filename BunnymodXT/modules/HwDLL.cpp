@@ -805,6 +805,9 @@ void HwDLL::Clear()
 	tas_editor_set_run_point_and_save = false;
 	free_cam_active = false;
 	extendPlayerTraceDistanceLimit = false;
+	LookAtActionSplit = false;
+	LookAtActionBulk = 0;
+	LookAtActionRepeat = 0;
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -2311,6 +2314,9 @@ void HwDLL::ResetStateBeforeTASPlayback()
 	clearedImpulsesForTheFirstTime = false;
 	TargetYawOverrideIndex = 0;
 	TargetYawOverrides.clear();
+	LookAtActionSplit = false;
+	LookAtActionBulk = 0;
+	LookAtActionRepeat = 0;
 }
 
 void HwDLL::StartTASPlayback()

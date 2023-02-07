@@ -343,7 +343,7 @@ public:
 
 	bool is_cof_steam = false; // Cry of Fear-specific
 
-	void ResetStateBeforeTASPlayback();
+	void ResetTASPlaybackState();
 	void StartTASPlayback();
 
 	void TimerReset();

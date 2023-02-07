@@ -2397,7 +2397,7 @@ cvar_t* HwDLL::FindCVar(const char* name)
 	return ORIG_Cvar_FindVar(name);
 }
 
-void HwDLL::ResetStateBeforeTASPlayback()
+void HwDLL::ResetTASPlaybackState()
 {
 	// Disable the input editor.
 	SetTASEditorMode(TASEditorMode::DISABLED);
@@ -2519,7 +2519,7 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		if (hw.resetState != ResetState::NORMAL)
 			return;
 
-		hw.ResetStateBeforeTASPlayback();
+		hw.ResetTASPlaybackState();
 		hw.hltas_filename = fileName;
 
 		simulation_ipc::maybe_lock_mutex();
@@ -2798,7 +2798,7 @@ struct HwDLL::Cmd_BXT_TAS_Check_Position
 			origin.x, origin.y, origin.z, x, y, z);
 
 		const auto filename = hw.hltas_filename;
-		hw.ResetStateBeforeTASPlayback();
+		hw.ResetTASPlaybackState();
 		hw.hltas_filename = filename;
 
 		if (std::getenv("BXT_SCRIPT"))
@@ -4453,7 +4453,7 @@ struct HwDLL::Cmd_BXT_TAS_Client_Load_Received_Script
 			return;
 
 		auto& hw = HwDLL::GetInstance();
-		hw.ResetStateBeforeTASPlayback();
+		hw.ResetTASPlaybackState();
 
 		auto err = hw.input.FromString(simulation_ipc::message.script);
 		simulation_ipc::message.script[0] = 0;
@@ -4912,7 +4912,7 @@ struct HwDLL::Cmd_BXT_Splits_Place_Down
 extern "C" DLLEXPORT void bxt_tas_load_script_from_string(const char *script)
 {
 	auto& hw = HwDLL::GetInstance();
-	hw.ResetStateBeforeTASPlayback();
+	hw.ResetTASPlaybackState();
 
 	auto err = hw.input.FromString(script);
 
@@ -5431,7 +5431,7 @@ void HwDLL::InsertCommands()
 						PrevNormalzs,
 					});
 					if (stop) {
-						ResetStateBeforeTASPlayback();
+						ResetTASPlaybackState();
 						break;
 					}
 				}

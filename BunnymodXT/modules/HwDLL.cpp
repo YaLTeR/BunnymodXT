@@ -3833,6 +3833,45 @@ struct HwDLL::Cmd_BXT_Print_Entities
 	}
 };
 
+struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
+{
+	NO_USAGE();
+
+	static void handler(int num)
+	{
+		const auto& hw = HwDLL::GetInstance();
+
+		std::ostringstream out;
+
+		edict_t *edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+		for (int e = 0; e < numEdicts; ++e) {
+			const edict_t *ent = edicts + e;
+			if (!hw.IsValidEdict(ent))
+				continue;
+
+			if (e != num)
+				continue;
+
+			const char *classname = hw.GetString(ent->v.classname);
+			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+
+			Vector origin;
+			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger)
+				origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
+			else
+				origin = ent->v.origin;
+
+			out << "bxt_ch_set_pos " << origin.x << " " << origin.y << " " << origin.z;
+
+			out << '\n';
+		}
+
+		auto str = out.str();
+		hw.ORIG_Cbuf_InsertText(str.c_str());
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save
 {
 	USAGE("Usage: bxt_tas_editor_set_run_point_and_save\n Makes the script execute up to the selected point and resume editing from it.\n");
@@ -4694,6 +4733,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin_Offset, Handler<float, float, float>>("bxt_ch_set_pos_offset");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Velocity, Handler<float, float, float>>("bxt_ch_set_vel");
+	wrapper::AddCheat<Cmd_BXT_CH_Teleport_To_Entity, Handler<int>>("bxt_ch_teleport_to_entity");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>>("bxt_ch_get_other_player_info");
 	wrapper::AddCheat<

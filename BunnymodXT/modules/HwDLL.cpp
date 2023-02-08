@@ -3822,8 +3822,79 @@ struct HwDLL::Cmd_BXT_Print_Entities
 
 			if (ent->v.targetname != 0) {
 				const char *targetname = hw.GetString(ent->v.targetname);
-				out << " - " << targetname;
+				out << "; name: " << targetname;
 			}
+
+			if (ent->v.target != 0) {
+				const char *target = hw.GetString(ent->v.target);
+				out << "; target: " << target;
+			}
+
+			out << "; hp: " << ent->v.health;
+
+			if ((strstr(classname, "func_door") != NULL) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
+				out << "; dmg: " << ent->v.dmg;
+
+			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+
+			Vector origin;
+			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger)
+				origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
+			else
+				origin = ent->v.origin;
+
+			out << "; x: " << origin.x << "; y: " << origin.y << "; z: " << origin.z;
+
+			out << '\n';
+		}
+
+		auto str = out.str();
+		hw.ORIG_Con_Printf("%s", str.c_str());
+	}
+
+	static void handler(const char *name)
+	{
+		const auto& hw = HwDLL::GetInstance();
+
+		std::ostringstream out;
+
+		edict_t *edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+		for (int e = 0; e < numEdicts; ++e) {
+			const edict_t *ent = edicts + e;
+			if (!hw.IsValidEdict(ent))
+				continue;
+			
+			const char *classname = hw.GetString(ent->v.classname);
+			if (strstr(classname, name) == 0)
+				continue;
+
+			out << e << ": " << classname;
+
+			if (ent->v.targetname != 0) {
+				const char *targetname = hw.GetString(ent->v.targetname);
+				out << "; name: " << targetname;
+			}
+
+			if (ent->v.target != 0) {
+				const char *target = hw.GetString(ent->v.target);
+				out << "; target: " << target;
+			}
+
+			out << "; hp: " << ent->v.health;
+
+			if ((strstr(classname, "func_door") != NULL) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
+				out << "; dmg: " << ent->v.dmg;
+
+			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+
+			Vector origin;
+			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger)
+				origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
+			else
+				origin = ent->v.origin;
+
+			out << "; x: " << origin.x << "; y: " << origin.y << "; z: " << origin.z;
 
 			out << '\n';
 		}
@@ -4784,7 +4855,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TASLog, Handler<int>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
-	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>>("bxt_print_entities");
+	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>, Handler<const char*>>("bxt_print_entities");
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Resimulate, Handler<>>("bxt_tas_editor_resimulate");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Apply_Smoothing, Handler<>>("bxt_tas_editor_apply_smoothing");

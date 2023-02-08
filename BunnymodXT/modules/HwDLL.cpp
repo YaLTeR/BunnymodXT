@@ -35,8 +35,13 @@ struct on_tas_playback_frame_data {
 // Change the variable name if you change the parameters!
 // This way outdated bxt-rs will be unable to find the variable, instead of crashing due to mismatching parameters.
 extern "C" {
-	// Return value != 0 means stop TAS playback.
+	// BXT will call this right before running HLStrafe for every played back frame of a TAS.
+	//
+	// Return value != 0 will cause BXT to stop TAS playback.
 	DLLEXPORT int (*bxt_on_tas_playback_frame)(on_tas_playback_frame_data data);
+
+	// BXT will call this when the TAS playback stops.
+	DLLEXPORT void (*bxt_on_tas_playback_stopped)();
 }
 
 // Linux hooks.
@@ -2390,8 +2395,16 @@ int HwDLL::CallOnTASPlaybackFrame() {
 	});
 }
 
+void HwDLL::CallOnTASPlaybackStopped() {
+	if (bxt_on_tas_playback_stopped) {
+		bxt_on_tas_playback_stopped();
+	}
+}
+
 void HwDLL::ResetTASPlaybackState()
 {
+	CallOnTASPlaybackStopped();
+
 	// Disable the input editor.
 	SetTASEditorMode(TASEditorMode::DISABLED);
 
@@ -4967,6 +4980,7 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 				input.RemoveFrame(currentFramebulk);
 			}
 
+			CallOnTASPlaybackStopped();
 			runningFrames = false;
 			ORIG_Cbuf_InsertText("host_framerate 0;_bxt_norefresh 0;_bxt_min_frametime 0;bxt_taslog 0\n");
 
@@ -5882,6 +5896,7 @@ void HwDLL::InsertCommands()
 
 		// Ran through all frames.
 		if (currentFramebulk >= totalFramebulks) {
+			CallOnTASPlaybackStopped();
 			runningFrames = false;
 
 			if (!exportFilename.empty()) {

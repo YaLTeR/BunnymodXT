@@ -415,16 +415,8 @@ protected:
 	struct Cmd_BXT_CH_Set_Velocity;
 	struct Cmd_BXT_CH_Set_Velocity_Angles;
 	struct Cmd_BXT_CH_Get_Velocity;
-	struct Cmd_BXT_CH_Get_BaseVelocity;
-	struct Cmd_BXT_CH_Get_Movetype;
-	struct Cmd_BXT_CH_Get_MaxHealth;
-	struct Cmd_BXT_CH_Get_Health_And_Armor;
-	struct Cmd_BXT_CH_Get_Waterlevel;
-	struct Cmd_BXT_CH_Get_PunchAngle;
-	struct Cmd_BXT_CH_Get_Gravity;
-	struct Cmd_BXT_CH_Get_Friction;
+	struct Cmd_BXT_CH_Get_Other_Player_Info;
 	struct Cmd_BXT_Get_Origin_And_Angles;
-	struct Cmd_BXT_Get_ClientMaxSpeed;
 	struct Cmd_BXT_Get_ServerTime;
 	struct Cmd_Multiwait;
 	struct Cmd_BXT_Camera_Fixed;

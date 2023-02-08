@@ -3847,9 +3847,12 @@ struct HwDLL::Cmd_BXT_Print_Entities
 				out << "; dmg: " << ent->v.dmg;
 
 			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+			bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+			bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
+			bool is_water = std::strncmp(classname, "func_water", 10) == 0;
 
 			Vector origin;
-			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger)
+			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
 				origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
 			else
 				origin = ent->v.origin;
@@ -3898,9 +3901,12 @@ struct HwDLL::Cmd_BXT_Print_Entities
 				out << "; dmg: " << ent->v.dmg;
 
 			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+			bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+			bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
+			bool is_water = std::strncmp(classname, "func_water", 10) == 0;
 
 			Vector origin;
-			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger)
+			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
 				origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
 			else
 				origin = ent->v.origin;
@@ -3937,9 +3943,12 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 
 			const char *classname = hw.GetString(ent->v.classname);
 			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+			bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+			bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
+			bool is_water = std::strncmp(classname, "func_water", 10) == 0;
 
 			Vector origin;
-			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger)
+			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
 				origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
 			else
 				origin = ent->v.origin;

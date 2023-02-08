@@ -5879,6 +5879,87 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 				newTASFilename.clear();
 				newTASResult.Clear();
 			}
+
+			if (LookAtActionSplit) {
+				LookAtActionSplit = false;
+				auto curr_bulk = input.GetFrame(LookAtActionBulk);
+				// auto curr_parameters = input.GetFrame(LookAtActionBulk+1).GetAlgorithmParameters();
+
+				// There is a chance repeat value will be 0, which indicates the first frame of the bulk
+				// This will subtract the repeat to get correct repeat and maybe bulk
+				std::printf("pre start split %u %u\n", LookAtActionBulk, LookAtActionRepeat);
+				if (LookAtActionRepeat == 0) {
+					--LookAtActionBulk;
+					curr_bulk = input.GetFrame(LookAtActionBulk);
+					// Subtract 1 because maybe it counts from 0..
+					LookAtActionRepeat = curr_bulk.GetRepeats() - 1;
+				} else {
+					--LookAtActionRepeat;
+				}
+
+				std::printf("start split %u %u\n", LookAtActionBulk, LookAtActionRepeat);
+
+				auto parameter_yaw_frame = curr_bulk;
+				auto parameter_lookat_frame = curr_bulk;
+
+				auto parameter_yaw = HLTAS::AlgorithmParameters {};
+				parameter_yaw.Type = HLTAS::ConstraintsType::YAW;
+				parameter_yaw.Parameters.Yaw.Yaw = LookAtActionViewangles[1];
+				parameter_yaw.Parameters.Yaw.Constraints = 0;
+				parameter_yaw_frame.SetAlgorithmParameters(parameter_yaw);
+
+				auto parameter_lookat = HLTAS::AlgorithmParameters {};
+				parameter_lookat.Type = HLTAS::ConstraintsType::LOOK_AT;
+				parameter_lookat.Parameters.LookAt.X = StrafeState.Parameters.Parameters.LookAt.X;
+				parameter_lookat.Parameters.LookAt.Y = StrafeState.Parameters.Parameters.LookAt.Y;
+				parameter_lookat.Parameters.LookAt.Z = StrafeState.Parameters.Parameters.LookAt.Z;
+				parameter_lookat.Parameters.LookAt.Entity = StrafeState.Parameters.Parameters.LookAt.Entity;
+				parameter_lookat.Parameters.LookAt.Action = StrafeState.Parameters.Parameters.LookAt.Action;
+				parameter_lookat_frame.SetAlgorithmParameters(parameter_lookat);
+
+				// std::printf("is movement %u\n", input.GetFrame(LookAtActionBulk-1).IsMovement());
+				
+				// auto curr_parameters = curr_bulk.GetAlgorithmParameters();
+				if (curr_bulk.GetRepeats() == 1) {
+					std::printf("one bulk]\n");
+					// Action bulk is one frame so we just change pitch yaw action
+					// curr_bulk.SetAlgorithmParameters(new_parameters);
+					// auto curr_parameters = curr_bulk.GetAlgorithmParameters();
+					// auto curr_parameters = input.GetFrame(LookAtActionBulk).GetAlgorithmParameters();
+
+					curr_bulk.SetPitch(LookAtActionViewangles[0]);
+					curr_bulk.SetAttack2(true);
+
+					input.RemoveFrame(LookAtActionBulk);
+					input.InsertFrame(LookAtActionBulk, parameter_lookat_frame);
+					input.InsertFrame(LookAtActionBulk, curr_bulk);
+					input.InsertFrame(LookAtActionBulk, parameter_yaw_frame);
+					currentFramebulk = LookAtActionBulk;
+				} else {
+					std::printf("normal stuff\n");
+					bool yes_after = input.SplitFrame(LookAtActionBulk, LookAtActionRepeat+1);
+					if (yes_after)
+						++totalFramebulks;
+
+					bool yes_before = input.SplitFrame(LookAtActionBulk, LookAtActionRepeat);
+					if (yes_before)
+						++totalFramebulks;
+
+					auto action = input.GetFrames()[LookAtActionBulk + yes_before];
+					// action.SetAlgorithmParameters(parameters);
+					action.SetPitch(LookAtActionViewangles[0]);
+					// action.SetPitch((double)69);
+					action.SetAttack2(true);
+
+					input.RemoveFrame(LookAtActionBulk + yes_before);
+					input.InsertFrame(LookAtActionBulk + yes_before, action);
+					currentFramebulk = LookAtActionBulk + yes_before;
+				}
+
+				std::ifstream file("testone.two");
+				auto error = input.Save("testone.two");
+				currentRepeat = 0;
+			}
 		}
 
 		InsertCommands();

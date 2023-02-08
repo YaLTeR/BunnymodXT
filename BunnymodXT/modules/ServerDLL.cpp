@@ -3131,32 +3131,18 @@ HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,voi
 		HLStrafe::VecSubtract<float, float, 3>(view, src, view);
 		HLStrafe::VecSubtract<float, float, 3>(end, src, end);
 
-		auto curr_yaw = std::asin(hw.ppGlobals->v_right.x);
-		auto curr_pitch = std::acos(hw.ppGlobals->v_up.z);
-		auto diff_yaw = std::acos(
-			HLStrafe::DotProduct<float, float, 2>(end, view) / (HLStrafe::Length<float, 2>(end) * HLStrafe::Length<float, 2>(view)));
+		auto curr_yaw = std::asin(hw.ppGlobals->v_right.x) * HLStrafe::M_RAD2DEG;
+		auto curr_pitch = std::acos(hw.ppGlobals->v_up.z) * HLStrafe::M_RAD2DEG;
 
-		if (HLStrafe::Atan2(end[1], end[0]) > HLStrafe::Atan2(view[1], view[0]))
-			curr_yaw -= diff_yaw;
-		else
-			curr_yaw += diff_yaw;
+		HLStrafe::GetViewanglesTwoVec(result, view, end);
 
-		end[0] = HLStrafe::Length<float, 2>(end);
-		end[1] = end[2];
-		view[0] = HLStrafe::Length<float, 2>(view);
-		view[1] = view[2];
+		std::printf("out %f %f\n", curr_pitch + result[0], curr_yaw + result[1]);
+		hw.LookAtActionViewangles[0] = curr_pitch + result[0];
+		hw.LookAtActionViewangles[1] = curr_yaw + result[1];
 
-		auto diff_pitch = std::acos(HLStrafe::DotProduct<float, float, 2>(end, view) / (HLStrafe::Length<float, 2>(end) * HLStrafe::Length<float, 2>(view)));
-		if (HLStrafe::Atan2(end[1], end[0]) < HLStrafe::Atan2(view[1], view[0]))
-			curr_pitch -= diff_pitch;
-		else
-			curr_pitch += diff_pitch;
-
-		// std::printf("out %f %f\n", curr_pitch * HLStrafe::M_RAD2DEG, curr_yaw * HLStrafe::M_RAD2DEG);
-		hw.LookAtActionViewangles[0] = curr_pitch * HLStrafe::M_RAD2DEG;
-		hw.LookAtActionViewangles[1] = curr_yaw * HLStrafe::M_RAD2DEG;
 		hw.LookAtActionSplit = true;
-
+		hw.LookAtActionBulk = hw.currentFramebulk;
+		hw.LookAtActionRepeat = hw.currentRepeat;
 	}
 
 	auto ret = ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);

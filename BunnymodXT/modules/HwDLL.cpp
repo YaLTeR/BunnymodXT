@@ -2379,6 +2379,17 @@ cvar_t* HwDLL::FindCVar(const char* name)
 	return ORIG_Cvar_FindVar(name);
 }
 
+int HwDLL::CallOnTASPlaybackFrame() {
+	if (!bxt_on_tas_playback_frame)
+		return 0;
+
+	return bxt_on_tas_playback_frame(on_tas_playback_frame_data {
+		StrafeState.StrafeCycleFrameCount,
+		PrevFractions,
+		PrevNormalzs,
+	});
+}
+
 void HwDLL::ResetTASPlaybackState()
 {
 	// Disable the input editor.
@@ -5407,11 +5418,7 @@ void HwDLL::InsertCommands()
 				});
 
 				if (bxt_on_tas_playback_frame) {
-					const auto stop = bxt_on_tas_playback_frame(on_tas_playback_frame_data {
-						StrafeState.StrafeCycleFrameCount,
-						PrevFractions,
-						PrevNormalzs,
-					});
+					const auto stop = CallOnTASPlaybackFrame();
 					if (stop) {
 						ResetTASPlaybackState();
 						break;

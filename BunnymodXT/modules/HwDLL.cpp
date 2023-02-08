@@ -3804,7 +3804,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 {
 	NO_USAGE();
 
-	static void handler()
+	static void handler(const char *name1, const char *name2)
 	{
 		const auto& hw = HwDLL::GetInstance();
 
@@ -3818,15 +3818,26 @@ struct HwDLL::Cmd_BXT_Print_Entities
 				continue;
 
 			const char *classname = hw.GetString(ent->v.classname);
+			const char *targetname = hw.GetString(ent->v.targetname);
+			const char *target = hw.GetString(ent->v.target);
+			if (std::strcmp(name2, "targetname") == 0)
+			{
+				if ((std::strcmp(targetname, name1) != 0) && (std::strcmp(target, name1) != 0))
+					continue;
+			}
+			else
+			{
+				if ((strstr(classname, name1) == 0) && (strstr(classname, name2) == 0))
+					continue;
+			}
+
 			out << e << ": " << classname;
 
 			if (ent->v.targetname != 0) {
-				const char *targetname = hw.GetString(ent->v.targetname);
 				out << "; name: " << targetname;
 			}
 
 			if (ent->v.target != 0) {
-				const char *target = hw.GetString(ent->v.target);
 				out << "; target: " << target;
 			}
 
@@ -4855,7 +4866,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TASLog, Handler<int>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
-	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>, Handler<const char*>>("bxt_print_entities");
+	wrapper::Add<Cmd_BXT_Print_Entities, Handler<const char*>, Handler<const char*, const char*>>("bxt_print_entities");
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Resimulate, Handler<>>("bxt_tas_editor_resimulate");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Apply_Smoothing, Handler<>>("bxt_tas_editor_apply_smoothing");

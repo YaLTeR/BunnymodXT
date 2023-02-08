@@ -2899,6 +2899,28 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.ORIG_Con_Printf("Max health: %f\n", (*hw.sv_player)->v.max_health);
 		hw.ORIG_Con_Printf("Gravity: %f\n", (*hw.sv_player)->v.gravity);
 		hw.ORIG_Con_Printf("Friction: %f\n", (*hw.sv_player)->v.friction);
+		std::ostringstream out;
+		out << "Flags: ";
+		if ((*hw.sv_player)->v.flags & FL_CONVEYOR)
+			out << "FL_CONVEYOR; ";
+		if ((*hw.sv_player)->v.flags & FL_INWATER)
+			out << "FL_INWATER; ";
+		if ((*hw.sv_player)->v.flags & FL_GODMODE)
+			out << "FL_GODMODE; ";
+		if ((*hw.sv_player)->v.flags & FL_NOTARGET)
+			out << "FL_NOTARGET; ";
+		if ((*hw.sv_player)->v.flags & FL_ONGROUND)
+			out << "FL_ONGROUND; ";
+		if ((*hw.sv_player)->v.flags & FL_WATERJUMP)
+			out << "FL_WATERJUMP; ";
+		if ((*hw.sv_player)->v.flags & FL_FROZEN)
+			out << "FL_FROZEN; ";
+		if ((*hw.sv_player)->v.flags & FL_DUCKING)
+			out << "FL_DUCKING; ";
+		if ((*hw.sv_player)->v.flags & FL_ONTRAIN)
+			out << "FL_ONTRAIN";
+		out << '\n';
+		hw.ORIG_Con_Printf("%s", out.str().c_str());
 		hw.ORIG_Con_Printf("Basevelocity: X = %f; Y = %f; Z = %f\n", basevel.x, basevel.y, basevel.z);
 		hw.ORIG_Con_Printf("Basevelocity (XY): %f\n", basevel.Length2D());
 		hw.ORIG_Con_Printf("Basevelocity (XYZ): %f\n", basevel.Length());

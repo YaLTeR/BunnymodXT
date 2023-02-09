@@ -3847,6 +3847,11 @@ struct HwDLL::Cmd_BXT_Print_Entities
 				if ((std::strcmp(targetname, name1) != 0) && (std::strcmp(target, name1) != 0))
 					continue;
 			}
+			else if (std::strcmp(name2, "strcmp") == 0)
+			{
+				if ((std::strcmp(classname, name1) != 0))
+					continue;
+			}
 			else
 			{
 				if ((strstr(classname, name1) == 0) && (strstr(classname, name2) == 0))

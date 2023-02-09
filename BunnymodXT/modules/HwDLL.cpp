@@ -3884,7 +3884,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			else
 				origin = ent->v.origin;
 
-			out << "; x: " << origin.x << "; y: " << origin.y << "; z: " << origin.z;
+			out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
 
 			out << '\n';
 		}
@@ -3938,7 +3938,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			else
 				origin = ent->v.origin;
 
-			out << "; x: " << origin.x << "; y: " << origin.y << "; z: " << origin.z;
+			out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
 
 			out << '\n';
 		}

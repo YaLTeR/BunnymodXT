@@ -3074,7 +3074,7 @@ float SUTIL_SharedRandomFloat(unsigned int& static_glSeed, unsigned int *seed_ta
 	}
 }
 
-bool ServerDLL::FireBulletsPlayer_Predict(float result[3], Vector vecSrc, Vector vecDirShooting, Vector vecSpread, unsigned long cShots, int shared_rand)
+bool ServerDLL::FireBulletsPlayer_Predict(double result[3], Vector vecSrc, Vector vecDirShooting, Vector vecSpread, unsigned long cShots, int shared_rand)
 {
 	auto &hw = HwDLL::GetInstance();
 	Vector vecRight = hw.ppGlobals->v_right;
@@ -3116,33 +3116,17 @@ HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, 
 HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand)
 {
 	fireBulletsPlayer_count = cShots;
-	float end[3];
-
-	if (FireBulletsPlayer_Predict(end, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand))
+	double end[3];
+	auto &hw = HwDLL::GetInstance();
+	if (
+		hw.runningFrames && 
+		hw.StrafeState.Parameters.Type == HLTAS::ConstraintsType::LOOK_AT &&
+		(unsigned int)hw.StrafeState.Parameters.Parameters.LookAt.Action && 
+		FireBulletsPlayer_Predict(end, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand)
+		)
 	{
-		auto &hw = HwDLL::GetInstance();
-		float view[3];
-		float src[3] = {vecSrc.x, vecSrc.y, vecSrc.z};
-		float view_offset[3] = {
-			static_cast<float>(hw.StrafeState.Parameters.Parameters.LookAt.X), 
-			static_cast<float>(hw.StrafeState.Parameters.Parameters.LookAt.Y), 
-			static_cast<float>(hw.StrafeState.Parameters.Parameters.LookAt.Z)};
-		HLStrafe::VecAdd<float, float, 3>(hw.StrafeState.TargetYawLookAtOrigin, view_offset, view);
-		HLStrafe::VecSubtract<float, float, 3>(view, src, view);
-		HLStrafe::VecSubtract<float, float, 3>(end, src, end);
-
-		auto curr_yaw = std::asin(hw.ppGlobals->v_right.x) * HLStrafe::M_RAD2DEG;
-		auto curr_pitch = std::acos(hw.ppGlobals->v_up.z) * HLStrafe::M_RAD2DEG;
-
-		HLStrafe::GetViewanglesTwoVec(result, view, end);
-
-		std::printf("out %f %f\n", curr_pitch + result[0], curr_yaw + result[1]);
-		hw.LookAtActionViewangles[0] = curr_pitch + result[0];
-		hw.LookAtActionViewangles[1] = curr_yaw + result[1];
-
-		hw.LookAtActionSplit = true;
-		hw.LookAtActionBulk = hw.currentFramebulk;
-		hw.LookAtActionRepeat = hw.currentRepeat;
+		double src[3] = {vecSrc.x, vecSrc.y, vecSrc.z};
+		hw.LookAtDoBulletPrediction(src, end);
 	}
 
 	auto ret = ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);

@@ -348,6 +348,8 @@ public:
 	void TimerReset();
 	void TimerStart();
 
+	void LookAtDoBulletPrediction(double src[3], double end[3]);
+
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
 	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};
@@ -595,8 +597,8 @@ public:
 	std::string frametime0ms;
 	size_t currentFramebulk;
 	size_t currentRepeat;
-protected:
 	bool runningFrames;
+protected:
 	bool wasRunningFrames;
 	size_t preExecFramebulk = 0;
 	size_t totalFramebulks;
@@ -717,6 +719,7 @@ protected:
 
 public:
 	bool LookAtActionSplit;
+	bool LookAtActionFirstBulk;
 	float LookAtActionViewangles[2];
 	size_t LookAtActionBulk;
 	size_t LookAtActionRepeat;

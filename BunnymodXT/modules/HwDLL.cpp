@@ -5883,21 +5883,18 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 			if (LookAtActionSplit) {
 				LookAtActionSplit = false;
 				auto curr_bulk = input.GetFrame(LookAtActionBulk);
-				// auto curr_parameters = input.GetFrame(LookAtActionBulk+1).GetAlgorithmParameters();
 
-				// There is a chance repeat value will be 0, which indicates the first frame of the bulk
-				// This will subtract the repeat to get correct repeat and maybe bulk
-				std::printf("pre start split %u %u\n", LookAtActionBulk, LookAtActionRepeat);
 				if (LookAtActionRepeat == 0) {
+					// There is a chance repeat value will be 0, which indicates the first frame of the bulk
+					// This will subtract the repeat to get correct repeat and maybe bulk
 					--LookAtActionBulk;
 					curr_bulk = input.GetFrame(LookAtActionBulk);
-					// Subtract 1 because maybe it counts from 0..
+					// Subtract 1 because maybe it counts from 0.
 					LookAtActionRepeat = curr_bulk.GetRepeats() - 1;
 				} else {
+					// On the same framebulk so go back by one
 					--LookAtActionRepeat;
 				}
-
-				std::printf("start split %u %u\n", LookAtActionBulk, LookAtActionRepeat);
 
 				auto parameter_yaw_frame = curr_bulk;
 				auto parameter_lookat_frame = curr_bulk;
@@ -5917,48 +5914,58 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 				parameter_lookat.Parameters.LookAt.Action = StrafeState.Parameters.Parameters.LookAt.Action;
 				parameter_lookat_frame.SetAlgorithmParameters(parameter_lookat);
 
-				// std::printf("is movement %u\n", input.GetFrame(LookAtActionBulk-1).IsMovement());
-				
-				// auto curr_parameters = curr_bulk.GetAlgorithmParameters();
-				if (curr_bulk.GetRepeats() == 1) {
-					std::printf("one bulk]\n");
-					// Action bulk is one frame so we just change pitch yaw action
-					// curr_bulk.SetAlgorithmParameters(new_parameters);
-					// auto curr_parameters = curr_bulk.GetAlgorithmParameters();
-					// auto curr_parameters = input.GetFrame(LookAtActionBulk).GetAlgorithmParameters();
+				// Option to remove the look_at line
+				// if (!input.GetFrame(LookAtActionBulk-1).IsMovement()) {
+				// 	input.RemoveFrame(LookAtActionBulk-1);
+				// 	--LookAtActionBulk;
+				// 	--totalFramebulks;
+				// }
 
-					curr_bulk.SetPitch(LookAtActionViewangles[0]);
-					curr_bulk.SetAttack2(true);
-
-					input.RemoveFrame(LookAtActionBulk);
-					input.InsertFrame(LookAtActionBulk, parameter_lookat_frame);
-					input.InsertFrame(LookAtActionBulk, curr_bulk);
-					input.InsertFrame(LookAtActionBulk, parameter_yaw_frame);
-					currentFramebulk = LookAtActionBulk;
-				} else {
-					std::printf("normal stuff\n");
-					bool yes_after = input.SplitFrame(LookAtActionBulk, LookAtActionRepeat+1);
-					if (yes_after)
-						++totalFramebulks;
-
-					bool yes_before = input.SplitFrame(LookAtActionBulk, LookAtActionRepeat);
-					if (yes_before)
-						++totalFramebulks;
-
-					auto action = input.GetFrames()[LookAtActionBulk + yes_before];
-					// action.SetAlgorithmParameters(parameters);
-					action.SetPitch(LookAtActionViewangles[0]);
-					// action.SetPitch((double)69);
-					action.SetAttack2(true);
-
-					input.RemoveFrame(LookAtActionBulk + yes_before);
-					input.InsertFrame(LookAtActionBulk + yes_before, action);
-					currentFramebulk = LookAtActionBulk + yes_before;
+				// Split from beginning to not including shootable frame
+				if (input.SplitFrame(LookAtActionBulk, LookAtActionRepeat)) {
+					++LookAtActionBulk;
+					++totalFramebulks;
+					LookAtActionRepeat = 0;
 				}
 
-				std::ifstream file("testone.two");
-				auto error = input.Save("testone.two");
+				// Regardless whether it can split or not, action frame will be the repeat 0 of the current framebulk
+				if (input.SplitFrame(LookAtActionBulk, 1)) {
+					++totalFramebulks;
+				}
+
+				// Now action frame is one frame
+				auto action = input.GetFrames()[LookAtActionBulk];
+				action.SetPitch(LookAtActionViewangles[0]);
+				switch (StrafeState.Parameters.Parameters.LookAt.Action) {
+					case HLTAS::LookAtAction::ATTACK:
+						action.SetAttack(true);
+						break;
+					case HLTAS::LookAtAction::ATTACK2:
+						action.SetAttack2(true);
+						break;
+					case HLTAS::LookAtAction::NONE:
+					default:
+						break;
+				}
+
+				// Insert frames accordingly
+				input.RemoveFrame(LookAtActionBulk);
+				input.InsertFrame(LookAtActionBulk, parameter_lookat_frame);
+				input.InsertFrame(LookAtActionBulk, action);
+				input.InsertFrame(LookAtActionBulk, parameter_yaw_frame);
+
+				// Move on to next frame. Plus 2 because one parameter frame and then movement frame.
+				currentFramebulk = LookAtActionBulk + 2;
+				totalFramebulks += 2;
 				currentRepeat = 0;
+
+				// It is saved every frame involves shooting
+				std::ifstream file(hltas_filename);
+				auto error = input.Save(hltas_filename);
+				if (error.Code == HLTAS::ErrorCode::OK)
+					ORIG_Con_Printf("Modified with compensated view angles\n");
+				else
+					ORIG_Con_Printf("Error saving current TAS file modified with compensated view angles\n: %s\n", HLTAS::GetErrorMessage(error).c_str());
 			}
 		}
 
@@ -6214,6 +6221,37 @@ void HwDLL::FreeCamTick()
 	cameraOverrideOrigin[0] += direction[0];
 	cameraOverrideOrigin[1] += direction[1];
 	cameraOverrideOrigin[2] += direction[2];
+}
+
+void HwDLL::LookAtDoBulletPrediction(double src[3], double end[3])
+{
+	double result[2];
+	double view[3] = {
+		StrafeState.Parameters.Parameters.LookAt.X, 
+		StrafeState.Parameters.Parameters.LookAt.Y, 
+		StrafeState.Parameters.Parameters.LookAt.Z
+	};
+	HLStrafe::VecAdd<float, double, 3>(StrafeState.TargetYawLookAtOrigin, view, view);
+
+	HLStrafe::VecSubtract<double, double, 3>(view, src, view);
+	HLStrafe::VecSubtract<double, double, 3>(end, src, end);
+
+	auto curr_yaw = std::asin(ppGlobals->v_right.x);
+	auto curr_pitch = std::acos(ppGlobals->v_up.z);
+
+	HLStrafe::GetViewanglesTwoVec<double, double, double>(result, view, end);
+
+	// std::printf("Pitch: %f Yaw: %f before bulk %u repeat %u\n",
+	// 	(curr_pitch + result[0]) * HLStrafe::M_RAD2DEG, (curr_yaw + result[1]) * HLStrafe::M_RAD2DEG,
+	// 	currentFramebulk,
+	// 	currentRepeat
+	// 	);
+	
+	LookAtActionViewangles[0] = (curr_pitch + result[0]) * HLStrafe::M_RAD2DEG;
+	LookAtActionViewangles[1] = (curr_yaw + result[1]) * HLStrafe::M_RAD2DEG;
+	LookAtActionSplit = true;
+	LookAtActionBulk = currentFramebulk;
+	LookAtActionRepeat = currentRepeat;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

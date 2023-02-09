@@ -719,7 +719,6 @@ protected:
 
 public:
 	bool LookAtActionSplit;
-	bool LookAtActionFirstBulk;
 	float LookAtActionViewangles[2];
 	size_t LookAtActionBulk;
 	size_t LookAtActionRepeat;

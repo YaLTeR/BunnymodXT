@@ -3114,10 +3114,10 @@ HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, 
 		offseed_table && offglSeed &&
 		hw.runningFrames && 
 		hw.StrafeState.Parameters.Type == HLTAS::ConstraintsType::LOOK_AT &&
-		(unsigned int)hw.StrafeState.Parameters.Parameters.LookAt.Action && 
-		FireBulletsPlayer_Predict(end, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand)
+		(unsigned int)hw.StrafeState.Parameters.Parameters.LookAt.Action
 		)
 	{
+		FireBulletsPlayer_Predict(end, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand);
 		double src[3] = {vecSrc.x, vecSrc.y, vecSrc.z};
 		hw.LookAtDoBulletPrediction(src, end);
 	}

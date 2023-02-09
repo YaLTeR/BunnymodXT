@@ -1273,9 +1273,9 @@ void ServerDLL::FindStuff()
 		EngineDevMsg("[server dll] Found CNihilanth::DyingThink at %p.\n", ORIG_CNihilanth__DyingThink);
 	} else {
 		ORIG_CNihilanth__DyingThink_Linux = reinterpret_cast<_CNihilanth__DyingThink_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN10CNihilanth10DyingThinkEv"));
-		if (ORIG_CNihilanth__DyingThink_Linux) {
+		if (ORIG_CNihilanth__DyingThink_Linux)
 			EngineDevMsg("[server dll] Found CNihilanth::DyingThink [Linux] at %p.\n", ORIG_CNihilanth__DyingThink_Linux);
-		} else {
+		else {
 			EngineDevWarning("[server dll] Could not find CNihilanth::DyingThink.\n");
 			EngineWarning("Nihilanth automatic timer stopping is not available.\n");
 		}
@@ -3108,6 +3108,18 @@ bool ServerDLL::FireBulletsPlayer_Predict(double result[3], Vector vecSrc, Vecto
 HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, thisptr, int, edx, float, param1, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand)
 {
 	fireBulletsPlayer_count = cShots;
+	double end[3];
+	auto &hw = HwDLL::GetInstance();
+	if (
+		hw.runningFrames && 
+		hw.StrafeState.Parameters.Type == HLTAS::ConstraintsType::LOOK_AT &&
+		(unsigned int)hw.StrafeState.Parameters.Parameters.LookAt.Action && 
+		FireBulletsPlayer_Predict(end, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand)
+		)
+	{
+		double src[3] = {vecSrc.x, vecSrc.y, vecSrc.z};
+		hw.LookAtDoBulletPrediction(src, end);
+	}
 	ORIG_CBaseEntity__FireBulletsPlayer(thisptr, edx, param1, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	// just in case
 	fireBulletsPlayer_count = 0;
@@ -3128,7 +3140,6 @@ HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,voi
 		double src[3] = {vecSrc.x, vecSrc.y, vecSrc.z};
 		hw.LookAtDoBulletPrediction(src, end);
 	}
-
 	auto ret = ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	// just in case
 	fireBulletsPlayer_count = 0;

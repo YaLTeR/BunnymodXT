@@ -304,6 +304,7 @@ public:
 	float tas_editor_set_target_yaw_look_at_x;
 	float tas_editor_set_target_yaw_look_at_y;
 	float tas_editor_set_target_yaw_look_at_z;
+	HLTAS::LookAtAction tas_editor_set_target_yaw_look_at_action;
 	bool tas_editor_set_yaw;
 	float tas_editor_set_yaw_yaw;
 	bool tas_editor_set_pitch;

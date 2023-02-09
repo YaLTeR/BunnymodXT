@@ -3689,9 +3689,20 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Change_Type
 	}
 };
 
+static HLTAS::LookAtAction LookAt_Action_Parse(const char* what)
+{
+	if (!strcmp(what, "attack2")) {
+		return HLTAS::LookAtAction::ATTACK2;
+	} else if (!strcmp(what, "attack")) {
+		return HLTAS::LookAtAction::ATTACK;
+	} else {
+		return HLTAS::LookAtAction::NONE;
+	}
+}
+
 struct HwDLL::Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type
 {
-	USAGE("Usage: bxt_tas_editor_set_target_yaw_type <type>\n Set type of target_yaw for a point in the camera editor. Valid types (currently supported) are velocity_lock and look_at [entity <index>] [<x> <y> <z>].\n");
+	USAGE("Usage: bxt_tas_editor_set_target_yaw_type <type>\n Set type of target_yaw for a point in the camera editor. Valid types (currently supported) are velocity_lock and look_at [entity <index>] <x> <y> <z>. Origin values are required for look_at\n");
 
 	static void handler(const char *what)
 	{
@@ -3702,27 +3713,40 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type
 		} else {
 			unsigned int entity;
 			float x = 0, y = 0, z = 0;
+			char action[16];
 			hw.tas_editor_set_target_yaw_look_at_entity = 0;
 			hw.tas_editor_set_target_yaw_look_at_x = 0;
 			hw.tas_editor_set_target_yaw_look_at_y = 0;
 			hw.tas_editor_set_target_yaw_look_at_z = 0;
+			hw.tas_editor_set_target_yaw_look_at_action = HLTAS::LookAtAction::NONE;
 
-			int scan_entity = sscanf(what, "look_at entity %d %f %f %f", &entity, &x, &y, &z);
-			if (scan_entity) {
+			int scan = sscanf(what, "look_at entity %d %f %f %f %s", &entity, &x, &y, &z, action);
+			if (scan) {
 				hw.tas_editor_set_target_yaw_look_at = true;
 				hw.tas_editor_set_target_yaw_look_at_entity = entity;
 
-				if (scan_entity == 4) {
-					hw.tas_editor_set_target_yaw_look_at_x = x;
-					hw.tas_editor_set_target_yaw_look_at_y = y;
-					hw.tas_editor_set_target_yaw_look_at_z = z;
-				}
-			} else if (sscanf(what, "look_at %f %f %f", &x, &y, &z) == 3) {
+				hw.tas_editor_set_target_yaw_look_at_x = x;
+				hw.tas_editor_set_target_yaw_look_at_y = y;
+				hw.tas_editor_set_target_yaw_look_at_z = z;
+
+				if (scan == 5)
+					hw.tas_editor_set_target_yaw_look_at_action = LookAt_Action_Parse(action);
+
+				return;
+			}
+
+			scan = sscanf(what, "look_at %f %f %f %s", &x, &y, &z, action);
+			if (scan) {
 				hw.tas_editor_set_target_yaw_look_at = true;
 				hw.tas_editor_set_target_yaw_look_at_entity = 0;
 				hw.tas_editor_set_target_yaw_look_at_x = x;
 				hw.tas_editor_set_target_yaw_look_at_y = y;
 				hw.tas_editor_set_target_yaw_look_at_z = z;
+
+				if (scan == 4)
+					hw.tas_editor_set_target_yaw_look_at_action = LookAt_Action_Parse(action);
+
+				return;
 			}
 		}
 	}

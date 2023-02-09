@@ -3111,6 +3111,7 @@ HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, 
 	double end[3];
 	auto &hw = HwDLL::GetInstance();
 	if (
+		offseed_table && offglSeed &&
 		hw.runningFrames && 
 		hw.StrafeState.Parameters.Type == HLTAS::ConstraintsType::LOOK_AT &&
 		(unsigned int)hw.StrafeState.Parameters.Parameters.LookAt.Action && 
@@ -3131,6 +3132,7 @@ HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,voi
 	double end[3];
 	auto &hw = HwDLL::GetInstance();
 	if (
+		offseed_table && offglSeed &&
 		hw.runningFrames && 
 		hw.StrafeState.Parameters.Type == HLTAS::ConstraintsType::LOOK_AT &&
 		(unsigned int)hw.StrafeState.Parameters.Parameters.LookAt.Action && 

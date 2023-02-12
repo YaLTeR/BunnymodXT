@@ -407,6 +407,10 @@ namespace discord_integration
 
 	void on_frame()
 	{
+		static bool bxtDisableDiscordRPC = getenv("BXT_DISABLE_DISCORD_RPC");
+		if (bxtDisableDiscordRPC)
+			return;
+
 		static bool rpc_initialized = false;
 
 		if (!rpc_initialized)

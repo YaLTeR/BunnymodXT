@@ -33,6 +33,8 @@ Use the [Bunnymod XT Launcher](https://github.com/YaLTeR/bxt-launcher).
 - **BXT_SCRIPT** - if set to a filename of a hltas script, loads the non-shared RNG from that script on load.
 - **BXT_LOGFILE** - if set, logs all Bunnymod XT messages into a file with that filename.
 - **SPTLIB_DEBUG** - if set to 1, logs all dlopen, dlclose and dlsym calls.
+- **BXT_DISABLE_DEBUG_CONSOLE** - if set, disables the Bunnymod XT debug console.
+- **BXT_DISABLE_DISCORD_RPC** - if set, disables the Discord RPC module.
 
 ## Building
 

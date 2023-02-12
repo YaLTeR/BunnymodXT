@@ -2896,6 +2896,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.ORIG_Con_Printf("Health: %f\n", (*hw.sv_player)->v.health);
 		hw.ORIG_Con_Printf("Armor: %f\n", (*hw.sv_player)->v.armorvalue);
 		hw.ORIG_Con_Printf("Waterlevel: %d\n", (*hw.sv_player)->v.waterlevel);
+		hw.ORIG_Con_Printf("Watertype: %d\n", (*hw.sv_player)->v.watertype);
 		hw.ORIG_Con_Printf("Max health: %f\n", (*hw.sv_player)->v.max_health);
 		hw.ORIG_Con_Printf("Gravity: %f\n", (*hw.sv_player)->v.gravity);
 		hw.ORIG_Con_Printf("Friction: %f\n", (*hw.sv_player)->v.friction);
@@ -2921,10 +2922,20 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 			out << "FL_ONTRAIN";
 		out << '\n';
 		hw.ORIG_Con_Printf("%s", out.str().c_str());
-		hw.ORIG_Con_Printf("Basevelocity: X = %f; Y = %f; Z = %f\n", basevel.x, basevel.y, basevel.z);
-		hw.ORIG_Con_Printf("Basevelocity (XY): %f\n", basevel.Length2D());
-		hw.ORIG_Con_Printf("Basevelocity (XYZ): %f\n", basevel.Length());
-		hw.ORIG_Con_Printf("Server punchangle: X = %f; Y = %f; Z = %f\n", punch.x, punch.y, punch.z);
+		hw.ORIG_Con_Printf("bInDuck: %d\n", (*hw.sv_player)->v.bInDuck);
+		hw.ORIG_Con_Printf("Basevelocity: %f %f %f; XY = %f; XYZ = %f\n", basevel.x, basevel.y, basevel.z, basevel.Length2D(), basevel.Length());
+		hw.ORIG_Con_Printf("Server punchangle: %f %f %f\n", punch.x, punch.y, punch.z);
+		hw.ORIG_Con_Printf("iuser1: %d; iuser2: %d; iuser3: %d; iuser4: %d\n", (*hw.sv_player)->v.iuser1, (*hw.sv_player)->v.iuser2, (*hw.sv_player)->v.iuser3, (*hw.sv_player)->v.iuser4);
+		hw.ORIG_Con_Printf("fuser1: %f; fuser2: %f; fuser3: %f; fuser4: %f\n", (*hw.sv_player)->v.fuser1, (*hw.sv_player)->v.fuser2, (*hw.sv_player)->v.fuser3, (*hw.sv_player)->v.fuser4);
+
+		const auto& vusr1 = (*hw.sv_player)->v.vuser1;
+		const auto& vusr2 = (*hw.sv_player)->v.vuser2;
+		const auto& vusr3 = (*hw.sv_player)->v.vuser3;
+		const auto& vusr4 = (*hw.sv_player)->v.vuser4;
+		hw.ORIG_Con_Printf("vuser1: %f %f %f; XY = %f; XYZ = %f\n", vusr1.x, vusr1.y, vusr1.z, vusr1.Length2D(), vusr1.Length());
+		hw.ORIG_Con_Printf("vuser2: %f %f %f; XY = %f; XYZ = %f\n", vusr2.x, vusr2.y, vusr2.z, vusr2.Length2D(), vusr2.Length());
+		hw.ORIG_Con_Printf("vuser3: %f %f %f; XY = %f; XYZ = %f\n", vusr3.x, vusr3.y, vusr3.z, vusr3.Length2D(), vusr3.Length());
+		hw.ORIG_Con_Printf("vuser4: %f %f %f; XY = %f; XYZ = %f\n", vusr4.x, vusr4.y, vusr4.z, vusr4.Length2D(), vusr4.Length());
 	}
 };
 

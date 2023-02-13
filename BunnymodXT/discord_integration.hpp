@@ -271,7 +271,6 @@ namespace discord_integration
 			{"ba_tram1", "bschapter9"},
 			{"ba_tram2", "bschapter9"},
 			{"ba_tram3", "bschapter9"},
-			{"ba_security1", "bschapter9"},
 		};
 
 		const std::unordered_map<std::string_view, std::string_view> gmc_thumbnail_to_chapter = {

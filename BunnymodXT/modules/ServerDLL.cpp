@@ -406,36 +406,36 @@ void ServerDLL::FindStuff()
 			{
 				switch (pattern - patterns::shared::PM_Jump.cbegin())
 				{
-				case 0:
-				case 1:
+				case 0: // HL-SteamPipe
+				case 1: // gunman
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 2);
 					break;
-				case 2:
+				case 2: // AG-Server
 				case 3: // AG-Client, shouldn't happen here but who knows.
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 3);
 					break;
-				case 4:
+				case 4: // BigLolly
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 21);
 					break;
-				case 10:
-				case 11:
-				case 5:
+				case 10: // Parasomnia
+				case 11: // Reissues
+				case 5: // TWHL-Tower-2
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 5);
 					break;
-				case 12:
-				case 6:
-				case 14:
+				case 12: // HL-SWEET
+				case 6: // Decay
+				case 14: // CoF-Mod-155
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 24);
 					break;
-				case 7:
+				case 7: // Halfquake-Trilogy
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 6);
 					break;
-				case 8:
-				case 9:
-				case 13:
+				case 8: // Half-Payne
+				case 9: // DSM-Demo-1
+				case 13: // CoF-5936
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 8);
 					break;
-				case 15:
+				case 15: // CoF-Mod-155-Client
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 9);
 					break;
 				}
@@ -810,6 +810,7 @@ void ServerDLL::FindStuff()
 		pDispatchRestore,
 		patterns::server::DispatchRestore,
 		[&](auto pattern) {
+			// HL-SteamPipe
 			pGlobalState = *reinterpret_cast<void**>(pDispatchRestore + 153);
 		});
 
@@ -1031,15 +1032,15 @@ void ServerDLL::FindStuff()
 		patterns::server::CGraph__InitGraph,
 		[&](auto pattern) {
 			switch (pattern - patterns::server::CGraph__InitGraph.cbegin()) {
-			case 0:  // HL-SteamPipe
-			case 1:
-			case 2:
-			case 3:
-			case 4:
-			case 5:
-			case 6:
-			case 7:
-			case 8:
+			case 0: // HL-SteamPipe
+			case 1: // TWHL-Tower-2
+			case 2: // Echoes
+			case 3: // Decay
+			case 4: // Halfquake-Trilogy
+			case 5: // Parasomnia
+			case 6: // HL-SWEET
+			case 7: // Reissues
+			case 8: // CoF-5936
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;

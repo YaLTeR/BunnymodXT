@@ -93,7 +93,7 @@ typedef struct engine_studio_api_s
 
 	// Only called by hardware interface
 	void			( *GL_StudioDrawShadow )		( void );
-	void			( *GL_SetRenderMode )			( int mode );
+	void			( *GL_SetRenderMode )			( int mode ); // Smiley: Last function in 1712 build
 
 	void			( *StudioSetRenderamt )			(int iRenderamt); 	//!!!CZERO added for rendering glass on viewmodels
 	void			( *StudioSetCullState )			( int iCull	   );

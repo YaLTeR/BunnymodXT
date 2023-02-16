@@ -252,7 +252,7 @@ typedef struct enginefuncs_s
 
 	void		(*pfnGetPlayerStats)		( const edict_t *pClient, int *ping, int *packet_loss );
 
-	void		(*pfnAddServerCommand)		( const char *cmd_name, void (*function) (void) );
+	void		(*pfnAddServerCommand)		( const char *cmd_name, void (*function) (void) ); // Smiley: Last function in 1712 build
 
 	// For voice communications, set which clients hear eachother.
 	// NOTE: these functions take player entity indices (starting at 1).
@@ -272,7 +272,7 @@ typedef struct enginefuncs_s
 	void	(*pfnProcessTutorMessageDecayBuffer)( int *buffer, int bufferLength );
 	void	(*pfnConstructTutorMessageDecayBuffer)( int *buffer, int bufferLength );
 	void	(*pfnResetTutorMessageDecayData)( void );
-	void	(*pfnQueryClientCvarValue)( const edict_t *player, const char *cvarName );
+	void	(*pfnQueryClientCvarValue)( const edict_t *player, const char *cvarName ); // Smiley: Last function in 3248 build
 	void	(*pfnQueryClientCvarValue2)( const edict_t *player, const char *cvarName, int requestID );
 	int	(*CheckParm)( char *parm, char **ppnext );
 

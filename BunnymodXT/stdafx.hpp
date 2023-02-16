@@ -65,6 +65,7 @@ using std::ptrdiff_t;
 #include "HLSDK/common/event_args.h"
 #include "HLSDK/common/demo_api.h"
 #include "HLSDK/common/r_studioint.h"
+#include "HLSDK/common/engine_launcher_api.h"
 #include "HLSDK/engine/studio.h"
 #include "HLSDK/engine/cmd.h"
 

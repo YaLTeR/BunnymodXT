@@ -206,7 +206,7 @@
 	X(bxt_show_bullets_enemy, "0") \
 	X(bxt_anglespeed_cap, "1") \
 	X(bxt_speed_scaling, "1") \
-	X(bxt_show_splits, "1") \
+	X(bxt_show_splits, "0") \
 	X(bxt_splits_color, "") \
 	X(bxt_splits_print, "1") \
 	X(bxt_splits_print_times_at_end, "1") \

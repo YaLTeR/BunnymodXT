@@ -863,11 +863,6 @@ namespace CustomHud
 
 				if (CVars::bxt_hud_entity_info.GetInt() >= 2)
 				{
-					if ((ent->v.model != 0) && (CVars::bxt_hud_entity_info.GetInt() == 3)) {
-						const char *model = hw.GetString(ent->v.model);
-						out << "Model: " << model << '\n';
-					}
-
 					out << "Yaw: " << ent->v.angles[1] << '\n';
 
 					// Borrowed from https://github.com/SNMetamorph/goldsrc-monitor/blob/08c368e246d09996b2d85e4367d4d8cc1e507712/sources/library/displaymode_entityreport.cpp#L45
@@ -886,7 +881,12 @@ namespace CustomHud
 					out << "Y Vel: " << ent->v.velocity.y << '\n';
 					out << "Z Vel: " << ent->v.velocity.z << '\n';
 
-					out << "Renderfx: " << ent->v.renderfx;
+					out << "Renderfx: " << ent->v.renderfx << '\n';
+
+					if ((ent->v.model != 0) && (CVars::bxt_hud_entity_info.GetInt() == 3)) {
+						const char *model = hw.GetString(ent->v.model);
+						out << "Model: " << model;
+					}
 				}
 			}
 			else

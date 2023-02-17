@@ -862,7 +862,7 @@ namespace CustomHud
 				if ((strstr(classname, "func_door") != NULL) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
 					out << "Damage: " << ent->v.dmg << '\n';
 
-				if (CVars::bxt_hud_entity_info.GetInt() == 2)
+				if (CVars::bxt_hud_entity_info.GetInt() >= 2)
 				{
 					out << "Yaw: " << ent->v.angles[1] << '\n';
 
@@ -880,7 +880,14 @@ namespace CustomHud
 
 					out << "X Vel: " << ent->v.velocity.x << '\n';
 					out << "Y Vel: " << ent->v.velocity.y << '\n';
-					out << "Z Vel: " << ent->v.velocity.z;
+					out << "Z Vel: " << ent->v.velocity.z << '\n';
+
+					out << "Renderfx: " << ent->v.renderfx << '\n';
+
+					if ((ent->v.model != 0) && (CVars::bxt_hud_entity_info.GetInt() == 3)) {
+						const char *model = hw.GetString(ent->v.model);
+						out << "Model: " << model;
+					}
 				}
 			}
 			else
@@ -941,7 +948,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_selfgauss.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 32) + 3);
+			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 34) + 3);
 
 			bool selfgaussable;
 			int hitGroup = 0; // It's always initialized if selfgaussable is set to true, but GCC issues a warning anyway.
@@ -999,7 +1006,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_armor.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_armor_offset, CVars::bxt_hud_armor_anchor, &x, &y, -200, (si.iCharHeight * 35) + 3);
+			GetPosition(CVars::bxt_hud_armor_offset, CVars::bxt_hud_armor_anchor, &x, &y, -200, (si.iCharHeight * 37) + 3);
 
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
@@ -1015,7 +1022,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_waterlevel.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_waterlevel_offset, CVars::bxt_hud_waterlevel_anchor, &x, &y, -200, (si.iCharHeight * 36) + 3);
+			GetPosition(CVars::bxt_hud_waterlevel_offset, CVars::bxt_hud_waterlevel_anchor, &x, &y, -200, (si.iCharHeight * 38) + 3);
 
 			std::ostringstream out;
 			out.setf(std::ios::fixed);
@@ -1033,7 +1040,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_nihilanth.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 37) + 3);
+			GetPosition(CVars::bxt_hud_nihilanth_offset, CVars::bxt_hud_nihilanth_anchor, &x, &y, -200, (si.iCharHeight * 39) + 3);
 
 			std::ostringstream out;
 			out << "Nihilanth:\n";
@@ -1067,7 +1074,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_gonarch.GetBool())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 44) + 3);
+			GetPosition(CVars::bxt_hud_gonarch_offset, CVars::bxt_hud_gonarch_anchor, &x, &y, -200, (si.iCharHeight * 46) + 3);
 
 			std::ostringstream out;
 			out << "Gonarch:\n";

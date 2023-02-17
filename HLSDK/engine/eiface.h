@@ -252,7 +252,9 @@ typedef struct enginefuncs_s
 
 	void		(*pfnGetPlayerStats)		( const edict_t *pClient, int *ping, int *packet_loss );
 
-	void		(*pfnAddServerCommand)		( const char *cmd_name, void (*function) (void) );
+	void		(*pfnAddServerCommand)		( const char *cmd_name, void (*function) (void) ); 
+
+	// Functions below are present only in builds > 1712
 
 	// For voice communications, set which clients hear eachother.
 	// NOTE: these functions take player entity indices (starting at 1).
@@ -273,10 +275,13 @@ typedef struct enginefuncs_s
 	void	(*pfnConstructTutorMessageDecayBuffer)( int *buffer, int bufferLength );
 	void	(*pfnResetTutorMessageDecayData)( void );
 	void	(*pfnQueryClientCvarValue)( const edict_t *player, const char *cvarName );
+
+	// Functions below are present only in builds > 3248
+
 	void	(*pfnQueryClientCvarValue2)( const edict_t *player, const char *cvarName, int requestID );
 	int	(*CheckParm)( char *parm, char **ppnext );
 
-	// added in 8279
+	// Added in 8279
 	edict_t* (*pfnPEntityOfEntIndexAllEntities)( int iEntIndex );
 } enginefuncs_t;
 // ONLY ADD NEW FUNCTIONS TO THE END OF THIS STRUCT.  INTERFACE VERSION IS FROZEN AT 138

@@ -95,6 +95,8 @@ typedef struct engine_studio_api_s
 	void			( *GL_StudioDrawShadow )		( void );
 	void			( *GL_SetRenderMode )			( int mode );
 
+	// Functions below are present only in builds > 1712
+
 	void			( *StudioSetRenderamt )			(int iRenderamt); 	//!!!CZERO added for rendering glass on viewmodels
 	void			( *StudioSetCullState )			( int iCull	   );
 	void			( *StudioRenderShadow )			( int iSprite, float *p1, float *p2, float *p3, float *p4 );

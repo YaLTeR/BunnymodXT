@@ -225,6 +225,9 @@ typedef struct cl_enginefuncs_s
 	struct event_api_s			*pEventAPI;
 	struct demo_api_s			*pDemoAPI;
 	struct net_api_s			*pNetAPI;
+
+	// Functions below are present only in builds > 1712
+
 	struct IVoiceTweak_s		*pVoiceTweak;
 
 	// returns 1 if the client is a spectator only (connected to a proxy), 0 otherwise or 2 if in dev_overview mode
@@ -292,12 +295,18 @@ typedef struct cl_enginefuncs_s
 	void		(*pfnResetTutorMessageDecayData)( void );
 
 	void		(*pfnPlaySoundByNameAtPitch)( const char *szSound, float volume, int pitch );
-	void		(*pfnFillRGBABlend)( int x, int y, int width, int height, int r, int g, int b, int a );
+	void		(*pfnFillRGBABlend)( int x, int y, int width, int height, int r, int g, int b, int a ); 
+
+	// Functions below are present only in builds > 3248
+
 	int		(*pfnGetAppID)( void );
 	cmdalias_t	*(*pfnGetAliases)( void );
+
+	// Functions below are present only in builds > 4554
+
 	void		(*pfnVguiWrap2_GetMouseDelta)( int *x, int *y );
 
-	// added in 2019 update, not documented yet
+	// Added in 2019 update, not documented yet
 	int             (*pfnFilteredClientCmd)( const char *cmd );
 } cl_enginefunc_t;
 

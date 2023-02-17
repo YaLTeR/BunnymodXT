@@ -51,6 +51,9 @@ typedef struct triangleapi_s
 	void		( *CullFace ) ( TRICULLSTYLE style );
 	int			( *SpriteTexture ) ( struct model_s *pSpriteModel, int frame );
 	int			( *WorldToScreen ) ( float *world, float *screen );  // Returns 1 if it's z clipped
+
+	// Functions below are present only in builds > 1712
+
 	void		( *Fog ) ( float flFogColor[3], float flStart, float flEnd, int bOn ); // Works just like GL_FOG, flFogColor is r/g/b.
 	void		( *ScreenToWorld ) ( float *screen, float *world  ); 
 	void		( *GetMatrix ) ( const int pname, float *matrix );

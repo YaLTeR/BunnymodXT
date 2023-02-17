@@ -684,6 +684,7 @@ void HwDLL::Clear()
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
 	ppGlobals = nullptr;
 	pEngStudio = nullptr;
+	pEngineAPI = nullptr;
 
 	registeredVarsAndCmds = false;
 	autojump = false;
@@ -1335,6 +1336,20 @@ void HwDLL::FindStuff()
 				}
 			});
 
+		void* Sys_EngineAPI;
+		auto fSys_EngineAPI = FindAsync(
+			Sys_EngineAPI,
+			patterns::engine::Sys_EngineAPI,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::Sys_EngineAPI.cbegin())
+				{
+				default:
+				case 0: // HL-WON-1712
+					pEngineAPI = *reinterpret_cast<engine_api_t**>(reinterpret_cast<uintptr_t>(Sys_EngineAPI) + 41);
+					break;
+				}
+			});
+
 		void* ClientDLL_Init;
 		auto fClientDLL_Init = FindAsync(
 			ClientDLL_Init,
@@ -1895,6 +1910,17 @@ void HwDLL::FindStuff()
 			}
 			else {
 				EngineDevWarning("[hw dll] Could not find ClientDLL_CheckStudioInterface.\n");
+			}
+		}
+
+		{
+			auto pattern = fSys_EngineAPI.get();
+			if (Sys_EngineAPI) {
+				EngineDevMsg("[hw dll] Found Sys_EngineAPI at %p (using the %s pattern).\n", Sys_EngineAPI, pattern->name());
+				EngineDevMsg("[hw dll] Found engineapi at %p.\n", pEngineAPI);
+			}
+			else {
+				EngineDevWarning("[hw dll] Could not find Sys_EngineAPI.\n");
 			}
 		}
 

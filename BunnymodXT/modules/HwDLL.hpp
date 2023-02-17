@@ -332,6 +332,7 @@ public:
 
 	globalvars_t *ppGlobals;
 	engine_studio_api_t *pEngStudio;
+	engine_api_t *pEngineAPI;
 
 	inline const char* GetString(int string) const {
 		assert(ppGlobals);

@@ -401,6 +401,7 @@ protected:
 
 	void FindStuff();
 
+	struct Cmd_BXT_Disable_V_Sync;
 	struct Cmd_BXT_TAS_LoadScript;
 	struct Cmd_BXT_TAS_ExportScript;
 	struct Cmd_BXT_TAS_ExportLibTASInput;

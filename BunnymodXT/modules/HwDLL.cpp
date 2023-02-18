@@ -2425,22 +2425,6 @@ void HwDLL::StartTASPlayback()
 	}
 }
 
-struct HwDLL::Cmd_BXT_Disable_V_Sync
-{
-	NO_USAGE();
-
-	static void handler()
-	{
-	#ifdef _WIN32
-		typedef BOOL(APIENTRY* PFNWGLSWAPINTERVALPROC)(int);
-		PFNWGLSWAPINTERVALPROC wglSwapIntervalEXT = 0;
-		wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress("wglSwapIntervalEXT");
-		if (wglSwapIntervalEXT)
-			wglSwapIntervalEXT(0);
-	#endif
-	}
-};
-
 struct HwDLL::Cmd_BXT_TAS_LoadScript
 {
 	USAGE("Usage: bxt_tas_loadscript <filename>\n");
@@ -4655,7 +4639,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		CmdFuncs::AddCommand("notarget", ORIG_Host_Notarget_f);
 	}
 
-	wrapper::Add<Cmd_BXT_Disable_V_Sync, Handler<>>("bxt_disable_v_sync");
 	wrapper::Add<Cmd_BXT_TAS_LoadScript, Handler<const char *>>("bxt_tas_loadscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportScript, Handler<const char *>>("bxt_tas_exportscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportLibTASInput, Handler<const char *>>("bxt_tas_export_libtas_input");

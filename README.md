@@ -35,6 +35,7 @@ Use the [Bunnymod XT Launcher](https://github.com/YaLTeR/bxt-launcher).
 - **SPTLIB_DEBUG** - if set to 1, logs all dlopen, dlclose and dlsym calls.
 - **BXT_DISABLE_DEBUG_CONSOLE** - if set, disables the Bunnymod XT debug console.
 - **BXT_DISABLE_DISCORD_RPC** - if set, disables the Discord RPC module.
+- **BXT_DISABLE_VSYNC** - if set, disables the V-Sync on initialization.
 
 ## Building
 

@@ -109,6 +109,7 @@
 	X(bxt_collision_depth_map_max_depth, "1000") \
 	X(bxt_collision_depth_map_pixel_scale, "8") \
 	X(bxt_collision_depth_map_remove_distance_limit, "1") \
+	X(bxt_collision_depth_map_fov, "0") \
 	X(bxt_unlock_camera_during_pause, "0") \
 	X(bxt_hud, "1") \
 	X(bxt_hud_color, "") \

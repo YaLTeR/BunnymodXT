@@ -3949,6 +3949,34 @@ struct HwDLL::Cmd_BXT_Print_Entities
 	}
 };
 
+struct HwDLL::Cmd_BXT_Print_Entities_By_Index
+{
+	USAGE("Usage: bxt_print_entities_by_index <min_range> <max_range>\n");
+
+	static void handler(int value1, int value2)
+	{
+		const auto& hw = HwDLL::GetInstance();
+
+		std::ostringstream out;
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+		for (int e = 0; e < numEdicts; ++e) {
+			const edict_t* ent = edicts + e;
+			if (!hw.IsValidEdict(ent))
+				continue;
+
+			if ((e < value1) || (e > value2))
+				continue;
+
+			HwDLL::GetInstance().PrintEntities(out, e, ent);
+		}
+
+		auto str = out.str();
+		hw.ORIG_Con_Printf("%s", str.c_str());
+	}
+};
+
 void HwDLL::GetOriginOfEntity(Vector& origin, const edict_t* ent)
 {
 	const auto& hw = HwDLL::GetInstance();
@@ -4918,6 +4946,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 	wrapper::Add<Cmd_BXT_Print_Entities, Handler<const char*>, Handler<const char*, const char*>>("bxt_print_entities");
+	wrapper::Add<Cmd_BXT_Print_Entities_By_Index, Handler<int, int>>("bxt_print_entities_by_index");
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Resimulate, Handler<>>("bxt_tas_editor_resimulate");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Apply_Smoothing, Handler<>>("bxt_tas_editor_apply_smoothing");

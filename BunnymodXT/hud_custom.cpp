@@ -866,13 +866,8 @@ namespace CustomHud
 				{
 					out << "Yaw: " << ent->v.angles[1] << '\n';
 
-					// Borrowed from https://github.com/SNMetamorph/goldsrc-monitor/blob/08c368e246d09996b2d85e4367d4d8cc1e507712/sources/library/displaymode_entityreport.cpp#L45
 					Vector origin;
-
-					if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP)
-						origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
-					else
-						origin = ent->v.origin;
+					HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
 
 					out << "X: " << origin.x << '\n';
 					out << "Y: " << origin.y << '\n';

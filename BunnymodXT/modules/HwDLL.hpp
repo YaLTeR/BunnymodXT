@@ -418,7 +418,7 @@ protected:
 	struct Cmd_BXT_CH_Get_Velocity;
 	struct Cmd_BXT_CH_Get_Other_Player_Info;
 	struct Cmd_BXT_Get_Origin_And_Angles;
-	struct Cmd_BXT_Get_ServerTime;
+	struct Cmd_BXT_Get_Server_Time;
 	struct Cmd_Multiwait;
 	struct Cmd_BXT_Camera_Fixed;
 	struct Cmd_BXT_Camera_Clear;
@@ -504,9 +504,11 @@ protected:
 	bool GetNextMovementFrame(HLTAS::Frame& f);
 	void ResetButtons();
 	void FindCVarsIfNeeded();
+	void PrintEntities(std::ostringstream &out, int e, const edict_t* ent);
 public:
 	HLStrafe::MovementVars GetMovementVars();
 	const char* GetMovetypeName(int moveType);
+	void GetOriginOfEntity(Vector& origin, const edict_t* ent);
 
 	bool ducktap;
 	edict_t **sv_player;

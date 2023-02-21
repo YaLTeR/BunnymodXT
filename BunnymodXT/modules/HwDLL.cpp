@@ -2919,7 +2919,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		if ((*hw.sv_player)->v.flags & FL_DUCKING)
 			out << "FL_DUCKING; ";
 		if ((*hw.sv_player)->v.flags & FL_ONTRAIN)
-			out << "FL_ONTRAIN";
+			out << "FL_ONTRAIN; ";
 		out << '\n';
 		hw.ORIG_Con_Printf("%s", out.str().c_str());
 		hw.ORIG_Con_Printf("bInDuck: %d\n", (*hw.sv_player)->v.bInDuck);
@@ -3072,7 +3072,7 @@ struct HwDLL::Cmd_BXT_Timer_Reset
 	}
 };
 
-struct HwDLL::Cmd_BXT_Get_ServerTime
+struct HwDLL::Cmd_BXT_Get_Server_Time
 {
 	NO_USAGE();
 
@@ -3833,9 +3833,55 @@ struct HwDLL::Cmd_BXT_FreeCam
 	}
 };
 
+void HwDLL::PrintEntities(std::ostringstream &out, int e, const edict_t* ent)
+{
+	const auto& hw = HwDLL::GetInstance();
+	const char* classname = hw.GetString(ent->v.classname);
+	const char* targetname = hw.GetString(ent->v.targetname);
+	const char* target = hw.GetString(ent->v.target);
+
+	out << e << ": " << classname;
+
+	if (ent->v.targetname != 0) {
+		out << "; name: " << targetname;
+	}
+
+	if (ent->v.target != 0) {
+		out << "; target: " << target;
+	}
+
+	out << "; hp: " << ent->v.health;
+
+	if ((!strncmp(classname, "func_door", 9)) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
+		out << "; dmg: " << ent->v.dmg;
+
+	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+	bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
+	bool is_water = std::strncmp(classname, "func_water", 10) == 0;
+
+	Vector origin;
+	if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
+		origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
+	else
+		origin = ent->v.origin;
+
+	out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
+
+	out << '\n';
+}
+
 struct HwDLL::Cmd_BXT_Print_Entities
 {
-	NO_USAGE();
+	USAGE("Usage:\n"
+	"bxt_print_entities <classname>\n"
+	"bxt_print_entities <targetname>\n"
+	"bxt_print_entities <target>\n"
+	"bxt_print_entities <classname> <classname>\n"
+	"bxt_print_entities <classname> strcmp\n"
+	"bxt_print_entities <targetname> targetname\n"
+	"bxt_print_entities <target> targetname\n"
+	);
 
 	static void handler(const char *name1, const char *name2)
 	{
@@ -3869,35 +3915,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 					continue;
 			}
 
-			out << e << ": " << classname;
-
-			if (ent->v.targetname != 0) {
-				out << "; name: " << targetname;
-			}
-
-			if (ent->v.target != 0) {
-				out << "; target: " << target;
-			}
-
-			out << "; hp: " << ent->v.health;
-
-			if ((strstr(classname, "func_door") != NULL) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
-				out << "; dmg: " << ent->v.dmg;
-
-			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-			bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-			bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
-			bool is_water = std::strncmp(classname, "func_water", 10) == 0;
-
-			Vector origin;
-			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
-				origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
-			else
-				origin = ent->v.origin;
-
-			out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
-
-			out << '\n';
+			HwDLL::GetInstance().PrintEntities(out, e, ent);
 		}
 
 		auto str = out.str();
@@ -3916,42 +3934,14 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			const edict_t *ent = edicts + e;
 			if (!hw.IsValidEdict(ent))
 				continue;
-			
-			const char *classname = hw.GetString(ent->v.classname);
-			if (strstr(classname, name) == 0)
+
+			const char* classname = hw.GetString(ent->v.classname);
+			const char* targetname = hw.GetString(ent->v.targetname);
+			const char* target = hw.GetString(ent->v.target);
+			if ((strstr(classname, name) == 0) && (std::strcmp(targetname, name) != 0) && (std::strcmp(target, name) != 0))
 				continue;
 
-			out << e << ": " << classname;
-
-			if (ent->v.targetname != 0) {
-				const char *targetname = hw.GetString(ent->v.targetname);
-				out << "; name: " << targetname;
-			}
-
-			if (ent->v.target != 0) {
-				const char *target = hw.GetString(ent->v.target);
-				out << "; target: " << target;
-			}
-
-			out << "; hp: " << ent->v.health;
-
-			if ((strstr(classname, "func_door") != NULL) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
-				out << "; dmg: " << ent->v.dmg;
-
-			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-			bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-			bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
-			bool is_water = std::strncmp(classname, "func_water", 10) == 0;
-
-			Vector origin;
-			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
-				origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
-			else
-				origin = ent->v.origin;
-
-			out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
-
-			out << '\n';
+			HwDLL::GetInstance().PrintEntities(out, e, ent);
 		}
 
 		auto str = out.str();
@@ -3959,9 +3949,25 @@ struct HwDLL::Cmd_BXT_Print_Entities
 	}
 };
 
+void HwDLL::GetOriginOfEntity(Vector& origin, const edict_t* ent)
+{
+	const auto& hw = HwDLL::GetInstance();
+	const char* classname = hw.GetString(ent->v.classname);
+	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+	bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
+	bool is_water = std::strncmp(classname, "func_water", 10) == 0;
+
+	// Credits to 'goldsrc_monitor' tool for their code to get origin of entities
+	if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
+		origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
+	else
+		origin = ent->v.origin;
+}
+
 struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 {
-	NO_USAGE();
+	USAGE("Usage: bxt_ch_teleport_to_entity <index>\n");
 
 	static void handler(int num)
 	{
@@ -3971,6 +3977,13 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 
 		edict_t *edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (num >= numEdicts)
+		{
+			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			return;
+		}
+
 		for (int e = 0; e < numEdicts; ++e) {
 			const edict_t *ent = edicts + e;
 			if (!hw.IsValidEdict(ent))
@@ -3979,17 +3992,8 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 			if (e != num)
 				continue;
 
-			const char *classname = hw.GetString(ent->v.classname);
-			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-			bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-			bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
-			bool is_water = std::strncmp(classname, "func_water", 10) == 0;
-
 			Vector origin;
-			if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
-				origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
-			else
-				origin = ent->v.origin;
+			HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
 
 			out << "bxt_ch_set_pos " << origin.x << " " << origin.y << " " << origin.z;
 
@@ -4873,7 +4877,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Cmd_BXT_Set_Angles,
 		Handler<float, float>,
 		Handler<float, float, float>>("bxt_set_angles");
-	wrapper::Add<Cmd_BXT_Get_ServerTime, Handler<>>("bxt_get_servertime");
+	wrapper::Add<Cmd_BXT_Get_Server_Time, Handler<>>("bxt_get_server_time");
 	wrapper::Add<
 		Cmd_Multiwait,
 		Handler<>,
@@ -5900,9 +5904,9 @@ const char* HwDLL::GetMovetypeName(int moveType)
 		case MOVETYPE_TOSS:             return "Toss";
 		case MOVETYPE_PUSH:             return "Push";
 		case MOVETYPE_NOCLIP:           return "Noclip";
-		case MOVETYPE_FLYMISSILE:       return "Fly-missle";
+		case MOVETYPE_FLYMISSILE:       return "Fly-missile";
 		case MOVETYPE_BOUNCE:           return "Bounce";
-		case MOVETYPE_BOUNCEMISSILE:    return "Bounce-missle";
+		case MOVETYPE_BOUNCEMISSILE:    return "Bounce-missile";
 		case MOVETYPE_FOLLOW:           return "Follow";
 		case MOVETYPE_PUSHSTEP:         return "Push-step";
 		default:                        return "Unknown";

@@ -3879,6 +3879,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 	"bxt_print_entities <target>\n"
 	"bxt_print_entities <classname> <classname>\n"
 	"bxt_print_entities <classname> strcmp\n"
+	"bxt_print_entities <classname> strstr\n"
 	"bxt_print_entities <targetname> targetname\n"
 	"bxt_print_entities <target> targetname\n"
 	);
@@ -3888,6 +3889,10 @@ struct HwDLL::Cmd_BXT_Print_Entities
 		const auto& hw = HwDLL::GetInstance();
 
 		std::ostringstream out;
+
+		bool check1 = std::strcmp(name2, "targetname") == 0;
+		bool check2 = std::strcmp(name2, "strcmp") == 0;
+		bool check3 = std::strcmp(name2, "strstr") == 0;
 
 		edict_t *edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
@@ -3899,14 +3904,19 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			const char *classname = hw.GetString(ent->v.classname);
 			const char *targetname = hw.GetString(ent->v.targetname);
 			const char *target = hw.GetString(ent->v.target);
-			if (std::strcmp(name2, "targetname") == 0)
+			if (check1)
 			{
 				if ((std::strcmp(targetname, name1) != 0) && (std::strcmp(target, name1) != 0))
 					continue;
 			}
-			else if (std::strcmp(name2, "strcmp") == 0)
+			else if (check2)
 			{
 				if ((std::strcmp(classname, name1) != 0))
+					continue;
+			}
+			else if (check3)
+			{
+				if ((strstr(classname, name1) == 0))
 					continue;
 			}
 			else

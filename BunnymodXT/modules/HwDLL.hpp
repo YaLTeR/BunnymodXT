@@ -526,6 +526,7 @@ protected:
 	bool insideHost_Loadgame_f;
 	bool insideHost_Reload_f;
 
+	void *pcl;
 	void *cls;
 	void *psv;
 	ptrdiff_t offTime;

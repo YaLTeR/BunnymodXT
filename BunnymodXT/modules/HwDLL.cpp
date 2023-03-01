@@ -696,6 +696,7 @@ void HwDLL::Clear()
 	autoRecordNow = false;
 	insideHost_Loadgame_f = false;
 	insideHost_Reload_f = false;
+	pcl = nullptr;
 	cls = nullptr;
 	psv = nullptr;
 	lastRecordedHealth = 0;
@@ -1610,6 +1611,7 @@ void HwDLL::FindStuff()
 						*reinterpret_cast<ptrdiff_t*>(f + 33)
 						+ (f + 37)
 						);
+					pcl = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 86) - 0x2AF80);
 					cls = *reinterpret_cast<void**>(f + 69);
 					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 122);
@@ -1626,6 +1628,7 @@ void HwDLL::FindStuff()
 						*reinterpret_cast<ptrdiff_t*>(f + 63)
 						+ (f + 67)
 						);
+					pcl = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 140) - 0x3BF88);
 					cls = *reinterpret_cast<void**>(f + 105);
 					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 79) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 182);
@@ -2000,6 +2003,7 @@ void HwDLL::FindStuff()
 			auto pattern = fHost_AutoSave_f.get();
 			if (Host_AutoSave_f) {
 				EngineDevMsg("[hw dll] Found Host_AutoSave_f at %p (using the %s pattern).\n", Host_AutoSave_f, pattern->name());
+				EngineDevMsg("[hw dll] Found cl at %p.\n", pcl);
 				EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
 				EngineDevMsg("[hw dll] Found sv at %p.\n", psv);
 				EngineDevMsg("[hw dll] Found svs at %p.\n", svs);

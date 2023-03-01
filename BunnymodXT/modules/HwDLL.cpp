@@ -717,7 +717,6 @@ void HwDLL::Clear()
 	host_frametime = nullptr;
 	cvar_vars = nullptr;
 	movevars = nullptr;
-	offZmax = 0;
 	pHost_FilterTime_FPS_Cap_Byte = 0;
 	cofSaveHack = nullptr;
 	noclip_anglehack = nullptr;
@@ -919,10 +918,9 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find cvar_vars.\n");
 
-		movevars = MemUtils::GetSymbolAddress(m_Handle, "movevars");
+		movevars = reinterpret_cast<movevars_t*>(MemUtils::GetSymbolAddress(m_Handle, "movevars"));
 		if (movevars) {
 			EngineDevMsg("[hw dll] Found movevars at %p.\n", movevars);
-			offZmax = 0x38;
 		} else
 			EngineDevWarning("[hw dll] Could not find movevars.\n");
 
@@ -1824,12 +1822,10 @@ void HwDLL::FindStuff()
 				switch (pattern - patterns::engine::SV_SetMoveVars.cbegin())
 				{
 				case 0: // SteamPipe.
-					movevars = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(ORIG_SV_SetMoveVars) + 18);
-					offZmax = 0x38;
+					movevars = *reinterpret_cast<movevars_t**>(reinterpret_cast<uintptr_t>(ORIG_SV_SetMoveVars) + 18);
 					break;
 				case 1: // CoF-5936.
-					movevars = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(ORIG_SV_SetMoveVars) + 9);
-					offZmax = 0x38;
+					movevars = *reinterpret_cast<movevars_t**>(reinterpret_cast<uintptr_t>(ORIG_SV_SetMoveVars) + 9);
 					break;
 				}
 			}
@@ -6648,9 +6644,8 @@ HOOK_DEF_0(HwDLL, void, __cdecl, SV_SetMoveVars)
 	ORIG_SV_SetMoveVars();
 
 	if (CVars::bxt_force_zmax.GetBool()) {
-		if (movevars && offZmax) {
-			auto movevars_zmax = reinterpret_cast<float*>(reinterpret_cast<uintptr_t>(movevars) + offZmax);
-			*movevars_zmax = CVars::bxt_force_zmax.GetFloat();
+		if (movevars) {
+			movevars->zmax = CVars::bxt_force_zmax.GetFloat();
 		}
 	}
 }

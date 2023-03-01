@@ -546,8 +546,7 @@ protected:
 	int *demorecording;
 	cmdalias_t* cmd_alias;
 	cvar_t **cvar_vars;
-	void *movevars;
-	ptrdiff_t offZmax;
+	movevars_t *movevars;
 	studiohdr_t **pstudiohdr;
 	float *scr_fov_value;
 	ptrdiff_t pHost_FilterTime_FPS_Cap_Byte;

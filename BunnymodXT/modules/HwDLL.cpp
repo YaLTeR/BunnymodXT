@@ -697,7 +697,7 @@ void HwDLL::Clear()
 	insideHost_Loadgame_f = false;
 	insideHost_Reload_f = false;
 	cls = nullptr;
-	sv = nullptr;
+	psv = nullptr;
 	lastRecordedHealth = 0;
 	offTime = 0;
 	offWorldmodel = 0;
@@ -845,9 +845,9 @@ void HwDLL::FindStuff()
 		} else
 			EngineDevWarning("[hw dll] Could not find cls.\n");
 
-		sv = MemUtils::GetSymbolAddress(m_Handle, "sv");
-		if (sv) {
-			EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
+		psv = MemUtils::GetSymbolAddress(m_Handle, "sv");
+		if (psv) {
+			EngineDevMsg("[hw dll] Found sv at %p.\n", psv);
 			offTime = 0xc;
 			offWorldmodel = 296;
 			offModels = 0x30948;
@@ -908,13 +908,13 @@ void HwDLL::FindStuff()
 
 		host_frametime = reinterpret_cast<double*>(MemUtils::GetSymbolAddress(m_Handle, "host_frametime"));
 		if (host_frametime)
-			EngineDevMsg("[hw dll] Found host_frametime at %p.\n", sv);
+			EngineDevMsg("[hw dll] Found host_frametime at %p.\n", host_frametime);
 		else
 			EngineDevWarning("[hw dll] Could not find host_frametime.\n");
 
 		cvar_vars = reinterpret_cast<cvar_t**>(MemUtils::GetSymbolAddress(m_Handle, "cvar_vars"));
 		if (cvar_vars)
-			EngineDevMsg("[hw dll] Found cvar_vars at %p.\n", sv);
+			EngineDevMsg("[hw dll] Found cvar_vars at %p.\n", cvar_vars);
 		else
 			EngineDevWarning("[hw dll] Could not find cvar_vars.\n");
 
@@ -1015,7 +1015,7 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find CL_CheckGameDirectory.\n");
 
-		if (!cls || !sv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
+		if (!cls || !psv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
 		#define FIND(f) \
@@ -1227,7 +1227,7 @@ void HwDLL::FindStuff()
 
 		scr_fov_value = reinterpret_cast<float*>(MemUtils::GetSymbolAddress(m_Handle, "scr_fov_value"));
 		if (scr_fov_value)
-			EngineDevMsg("[hw dll] Found scr_fov_value at %p.\n", sv);
+			EngineDevMsg("[hw dll] Found scr_fov_value at %p.\n", scr_fov_value);
 		else
 			EngineDevWarning("[hw dll] Could not find scr_fov_value.\n");
 
@@ -1599,7 +1599,7 @@ void HwDLL::FindStuff()
 				{
 				default:
 				case 0: // HL-Steampipe
-					sv = *reinterpret_cast<void**>(f + 19);
+					psv = *reinterpret_cast<void**>(f + 19);
 					offTime = 0x10;
 					offWorldmodel = 304;
 					offModels = 0x30950;
@@ -1615,7 +1615,7 @@ void HwDLL::FindStuff()
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 122);
 					break;
 				case 1: // CoF-5936
-					sv = *reinterpret_cast<void**>(f + 50);
+					psv = *reinterpret_cast<void**>(f + 50);
 					offTime = 0x10;
 					offWorldmodel = 304;
 					offModels = 0x41D50;
@@ -2001,7 +2001,7 @@ void HwDLL::FindStuff()
 			if (Host_AutoSave_f) {
 				EngineDevMsg("[hw dll] Found Host_AutoSave_f at %p (using the %s pattern).\n", Host_AutoSave_f, pattern->name());
 				EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
-				EngineDevMsg("[hw dll] Found sv at %p.\n", sv);
+				EngineDevMsg("[hw dll] Found sv at %p.\n", psv);
 				EngineDevMsg("[hw dll] Found svs at %p.\n", svs);
 				EngineDevMsg("[hw dll] Found Con_Printf at %p.\n", ORIG_Con_Printf);
 			} else {
@@ -5682,7 +5682,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	UpdateCustomTriggersAndSplits();
 
 	int *state = reinterpret_cast<int*>(cls);
-	int *paused = reinterpret_cast<int*>(sv)+1;
+	int *paused = reinterpret_cast<int*>(psv)+1;
 	static unsigned counter = 1;
 	auto c = counter++;
 	if (CVars::_bxt_taslog.GetBool()){
@@ -6092,8 +6092,8 @@ void HwDLL::SaveInitialDataToDemo()
 
 	RuntimeData::Add(std::move(cvar_values));
 
-	if (sv && offMaxEdicts) {
-		const int maxEdicts = *reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(sv) + offMaxEdicts);
+	if (psv && offMaxEdicts) {
+		const int maxEdicts = *reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(psv) + offMaxEdicts);
 		RuntimeData::Add(RuntimeData::Edicts{ maxEdicts });
 	}
 
@@ -6361,7 +6361,7 @@ HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, cha
 HOOK_DEF_0(HwDLL, void, __cdecl, SV_Frame)
 {
 	if (tasLogging) {
-		const bool paused = *(reinterpret_cast<const int *>(sv) + 1) != 0;
+		const bool paused = *(reinterpret_cast<const int *>(psv) + 1) != 0;
 		const int *clstate = reinterpret_cast<const int *>(cls);
 		logWriter.StartPhysicsFrame(*host_frametime, *clstate, paused, loggedCbuf.c_str());
 	}
@@ -6625,7 +6625,7 @@ HOOK_DEF_3(HwDLL, void, __cdecl, SV_AddLinksToPM_, void *, node, float *, pmove_
 
 HOOK_DEF_2(HwDLL, void, __cdecl, SV_WriteEntitiesToClient, client_t*, client, void*, msg)
 {
-	auto num_edicts = reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(sv) + offNumEdicts);
+	auto num_edicts = reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(psv) + offNumEdicts);
 	const auto orig_num_edicts = *num_edicts;
 	if (CVars::_bxt_norefresh.GetBool())
 		*num_edicts = 0;

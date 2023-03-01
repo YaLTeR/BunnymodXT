@@ -204,14 +204,14 @@ public:
 	inline bool IsCountingSharedRNGSeed() { return CountingSharedRNGSeed; }
 	inline unsigned GetSharedRNGSeedCounter() { return SharedRNGSeedCounter; }
 
-	inline bool IsPaused() { return (sv && *(reinterpret_cast<int*>(sv) + 1)); }
-	inline bool IsActive() { return (sv && *reinterpret_cast<int*>(sv)); }
+	inline bool IsPaused() { return (psv && *(reinterpret_cast<int*>(psv) + 1)); }
+	inline bool IsActive() { return (psv && *reinterpret_cast<int*>(psv)); }
 
 	inline bool IsRecordingDemo() const { return demorecording && *demorecording == 1; }
 	void StoreCommand(const char* command);
 
 	inline double GetTime() const {
-		return *reinterpret_cast<double *>(reinterpret_cast<uintptr_t>(sv) + offTime);
+		return *reinterpret_cast<double *>(reinterpret_cast<uintptr_t>(psv) + offTime);
 	}
 	inline edict_t* GetPlayerEdict() const {
 		if (!svs || svs->num_clients == 0)
@@ -223,11 +223,11 @@ public:
 	inline size_t GetPreExecFramebulk() const { return preExecFramebulk; }
 
 	inline int GetEdicts(edict_t **edicts) const {
-		*edicts = *reinterpret_cast<edict_t **>(reinterpret_cast<uintptr_t>(sv) + offEdicts);
-		return *reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(sv) + offNumEdicts);
+		*edicts = *reinterpret_cast<edict_t **>(reinterpret_cast<uintptr_t>(psv) + offEdicts);
+		return *reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(psv) + offNumEdicts);
 	}
 	inline model_t *GetModelByIndex(int index) const {
-		model_t **models = reinterpret_cast<model_t **>(reinterpret_cast<uintptr_t>(sv) + offModels);
+		model_t **models = reinterpret_cast<model_t **>(reinterpret_cast<uintptr_t>(psv) + offModels);
 		return *(models + index);
 	}
 	inline bool IsValidEdict(const edict_t *edict) const {
@@ -527,7 +527,7 @@ protected:
 	bool insideHost_Reload_f;
 
 	void *cls;
-	void *sv;
+	void *psv;
 	ptrdiff_t offTime;
 	ptrdiff_t offWorldmodel;
 	ptrdiff_t offModels;

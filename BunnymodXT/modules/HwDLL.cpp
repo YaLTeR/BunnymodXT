@@ -4014,21 +4014,16 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 			return;
 		}
 
-		for (int e = 0; e < numEdicts; ++e) {
-			const edict_t *ent = edicts + e;
-			if (!hw.IsValidEdict(ent))
-				continue;
+		const edict_t *ent = edicts + num;
+		if (!hw.IsValidEdict(ent))
+			return;
 
-			if (e != num)
-				continue;
+		Vector origin;
+		HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
 
-			Vector origin;
-			HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
+		out << "bxt_ch_set_pos " << origin.x << " " << origin.y << " " << origin.z;
 
-			out << "bxt_ch_set_pos " << origin.x << " " << origin.y << " " << origin.z;
-
-			out << '\n';
-		}
+		out << '\n';
 
 		auto str = out.str();
 		hw.ORIG_Cbuf_InsertText(str.c_str());

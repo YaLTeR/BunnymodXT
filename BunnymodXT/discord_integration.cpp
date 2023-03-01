@@ -312,7 +312,10 @@ namespace discord_integration
 						skillName = "";
 				}
 
-				snprintf(buffer_state, sizeof(buffer_state), "%s | FPS: %.1f | %s", state.c_str(), CVars::fps_max.GetFloat(), skillName);
+				if (CVars::host_framerate.GetFloat() > 0.0f)
+					snprintf(buffer_state, sizeof(buffer_state), "%s | FPS (HFR): %.1f | %s", state.c_str(), 1.0f / CVars::host_framerate.GetFloat(), skillName);
+				else
+					snprintf(buffer_state, sizeof(buffer_state), "%s | FPS: %.1f | %s", state.c_str(), CVars::fps_max.GetFloat(), skillName);
 				presence.state = buffer_state;
 
 				if (CustomHud::GetCountingTime())
@@ -426,7 +429,12 @@ namespace discord_integration
 			rpc_initialized = true;
 		}
 
-		float FPS_current = CVars::fps_max.GetFloat();
+		float FPS_current;
+		if (CVars::host_framerate.GetFloat() > 0.0f)
+			FPS_current = CVars::host_framerate.GetFloat();
+		else
+			FPS_current = CVars::fps_max.GetFloat();
+
 		static float FPS_previous = FPS_current;
 
 		if (FPS_current != FPS_previous)

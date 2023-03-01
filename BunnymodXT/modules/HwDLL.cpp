@@ -3855,16 +3855,8 @@ void HwDLL::PrintEntities(std::ostringstream &out, int e, const edict_t* ent)
 	if ((!strncmp(classname, "func_door", 9)) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
 		out << "; dmg: " << ent->v.dmg;
 
-	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-	bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
-	bool is_water = std::strncmp(classname, "func_water", 10) == 0;
-
 	Vector origin;
-	if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
-		origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
-	else
-		origin = ent->v.origin;
+	HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
 
 	out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
 

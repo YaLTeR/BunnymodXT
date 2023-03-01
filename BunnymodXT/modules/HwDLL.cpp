@@ -1590,13 +1590,12 @@ void HwDLL::FindStuff()
 				);
 			});
 
-		void *Host_AutoSave_f;
-		auto fHost_AutoSave_f = FindAsync(
-			Host_AutoSave_f,
-			patterns::engine::Host_AutoSave_f,
+		auto fHost_ValidSave = FindAsync(
+			ORIG_Host_ValidSave,
+			patterns::engine::Host_ValidSave,
 			[&](auto pattern) {
-				auto f = reinterpret_cast<uintptr_t>(Host_AutoSave_f);
-				switch (pattern - patterns::engine::Host_AutoSave_f.cbegin())
+				auto f = reinterpret_cast<uintptr_t>(ORIG_Host_ValidSave);
+				switch (pattern - patterns::engine::Host_ValidSave.cbegin())
 				{
 				default:
 				case 0: // HL-Steampipe
@@ -1632,6 +1631,7 @@ void HwDLL::FindStuff()
 					cls = *reinterpret_cast<void**>(f + 105);
 					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 79) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 182);
+					cofSaveHack = *reinterpret_cast<bool**>(f + 21);
 					is_cof_steam = true;
 					break;
 				}
@@ -1878,13 +1878,6 @@ void HwDLL::FindStuff()
 				}
 			});
 
-		auto fHost_ValidSave = FindAsync(
-			ORIG_Host_ValidSave,
-			patterns::engine::Host_ValidSave,
-			[&](auto pattern) {
-				cofSaveHack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(ORIG_Host_ValidSave) + 21);
-			});
-
 		void *CL_RegisterResources;
 		auto fCL_RegisterResources = FindAsync(
 			CL_RegisterResources,
@@ -2000,16 +1993,19 @@ void HwDLL::FindStuff()
 		}
 
 		{
-			auto pattern = fHost_AutoSave_f.get();
-			if (Host_AutoSave_f) {
-				EngineDevMsg("[hw dll] Found Host_AutoSave_f at %p (using the %s pattern).\n", Host_AutoSave_f, pattern->name());
+			auto pattern = fHost_ValidSave.get();
+			if (ORIG_Host_ValidSave) {
+				EngineDevMsg("[hw dll] Found Host_ValidSave at %p (using the %s pattern).\n", ORIG_Host_ValidSave, pattern->name());
 				EngineDevMsg("[hw dll] Found cl at %p.\n", pcl);
 				EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
 				EngineDevMsg("[hw dll] Found sv at %p.\n", psv);
 				EngineDevMsg("[hw dll] Found svs at %p.\n", svs);
 				EngineDevMsg("[hw dll] Found Con_Printf at %p.\n", ORIG_Con_Printf);
+				if (is_cof_steam)
+					EngineDevMsg("[hw dll] Found cof_savehack at %p.\n", cofSaveHack);
 			} else {
-				EngineDevWarning("[hw dll] Could not find Host_AutoSave_f.\n");
+				EngineDevWarning("[hw dll] Could not find Host_ValidSave.\n");
+				EngineWarning("[hw dll] Quick saving in Cry of Fear is not available.\n");
 				ORIG_Cbuf_Execute = nullptr;
 			}
 		}
@@ -2162,17 +2158,6 @@ void HwDLL::FindStuff()
 			} else {
 				EngineDevWarning("[hw dll] Could not find R_StudioSetupBones.\n");
 				EngineWarning("[hw dll] Disabling weapon viewmodel idle or equip sequences is not available.\n");
-			}
-		}
-
-		{
-			auto pattern = fHost_ValidSave.get();
-			if (ORIG_Host_ValidSave) {
-				EngineDevMsg("[hw dll] Found Host_ValidSave at %p (using the %s pattern).\n", ORIG_Host_ValidSave, pattern->name());
-				EngineDevMsg("[hw dll] Found cof_savehack at %p.\n", cofSaveHack);
-			} else {
-				EngineDevWarning("[hw dll] Could not find Host_ValidSave.\n");
-				EngineWarning("[hw dll] Quick saving in Cry of Fear is not available.\n");
 			}
 		}
 

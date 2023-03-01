@@ -3865,16 +3865,7 @@ void HwDLL::PrintEntities(std::ostringstream &out, int e, const edict_t* ent)
 
 struct HwDLL::Cmd_BXT_Print_Entities
 {
-	USAGE("Usage:\n"
-	"bxt_print_entities <classname>\n"
-	"bxt_print_entities <targetname>\n"
-	"bxt_print_entities <target>\n"
-	"bxt_print_entities <classname> <classname>\n"
-	"bxt_print_entities <classname> strcmp\n"
-	"bxt_print_entities <classname> strstr\n"
-	"bxt_print_entities <targetname> targetname\n"
-	"bxt_print_entities <target> targetname\n"
-	);
+	NO_USAGE();
 
 	static void handler(const char *name1, const char *name2)
 	{
@@ -3945,6 +3936,47 @@ struct HwDLL::Cmd_BXT_Print_Entities
 
 			HwDLL::GetInstance().PrintEntities(out, e, ent);
 		}
+
+		auto str = out.str();
+		hw.ORIG_Con_Printf("%s", str.c_str());
+	}
+
+	static void handler()
+	{
+		const auto& hw = HwDLL::GetInstance();
+
+		std::ostringstream out;
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+		for (int e = 0; e < numEdicts; ++e) {
+			const edict_t* ent = edicts + e;
+			if (!hw.IsValidEdict(ent))
+				continue;
+
+			HwDLL::GetInstance().PrintEntities(out, e, ent);
+		}
+
+		auto str = out.str();
+		hw.ORIG_Con_Printf("%s", str.c_str());
+	}
+};
+
+struct HwDLL::Cmd_BXT_Print_Entities_Help
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		const auto& hw = HwDLL::GetInstance();
+
+		std::ostringstream out;
+
+		out << "bxt_print_entities <classname>\n";
+		out << "bxt_print_entities <targetname>\n";
+		out << "bxt_print_entities <target>\n";
+		out << "bxt_print_entities <classname> <classname>\n";
+		out << "bxt_print_entities <classname> *\n";
 
 		auto str = out.str();
 		hw.ORIG_Con_Printf("%s", str.c_str());
@@ -4942,7 +4974,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TASLog, Handler<int>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
-	wrapper::Add<Cmd_BXT_Print_Entities, Handler<const char*>, Handler<const char*, const char*>>("bxt_print_entities");
+	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>, Handler<const char*>, Handler<const char*, const char*>>("bxt_print_entities");
+	wrapper::Add<Cmd_BXT_Print_Entities_Help, Handler<>>("bxt_print_entities_help");
 	wrapper::Add<Cmd_BXT_Print_Entities_By_Index, Handler<int, int>>("bxt_print_entities_by_index");
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Resimulate, Handler<>>("bxt_tas_editor_resimulate");

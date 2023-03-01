@@ -476,6 +476,7 @@ protected:
 	struct Cmd_BXT_TAS_Optim_Init;
 	struct Cmd_BXT_FreeCam;
 	struct Cmd_BXT_Print_Entities;
+	struct Cmd_BXT_Print_Entities_Help;
 	struct Cmd_BXT_Print_Entities_By_Index;
 	struct Cmd_BXT_TAS_Become_Simulator_Client;
 	struct Cmd_BXT_TAS_Server_Send_Command;

@@ -414,7 +414,13 @@ protected:
 	struct Cmd_BXT_CH_Set_Origin_Offset;
 	struct Cmd_BXT_CH_Set_Velocity;
 	struct Cmd_BXT_CH_Set_Velocity_Angles;
+	struct Cmd_BXT_CH_Teleport_To_Entity;
+	struct Cmd_BXT_CH_Get_Velocity;
+	struct Cmd_BXT_CH_Get_Other_Player_Info;
+	struct Cmd_BXT_CH_Entity_Set_Health;
+	struct Cmd_BXT_CH_Monster_Set_Origin;
 	struct Cmd_BXT_Get_Origin_And_Angles;
+	struct Cmd_BXT_Get_Server_Time;
 	struct Cmd_Multiwait;
 	struct Cmd_BXT_Camera_Fixed;
 	struct Cmd_BXT_Camera_Clear;
@@ -422,7 +428,6 @@ protected:
 	struct Cmd_BXT_Timer_Start;
 	struct Cmd_BXT_Timer_Stop;
 	struct Cmd_BXT_Timer_Reset;
-	struct Cmd_BXT_Get_ClientMaxSpeed;
 	struct Cmd_BXT_TAS_Autojump_Down;
 	struct Cmd_BXT_TAS_Autojump_Up;
 	struct Cmd_BXT_TAS_Ducktap_Down;
@@ -473,6 +478,7 @@ protected:
 	struct Cmd_BXT_TAS_Optim_Init;
 	struct Cmd_BXT_FreeCam;
 	struct Cmd_BXT_Print_Entities;
+	struct Cmd_BXT_Print_Entities_By_Index;
 	struct Cmd_BXT_TAS_Become_Simulator_Client;
 	struct Cmd_BXT_TAS_Server_Send_Command;
 	struct Cmd_BXT_TAS_Client_Load_Received_Script;
@@ -501,8 +507,12 @@ protected:
 	bool GetNextMovementFrame(HLTAS::Frame& f);
 	void ResetButtons();
 	void FindCVarsIfNeeded();
+	void PrintEntity(std::ostringstream &out, int index);
+	void TeleportMonsterToPosition(float x, float y, float z, int index);
 public:
 	HLStrafe::MovementVars GetMovementVars();
+	const char* GetMovetypeName(int moveType);
+	void GetOriginOfEntity(Vector& origin, const edict_t* ent);
 
 	bool ducktap;
 	edict_t **sv_player;

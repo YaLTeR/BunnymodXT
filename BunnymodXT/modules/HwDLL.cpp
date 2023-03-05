@@ -2863,6 +2863,229 @@ struct HwDLL::Cmd_BXT_Set_Angles
 	}
 };
 
+struct HwDLL::Cmd_BXT_CH_Get_Velocity
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		const auto& vel = (*hw.sv_player)->v.velocity;
+		hw.ORIG_Con_Printf("bxt_ch_set_vel %f %f %f\n", vel.x, vel.y, vel.z);
+		hw.ORIG_Con_Printf("Velocity (XY): %f\n", vel.Length2D());
+		hw.ORIG_Con_Printf("Velocity (XYZ): %f\n", vel.Length());
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
+{
+	USAGE("Usage:\n"
+		"bxt_ch_entity_set_health <health>\n"
+		"bxt_ch_entity_set_health <health> <entity_index>\n"
+	);
+
+	static void handler(float hp)
+	{
+		const auto& serv = ServerDLL::GetInstance();
+		float view[3], end[3];
+		ClientDLL::GetInstance().SetupTraceVectors(view, end);
+
+		const auto tr = serv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+
+		if (tr.pHit)
+		{
+			const auto ent = tr.pHit;
+
+			ent->v.health = hp;
+		}
+	}
+
+	static void handler(float hp, int num)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (num >= numEdicts)
+		{
+			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			return;
+		}
+
+		edict_t* ent = edicts + num;
+		if (!hw.IsValidEdict(ent))
+			return;
+
+		ent->v.health = hp;
+	}
+};
+
+void HwDLL::TeleportMonsterToPosition(float x, float y, float z, int index)
+{
+	const auto& hw = HwDLL::GetInstance();
+	edict_t* edicts;
+	hw.GetEdicts(&edicts);
+	edict_t* ent = edicts + index;
+	if (!hw.IsValidEdict(ent))
+		return;
+
+	if (ent->v.flags & FL_MONSTER)
+	{
+		ent->v.origin[0] = x;
+		ent->v.origin[1] = y;
+		ent->v.origin[2] = z;
+	}
+}
+
+struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
+{
+	USAGE("Usage:\n"
+		"bxt_ch_monster_set_origin <entity_index>\n"
+		"bxt_ch_monster_set_origin <entity_index> <offset_z>\n"
+		"bxt_ch_monster_set_origin <x> <y> <z>\n"
+		"bxt_ch_monster_set_origin <x> <y> <z> <entity_index>\n"
+	);
+
+	static void handler(int num)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (num >= numEdicts)
+		{
+			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			return;
+		}
+
+		const auto& p_pos = (*hw.sv_player)->v.origin;
+		hw.TeleportMonsterToPosition(p_pos[0], p_pos[1], p_pos[2], num);
+	}
+
+	static void handler(int num, float off_z)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (num >= numEdicts)
+		{
+			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			return;
+		}
+
+		edict_t* ent = edicts + num;
+		if (!hw.IsValidEdict(ent))
+			return;
+
+		if (ent->v.flags & FL_MONSTER)
+		{
+			ent->v.origin[2] += off_z;
+		}
+	}
+
+	static void handler(float x, float y, float z)
+	{
+		const auto& serv = ServerDLL::GetInstance();
+		float view[3], end[3];
+		ClientDLL::GetInstance().SetupTraceVectors(view, end);
+
+		const auto tr = serv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+
+		if (tr.pHit)
+		{
+			const auto ent = tr.pHit;
+			if (ent->v.flags & FL_MONSTER)
+			{
+				ent->v.origin[0] = x;
+				ent->v.origin[1] = y;
+				ent->v.origin[2] = z;
+			}
+		}
+	}
+
+	static void handler(float x, float y, float z, int num)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (num >= numEdicts)
+		{
+			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			return;
+		}
+
+		hw.TeleportMonsterToPosition(x, y, z, num);
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+		auto &cl = ClientDLL::GetInstance();
+
+		const auto& mvtype = (*hw.sv_player)->v.movetype;
+		const auto& basevel = (*hw.sv_player)->v.basevelocity;
+		const auto& punch = (*hw.sv_player)->v.punchangle;
+
+		if (cl.pEngfuncs)
+			hw.ORIG_Con_Printf("Client maxspeed: %f\n", cl.pEngfuncs->GetClientMaxspeed());
+		hw.ORIG_Con_Printf("Movetype: %d (%s)\n", mvtype, hw.GetMovetypeName(mvtype));
+		hw.ORIG_Con_Printf("Health: %f\n", (*hw.sv_player)->v.health);
+		hw.ORIG_Con_Printf("Armor: %f\n", (*hw.sv_player)->v.armorvalue);
+		hw.ORIG_Con_Printf("Waterlevel: %d\n", (*hw.sv_player)->v.waterlevel);
+		hw.ORIG_Con_Printf("Watertype: %d\n", (*hw.sv_player)->v.watertype);
+		hw.ORIG_Con_Printf("Max health: %f\n", (*hw.sv_player)->v.max_health);
+		hw.ORIG_Con_Printf("Gravity: %f\n", (*hw.sv_player)->v.gravity);
+		hw.ORIG_Con_Printf("Friction: %f\n", (*hw.sv_player)->v.friction);
+		std::ostringstream out;
+		out << "Flags: ";
+		if ((*hw.sv_player)->v.flags & FL_CONVEYOR)
+			out << "FL_CONVEYOR; ";
+		if ((*hw.sv_player)->v.flags & FL_INWATER)
+			out << "FL_INWATER; ";
+		if ((*hw.sv_player)->v.flags & FL_GODMODE)
+			out << "FL_GODMODE; ";
+		if ((*hw.sv_player)->v.flags & FL_NOTARGET)
+			out << "FL_NOTARGET; ";
+		if ((*hw.sv_player)->v.flags & FL_ONGROUND)
+			out << "FL_ONGROUND; ";
+		if ((*hw.sv_player)->v.flags & FL_WATERJUMP)
+			out << "FL_WATERJUMP; ";
+		if ((*hw.sv_player)->v.flags & FL_FROZEN)
+			out << "FL_FROZEN; ";
+		if ((*hw.sv_player)->v.flags & FL_DUCKING)
+			out << "FL_DUCKING; ";
+		if ((*hw.sv_player)->v.flags & FL_ONTRAIN)
+			out << "FL_ONTRAIN; ";
+		out << '\n';
+		hw.ORIG_Con_Printf("%s", out.str().c_str());
+		hw.ORIG_Con_Printf("bInDuck: %d\n", (*hw.sv_player)->v.bInDuck);
+		hw.ORIG_Con_Printf("Basevelocity: %f %f %f; XY = %f; XYZ = %f\n", basevel.x, basevel.y, basevel.z, basevel.Length2D(), basevel.Length());
+		hw.ORIG_Con_Printf("Server punchangle: %f %f %f\n", punch.x, punch.y, punch.z);
+		hw.ORIG_Con_Printf("iuser1: %d; iuser2: %d; iuser3: %d; iuser4: %d\n", (*hw.sv_player)->v.iuser1, (*hw.sv_player)->v.iuser2, (*hw.sv_player)->v.iuser3, (*hw.sv_player)->v.iuser4);
+		hw.ORIG_Con_Printf("fuser1: %f; fuser2: %f; fuser3: %f; fuser4: %f\n", (*hw.sv_player)->v.fuser1, (*hw.sv_player)->v.fuser2, (*hw.sv_player)->v.fuser3, (*hw.sv_player)->v.fuser4);
+
+		const auto& vusr1 = (*hw.sv_player)->v.vuser1;
+		const auto& vusr2 = (*hw.sv_player)->v.vuser2;
+		const auto& vusr3 = (*hw.sv_player)->v.vuser3;
+		const auto& vusr4 = (*hw.sv_player)->v.vuser4;
+		hw.ORIG_Con_Printf("vuser1: %f %f %f; XY = %f; XYZ = %f\n", vusr1.x, vusr1.y, vusr1.z, vusr1.Length2D(), vusr1.Length());
+		hw.ORIG_Con_Printf("vuser2: %f %f %f; XY = %f; XYZ = %f\n", vusr2.x, vusr2.y, vusr2.z, vusr2.Length2D(), vusr2.Length());
+		hw.ORIG_Con_Printf("vuser3: %f %f %f; XY = %f; XYZ = %f\n", vusr3.x, vusr3.y, vusr3.z, vusr3.Length2D(), vusr3.Length());
+		hw.ORIG_Con_Printf("vuser4: %f %f %f; XY = %f; XYZ = %f\n", vusr4.x, vusr4.y, vusr4.z, vusr4.Length2D(), vusr4.Length());
+	}
+};
+
 struct HwDLL::Cmd_Multiwait
 {
 	USAGE("Usage: w [number of waits]\n");
@@ -2996,14 +3219,13 @@ struct HwDLL::Cmd_BXT_Timer_Reset
 	}
 };
 
-struct HwDLL::Cmd_BXT_Get_ClientMaxSpeed
+struct HwDLL::Cmd_BXT_Get_Server_Time
 {
 	NO_USAGE();
 
 	static void handler()
 	{
-		if (ClientDLL::GetInstance().pEngfuncs)
-			HwDLL::GetInstance().ORIG_Con_Printf("Client maxspeed: %f\n", ClientDLL::GetInstance().pEngfuncs->GetClientMaxspeed());
+		HwDLL::GetInstance().ORIG_Con_Printf("Server time: %f\n", ServerDLL::GetInstance().GetTime());
 	}
 };
 
@@ -3758,11 +3980,80 @@ struct HwDLL::Cmd_BXT_FreeCam
 	}
 };
 
+void HwDLL::PrintEntity(std::ostringstream &out, int index)
+{
+	const auto& hw = HwDLL::GetInstance();
+	edict_t* edicts;
+	hw.GetEdicts(&edicts);
+	const edict_t* ent = edicts + index;
+	const char* classname = hw.GetString(ent->v.classname);
+	const char* targetname = hw.GetString(ent->v.targetname);
+	const char* target = hw.GetString(ent->v.target);
+
+	out << index << ": " << classname;
+
+	if (ent->v.targetname != 0) {
+		out << "; name: " << targetname;
+	}
+
+	if (ent->v.target != 0) {
+		out << "; target: " << target;
+	}
+
+	out << "; hp: " << ent->v.health;
+
+	if ((!strncmp(classname, "func_door", 9)) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
+		out << "; dmg: " << ent->v.dmg;
+
+	Vector origin;
+	HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
+
+	out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
+
+	out << '\n';
+}
+
 struct HwDLL::Cmd_BXT_Print_Entities
 {
 	NO_USAGE();
 
-	static void handler()
+	static void handler(const char *name1, const char *name2)
+	{
+		const auto& hw = HwDLL::GetInstance();
+
+		std::ostringstream out;
+
+		bool match_substring = std::strcmp(name2, "*") == 0;
+
+		edict_t *edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+		for (int e = 0; e < numEdicts; ++e) {
+			const edict_t *ent = edicts + e;
+			if (!hw.IsValidEdict(ent))
+				continue;
+
+			const char *classname = hw.GetString(ent->v.classname);
+			const char *targetname = hw.GetString(ent->v.targetname);
+			const char *target = hw.GetString(ent->v.target);
+			if (match_substring)
+			{
+				if ((strstr(classname, name1) == 0))
+					continue;
+			}
+			else
+			{
+				if ((strcmp(classname, name1) != 0) && (strcmp(classname, name2) != 0))
+					continue;
+			}
+
+			HwDLL::GetInstance().PrintEntity(out, e);
+		}
+
+		auto str = out.str();
+		hw.ORIG_Con_Printf("%s", str.c_str());
+	}
+
+	static void handler(const char *name)
 	{
 		const auto& hw = HwDLL::GetInstance();
 
@@ -3775,19 +4066,116 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			if (!hw.IsValidEdict(ent))
 				continue;
 
-			const char *classname = hw.GetString(ent->v.classname);
-			out << e << ": " << classname;
+			const char* classname = hw.GetString(ent->v.classname);
+			const char* targetname = hw.GetString(ent->v.targetname);
+			const char* target = hw.GetString(ent->v.target);
+			if ((std::strcmp(classname, name) != 0) && (std::strcmp(targetname, name) != 0) && (std::strcmp(target, name) != 0))
+				continue;
 
-			if (ent->v.targetname != 0) {
-				const char *targetname = hw.GetString(ent->v.targetname);
-				out << " - " << targetname;
-			}
-
-			out << '\n';
+			HwDLL::GetInstance().PrintEntity(out, e);
 		}
 
 		auto str = out.str();
 		hw.ORIG_Con_Printf("%s", str.c_str());
+	}
+
+	static void handler()
+	{
+		const auto& hw = HwDLL::GetInstance();
+
+		std::ostringstream out;
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+		for (int e = 0; e < numEdicts; ++e) {
+			const edict_t* ent = edicts + e;
+			if (!hw.IsValidEdict(ent))
+				continue;
+
+			HwDLL::GetInstance().PrintEntity(out, e);
+		}
+
+		auto str = out.str();
+		hw.ORIG_Con_Printf("%s", str.c_str());
+	}
+};
+
+struct HwDLL::Cmd_BXT_Print_Entities_By_Index
+{
+	USAGE("Usage: bxt_print_entities_by_index <min_range> <max_range>\n");
+
+	static void handler(int value1, int value2)
+	{
+		const auto& hw = HwDLL::GetInstance();
+
+		std::ostringstream out;
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+		for (int e = 0; e < numEdicts; ++e) {
+			const edict_t* ent = edicts + e;
+			if (!hw.IsValidEdict(ent))
+				continue;
+
+			if ((e < value1) || (e > value2))
+				continue;
+
+			HwDLL::GetInstance().PrintEntity(out, e);
+		}
+
+		auto str = out.str();
+		hw.ORIG_Con_Printf("%s", str.c_str());
+	}
+};
+
+void HwDLL::GetOriginOfEntity(Vector& origin, const edict_t* ent)
+{
+	const auto& hw = HwDLL::GetInstance();
+	const char* classname = hw.GetString(ent->v.classname);
+	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
+	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+	bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
+	bool is_water = std::strncmp(classname, "func_water", 10) == 0;
+
+	// Credits to 'goldsrc_monitor' tool for their code to get origin of entities
+	if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
+		origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
+	else
+		origin = ent->v.origin;
+}
+
+struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
+{
+	USAGE("Usage: bxt_ch_teleport_to_entity <index>\n");
+
+	static void handler(int num)
+	{
+		const auto& hw = HwDLL::GetInstance();
+
+		std::ostringstream out;
+
+		edict_t *edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (num >= numEdicts)
+		{
+			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			return;
+		}
+
+		const edict_t *ent = edicts + num;
+		if (!hw.IsValidEdict(ent))
+			return;
+
+		Vector origin;
+		HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
+
+		out << "bxt_ch_set_pos " << origin.x << " " << origin.y << " " << origin.z;
+
+		out << '\n';
+
+		auto str = out.str();
+		hw.ORIG_Cbuf_InsertText(str.c_str());
 	}
 };
 
@@ -4652,6 +5040,11 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin_Offset, Handler<float, float, float>>("bxt_ch_set_pos_offset");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Velocity, Handler<float, float, float>>("bxt_ch_set_vel");
+	wrapper::AddCheat<Cmd_BXT_CH_Teleport_To_Entity, Handler<int>>("bxt_ch_teleport_to_entity");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>>("bxt_ch_get_other_player_info");
+	wrapper::AddCheat<Cmd_BXT_CH_Entity_Set_Health, Handler<float>, Handler<float, int>>("bxt_ch_entity_set_health");
+	wrapper::AddCheat<Cmd_BXT_CH_Monster_Set_Origin, Handler<int>, Handler<float, float, float>, Handler<float, float, float, int>>("bxt_ch_monster_set_origin");
 	wrapper::AddCheat<
 		Cmd_BXT_CH_Set_Velocity_Angles,
 		Handler<float>,
@@ -4660,6 +5053,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Cmd_BXT_Set_Angles,
 		Handler<float, float>,
 		Handler<float, float, float>>("bxt_set_angles");
+	wrapper::Add<Cmd_BXT_Get_Server_Time, Handler<>>("bxt_get_server_time");
 	wrapper::Add<
 		Cmd_Multiwait,
 		Handler<>,
@@ -4670,7 +5064,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Timer_Start, Handler<>>("bxt_timer_start");
 	wrapper::Add<Cmd_BXT_Timer_Stop, Handler<>>("bxt_timer_stop");
 	wrapper::Add<Cmd_BXT_Timer_Reset, Handler<>>("bxt_timer_reset");
-	wrapper::Add<Cmd_BXT_Get_ClientMaxSpeed, Handler<>>("bxt_get_clientmaxspeed");
 	wrapper::Add<Cmd_BXT_Get_Origin_And_Angles, Handler<>>("bxt_get_pos");
 	wrapper::Add<Cmd_BXT_TAS_Autojump_Down, Handler<>, Handler<const char*>>("+bxt_tas_autojump");
 	wrapper::Add<Cmd_BXT_TAS_Autojump_Up, Handler<>, Handler<const char*>>("-bxt_tas_autojump");
@@ -4700,7 +5093,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TASLog, Handler<int>>("bxt_taslog");
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
-	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>>("bxt_print_entities");
+	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>, Handler<const char*>, Handler<const char*, const char*>>("bxt_print_entities");
+	wrapper::Add<Cmd_BXT_Print_Entities_By_Index, Handler<int, int>>("bxt_print_entities_by_index");
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Resimulate, Handler<>>("bxt_tas_editor_resimulate");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Apply_Smoothing, Handler<>>("bxt_tas_editor_apply_smoothing");
@@ -5674,6 +6068,26 @@ void HwDLL::KeyUp(Key& key)
 	std::ostringstream ss;
 	ss << '-' << key.Name << '\n';
 	ORIG_Cbuf_InsertText(ss.str().c_str());
+}
+
+const char* HwDLL::GetMovetypeName(int moveType)
+{
+	switch (moveType)
+	{
+		case MOVETYPE_NONE:             return "None";
+		case MOVETYPE_WALK:             return "Walk";
+		case MOVETYPE_STEP:             return "Step";
+		case MOVETYPE_FLY:              return "Fly";
+		case MOVETYPE_TOSS:             return "Toss";
+		case MOVETYPE_PUSH:             return "Push";
+		case MOVETYPE_NOCLIP:           return "Noclip";
+		case MOVETYPE_FLYMISSILE:       return "Fly-missile";
+		case MOVETYPE_BOUNCE:           return "Bounce";
+		case MOVETYPE_BOUNCEMISSILE:    return "Bounce-missile";
+		case MOVETYPE_FOLLOW:           return "Follow";
+		case MOVETYPE_PUSHSTEP:         return "Push-step";
+		default:                        return "Unknown";
+	}
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)

@@ -3876,7 +3876,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 
 		std::ostringstream out;
 
-		bool check1 = std::strcmp(name2, "*") == 0;
+		bool match_substring = std::strcmp(name2, "*") == 0;
 
 		edict_t *edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
@@ -3888,7 +3888,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			const char *classname = hw.GetString(ent->v.classname);
 			const char *targetname = hw.GetString(ent->v.targetname);
 			const char *target = hw.GetString(ent->v.target);
-			if (check1)
+			if (match_substring)
 			{
 				if ((strstr(classname, name1) == 0))
 					continue;

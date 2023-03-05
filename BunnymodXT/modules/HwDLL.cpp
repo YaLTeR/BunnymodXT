@@ -1252,7 +1252,6 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(RandomLong)
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		DEF_FUTURE(PM_PlayerTrace)
-		DEF_FUTURE(Host_FilterTime)
 		DEF_FUTURE(V_FadeAlpha)
 		DEF_FUTURE(V_ApplyShake)
 		DEF_FUTURE(R_DrawSkyBox)
@@ -1599,11 +1598,11 @@ void HwDLL::FindStuff()
 				case 0: // HL-Steampipe
 					psv = *reinterpret_cast<void**>(f + 19);
 					offTime = 0x10;
-					offWorldmodel = 304;
-					offModels = 0x30950;
+					offWorldmodel = 304; // 1712: 240
+					offModels = 0x30950; // 1712: 0x30910
 					offNumEdicts = 0x3bc58;
 					offMaxEdicts = 0x3bc5c;
-					offEdicts = 0x3bc60;
+					offEdicts = 0x3bc60; // 1712: 0x3ba20
 					ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
 						*reinterpret_cast<ptrdiff_t*>(f + 33)
 						+ (f + 37)
@@ -1685,6 +1684,22 @@ void HwDLL::FindStuff()
 				ORIG_SV_AddLinksToPM = reinterpret_cast<_SV_AddLinksToPM>(
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(MiddleOfSV_RunCmd) + 25)
 					+ reinterpret_cast<uintptr_t>(MiddleOfSV_RunCmd) + 29);
+			});
+
+		auto fHost_FilterTime = FindAsync(
+			ORIG_Host_FilterTime,
+			patterns::engine::Host_FilterTime,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::Host_FilterTime.cbegin())
+				{
+				case 2: // HL-WON-1712
+					offWorldmodel = 240; // 6153: 304
+					offModels = 0x30910; // 6153: 0x30950
+					offNumEdicts = 0x3ba18;
+					offMaxEdicts = 0x3ba1c;
+					offEdicts = 0x3ba20; // 6153: 0x3bc60
+					break;
+				}
 			});
 
 		auto fHost_Changelevel2_f = FindAsync(

@@ -3953,27 +3953,6 @@ struct HwDLL::Cmd_BXT_Print_Entities
 	}
 };
 
-struct HwDLL::Cmd_BXT_Print_Entities_Help
-{
-	NO_USAGE();
-
-	static void handler()
-	{
-		const auto& hw = HwDLL::GetInstance();
-
-		std::ostringstream out;
-
-		out << "bxt_print_entities <classname>\n";
-		out << "bxt_print_entities <targetname>\n";
-		out << "bxt_print_entities <target>\n";
-		out << "bxt_print_entities <classname> <classname>\n";
-		out << "bxt_print_entities <classname> *\n";
-
-		auto str = out.str();
-		hw.ORIG_Con_Printf("%s", str.c_str());
-	}
-};
-
 struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 {
 	USAGE("Usage: bxt_print_entities_by_index <min_range> <max_range>\n");
@@ -4966,7 +4945,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>, Handler<const char*>, Handler<const char*, const char*>>("bxt_print_entities");
-	wrapper::Add<Cmd_BXT_Print_Entities_Help, Handler<>>("bxt_print_entities_help");
 	wrapper::Add<Cmd_BXT_Print_Entities_By_Index, Handler<int, int>>("bxt_print_entities_by_index");
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Resimulate, Handler<>>("bxt_tas_editor_resimulate");

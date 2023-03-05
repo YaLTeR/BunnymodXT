@@ -2921,6 +2921,109 @@ struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 	}
 };
 
+void HwDLL::TeleportMonsterToPosition(float x, float y, float z, int index)
+{
+	const auto& hw = HwDLL::GetInstance();
+	edict_t* edicts;
+	hw.GetEdicts(&edicts);
+	edict_t* ent = edicts + index;
+	if (!hw.IsValidEdict(ent))
+		return;
+
+	if (ent->v.flags & FL_MONSTER)
+	{
+		ent->v.origin[0] = x;
+		ent->v.origin[1] = y;
+		ent->v.origin[2] = z;
+	}
+}
+
+struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
+{
+	USAGE("Usage:\n"
+		"bxt_ch_monster_set_origin <entity_index>\n"
+		"bxt_ch_monster_set_origin <entity_index> <offset_z>\n"
+		"bxt_ch_monster_set_origin <x> <y> <z>\n"
+		"bxt_ch_monster_set_origin <x> <y> <z> <entity_index>\n"
+	);
+
+	static void handler(int num)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (num >= numEdicts)
+		{
+			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			return;
+		}
+
+		const auto& p_pos = (*hw.sv_player)->v.origin;
+		hw.TeleportMonsterToPosition(p_pos[0], p_pos[1], p_pos[2], num);
+	}
+
+	static void handler(int num, float off_z)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (num >= numEdicts)
+		{
+			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			return;
+		}
+
+		edict_t* ent = edicts + num;
+		if (!hw.IsValidEdict(ent))
+			return;
+
+		if (ent->v.flags & FL_MONSTER)
+		{
+			ent->v.origin[2] += off_z;
+		}
+	}
+
+	static void handler(float x, float y, float z)
+	{
+		const auto& serv = ServerDLL::GetInstance();
+		float view[3], end[3];
+		ClientDLL::GetInstance().SetupTraceVectors(view, end);
+
+		const auto tr = serv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+
+		if (tr.pHit)
+		{
+			const auto ent = tr.pHit;
+			if (ent->v.flags & FL_MONSTER)
+			{
+				ent->v.origin[0] = x;
+				ent->v.origin[1] = y;
+				ent->v.origin[2] = z;
+			}
+		}
+	}
+
+	static void handler(float x, float y, float z, int num)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (num >= numEdicts)
+		{
+			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			return;
+		}
+
+		hw.TeleportMonsterToPosition(x, y, z, num);
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 {
 	NO_USAGE();
@@ -4941,6 +5044,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>>("bxt_ch_get_other_player_info");
 	wrapper::AddCheat<Cmd_BXT_CH_Entity_Set_Health, Handler<float>, Handler<float, int>>("bxt_ch_entity_set_health");
+	wrapper::AddCheat<Cmd_BXT_CH_Monster_Set_Origin, Handler<int>, Handler<float, float, float>, Handler<float, float, float, int>>("bxt_ch_monster_set_origin");
 	wrapper::AddCheat<
 		Cmd_BXT_CH_Set_Velocity_Angles,
 		Handler<float>,

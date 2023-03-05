@@ -417,6 +417,7 @@ protected:
 	struct Cmd_BXT_CH_Teleport_To_Entity;
 	struct Cmd_BXT_CH_Get_Velocity;
 	struct Cmd_BXT_CH_Get_Other_Player_Info;
+	struct Cmd_BXT_CH_Entity_Set_Health;
 	struct Cmd_BXT_Get_Origin_And_Angles;
 	struct Cmd_BXT_Get_Server_Time;
 	struct Cmd_Multiwait;

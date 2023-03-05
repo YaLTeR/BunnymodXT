@@ -2877,6 +2877,50 @@ struct HwDLL::Cmd_BXT_CH_Get_Velocity
 	}
 };
 
+struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
+{
+	USAGE("Usage:\n"
+		"bxt_ch_entity_set_health <health>\n"
+		"bxt_ch_entity_set_health <health> <entity_index>\n"
+	);
+
+	static void handler(float hp)
+	{
+		const auto& serv = ServerDLL::GetInstance();
+		float view[3], end[3];
+		ClientDLL::GetInstance().SetupTraceVectors(view, end);
+
+		const auto tr = serv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+
+		if (tr.pHit)
+		{
+			const auto ent = tr.pHit;
+
+			ent->v.health = hp;
+		}
+	}
+
+	static void handler(float hp, int num)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (num >= numEdicts)
+		{
+			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			return;
+		}
+
+		edict_t* ent = edicts + num;
+		if (!hw.IsValidEdict(ent))
+			return;
+
+		ent->v.health = hp;
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 {
 	NO_USAGE();
@@ -4896,6 +4940,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Teleport_To_Entity, Handler<int>>("bxt_ch_teleport_to_entity");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>>("bxt_ch_get_other_player_info");
+	wrapper::AddCheat<Cmd_BXT_CH_Entity_Set_Health, Handler<float>, Handler<float, int>>("bxt_ch_entity_set_health");
 	wrapper::AddCheat<
 		Cmd_BXT_CH_Set_Velocity_Angles,
 		Handler<float>,

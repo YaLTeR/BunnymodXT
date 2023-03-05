@@ -3833,14 +3833,17 @@ struct HwDLL::Cmd_BXT_FreeCam
 	}
 };
 
-void HwDLL::PrintEntities(std::ostringstream &out, int e, const edict_t* ent)
+void HwDLL::PrintEntity(std::ostringstream &out, int index)
 {
 	const auto& hw = HwDLL::GetInstance();
+	edict_t* edicts;
+	hw.GetEdicts(&edicts);
+	const edict_t* ent = edicts + index;
 	const char* classname = hw.GetString(ent->v.classname);
 	const char* targetname = hw.GetString(ent->v.targetname);
 	const char* target = hw.GetString(ent->v.target);
 
-	out << e << ": " << classname;
+	out << index << ": " << classname;
 
 	if (ent->v.targetname != 0) {
 		out << "; name: " << targetname;
@@ -3896,7 +3899,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 					continue;
 			}
 
-			HwDLL::GetInstance().PrintEntities(out, e, ent);
+			HwDLL::GetInstance().PrintEntity(out, e);
 		}
 
 		auto str = out.str();
@@ -3922,7 +3925,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			if ((std::strcmp(classname, name) != 0) && (std::strcmp(targetname, name) != 0) && (std::strcmp(target, name) != 0))
 				continue;
 
-			HwDLL::GetInstance().PrintEntities(out, e, ent);
+			HwDLL::GetInstance().PrintEntity(out, e);
 		}
 
 		auto str = out.str();
@@ -3942,7 +3945,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			if (!hw.IsValidEdict(ent))
 				continue;
 
-			HwDLL::GetInstance().PrintEntities(out, e, ent);
+			HwDLL::GetInstance().PrintEntity(out, e);
 		}
 
 		auto str = out.str();
@@ -3991,7 +3994,7 @@ struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 			if ((e < value1) || (e > value2))
 				continue;
 
-			HwDLL::GetInstance().PrintEntities(out, e, ent);
+			HwDLL::GetInstance().PrintEntity(out, e);
 		}
 
 		auto str = out.str();

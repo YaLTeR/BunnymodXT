@@ -506,7 +506,7 @@ protected:
 	bool GetNextMovementFrame(HLTAS::Frame& f);
 	void ResetButtons();
 	void FindCVarsIfNeeded();
-	void PrintEntities(std::ostringstream &out, int e, const edict_t* ent);
+	void PrintEntity(std::ostringstream &out, int index);
 public:
 	HLStrafe::MovementVars GetMovementVars();
 	const char* GetMovetypeName(int moveType);

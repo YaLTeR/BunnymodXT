@@ -4177,8 +4177,6 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 	{
 		const auto& hw = HwDLL::GetInstance();
 
-		std::ostringstream out;
-
 		edict_t *edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
 
@@ -4195,12 +4193,9 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 		Vector origin;
 		HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
 
-		out << "bxt_ch_set_pos " << origin.x << " " << origin.y << " " << origin.z;
-
-		out << '\n';
-
-		auto str = out.str();
-		hw.ORIG_Cbuf_InsertText(str.c_str());
+		(*hw.sv_player)->v.origin[0] = origin[0];
+		(*hw.sv_player)->v.origin[1] = origin[1];
+		(*hw.sv_player)->v.origin[2] = origin[2];
 	}
 };
 

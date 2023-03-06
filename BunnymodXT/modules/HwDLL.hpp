@@ -536,11 +536,11 @@ protected:
 	bool insideHost_Loadgame_f;
 	bool insideHost_Reload_f;
 
+	ptrdiff_t offActiveAddr;
 	void *pcl;
 	void *cls;
 	void *psv;
 	ptrdiff_t offTime;
-	ptrdiff_t offWorldmodel;
 	ptrdiff_t offModels;
 	ptrdiff_t offNumEdicts;
 	ptrdiff_t offMaxEdicts;

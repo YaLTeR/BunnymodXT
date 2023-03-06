@@ -4033,8 +4033,6 @@ struct HwDLL::Cmd_BXT_Print_Entities
 				continue;
 
 			const char *classname = hw.GetString(ent->v.classname);
-			const char *targetname = hw.GetString(ent->v.targetname);
-			const char *target = hw.GetString(ent->v.target);
 			if (match_substring)
 			{
 				if ((strstr(classname, name1) == 0))

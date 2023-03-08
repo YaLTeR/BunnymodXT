@@ -97,6 +97,7 @@ public:
 	bool insideDrawNightVision = false;
 	bool insideDrawFiberCameraCZDS = false;
 	bool insideDrawHudIconsCZDS = false;
+	float drawdamage_flTime;
 
 	unsigned short last_buttons;
 

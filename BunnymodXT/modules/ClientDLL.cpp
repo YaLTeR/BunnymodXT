@@ -1092,6 +1092,10 @@ void ClientDLL::RegisterCVarsAndCommands()
 	if (pCS_SpeedScaling || pCS_SpeedScaling_Linux) {
 		REG(bxt_speed_scaling);
 	}
+
+	if ((ORIG_CHudHealth__DrawDamage || ORIG_CHudHealth__DrawDamage_Linux) && ORIG_ScaleColors) {
+		REG(bxt_hud_game_alpha_damage);
+	}
 	#undef REG
 }
 
@@ -2001,6 +2005,11 @@ HOOK_DEF_4(ClientDLL, void, __cdecl, ScaleColors, int*, r, int*, g, int*, b, int
 	if (CVars::bxt_hud_game_alpha.GetInt() >= 1 && CVars::bxt_hud_game_alpha.GetInt() <= 255 && !insideDrawAmmoHistory && !insideDrawHealthDamage && !insideDrawHealthPain)
 		a = CVars::bxt_hud_game_alpha.GetInt();
 
+	if (insideDrawHealthDamage && CVars::bxt_hud_game_alpha_damage.GetBool() && CVars::bxt_hud_game_alpha.GetInt() >= 1 && CVars::bxt_hud_game_alpha.GetInt() <= 255)
+	{
+		a = static_cast<int>(std::fabs(std::sin(drawdamage_flTime*2.0f)) * CVars::bxt_hud_game_alpha.GetFloat());
+	}
+
 	ORIG_ScaleColors(r, g, b, a);
 }
 
@@ -2024,6 +2033,7 @@ HOOK_DEF_2(ClientDLL, int, __cdecl, HistoryResource__DrawAmmoHistory_Linux, void
 
 HOOK_DEF_3(ClientDLL, int, __fastcall, CHudHealth__DrawDamage, void*, thisptr, int, edx, float, flTime)
 {
+	drawdamage_flTime = flTime;
 	insideDrawHealthDamage = true;
 	auto ret = ORIG_CHudHealth__DrawDamage(thisptr, edx, flTime);
 	insideDrawHealthDamage = false;
@@ -2033,6 +2043,7 @@ HOOK_DEF_3(ClientDLL, int, __fastcall, CHudHealth__DrawDamage, void*, thisptr, i
 
 HOOK_DEF_2(ClientDLL, int, __cdecl, CHudHealth__DrawDamage_Linux, void*, thisptr, float, flTime)
 {
+	drawdamage_flTime = flTime;
 	insideDrawHealthDamage = true;
 	auto ret = ORIG_CHudHealth__DrawDamage_Linux(thisptr, flTime);
 	insideDrawHealthDamage = false;

@@ -114,7 +114,7 @@
 	X(bxt_unlock_camera_during_pause, "0") \
 	X(bxt_hud, "1") \
 	X(bxt_hud_color, "") \
-	X(bxt_hud_game_alpha_max_clientside, "0") \
+	X(bxt_hud_game_alpha, "0") \
 	X(bxt_hud_precision, "6") \
 	X(bxt_hud_quickgauss, "0") \
 	X(bxt_hud_quickgauss_offset, "") \

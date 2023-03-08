@@ -1078,7 +1078,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 	}
 
 	if (ORIG_ScaleColors) {
-		REG(bxt_hud_game_alpha_max_clientside);
+		REG(bxt_hud_game_alpha);
 	}
 
 	if (ORIG_CHudFlashlight__drawNightVision_Linux || ORIG_CHudFlashlight__drawNightVision || ORIG_CHud__DrawHudNightVision_Linux || ORIG_CHud__DrawHudNightVision ) {
@@ -1998,8 +1998,8 @@ HOOK_DEF_4(ClientDLL, void, __cdecl, ScaleColors, int*, r, int*, g, int*, b, int
 		*b = custom_b;
 	}
 
-	if (CVars::bxt_hud_game_alpha_max_clientside.GetBool() && !insideDrawAmmoHistory && !insideDrawHealthDamage && !insideDrawHealthPain)
-		a = 255;
+	if (CVars::bxt_hud_game_alpha.GetInt() >= 1 && CVars::bxt_hud_game_alpha.GetInt() <= 255 && !insideDrawAmmoHistory && !insideDrawHealthDamage && !insideDrawHealthPain)
+		a = CVars::bxt_hud_game_alpha.GetInt();
 
 	ORIG_ScaleColors(r, g, b, a);
 }

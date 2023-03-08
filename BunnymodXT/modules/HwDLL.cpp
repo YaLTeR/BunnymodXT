@@ -7381,8 +7381,10 @@ HOOK_DEF_8(HwDLL, void, __cdecl, Draw_FillRGBA, int, x, int, y, int, w, int, h, 
 		b = cl.custom_b;
 	}
 
-	if (cl.custom_hud_color_set || CVars::bxt_hud_game_alpha_max_clientside.GetBool())
+	if (cl.custom_hud_color_set)
 		a = 255;
+	else if (CVars::bxt_hud_game_alpha.GetInt() >= 1 && CVars::bxt_hud_game_alpha.GetInt() <= 255)
+		a = CVars::bxt_hud_game_alpha.GetInt();
 
 	ORIG_Draw_FillRGBA(x, y, w, h, r, g, b, a);
 }

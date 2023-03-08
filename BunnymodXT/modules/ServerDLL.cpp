@@ -239,6 +239,7 @@ void ServerDLL::Clear()
 	ORIG_CBasePlayer__ForceClientDllUpdate_Linux = nullptr;
 	ORIG_CBasePlayer__GiveNamedItem = nullptr;
 	ORIG_CBasePlayer__GiveNamedItem_Linux = nullptr;
+	ORIG_CoF_CBasePlayer__GiveNamedItem = nullptr;
 	ORIG_ClientCommand = nullptr;
 	ORIG_CPushable__Move = nullptr;
 	ORIG_CPushable__Move_Linux = nullptr;
@@ -800,6 +801,7 @@ void ServerDLL::FindStuff()
 	auto fPM_Duck = FindFunctionAsync(ORIG_PM_Duck, "PM_Duck", patterns::server::PM_Duck);
 	auto fPM_UnDuck = FindAsync(ORIG_PM_UnDuck, patterns::server::PM_UnDuck);
 	auto fCBasePlayer__GiveNamedItem = FindAsync(ORIG_CBasePlayer__GiveNamedItem, patterns::server::CBasePlayer__GiveNamedItem);
+	auto fCoF_CBasePlayer__GiveNamedItem = FindAsync(ORIG_CoF_CBasePlayer__GiveNamedItem, patterns::server::CoF_CBasePlayer__GiveNamedItem);
 	auto fShiftMonsters = FindAsync(ORIG_ShiftMonsters, patterns::server::ShiftMonsters);
 	auto fCBasePlayer__ViewPunch = FindAsync(ORIG_CBasePlayer__ViewPunch, patterns::server::CBasePlayer__ViewPunch);
 	auto fCBasePlayer__Jump = FindAsync(ORIG_CBasePlayer__Jump, patterns::server::CBasePlayer__Jump);
@@ -1065,6 +1067,15 @@ void ServerDLL::FindStuff()
 			} else {
 				EngineDevWarning("[server dll] Could not find CBasePlayer::GiveNamedItem.\n");
 			}
+		}
+	}
+
+	{
+		auto pattern = fCoF_CBasePlayer__GiveNamedItem.get();
+		if (ORIG_CoF_CBasePlayer__GiveNamedItem) {
+			EngineDevMsg("[server dll] Found CBasePlayer::GiveNamedItem [CoF] at %p (using the %s pattern).\n", ORIG_CoF_CBasePlayer__GiveNamedItem, pattern->name());
+		} else {
+			EngineDevWarning("[server dll] Could not find CBasePlayer::GiveNamedItem [CoF].\n");
 		}
 	}
 
@@ -2572,10 +2583,13 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 			ORIG_CBasePlayer__ForceClientDllUpdate_Linux(classPtr);
 		#endif
 	}
-	else if ((std::strcmp(cmd, "give") == 0) && (ORIG_CBasePlayer__GiveNamedItem || ORIG_CBasePlayer__GiveNamedItem_Linux) && CVars::sv_cheats.GetBool()) {
+	else if ((std::strcmp(cmd, "give") == 0) && (ORIG_CBasePlayer__GiveNamedItem || ORIG_CBasePlayer__GiveNamedItem_Linux || ORIG_CoF_CBasePlayer__GiveNamedItem) && CVars::sv_cheats.GetBool()) {
 		int iszItem = pEngfuncs->pfnAllocString(pEngfuncs->pfnCmd_Argv(1)); // Make a copy of the classname
 		#ifdef _WIN32
-			ORIG_CBasePlayer__GiveNamedItem(classPtr, 0, HwDLL::GetInstance().GetString(iszItem));
+			if (is_cof)
+				ORIG_CoF_CBasePlayer__GiveNamedItem(classPtr, 0, HwDLL::GetInstance().GetString(iszItem), false);
+			else
+				ORIG_CBasePlayer__GiveNamedItem(classPtr, 0, HwDLL::GetInstance().GetString(iszItem));
 		#else
 			ORIG_CBasePlayer__GiveNamedItem_Linux(classPtr, HwDLL::GetInstance().GetString(iszItem));
 		#endif

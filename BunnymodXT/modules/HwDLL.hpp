@@ -516,7 +516,7 @@ public:
 
 	bool ducktap;
 	edict_t **sv_player;
-	bool *noclip_anglehack;
+	qboolean *noclip_anglehack;
 protected:
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
@@ -560,7 +560,7 @@ protected:
 	studiohdr_t **pstudiohdr;
 	float *scr_fov_value;
 	ptrdiff_t pHost_FilterTime_FPS_Cap_Byte;
-	bool *cofSaveHack; // Cry of Fear-specific
+	qboolean *cofSaveHack; // Cry of Fear-specific
 
 	int framesTillExecuting;
 	bool executing;

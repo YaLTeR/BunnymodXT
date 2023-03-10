@@ -1761,7 +1761,7 @@ void ServerDLL::LogPlayerMove(bool pre, uintptr_t pmove) const
 	const float *baseVelocity = reinterpret_cast<const float *>(pmove + offBasevelocity);
 	const float *origin = reinterpret_cast<const float *>(pmove + offOrigin);
 	const int *flags = reinterpret_cast<const int *>(pmove + offFlags);
-	const bool *inDuck = reinterpret_cast<const bool *>(pmove + offInDuck);
+	const int *inDuck = reinterpret_cast<const int *>(pmove + offInDuck);
 	const int *groundEntity = reinterpret_cast<const int *>(pmove + offOnground);
 	const int *waterLevel = reinterpret_cast<const int *>(pmove + offWaterlevel);
 
@@ -3172,7 +3172,7 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_UnDuck)
 	if (ppmove && offFlags && offInDuck && CVars::bxt_cof_enable_ducktap.GetBool()) {
 		auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
 		int *flags = reinterpret_cast<int*>(pmove + offFlags);
-		bool *inDuck = reinterpret_cast<bool*>(pmove + offInDuck);
+		qboolean *inDuck = reinterpret_cast<qboolean*>(pmove + offInDuck);
 		*flags |= FL_DUCKING;
 		*inDuck = false;
 	}

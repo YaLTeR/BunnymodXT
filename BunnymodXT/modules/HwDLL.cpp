@@ -1618,7 +1618,7 @@ void HwDLL::FindStuff()
 					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 79) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 182);
 					offActiveAddr = *reinterpret_cast<uintptr_t*>(f + 0x32);
-					cofSaveHack = *reinterpret_cast<bool**>(f + 21);
+					cofSaveHack = *reinterpret_cast<qboolean**>(f + 21);
 					is_cof_steam = true;
 					break;
 				}
@@ -1935,13 +1935,13 @@ void HwDLL::FindStuff()
 				{
 				default:
 				case 0: // CoF-5936.
-					noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 216);
+					noclip_anglehack = *reinterpret_cast<qboolean**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 216);
 					break;
 				case 1: // Steampipe.
-					noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 237);
+					noclip_anglehack = *reinterpret_cast<qboolean**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 237);
 					break;
 				case 2: // 4554.
-					noclip_anglehack = *reinterpret_cast<bool**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 204);
+					noclip_anglehack = *reinterpret_cast<qboolean**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 204);
 					break;
 				}
 			});

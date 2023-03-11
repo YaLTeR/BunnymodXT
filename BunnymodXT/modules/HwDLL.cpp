@@ -2980,7 +2980,7 @@ struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 
 		if (num >= numEdicts)
 		{
-			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
 			return;
 		}
 
@@ -2999,7 +2999,10 @@ void HwDLL::TeleportMonsterToPosition(float x, float y, float z, int index)
 	hw.GetEdicts(&edicts);
 	edict_t* ent = edicts + index;
 	if (!hw.IsValidEdict(ent))
+	{
+		hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", index);
 		return;
+	}
 
 	if (ent->v.flags & FL_MONSTER)
 	{
@@ -3027,7 +3030,7 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 		if (num >= numEdicts)
 		{
-			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
 			return;
 		}
 
@@ -3044,13 +3047,16 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 		if (num >= numEdicts)
 		{
-			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
 			return;
 		}
 
 		edict_t* ent = edicts + num;
 		if (!hw.IsValidEdict(ent))
+		{
+			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
 			return;
+		}
 
 		if (ent->v.flags & FL_MONSTER)
 		{
@@ -3087,7 +3093,7 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 		if (num >= numEdicts)
 		{
-			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
 			return;
 		}
 
@@ -4171,7 +4177,35 @@ struct HwDLL::Cmd_BXT_Print_Entities
 
 struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 {
-	USAGE("Usage: bxt_print_entities_by_index <min_range> <max_range>\n");
+	USAGE("Usage:\n bxt_print_entities_by_index <index>\n bxt_print_entities_by_index <min_range> <max_range>\n");
+
+	static void handler(int num)
+	{
+		const auto& hw = HwDLL::GetInstance();
+
+		std::ostringstream out;
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (num >= numEdicts)
+		{
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
+			return;
+		}
+
+		const edict_t *ent = edicts + num;
+		if (!hw.IsValidEdict(ent))
+		{
+			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
+			return;
+		}
+
+		HwDLL::GetInstance().PrintEntity(out, num);
+
+		auto str = out.str();
+		hw.ORIG_Con_Printf("%s", str.c_str());
+	}
 
 	static void handler(int value1, int value2)
 	{
@@ -4221,30 +4255,28 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 	{
 		const auto& hw = HwDLL::GetInstance();
 
-		std::ostringstream out;
-
 		edict_t *edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
 
 		if (num >= numEdicts)
 		{
-			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
 			return;
 		}
 
 		const edict_t *ent = edicts + num;
 		if (!hw.IsValidEdict(ent))
+		{
+			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
 			return;
+		}
 
 		Vector origin;
 		HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
 
-		out << "bxt_ch_set_pos " << origin.x << " " << origin.y << " " << origin.z;
-
-		out << '\n';
-
-		auto str = out.str();
-		hw.ORIG_Cbuf_InsertText(str.c_str());
+		(*hw.sv_player)->v.origin[0] = origin[0];
+		(*hw.sv_player)->v.origin[1] = origin[1];
+		(*hw.sv_player)->v.origin[2] = origin[2];
 	}
 };
 
@@ -5113,7 +5145,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>>("bxt_ch_get_other_player_info");
 	wrapper::AddCheat<Cmd_BXT_CH_Entity_Set_Health, Handler<float>, Handler<float, int>>("bxt_ch_entity_set_health");
-	wrapper::AddCheat<Cmd_BXT_CH_Monster_Set_Origin, Handler<int>, Handler<float, float, float>, Handler<float, float, float, int>>("bxt_ch_monster_set_origin");
+	wrapper::AddCheat<Cmd_BXT_CH_Monster_Set_Origin, Handler<int>, Handler<int, float>, Handler<float, float, float>, Handler<float, float, float, int>>("bxt_ch_monster_set_origin");
 	wrapper::AddCheat<
 		Cmd_BXT_CH_Set_Velocity_Angles,
 		Handler<float>,
@@ -5163,7 +5195,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Append, Handler<const char *>>("bxt_append");
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>, Handler<const char*>, Handler<const char*, const char*>>("bxt_print_entities");
-	wrapper::Add<Cmd_BXT_Print_Entities_By_Index, Handler<int, int>>("bxt_print_entities_by_index");
+	wrapper::Add<Cmd_BXT_Print_Entities_By_Index, Handler<int>, Handler<int, int>>("bxt_print_entities_by_index");
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Resimulate, Handler<>>("bxt_tas_editor_resimulate");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Apply_Smoothing, Handler<>>("bxt_tas_editor_apply_smoothing");

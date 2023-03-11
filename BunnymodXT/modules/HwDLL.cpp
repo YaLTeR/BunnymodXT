@@ -2928,7 +2928,10 @@ void HwDLL::TeleportMonsterToPosition(float x, float y, float z, int index)
 	hw.GetEdicts(&edicts);
 	edict_t* ent = edicts + index;
 	if (!hw.IsValidEdict(ent))
+	{
+		hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", index);
 		return;
+	}
 
 	if (ent->v.flags & FL_MONSTER)
 	{
@@ -2979,7 +2982,10 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 		edict_t* ent = edicts + num;
 		if (!hw.IsValidEdict(ent))
+		{
+			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
 			return;
+		}
 
 		if (ent->v.flags & FL_MONSTER)
 		{
@@ -4121,7 +4127,10 @@ struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 
 		const edict_t *ent = edicts + num;
 		if (!hw.IsValidEdict(ent))
+		{
+			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
 			return;
+		}
 
 		HwDLL::GetInstance().PrintEntity(out, num);
 
@@ -4188,7 +4197,10 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 
 		const edict_t *ent = edicts + num;
 		if (!hw.IsValidEdict(ent))
+		{
+			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
 			return;
+		}
 
 		Vector origin;
 		HwDLL::GetInstance().GetOriginOfEntity(origin, ent);

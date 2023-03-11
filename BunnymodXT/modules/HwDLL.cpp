@@ -2909,7 +2909,7 @@ struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 
 		if (num >= numEdicts)
 		{
-			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
 			return;
 		}
 
@@ -2956,7 +2956,7 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 		if (num >= numEdicts)
 		{
-			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
 			return;
 		}
 
@@ -2973,7 +2973,7 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 		if (num >= numEdicts)
 		{
-			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
 			return;
 		}
 
@@ -3016,7 +3016,7 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 		if (num >= numEdicts)
 		{
-			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
 			return;
 		}
 
@@ -4115,7 +4115,7 @@ struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 
 		if (num >= numEdicts)
 		{
-			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
 			return;
 		}
 
@@ -4182,7 +4182,7 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 
 		if (num >= numEdicts)
 		{
-			hw.ORIG_Con_Printf("Error: not found entity with that index; num_edicts is %d\n", numEdicts);
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
 			return;
 		}
 

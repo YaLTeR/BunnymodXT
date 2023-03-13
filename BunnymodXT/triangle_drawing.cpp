@@ -305,17 +305,14 @@ namespace TriangleDrawing
 		const auto& hw = HwDLL::GetInstance();
 		if (hw.sv_player)
 		{
+			pTriAPI->RenderMode(kRenderTransColor);
+			pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 1.0f);
+			TriangleUtils::DrawAACuboidWireframe(pTriAPI, (*hw.sv_player)->v.absmin, (*hw.sv_player)->v.absmax);
 			if (CVars::bxt_show_player_bbox.GetInt() == 2)
 			{
 				pTriAPI->RenderMode(kRenderTransAdd);
 				pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 0.1f);
 				TriangleUtils::DrawAACuboid(pTriAPI, (*hw.sv_player)->v.absmin, (*hw.sv_player)->v.absmax);
-			}
-			else
-			{
-				pTriAPI->RenderMode(kRenderTransColor);
-				pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 1.0f);
-				TriangleUtils::DrawAACuboidWireframe(pTriAPI, (*hw.sv_player)->v.absmin, (*hw.sv_player)->v.absmax);
 			}
 		}
 	}

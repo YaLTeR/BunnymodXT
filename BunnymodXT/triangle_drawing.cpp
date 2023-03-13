@@ -352,7 +352,6 @@ namespace TriangleDrawing
 					pTriAPI->Color4f(1.0f, 0.75f, 0.8f, 0.1f);
 					TriangleUtils::DrawAACuboid(pTriAPI, ent->v.absmin, ent->v.absmax);
 				}
-				continue;
 			}
 		}
 	}

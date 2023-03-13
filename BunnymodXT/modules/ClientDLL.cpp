@@ -956,6 +956,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_nodes);
 		REG(bxt_show_pickup_bbox);
 		REG(bxt_show_player_bbox);
+		REG(bxt_show_monster_bbox);
 		REG(bxt_show_displacer_earth_targets);
 		REG(bxt_hud_useables);
 		REG(bxt_hud_useables_radius);

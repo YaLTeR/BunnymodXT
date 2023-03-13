@@ -70,6 +70,7 @@
 	X(bxt_show_triggers_legacy_alpha, "120") \
 	X(bxt_show_pickup_bbox, "0") \
 	X(bxt_show_player_bbox, "0") \
+	X(bxt_show_monster_bbox, "0") \
 	X(bxt_disable_autosave, "0") \
 	X(bxt_disable_changelevel, "0") \
 	X(bxt_force_duck, "0") \

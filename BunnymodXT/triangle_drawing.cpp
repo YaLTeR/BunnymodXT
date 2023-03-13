@@ -303,31 +303,19 @@ namespace TriangleDrawing
 		pTriAPI->CullFace(TRI_NONE);
 
 		const auto& hw = HwDLL::GetInstance();
-		const auto& server = ServerDLL::GetInstance();
-		const enginefuncs_t* engfuncs = server.pEngfuncs;
-		if (!engfuncs) {
-			return;
-		}
-
-		edict_t* edicts = nullptr;
-		const int numEdicts = hw.GetEdicts(&edicts);
-		for (int e = 0; e < numEdicts; ++e) {
-			const edict_t* ent = edicts + e;
-			if (!hw.IsValidEdict(ent)) {
-				continue;
+		if (hw.sv_player)
+		{
+			if (CVars::bxt_show_player_bbox.GetInt() == 2)
+			{
+				pTriAPI->RenderMode(kRenderTransAdd);
+				pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 0.1f);
+				TriangleUtils::DrawAACuboid(pTriAPI, (*hw.sv_player)->v.absmin, (*hw.sv_player)->v.absmax);
 			}
-
-			const char* classname = hw.GetString(ent->v.classname);
-			if (strcmp(classname, "player") == 0) {
+			else
+			{
 				pTriAPI->RenderMode(kRenderTransColor);
 				pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 1.0f);
-				TriangleUtils::DrawAACuboidWireframe(pTriAPI, ent->v.absmin, ent->v.absmax);
-				if (CVars::bxt_show_player_bbox.GetInt() == 2) {
-					pTriAPI->RenderMode(kRenderTransAdd);
-					pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 0.1f);
-					TriangleUtils::DrawAACuboid(pTriAPI, ent->v.absmin, ent->v.absmax);
-				}
-				continue;
+				TriangleUtils::DrawAACuboidWireframe(pTriAPI, (*hw.sv_player)->v.absmin, (*hw.sv_player)->v.absmax);
 			}
 		}
 	}

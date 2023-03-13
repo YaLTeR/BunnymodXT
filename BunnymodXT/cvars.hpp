@@ -41,6 +41,7 @@
 	X(bxt_tas_norefresh_until_last_frames, "0") \
 	X(bxt_tas_write_log, "0") \
 	X(bxt_tas_playback_speed, "1") \
+	X(bxt_tas_ducktap_priority, "1") \
 	X(bxt_disable_vgui, "0") \
 	X(bxt_show_only_players, "0") \
 	X(bxt_force_zmax, "0") \

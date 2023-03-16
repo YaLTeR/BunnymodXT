@@ -992,18 +992,29 @@ void ServerDLL::FindStuff()
 		} else {
 			ORIG_CBasePlayer__ForceClientDllUpdate_Linux = reinterpret_cast<_CBasePlayer__ForceClientDllUpdate_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer20ForceClientDllUpdateEv"));
 			if (ORIG_CBasePlayer__ForceClientDllUpdate_Linux) {
+				// Linux offsets.
 				offm_rgAmmoLast = 0x56C; // 6153: 0x568
 				offm_iClientFOV = 0x4C4; // 6153: 0x4C0
+				offm_pClientActiveItem = 0x4E4; // 6153: 0x4E0
+				offm_iPrimaryAmmoType = 0xA8;
+				offm_CMultiManager_index = 0x108;
+				offm_afButtonPressed = 0x2E8; // 6153: 0x2E4
 				if (ClientDLL::GetInstance().DoesGameDirContain("czeror")) {
 					offm_rgAmmoLast = 0x554; // 6153: 0x550
 					offm_iClientFOV = 0x8B0; // 6153: 0x8AC
 					offFuncIsPlayer = 0xA8;
 					offFuncCenter = 0xDC;
 					offFuncObjectCaps = 0x18;
+					offm_pClientActiveItem = 0x4CC; // 6153: 0x4C8
+					offm_iPrimaryAmmoType = 0x94;
+					offm_CMultiManager_index = 0x104;
+					offm_afButtonPressed = 0x35C; // 6153: 0x358
 				}
 				if (ClientDLL::GetInstance().DoesGameDirContain("bshift")) {
 					offm_rgAmmoLast = 0x568; // 8684: 0x56C
 					offm_iClientFOV = 0x4C0; // 8684: 0x4C4
+					offm_pClientActiveItem = 0x4E0; // 8684: 0x4E4
+					offm_afButtonPressed = 0x2E4; // 8684: 0x2E8
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike") || ClientDLL::GetInstance().DoesGameDirMatch("czero")) {
 					offm_rgAmmoLast = 0x674;
@@ -1011,11 +1022,19 @@ void ServerDLL::FindStuff()
 					offFuncIsPlayer = 0xA0;
 					offFuncCenter = 0xCC;
 					offFuncObjectCaps = 0x18;
+					offm_pClientActiveItem = 0x5EC;
+					offm_iPrimaryAmmoType = 0xD4;
+					offm_CMultiManager_index = 0x13C;
+					offm_afButtonPressed = 0x3EC;
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("tfc")) {
 					offm_rgAmmoLast = 0x98C; // 6153: 0x988
 					offm_iClientFOV = 0x8E0; // 6153: 0x8DC
 					offFuncObjectCaps = 0x1C;
+					offm_pClientActiveItem = 0x900; // 6153: 0x8FC
+					offm_iPrimaryAmmoType = 0x4D4;
+					offm_CMultiManager_index = 0x518;
+					offm_afButtonPressed = 0x6F8; // 6153: 0x6F4
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("dod")) {
 					offm_rgAmmoLast = 0x4F8; // 6153: 0x4F4
@@ -1023,10 +1042,18 @@ void ServerDLL::FindStuff()
 					offFuncIsPlayer = 0xB4;
 					offFuncCenter = 0xE0;
 					offFuncObjectCaps = 0x20;
+					offm_pClientActiveItem = 0x470; // 6153: 0x46C
+					offm_iPrimaryAmmoType = 0x1B8;
+					offm_CMultiManager_index = 0x160;
+					offm_afButtonPressed = 0x3CC; // 6153: 0x3C8
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("dmc")) {
 					offm_rgAmmoLast = 0x534; // 6153: 0x530
 					offm_iClientFOV = 0x48C; // 6153: 0x488
+					offm_pClientActiveItem = 0x4AC; // 6153: 0x4A8
+					offm_iPrimaryAmmoType = 0x7C;
+					offm_CMultiManager_index = 0xE4;
+					offm_afButtonPressed = 0x2B0; // 6153: 0x2AC
 				}
 				EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate [Linux] at %p.\n", ORIG_CBasePlayer__ForceClientDllUpdate_Linux);
 			} else {
@@ -1126,6 +1153,7 @@ void ServerDLL::FindStuff()
 		} else {
 			ORIG_CGraph__InitGraph_Linux = reinterpret_cast<_CGraph__InitGraph_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN6CGraph9InitGraphEv"));
 			if (ORIG_CGraph__InitGraph_Linux) {
+				// Linux offsets.
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;
@@ -1302,8 +1330,13 @@ void ServerDLL::FindStuff()
 		ORIG_COFGeneWorm__DyingThink_Linux = reinterpret_cast<_COFGeneWorm__DyingThink_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11COFGeneWorm10DyingThinkEv"));
 		if (ORIG_COFGeneWorm__DyingThink_Linux) {
 			EngineDevMsg("[server dll] Found COFGeneWorm::DyingThink [Linux] at %p.\n", ORIG_COFGeneWorm__DyingThink_Linux);
+			// Linux offsets.
 			offm_rgAmmoLast = 0x61c; // 6153: 0x618
 			offm_iClientFOV = 0x4f8; // 6153: 0x4f4
+			offm_pClientActiveItem = 0x594; // 6153: 0x590
+			offm_iPrimaryAmmoType = 0xB4;
+			offm_CMultiManager_index = 0x114;
+			offm_afButtonPressed = 0x314; // 6153: 0x310
 		} else {
 			EngineDevWarning("[server dll] Could not find COFGeneWorm::DyingThink.\n");
 			EngineWarning("Gene Worm automatic timer stopping is not available.\n");

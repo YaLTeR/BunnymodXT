@@ -1124,13 +1124,6 @@ namespace patterns
 			"8B 48 04 83 B9 ?? ?? ?? ?? 08 75 10"
 		);
 
-		PATTERNS(CBasePlayer__Jump_OldButtons_Check_Byte,
-			"CoF-Mod-155",
-			"8B 45 ?? 8B 88 ?? ?? ?? ?? 83 E1 02 75 ?? E9",
-			"CoF-5936",
-			"0F 85 ?? ?? ?? ?? F6 86 B0 22 00 00 02 0F 84 0C 02 00 00"
-		);
-
 		PATTERNS(ShiftMonsters,
 			"CoF-5936",
 			"55 8B EC 56 51 8D 45 08 ?? 04 ?? 00 00 80 44 50 6A 00 E8",

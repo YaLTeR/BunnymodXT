@@ -63,6 +63,7 @@
 	X(bxt_fire_on_stuck, "") \
 	X(bxt_autojump, "0") \
 	X(bxt_autojump_priority, "1") \
+	X(bxt_autojump_fix, "0") \
 	X(bxt_bhopcap, "1") \
 	X(bxt_timer_autostop, "1") \
 	X(bxt_show_hidden_entities, "0") \

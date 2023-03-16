@@ -282,7 +282,6 @@ void ServerDLL::Clear()
 	pCZDS_Velocity_Byte = 0;
 	pAddToFullPack_PVS_Byte = 0;
 	pCoF_Noclip_Preventing_Check_Byte = 0;
-	pCBasePlayer__Jump_OldButtons_Check_Byte = 0;
 	offm_iClientFOV = 0;
 	offm_rgAmmoLast = 0;
 	offEntFriction = 0;
@@ -310,6 +309,7 @@ void ServerDLL::Clear()
 	pCS_Bhopcap_Windows = 0;
 	offm_pClientActiveItem = 0;
 	offm_CMultiManager_index = 0;
+	offm_afButtonPressed = 0;
 
 	// Cry of Fear-specific
 	offm_bInfiniteStamina = 0;
@@ -600,6 +600,7 @@ void ServerDLL::FindStuff()
 				offm_fStamina = 0x2080;
 				offm_bInfiniteStamina = 0x2078;
 				offm_pClientActiveItem = 0x23B0;
+				offm_afButtonPressed = 0x2130;
 				offm_old_iAmmo = 284;
 				offm_CMultiManager_index = 224;
 				is_cof = true;
@@ -613,6 +614,7 @@ void ServerDLL::FindStuff()
 				offm_fStamina = 0x2084;
 				offm_bInfiniteStamina = 0x207C;
 				offm_pClientActiveItem = 0x23B4;
+				offm_afButtonPressed = 0x2134;
 				offm_old_iAmmo = 284;
 				offm_CMultiManager_index = 224;
 				is_cof = true;
@@ -626,6 +628,7 @@ void ServerDLL::FindStuff()
 				offm_fStamina = 0x2090;
 				offm_bInfiniteStamina = 0x2088;
 				offm_pClientActiveItem = 0x23C0;
+				offm_afButtonPressed = 0x2140;
 				offm_old_iAmmo = 284;
 				offm_iPlayerSaveLock = 0x4A8;
 				offm_CMultiManager_index = 224;
@@ -640,6 +643,7 @@ void ServerDLL::FindStuff()
 				offm_fStamina = 0x20A0;
 				offm_bInfiniteStamina = 0x2098;
 				offm_pClientActiveItem = 0x23D0;
+				offm_afButtonPressed = 0x2150;
 				offm_old_iAmmo = 284;
 				offm_iPlayerSaveLock = 0x4B4;
 				offm_CMultiManager_index = 224;
@@ -654,6 +658,7 @@ void ServerDLL::FindStuff()
 				offm_fStamina = 0x20A4;
 				offm_bInfiniteStamina = 0x209C;
 				offm_pClientActiveItem = 0x23D4;
+				offm_afButtonPressed = 0x2154;
 				offm_old_iAmmo = 284;
 				offm_iPlayerSaveLock = 0x4B8;
 				offm_CMultiManager_index = 224;
@@ -668,6 +673,7 @@ void ServerDLL::FindStuff()
 				offm_fStamina = 0x20B4;
 				offm_bInfiniteStamina = 0x20AC;
 				offm_pClientActiveItem = 0x23E4;
+				offm_afButtonPressed = 0x2164;
 				offm_old_iAmmo = 288;
 				offm_CMultiManager_index = 228;
 				is_cof = true;
@@ -681,6 +687,7 @@ void ServerDLL::FindStuff()
 				offm_fStamina = 0x21F0;
 				offm_bInfiniteStamina = 0x21E8;
 				offm_pClientActiveItem = 0x2530;
+				offm_afButtonPressed = 0x22B0;
 				offm_old_iAmmo = 288;
 				offm_CMultiManager_index = 228;
 				is_cof = true;
@@ -785,22 +792,6 @@ void ServerDLL::FindStuff()
 			case 0: // CoF-5936
 			case 1: // CoF-Mod-155
 				pCoF_Noclip_Preventing_Check_Byte += 10;
-				break;
-			default:
-				assert(false);
-			}
-		});
-
-	auto fCBasePlayer__Jump_OldButtons_Check_Byte = FindAsync(
-		pCBasePlayer__Jump_OldButtons_Check_Byte,
-		patterns::server::CBasePlayer__Jump_OldButtons_Check_Byte,
-		[&](auto pattern) {
-			switch (pattern - patterns::server::CBasePlayer__Jump_OldButtons_Check_Byte.cbegin()) {
-			case 0: // CoF-Mod-155
-				pCBasePlayer__Jump_OldButtons_Check_Byte += 12;
-				break;
-			case 1: // CoF-5936
-				pCBasePlayer__Jump_OldButtons_Check_Byte += 6;
 				break;
 			default:
 				assert(false);
@@ -923,12 +914,6 @@ void ServerDLL::FindStuff()
 		auto pattern = fCoF_Noclip_Preventing_Check_Byte.get();
 		if (pCoF_Noclip_Preventing_Check_Byte)
 			EngineDevMsg("[server dll] Found noclip preventing check in CoF at %p (using the %s pattern).\n", pCoF_Noclip_Preventing_Check_Byte, pattern->name());
-	}
-
-	{
-		auto pattern = fCBasePlayer__Jump_OldButtons_Check_Byte.get();
-		if (pCBasePlayer__Jump_OldButtons_Check_Byte)
-			EngineDevMsg("[server dll] Found oldbuttons check from CBasePlayer::Jump at %p (using the %s pattern).\n", pCBasePlayer__Jump_OldButtons_Check_Byte, pattern->name());
 	}
 
 	{
@@ -1629,6 +1614,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_cof_disable_viewpunch_from_jump);
 	if (ORIG_ShiftMonsters && is_cof)
 		REG(bxt_cof_disable_monsters_teleport_to_spawn_after_load);
+	if (ORIG_CBasePlayer__Jump && offm_afButtonPressed)
+		REG(bxt_autojump_fix);
 
 	REG(bxt_splits_print);
 	REG(bxt_splits_print_times_at_end);
@@ -1822,21 +1809,6 @@ void ServerDLL::CoFChanges()
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
 			else if ((*reinterpret_cast<byte*>(pCoF_Noclip_Preventing_Check_Byte) == 0xEB) && !(*HwDLL::GetInstance().noclip_anglehack))
 				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCoF_Noclip_Preventing_Check_Byte), 1, reinterpret_cast<const byte*>("\x75"));
-		}
-
-		if (pCBasePlayer__Jump_OldButtons_Check_Byte)
-		{
-			if (offm_rgAmmoLast == 0x25C0) { // CoF-5936
-				if ((*reinterpret_cast<byte*>(pCBasePlayer__Jump_OldButtons_Check_Byte) == 0xF6) && CVars::bxt_autojump.GetBool())
-					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayer__Jump_OldButtons_Check_Byte), 13, reinterpret_cast<const byte*>("\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90"));
-				else if ((*reinterpret_cast<byte*>(pCBasePlayer__Jump_OldButtons_Check_Byte) == 0x90) && !CVars::bxt_autojump.GetBool())
-					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayer__Jump_OldButtons_Check_Byte), 13, reinterpret_cast<const byte*>("\xF6\x86\xB0\x22\x00\x00\x02\x0F\x84\x0C\x02\x00\x00"));
-			} else { // CoF-Mod
-				if ((*reinterpret_cast<byte*>(pCBasePlayer__Jump_OldButtons_Check_Byte) == 0x75) && CVars::bxt_autojump.GetBool())
-					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayer__Jump_OldButtons_Check_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
-				else if ((*reinterpret_cast<byte*>(pCBasePlayer__Jump_OldButtons_Check_Byte) == 0xEB) && !CVars::bxt_autojump.GetBool())
-					MemUtils::ReplaceBytes(reinterpret_cast<void*>(pCBasePlayer__Jump_OldButtons_Check_Byte), 1, reinterpret_cast<const byte*>("\x75"));
-			}
 		}
 
 		void* classPtr = (*HwDLL::GetInstance().sv_player)->v.pContainingEntity->pvPrivateData;
@@ -3218,7 +3190,21 @@ HOOK_DEF_5(ServerDLL, void, __fastcall, CBasePlayer__ViewPunch, void*, thisptr, 
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__Jump, void*, thisptr)
 {
+	int *afButtonPressed;
+	int orig_afButtonPressed;
+
+	if (offm_afButtonPressed && CVars::bxt_autojump.GetBool() && (is_cof || CVars::bxt_autojump_fix.GetBool()))
+	{
+		afButtonPressed = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + offm_afButtonPressed);
+		orig_afButtonPressed = *afButtonPressed;
+		if (!(*afButtonPressed & IN_JUMP))
+			*afButtonPressed |= IN_JUMP;
+	}
+
 	insideCBasePlayerJump = true;
 	ORIG_CBasePlayer__Jump(thisptr);
 	insideCBasePlayerJump = false;
+	
+	if (offm_afButtonPressed && CVars::bxt_autojump.GetBool() && (is_cof || CVars::bxt_autojump_fix.GetBool()))
+		*afButtonPressed = orig_afButtonPressed;
 }

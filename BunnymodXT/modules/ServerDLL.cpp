@@ -685,21 +685,40 @@ void ServerDLL::FindStuff()
 				offm_CMultiManager_index = 228;
 				is_cof = true;
 				break;
-			case 32: // DayOfDefeat-Latest
+			case 32: // DayOfDefeat-Steampipe
+			case 33: // DayOfDefeat-Latest
 				offFuncIsPlayer = 0xB4;
 				offFuncCenter = 0xE0;
 				offFuncObjectCaps = 0x20;
 				break;
-			case 33: // DeathmatchClassic-Latest
+			case 34: // DeathmatchClassic-WON
+				offm_rgAmmoLast = 0x51C;
+				offm_iClientFOV = 0x474;
+				break;
+			case 35: // DeathmatchClassic-Latest
 				offm_rgAmmoLast = 0x520;
 				offm_iClientFOV = 0x478;
 				break;
-			case 34: // CStrike-Latest
+			case 36: // CStrike-Latest
 				offFuncIsPlayer = 0xA0;
 				offFuncCenter = 0xCC;
 				offFuncObjectCaps = 0x18;
 				break;
-			case 35: // TFC-Latest
+			case 37: // TFC-WON
+				offm_rgAmmoLast = 0x930;
+				offm_iClientFOV = 0x884;
+				offFuncIsPlayer = 0x98;
+				offFuncCenter = 0xC4;
+				offFuncObjectCaps = 0x18;
+				break;
+			case 38: // TFC-Steampipe
+				offm_rgAmmoLast = 0x974;
+				offm_iClientFOV = 0x8C8;
+				offFuncIsPlayer = 0x98;
+				offFuncCenter = 0xC4;
+				offFuncObjectCaps = 0x18;
+				break;
+			case 39: // TFC-Latest
 				offm_rgAmmoLast = 0x978;
 				offm_iClientFOV = 0x8CC;
 				offFuncIsPlayer = 0x98;
@@ -1018,8 +1037,8 @@ void ServerDLL::FindStuff()
 					offFuncObjectCaps = 0x20;
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("dmc")) {
-					offm_rgAmmoLast = 0x534;
-					offm_iClientFOV = 0x48C;
+					offm_rgAmmoLast = 0x534; // 6153: 0x530
+					offm_iClientFOV = 0x48C; // 6153: 0x488
 				}
 				EngineDevMsg("[server dll] Found CBasePlayer::ForceClientDllUpdate [Linux] at %p.\n", ORIG_CBasePlayer__ForceClientDllUpdate_Linux);
 			} else {

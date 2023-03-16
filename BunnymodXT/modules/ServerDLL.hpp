@@ -108,6 +108,11 @@ public:
 	bool is_cof = false; // Cry of Fear-specific
 	ptrdiff_t offm_fStamina; // Cry of Fear-specific
 
+	ptrdiff_t offm_rgAmmoLast;
+	int maxAmmoSlots = MAX_AMMO_SLOTS;
+	ptrdiff_t offm_pClientActiveItem;
+	ptrdiff_t offm_iPrimaryAmmoType;
+
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};
 	ServerDLL(const ServerDLL&);
@@ -179,8 +184,6 @@ protected:
 	ptrdiff_t offNihilanthSpheres;
 
 	ptrdiff_t offm_iClientFOV;
-	ptrdiff_t offm_rgAmmoLast;
-	int maxAmmoSlots = MAX_AMMO_SLOTS;
 
 	void *WorldGraph = nullptr;
 	size_t size_CNode;
@@ -203,7 +206,6 @@ protected:
 	ptrdiff_t offm_old_iAmmo; // Cry of Fear-specific
 	ptrdiff_t offm_iPlayerSaveLock; // Cry of Fear-specific
 
-	ptrdiff_t offm_pClientActiveItem;
 	ptrdiff_t offm_CMultiManager_index;
 	ptrdiff_t offm_afButtonPressed;
 

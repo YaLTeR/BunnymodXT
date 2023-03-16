@@ -414,6 +414,10 @@ protected:
 	struct Cmd_BXT_CH_Set_Origin_Offset;
 	struct Cmd_BXT_CH_Set_Velocity;
 	struct Cmd_BXT_CH_Set_Velocity_Angles;
+	struct Cmd_BXT_CH_Set_Ammo_Primary;
+	struct Cmd_BXT_CH_Set_Ammo_Secondary;
+	struct Cmd_BXT_CH_Set_Ammo_Clip;
+	struct Cmd_BXT_CH_Set_Velocity_Angles;
 	struct Cmd_BXT_CH_Teleport_To_Entity;
 	struct Cmd_BXT_CH_Get_Velocity;
 	struct Cmd_BXT_CH_Get_Other_Player_Info;

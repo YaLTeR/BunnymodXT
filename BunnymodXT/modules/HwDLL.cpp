@@ -2875,6 +2875,77 @@ struct HwDLL::Cmd_BXT_CH_Set_Velocity
 	}
 };
 
+struct HwDLL::Cmd_BXT_CH_Set_Ammo_Primary
+{
+	USAGE("Usage: bxt_ch_set_ammo_primary <value>\n");
+
+	static void handler(int val)
+	{
+		auto& sv = ServerDLL::GetInstance();
+		auto& hw = HwDLL::GetInstance();
+		if (sv.offm_pClientActiveItem && sv.offm_iPrimaryAmmoType && sv.offm_rgAmmoLast)
+		{
+			void* classPtr = (*hw.sv_player)->v.pContainingEntity->pvPrivateData;
+			uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+			void** m_pActiveItem = reinterpret_cast<void**>(thisAddr + (sv.offm_pClientActiveItem - 4));
+
+			if (*m_pActiveItem != NULL) {
+				uintptr_t* m_pClientActiveItem = reinterpret_cast<uintptr_t*>(thisAddr + sv.offm_pClientActiveItem);
+				int* m_rgAmmo = reinterpret_cast<int*>(thisAddr + (sv.offm_rgAmmoLast - (sv.maxAmmoSlots * 4)));
+				int* m_iPrimaryAmmoType = reinterpret_cast<int*>(*m_pClientActiveItem + sv.offm_iPrimaryAmmoType);
+				m_rgAmmo[*m_iPrimaryAmmoType] = val;
+			}
+		}
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Set_Ammo_Secondary
+{
+	USAGE("Usage: bxt_ch_set_ammo_secondary <value>\n");
+
+	static void handler(int val)
+	{
+		auto& sv = ServerDLL::GetInstance();
+		auto& hw = HwDLL::GetInstance();
+		if (sv.offm_pClientActiveItem && sv.offm_iPrimaryAmmoType && sv.offm_rgAmmoLast)
+		{
+			void* classPtr = (*hw.sv_player)->v.pContainingEntity->pvPrivateData;
+			uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+			void** m_pActiveItem = reinterpret_cast<void**>(thisAddr + (sv.offm_pClientActiveItem - 4));
+
+			if (*m_pActiveItem != NULL) {
+				uintptr_t* m_pClientActiveItem = reinterpret_cast<uintptr_t*>(thisAddr + sv.offm_pClientActiveItem);
+				int* m_rgAmmo = reinterpret_cast<int*>(thisAddr + (sv.offm_rgAmmoLast - (sv.maxAmmoSlots * 4)));
+				int* m_iSecondaryAmmoType = reinterpret_cast<int*>(*m_pClientActiveItem + (sv.offm_iPrimaryAmmoType + 4));
+				m_rgAmmo[*m_iSecondaryAmmoType] = val;
+			}
+		}
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Set_Ammo_Clip
+{
+	USAGE("Usage: bxt_ch_set_ammo_clip <value>\n");
+
+	static void handler(int val)
+	{
+		auto& sv = ServerDLL::GetInstance();
+		auto& hw = HwDLL::GetInstance();
+		if (sv.offm_pClientActiveItem && sv.offm_iPrimaryAmmoType)
+		{
+			void* classPtr = (*hw.sv_player)->v.pContainingEntity->pvPrivateData;
+			uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+			void** m_pActiveItem = reinterpret_cast<void**>(thisAddr + (sv.offm_pClientActiveItem - 4));
+
+			if (*m_pActiveItem != NULL) {
+				uintptr_t* m_pClientActiveItem = reinterpret_cast<uintptr_t*>(thisAddr + sv.offm_pClientActiveItem);
+				int* m_iClip = reinterpret_cast<int*>(*m_pClientActiveItem + (sv.offm_iPrimaryAmmoType + 8));
+				*m_iClip = val;
+			}
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_Set_Velocity_Angles
 {
 	USAGE("Usage:\n bxt_ch_set_vel_angles <magnitude>\n bxt_ch_set_vel_angles <pitch> <yaw> <magnitude>\n");
@@ -5142,6 +5213,9 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin_Offset, Handler<float, float, float>>("bxt_ch_set_pos_offset");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Velocity, Handler<float, float, float>>("bxt_ch_set_vel");
+	wrapper::AddCheat<Cmd_BXT_CH_Set_Ammo_Primary, Handler<int>>("bxt_ch_set_ammo_primary");
+	wrapper::AddCheat<Cmd_BXT_CH_Set_Ammo_Secondary, Handler<int>>("bxt_ch_set_ammo_secondary");
+	wrapper::AddCheat<Cmd_BXT_CH_Set_Ammo_Clip, Handler<int>>("bxt_ch_set_ammo_clip");
 	wrapper::AddCheat<Cmd_BXT_CH_Teleport_To_Entity, Handler<int>>("bxt_ch_teleport_to_entity");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>>("bxt_ch_get_other_player_info");

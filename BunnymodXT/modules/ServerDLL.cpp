@@ -310,6 +310,7 @@ void ServerDLL::Clear()
 	offm_pClientActiveItem = 0;
 	offm_CMultiManager_index = 0;
 	offm_afButtonPressed = 0;
+	offm_iPrimaryAmmoType = 0;
 
 	// Cry of Fear-specific
 	offm_bInfiniteStamina = 0;
@@ -472,6 +473,8 @@ void ServerDLL::FindStuff()
 			case 1: // HL-SteamPipe
 				offm_rgAmmoLast = 0x554;
 				offm_iClientFOV = 0x4AC;
+				offm_iPrimaryAmmoType = 0x98;
+				offm_pClientActiveItem = 0x4CC;
 				break;
 			case 2: // HL-SteamPipe-8684
 				offm_rgAmmoLast = 0x558;

@@ -256,7 +256,7 @@ namespace TriangleDrawing
 			"weaponbox",
 		};
 
-		if (!CVars::bxt_show_pickup_bbox.GetBool())
+		if (!CVars::bxt_show_pickup_bbox.GetBool() && !CVars::bxt_show_monster_bbox.GetBool())
 			return;
 
 		pTriAPI->CullFace(TRI_NONE);
@@ -275,6 +275,22 @@ namespace TriangleDrawing
 			if (!hw.IsValidEdict(ent)) {
 				continue;
 			}
+
+			if (CVars::bxt_show_monster_bbox.GetBool() && (ent->v.flags & FL_MONSTER))
+			{
+				pTriAPI->RenderMode(kRenderTransColor);
+				pTriAPI->Color4f(1.0f, 0.75f, 0.8f, 1.0f);
+				TriangleUtils::DrawAACuboidWireframe(pTriAPI, ent->v.absmin, ent->v.absmax);
+				if (CVars::bxt_show_monster_bbox.GetInt() == 2) {
+					pTriAPI->RenderMode(kRenderTransAdd);
+					pTriAPI->Color4f(1.0f, 0.75f, 0.8f, 0.1f);
+					TriangleUtils::DrawAACuboid(pTriAPI, ent->v.absmin, ent->v.absmax);
+				}
+				continue;
+			}
+
+			if (!CVars::bxt_show_pickup_bbox.GetBool())
+				continue;
 
 			const char* classname = hw.GetString(ent->v.classname);
 			const auto it = std::find_if(PICKABLE_PREFIX.cbegin(), PICKABLE_PREFIX.cend(), [classname](const std::string& val) {
@@ -313,42 +329,6 @@ namespace TriangleDrawing
 				pTriAPI->RenderMode(kRenderTransAdd);
 				pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 0.1f);
 				TriangleUtils::DrawAACuboid(pTriAPI, (*hw.sv_player)->v.absmin, (*hw.sv_player)->v.absmax);
-			}
-		}
-	}
-
-	static void DrawMonsterAbsMinMax(triangleapi_s *pTriAPI)
-	{
-		if (!CVars::bxt_show_monster_bbox.GetBool())
-			return;
-
-		pTriAPI->CullFace(TRI_NONE);
-
-		const auto& hw = HwDLL::GetInstance();
-		const auto& server = ServerDLL::GetInstance();
-		const enginefuncs_t* engfuncs = server.pEngfuncs;
-		if (!engfuncs) {
-			return;
-		}
-
-		edict_t* edicts = nullptr;
-		const int numEdicts = hw.GetEdicts(&edicts);
-		for (int e = 0; e < numEdicts; ++e) {
-			const edict_t* ent = edicts + e;
-			if (!hw.IsValidEdict(ent)) {
-				continue;
-			}
-
-			if (ent->v.flags & FL_MONSTER)
-			{
-				pTriAPI->RenderMode(kRenderTransColor);
-				pTriAPI->Color4f(1.0f, 0.75f, 0.8f, 1.0f);
-				TriangleUtils::DrawAACuboidWireframe(pTriAPI, ent->v.absmin, ent->v.absmax);
-				if (CVars::bxt_show_monster_bbox.GetInt() == 2) {
-					pTriAPI->RenderMode(kRenderTransAdd);
-					pTriAPI->Color4f(1.0f, 0.75f, 0.8f, 0.1f);
-					TriangleUtils::DrawAACuboid(pTriAPI, ent->v.absmin, ent->v.absmax);
-				}
 			}
 		}
 	}
@@ -2366,7 +2346,6 @@ namespace TriangleDrawing
 		DrawCustomTriggers(pTriAPI);
 		DrawAbsMinMax(pTriAPI);
 		DrawPlayerAbsMinMax(pTriAPI);
-		DrawMonsterAbsMinMax(pTriAPI);
 		DrawBulletsEnemyTrace(pTriAPI);
 		DrawBulletsPlayerTrace(pTriAPI);
 		DrawSplits(pTriAPI);

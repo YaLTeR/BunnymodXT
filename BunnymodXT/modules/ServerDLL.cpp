@@ -3228,6 +3228,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__Jump, void*, thisptr)
 {
 	int *afButtonPressed;
 	int orig_afButtonPressed;
+	bool return_orig_value = false;
 
 	if (offm_afButtonPressed && CVars::bxt_autojump.GetBool() && (is_cof || CVars::bxt_autojump_fix.GetBool()))
 	{
@@ -3235,12 +3236,13 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__Jump, void*, thisptr)
 		orig_afButtonPressed = *afButtonPressed;
 		if (!(*afButtonPressed & IN_JUMP))
 			*afButtonPressed |= IN_JUMP;
+		return_orig_value = true;
 	}
 
 	insideCBasePlayerJump = true;
 	ORIG_CBasePlayer__Jump(thisptr);
 	insideCBasePlayerJump = false;
 	
-	if (offm_afButtonPressed && CVars::bxt_autojump.GetBool() && (is_cof || CVars::bxt_autojump_fix.GetBool()))
+	if (return_orig_value)
 		*afButtonPressed = orig_afButtonPressed;
 }

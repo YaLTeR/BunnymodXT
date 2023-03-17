@@ -317,6 +317,16 @@ extern "C" qboolean __cdecl CL_CheckGameDirectory(char *gamedir)
 {
 	return HwDLL::HOOKED_CL_CheckGameDirectory(gamedir);
 }
+
+extern "C" qboolean __cdecl Cvar_Command()
+{
+	return HwDLL::HOOKED_Cvar_Command();
+}
+
+extern "C" qboolean __cdecl Cvar_CommandWithPrivilegeCheck(qboolean bIsPrivileged)
+{
+	return HwDLL::HOOKED_Cvar_CommandWithPrivilegeCheck(bIsPrivileged);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -439,6 +449,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SCR_NetGraph);
 			MemUtils::MarkAsExecutable(ORIG_Host_Shutdown);
 			MemUtils::MarkAsExecutable(ORIG_ReleaseEntityDlls);
+			MemUtils::MarkAsExecutable(ORIG_Cvar_Command);
+			MemUtils::MarkAsExecutable(ORIG_Cvar_CommandWithPrivilegeCheck);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -499,7 +511,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory,
 			ORIG_SaveGameSlot, HOOKED_SaveGameSlot,
 			ORIG_ReleaseEntityDlls, HOOKED_ReleaseEntityDlls,
-			ORIG_Host_Shutdown, HOOKED_Host_Shutdown);
+			ORIG_Host_Shutdown, HOOKED_Host_Shutdown,
+			ORIG_Cvar_Command, HOOKED_Cvar_Command,
+			ORIG_Cvar_CommandWithPrivilegeCheck, HOOKED_Cvar_CommandWithPrivilegeCheck);
 	}
 
 	#ifdef _WIN32
@@ -581,7 +595,9 @@ void HwDLL::Unhook()
 			ORIG_CL_CheckGameDirectory,
 			ORIG_SaveGameSlot,
 			ORIG_ReleaseEntityDlls,
-			ORIG_Host_Shutdown);
+			ORIG_Host_Shutdown,
+			ORIG_Cvar_Command,
+			ORIG_Cvar_CommandWithPrivilegeCheck);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -679,6 +695,8 @@ void HwDLL::Clear()
 	ORIG_SCR_DrawPause = nullptr;
 	ORIG_Host_Shutdown = nullptr;
 	ORIG_ReleaseEntityDlls = nullptr;
+	ORIG_Cvar_Command = nullptr;
+	ORIG_Cvar_CommandWithPrivilegeCheck = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1013,6 +1031,18 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find CL_CheckGameDirectory.\n");
 
+		ORIG_Cvar_Command = reinterpret_cast<_Cvar_Command>(MemUtils::GetSymbolAddress(m_Handle, "Cvar_Command"));
+		if (ORIG_Cvar_Command)
+			EngineDevMsg("[hw dll] Found Cvar_Command at %p.\n", ORIG_Cvar_Command);
+		else
+			EngineDevWarning("[hw dll] Could not find Cvar_Command.\n");
+
+		ORIG_Cvar_CommandWithPrivilegeCheck = reinterpret_cast<_Cvar_CommandWithPrivilegeCheck>(MemUtils::GetSymbolAddress(m_Handle, "Cvar_CommandWithPrivilegeCheck"));
+		if (ORIG_Cvar_CommandWithPrivilegeCheck)
+			EngineDevMsg("[hw dll] Found Cvar_CommandWithPrivilegeCheck at %p.\n", ORIG_Cvar_CommandWithPrivilegeCheck);
+		else
+			EngineDevWarning("[hw dll] Could not find Cvar_CommandWithPrivilegeCheck.\n");
+
 		if (!cls || !psv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -1295,6 +1325,8 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SCR_DrawPause)
 		DEF_FUTURE(Host_Shutdown)
 		DEF_FUTURE(ReleaseEntityDlls)
+		DEF_FUTURE(Cvar_Command)
+		DEF_FUTURE(Cvar_CommandWithPrivilegeCheck)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -2333,6 +2365,8 @@ void HwDLL::FindStuff()
 		GET_FUTURE(SCR_DrawPause);
 		GET_FUTURE(Host_Shutdown);
 		GET_FUTURE(ReleaseEntityDlls);
+		GET_FUTURE(Cvar_Command);
+		GET_FUTURE(Cvar_CommandWithPrivilegeCheck);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -5172,6 +5206,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_disable_world);
 	RegisterCVar(CVars::bxt_disable_particles);
 	RegisterCVar(CVars::bxt_tas_ducktap_priority);
+	RegisterCVar(CVars::bxt_disable_cheats_check_in_demo);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
@@ -7562,4 +7597,46 @@ HOOK_DEF_0(HwDLL, void, __cdecl, ReleaseEntityDlls)
 {
 	ServerDLL::GetInstance().Unhook();
 	ORIG_ReleaseEntityDlls();
+}
+
+HOOK_DEF_0(HwDLL, qboolean, __cdecl, Cvar_Command)
+{
+	int *state;
+	int orig_state;
+	bool return_orig_value = false;
+
+	if (cls && CVars::bxt_disable_cheats_check_in_demo.GetBool() && IsPlayingbackDemo())
+	{
+		state = reinterpret_cast<int*>(cls);
+		orig_state = *state;
+		*state = 1;
+		return_orig_value = true;
+	}
+
+	auto ret = ORIG_Cvar_Command();
+	if (return_orig_value)
+		*state = orig_state;
+
+	return ret;
+}
+
+HOOK_DEF_1(HwDLL, qboolean, __cdecl, Cvar_CommandWithPrivilegeCheck, qboolean, bIsPrivileged)
+{
+	int *state;
+	int orig_state;
+	bool return_orig_value = false;
+
+	if (cls && CVars::bxt_disable_cheats_check_in_demo.GetBool() && IsPlayingbackDemo())
+	{
+		state = reinterpret_cast<int*>(cls);
+		orig_state = *state;
+		*state = 1;
+		return_orig_value = true;
+	}
+
+	auto ret = ORIG_Cvar_CommandWithPrivilegeCheck(bIsPrivileged);
+	if (return_orig_value)
+		*state = orig_state;
+
+	return ret;
 }

@@ -81,6 +81,8 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, SCR_NetGraph)
 	HOOK_DECL(void, __cdecl, Host_Shutdown)
 	HOOK_DECL(void, __cdecl, ReleaseEntityDlls)
+	HOOK_DECL(qboolean, __cdecl, Cvar_Command)
+	HOOK_DECL(qboolean, __cdecl, Cvar_CommandWithPrivilegeCheck, qboolean bIsPrivileged)
 
 	struct cmdbuf_t
 	{

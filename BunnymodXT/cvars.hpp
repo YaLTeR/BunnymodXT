@@ -55,6 +55,7 @@
 	X(bxt_fix_mouse_horizontal_limit, "0") \
 	X(bxt_hud_game_color, "") \
 	X(bxt_disable_gamedir_check_in_demo, "0") \
+	X(bxt_disable_cheats_check_in_demo, "0") \
 	X(bxt_remove_fps_limit, "0") \
 	X(bxt_cof_disable_save_lock, "0") \
 	X(bxt_remove_viewmodel, "0") \

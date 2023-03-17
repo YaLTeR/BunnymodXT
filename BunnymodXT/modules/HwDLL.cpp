@@ -6747,6 +6747,15 @@ void HwDLL::FreeCamTick()
 	cameraOverrideOrigin[2] += direction[2];
 }
 
+bool HwDLL::IsPlayingbackDemo()
+{
+	auto& cl = ClientDLL::GetInstance();
+	if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback())
+		return true;
+
+	return false;
+}
+
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)
 {
 	insideSeedRNG = true;
@@ -7505,9 +7514,7 @@ HOOK_DEF_5(HwDLL, void, __cdecl, PF_traceline_DLL, const Vector*, v1, const Vect
 
 HOOK_DEF_1(HwDLL, qboolean, __cdecl, CL_CheckGameDirectory, char*, gamedir)
 {
-	auto& cl = ClientDLL::GetInstance();
-
-	if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback() && CVars::bxt_disable_gamedir_check_in_demo.GetBool())
+	if (IsPlayingbackDemo() && CVars::bxt_disable_gamedir_check_in_demo.GetBool())
 		return true;
 	else
 		return ORIG_CL_CheckGameDirectory(gamedir);

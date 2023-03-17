@@ -335,7 +335,7 @@ namespace discord_integration
 				}
 				else if ((gt.milliseconds == 0 && total_time == 0) && !CustomHud::GetCountingTime())
 				{
-					if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback()) {
+					if (hw.IsPlayingbackDemo()) {
 						presence.smallImageKey = "discord_brown";
 						presence.smallImageText = "Watching a demo";
 					} else {
@@ -350,7 +350,7 @@ namespace discord_integration
 					snprintf(buffer_stop, sizeof(buffer_stop), "Timer stopped at %d:%02d:%02d.%03d", gt.hours, gt.minutes, gt.seconds, gt.milliseconds);
 					presence.state = buffer_stop;
 
-					if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback()) {
+					if (hw.IsPlayingbackDemo()) {
 						presence.smallImageKey = "discord_brown";
 						presence.smallImageText = "Watching a demo";
 					} else {

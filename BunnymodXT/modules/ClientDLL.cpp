@@ -1704,7 +1704,7 @@ HOOK_DEF_2(ClientDLL, int, __cdecl, HUD_UpdateClientData, client_data_t*, pcldat
 		pEngfuncs->pfnGetScreenInfo = [](SCREENINFO *pscrinfo) { return 0; };
 	}
 
-	if (pEngfuncs && !pEngfuncs->pDemoAPI->IsPlayingback())
+	if (!HwDLL::GetInstance().IsPlayingbackDemo())
 		discord_integration::on_update_client_data();
 
 	const auto rv = ORIG_HUD_UpdateClientData(pcldata, flTime);
@@ -1913,7 +1913,7 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 
 	if (pEngfuncs)
 	{
-		if (CVars::bxt_disable_player_corpses.GetBool() && ent->curstate.renderfx == kRenderFxDeadPlayer && pEngfuncs->pDemoAPI->IsPlayingback())
+		if (CVars::bxt_disable_player_corpses.GetBool() && ent->curstate.renderfx == kRenderFxDeadPlayer && HwDLL::GetInstance().IsPlayingbackDemo())
 			return 0;
 
 		if (ppmove)
@@ -1921,7 +1921,7 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 			auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
 			int* iuser2 = reinterpret_cast<int*>(pmove + (offIUser1 + 4));
 
-			if (CVars::bxt_hide_other_players.GetBool() && ent->player && pEngfuncs->pDemoAPI->IsPlayingback() && ent->index != *iuser2)
+			if (CVars::bxt_hide_other_players.GetBool() && ent->player && HwDLL::GetInstance().IsPlayingbackDemo() && ent->index != *iuser2)
 				return 0;
 		}
 	}
@@ -1937,7 +1937,7 @@ HOOK_DEF_0(ClientDLL, int, __cdecl, CL_IsThirdPerson)
 	auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
 	int *iuser1 = reinterpret_cast<int*>(pmove + offIUser1);
 
-	if (pEngfuncs->pDemoAPI->IsPlayingback() && pEngfuncs->IsSpectateOnly() && (*iuser1 != 4))
+	if (HwDLL::GetInstance().IsPlayingbackDemo() && pEngfuncs->IsSpectateOnly() && (*iuser1 != 4))
 		return 1;
 
 	return ORIG_CL_IsThirdPerson();

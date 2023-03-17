@@ -1096,7 +1096,7 @@ namespace CustomHud
 			int x, y;
 			GetPosition(CVars::bxt_hud_health_offset, CVars::bxt_hud_health_anchor, &x, &y, 0, -4 * NumberHeight);
 
-			if (ClientDLL::GetInstance().pEngfuncs->pDemoAPI->IsPlayingback() && CVars::bxt_hud_health_override_in_demo.GetInt() >= 1)
+			if (HwDLL::GetInstance().IsPlayingbackDemo() && CVars::bxt_hud_health_override_in_demo.GetInt() >= 1)
 				DrawNumber(CVars::bxt_hud_health_override_in_demo.GetInt(), x, y);
 			else
 				DrawNumber(static_cast<int>(player.health), x, y);

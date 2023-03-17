@@ -349,6 +349,8 @@ public:
 	void TimerReset();
 	void TimerStart();
 
+	bool IsPlayingbackDemo();
+
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
 	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};

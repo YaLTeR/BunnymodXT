@@ -1129,13 +1129,6 @@ namespace patterns
 			"55 8B EC 81 EC 1C 01 00 00 53 56 57 A1"
 		);
 
-		PATTERNS(CoF_Noclip_Preventing_Check_Byte,
-			"CoF-5936",
-			"8B 47 04 83 B8 ?? ?? ?? ?? 08 75 0D",
-			"CoF-Mod-155",
-			"8B 48 04 83 B9 ?? ?? ?? ?? 08 75 10"
-		);
-
 		PATTERNS(ShiftMonsters,
 			"CoF-5936",
 			"55 8B EC 56 51 8D 45 08 ?? 04 ?? 00 00 80 44 50 6A 00 E8",

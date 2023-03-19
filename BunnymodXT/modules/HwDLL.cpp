@@ -327,6 +327,11 @@ extern "C" qboolean __cdecl Cvar_CommandWithPrivilegeCheck(qboolean bIsPrivilege
 {
 	return HwDLL::HOOKED_Cvar_CommandWithPrivilegeCheck(bIsPrivileged);
 }
+
+extern "C" void __cdecl R_ForceCvars(qboolean mp)
+{
+	return HwDLL::HOOKED_R_ForceCvars(mp);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -451,6 +456,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_ReleaseEntityDlls);
 			MemUtils::MarkAsExecutable(ORIG_Cvar_Command);
 			MemUtils::MarkAsExecutable(ORIG_Cvar_CommandWithPrivilegeCheck);
+			MemUtils::MarkAsExecutable(ORIG_R_ForceCvars);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -513,7 +519,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_ReleaseEntityDlls, HOOKED_ReleaseEntityDlls,
 			ORIG_Host_Shutdown, HOOKED_Host_Shutdown,
 			ORIG_Cvar_Command, HOOKED_Cvar_Command,
-			ORIG_Cvar_CommandWithPrivilegeCheck, HOOKED_Cvar_CommandWithPrivilegeCheck);
+			ORIG_Cvar_CommandWithPrivilegeCheck, HOOKED_Cvar_CommandWithPrivilegeCheck,
+			ORIG_R_ForceCvars, HOOKED_R_ForceCvars);
 	}
 
 	#ifdef _WIN32
@@ -597,7 +604,8 @@ void HwDLL::Unhook()
 			ORIG_ReleaseEntityDlls,
 			ORIG_Host_Shutdown,
 			ORIG_Cvar_Command,
-			ORIG_Cvar_CommandWithPrivilegeCheck);
+			ORIG_Cvar_CommandWithPrivilegeCheck,
+			ORIG_R_ForceCvars);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -697,6 +705,7 @@ void HwDLL::Clear()
 	ORIG_ReleaseEntityDlls = nullptr;
 	ORIG_Cvar_Command = nullptr;
 	ORIG_Cvar_CommandWithPrivilegeCheck = nullptr;
+	ORIG_R_ForceCvars = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1043,6 +1052,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find Cvar_CommandWithPrivilegeCheck.\n");
 
+		ORIG_R_ForceCvars = reinterpret_cast<_R_ForceCvars>(MemUtils::GetSymbolAddress(m_Handle, "R_ForceCvars"));
+		if (ORIG_R_ForceCvars)
+			EngineDevMsg("[hw dll] Found R_ForceCvars at %p.\n", ORIG_R_ForceCvars);
+		else
+			EngineDevWarning("[hw dll] Could not find R_ForceCvars.\n");
+
 		if (!cls || !psv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -1327,6 +1342,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(ReleaseEntityDlls)
 		DEF_FUTURE(Cvar_Command)
 		DEF_FUTURE(Cvar_CommandWithPrivilegeCheck)
+		DEF_FUTURE(R_ForceCvars)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -2367,6 +2383,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(ReleaseEntityDlls);
 		GET_FUTURE(Cvar_Command);
 		GET_FUTURE(Cvar_CommandWithPrivilegeCheck);
+		GET_FUTURE(R_ForceCvars);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -7639,4 +7656,12 @@ HOOK_DEF_1(HwDLL, qboolean, __cdecl, Cvar_CommandWithPrivilegeCheck, qboolean, b
 		*state = orig_state;
 
 	return ret;
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, R_ForceCvars, qboolean, mp)
+{
+	if (CVars::bxt_disable_cheats_check_in_demo.GetBool() && IsPlayingbackDemo())
+		return;
+
+	ORIG_R_ForceCvars(mp);
 }

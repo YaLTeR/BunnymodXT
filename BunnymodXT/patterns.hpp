@@ -794,6 +794,15 @@ namespace patterns
 			"HL-SteamPipe-8684",
 			"55 8B EC 83 EC 14 53 56 57 6A 00"
 		);
+
+		PATTERNS(R_ForceCvars,
+			"HL-4554",
+			"8B 44 24 ?? 85 C0 0F 84 ?? ?? ?? ?? D9 05",
+			"HL-Steampipe",
+			"55 8B EC 8B 45 ?? 85 C0 0F 84 ?? ?? ?? ?? D9 05",
+			"CoF-5936",
+			"55 8B EC 83 7D ?? 00 0F 84 ?? ?? ?? ?? D9 05"
+		);
 	}
 
 	namespace server

@@ -476,39 +476,46 @@ void ServerDLL::FindStuff()
 			case 0: // HL-WON
 				offm_rgAmmoLast = 0x50C;
 				offm_iClientFOV = 0x464;
+				offm_afButtonPressed = 0x288;
 				break;
 			case 1: // HL-SteamPipe
 				offm_rgAmmoLast = 0x554;
 				offm_iClientFOV = 0x4AC;
 				offm_iPrimaryAmmoType = 0x98;
 				offm_pClientActiveItem = 0x4CC;
+				offm_afButtonPressed = 0x2D0;
 				break;
 			case 2: // HL-SteamPipe-8684
 				offm_rgAmmoLast = 0x558;
 				offm_iClientFOV = 0x4B0;
+				offm_afButtonPressed = 0x2D4;
 				break;
 			case 3: // OP4-WON
 				offm_rgAmmoLast = 0x5C0;
 				offm_iClientFOV = 0x4A4;
 				offFuncIsPlayer = 0xA0;
 				offFuncCenter = 0xCC;
+				offm_afButtonPressed = 0x2C0;
 				break;
 			case 4: // OpposingForce
 				offm_rgAmmoLast = 0x604;
 				offm_iClientFOV = 0x4E0;
 				offFuncIsPlayer = 0xA0;
 				offFuncCenter = 0xCC;
+				offm_afButtonPressed = 0x2FC;
 				break;
 			case 5: // OP4-8684
 				offm_rgAmmoLast = 0x608;
 				offm_iClientFOV = 0x4E4;
 				offFuncIsPlayer = 0xA0;
 				offFuncCenter = 0xCC;
+				offm_afButtonPressed = 0x300;
 				break;
 			case 6: // Gunman
 				offm_rgAmmoLast = 0x53C;
 				offm_iClientFOV = 0x47C;
 				offFuncCenter = 0xCC;
+				offm_afButtonPressed = 0x2A4;
 				break;
 			case 7: // CSCZDS
 				offm_rgAmmoLast = 0x53C;
@@ -516,6 +523,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xA8;
 				offFuncCenter = 0xDC;
 				offFuncObjectCaps = 0x18;
+				offm_afButtonPressed = 0x344;
 				is_czeror = true;
 				break;
 			case 8: // CSCZDS-8684
@@ -524,11 +532,13 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xA8;
 				offFuncCenter = 0xDC;
 				offFuncObjectCaps = 0x18;
+				offm_afButtonPressed = 0x348;
 				is_czeror = true;
 				break;
 			case 9: // AoMDC
 				offm_rgAmmoLast = 0x578;
 				offm_iClientFOV = 0x4D0;
+				offm_afButtonPressed = 0x2DC;
 				break;
 			case 10: // PARANOIA
 				offm_rgAmmoLast = 0x62C;
@@ -536,6 +546,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offm_afButtonPressed = 0x35C;
 				break;
 			case 11: // TWHL-Tower-2
 			case 12: // Halfquake Trilogy
@@ -544,6 +555,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD4;
 				offFuncCenter = 0x100;
 				offFuncObjectCaps = 0x44;
+				offm_afButtonPressed = 0x358;
 				spirit_sdk = true;
 				break;
 			case 13: // Echoes
@@ -552,26 +564,31 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xCC;
 				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
+				offm_afButtonPressed = 0x358;
 				spirit_sdk = true;
 				break;
 			case 14: // Decay
 				offm_rgAmmoLast = 0x544;
 				offm_iClientFOV = 0x49C;
+				offm_afButtonPressed = 0x2C0;
 				break;
 			case 20: // TheGate
 			case 15: // HazardousCourse2
 				offm_rgAmmoLast = 0x540;
 				offm_iClientFOV = 0x498;
+				offm_afButtonPressed = 0x2BC;
 				break;
 			case 16: // Black-Ops
 				offm_rgAmmoLast = 0x554;
 				offm_iClientFOV = 0x4AC;
 				offFuncIsPlayer = 0xA4;
 				offFuncCenter = 0xD0;
+				offm_afButtonPressed = 0x2D0;
 				break;
 			case 17: // Invasion
 				offm_rgAmmoLast = 0x514;
 				offm_iClientFOV = 0x46C;
+				offm_afButtonPressed = 0x290;
 				break;
 			case 18: // Arctic-Incident
 				offm_rgAmmoLast = 0x5B8;
@@ -579,6 +596,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xCC;
 				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
+				offm_afButtonPressed = 0x334;
 				break;
 			case 19: // HL-Delta
 				offm_rgAmmoLast = 0x5C8;
@@ -586,20 +604,24 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xCC;
 				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
+				offm_afButtonPressed = 0x340;
 				break;
 			case 21: // OPBT
 				offm_rgAmmoLast = 0x65C;
 				offm_iClientFOV = 0x5A4;
+				offm_afButtonPressed = 0x39C;
 				break;
 			case 22: // Parasomnia
 				offm_rgAmmoLast = 0x564;
 				offm_iClientFOV = 0x4B8;
 				offFuncIsPlayer = 0x98;
 				offFuncCenter = 0xC4;
+				offm_afButtonPressed = 0x2D4;
 				break;
 			case 24: // AVP2
 				offm_rgAmmoLast = 0x550;
 				offm_iClientFOV = 0x4A8;
+				offm_afButtonPressed = 0x2C4;
 				break;
 			case 25: // CoF-Mod-10
 				offm_rgAmmoLast = 0x2440;
@@ -703,23 +725,32 @@ void ServerDLL::FindStuff()
 				is_cof = true;
 				break;
 			case 32: // DayOfDefeat-Steampipe
+				offFuncIsPlayer = 0xB4;
+				offFuncCenter = 0xE0;
+				offFuncObjectCaps = 0x20;
+				offm_afButtonPressed = 0x3B4;
+				break;
 			case 33: // DayOfDefeat-Latest
 				offFuncIsPlayer = 0xB4;
 				offFuncCenter = 0xE0;
 				offFuncObjectCaps = 0x20;
+				offm_afButtonPressed = 0x3B8;
 				break;
 			case 34: // DeathmatchClassic-WON
 				offm_rgAmmoLast = 0x51C;
 				offm_iClientFOV = 0x474;
+				offm_afButtonPressed = 0x298;
 				break;
 			case 35: // DeathmatchClassic-Latest
 				offm_rgAmmoLast = 0x520;
 				offm_iClientFOV = 0x478;
+				offm_afButtonPressed = 0x29C;
 				break;
 			case 36: // CStrike-Latest
 				offFuncIsPlayer = 0xA0;
 				offFuncCenter = 0xCC;
 				offFuncObjectCaps = 0x18;
+				offm_afButtonPressed = 0x3D8;
 				break;
 			case 37: // TFC-WON
 				offm_rgAmmoLast = 0x930;
@@ -727,6 +758,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0x98;
 				offFuncCenter = 0xC4;
 				offFuncObjectCaps = 0x18;
+				offm_afButtonPressed = 0x6A0;
 				break;
 			case 38: // TFC-Steampipe
 				offm_rgAmmoLast = 0x974;
@@ -734,6 +766,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0x98;
 				offFuncCenter = 0xC4;
 				offFuncObjectCaps = 0x18;
+				offm_afButtonPressed = 0x6E0;
 				break;
 			case 39: // TFC-Latest
 				offm_rgAmmoLast = 0x978;
@@ -741,6 +774,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0x98;
 				offFuncCenter = 0xC4;
 				offFuncObjectCaps = 0x18;
+				offm_afButtonPressed = 0x6E4;
 				break;
 			default:
 				assert(false);

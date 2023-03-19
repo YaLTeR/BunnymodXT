@@ -403,6 +403,8 @@ protected:
 	_VGuiWrap2_IsGameUIVisible ORIG_VGuiWrap2_IsGameUIVisible;
 	typedef void(__cdecl *_SCR_DrawPause) ();
 	_SCR_DrawPause ORIG_SCR_DrawPause;
+	typedef void(__cdecl *_GL_BuildLightmaps) ();
+	_GL_BuildLightmaps ORIG_GL_BuildLightmaps;
 
 	void FindStuff();
 

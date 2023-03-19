@@ -803,6 +803,15 @@ namespace patterns
 			"CoF-5936",
 			"55 8B EC 83 7D ?? 00 0F 84 ?? ?? ?? ?? D9 05"
 		);
+
+		PATTERNS(GL_BuildLightmaps,
+			"HL-4554",
+			"51 68 00 80 00 00 6A 00",
+			"HL-Steampipe",
+			"55 8B EC 51 53 56 57 68 00 80 00 00",
+			"CoF-5936",
+			"55 8B EC 83 EC 10 68 00 80 00 00"
+		);
 	}
 
 	namespace server

@@ -706,6 +706,7 @@ void HwDLL::Clear()
 	ORIG_Cvar_Command = nullptr;
 	ORIG_Cvar_CommandWithPrivilegeCheck = nullptr;
 	ORIG_R_ForceCvars = nullptr;
+	ORIG_GL_BuildLightmaps = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1058,6 +1059,12 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find R_ForceCvars.\n");
 
+		ORIG_GL_BuildLightmaps = reinterpret_cast<_GL_BuildLightmaps>(MemUtils::GetSymbolAddress(m_Handle, "GL_BuildLightmaps"));
+		if (ORIG_GL_BuildLightmaps)
+			EngineDevMsg("[hw dll] Found GL_BuildLightmaps at %p.\n", ORIG_GL_BuildLightmaps);
+		else
+			EngineDevWarning("[hw dll] Could not find GL_BuildLightmaps.\n");
+
 		if (!cls || !psv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -1343,6 +1350,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Cvar_Command)
 		DEF_FUTURE(Cvar_CommandWithPrivilegeCheck)
 		DEF_FUTURE(R_ForceCvars)
+		DEF_FUTURE(GL_BuildLightmaps)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -2384,6 +2392,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Cvar_Command);
 		GET_FUTURE(Cvar_CommandWithPrivilegeCheck);
 		GET_FUTURE(R_ForceCvars);
+		GET_FUTURE(GL_BuildLightmaps);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -5239,6 +5248,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	CVars::default_fov.Assign(FindCVar("default_fov"));
 	CVars::skill.Assign(FindCVar("skill"));
 	CVars::host_framerate.Assign(FindCVar("host_framerate"));
+	CVars::gl_monolights.Assign(FindCVar("gl_monolights"));
+	CVars::r_fullbright.Assign(FindCVar("r_fullbright"));
 
 	FindCVarsIfNeeded();
 
@@ -7660,8 +7671,22 @@ HOOK_DEF_1(HwDLL, qboolean, __cdecl, Cvar_CommandWithPrivilegeCheck, qboolean, b
 
 HOOK_DEF_1(HwDLL, void, __cdecl, R_ForceCvars, qboolean, mp)
 {
+	static bool is_monolights_changed = CVars::gl_monolights.GetBool();
+	static bool is_fullbright_changed = CVars::r_fullbright.GetBool();
+
 	if (CVars::bxt_disable_cheats_check_in_demo.GetBool() && IsPlayingbackDemo())
+	{
+		if ((is_monolights_changed != CVars::gl_monolights.GetBool()) || (is_fullbright_changed != CVars::r_fullbright.GetBool()))
+		{
+			ORIG_GL_BuildLightmaps();
+		}
+		is_monolights_changed = CVars::gl_monolights.GetBool();
+		is_fullbright_changed = CVars::r_fullbright.GetBool();
 		return;
+	}
 
 	ORIG_R_ForceCvars(mp);
+
+	is_monolights_changed = CVars::gl_monolights.GetBool();
+	is_fullbright_changed = CVars::r_fullbright.GetBool();
 }

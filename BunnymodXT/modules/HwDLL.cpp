@@ -1414,9 +1414,11 @@ void HwDLL::FindStuff()
 				default:
 				case 0: // HL-Steampipe
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 181);
+					steamid_build = true;
 					break;
 				case 1: // HL-4554
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 226);
+					steamid_build = true;
 					break;
 				case 2: // HL-NGHL
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 203);
@@ -1426,6 +1428,7 @@ void HwDLL::FindStuff()
 					break;
 				case 4: // CoF-5936
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 230);
+					steamid_build = true;
 					break;
 				}
 			});
@@ -3291,6 +3294,24 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.ORIG_Con_Printf("vuser2: %f %f %f; XY = %f; XYZ = %f\n", vusr2.x, vusr2.y, vusr2.z, vusr2.Length2D(), vusr2.Length());
 		hw.ORIG_Con_Printf("vuser3: %f %f %f; XY = %f; XYZ = %f\n", vusr3.x, vusr3.y, vusr3.z, vusr3.Length2D(), vusr3.Length());
 		hw.ORIG_Con_Printf("vuser4: %f %f %f; XY = %f; XYZ = %f\n", vusr4.x, vusr4.y, vusr4.z, vusr4.Length2D(), vusr4.Length());
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Get_SteamID_In_Demo
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+		auto& cl = ClientDLL::GetInstance();
+		if (hw.steamid_build && hw.IsPlayingbackDemo())
+		{
+			int player = cl.pEngfuncs->GetLocalPlayer()->index;
+			player_info_s* player_info = hw.pEngStudio->PlayerInfo(player - 1);
+
+			hw.ORIG_Con_Printf("Steam ID: %" PRIu64 "\n", player_info->m_nSteamID);
+		}
 	}
 };
 
@@ -5282,6 +5303,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Teleport_To_Entity, Handler<int>>("bxt_ch_teleport_to_entity");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>>("bxt_ch_get_other_player_info");
+	wrapper::Add<Cmd_BXT_CH_Get_SteamID_In_Demo, Handler<>>("bxt_ch_get_steamid_in_demo");
 	wrapper::AddCheat<Cmd_BXT_CH_Entity_Set_Health, Handler<float>, Handler<float, int>>("bxt_ch_entity_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Monster_Set_Origin, Handler<int>, Handler<int, float>, Handler<float, float, float>, Handler<float, float, float, int>>("bxt_ch_monster_set_origin");
 	wrapper::AddCheat<

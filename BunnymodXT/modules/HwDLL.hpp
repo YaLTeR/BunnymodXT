@@ -343,6 +343,7 @@ public:
 	}
 
 	bool Called_Timer = false;
+	bool steamid_build = false;
 
 	bool is_cof_steam = false; // Cry of Fear-specific
 
@@ -512,6 +513,7 @@ protected:
 	struct Cmd_BXT_Splits_Track_Z;
 	struct Cmd_BXT_Splits_Place_Up;
 	struct Cmd_BXT_Splits_Place_Down;
+	struct Cmd_BXT_CH_Get_SteamID_In_Demo;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

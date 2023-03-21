@@ -5252,7 +5252,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_remove_fps_limit);
 	RegisterCVar(CVars::bxt_disable_world);
 	RegisterCVar(CVars::bxt_disable_particles);
-	RegisterCVar(CVars::bxt_tas_ducktap_priority);
+	RegisterCVar(CVars::bxt_tas_autojump_priority);
 	RegisterCVar(CVars::bxt_disable_cheats_check_in_demo);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
@@ -6094,7 +6094,7 @@ void HwDLL::InsertCommands()
 			auto traceFunc = std::bind(&HwDLL::PlayerTrace, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false);
 			auto pointContentsFunc = std::bind(*(ClientDLL::GetInstance().pEngfuncs->PM_PointContents), std::placeholders::_1, nullptr);
 			auto postype = GetPositionType(playerCopy, traceFunc, pointContentsFunc, HLStrafe::MAX_SUPPORTED_VERSION);
-			if (ducktap && postype == HLStrafe::PositionType::GROUND && (autojump == false || (autojump == true && CVars::bxt_tas_ducktap_priority.GetBool()))) {
+			if (ducktap && postype == HLStrafe::PositionType::GROUND && (autojump == false || (autojump == true && !CVars::bxt_tas_autojump_priority.GetBool()))) {
 					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {
 						// This should check against the next frame's origin but meh.
 						const float VEC_HULL_MIN[3] = { -16, -16, -36 };
@@ -6141,7 +6141,7 @@ void HwDLL::InsertCommands()
 			if (jumpbug) {
 				INS(Duck)
 				INS(Jump)
-			} else if (ducktap && (autojump == false || (autojump == true && CVars::bxt_tas_ducktap_priority.GetBool()))) {
+			} else if (ducktap && (autojump == false || (autojump == true && !CVars::bxt_tas_autojump_priority.GetBool()))) {
 				INS(Duck)
 			} else if (autojump) {
 				INS(Jump)

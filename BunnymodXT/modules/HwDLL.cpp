@@ -3139,7 +3139,7 @@ void HwDLL::TeleportMonsterToPosition(float x, float y, float z, int index)
 		return;
 	}
 
-	if (ent->v.flags & FL_MONSTER)
+	if ((ent->v.flags & FL_MONSTER) || (ent->v.flags & FL_CLIENT))
 	{
 		ent->v.origin[0] = x;
 		ent->v.origin[1] = y;
@@ -3193,7 +3193,7 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 			return;
 		}
 
-		if (ent->v.flags & FL_MONSTER)
+		if ((ent->v.flags & FL_MONSTER) || (ent->v.flags & FL_CLIENT))
 		{
 			ent->v.origin[2] += off_z;
 		}
@@ -3210,7 +3210,7 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 		if (tr.pHit)
 		{
 			const auto ent = tr.pHit;
-			if (ent->v.flags & FL_MONSTER)
+			if ((ent->v.flags & FL_MONSTER) || (ent->v.flags & FL_CLIENT))
 			{
 				ent->v.origin[0] = x;
 				ent->v.origin[1] = y;

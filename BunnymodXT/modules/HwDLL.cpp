@@ -3297,7 +3297,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 	}
 };
 
-struct HwDLL::Cmd_BXT_CH_Get_SteamID_In_Demo
+struct HwDLL::Cmd_BXT_Get_SteamID_In_Demo
 {
 	NO_USAGE();
 
@@ -5303,7 +5303,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Teleport_To_Entity, Handler<int>>("bxt_ch_teleport_to_entity");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>>("bxt_ch_get_other_player_info");
-	wrapper::Add<Cmd_BXT_CH_Get_SteamID_In_Demo, Handler<>>("bxt_ch_get_steamid_in_demo");
+	wrapper::Add<Cmd_BXT_Get_SteamID_In_Demo, Handler<>>("bxt_get_steamid_in_demo");
 	wrapper::AddCheat<Cmd_BXT_CH_Entity_Set_Health, Handler<float>, Handler<float, int>>("bxt_ch_entity_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Monster_Set_Origin, Handler<int>, Handler<int, float>, Handler<float, float, float>, Handler<float, float, float, int>>("bxt_ch_monster_set_origin");
 	wrapper::AddCheat<

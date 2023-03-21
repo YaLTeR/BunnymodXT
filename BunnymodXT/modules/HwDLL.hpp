@@ -513,7 +513,7 @@ protected:
 	struct Cmd_BXT_Splits_Track_Z;
 	struct Cmd_BXT_Splits_Place_Up;
 	struct Cmd_BXT_Splits_Place_Down;
-	struct Cmd_BXT_CH_Get_SteamID_In_Demo;
+	struct Cmd_BXT_Get_SteamID_In_Demo;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

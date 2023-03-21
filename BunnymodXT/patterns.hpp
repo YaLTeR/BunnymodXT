@@ -201,8 +201,10 @@ namespace patterns
 		PATTERNS(Host_FilterTime_FPS_Cap_Byte,
 			"HL-SteamPipe",
 			"83 3D ?? ?? ?? ?? 01 7E ?? D9 45",
+			"HL-4554",
+			"83 3D ?? ?? ?? ?? 01 7E ?? D9 44",
 			"HL-WON-1712",
-			"DC 1D ?? ?? ?? ?? DF E0 F6 C4 41 75 ?? C7 44 24 00 00 00 00 00 C7 44 24 ?? 00 00 59 40"
+			"D9 5C 24 00 D9 44 24 00 DC 1D ?? ?? ?? ?? DF E0 F6 C4 41 75 ?? C7 44 24 00 00 00 00 00 C7 44 24 ?? 00 00 59 40"
 		);
 
 		PATTERNS(SeedRandomNumberGenerator,

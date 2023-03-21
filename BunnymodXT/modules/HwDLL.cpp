@@ -1466,10 +1466,11 @@ void HwDLL::FindStuff()
 			[&](auto pattern) {
 				switch (pattern - patterns::engine::Host_FilterTime_FPS_Cap_Byte.cbegin()) {
 				case 0: // HL-SteamPipe
+				case 1: // HL-4554
 					pHost_FilterTime_FPS_Cap_Byte += 7;
 					break;
-				case 1: // HL-WON-1712
-					pHost_FilterTime_FPS_Cap_Byte += 11;
+				case 2: // HL-WON-1712
+					pHost_FilterTime_FPS_Cap_Byte += 19;
 					break;
 				default:
 					assert(false);

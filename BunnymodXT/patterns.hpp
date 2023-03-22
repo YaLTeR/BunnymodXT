@@ -904,6 +904,8 @@ namespace patterns
 			"83 C8 FF 89 81 60 04 00 00 89 81 64 04 00 00 89 81 28 06 00 00 89 81 20 06 00 00 8B 81 3C 04 00 00 0C C0 89 81 3C 04 00 00 33 C0 89 81 40 04 00 00 89 81 C4 02 00 00",
 			"DeathmatchClassic-Latest",
 			"83 C8 FF C7 81 38 04 00 00 01 00 00 00 89 81 64 04 00 00 89 81 68 04 00 00 89 81 2C 06 00 00 89 81 24 06 00 00 8B 81 40 04 00 00 0C C0 89 81 40 04 00 00 33 C0 89 81 44 04 00 00",
+			"CStrike-11",
+			"83 C8 FF 89 81 90 05 00 00 89 81 94 05 00 00 8B 81 6C 05 00 00 0C C0 89 81 6C 05 00 00 33 C0 89 81 70 05 00 00 89 81 F4 03 00 00 8B 01 FF A0 44 01 00 00 90 90 90 90 90 90 90 90 90 90 90 90 90",
 			"CStrike-Latest",
 			"56 8B F1 83 C8 FF 89 86 9C 05 00 00 89 86 A0 05 00 00 8B 86 78 05 00 00 C7 86 7C 05 00 00 00 00 00 00 0C C0 C7 86 70 05 00 00 01 00 00 00 89 86 78 05 00 00",
 			"TFC-WON",
@@ -949,7 +951,9 @@ namespace patterns
 
 		PATTERNS(CBasePlayer__GiveNamedItem,
 			"CStrike-Latest",
-			"8B 44 24 ?? 56 57 8B F9 8B 0D ?? ?? ?? ?? 2B 81 ?? ?? ?? ?? 50 E8"
+			"8B 44 24 ?? 56 57 8B F9 8B 0D ?? ?? ?? ?? 2B 81 ?? ?? ?? ?? 50 E8",
+			"CStrike-11",
+			"53 55 8B E9 56 8B 0D ?? ?? ?? ?? 57 8B 7C 24"
 		);
 
 		PATTERNS(CoF_CBasePlayer__GiveNamedItem,
@@ -1181,7 +1185,9 @@ namespace patterns
 			"Parasomnia",
 			"55 8B EC 83 E4 F8 83 EC 18 53 56 8B F1 8B 46 ?? 8B 88 ?? ?? ?? ?? F7",
 			"CStrike-Latest",
-			"83 EC 0C 53 55 8B E9 56 57 8B 45 ?? 8B 88 ?? ?? ?? ?? F6"
+			"83 EC 0C 53 55 8B E9 56 57 8B 45 ?? 8B 88 ?? ?? ?? ?? F6",
+			"CStrike-11",
+			"83 EC 10 53 55 56 57 8B F9 89 7C 24 ?? 8B 47 ?? 8B 88 ?? ?? ?? ?? F6 C5 08"
 		);
 
 		PATTERNS(CBasePlayer__ViewPunch,

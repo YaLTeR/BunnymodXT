@@ -746,13 +746,19 @@ void ServerDLL::FindStuff()
 				offm_iClientFOV = 0x478;
 				offm_afButtonPressed = 0x29C;
 				break;
-			case 36: // CStrike-Latest
+			case 36: // CStrike-11
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
+				offFuncObjectCaps = 0x18;
+				offm_afButtonPressed = 0x3CC;
+				break;
+			case 37: // CStrike-Latest
 				offFuncIsPlayer = 0xA0;
 				offFuncCenter = 0xCC;
 				offFuncObjectCaps = 0x18;
 				offm_afButtonPressed = 0x3D8;
 				break;
-			case 37: // TFC-WON
+			case 38: // TFC-WON
 				offm_rgAmmoLast = 0x930;
 				offm_iClientFOV = 0x884;
 				offFuncIsPlayer = 0x98;
@@ -760,7 +766,7 @@ void ServerDLL::FindStuff()
 				offFuncObjectCaps = 0x18;
 				offm_afButtonPressed = 0x6A0;
 				break;
-			case 38: // TFC-Steampipe
+			case 39: // TFC-Steampipe
 				offm_rgAmmoLast = 0x974;
 				offm_iClientFOV = 0x8C8;
 				offFuncIsPlayer = 0x98;
@@ -768,7 +774,7 @@ void ServerDLL::FindStuff()
 				offFuncObjectCaps = 0x18;
 				offm_afButtonPressed = 0x6E0;
 				break;
-			case 39: // TFC-Latest
+			case 40: // TFC-Latest
 				offm_rgAmmoLast = 0x978;
 				offm_iClientFOV = 0x8CC;
 				offFuncIsPlayer = 0x98;

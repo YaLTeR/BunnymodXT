@@ -6855,10 +6855,22 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	armorvalue = pl->v.armorvalue;
 	waterlevel = pl->v.waterlevel;
 
-	if (ServerDLL::GetInstance().is_cof) {
-		void* classPtr = (*sv_player)->v.pContainingEntity->pvPrivateData;
+	auto& sv = ServerDLL::GetInstance();
+	if (sv.is_cof) {
+		edict_t *edicts;
+		GetEdicts(&edicts);
+		int num = 1;
+		edict_t *ent = edicts + num;
+		bool is_ent_failed = CheckIfEntityIsValidAndPlayer(ent, num, true);
+		if (is_ent_failed)
+		{
+			stamina = 0.0f;
+			return true;
+		}
+
+		void* classPtr = ent->v.pContainingEntity->pvPrivateData;
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-		float* m_fStamina = reinterpret_cast<float*>(thisAddr + ServerDLL::GetInstance().offm_fStamina);
+		float* m_fStamina = reinterpret_cast<float*>(thisAddr + sv.offm_fStamina);
 		stamina = *m_fStamina;
 	} else {
 		stamina = pl->v.fuser2;

@@ -2941,15 +2941,37 @@ struct HwDLL::Cmd_BXT_CH_Set_Velocity
 
 struct HwDLL::Cmd_BXT_CH_Set_Ammo_Primary
 {
-	USAGE("Usage: bxt_ch_set_ammo_primary <value>\n");
+	USAGE("Usage: bxt_ch_set_ammo_primary <value>\n bxt_ch_set_ammo_primary <value> <player_index>\n");
+
+	static void handler(int val, int pl_num)
+	{
+		auto& hw = HwDLL::GetInstance();
+		if (pl_num > 1)
+		{
+			hw.player_index = pl_num;
+			hw.set_default_player_index = false;
+		}
+		handler(val);
+	}
 
 	static void handler(int val)
 	{
 		auto& sv = ServerDLL::GetInstance();
 		auto& hw = HwDLL::GetInstance();
+
+		hw.SetPlayerIndexToDefaultIfNecessary();
+
 		if (sv.offm_pClientActiveItem && sv.offm_iPrimaryAmmoType && sv.offm_rgAmmoLast)
 		{
-			void* classPtr = (*hw.sv_player)->v.pContainingEntity->pvPrivateData;
+			edict_t* edicts;
+			hw.GetEdicts(&edicts);
+
+			edict_t* ent = edicts + hw.player_index;
+			bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true);
+			if (is_ent_failed)
+				return;
+
+			void* classPtr = ent->v.pContainingEntity->pvPrivateData;
 			uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 			void** m_pActiveItem = reinterpret_cast<void**>(thisAddr + (sv.offm_pClientActiveItem - 4));
 
@@ -2965,15 +2987,37 @@ struct HwDLL::Cmd_BXT_CH_Set_Ammo_Primary
 
 struct HwDLL::Cmd_BXT_CH_Set_Ammo_Secondary
 {
-	USAGE("Usage: bxt_ch_set_ammo_secondary <value>\n");
+	USAGE("Usage: bxt_ch_set_ammo_secondary <value>\n bxt_ch_set_ammo_secondary <value> <player_index>\n");
+
+	static void handler(int val, int pl_num)
+	{
+		auto& hw = HwDLL::GetInstance();
+		if (pl_num > 1)
+		{
+			hw.player_index = pl_num;
+			hw.set_default_player_index = false;
+		}
+		handler(val);
+	}
 
 	static void handler(int val)
 	{
 		auto& sv = ServerDLL::GetInstance();
 		auto& hw = HwDLL::GetInstance();
+
+		hw.SetPlayerIndexToDefaultIfNecessary();
+
 		if (sv.offm_pClientActiveItem && sv.offm_iPrimaryAmmoType && sv.offm_rgAmmoLast)
 		{
-			void* classPtr = (*hw.sv_player)->v.pContainingEntity->pvPrivateData;
+			edict_t* edicts;
+			hw.GetEdicts(&edicts);
+
+			edict_t* ent = edicts + hw.player_index;
+			bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true);
+			if (is_ent_failed)
+				return;
+
+			void* classPtr = ent->v.pContainingEntity->pvPrivateData;
 			uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 			void** m_pActiveItem = reinterpret_cast<void**>(thisAddr + (sv.offm_pClientActiveItem - 4));
 
@@ -2989,15 +3033,37 @@ struct HwDLL::Cmd_BXT_CH_Set_Ammo_Secondary
 
 struct HwDLL::Cmd_BXT_CH_Set_Ammo_Clip
 {
-	USAGE("Usage: bxt_ch_set_ammo_clip <value>\n");
+	USAGE("Usage: bxt_ch_set_ammo_clip <value>\n bxt_ch_set_ammo_clip <value> <player_index>\n");
+
+	static void handler(int val, int pl_num)
+	{
+		auto& hw = HwDLL::GetInstance();
+		if (pl_num > 1)
+		{
+			hw.player_index = pl_num;
+			hw.set_default_player_index = false;
+		}
+		handler(val);
+	}
 
 	static void handler(int val)
 	{
 		auto& sv = ServerDLL::GetInstance();
 		auto& hw = HwDLL::GetInstance();
+
+		hw.SetPlayerIndexToDefaultIfNecessary();
+
 		if (sv.offm_pClientActiveItem && sv.offm_iPrimaryAmmoType)
 		{
-			void* classPtr = (*hw.sv_player)->v.pContainingEntity->pvPrivateData;
+			edict_t* edicts;
+			hw.GetEdicts(&edicts);
+
+			edict_t* ent = edicts + hw.player_index;
+			bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true);
+			if (is_ent_failed)
+				return;
+
+			void* classPtr = ent->v.pContainingEntity->pvPrivateData;
 			uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 			void** m_pActiveItem = reinterpret_cast<void**>(thisAddr + (sv.offm_pClientActiveItem - 4));
 
@@ -3069,6 +3135,96 @@ struct HwDLL::Cmd_BXT_Set_Angles
 	}
 };
 
+struct HwDLL::Cmd_BXT_CH_Client_Set_Armor
+{
+	USAGE("Usage:\n"
+		"bxt_ch_client_set_armor <armor>\n"
+		"bxt_ch_client_set_armor <armor> <entity_index>\n"
+	);
+
+	static void handler(float arm)
+	{
+		const auto& serv = ServerDLL::GetInstance();
+		float view[3], end[3];
+		ClientDLL::GetInstance().SetupTraceVectors(view, end);
+
+		const auto tr = serv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+
+		if (tr.pHit)
+		{
+			const auto ent = tr.pHit;
+
+			if (ent->v.flags & FL_CLIENT)
+				ent->v.armorvalue = arm;
+		}
+	}
+
+	static void handler(float arm, int num)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		edict_t* edicts;
+		hw.GetEdicts(&edicts);
+
+		edict_t* ent = edicts + num;
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		if (is_ent_failed)
+			return;
+
+		if (ent->v.flags & FL_CLIENT)
+			ent->v.armorvalue = arm;
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_Client_Set_Velocity
+{
+	USAGE("Usage:\n"
+		"bxt_ch_client_set_velocity <x> <y> <z>\n"
+		"bxt_ch_client_set_velocity <x> <y> <z> <entity_index>\n"
+	);
+
+	static void handler(float x, float y, float z)
+	{
+		const auto& serv = ServerDLL::GetInstance();
+		float view[3], end[3];
+		ClientDLL::GetInstance().SetupTraceVectors(view, end);
+
+		const auto tr = serv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+
+		if (tr.pHit)
+		{
+			const auto ent = tr.pHit;
+
+			if (ent->v.flags & FL_CLIENT)
+			{
+				ent->v.velocity[0] = x;
+				ent->v.velocity[1] = y;
+				ent->v.velocity[2] = z;
+			}
+		}
+	}
+
+	static void handler(float x, float y, float z, int num)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		edict_t* edicts;
+		hw.GetEdicts(&edicts);
+
+		edict_t* ent = edicts + num;
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		if (is_ent_failed)
+			return;
+
+		if (ent->v.flags & FL_CLIENT)
+		{
+			ent->v.velocity[0] = x;
+			ent->v.velocity[1] = y;
+			ent->v.velocity[2] = z;
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_Get_Velocity
 {
 	NO_USAGE();
@@ -3111,16 +3267,11 @@ struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
+		hw.GetEdicts(&edicts);
 
 		edict_t* ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		if (is_ent_failed)
 			return;
 
 		ent->v.health = hp;
@@ -3129,15 +3280,14 @@ struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 
 void HwDLL::TeleportMonsterToPosition(float x, float y, float z, int index)
 {
-	const auto& hw = HwDLL::GetInstance();
+	auto& hw = HwDLL::GetInstance();
 	edict_t* edicts;
 	hw.GetEdicts(&edicts);
 	edict_t* ent = edicts + index;
-	if (!hw.IsValidEdict(ent))
-	{
-		hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", index);
+
+	bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, index, false);
+	if (is_ent_failed)
 		return;
-	}
 
 	if ((ent->v.flags & FL_MONSTER) || (ent->v.flags & FL_CLIENT))
 	{
@@ -3151,52 +3301,17 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 {
 	USAGE("Usage:\n"
 		"bxt_ch_monster_set_origin <entity_index>\n"
-		"bxt_ch_monster_set_origin <entity_index> <offset_z>\n"
 		"bxt_ch_monster_set_origin <x> <y> <z>\n"
 		"bxt_ch_monster_set_origin <x> <y> <z> <entity_index>\n"
+		"bxt_ch_monster_set_origin <offset_x> <offset_y> <offset_z> <entity_index> *\n"
 	);
 
 	static void handler(int num)
 	{
 		auto& hw = HwDLL::GetInstance();
 
-		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
-
 		const auto& p_pos = (*hw.sv_player)->v.origin;
 		hw.TeleportMonsterToPosition(p_pos[0], p_pos[1], p_pos[2], num);
-	}
-
-	static void handler(int num, float off_z)
-	{
-		auto& hw = HwDLL::GetInstance();
-
-		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
-
-		edict_t* ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
-			return;
-		}
-
-		if ((ent->v.flags & FL_MONSTER) || (ent->v.flags & FL_CLIENT))
-		{
-			ent->v.origin[2] += off_z;
-		}
 	}
 
 	static void handler(float x, float y, float z)
@@ -3221,18 +3336,31 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 	static void handler(float x, float y, float z, int num)
 	{
+		HwDLL::GetInstance().TeleportMonsterToPosition(x, y, z, num);
+	}
+
+	static void handler(float off_x, float off_y, float off_z, int num, const char *name)
+	{
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
+		hw.GetEdicts(&edicts);
 
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
+		edict_t* ent = edicts + num;
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		if (is_ent_failed)
 			return;
-		}
 
-		hw.TeleportMonsterToPosition(x, y, z, num);
+		bool match_offstring = std::strcmp(name, "*") == 0;
+		if (match_offstring)
+		{
+			if ((ent->v.flags & FL_MONSTER) || (ent->v.flags & FL_CLIENT))
+			{
+				ent->v.origin[0] += off_x;
+				ent->v.origin[1] += off_y;
+				ent->v.origin[2] += off_z;
+			}
+		}
 	}
 };
 
@@ -3240,57 +3368,83 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 {
 	NO_USAGE();
 
+	static void handler(int pl_num)
+	{
+		auto& hw = HwDLL::GetInstance();
+		if (pl_num > 1)
+		{
+			hw.player_index = pl_num;
+			hw.set_default_player_index = false;
+		}
+		handler();
+	}
+
 	static void handler()
 	{
 		auto &hw = HwDLL::GetInstance();
 		auto &cl = ClientDLL::GetInstance();
 
-		const auto& mvtype = (*hw.sv_player)->v.movetype;
-		const auto& basevel = (*hw.sv_player)->v.basevelocity;
-		const auto& punch = (*hw.sv_player)->v.punchangle;
+		hw.SetPlayerIndexToDefaultIfNecessary();
 
-		if (cl.pEngfuncs)
+		edict_t* edicts;
+		hw.GetEdicts(&edicts);
+
+		edict_t* ent = edicts + hw.player_index;
+		bool is_ent_player_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true);
+		if (is_ent_player_failed)
+			return;
+
+		const auto& mvtype = ent->v.movetype;
+		const auto& vel = ent->v.velocity;
+		const auto& basevel = ent->v.basevelocity;
+		const auto& punch = ent->v.punchangle;
+		const auto& v_angle = ent->v.v_angle;
+
+		if (cl.pEngfuncs && (hw.player_index == 1))
 			hw.ORIG_Con_Printf("Client maxspeed: %f\n", cl.pEngfuncs->GetClientMaxspeed());
+		hw.ORIG_Con_Printf("Index: %d\n", hw.player_index);
 		hw.ORIG_Con_Printf("Movetype: %d (%s)\n", mvtype, hw.GetMovetypeName(mvtype));
-		hw.ORIG_Con_Printf("Health: %f\n", (*hw.sv_player)->v.health);
-		hw.ORIG_Con_Printf("Armor: %f\n", (*hw.sv_player)->v.armorvalue);
-		hw.ORIG_Con_Printf("Waterlevel: %d\n", (*hw.sv_player)->v.waterlevel);
-		hw.ORIG_Con_Printf("Watertype: %d\n", (*hw.sv_player)->v.watertype);
-		hw.ORIG_Con_Printf("Max health: %f\n", (*hw.sv_player)->v.max_health);
-		hw.ORIG_Con_Printf("Gravity: %f\n", (*hw.sv_player)->v.gravity);
-		hw.ORIG_Con_Printf("Friction: %f\n", (*hw.sv_player)->v.friction);
+		hw.ORIG_Con_Printf("Health: %f\n", ent->v.health);
+		hw.ORIG_Con_Printf("Armor: %f\n", ent->v.armorvalue);
+		hw.ORIG_Con_Printf("Waterlevel: %d\n", ent->v.waterlevel);
+		hw.ORIG_Con_Printf("Watertype: %d\n", ent->v.watertype);
+		hw.ORIG_Con_Printf("Max health: %f\n", ent->v.max_health);
+		hw.ORIG_Con_Printf("Gravity: %f\n", ent->v.gravity);
+		hw.ORIG_Con_Printf("Friction: %f\n", ent->v.friction);
 		std::ostringstream out;
 		out << "Flags: ";
-		if ((*hw.sv_player)->v.flags & FL_CONVEYOR)
+		if (ent->v.flags & FL_CONVEYOR)
 			out << "FL_CONVEYOR; ";
-		if ((*hw.sv_player)->v.flags & FL_INWATER)
+		if (ent->v.flags & FL_INWATER)
 			out << "FL_INWATER; ";
-		if ((*hw.sv_player)->v.flags & FL_GODMODE)
+		if (ent->v.flags & FL_GODMODE)
 			out << "FL_GODMODE; ";
-		if ((*hw.sv_player)->v.flags & FL_NOTARGET)
+		if (ent->v.flags & FL_NOTARGET)
 			out << "FL_NOTARGET; ";
-		if ((*hw.sv_player)->v.flags & FL_ONGROUND)
+		if (ent->v.flags & FL_ONGROUND)
 			out << "FL_ONGROUND; ";
-		if ((*hw.sv_player)->v.flags & FL_WATERJUMP)
+		if (ent->v.flags & FL_WATERJUMP)
 			out << "FL_WATERJUMP; ";
-		if ((*hw.sv_player)->v.flags & FL_FROZEN)
+		if (ent->v.flags & FL_FROZEN)
 			out << "FL_FROZEN; ";
-		if ((*hw.sv_player)->v.flags & FL_DUCKING)
+		if (ent->v.flags & FL_DUCKING)
 			out << "FL_DUCKING; ";
-		if ((*hw.sv_player)->v.flags & FL_ONTRAIN)
+		if (ent->v.flags & FL_ONTRAIN)
 			out << "FL_ONTRAIN; ";
 		out << '\n';
 		hw.ORIG_Con_Printf("%s", out.str().c_str());
-		hw.ORIG_Con_Printf("bInDuck: %d\n", (*hw.sv_player)->v.bInDuck);
+		hw.ORIG_Con_Printf("bInDuck: %d\n", ent->v.bInDuck);
+		hw.ORIG_Con_Printf("v_angle: %f %f %f\n", v_angle.x, v_angle.y, v_angle.z);
+		hw.ORIG_Con_Printf("Velocity: %f %f %f; XY = %f; XYZ = %f\n", vel.x, vel.y, vel.z, vel.Length2D(), vel.Length());
 		hw.ORIG_Con_Printf("Basevelocity: %f %f %f; XY = %f; XYZ = %f\n", basevel.x, basevel.y, basevel.z, basevel.Length2D(), basevel.Length());
 		hw.ORIG_Con_Printf("Server punchangle: %f %f %f\n", punch.x, punch.y, punch.z);
-		hw.ORIG_Con_Printf("iuser1: %d; iuser2: %d; iuser3: %d; iuser4: %d\n", (*hw.sv_player)->v.iuser1, (*hw.sv_player)->v.iuser2, (*hw.sv_player)->v.iuser3, (*hw.sv_player)->v.iuser4);
-		hw.ORIG_Con_Printf("fuser1: %f; fuser2: %f; fuser3: %f; fuser4: %f\n", (*hw.sv_player)->v.fuser1, (*hw.sv_player)->v.fuser2, (*hw.sv_player)->v.fuser3, (*hw.sv_player)->v.fuser4);
+		hw.ORIG_Con_Printf("iuser1: %d; iuser2: %d; iuser3: %d; iuser4: %d\n", ent->v.iuser1, ent->v.iuser2, ent->v.iuser3, ent->v.iuser4);
+		hw.ORIG_Con_Printf("fuser1: %f; fuser2: %f; fuser3: %f; fuser4: %f\n", ent->v.fuser1, ent->v.fuser2, ent->v.fuser3, ent->v.fuser4);
 
-		const auto& vusr1 = (*hw.sv_player)->v.vuser1;
-		const auto& vusr2 = (*hw.sv_player)->v.vuser2;
-		const auto& vusr3 = (*hw.sv_player)->v.vuser3;
-		const auto& vusr4 = (*hw.sv_player)->v.vuser4;
+		const auto& vusr1 = ent->v.vuser1;
+		const auto& vusr2 = ent->v.vuser2;
+		const auto& vusr3 = ent->v.vuser3;
+		const auto& vusr4 = ent->v.vuser4;
 		hw.ORIG_Con_Printf("vuser1: %f %f %f; XY = %f; XYZ = %f\n", vusr1.x, vusr1.y, vusr1.z, vusr1.Length2D(), vusr1.Length());
 		hw.ORIG_Con_Printf("vuser2: %f %f %f; XY = %f; XYZ = %f\n", vusr2.x, vusr2.y, vusr2.z, vusr2.Length2D(), vusr2.Length());
 		hw.ORIG_Con_Printf("vuser3: %f %f %f; XY = %f; XYZ = %f\n", vusr3.x, vusr3.y, vusr3.z, vusr3.Length2D(), vusr3.Length());
@@ -4334,25 +4488,17 @@ struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 
 	static void handler(int num)
 	{
-		const auto& hw = HwDLL::GetInstance();
+		auto& hw = HwDLL::GetInstance();
 
 		std::ostringstream out;
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
+		hw.GetEdicts(&edicts);
 
 		const edict_t *ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		if (is_ent_failed)
 			return;
-		}
 
 		HwDLL::GetInstance().PrintEntity(out, num);
 
@@ -4400,36 +4546,93 @@ void HwDLL::GetOriginOfEntity(Vector& origin, const edict_t* ent)
 		origin = ent->v.origin;
 }
 
+bool HwDLL::CheckIfEntityIsValidAndPlayer(const edict_t* ent, int ent_number, bool check_for_player)
+{
+	auto& hw = HwDLL::GetInstance();
+	edict_t* edicts;
+	const int numEdicts = hw.GetEdicts(&edicts);
+
+	if (ent_number < numEdicts)
+	{
+		if (hw.IsValidEdict(ent))
+		{
+			if ((ent->v.flags & FL_CLIENT) && check_for_player)
+			{
+				return false;
+			}
+			else if (check_for_player)
+			{
+				hw.ORIG_Con_Printf("Error: entity with index %d is not player!\n", ent_number);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", ent_number);
+			return true;
+		}
+	}
+	else
+	{
+		hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", ent_number, numEdicts);
+		return true;
+	}
+
+	return true;
+}
+
+void HwDLL::SetPlayerIndexToDefaultIfNecessary()
+{
+	auto& hw = HwDLL::GetInstance();
+	if (hw.set_default_player_index)
+		hw.player_index = 1;
+	hw.set_default_player_index = true;
+}
+
 struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 {
-	USAGE("Usage: bxt_ch_teleport_to_entity <index>\n");
+	USAGE("Usage: bxt_ch_teleport_to_entity <index>\n bxt_ch_teleport_to_entity <index> <player_index>\n");
+
+	static void handler(int num, int pl_num)
+	{
+		auto& hw = HwDLL::GetInstance();
+		if (pl_num > 1)
+		{
+			hw.player_index = pl_num;
+			hw.set_default_player_index = false;
+		}
+		handler(num);
+	}
 
 	static void handler(int num)
 	{
-		const auto& hw = HwDLL::GetInstance();
+		auto& hw = HwDLL::GetInstance();
+
+		hw.SetPlayerIndexToDefaultIfNecessary();
 
 		edict_t *edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
+		hw.GetEdicts(&edicts);
 
 		const edict_t *ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		if (is_ent_failed)
 			return;
-		}
+
+		edict_t* ent_player = edicts + hw.player_index;
+		bool is_ent_player_failed = hw.CheckIfEntityIsValidAndPlayer(ent_player, hw.player_index, true);
+		if (is_ent_player_failed)
+			return;
 
 		Vector origin;
 		HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
 
-		(*hw.sv_player)->v.origin[0] = origin[0];
-		(*hw.sv_player)->v.origin[1] = origin[1];
-		(*hw.sv_player)->v.origin[2] = origin[2];
+		ent_player->v.origin[0] = origin[0];
+		ent_player->v.origin[1] = origin[1];
+		ent_player->v.origin[2] = origin[2];
 	}
 };
 
@@ -5298,15 +5501,17 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin, Handler<float, float, float>>("bxt_ch_set_pos");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Origin_Offset, Handler<float, float, float>>("bxt_ch_set_pos_offset");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Velocity, Handler<float, float, float>>("bxt_ch_set_vel");
-	wrapper::AddCheat<Cmd_BXT_CH_Set_Ammo_Primary, Handler<int>>("bxt_ch_set_ammo_primary");
-	wrapper::AddCheat<Cmd_BXT_CH_Set_Ammo_Secondary, Handler<int>>("bxt_ch_set_ammo_secondary");
-	wrapper::AddCheat<Cmd_BXT_CH_Set_Ammo_Clip, Handler<int>>("bxt_ch_set_ammo_clip");
-	wrapper::AddCheat<Cmd_BXT_CH_Teleport_To_Entity, Handler<int>>("bxt_ch_teleport_to_entity");
+	wrapper::AddCheat<Cmd_BXT_CH_Set_Ammo_Primary, Handler<int>, Handler<int, int>>("bxt_ch_set_ammo_primary");
+	wrapper::AddCheat<Cmd_BXT_CH_Set_Ammo_Secondary, Handler<int>, Handler<int, int>>("bxt_ch_set_ammo_secondary");
+	wrapper::AddCheat<Cmd_BXT_CH_Set_Ammo_Clip, Handler<int>, Handler<int, int>>("bxt_ch_set_ammo_clip");
+	wrapper::AddCheat<Cmd_BXT_CH_Teleport_To_Entity, Handler<int>, Handler<int, int>>("bxt_ch_teleport_to_entity");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
-	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>>("bxt_ch_get_other_player_info");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>, Handler<int>>("bxt_ch_get_other_player_info");
 	wrapper::Add<Cmd_BXT_Get_SteamID_In_Demo, Handler<>>("bxt_get_steamid_in_demo");
 	wrapper::AddCheat<Cmd_BXT_CH_Entity_Set_Health, Handler<float>, Handler<float, int>>("bxt_ch_entity_set_health");
-	wrapper::AddCheat<Cmd_BXT_CH_Monster_Set_Origin, Handler<int>, Handler<int, float>, Handler<float, float, float>, Handler<float, float, float, int>>("bxt_ch_monster_set_origin");
+	wrapper::AddCheat<Cmd_BXT_CH_Monster_Set_Origin, Handler<int>, Handler<float, float, float>, Handler<float, float, float, int>, Handler<float, float, float, int, const char *>>("bxt_ch_monster_set_origin");
+	wrapper::AddCheat<Cmd_BXT_CH_Client_Set_Armor, Handler<float>, Handler<float, int>>("bxt_ch_client_set_armor");
+	wrapper::AddCheat<Cmd_BXT_CH_Client_Set_Velocity, Handler<float, float, float>, Handler<float, float, float, int>>("bxt_ch_client_set_velocity");
 	wrapper::AddCheat<
 		Cmd_BXT_CH_Set_Velocity_Angles,
 		Handler<float>,

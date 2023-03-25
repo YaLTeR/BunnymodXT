@@ -2315,7 +2315,6 @@ void HwDLL::FindStuff()
 			}
 		GET_FUTURE(Cvar_DirectSet)
 		GET_FUTURE(Cvar_FindVar)
-		GET_FUTURE(Cmd_FindCmd)
 		GET_FUTURE(Cbuf_InsertText)
 		GET_FUTURE(Cbuf_AddText)
 		GET_FUTURE(Cmd_AddMallocCommand)
@@ -2353,6 +2352,7 @@ void HwDLL::FindStuff()
 					EngineDevWarning("[hw dll] Could not find " #future_name ".\n"); \
 				} \
 			}
+		GET_FUTURE(Cmd_FindCmd);
 		GET_FUTURE(Host_FilterTime);
 		GET_FUTURE(V_FadeAlpha);
 		GET_FUTURE(V_ApplyShake);

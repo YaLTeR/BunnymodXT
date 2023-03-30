@@ -6995,7 +6995,17 @@ void HwDLL::SaveInitialDataToDemo()
 	}
 
 	auto &hw = HwDLL::GetInstance();
-	lastRecordedHealth = static_cast<int>((*hw.sv_player)->v.health);
+
+	edict_t *edicts;
+	GetEdicts(&edicts);
+	int num = 1;
+	edict_t *ent = edicts + num;
+	bool is_ent_failed = CheckIfEntityIsValidAndPlayer(ent, num, true, false);
+
+	if (is_ent_failed)
+		lastRecordedHealth = 0;
+	else
+		lastRecordedHealth = static_cast<int>((*hw.sv_player)->v.health);
 
 	RuntimeData::Add(RuntimeData::PlayerHealth{lastRecordedHealth});
 
@@ -7173,7 +7183,16 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 	if (IsRecordingDemo())
 	{
-		int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
+		int playerhealth = 0; 
+
+		edict_t *edicts;
+		GetEdicts(&edicts);
+		int num = 1;
+		edict_t *ent = edicts + num;
+		bool is_ent_failed = CheckIfEntityIsValidAndPlayer(ent, num, true, false);
+
+		if (!is_ent_failed)
+			playerhealth = static_cast<int>((*hw.sv_player)->v.health);
 
 		if (playerhealth != lastRecordedHealth)
 			RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});

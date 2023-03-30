@@ -2967,7 +2967,7 @@ struct HwDLL::Cmd_BXT_CH_Set_Ammo_Primary
 			hw.GetEdicts(&edicts);
 
 			edict_t* ent = edicts + hw.player_index;
-			bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true);
+			bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true, true);
 			if (is_ent_failed)
 				return;
 
@@ -3013,7 +3013,7 @@ struct HwDLL::Cmd_BXT_CH_Set_Ammo_Secondary
 			hw.GetEdicts(&edicts);
 
 			edict_t* ent = edicts + hw.player_index;
-			bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true);
+			bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true, true);
 			if (is_ent_failed)
 				return;
 
@@ -3059,7 +3059,7 @@ struct HwDLL::Cmd_BXT_CH_Set_Ammo_Clip
 			hw.GetEdicts(&edicts);
 
 			edict_t* ent = edicts + hw.player_index;
-			bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true);
+			bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true, true);
 			if (is_ent_failed)
 				return;
 
@@ -3167,7 +3167,7 @@ struct HwDLL::Cmd_BXT_CH_Client_Set_Armor
 		hw.GetEdicts(&edicts);
 
 		edict_t* ent = edicts + num;
-		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false, true);
 		if (is_ent_failed)
 			return;
 
@@ -3212,7 +3212,7 @@ struct HwDLL::Cmd_BXT_CH_Client_Set_Velocity
 		hw.GetEdicts(&edicts);
 
 		edict_t* ent = edicts + num;
-		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false, true);
 		if (is_ent_failed)
 			return;
 
@@ -3270,7 +3270,7 @@ struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 		hw.GetEdicts(&edicts);
 
 		edict_t* ent = edicts + num;
-		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false, true);
 		if (is_ent_failed)
 			return;
 
@@ -3285,7 +3285,7 @@ void HwDLL::TeleportMonsterToPosition(float x, float y, float z, int index)
 	hw.GetEdicts(&edicts);
 	edict_t* ent = edicts + index;
 
-	bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, index, false);
+	bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, index, false, true);
 	if (is_ent_failed)
 		return;
 
@@ -3347,7 +3347,7 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 		hw.GetEdicts(&edicts);
 
 		edict_t* ent = edicts + num;
-		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false, true);
 		if (is_ent_failed)
 			return;
 
@@ -3390,7 +3390,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.GetEdicts(&edicts);
 
 		edict_t* ent = edicts + hw.player_index;
-		bool is_ent_player_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true);
+		bool is_ent_player_failed = hw.CheckIfEntityIsValidAndPlayer(ent, hw.player_index, true, true);
 		if (is_ent_player_failed)
 			return;
 
@@ -4496,7 +4496,7 @@ struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 		hw.GetEdicts(&edicts);
 
 		const edict_t *ent = edicts + num;
-		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false, true);
 		if (is_ent_failed)
 			return;
 
@@ -4546,7 +4546,7 @@ void HwDLL::GetOriginOfEntity(Vector& origin, const edict_t* ent)
 		origin = ent->v.origin;
 }
 
-bool HwDLL::CheckIfEntityIsValidAndPlayer(const edict_t* ent, int ent_number, bool check_for_player)
+bool HwDLL::CheckIfEntityIsValidAndPlayer(const edict_t* ent, int ent_number, bool check_for_player, bool print_message)
 {
 	auto& hw = HwDLL::GetInstance();
 	edict_t* edicts;
@@ -4562,7 +4562,8 @@ bool HwDLL::CheckIfEntityIsValidAndPlayer(const edict_t* ent, int ent_number, bo
 			}
 			else if (check_for_player)
 			{
-				hw.ORIG_Con_Printf("Error: entity with index %d is not player!\n", ent_number);
+				if (print_message)
+					hw.ORIG_Con_Printf("Error: entity with index %d is not player!\n", ent_number);
 				return true;
 			}
 			else
@@ -4572,13 +4573,15 @@ bool HwDLL::CheckIfEntityIsValidAndPlayer(const edict_t* ent, int ent_number, bo
 		}
 		else
 		{
-			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", ent_number);
+			if (print_message)
+				hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", ent_number);
 			return true;
 		}
 	}
 	else
 	{
-		hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", ent_number, numEdicts);
+		if (print_message)
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", ent_number, numEdicts);
 		return true;
 	}
 
@@ -4618,12 +4621,12 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 		hw.GetEdicts(&edicts);
 
 		const edict_t *ent = edicts + num;
-		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false);
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, false, true);
 		if (is_ent_failed)
 			return;
 
 		edict_t* ent_player = edicts + hw.player_index;
-		bool is_ent_player_failed = hw.CheckIfEntityIsValidAndPlayer(ent_player, hw.player_index, true);
+		bool is_ent_player_failed = hw.CheckIfEntityIsValidAndPlayer(ent_player, hw.player_index, true, true);
 		if (is_ent_player_failed)
 			return;
 
@@ -6861,7 +6864,7 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 		GetEdicts(&edicts);
 		int num = 1;
 		edict_t *ent = edicts + num;
-		bool is_ent_failed = CheckIfEntityIsValidAndPlayer(ent, num, true);
+		bool is_ent_failed = CheckIfEntityIsValidAndPlayer(ent, num, true, false);
 		if (is_ent_failed)
 		{
 			stamina = 0.0f;

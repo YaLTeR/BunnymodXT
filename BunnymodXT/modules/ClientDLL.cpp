@@ -443,6 +443,7 @@ void ClientDLL::FindStuff()
 			case 13: // CStrike-Latest
 			case 14: // CoF-5936
 			case 15: // CoF-Mod-155
+			case 17: // Sven-v525
 				offpCurrentEntity = 48;
 				offpStudioHeader = 68;
 				break;
@@ -481,6 +482,7 @@ void ClientDLL::FindStuff()
 				offVectorTransform = 97;
 				break;
 			case 7: // CoF-5936
+			case 10: // Sven-v525
 				offVectorTransform = 77;
 				break;
 			case 8: // CoF-Mod-155
@@ -1636,10 +1638,14 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 {
 	ORIG_HUD_Frame(time);
 
+	auto& hw = HwDLL::GetInstance();
 	static bool check_forcehltv = true;
 	if (check_forcehltv) {
 		check_forcehltv = false;
-		orig_forcehltv_found = HwDLL::GetInstance().ORIG_Cmd_FindCmd("dem_forcehltv");
+		if (hw.ORIG_Cmd_FindCmd)
+			orig_forcehltv_found = hw.ORIG_Cmd_FindCmd("dem_forcehltv");
+		else if (hw.ORIG_Cmd_Exists)
+			orig_forcehltv_found = hw.ORIG_Cmd_Exists("dem_forcehltv");
 	}
 
 	#ifdef _WIN32

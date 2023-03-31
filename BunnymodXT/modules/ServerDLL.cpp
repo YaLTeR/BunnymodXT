@@ -850,7 +850,6 @@ void ServerDLL::FindStuff()
 	auto fCoF_CBasePlayer__GiveNamedItem = FindAsync(ORIG_CoF_CBasePlayer__GiveNamedItem, patterns::server::CoF_CBasePlayer__GiveNamedItem);
 	auto fShiftMonsters = FindAsync(ORIG_ShiftMonsters, patterns::server::ShiftMonsters);
 	auto fCBasePlayer__ViewPunch = FindAsync(ORIG_CBasePlayer__ViewPunch, patterns::server::CBasePlayer__ViewPunch);
-	auto fCBasePlayer__Jump = FindAsync(ORIG_CBasePlayer__Jump, patterns::server::CBasePlayer__Jump);
 	auto fCBaseDoor__DoorActivate = FindAsync(ORIG_CBaseDoor__DoorActivate, patterns::server::CBaseDoor__DoorActivate);
 
 	uintptr_t pDispatchRestore;
@@ -910,6 +909,20 @@ void ServerDLL::FindStuff()
 				break;
 			default:
 				assert(false);
+			}
+		});
+
+	auto fCBasePlayer__Jump = FindAsync(
+		ORIG_CBasePlayer__Jump,
+		patterns::server::CBasePlayer__Jump,
+		[&](auto pattern) {
+			auto f = reinterpret_cast<uintptr_t>(ORIG_CBasePlayer__Jump);
+			switch (pattern - patterns::server::CBasePlayer__Jump.cbegin()) {
+			case 11: // Sven-v525
+				offm_afButtonPressed = *reinterpret_cast<ptrdiff_t*>(f + 0x31);
+				break;
+			default:
+				break;
 			}
 		});
 
@@ -1111,6 +1124,21 @@ void ServerDLL::FindStuff()
 					size_CNode = 0x60;
 				else
 					size_CNode = 0x58;
+				break;
+			case 9: // Sven-v525
+				offm_pNodes = 0x8;
+				offm_vecOrigin = 0x00;
+				offm_cNodes = 0x14;
+				size_CNode = 0x60;
+				// ForceClientDllUpdate is inline on Windows, so we find other offsets here for Sven Co-op.
+				maxAmmoSlots = 64;
+				offFuncIsPlayer = 0xD4;
+				offFuncCenter = 0x11C;
+				offFuncObjectCaps = 0x24;
+				//offm_rgAmmoLast = 0x;
+				//offm_iPrimaryAmmoType = 0x;
+				//offm_pClientActiveItem = 0x;
+				//offm_CMultiManager_index = 0x;
 				break;
 			default:
 				assert(false);

@@ -84,6 +84,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(qboolean, __cdecl, Cvar_Command)
 	HOOK_DECL(qboolean, __cdecl, Cvar_CommandWithPrivilegeCheck, qboolean bIsPrivileged)
 	HOOK_DECL(void, __cdecl, R_ForceCvars, qboolean mp)
+	HOOK_DECL(void, __cdecl, GL_EndRendering)
 
 	struct cmdbuf_t
 	{
@@ -377,6 +378,8 @@ public:
 	_Host_Notarget_f ORIG_Host_Notarget_f;
 	typedef void(__cdecl* _Host_Noclip_f) ();
 	_Host_Noclip_f ORIG_Host_Noclip_f;
+	typedef qboolean(__cdecl *_Cmd_Exists) (const char* cmd_name);
+	_Cmd_Exists ORIG_Cmd_Exists;
 
 	HLStrafe::PlayerData GetPlayerData();
 
@@ -409,6 +412,8 @@ protected:
 	_SCR_DrawPause ORIG_SCR_DrawPause;
 	typedef void(__cdecl *_GL_BuildLightmaps) ();
 	_GL_BuildLightmaps ORIG_GL_BuildLightmaps;
+	typedef void(__cdecl *_VID_FlipScreen) ();
+	_VID_FlipScreen ORIG_VID_FlipScreen;
 
 	void FindStuff();
 
@@ -580,6 +585,7 @@ protected:
 	studiohdr_t **pstudiohdr;
 	float *scr_fov_value;
 	ptrdiff_t pHost_FilterTime_FPS_Cap_Byte;
+	ptrdiff_t pGL_EndRendering_VID_FlipScreen_Bytes;
 	qboolean *cofSaveHack; // Cry of Fear-specific
 
 	int framesTillExecuting;

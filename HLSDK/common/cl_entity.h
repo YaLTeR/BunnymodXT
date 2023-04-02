@@ -68,7 +68,7 @@ typedef struct cl_entity_s cl_entity_t;
 #include "entity_state.h"
 #endif
 
-
+//TODO: reverse-engineering that struct for HLSDK 1.0 builds because I'm sure that it is differs
 struct cl_entity_s
 {
 	int						index;      // Index into cl_entities ( should match actual slot, but not necessarily )

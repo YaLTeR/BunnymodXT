@@ -26,6 +26,50 @@
 //  entities that is sent to a client.
 typedef struct entity_state_s entity_state_t;
 
+
+#ifdef SDK10_BUILD
+struct entity_state_s
+{
+	int     entityType;  // Normal or Custom to know how to parse the entity.
+	int     number;      // Index into cl_entities array for this entity.
+	int     flags;       // The delta compression bit header.
+
+	vec3_t	origin;
+	vec3_t	angles;
+
+	int		modelindex;
+	int		sequence;
+	float	frame;
+	int		colormap;
+	short	skin;
+	short	solid;
+	int		effects;
+	float	scale;
+	
+	// render information
+	int		rendermode;
+	int		renderamt;
+	color24	rendercolor;
+	int		renderfx;
+
+	// Added for entity delta compression
+	//vec3_t  msg_origins[2];
+	//vec3_t  msg_angles[2];
+
+	int     movetype;
+	float   animtime;
+	float   framerate;
+	int     body;
+	byte    controller[4];
+	byte    blending[4];
+	vec3_t	velocity;
+
+	vec3_t  mins;    // Send bbox down to client for use during prediction.
+	vec3_t  maxs;
+
+	int		aiment;
+};
+#else
 struct entity_state_s
 {
 // Fields which are filled in by routines outside of delta compression
@@ -121,6 +165,7 @@ struct entity_state_s
 	vec3_t		vuser3;
 	vec3_t		vuser4;
 };
+#endif
 
 #define MAX_PHYSINFO_STRING 256
 typedef struct clientdata_s

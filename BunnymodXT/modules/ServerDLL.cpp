@@ -38,7 +38,7 @@ extern "C" void __cdecl _ZN10CBreakable3DieEv(void* thisptr)
 
 extern "C" void __cdecl _Z11FireTargetsPKcP11CBaseEntityS2_8USE_TYPEf(char* targetName, void* pActivator, void* pCaller, int useType, float value)
 {
-     return ServerDLL::HOOKED_FireTargets_Linux(targetName, pActivator, pCaller, useType, value);
+     return ServerDLL::HOOKED_FireTargets(targetName, pActivator, pCaller, useType, value);
 }
 
 extern "C" int __cdecl _Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh(struct entity_state_s* state, int e, edict_t* ent, edict_t* host, int hostflags, int player, unsigned char* pSet)
@@ -91,6 +91,11 @@ extern "C" Vector __cdecl _ZN11CBaseEntity17FireBulletsPlayerEj6VectorS0_S0_fiii
 	return ServerDLL::HOOKED_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 }
 
+extern "C" void __cdecl _ZN11CBasePlayer4JumpEv(void* thisptr)
+{
+	return ServerDLL::HOOKED_CBasePlayer__Jump_Linux(thisptr);
+}
+
 extern "C" void __cdecl _Z15PlayerPostThinkP7edict_s(edict_t* pEntity)
 {
 	return ServerDLL::HOOKED_PlayerPostThink(pEntity);
@@ -126,6 +131,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CNihilanth__DyingThink, HOOKED_CNihilanth__DyingThink,
 			ORIG_COFGeneWorm__DyingThink, HOOKED_COFGeneWorm__DyingThink,
 			ORIG_CApache__DyingThink, HOOKED_CApache__DyingThink,
+			ORIG_COsprey__DyingThink, HOOKED_COsprey__DyingThink,
 			ORIG_CBreakable__Die, HOOKED_CBreakable__Die,
 			ORIG_CBaseDoor__DoorActivate, HOOKED_CBaseDoor__DoorActivate,
 			ORIG_CBaseDoor__DoorGoUp, HOOKED_CBaseDoor__DoorGoUp,
@@ -155,7 +161,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch,
 			ORIG_ShiftMonsters, HOOKED_ShiftMonsters,
 			ORIG_PM_Duck, HOOKED_PM_Duck,
-			ORIG_PM_UnDuck, HOOKED_PM_UnDuck);
+			ORIG_PM_UnDuck, HOOKED_PM_UnDuck,
+			ORIG_FireTargets, HOOKED_FireTargets);
 	}
 }
 
@@ -177,6 +184,7 @@ void ServerDLL::Unhook()
 			ORIG_CNihilanth__DyingThink,
 			ORIG_COFGeneWorm__DyingThink,
 			ORIG_CApache__DyingThink,
+			ORIG_COsprey__DyingThink,
 			ORIG_CBreakable__Die,
 			ORIG_CBaseDoor__DoorActivate,
 			ORIG_CBaseDoor__DoorGoUp,
@@ -206,7 +214,8 @@ void ServerDLL::Unhook()
 			ORIG_CTriggerEndSection__EndSectionTouch,
 			ORIG_ShiftMonsters,
 			ORIG_PM_Duck,
-			ORIG_PM_UnDuck);
+			ORIG_PM_UnDuck,
+			ORIG_FireTargets);
 	}
 
 	Clear();
@@ -231,6 +240,7 @@ void ServerDLL::Clear()
 	ORIG_COFGeneWorm__DyingThink = nullptr;
 	ORIG_COFGeneWorm__DyingThink_Linux = nullptr;
 	ORIG_CApache__DyingThink = nullptr;
+	ORIG_COsprey__DyingThink = nullptr;
 	ORIG_CBreakable__Die = nullptr;
 	ORIG_CBreakable__Die_Linux = nullptr;
 	ORIG_CBaseDoor__DoorActivate = nullptr;
@@ -238,7 +248,7 @@ void ServerDLL::Clear()
 	ORIG_CBaseDoor__DoorHitTop = nullptr;
 	ORIG_CBaseMonster__Killed = nullptr;
 	ORIG_CMultiManager__ManagerThink = nullptr;
-	ORIG_FireTargets_Linux = nullptr;
+	ORIG_FireTargets = nullptr;
 	ORIG_AddToFullPack = nullptr;
 	ORIG_CTriggerVolume__Spawn = nullptr;
 	ORIG_CTriggerVolume__Spawn_Linux = nullptr;
@@ -272,6 +282,7 @@ void ServerDLL::Clear()
 	ORIG_CBaseButton__ButtonTriggerAndWait = nullptr;
 	ORIG_CBasePlayer__ViewPunch = nullptr;
 	ORIG_CBasePlayer__Jump = nullptr;
+	ORIG_CBasePlayer__Jump_Linux = nullptr;
 	ORIG_CTriggerEndSection__EndSectionUse = nullptr;
 	ORIG_CTriggerEndSection__EndSectionTouch = nullptr;
 	ORIG_ShiftMonsters = nullptr;
@@ -782,6 +793,14 @@ void ServerDLL::FindStuff()
 				offFuncObjectCaps = 0x18;
 				offm_afButtonPressed = 0x6E4;
 				break;
+			case 41: // HL-1202
+				offm_rgAmmoLast = 0x508;
+				offm_iClientFOV = 0x460;
+				break;
+			case 42: // BShift-WON-1001
+				offm_rgAmmoLast = 0x50C;
+				offm_iClientFOV = 0x464;
+				break;
 			default:
 				assert(false);
 			}
@@ -851,6 +870,7 @@ void ServerDLL::FindStuff()
 	auto fShiftMonsters = FindAsync(ORIG_ShiftMonsters, patterns::server::ShiftMonsters);
 	auto fCBasePlayer__ViewPunch = FindAsync(ORIG_CBasePlayer__ViewPunch, patterns::server::CBasePlayer__ViewPunch);
 	auto fCBaseDoor__DoorActivate = FindAsync(ORIG_CBaseDoor__DoorActivate, patterns::server::CBaseDoor__DoorActivate);
+	auto fFireTargets = FindAsync(ORIG_FireTargets, patterns::server::FireTargets);
 
 	uintptr_t pDispatchRestore;
 	auto fDispatchRestore = FindAsync(
@@ -887,6 +907,11 @@ void ServerDLL::FindStuff()
 				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity - 0x1a1);
 				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity + 0x2b);
 				break;
+			case 4: // HL-1202
+				offNihilanthLevel = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity + 0x42);
+				offNihilanthIrritation = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity - 0x1ce);
+				offNihilanthRecharger = *reinterpret_cast<ptrdiff_t *>(pMiddleOfCNihilanth__NextActivity + 0x2d);
+				break;
 			default:
 				assert(false);
 			}
@@ -906,6 +931,9 @@ void ServerDLL::FindStuff()
 				break;
 			case 2: // Half-Payne
 				offNihilanthSpheres = *reinterpret_cast<ptrdiff_t *>(pCNihilanth__EmitSphere + 0x1a);
+				break;
+			case 3: // HL-1202
+				offNihilanthSpheres = *reinterpret_cast<ptrdiff_t *>(pCNihilanth__EmitSphere + 0x16);
 				break;
 			default:
 				assert(false);
@@ -1117,6 +1145,7 @@ void ServerDLL::FindStuff()
 			case 6: // HL-SWEET
 			case 7: // Reissues
 			case 8: // CoF-5936
+			case 10: // HL-1202
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;
@@ -1335,28 +1364,37 @@ void ServerDLL::FindStuff()
 	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move"));
 	ORIG_PlayerPostThink = reinterpret_cast<_PlayerPostThink>(MemUtils::GetSymbolAddress(m_Handle, "_Z15PlayerPostThinkP7edict_s"));
 
-	if (ORIG_CmdStart && ORIG_AddToFullPack && ORIG_ClientCommand && ORIG_PM_Move && ORIG_PlayerPostThink) {
-		EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
-		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+	if (ORIG_ClientCommand && ORIG_PlayerPostThink && ORIG_PM_Move && ORIG_AddToFullPack && ORIG_CmdStart) {
 		EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
-		EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
 		EngineDevMsg("[server dll] Found PlayerPostThink at %p.\n", ORIG_PlayerPostThink);
+		EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
+		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+		EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
 	} else {
 		ORIG_GetEntityAPI = reinterpret_cast<_GetEntityAPI>(MemUtils::GetSymbolAddress(m_Handle, "GetEntityAPI"));
 		if (ORIG_GetEntityAPI) {
 			DLL_FUNCTIONS funcs;
-			if (ORIG_GetEntityAPI(&funcs, 140)) {
+			if (ORIG_GetEntityAPI(&funcs, INTERFACE_VERSION)) {
 				// Gets our hooked addresses on Windows.
-				ORIG_CmdStart = funcs.pfnCmdStart;
-				ORIG_AddToFullPack = funcs.pfnAddToFullPack;
 				ORIG_ClientCommand = funcs.pfnClientCommand;
-				ORIG_PM_Move = funcs.pfnPM_Move;
 				ORIG_PlayerPostThink = funcs.pfnPlayerPostThink;
-				EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
-				EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
 				EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
-				EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
 				EngineDevMsg("[server dll] Found PlayerPostThink at %p.\n", ORIG_PlayerPostThink);
+				if (INTERFACE_VERSION == 140)
+				{
+					ORIG_PM_Move = funcs.pfnPM_Move;
+					ORIG_AddToFullPack = funcs.pfnAddToFullPack;
+					ORIG_CmdStart = funcs.pfnCmdStart;
+					EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
+					EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+					EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
+				}
+				else
+				{
+					EngineDevWarning("[server dll] Could not find PM_Move.\n");
+					EngineDevWarning("[server dll] Could not find AddToFullPack.\n");
+					EngineDevWarning("[server dll] Could not find CmdStart.\n");
+				}
 			} else {
 				EngineDevWarning("[server dll] Could not get the server DLL function table.\n");
 				EngineWarning("Serverside shared RNG manipulation and usercommand logging are not available.\n");
@@ -1408,6 +1446,13 @@ void ServerDLL::FindStuff()
 	} else {
 		EngineDevWarning("[server dll] Could not find CApache::DyingThink.\n");
 		EngineWarning("They Hunger Episode 3 automatic timer stopping is not available.\n");
+	}
+
+	ORIG_COsprey__DyingThink = reinterpret_cast<_COsprey__DyingThink>(MemUtils::GetSymbolAddress(m_Handle, "?DyingThink@COsprey@@QAEXXZ"));
+	if (ORIG_COsprey__DyingThink) {
+		EngineDevMsg("[server dll] Found COsprey::DyingThink at %p.\n", ORIG_COsprey__DyingThink);
+	} else {
+		EngineDevWarning("[server dll] Could not find COsprey::DyingThink.\n");
 	}
 
 	ORIG_CBreakable__Die = reinterpret_cast<_CBreakable__Die>(MemUtils::GetSymbolAddress(m_Handle, "?Die@CBreakable@@QAEXXZ"));
@@ -1462,13 +1507,20 @@ void ServerDLL::FindStuff()
 	if (ORIG_CMultiManager__ManagerThink) {
 		EngineDevMsg("[server dll] Found CMultiManager::ManagerThink at %p.\n", ORIG_CMultiManager__ManagerThink);
 	} else {
-		// https://github.com/YaLTeR/BunnymodXT/issues/63 <- because of this issue FireTargets is hooked on Linux instead, which is what MM::Think calls anyway
-		ORIG_FireTargets_Linux = reinterpret_cast<_FireTargets_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_Z11FireTargetsPKcP11CBaseEntityS2_8USE_TYPEf"));
-		if (ORIG_FireTargets_Linux)
-			EngineDevMsg("[server dll] Found FireTargets [Linux] at %p.\n", ORIG_FireTargets_Linux);
-		else {
-			EngineDevWarning("[server dll] Could not find FireTargets or CMultiManager::ManagerUse.\n");
-			EngineWarning("Blue Shift and Gunman Chronicles automatic timer stopping is not available.\n");
+		EngineDevWarning("[server dll] Could not find CMultiManager::ManagerUse.\n");
+	}
+
+	{
+		auto pattern = fFireTargets.get();
+		if (ORIG_FireTargets) {
+			EngineDevMsg("[server dll] Found FireTargets at %p (using the %s pattern).\n", ORIG_FireTargets, pattern->name());
+		} else {
+			ORIG_FireTargets = reinterpret_cast<_FireTargets>(MemUtils::GetSymbolAddress(m_Handle, "_Z11FireTargetsPKcP11CBaseEntityS2_8USE_TYPEf"));
+			if (ORIG_FireTargets) {
+				EngineDevMsg("[server dll] Found FireTargets [Linux] at %p.\n", ORIG_FireTargets);
+			} else {
+				EngineDevWarning("[server dll] Could not find FireTargets.\n");
+			}
 		}
 	}
 
@@ -1606,7 +1658,11 @@ void ServerDLL::FindStuff()
 		if (ORIG_CBasePlayer__Jump) {
 			EngineDevMsg("[server dll] Found CBasePlayer::Jump at %p (using the %s pattern).\n", ORIG_CBasePlayer__Jump, pattern->name());
 		} else {
-			EngineDevWarning("[server dll] Could not find CBasePlayer::Jump.\n");
+			ORIG_CBasePlayer__Jump_Linux = reinterpret_cast<_CBasePlayer__Jump_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer4JumpEv"));
+			if (ORIG_CBasePlayer__Jump_Linux)
+				EngineDevMsg("[server dll] Found CBasePlayer::Jump [Linux] at %p.\n", ORIG_CBasePlayer__Jump_Linux);
+			else
+				EngineDevWarning("[server dll] Could not find CBasePlayer::Jump.\n");
 		}
 	}
 
@@ -1669,12 +1725,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 	}
 	if (!ORIG_PM_PreventMegaBunnyJumping && !pBhopcapWindows)
 		HwDLL::GetInstance().SetCVarValue(CVars::bxt_bhopcap, "0");
-	if (ORIG_AddToFullPack) {
-		REG(bxt_show_hidden_entities);
-		REG(bxt_show_triggers_legacy);
-		REG(bxt_show_triggers_legacy_alpha);
+	if (pAddToFullPack_PVS_Byte)
 		REG(bxt_render_far_entities);
-	}
 	if (ORIG_PM_CheckStuck)
 		REG(bxt_fire_on_stuck);
 	if (ORIG_CTriggerSave__SaveTouch || ORIG_CTriggerSave__SaveTouch_Linux)
@@ -1685,9 +1737,14 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_disable_changelevel);
 	if (ORIG_PM_PlayerMove)
 		REG(bxt_force_duck);
-	if (ORIG_PM_PlayerMove && ORIG_PM_Jump)
+	if (ORIG_PM_PlayerMove && ORIG_PM_Jump && (ORIG_CBasePlayer__Jump || ORIG_CBasePlayer__Jump_Linux))
 		REG(bxt_force_jumpless);
-	if (ORIG_CMultiManager__ManagerThink || ORIG_FireTargets_Linux) {
+	/*
+	if (ORIG_FireTargets)
+	{
+	}
+	*/
+	if (ORIG_CMultiManager__ManagerThink || ORIG_FireTargets) {
 		REG(bxt_fire_on_mm_targetname);
 		REG(bxt_fire_on_mm_command);
 	}
@@ -1709,7 +1766,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_cof_disable_viewpunch_from_jump);
 	if (ORIG_ShiftMonsters && is_cof)
 		REG(bxt_cof_disable_monsters_teleport_to_spawn_after_load);
-	if (ORIG_CBasePlayer__Jump && offm_afButtonPressed)
+	if ((ORIG_CBasePlayer__Jump || ORIG_CBasePlayer__Jump_Linux) && offm_afButtonPressed)
 		REG(bxt_autojump_fix);
 
 	REG(bxt_splits_print);
@@ -1937,7 +1994,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 			std::ostringstream ss;
 			ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
 
-			hwDLL.ORIG_Cbuf_InsertText(ss.str().c_str());
+			hwDLL.InsertText(ss.str().c_str());
 		}
 		not_stuck_prev_frame = !stuck_cur_frame;
 	}
@@ -1957,22 +2014,9 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	origin =   reinterpret_cast<float*>(pmove + offOrigin);
 	angles =   reinterpret_cast<float*>(pmove + offAngles);
 	usercmd_t *cmd = reinterpret_cast<usercmd_t*>(pmove + offCmd);
-	int *flags = reinterpret_cast<int*>(pmove + offFlags);
-
-	static bool reset_waterjump_flag = false;
 
 	if (CVars::bxt_force_jumpless.GetBool())
-	{
 		cmd->buttons &= ~IN_JUMP;
-		*flags |= FL_WATERJUMP;
-		reset_waterjump_flag = true;
-	}
-
-	if (!CVars::bxt_force_jumpless.GetBool() && reset_waterjump_flag)
-	{
-		*flags &= ~FL_WATERJUMP;
-		reset_waterjump_flag = false;
-	}
 
 	if (CVars::bxt_force_duck.GetBool())
 		cmd->buttons |= IN_DUCK;
@@ -2169,28 +2213,60 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 
 HOOK_DEF_2(ServerDLL, void, __fastcall, CNihilanth__DyingThink, void*, thisptr, int, edx)
 {
-	DoAutoStopTasks();
+	if (HwDLL::GetInstance().ppGlobals) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->targetname) {
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+			if (!std::strcmp(targetname, "nihilanth")) {
+				DoAutoStopTasks();
+			}
+		}
+	}
 
 	return ORIG_CNihilanth__DyingThink(thisptr, edx);
 }
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, CNihilanth__DyingThink_Linux, void*, thisptr)
 {
-	DoAutoStopTasks();
+	if (HwDLL::GetInstance().ppGlobals) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->targetname) {
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+			if (!std::strcmp(targetname, "nihilanth")) {
+				DoAutoStopTasks();
+			}
+		}
+	}
 
 	return ORIG_CNihilanth__DyingThink_Linux(thisptr);
 }
 
 HOOK_DEF_2(ServerDLL, void, __fastcall, COFGeneWorm__DyingThink, void*, thisptr, int, edx)
 {
-	DoAutoStopTasks();
+	if (HwDLL::GetInstance().ppGlobals) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->targetname) {
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+			if (!std::strcmp(targetname, "anthony")) {
+				DoAutoStopTasks();
+			}
+		}
+	}
 
 	return ORIG_COFGeneWorm__DyingThink(thisptr, edx);
 }
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, COFGeneWorm__DyingThink_Linux, void*, thisptr)
 {
-	DoAutoStopTasks();
+	if (HwDLL::GetInstance().ppGlobals) {
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		if (pev && pev->targetname) {
+			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
+			if (!std::strcmp(targetname, "anthony")) {
+				DoAutoStopTasks();
+			}
+		}
+	}
 
 	return ORIG_COFGeneWorm__DyingThink_Linux(thisptr);
 }
@@ -2208,6 +2284,11 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 	}
 
 	return ORIG_CApache__DyingThink(thisptr);
+}
+
+HOOK_DEF_1(ServerDLL, void, __fastcall, COsprey__DyingThink, void*, thisptr)
+{
+	return ORIG_COsprey__DyingThink(thisptr);
 }
 
 HOOK_DEF_2(ServerDLL, void, __fastcall, CBreakable__Die, void*, thisptr, int, edx)
@@ -2324,7 +2405,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 	return ORIG_CMultiManager__ManagerThink(thisptr, edx);
 }
 
-HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*, pActivator, void*, pCaller, int, useType, float, value)
+HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets, char*, targetName, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
 	if (HwDLL::GetInstance().ppGlobals && targetName != NULL && pCaller) {
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
@@ -2333,7 +2414,7 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->classname;
 			// We first need to check if the pCaller is a multi_manager since FireTargets can be called by anyone
-			if (!std::strcmp(classname, "multi_manager")) {
+			if (!std::strcmp(classname, "multi_manager") && !ORIG_CMultiManager__ManagerThink) {
 				OnMultiManagerFired(targetname);
 			} else {
 				// Fire any splitter that matches this fired entity's name
@@ -2342,7 +2423,7 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 		}
 	}
 
-	return ORIG_FireTargets_Linux(targetName, pActivator, pCaller, useType, value);
+	return ORIG_FireTargets(targetName, pActivator, pCaller, useType, value);
 }
 
 void ServerDLL::OnMultiManagerFired(const char *targetname)
@@ -2379,7 +2460,7 @@ void ServerDLL::OnMultiManagerFired(const char *targetname)
 			std::ostringstream ss;
 			ss << CVars::bxt_fire_on_mm_command.GetString().c_str() << "\n";
 
-			HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+			HwDLL::GetInstance().InsertText(ss.str().c_str());
 		}
 	}
 
@@ -2510,8 +2591,11 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldRenderAmount = ent->v.renderamt;
 	auto oldRenderFx = ent->v.renderfx;
 	auto oldFlags = ent->v.flags;
+
+	#ifndef SDK10_BUILD
 	auto oldIUser1 = ent->v.iuser1;
 	auto oldIUser2 = ent->v.iuser2;
+	#endif
 
 	static bool is_0x75 = false;
 
@@ -2534,12 +2618,14 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 		}
 	}
 
+	#ifndef SDK10_BUILD
 	if (ClientDLL::GetInstance().DoesGameDirContain("czeror") && CVars::bxt_render_far_entities.GetBool())
 	{
 		ent->v.flags |= FL_IMMUNE_LAVA; // Because the PVS check in AddToFullPack points to '524288' flags bit
 		ent->v.iuser1 = 1; // Similar to above explanation
 		ent->v.iuser2 = 1; // Mappers used on some entities 'nopvs = 1' keyvalue, which is 'iuser2 = 1` in game code
 	}
+	#endif
 
 	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && spirit_sdk))
 		ent->v.renderfx = 22; // kRenderFxEntInPVS from Spirit SDK
@@ -2591,8 +2677,12 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	ent->v.renderamt = oldRenderAmount;
 	ent->v.renderfx = oldRenderFx;
 	ent->v.flags = oldFlags;
+
+
+	#ifndef SDK10_BUILD
 	ent->v.iuser1 = oldIUser1;
 	ent->v.iuser2 = oldIUser2;
+	#endif
 
 	return ret;
 }
@@ -3178,7 +3268,7 @@ HOOK_DEF_6(ServerDLL, void, __fastcall, CBaseButton__ButtonUse, void*, thisptr, 
 						std::ostringstream ss;
 						ss << CVars::bxt_fire_on_button_command.GetString().c_str() << "\n";
 
-						HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+						HwDLL::GetInstance().InsertText(ss.str().c_str());
 					}
 				}
 			}
@@ -3296,6 +3386,9 @@ HOOK_DEF_5(ServerDLL, void, __fastcall, CBasePlayer__ViewPunch, void*, thisptr, 
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__Jump, void*, thisptr)
 {
+	if (CVars::bxt_force_jumpless.GetBool())
+		return;
+
 	int *afButtonPressed;
 	int orig_afButtonPressed;
 	bool return_orig_value = false;
@@ -3311,6 +3404,32 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__Jump, void*, thisptr)
 
 	insideCBasePlayerJump = true;
 	ORIG_CBasePlayer__Jump(thisptr);
+	insideCBasePlayerJump = false;
+	
+	if (return_orig_value)
+		*afButtonPressed = orig_afButtonPressed;
+}
+
+HOOK_DEF_1(ServerDLL, void, __cdecl, CBasePlayer__Jump_Linux, void*, thisptr)
+{
+	if (CVars::bxt_force_jumpless.GetBool())
+		return;
+
+	int *afButtonPressed;
+	int orig_afButtonPressed;
+	bool return_orig_value = false;
+
+	if (offm_afButtonPressed && CVars::bxt_autojump.GetBool() && (is_cof || CVars::bxt_autojump_fix.GetBool()))
+	{
+		afButtonPressed = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + offm_afButtonPressed);
+		orig_afButtonPressed = *afButtonPressed;
+		if (!(*afButtonPressed & IN_JUMP))
+			*afButtonPressed |= IN_JUMP;
+		return_orig_value = true;
+	}
+
+	insideCBasePlayerJump = true;
+	ORIG_CBasePlayer__Jump_Linux(thisptr);
 	insideCBasePlayerJump = false;
 	
 	if (return_orig_value)

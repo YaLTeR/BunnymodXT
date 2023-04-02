@@ -22,6 +22,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, COFGeneWorm__DyingThink, void* thisptr, int edx)
 	HOOK_DECL(void, __cdecl, COFGeneWorm__DyingThink_Linux, void* thisptr)
 	HOOK_DECL(void, __fastcall, CApache__DyingThink, void* thisptr)
+	HOOK_DECL(void, __fastcall, COsprey__DyingThink, void* thisptr)
 	HOOK_DECL(void, __fastcall, CBreakable__Die, void* thisptr, int edx)
 	HOOK_DECL(void, __cdecl, CBreakable__Die_Linux, void* thisptr)
 	HOOK_DECL(int, __fastcall, CBaseDoor__DoorActivate, void* thisptr, int edx)
@@ -29,7 +30,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CBaseDoor__DoorHitTop, void* thisptr)
 	HOOK_DECL(void, __fastcall, CBaseMonster__Killed, void* thisptr, int edx, entvars_t* pevAttacker, int iGib)
 	HOOK_DECL(void, __fastcall, CMultiManager__ManagerThink, void* thisptr, int edx)
-	HOOK_DECL(void, __cdecl, FireTargets_Linux, char* targetName, void* pActivator, void* pCaller, int useType, float value)
+	HOOK_DECL(void, __cdecl, FireTargets, char* targetName, void* pActivator, void* pCaller, int useType, float value)
 	HOOK_DECL(int, __cdecl, AddToFullPack, struct entity_state_s* state, int e, edict_t* ent, edict_t* host, int hostflags, int player, unsigned char* pSet)
 	HOOK_DECL(void, __fastcall, CTriggerVolume__Spawn, void* thisptr)
 	HOOK_DECL(void, __cdecl, CTriggerVolume__Spawn_Linux, void* thisptr)
@@ -59,6 +60,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, ShiftMonsters, Vector origin)
 	HOOK_DECL(void, __fastcall, CBasePlayer__ViewPunch, void* thisptr, int edx, float p, float y, float r)
 	HOOK_DECL(void, __fastcall, CBasePlayer__Jump, void* thisptr)
+	HOOK_DECL(void, __cdecl, CBasePlayer__Jump_Linux, void* thisptr)
 	HOOK_DECL(void, __cdecl, PlayerPostThink, edict_t* pEntity)
 
 public:

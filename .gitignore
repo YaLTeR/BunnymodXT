@@ -13,6 +13,10 @@
 [Rr]elease/
 x64/
 build/
+build_software/
+build_cof/
+build_sdk10/
+build_sdk10_software/
 build_release/
 [Bb]in/
 [Oo]bj/

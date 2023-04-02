@@ -15,11 +15,11 @@
 #ifndef EIFACE_H
 #define EIFACE_H
 
-#ifdef HLDEMO_BUILD
-#define INTERFACE_VERSION       001
-#else  // !HLDEMO_BUILD, i.e., regular version of HL
+#ifdef SDK10_BUILD
+#define INTERFACE_VERSION		138
+#else
 #define INTERFACE_VERSION		140
-#endif // !HLDEMO_BUILD
+#endif
 
 #include <stdio.h>
 #include "custom.h"
@@ -217,6 +217,8 @@ typedef struct enginefuncs_s
 	int			(*pfnIsDedicatedServer)		(void);// is this a dedicated server?
 	cvar_t		*(*pfnCVarGetPointer)		(const char *szVarName);
 	unsigned int (*pfnGetPlayerWONId)		(edict_t *e); // returns the server assigned WONid for this player.  useful for logging frags, etc.  returns -1 if the edict couldn't be found in the list of clients
+
+	// Functions below are present only in builds > 1202
 
 	// YWB 8/1/99 TFF Physics additions
 	void		(*pfnInfo_RemoveKey)		( char *s, const char *key );
@@ -434,7 +436,11 @@ typedef struct
 	void			(*pfnClientUserInfoChanged)( edict_t *pEntity, char *infobuffer );
 
 	void			(*pfnServerActivate)	( edict_t *pEdictList, int edictCount, int clientMax );
+	
+	// pfnServerDeactivate not exist in HLSDK 1.0 versions (pre-1.1.0.0 patches)
+	#ifndef SDK10_BUILD
 	void			(*pfnServerDeactivate)	( void );
+	#endif
 
 	void			(*pfnPlayerPreThink)	( edict_t *pEntity );
 	void			(*pfnPlayerPostThink)	( edict_t *pEntity );
@@ -453,6 +459,8 @@ typedef struct
 	void			(*pfnSpectatorConnect)		( edict_t *pEntity );
 	void			(*pfnSpectatorDisconnect)	( edict_t *pEntity );
 	void			(*pfnSpectatorThink)		( edict_t *pEntity );
+
+	// Functions below are present only in builds > 1202
 
 	// Notify game .dll that engine is going to shut down.  Allows mod authors to set a breakpoint.
 	void			(*pfnSys_Error)			( const char *error_string );

@@ -23,8 +23,15 @@ struct movevars_s
 	float   maxvelocity;       // maximum server velocity.
 	float	zmax;			   // Max z-buffer range (for GL)
 	float	waveHeight;		   // Water wave height (for GL)
+
+	#ifndef SDK10_BUILD
 	qboolean footsteps;        // Play footstep sounds
+	#endif
+
 	char	skyName[32];	   // Name of the sky map
+
+	// Variables below are present only in builds > 1202
+
 	float	rollangle;
 	float	rollspeed;
 	float	skycolor_r;			// Sky color

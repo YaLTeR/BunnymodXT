@@ -18,6 +18,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, LoadAndDecryptHwDLL, int a, void* b, void* c)
 	HOOK_DECL(void, __cdecl, Cbuf_Execute)
 	HOOK_DECL(void, __cdecl, Cbuf_AddText, const char* text)
+	HOOK_DECL(void, __cdecl, Cbuf_InsertText, const char* text)
 	HOOK_DECL(void, __cdecl, Cbuf_InsertTextLines, const char* text)
 	HOOK_DECL(void, __cdecl, Cmd_TokenizeString, char* text)
 	HOOK_DECL(void, __cdecl, SeedRandomNumberGenerator)
@@ -85,22 +86,34 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(qboolean, __cdecl, Cvar_CommandWithPrivilegeCheck, qboolean bIsPrivileged)
 	HOOK_DECL(void, __cdecl, R_ForceCvars, qboolean mp)
 	HOOK_DECL(void, __cdecl, GL_EndRendering)
+	HOOK_DECL(int, __cdecl, SV_AddToFullPack, struct entity_state_s* state, int e, unsigned char* pSet)
+	HOOK_DECL(void, __cdecl, CL_EmitEntities)
+	HOOK_DECL(void, __cdecl, V_RenderView)
 
-	struct cmdbuf_t
+	struct sizebuf_t
 	{
-		char *name;
-		unsigned flags;
-		char *data;
-		unsigned maxsize;
-		unsigned cursize;
+		char *buffername;
+		unsigned short flags;
+		char *data; // in fact it should be 'unsigned char *data' instead
+		unsigned maxsize; // in fact it should be 'int maxsize' instead
+		unsigned cursize; // in fact it should be 'int cursize' instead
 	};
 
-	struct svs_t
+	#ifdef SDK10_BUILD
+	struct server_static_t
 	{
-		char unk[4];
-		client_t *clients;
-		int num_clients;
+		int maxclients;
+		byte align[28684];
+		client_t *clients; // client_t
 	};
+	#else
+	struct server_static_t
+	{
+		qboolean dll_initialized;
+		client_t *clients; // client_t
+		int maxclients;
+	};
+	#endif
 
 	struct Key
 	{
@@ -133,7 +146,11 @@ class HwDLL : public IHookableNameFilterOrdered
 	{
 		inline static void AddCommand(const char *name, void (*handler)())
 		{
-			HwDLL::GetInstance().ORIG_Cmd_AddMallocCommand(name, handler, 2);  // 2 - Cmd_AddGameCommand.
+			#ifdef SDK10_BUILD
+				HwDLL::GetInstance().ORIG_Cmd_AddHUDCommand(name, handler);
+			#else
+				HwDLL::GetInstance().ORIG_Cmd_AddMallocCommand(name, handler, 2);  // 2 - Cmd_AddGameCommand.
+			#endif
 		}
 
 		inline static const char *Argv(int i)
@@ -212,13 +229,14 @@ public:
 	inline bool IsActive() { return (psv && *reinterpret_cast<int*>(psv)); }
 
 	inline bool IsRecordingDemo() const { return demorecording && *demorecording == 1; }
+	inline bool IsPlayingbackDemo() const { return demoplayback && *demoplayback == 1; }
 	void StoreCommand(const char* command);
 
 	inline double GetTime() const {
 		return *reinterpret_cast<double *>(reinterpret_cast<uintptr_t>(psv) + offTime);
 	}
 	inline edict_t* GetPlayerEdict() const {
-		if (!svs || svs->num_clients == 0)
+		if (!svs || svs->maxclients == 0)
 			return nullptr;
 
 		return *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
@@ -243,6 +261,10 @@ public:
 		return static_cast<float>(static_cast<float>(std::floor(*host_frametime * 1000)) * 0.001);
 	}
 
+	inline void InsertText(const char* text) {
+		HwDLL::GetInstance().ORIG_Cbuf_InsertText(text);
+	}
+
 	HLStrafe::TraceResult PlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull, bool extendDistanceLimit = false);
 	HLStrafe::TraceResult CameraTrace(float max_distance = 8192);
 
@@ -257,9 +279,6 @@ public:
 
 	double *frametime_remainder;
 	TASLogger::LogWriter logWriter;
-
-	typedef void(__cdecl *_Cbuf_InsertText) (const char* text);
-	_Cbuf_InsertText ORIG_Cbuf_InsertText;
 
 	TASEditorMode tas_editor_mode;
 	EditedInput tas_editor_input;
@@ -345,8 +364,11 @@ public:
 
 	bool Called_Timer = false;
 	bool steamid_build = false;
+	bool pause_cmds_missed_build = false;
 
 	bool is_cof_steam = false; // Cry of Fear-specific
+	bool is_sdk10 = false;
+	bool is_bshift_won = false;
 
 	bool set_default_player_index = true;
 	int player_index = 1;
@@ -356,8 +378,6 @@ public:
 
 	void TimerReset();
 	void TimerStart();
-
-	bool IsPlayingbackDemo();
 
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
@@ -380,6 +400,8 @@ public:
 	_Host_Noclip_f ORIG_Host_Noclip_f;
 	typedef qboolean(__cdecl *_Cmd_Exists) (const char* cmd_name);
 	_Cmd_Exists ORIG_Cmd_Exists;
+	typedef int(__cdecl* _Draw_String) (int x, int y, char* str);
+	_Draw_String ORIG_Draw_String;
 
 	HLStrafe::PlayerData GetPlayerData();
 
@@ -390,6 +412,8 @@ protected:
 	_Cvar_DirectSet ORIG_Cvar_DirectSet;
 	typedef void(__cdecl *_Cmd_AddMallocCommand) (const char* name, void(*func)(void), int flags);
 	_Cmd_AddMallocCommand ORIG_Cmd_AddMallocCommand;
+	typedef void(__cdecl *_Cmd_AddHUDCommand) (const char* name, void(*func)(void));
+	_Cmd_AddHUDCommand ORIG_Cmd_AddHUDCommand;
 	typedef int(__cdecl *_Cmd_Argc) ();
 	_Cmd_Argc ORIG_Cmd_Argc;
 	typedef char*(__cdecl *_Cmd_Args) ();
@@ -414,6 +438,10 @@ protected:
 	_GL_BuildLightmaps ORIG_GL_BuildLightmaps;
 	typedef void(__cdecl *_VID_FlipScreen) ();
 	_VID_FlipScreen ORIG_VID_FlipScreen;
+	typedef void(__cdecl *_Cmd_ForwardToServer) ();
+	_Cmd_ForwardToServer ORIG_Cmd_ForwardToServer;
+	typedef void(__cdecl *_MSG_WriteByte) (sizebuf_t* sb, int c);
+	_MSG_WriteByte ORIG_MSG_WriteByte;
 
 	void FindStuff();
 
@@ -524,6 +552,9 @@ protected:
 	struct Cmd_BXT_Splits_Place_Up;
 	struct Cmd_BXT_Splits_Place_Down;
 	struct Cmd_BXT_Get_SteamID_In_Demo;
+	struct Cmd_BXT_Test_Output;
+	struct Cmd_BXT_SetPause;
+	struct Cmd_BXT_UnPause;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();
@@ -532,6 +563,11 @@ protected:
 	void FindCVarsIfNeeded();
 	void PrintEntity(std::ostringstream &out, int index);
 	void TeleportMonsterToPosition(float x, float y, float z, int index);
+	void PauseGame(bool pause_state);
+
+	#ifdef _WIN32
+	void WinErrorIfWrongBXTVersion(LPCTSTR text);
+	#endif
 public:
 	HLStrafe::MovementVars GetMovementVars();
 	const char* GetMovetypeName(int moveType);
@@ -542,6 +578,20 @@ public:
 	bool ducktap;
 	edict_t **sv_player;
 	qboolean *noclip_anglehack;
+	void *pcl; // client_state_t
+	Vector *viewangles; // cl.viewangles
+	Vector *simorg; // cl.simorg
+	Vector *simvel; // cl.simvel
+	int* cl_paused; // cl.paused
+	cl_entity_t **cl_entities;
+	int *playernum; // cl.playernum
+	char *levelname; // cl.levelname
+	cl_entity_t *viewent; // cl.viewent
+	cl_entity_t **currententity;
+	void *cls; // client_static_t
+	void *psv; // server_t
+	ptrdiff_t offName; // sv.name
+	refdef_t* r_refdef;
 protected:
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
@@ -561,32 +611,35 @@ protected:
 	bool insideHost_Loadgame_f;
 	bool insideHost_Reload_f;
 
-	ptrdiff_t offActiveAddr;
-	void *pcl;
-	void *cls;
-	void *psv;
-	ptrdiff_t offTime;
-	ptrdiff_t offModels;
-	ptrdiff_t offNumEdicts;
-	ptrdiff_t offMaxEdicts;
-	ptrdiff_t offEdicts;
-	svs_t *svs;
-	ptrdiff_t offEdict;
+	ptrdiff_t offMaxEdictsAddr; // cl.max_edicts
+	ptrdiff_t offActiveAddr; // sv.active
+	ptrdiff_t offTime; // sv.time
+	ptrdiff_t offModels; // sv.models
+	ptrdiff_t offNumEdicts; // sv.num_edicts
+	ptrdiff_t offMaxEdicts; // sv.max_edicts
+	ptrdiff_t offEdicts; // sv.edicts
+	sizebuf_t *reliable_datagram; // sv.reliable_datagram
+	server_static_t *svs; // server_static_t
+	ptrdiff_t offEdict; // svs.clients->edict
 	void *svmove;
 	void **ppmove;
-	client_t **host_client;
+	client_t **host_client; // client_t
 	char *sv_areanodes;
-	cmdbuf_t *cmd_text;
+	sizebuf_t *cmd_text;
 	double *host_frametime;
-	int *demorecording;
+	int *demorecording; // cls.demorecording
+	int *demoplayback; // cls.demoplayback
 	cmdalias_t* cmd_alias;
 	cvar_t **cvar_vars;
 	movevars_t *movevars;
 	studiohdr_t **pstudiohdr;
 	float *scr_fov_value;
 	ptrdiff_t pHost_FilterTime_FPS_Cap_Byte;
+	ptrdiff_t pHost_FilterTime_Check_72FPS;
+	ptrdiff_t pHost_FilterTime_Set_72FPS;
 	ptrdiff_t pGL_EndRendering_VID_FlipScreen_Bytes;
 	qboolean *cofSaveHack; // Cry of Fear-specific
+	cmd_source_t *cmd_source;
 
 	int framesTillExecuting;
 	bool executing;

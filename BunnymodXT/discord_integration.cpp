@@ -89,11 +89,12 @@ namespace discord_integration
 				const auto& gt = CustomHud::GetTime();
 				int total_time = (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds;
 
-				if (cl.pEngfuncs)
+				if (cl.pEngfuncs && sv.pEngfuncs)
 				{
-					char gd[1024];
+					char gd[260];
 					// Game directory.
-					const char* gameDir = cl.pEngfuncs->pfnGetGameDirectory();
+					char gameDir[260];
+					sv.pEngfuncs->pfnGetGameDir(gameDir);
 					if (gameDir && gameDir[0])
 					{
 						cl.FileBase(gameDir, gd);
@@ -315,7 +316,11 @@ namespace discord_integration
 				if (CVars::host_framerate.GetFloat() > 0.0f)
 					snprintf(buffer_state, sizeof(buffer_state), "%s | FPS (HFR): %.1f | %s", state.c_str(), 1.0f / CVars::host_framerate.GetFloat(), skillName);
 				else
+					#ifdef SDK10_BUILD
+					snprintf(buffer_state, sizeof(buffer_state), "%s | FPS: %.1f | %s", state.c_str(), CVars::fps_single.GetFloat(), skillName);
+					#else
 					snprintf(buffer_state, sizeof(buffer_state), "%s | FPS: %.1f | %s", state.c_str(), CVars::fps_max.GetFloat(), skillName);
+					#endif
 				presence.state = buffer_state;
 
 				if (CustomHud::GetCountingTime())
@@ -380,20 +385,20 @@ namespace discord_integration
 
 		void handle_ready(const DiscordUser*)
 		{
-			if (cl.pEngfuncs)
-				cl.pEngfuncs->Con_Printf(const_cast<char*>("Connected to Discord.\n"));
+			if (hw.ORIG_Con_Printf)
+				hw.ORIG_Con_Printf(const_cast<char*>("Connected to Discord.\n"));
 		}
 
 		void handle_errored(int error_code, const char* message)
 		{
-			if (cl.pEngfuncs)
-				cl.pEngfuncs->Con_Printf(const_cast<char*>("Discord error (%d): %s\n"), error_code, message);
+			if (hw.ORIG_Con_Printf)
+				hw.ORIG_Con_Printf(const_cast<char*>("Discord error (%d): %s\n"), error_code, message);
 		}
 
 		void handle_disconnected(int error_code, const char* message)
 		{
-			if (cl.pEngfuncs)
-				cl.pEngfuncs->Con_Printf(const_cast<char*>("Disconnected from Discord (%d): %s\n"), error_code, message);
+			if (hw.ORIG_Con_Printf)
+				hw.ORIG_Con_Printf(const_cast<char*>("Disconnected from Discord (%d): %s\n"), error_code, message);
 		}
 	}
 
@@ -433,7 +438,11 @@ namespace discord_integration
 		if (CVars::host_framerate.GetFloat() > 0.0f)
 			FPS_current = CVars::host_framerate.GetFloat();
 		else
+		#ifdef SDK10_BUILD
+			FPS_current = CVars::fps_single.GetFloat();
+		#else
 			FPS_current = CVars::fps_max.GetFloat();
+		#endif
 
 		static float FPS_previous = FPS_current;
 

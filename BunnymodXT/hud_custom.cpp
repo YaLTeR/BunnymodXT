@@ -120,8 +120,14 @@ namespace CustomHud
 
 	static int DrawString(int x, int y, const char* s, float r, float g, float b)
 	{
+		#ifndef SDK10_BUILD
 		ClientDLL::GetInstance().pEngfuncs->pfnDrawSetTextColor(r, g, b);
-		return ClientDLL::GetInstance().pEngfuncs->pfnDrawConsoleString(x, y, const_cast<char*>(s));
+		#endif
+
+		if (HwDLL::GetInstance().ORIG_Draw_String)
+			return HwDLL::GetInstance().ORIG_Draw_String(x, y, const_cast<char*>(s));
+		else
+			return ClientDLL::GetInstance().pEngfuncs->pfnDrawConsoleString(x, y, const_cast<char*>(s));
 	}
 
 	static inline int DrawString(int x, int y, const char* s)
@@ -435,7 +441,7 @@ namespace CustomHud
 	void GetAccurateInfo()
 	{
 		receivedAccurateInfo = HwDLL::GetInstance().TryGettingAccurateInfo(player.origin, player.velocity, player.health, player.armorvalue, player.waterlevel, player.stamina);
-		ClientDLL::GetInstance().pEngfuncs->GetViewAngles(player.viewangles);
+		ClientDLL::GetInstance().GetViewAngles(player.viewangles);
 	}
 
 	static void UpdateColors()
@@ -533,6 +539,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_origin.GetBool())
 		{
 			const auto& cl = ClientDLL::GetInstance();
+			const auto& hw = HwDLL::GetInstance();
 
 			int x, y;
 			GetPosition(CVars::bxt_hud_origin_offset, CVars::bxt_hud_origin_anchor, &x, &y, -200, (si.iCharHeight * 6) + 1);
@@ -550,9 +557,15 @@ namespace CustomHud
 
 			if (CVars::bxt_hud_origin.GetInt() == 2)
 			{
-				out << "X: " << cl.last_vieworg[0] << "\n"
-					<< "Y: " << cl.last_vieworg[1] << "\n"
-					<< "Z: " << cl.last_vieworg[2];
+				Vector vorg;
+				if (hw.is_sdk10 && hw.r_refdef)
+					vorg = hw.r_refdef->vieworg;
+				else
+					vorg = cl.last_vieworg;
+
+				out << "X: " << vorg[0] << "\n"
+					<< "Y: " << vorg[1] << "\n"
+					<< "Z: " << vorg[2];
 			}
 			else
 			{
@@ -570,6 +583,7 @@ namespace CustomHud
 		if (CVars::bxt_hud_viewangles.GetBool())
 		{
 			const auto& cl = ClientDLL::GetInstance();
+			const auto& hw = HwDLL::GetInstance();
 
 			int x, y;
 			GetPosition(CVars::bxt_hud_viewangles_offset, CVars::bxt_hud_viewangles_anchor, &x, &y, -200, (si.iCharHeight * 10) + 2);
@@ -580,9 +594,15 @@ namespace CustomHud
 
 			if (CVars::bxt_hud_viewangles.GetInt() == 2)
 			{
+				Vector vangles;
+				if (hw.is_sdk10 && hw.r_refdef)
+					vangles = hw.r_refdef->viewangles;
+				else
+					vangles = cl.last_viewangles;
+
 				out << "Angles (incl. punch):" << "\n"
-				<< "Pitch: " << cl.last_viewangles[0] << "\n"
-				<< "Yaw: " << cl.last_viewangles[1];
+				<< "Pitch: " << vangles[0] << "\n"
+				<< "Yaw: " << vangles[1];
 			}
 			else
 			{

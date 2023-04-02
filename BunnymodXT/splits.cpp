@@ -185,7 +185,7 @@ namespace Splits
 			{
 				std::ostringstream ss;
 				ss << "bxt_autorecord " << record_name << "\n";
-				HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
+				HwDLL::GetInstance().InsertText(ss.str().c_str());
 			}
 		}
 

@@ -14,11 +14,13 @@
 	X(sv_stepsize) \
 	X(sv_bounce) \
 	X(fps_max) \
+	X(fps_single) \
 	X(default_fov) \
 	X(skill) \
 	X(host_framerate) \
 	X(gl_monolights) \
-	X(r_fullbright)
+	X(r_fullbright) \
+	X(pausable)
 
 #define DEFINE_CVARS(X) \
 	X(_bxt_taslog, "0") \

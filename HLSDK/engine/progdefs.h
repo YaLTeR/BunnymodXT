@@ -73,11 +73,13 @@ typedef struct entvars_s
 	vec3_t		punchangle;		// auto-decaying view angle adjustment
 	vec3_t		v_angle;		// Viewing angle (player only)
 
+	#ifndef SDK10_BUILD
 	// For parametric entities
 	vec3_t		endpos;
 	vec3_t		startpos;
 	float		impacttime;
 	float		starttime;
+	#endif
 
 	int			fixangle;		// 0:nothing, 1:force view angles, 2:add avelocity
 	float		idealpitch;
@@ -113,7 +115,7 @@ typedef struct entvars_s
 	int			light_level;
 
 	#ifdef COF_BUILD
-	byte		unknown[4];
+	byte		cof_unknown[4];
 	#endif
 
 	int			sequence;		// animation sequence
@@ -184,6 +186,7 @@ typedef struct entvars_s
 	
 	edict_t		*pContainingEntity;
 
+	#ifndef SDK10_BUILD
 	int			playerclass;
 	float		maxspeed;
 
@@ -222,9 +225,10 @@ typedef struct entvars_s
 	edict_t		*euser2;
 	edict_t		*euser3;
 	edict_t		*euser4;
+	#endif
 
 	#ifdef COF_BUILD
-	byte		unknown2[4];	// actual location unknown, required for pointer arithmetic
+	byte		cof_unknown2[4];	// actual location unknown, required for pointer arithmetic
 								// to work when we iterate through edicts.
 	#endif
 } entvars_t;

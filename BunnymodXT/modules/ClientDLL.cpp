@@ -1149,6 +1149,75 @@ void ClientDLL::StudioAdjustViewmodelAttachments(Vector &vOrigin)
 	vOrigin = last_vieworg + vOut;
 }
 
+void ClientDLL::GetViewAngles(float *va)
+{
+	auto &hw = HwDLL::GetInstance();
+	if (hw.viewangles)
+	{
+		va[0] = hw.viewangles->x;
+		va[1] = hw.viewangles->y;
+		va[2] = hw.viewangles->z;
+	}
+}
+
+void ClientDLL::SetViewAngles(float *va)
+{
+	auto &hw = HwDLL::GetInstance();
+	if (hw.viewangles)
+	{
+		hw.viewangles->x = va[0];
+		hw.viewangles->y = va[1];
+		hw.viewangles->z = va[2];
+	}
+}
+
+cl_entity_t* ClientDLL::GetLocalPlayer()
+{
+	auto &hw = HwDLL::GetInstance();
+
+	return hw.cl_entities[*hw.playernum + 1];
+}
+
+const char* ClientDLL::GetLevelName()
+{
+	auto& hw = HwDLL::GetInstance();
+
+	if (hw.is_sdk10)
+		return GetLevelNameSv();
+	else
+		return GetLevelNameCl();
+}
+
+const char* ClientDLL::GetLevelNameCl()
+{
+	auto& hw = HwDLL::GetInstance();
+	if (!hw.cls || !hw.levelname)
+		return "";
+
+	int* state = reinterpret_cast<int*>(hw.cls);
+	if (*state < 3)
+		return "";
+
+	return hw.levelname;
+}
+
+const char* ClientDLL::GetLevelNameSv()
+{
+	auto &hw = HwDLL::GetInstance();
+
+	if (!hw.offName || !hw.psv)
+		return "";
+
+	auto levelname = reinterpret_cast<char*>(reinterpret_cast<uintptr_t>(hw.psv) + hw.offName);
+
+	return levelname;
+}
+
+cl_entity_t* ClientDLL::GetViewModel()
+{
+	return HwDLL::GetInstance().viewent;
+}
+
 void ClientDLL::FileBase(const char *in, char *out)
 {
 	int len, start, end;
@@ -1195,11 +1264,13 @@ void ClientDLL::ConvertToLowerCase(const char *str)
 
 bool ClientDLL::DoesGameDirMatch(const char *game)
 {
-	if (!pEngfuncs)
+	if (!ServerDLL::GetInstance().pEngfuncs)
 		return false;
 
-	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
-	char gd[1024];
+	char gameDir[260];
+	char gd[260];
+
+	ServerDLL::GetInstance().pEngfuncs->pfnGetGameDir(gameDir);
 
 	if (gameDir && gameDir[0])
 	{
@@ -1212,11 +1283,13 @@ bool ClientDLL::DoesGameDirMatch(const char *game)
 
 bool ClientDLL::DoesGameDirContain(const char *game)
 {
-	if (!pEngfuncs)
+	if (!ServerDLL::GetInstance().pEngfuncs)
 		return false;
 
-	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
-	char gd[1024];
+	char gameDir[260];
+	char gd[260];
+
+	ServerDLL::GetInstance().pEngfuncs->pfnGetGameDir(gameDir);
 
 	if (gameDir && gameDir[0])
 	{
@@ -1229,7 +1302,7 @@ bool ClientDLL::DoesGameDirContain(const char *game)
 
 size_t ClientDLL::GetMapName(char* dest, size_t count)
 {
-	auto map_path = pEngfuncs->pfnGetLevelName();
+	auto map_path = GetLevelName();
 
 	const char* slash = strrchr(map_path, '/');
 	if (!slash)
@@ -1367,9 +1440,21 @@ void ClientDLL::SetSpeedScaling(bool scaled)
 
 void ClientDLL::SetupTraceVectors(float start[3], float end[3])
 {
-	auto view = last_vieworg;
-	Vector forward, right, up;
-	pEngfuncs->pfnAngleVectors(last_viewangles, forward, right, up);
+	auto& hw = HwDLL::GetInstance();
+
+	Vector forward, right, up, view, angles;
+	if (hw.is_sdk10 && hw.r_refdef)
+	{
+		view = hw.r_refdef->vieworg;
+		angles = hw.r_refdef->viewangles;
+	}
+	else
+	{
+		view = last_vieworg;
+		angles = last_viewangles;
+	}
+
+	pEngfuncs->pfnAngleVectors(angles, forward, right, up);
 
 	Vector end_ = view + forward * 8192;
 
@@ -1379,6 +1464,38 @@ void ClientDLL::SetupTraceVectors(float start[3], float end[3])
 	end[0] = end_[0];
 	end[1] = end_[1];
 	end[2] = end_[2];
+}
+
+void ClientDLL::SetStuffInHudFrame()
+{
+	auto& hw = HwDLL::GetInstance();
+	static bool check_forcehltv = true;
+	if (check_forcehltv) {
+		check_forcehltv = false;
+		if (hw.ORIG_Cmd_FindCmd)
+			orig_forcehltv_found = hw.ORIG_Cmd_FindCmd("dem_forcehltv");
+		else if (hw.ORIG_Cmd_Exists)
+			orig_forcehltv_found = hw.ORIG_Cmd_Exists("dem_forcehltv");
+	}
+
+	#ifdef _WIN32
+	static bool check_vsync = true;
+	if (check_vsync)
+	{
+		bool bxtDisableVSync = getenv("BXT_DISABLE_VSYNC");
+		if (bxtDisableVSync)
+		{
+			typedef BOOL(APIENTRY* PFNWGLSWAPINTERVALPROC)(int);
+			PFNWGLSWAPINTERVALPROC wglSwapIntervalEXT = 0;
+			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress("wglSwapIntervalEXT");
+			if (wglSwapIntervalEXT)
+				wglSwapIntervalEXT(0);
+		}
+		check_vsync = false;
+	}
+	#endif
+
+	discord_integration::on_frame();
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Jump)
@@ -1487,7 +1604,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 	float up_offset = CVars::bxt_viewmodel_ofs_up.GetFloat();
 
 	if (pEngfuncs) {
-		auto view = pEngfuncs->GetViewModel();
+		auto view = GetViewModel();
 
 		if (!paused) {
 			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
@@ -1638,39 +1755,12 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 {
 	ORIG_HUD_Frame(time);
 
-	auto& hw = HwDLL::GetInstance();
-	static bool check_forcehltv = true;
-	if (check_forcehltv) {
-		check_forcehltv = false;
-		if (hw.ORIG_Cmd_FindCmd)
-			orig_forcehltv_found = hw.ORIG_Cmd_FindCmd("dem_forcehltv");
-		else if (hw.ORIG_Cmd_Exists)
-			orig_forcehltv_found = hw.ORIG_Cmd_Exists("dem_forcehltv");
-	}
-
-	#ifdef _WIN32
-	static bool check_vsync = true;
-	if (check_vsync)
-	{
-		bool bxtDisableVSync = getenv("BXT_DISABLE_VSYNC");
-		if (bxtDisableVSync)
-		{
-			typedef BOOL(APIENTRY* PFNWGLSWAPINTERVALPROC)(int);
-			PFNWGLSWAPINTERVALPROC wglSwapIntervalEXT = 0;
-			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress("wglSwapIntervalEXT");
-			if (wglSwapIntervalEXT)
-				wglSwapIntervalEXT(0);
-		}
-		check_vsync = false;
-	}
-	#endif
+	SetStuffInHudFrame();
 
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 		pEngfuncs->Con_Printf(const_cast<char*>("HUD_Frame time: %f\n"), time);
 
 	SeedsQueued = 0;
-
-	discord_integration::on_frame();
 }
 
 HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_DrawTransparentTriangles)
@@ -1749,7 +1839,7 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioCalcAttachme
 	if (pEngfuncs && hw.pEngStudio)
 	{
 		auto currententity = hw.pEngStudio->GetCurrentEntity();
-		if (currententity == pEngfuncs->GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
+		if (currententity == GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
 			insideStudioCalcAttachmentsViewmodel = true;
 	}
 	ORIG_CStudioModelRenderer__StudioCalcAttachments(thisptr);
@@ -1763,7 +1853,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioCalcAttachments
 	if (pEngfuncs && hw.pEngStudio)
 	{
 		auto currententity = hw.pEngStudio->GetCurrentEntity();
-		if (currententity == pEngfuncs->GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
+		if (currententity == GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
 			insideStudioCalcAttachmentsViewmodel = true;
 	}
 	ORIG_CStudioModelRenderer__StudioCalcAttachments_Linux(thisptr);
@@ -1814,7 +1904,7 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioSetupBones, 
 		pStudioHeader->seqindex) + pCurrentEntity->curstate.sequence;
 
 	if (pEngfuncs) {
-		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+		if (pCurrentEntity == GetViewModel()) {
 			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
 			{
 				float(*rotationmatrix)[3][4] = reinterpret_cast<float(*)[3][4]>(HwDLL::GetInstance().pEngStudio->StudioGetRotationMatrix());
@@ -1865,7 +1955,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linu
 		pStudioHeader->seqindex) + pCurrentEntity->curstate.sequence;
 
 	if (pEngfuncs) {
-		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+		if (pCurrentEntity == GetViewModel()) {
 			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
 			{
 				float(*rotationmatrix)[3][4] = reinterpret_cast<float(*)[3][4]>(HwDLL::GetInstance().pEngStudio->StudioGetRotationMatrix());
@@ -1962,7 +2052,7 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel,
 	int old_rendermode = pCurrentEntity->curstate.rendermode;
 
 	if (pEngfuncs) {
-		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+		if (pCurrentEntity == GetViewModel()) {
 			if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
 				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
 				pEngfuncs->pTriAPI->Brightness(2);
@@ -1988,7 +2078,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Lin
 	int old_rendermode = pCurrentEntity->curstate.rendermode;
 
 	if (pEngfuncs) {
-		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
+		if (pCurrentEntity == GetViewModel()) {
 			if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
 				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
 				pEngfuncs->pTriAPI->Brightness(2);

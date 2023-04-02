@@ -153,12 +153,18 @@ typedef struct cl_enginefuncs_s
 	client_textmessage_t		*( *pfnTextMessageGet )		( const char *pName );
 	int							( *pfnDrawCharacter )		( int x, int y, int number, int r, int g, int b );
 	int							( *pfnDrawConsoleString )	( int x, int y, char *string );
+	
+	// pfnDrawSetTextColor not exist in HLSDK 1.0 versions (pre-1.1.0.0 patches)
+	#ifndef SDK10_BUILD
 	void						( *pfnDrawSetTextColor )	( float r, float g, float b );
+	#endif
+
 	void						( *pfnDrawConsoleStringLen )(  const char *string, int *length, int *height );
 
 	void						( *pfnConsolePrint )		( const char *string );
 	void						( *pfnCenterPrint )			( const char *string );
 
+	// Functions below are present only in builds > 1202
 
 // Added for user input processing
 	int							( *GetWindowCenterX )		( void );

@@ -32,7 +32,7 @@ namespace CustomTriggers
 				command
 			});
 
-		HwDLL::GetInstance().ORIG_Cbuf_InsertText(command.c_str());
+		HwDLL::GetInstance().InsertText(command.c_str());
 	}
 
 	Trigger::Trigger(Vector corner1, Vector corner2)

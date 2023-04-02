@@ -112,8 +112,16 @@ public:
 
 	void FileBase(const char *in, char *out);
 	void ConvertToLowerCase(const char *str);
+	void GetViewAngles(float *va);
+	void SetViewAngles(float *va);
+	cl_entity_t *GetLocalPlayer();
+	const char *GetLevelName();
+	const char *GetLevelNameCl();
+	const char *GetLevelNameSv();
+	cl_entity_t *GetViewModel();
 
 	void SetupTraceVectors(float start[3], float end[3]);
+	void SetStuffInHudFrame();
 
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};

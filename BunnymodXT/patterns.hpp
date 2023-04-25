@@ -1271,6 +1271,15 @@ namespace patterns
 			"HL-1202",
 			"53 56 8B 5C 24 ?? 57 8B 74 24 ?? 8A 03"
 		);
+
+		PATTERNS(LoadAdjacentEntities,
+			"HL-WON-1712",
+			"81 EC FC 05 00 00 53 33 DB 68 74 05 00 00",
+			"HL-1202",
+			"81 EC FC 05 00 00 53 56 57 33 C0 8D BC 24",
+			"BShift-WON-1001",
+			"81 EC FC 05 00 00 56 57 B9 5D 01 00 00"
+		);
 	}
 
 	namespace server

@@ -471,6 +471,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_V_RenderView);
 			MemUtils::MarkAsExecutable(ORIG_SV_AddToFullPack);
 			MemUtils::MarkAsExecutable(ORIG_CL_EmitEntities);
+			MemUtils::MarkAsExecutable(ORIG_LoadAdjacentEntities);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -539,7 +540,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_GL_EndRendering, HOOKED_GL_EndRendering,
 			ORIG_SV_AddToFullPack, HOOKED_SV_AddToFullPack,
 			ORIG_CL_EmitEntities, HOOKED_CL_EmitEntities,
-			ORIG_V_RenderView, HOOKED_V_RenderView);
+			ORIG_V_RenderView, HOOKED_V_RenderView,
+			ORIG_LoadAdjacentEntities, HOOKED_LoadAdjacentEntities);
 	}
 
 	#ifdef _WIN32
@@ -628,7 +630,8 @@ void HwDLL::Unhook()
 			ORIG_GL_EndRendering,
 			ORIG_SV_AddToFullPack,
 			ORIG_CL_EmitEntities,
-			ORIG_V_RenderView);
+			ORIG_V_RenderView,
+			ORIG_LoadAdjacentEntities);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -740,6 +743,7 @@ void HwDLL::Clear()
 	ORIG_Cmd_ForwardToServer = nullptr;
 	ORIG_MSG_WriteByte = nullptr;
 	ORIG_V_RenderView = nullptr;
+	ORIG_LoadAdjacentEntities = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1451,6 +1455,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(CL_EmitEntities)
 		DEF_FUTURE(Draw_String)
 		DEF_FUTURE(V_RenderView)
+		DEF_FUTURE(LoadAdjacentEntities)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -3116,6 +3121,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(CL_EmitEntities);
 		GET_FUTURE(Draw_String);
 		GET_FUTURE(V_RenderView);
+		GET_FUTURE(LoadAdjacentEntities);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -6236,6 +6242,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	if (ORIG_EmitWaterPolys)
 		RegisterCVar(CVars::bxt_water_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
+	if (pause_cmds_missed_build)
+		SetCVarValue(CVars::bxt_stop_demo_on_changelevel, "1");
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
 	RegisterCVar(CVars::bxt_tas_editor_camera_editor);
 	RegisterCVar(CVars::bxt_tas_norefresh_until_last_frames);
@@ -7982,7 +7990,6 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 
 	CustomHud::SaveTimeToDemo();
 
-	// TODO: fix the issue on WON versions when the next map is not loaded in demo playback after changelevel
 	if (CVars::bxt_stop_demo_on_changelevel.GetBool()) {
 		dontStopAutorecord = true;
 		ORIG_CL_Stop_f();
@@ -8146,7 +8153,7 @@ HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, cha
 	if (insideHost_Reload_f && !autoRecordDemoName.empty())
 		autoRecordNow = true;
 
-	if (insideHost_Changelevel2_f) {
+	if (insideHost_Changelevel2_f && !pause_cmds_missed_build) {
 		if (ret && !autoRecordDemoName.empty()) {
 			if (*demorecording == 0)
 				autoRecordNow = true;
@@ -8946,4 +8953,20 @@ HOOK_DEF_0(HwDLL, void, __cdecl, V_RenderView)
 		CustomHud::UpdatePlayerInfoInaccurate(*simvel, *simorg);
 
 	ORIG_V_RenderView();
+}
+
+HOOK_DEF_2(HwDLL, void, __cdecl, LoadAdjacentEntities, char*, pOldLevel, char*, pLandmarkName)
+{
+	if (insideHost_Changelevel2_f && pause_cmds_missed_build) {
+		if (!autoRecordDemoName.empty()) {
+			if (*demorecording == 0)
+				autoRecordNow = true;
+		}
+		else {
+			autoRecordNow = false;
+			autoRecordDemoName.clear();
+		}
+	}
+
+	ORIG_LoadAdjacentEntities(pOldLevel, pLandmarkName);
 }

@@ -89,6 +89,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(int, __cdecl, SV_AddToFullPack, struct entity_state_s* state, int e, unsigned char* pSet)
 	HOOK_DECL(void, __cdecl, CL_EmitEntities)
 	HOOK_DECL(void, __cdecl, V_RenderView)
+	HOOK_DECL(void, __cdecl, LoadAdjacentEntities, char* pOldLevel, char* pLandmarkName)
 
 	struct sizebuf_t
 	{

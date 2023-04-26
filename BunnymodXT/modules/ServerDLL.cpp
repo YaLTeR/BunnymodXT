@@ -796,10 +796,12 @@ void ServerDLL::FindStuff()
 			case 41: // HL-1202
 				offm_rgAmmoLast = 0x508;
 				offm_iClientFOV = 0x460;
+				offm_afButtonPressed = 0x284;
 				break;
 			case 42: // BShift-WON-1001
 				offm_rgAmmoLast = 0x50C;
 				offm_iClientFOV = 0x464;
+				offm_afButtonPressed = 0x284;
 				break;
 			default:
 				assert(false);
@@ -1767,7 +1769,12 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_ShiftMonsters && is_cof)
 		REG(bxt_cof_disable_monsters_teleport_to_spawn_after_load);
 	if ((ORIG_CBasePlayer__Jump || ORIG_CBasePlayer__Jump_Linux) && offm_afButtonPressed)
-		REG(bxt_autojump_fix);
+	{
+		if (HwDLL::GetInstance().is_sdk10)
+			REG(bxt_autojump);
+		else
+			REG(bxt_autojump_fix);
+	}
 
 	REG(bxt_splits_print);
 	REG(bxt_splits_print_times_at_end);
@@ -3393,7 +3400,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__Jump, void*, thisptr)
 	int orig_afButtonPressed;
 	bool return_orig_value = false;
 
-	if (offm_afButtonPressed && CVars::bxt_autojump.GetBool() && (is_cof || CVars::bxt_autojump_fix.GetBool()))
+	if (offm_afButtonPressed && CVars::bxt_autojump.GetBool() && (is_cof || CVars::bxt_autojump_fix.GetBool() || HwDLL::GetInstance().is_sdk10))
 	{
 		afButtonPressed = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + offm_afButtonPressed);
 		orig_afButtonPressed = *afButtonPressed;
@@ -3419,7 +3426,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CBasePlayer__Jump_Linux, void*, thisptr)
 	int orig_afButtonPressed;
 	bool return_orig_value = false;
 
-	if (offm_afButtonPressed && CVars::bxt_autojump.GetBool() && (is_cof || CVars::bxt_autojump_fix.GetBool()))
+	if (offm_afButtonPressed && CVars::bxt_autojump.GetBool() && (is_cof || CVars::bxt_autojump_fix.GetBool() || HwDLL::GetInstance().is_sdk10))
 	{
 		afButtonPressed = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(thisptr) + offm_afButtonPressed);
 		orig_afButtonPressed = *afButtonPressed;

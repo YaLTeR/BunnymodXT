@@ -6242,8 +6242,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	if (ORIG_EmitWaterPolys)
 		RegisterCVar(CVars::bxt_water_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
-	if (pause_cmds_missed_build)
-		SetCVarValue(CVars::bxt_stop_demo_on_changelevel, "1");
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
 	RegisterCVar(CVars::bxt_tas_editor_camera_editor);
 	RegisterCVar(CVars::bxt_tas_norefresh_until_last_frames);

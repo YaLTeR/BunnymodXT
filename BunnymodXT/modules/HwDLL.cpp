@@ -1977,6 +1977,10 @@ void HwDLL::FindStuff()
 					svs = reinterpret_cast<server_static_t*>(*reinterpret_cast<uintptr_t*>(f + 63) - 0);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 97);
 					offActiveAddr = *reinterpret_cast<uintptr_t*>(f + 0x13);
+					// For unknown reason the automatic search through functions to sv.models / sv.edicts does not work only in the Blue Shift WON engine
+					// I double-checked the offsets to addresses and they are correct, so I decided to hardcode the offsets only for that build.
+					offModels = 0x210F8;
+					offEdicts = 0x23204;
 					is_sdk10 = true;
 					break;
 				}
@@ -1988,7 +1992,7 @@ void HwDLL::FindStuff()
 			patterns::engine::NUM_FOR_EDICT,
 			[&](auto pattern) {
 				auto f = reinterpret_cast<uintptr_t>(NUM_FOR_EDICT);
-				if (offActiveAddr)
+				if (offActiveAddr && !offEdicts)
 				{
 					switch (pattern - patterns::engine::NUM_FOR_EDICT.cbegin())
 					{
@@ -2058,7 +2062,7 @@ void HwDLL::FindStuff()
 			patterns::engine::ModelFrames,
 			[&](auto pattern) {
 				auto f = reinterpret_cast<uintptr_t>(ModelFrames);
-				if (offActiveAddr)
+				if (offActiveAddr && !offModels)
 				{
 					switch (pattern - patterns::engine::ModelFrames.cbegin())
 					{

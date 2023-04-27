@@ -90,6 +90,8 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, CL_EmitEntities)
 	HOOK_DECL(void, __cdecl, V_RenderView)
 	HOOK_DECL(void, __cdecl, LoadAdjacentEntities, char* pOldLevel, char* pLandmarkName)
+	HOOK_DECL(void, __cdecl, JumpButton) // Engine implementation of PM_Jump in older WON versions
+	HOOK_DECL(void, __cdecl, PlayerMove, qboolean server) // Engine implementation of PM_PlayerMove in older WON versions
 
 	struct sizebuf_t
 	{
@@ -364,12 +366,13 @@ public:
 	}
 
 	bool Called_Timer = false;
-	bool steamid_build = false;
-	bool pause_cmds_missed_build = false;
 
+	bool is_won_build = false;
 	bool is_cof_steam = false; // Cry of Fear-specific
 	bool is_sdk10 = false;
 	bool is_bshift_won = false;
+	bool is_jumpbutton_found = false;
+	bool is_steamid_build = false;
 
 	bool set_default_player_index = true;
 	int player_index = 1;
@@ -443,6 +446,8 @@ protected:
 	_Cmd_ForwardToServer ORIG_Cmd_ForwardToServer;
 	typedef void(__cdecl *_MSG_WriteByte) (sizebuf_t* sb, int c);
 	_MSG_WriteByte ORIG_MSG_WriteByte;
+	typedef int(__cdecl* _PM_CheckStuck) ();
+	_PM_CheckStuck ORIG_PM_CheckStuck; // Engine implementation of PM_CheckStuck in older WON versions
 
 	void FindStuff();
 
@@ -593,6 +598,7 @@ public:
 	void *psv; // server_t
 	ptrdiff_t offName; // sv.name
 	refdef_t* r_refdef;
+	int* onground; // In older WON versions it is separated from playermove_t
 protected:
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
@@ -624,6 +630,7 @@ protected:
 	ptrdiff_t offEdict; // svs.clients->edict
 	void *svmove;
 	void **ppmove;
+	void *won_ppmove;
 	client_t **host_client; // client_t
 	char *sv_areanodes;
 	sizebuf_t *cmd_text;
@@ -655,6 +662,8 @@ protected:
 	std::string loggedCbuf;
 	FILE *tasLogFile = nullptr;
 	void SetTASLogging(bool enabled);
+
+	std::unordered_map<int, bool> cantJumpNextTime;
 
 public:
 	bool isOverridingCamera = false;

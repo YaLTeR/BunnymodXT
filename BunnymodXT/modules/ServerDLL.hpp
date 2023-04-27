@@ -62,6 +62,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CBasePlayer__Jump, void* thisptr)
 	HOOK_DECL(void, __cdecl, CBasePlayer__Jump_Linux, void* thisptr)
 	HOOK_DECL(void, __cdecl, PlayerPostThink, edict_t* pEntity)
+	HOOK_DECL(void, __fastcall, CBasePlayer__ForceClientDllUpdate, void* thisptr)
 
 public:
 	static ServerDLL& GetInstance()
@@ -109,7 +110,9 @@ public:
 	void SetStamina(bool makeItZero);
 
 	bool is_cof = false; // Cry of Fear-specific
+	ptrdiff_t offm_iKeypadNumber; // Cry of Fear-specific
 	ptrdiff_t offm_fStamina; // Cry of Fear-specific
+	ptrdiff_t offm_iPadlockNumber; // Cry of Fear-specific
 
 	ptrdiff_t offm_rgAmmoLast;
 	int maxAmmoSlots = MAX_AMMO_SLOTS;
@@ -125,8 +128,6 @@ protected:
 	typedef int(__cdecl *_GetEntityAPI)(DLL_FUNCTIONS* pFunctionTable, int interfaceVersion);
 	_GetEntityAPI ORIG_GetEntityAPI;
 
-	typedef void(__fastcall *_CBasePlayer__ForceClientDllUpdate)(void *thisptr);
-	_CBasePlayer__ForceClientDllUpdate ORIG_CBasePlayer__ForceClientDllUpdate;
 	typedef void(__cdecl *_CBasePlayer__ForceClientDllUpdate_Linux)(void *thisptr);
 	_CBasePlayer__ForceClientDllUpdate_Linux ORIG_CBasePlayer__ForceClientDllUpdate_Linux;
 	typedef int(__cdecl* _PM_CheckStuck)();

@@ -472,6 +472,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SV_AddToFullPack);
 			MemUtils::MarkAsExecutable(ORIG_CL_EmitEntities);
 			MemUtils::MarkAsExecutable(ORIG_LoadAdjacentEntities);
+			MemUtils::MarkAsExecutable(ORIG_JumpButton);
+			MemUtils::MarkAsExecutable(ORIG_PlayerMove);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -541,7 +543,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_SV_AddToFullPack, HOOKED_SV_AddToFullPack,
 			ORIG_CL_EmitEntities, HOOKED_CL_EmitEntities,
 			ORIG_V_RenderView, HOOKED_V_RenderView,
-			ORIG_LoadAdjacentEntities, HOOKED_LoadAdjacentEntities);
+			ORIG_LoadAdjacentEntities, HOOKED_LoadAdjacentEntities,
+			ORIG_JumpButton, HOOKED_JumpButton,
+			ORIG_PlayerMove, HOOKED_PlayerMove);
 	}
 
 	#ifdef _WIN32
@@ -631,7 +635,9 @@ void HwDLL::Unhook()
 			ORIG_SV_AddToFullPack,
 			ORIG_CL_EmitEntities,
 			ORIG_V_RenderView,
-			ORIG_LoadAdjacentEntities);
+			ORIG_LoadAdjacentEntities,
+			ORIG_JumpButton,
+			ORIG_PlayerMove);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -744,6 +750,10 @@ void HwDLL::Clear()
 	ORIG_MSG_WriteByte = nullptr;
 	ORIG_V_RenderView = nullptr;
 	ORIG_LoadAdjacentEntities = nullptr;
+	ORIG_JumpButton = nullptr;
+	ORIG_PlayerMove = nullptr;
+	ORIG_PM_CheckStuck = nullptr;
+	cantJumpNextTime.clear();
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -777,6 +787,7 @@ void HwDLL::Clear()
 	offEdict = 0;
 	svmove = nullptr;
 	ppmove = nullptr;
+	won_ppmove = nullptr;
 	host_client = nullptr;
 	sv_player = nullptr;
 	sv_areanodes = nullptr;
@@ -1456,6 +1467,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Draw_String)
 		DEF_FUTURE(V_RenderView)
 		DEF_FUTURE(LoadAdjacentEntities)
+		DEF_FUTURE(PlayerMove)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1522,34 +1534,34 @@ void HwDLL::FindStuff()
 				default:
 				case 0: // HL-Steampipe
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 181);
-					steamid_build = true;
+					is_steamid_build = true;
 					break;
 				case 1: // HL-4554
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 226);
-					steamid_build = true;
+					is_steamid_build = true;
 					break;
 				case 2: // HL-NGHL
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 203);
 					break;
 				case 3: // HL-WON-1712
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 1456);
-					pause_cmds_missed_build = true;
+					is_won_build = true;
 					break;
 				case 4: // CoF-5936
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 230);
-					steamid_build = true;
+					is_steamid_build = true;
 					break;
 				case 5: // Sven-v525
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 332);
-					steamid_build = true;
+					is_steamid_build = true;
 					break;
 				case 6: // HL-1202
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 352);
-					pause_cmds_missed_build = true;
+					is_won_build = true;
 					break;
 				case 7: // BShift-WON-1001
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 341);
-					pause_cmds_missed_build = true;
+					is_won_build = true;
 					break;
 				}
 			});
@@ -2372,6 +2384,38 @@ void HwDLL::FindStuff()
 				}
 			});
 
+		auto fJumpButton = FindAsync(
+			ORIG_JumpButton,
+			patterns::engine::JumpButton,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::JumpButton.cbegin())
+				{
+					case 0: // HL-1202
+						onground = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_JumpButton) + 0x75);
+						is_jumpbutton_found = true;
+						break;
+					case 1: // BShift-WON-1001
+						onground = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_JumpButton) + 0x6C);
+						is_jumpbutton_found = true;
+						break;
+				}
+			});
+
+		auto fPM_CheckStuck = FindAsync(
+			ORIG_PM_CheckStuck,
+			patterns::engine::PM_CheckStuck,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::PM_CheckStuck.cbegin())
+				{
+				case 0: // HL-1202
+					won_ppmove = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(ORIG_PM_CheckStuck) + 0x46);
+					break;
+				case 1: // BShift-WON-1001
+					won_ppmove = *reinterpret_cast<void**>(reinterpret_cast<uintptr_t>(ORIG_PM_CheckStuck) + 0x36);
+					break;
+				}
+			});
+
 		auto fCmd_Exec_f = FindAsync(
 			ORIG_Cmd_Exec_f,
 			patterns::engine::Cmd_Exec_f,
@@ -2987,6 +3031,28 @@ void HwDLL::FindStuff()
 		}
 
 		{
+			auto pattern = fJumpButton.get();
+			if (ORIG_JumpButton) {
+				EngineDevMsg("[hw dll] Found JumpButton at %p (using the %s pattern).\n", ORIG_JumpButton, pattern->name());
+				EngineDevMsg("[hw dll] Found onground at %p.\n", onground);
+			}
+			else {
+				EngineDevWarning("[hw dll] Could not find JumpButton.\n");
+			}
+		}
+
+		{
+			auto pattern = fPM_CheckStuck.get();
+			if (ORIG_PM_CheckStuck) {
+				EngineDevMsg("[hw dll] Found PM_CheckStuck at %p (using the %s pattern).\n", ORIG_PM_CheckStuck, pattern->name());
+				EngineDevMsg("[hw dll] Found pmove at %p.\n", won_ppmove);
+			}
+			else {
+				EngineDevWarning("[hw dll] Could not find PM_CheckStuck.\n");
+			}
+		}
+
+		{
 			auto pattern = fR_StudioCalcAttachments.get();
 			if (ORIG_R_StudioCalcAttachments) {
 				EngineDevMsg("[hw dll] Found R_StudioCalcAttachments at %p (using the %s pattern).\n", ORIG_R_StudioCalcAttachments, pattern->name());
@@ -3126,6 +3192,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Draw_String);
 		GET_FUTURE(V_RenderView);
 		GET_FUTURE(LoadAdjacentEntities);
+		GET_FUTURE(PlayerMove);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -4144,6 +4211,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 	{
 		auto &hw = HwDLL::GetInstance();
 		auto &cl = ClientDLL::GetInstance();
+		auto &sv = ServerDLL::GetInstance();
 
 		hw.SetPlayerIndexToDefaultIfNecessary();
 
@@ -4155,11 +4223,29 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		if (is_ent_player_failed)
 			return;
 
+		if (sv.offm_iKeypadNumber && sv.offm_iPadlockNumber)
+		{
+			void* classPtr = ent->v.pContainingEntity->pvPrivateData;
+			uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+			int* m_iKeypadNumber = reinterpret_cast<int*>(thisAddr + sv.offm_iKeypadNumber);
+			int* m_iPadlockNumber = reinterpret_cast<int*>(thisAddr + sv.offm_iPadlockNumber);
+
+			std::ostringstream ss_padlock;
+
+			for (int i = 1; i < 5; i++)
+			{
+				ss_padlock << m_iPadlockNumber[i];
+			}
+
+			hw.ORIG_Con_Printf("Keypad code [CoF]: %d\nPadlock code [CoF]: %s\n", *m_iKeypadNumber, ss_padlock.str().c_str());
+		}
+
 		const auto& mvtype = ent->v.movetype;
 		const auto& vel = ent->v.velocity;
 		const auto& basevel = ent->v.basevelocity;
 		const auto& punch = ent->v.punchangle;
 		const auto& v_angle = ent->v.v_angle;
+		const auto& orin = ent->v.origin;
 
 		#ifndef SDK10_BUILD
 		if (cl.pEngfuncs && (hw.player_index == 1))
@@ -4197,9 +4283,38 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		out << '\n';
 		hw.ORIG_Con_Printf("%s", out.str().c_str());
 		hw.ORIG_Con_Printf("v_angle: %f %f %f\n", v_angle.x, v_angle.y, v_angle.z);
+		hw.ORIG_Con_Printf("Origin: %f %f %f\n", orin.x, orin.y, orin.z);
 		hw.ORIG_Con_Printf("Velocity: %f %f %f; XY = %f; XYZ = %f\n", vel.x, vel.y, vel.z, vel.Length2D(), vel.Length());
 		hw.ORIG_Con_Printf("Basevelocity: %f %f %f; XY = %f; XYZ = %f\n", basevel.x, basevel.y, basevel.z, basevel.Length2D(), basevel.Length());
 		hw.ORIG_Con_Printf("Server punchangle: %f %f %f\n", punch.x, punch.y, punch.z);
+		std::ostringstream out_buttons;
+		out_buttons << "Button: ";
+		if (ent->v.button & IN_JUMP)
+			out_buttons << "IN_JUMP; ";
+		if (ent->v.button & IN_DUCK)
+			out_buttons << "IN_DUCK; ";
+		if (ent->v.button & IN_FORWARD)
+			out_buttons << "IN_FORWARD; ";
+		if (ent->v.button & IN_BACK)
+			out_buttons << "IN_BACK; ";
+		if (ent->v.button & IN_MOVELEFT)
+			out_buttons << "IN_MOVELEFT; ";
+		if (ent->v.button & IN_MOVERIGHT)
+			out_buttons << "IN_MOVERIGHT; ";
+		if (ent->v.button & IN_ATTACK)
+			out_buttons << "IN_ATTACK; ";
+		if (ent->v.button & IN_ATTACK2)
+			out_buttons << "IN_ATTACK2; ";
+		if (ent->v.button & IN_RELOAD)
+			out_buttons << "IN_RELOAD; ";
+		if (ent->v.button & IN_USE)
+			out_buttons << "IN_USE; ";
+		if (ent->v.button & IN_LEFT)
+			out_buttons << "IN_LEFT; ";
+		if (ent->v.button & IN_RIGHT)
+			out_buttons << "IN_RIGHT; ";
+		out_buttons << '\n';
+		hw.ORIG_Con_Printf("%s", out_buttons.str().c_str());
 
 		#ifndef SDK10_BUILD
 		hw.ORIG_Con_Printf("bInDuck: %d\n", ent->v.bInDuck);
@@ -4226,7 +4341,7 @@ struct HwDLL::Cmd_BXT_Get_SteamID_In_Demo
 	{
 		auto& hw = HwDLL::GetInstance();
 		auto& cl = ClientDLL::GetInstance();
-		if (hw.steamid_build && hw.IsPlayingbackDemo())
+		if (hw.is_steamid_build && hw.IsPlayingbackDemo())
 		{
 			int player = cl.pEngfuncs->GetLocalPlayer()->index;
 			player_info_s* player_info = hw.pEngStudio->PlayerInfo(player - 1);
@@ -4495,7 +4610,7 @@ struct HwDLL::Cmd_BXT_Triggers_Place_Down
 
 	static void handler()
 	{
-		if (!HwDLL::GetInstance().is_sdk10)
+		if (HwDLL::GetInstance().is_sdk10)
 		{
 			HwDLL::GetInstance().ORIG_Con_Printf("bxt_triggers_place_down is not supported for pre-1.1.0.0 versions");
 			return;
@@ -5164,7 +5279,7 @@ struct HwDLL::Cmd_BXT_FreeCam
 
 	static void handler(int enabled)
 	{
-		if (!HwDLL::GetInstance().is_sdk10)
+		if (HwDLL::GetInstance().is_sdk10)
 		{
 			HwDLL::GetInstance().ORIG_Con_Printf("bxt_freecam is not supported for pre-1.1.0.0 versions");
 			return;
@@ -6278,9 +6393,12 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	}
 	if (ORIG_SV_SetMoveVars && movevars)
 		RegisterCVar(CVars::bxt_force_zmax);
-	RegisterCVar(CVars::bxt_viewmodel_disable_idle);
-	RegisterCVar(CVars::bxt_viewmodel_disable_equip);
-	RegisterCVar(CVars::bxt_viewmodel_semitransparent);
+	if (ORIG_Host_ValidSave && !is_sdk10)
+	{
+		RegisterCVar(CVars::bxt_viewmodel_semitransparent);
+		RegisterCVar(CVars::bxt_viewmodel_disable_idle);
+		RegisterCVar(CVars::bxt_viewmodel_disable_equip);
+	}
 	if (ORIG_R_Clear) {
 		RegisterCVar(CVars::bxt_clear_color);
 		RegisterCVar(CVars::bxt_force_clear);
@@ -6301,7 +6419,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
 	if (ORIG_R_DrawViewModel) {
-		if (!is_sdk10)
+		if (ORIG_Host_ValidSave && !is_sdk10)
 			RegisterCVar(CVars::bxt_viewmodel_fov);
 
 		if (ORIG_R_PreDrawViewModel)
@@ -6310,6 +6428,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_show_hidden_entities);
 	RegisterCVar(CVars::bxt_show_triggers_legacy);
 	RegisterCVar(CVars::bxt_show_triggers_legacy_alpha);
+	if (ORIG_PM_CheckStuck)
+		RegisterCVar(CVars::bxt_fire_on_stuck);
 
 	CVars::sv_cheats.Assign(FindCVar("sv_cheats"));
 	CVars::fps_max.Assign(FindCVar("fps_max"));
@@ -7653,7 +7773,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		InsertCommands();
 
 		if (*state == 5 && pauseOnTheFirstFrame) {
-			if (pause_cmds_missed_build)
+			if (is_won_build)
 				ORIG_Cbuf_InsertText("bxt_setpause\n");
 			else
 				ORIG_Cbuf_InsertText("setpause\n");
@@ -8155,7 +8275,7 @@ HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, cha
 	if (insideHost_Reload_f && !autoRecordDemoName.empty())
 		autoRecordNow = true;
 
-	if (insideHost_Changelevel2_f && !pause_cmds_missed_build) {
+	if (insideHost_Changelevel2_f && !is_won_build) {
 		if (ret && !autoRecordDemoName.empty()) {
 			if (*demorecording == 0)
 				autoRecordNow = true;
@@ -8544,21 +8664,15 @@ HOOK_DEF_3(HwDLL, void, __cdecl, VGuiWrap2_NotifyOfServerConnect, const char*, g
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioSetupBones)
 {
-	if (!CVars::bxt_viewmodel_disable_idle.GetBool() && !CVars::bxt_viewmodel_disable_equip.GetBool() && CVars::cl_righthand.GetFloat() < 1)
-	{
-		ORIG_R_StudioSetupBones();
-		return;
-	}
-
-	if (pstudiohdr && pEngStudio) {
+	if (pstudiohdr) {
 		auto& cl = ClientDLL::GetInstance();
-		auto current = pEngStudio->GetCurrentEntity();
+		auto current = cl.GetCurrentEntity();
 		auto pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(*pstudiohdr) +
 			(*pstudiohdr)->seqindex) + current->curstate.sequence;
 
 		if (cl.pEngfuncs) {
 			if (current == cl.GetViewModel()) {
-				if (cl.orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
+				if (cl.orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0 && pEngStudio)
 				{
 					float(*rotationmatrix)[3][4] = reinterpret_cast<float(*)[3][4]>(pEngStudio->StudioGetRotationMatrix());
 
@@ -8959,7 +9073,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, V_RenderView)
 
 HOOK_DEF_2(HwDLL, void, __cdecl, LoadAdjacentEntities, char*, pOldLevel, char*, pLandmarkName)
 {
-	if (insideHost_Changelevel2_f && pause_cmds_missed_build) {
+	if (insideHost_Changelevel2_f && is_won_build) {
 		if (!autoRecordDemoName.empty()) {
 			if (*demorecording == 0)
 				autoRecordNow = true;
@@ -8971,4 +9085,68 @@ HOOK_DEF_2(HwDLL, void, __cdecl, LoadAdjacentEntities, char*, pOldLevel, char*, 
 	}
 
 	ORIG_LoadAdjacentEntities(pOldLevel, pLandmarkName);
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, PlayerMove, qboolean, server)
+{
+	bool stuck_cur_frame = false;
+	static bool not_stuck_prev_frame = false;
+
+	if (ORIG_PM_CheckStuck)
+	{
+		stuck_cur_frame = ORIG_PM_CheckStuck();
+		if (!CVars::bxt_fire_on_stuck.IsEmpty() && stuck_cur_frame && not_stuck_prev_frame)
+		{
+			std::ostringstream ss;
+			ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
+
+			ORIG_Cbuf_InsertText(ss.str().c_str());
+		}
+		not_stuck_prev_frame = !stuck_cur_frame;
+	}
+
+	if (!won_ppmove)
+	{
+		ORIG_PlayerMove(server);
+		return;
+	}
+
+	ORIG_PlayerMove(server);
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, JumpButton)
+{
+	if (CVars::bxt_force_jumpless.GetBool())
+		return;
+
+	if (!won_ppmove || !onground)
+	{
+		ORIG_JumpButton();
+		return;
+	}
+
+	auto pmove = reinterpret_cast<uintptr_t>(won_ppmove);
+	int playerIndex = *reinterpret_cast<int*>(pmove + 0x0);
+
+	int orig_onground = *onground;
+
+	int* oldbuttons = reinterpret_cast<int*>(pmove + 0x6C);
+	int orig_oldbuttons = *oldbuttons;
+
+	if (CVars::bxt_autojump.GetBool())
+	{
+		if ((orig_onground != -1) && !cantJumpNextTime[playerIndex]) {
+			*oldbuttons &= ~IN_JUMP;
+		}
+	}
+
+	cantJumpNextTime[playerIndex] = false;
+
+	ORIG_JumpButton();
+
+	if ((orig_onground != -1) && (*onground == -1))
+		cantJumpNextTime[playerIndex] = true;
+
+	if (CVars::bxt_autojump.GetBool())
+		*oldbuttons = orig_oldbuttons;
 }

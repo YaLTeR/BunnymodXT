@@ -162,7 +162,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_ShiftMonsters, HOOKED_ShiftMonsters,
 			ORIG_PM_Duck, HOOKED_PM_Duck,
 			ORIG_PM_UnDuck, HOOKED_PM_UnDuck,
-			ORIG_FireTargets, HOOKED_FireTargets);
+			ORIG_FireTargets, HOOKED_FireTargets,
+			ORIG_CBasePlayer__ForceClientDllUpdate, HOOKED_CBasePlayer__ForceClientDllUpdate);
 	}
 }
 
@@ -215,7 +216,8 @@ void ServerDLL::Unhook()
 			ORIG_ShiftMonsters,
 			ORIG_PM_Duck,
 			ORIG_PM_UnDuck,
-			ORIG_FireTargets);
+			ORIG_FireTargets,
+			ORIG_CBasePlayer__ForceClientDllUpdate);
 	}
 
 	Clear();
@@ -331,8 +333,10 @@ void ServerDLL::Clear()
 	offm_iPrimaryAmmoType = 0;
 
 	// Cry of Fear-specific
+	offm_iKeypadNumber = 0;
 	offm_bInfiniteStamina = 0;
 	offm_fStamina = 0;
+	offm_iPadlockNumber = 0;
 	offm_old_iAmmo = 0;
 	offm_iPlayerSaveLock = 0;
 }
@@ -640,8 +644,10 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offm_iKeypadNumber = 0x1ED0;
 				offm_fStamina = 0x2080;
 				offm_bInfiniteStamina = 0x2078;
+				offm_iPadlockNumber = 0x21D8;
 				offm_pClientActiveItem = 0x23B0;
 				offm_afButtonPressed = 0x2130;
 				offm_old_iAmmo = 284;
@@ -654,8 +660,10 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offm_iKeypadNumber = 0x1ED4;
 				offm_fStamina = 0x2084;
 				offm_bInfiniteStamina = 0x207C;
+				offm_iPadlockNumber = 0x21DC;
 				offm_pClientActiveItem = 0x23B4;
 				offm_afButtonPressed = 0x2134;
 				offm_old_iAmmo = 284;
@@ -668,8 +676,10 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offm_iKeypadNumber = 0x1EE0;
 				offm_fStamina = 0x2090;
 				offm_bInfiniteStamina = 0x2088;
+				offm_iPadlockNumber = 0x21E8;
 				offm_pClientActiveItem = 0x23C0;
 				offm_afButtonPressed = 0x2140;
 				offm_old_iAmmo = 284;
@@ -683,8 +693,10 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offm_iKeypadNumber = 0x1EF0;
 				offm_fStamina = 0x20A0;
 				offm_bInfiniteStamina = 0x2098;
+				offm_iPadlockNumber = 0x21F8;
 				offm_pClientActiveItem = 0x23D0;
 				offm_afButtonPressed = 0x2150;
 				offm_old_iAmmo = 284;
@@ -698,8 +710,10 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offm_iKeypadNumber = 0x1EF4;
 				offm_fStamina = 0x20A4;
 				offm_bInfiniteStamina = 0x209C;
+				offm_iPadlockNumber = 0x21FC;
 				offm_pClientActiveItem = 0x23D4;
 				offm_afButtonPressed = 0x2154;
 				offm_old_iAmmo = 284;
@@ -713,8 +727,10 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offm_iKeypadNumber = 0x1F04;
 				offm_fStamina = 0x20B4;
 				offm_bInfiniteStamina = 0x20AC;
+				offm_iPadlockNumber = 0x220C;
 				offm_pClientActiveItem = 0x23E4;
 				offm_afButtonPressed = 0x2164;
 				offm_old_iAmmo = 288;
@@ -727,8 +743,10 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offm_iKeypadNumber = 0x2040;
 				offm_fStamina = 0x21F0;
 				offm_bInfiniteStamina = 0x21E8;
+				offm_iPadlockNumber = 0x2358;
 				offm_pClientActiveItem = 0x2530;
 				offm_afButtonPressed = 0x22B0;
 				offm_old_iAmmo = 288;
@@ -802,6 +820,20 @@ void ServerDLL::FindStuff()
 				offm_rgAmmoLast = 0x50C;
 				offm_iClientFOV = 0x464;
 				offm_afButtonPressed = 0x284;
+				break;
+			case 43: // OP4-1000
+				offm_rgAmmoLast = 0x54C;
+				offm_iClientFOV = 0x4A0;
+				offFuncIsPlayer = 0xA0;
+				offFuncCenter = 0xCC;
+				offm_afButtonPressed = 0x2BC;
+				break;
+			case 44: // TFC-1202
+				offm_rgAmmoLast = 0x8A8;
+				offm_iClientFOV = 0x800;
+				offFuncIsPlayer = 0x94;
+				offFuncCenter = 0xBC;
+				offm_afButtonPressed = 0x620;
 				break;
 			default:
 				assert(false);
@@ -1768,13 +1800,12 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_cof_disable_viewpunch_from_jump);
 	if (ORIG_ShiftMonsters && is_cof)
 		REG(bxt_cof_disable_monsters_teleport_to_spawn_after_load);
+	if (HwDLL::GetInstance().is_jumpbutton_found && ORIG_CBasePlayer__Jump && offm_afButtonPressed)
+		REG(bxt_autojump);
+	#ifndef SDK10_BUILD
 	if ((ORIG_CBasePlayer__Jump || ORIG_CBasePlayer__Jump_Linux) && offm_afButtonPressed)
-	{
-		if (HwDLL::GetInstance().is_sdk10)
-			REG(bxt_autojump);
-		else
-			REG(bxt_autojump_fix);
-	}
+		REG(bxt_autojump_fix);
+	#endif
 
 	REG(bxt_splits_print);
 	REG(bxt_splits_print_times_at_end);
@@ -3441,4 +3472,23 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CBasePlayer__Jump_Linux, void*, thisptr)
 	
 	if (return_orig_value)
 		*afButtonPressed = orig_afButtonPressed;
+}
+
+HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__ForceClientDllUpdate, void*, thisptr)
+{
+	if (HwDLL::GetInstance().is_won_build && offm_iClientFOV && offm_rgAmmoLast)
+	{
+		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		void* classPtr = pev->pContainingEntity->pvPrivateData;
+		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+
+		int* m_iClientFOV = reinterpret_cast<int*>(thisAddr + offm_iClientFOV);
+		int* m_rgAmmoLast = reinterpret_cast<int*>(thisAddr + offm_rgAmmoLast);
+
+		*m_iClientFOV = -1;
+		for (int i = 0; i < maxAmmoSlots; i++)
+			m_rgAmmoLast[i] = -1;
+	}
+
+	ORIG_CBasePlayer__ForceClientDllUpdate(thisptr);
 }

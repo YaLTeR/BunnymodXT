@@ -1174,8 +1174,9 @@ void ClientDLL::SetViewAngles(float *va)
 cl_entity_t* ClientDLL::GetLocalPlayer()
 {
 	auto &hw = HwDLL::GetInstance();
+	int pl_num = *hw.playernum;
 
-	return hw.cl_entities[*hw.playernum + 1];
+	return (*hw.cl_entities) + pl_num + 1;
 }
 
 const char* ClientDLL::GetLevelName()
@@ -1216,6 +1217,11 @@ const char* ClientDLL::GetLevelNameSv()
 cl_entity_t* ClientDLL::GetViewModel()
 {
 	return HwDLL::GetInstance().viewent;
+}
+
+cl_entity_t* ClientDLL::GetCurrentEntity()
+{
+	return *HwDLL::GetInstance().currententity;
 }
 
 void ClientDLL::FileBase(const char *in, char *out)

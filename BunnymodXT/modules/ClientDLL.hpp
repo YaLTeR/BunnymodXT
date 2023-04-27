@@ -119,6 +119,7 @@ public:
 	const char *GetLevelNameCl();
 	const char *GetLevelNameSv();
 	cl_entity_t *GetViewModel();
+	cl_entity_t *GetCurrentEntity();
 
 	void SetupTraceVectors(float start[3], float end[3]);
 	void SetStuffInHudFrame();

@@ -317,6 +317,7 @@ public:
 	bool tas_editor_unset_yaw;
 	bool tas_editor_unset_pitch;
 	bool tas_editor_apply_smoothing;
+	unsigned tas_editor_show_from_last_frames;
 	void SetTASEditorMode(TASEditorMode mode);
 	void SaveEditedInput();
 
@@ -472,6 +473,7 @@ protected:
 	struct Cmd_BXT_TAS_Editor_Set_Repeats;
 	struct Cmd_BXT_TAS_Editor_Set_Commands;
 	struct Cmd_BXT_TAS_Editor_Set_Left_Right_Count;
+	struct Cmd_BXT_TAS_Editor_Show_From_Last_Frames;
 	struct Cmd_BXT_TAS_Editor_Unset_Yaw;
 	struct Cmd_BXT_TAS_Editor_Unset_Pitch;
 	struct Cmd_BXT_TAS_Editor_Apply_Smoothing;

@@ -591,6 +591,9 @@ namespace TriangleDrawing
 		const auto& fractions = input.fractions;
 		const auto& normalzs = input.normalzs;
 		const auto& frame_bulk_starts = input.frame_bulk_starts;
+		const auto start_frame = hw.tas_editor_show_from_last_frames == 0 || 
+			hw.tas_editor_show_from_last_frames >= input.player_datas.size() ?
+				1 : input.player_datas.size() - hw.tas_editor_show_from_last_frames;
 
 		if (input.frame_bulks.size() == 0)
 			return;
@@ -1551,6 +1554,7 @@ namespace TriangleDrawing
 			} else {
 				for (size_t i = 1; i < frame_bulk_starts.size(); ++i) {
 					auto frame = frame_bulk_starts[i];
+					if (frame < start_frame) continue;
 
 					const auto origin = Vector(player_datas[frame].Origin);
 					auto disp = origin - view;
@@ -1610,6 +1614,13 @@ namespace TriangleDrawing
 			Vector last_shown_view_angle_origin;
 
 			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
+				if (frame < start_frame) {
+					// advancing
+					while (next_frame_bulk_start_index + 1 != frame_bulk_starts.size()
+							&& frame == frame_bulk_starts[next_frame_bulk_start_index])
+						++next_frame_bulk_start_index;
+					continue;
+				}
 				const auto origin = Vector(player_datas[frame].Origin);
 
 				// Draw the pushables.

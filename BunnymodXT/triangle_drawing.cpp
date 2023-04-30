@@ -1617,7 +1617,7 @@ namespace TriangleDrawing
 
 			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
 				if (frame < start_frame) {
-					// advancing
+					// Match inner advancing when skip showing some frame bulks
 					while (next_frame_bulk_start_index + 1 != frame_bulk_starts.size()
 							&& frame == frame_bulk_starts[next_frame_bulk_start_index])
 						++next_frame_bulk_start_index;

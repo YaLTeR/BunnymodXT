@@ -804,7 +804,6 @@ void HwDLL::Clear()
 	tas_editor_unset_pitch = false;
 	tas_editor_apply_smoothing = false;
 	tas_editor_set_run_point_and_save = false;
-	tas_editor_show_from_last_frames = 0;
 	free_cam_active = false;
 	extendPlayerTraceDistanceLimit = false;
 
@@ -4291,23 +4290,6 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save
 	}
 };
 
-struct HwDLL::Cmd_BXT_TAS_Editor_Show_From_Last_Frames
-{
-	USAGE("Usage: bxt_tas_editor_show_from_last_frames <frame count>\n Hide all frame bulks except ones counting from the end.\n");
-
-	static void handler(int value)
-	{
-		auto& hw = HwDLL::GetInstance();
-
-		if (value < 0) {
-			hw.ORIG_Con_Printf("Value must be >= 0.\n");
-			return;
-		}
-
-		hw.tas_editor_show_from_last_frames = value;
-	}
-};
-
 struct HwDLL::Cmd_BXT_TAS_Editor_Set_Yaw
 {
 	USAGE("Usage: bxt_tas_editor_set_yaw <yaw>\n Sets the yaw angle on the currently selected point.\n");
@@ -5092,6 +5074,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_tas_editor_apply_smoothing_over_s);
 	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_duration);
 	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_multiplier);
+	RegisterCVar(CVars::bxt_tas_editor_show_from_last_frames);
 	RegisterCVar(CVars::bxt_disable_vgui);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);
@@ -5231,7 +5214,6 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Change_Type, Handler<const char*>>("bxt_tas_editor_set_change_type");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type, Handler<const char*>>("bxt_tas_editor_set_target_yaw_type");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Set_Run_Point_And_Save, Handler<>>("bxt_tas_editor_set_run_point_and_save");
-	wrapper::Add<Cmd_BXT_TAS_Editor_Show_From_Last_Frames, Handler<int>>("bxt_tas_editor_show_from_last_frames");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Last_Point, Handler<>>("bxt_tas_editor_delete_last_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Delete_Point, Handler<>>("bxt_tas_editor_delete_point");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Insert_Point, Handler<>>("bxt_tas_editor_insert_point");

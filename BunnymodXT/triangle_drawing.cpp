@@ -591,9 +591,11 @@ namespace TriangleDrawing
 		const auto& fractions = input.fractions;
 		const auto& normalzs = input.normalzs;
 		const auto& frame_bulk_starts = input.frame_bulk_starts;
-		const auto start_frame = hw.tas_editor_show_from_last_frames == 0 || 
-			hw.tas_editor_show_from_last_frames >= input.player_datas.size() ?
-				1 : input.player_datas.size() - hw.tas_editor_show_from_last_frames;
+
+		const auto show_from_last_frames = CVars::bxt_tas_editor_show_from_last_frames.GetInt();
+		const auto start_frame = show_from_last_frames <= 0 || 
+			(unsigned) show_from_last_frames >= input.player_datas.size() ? 
+				1 : input.player_datas.size() - show_from_last_frames;
 
 		if (input.frame_bulks.size() == 0)
 			return;

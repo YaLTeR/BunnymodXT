@@ -38,6 +38,7 @@
 	X(bxt_tas_editor_apply_smoothing_over_s, "0.15") \
 	X(_bxt_tas_editor_apply_smoothing_high_weight_duration, "0.03") \
 	X(_bxt_tas_editor_apply_smoothing_high_weight_multiplier, "3") \
+	X(bxt_tas_editor_show_from_last_frames, "0") \
 	X(bxt_tas_norefresh_until_last_frames, "0") \
 	X(bxt_tas_write_log, "0") \
 	X(bxt_tas_playback_speed, "1") \

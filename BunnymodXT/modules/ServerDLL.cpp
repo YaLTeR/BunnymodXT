@@ -1759,6 +1759,11 @@ void ServerDLL::RegisterCVarsAndCommands()
 	}
 	if (!ORIG_PM_PreventMegaBunnyJumping && !pBhopcapWindows)
 		HwDLL::GetInstance().SetCVarValue(CVars::bxt_bhopcap, "0");
+	if (ORIG_AddToFullPack)
+	{
+		REG(bxt_show_hidden_entities);
+		REG(bxt_show_triggers_legacy);
+	}
 	if (pAddToFullPack_PVS_Byte)
 		REG(bxt_render_far_entities);
 	if (ORIG_PM_CheckStuck)

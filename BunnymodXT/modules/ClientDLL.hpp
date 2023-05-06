@@ -50,6 +50,9 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(int, __cdecl, CHudIcons__Draw_Linux, void *thisptr, float flTime)
 	HOOK_DECL(void, __cdecl, V_PunchAxis, int axis, float punch)
 	HOOK_DECL(void, __cdecl, HUD_Shutdown)
+	HOOK_DECL(void, __cdecl, PM_Duck)
+	HOOK_DECL(void, __cdecl, PM_UnDuck)
+	HOOK_DECL(void, __cdecl, CL_CreateMove, float frametime, usercmd_s *cmd, int active)
 
 public:
 	static ClientDLL& GetInstance()
@@ -85,6 +88,8 @@ public:
 
 	bool orig_forcehltv_found = false;
 	bool orig_righthand_not_found = false;
+
+	bool is_cof_client = false;
 
 	unsigned char custom_r, custom_g, custom_b;
 	bool custom_hud_color_set = false;
@@ -144,6 +149,12 @@ protected:
 	ptrdiff_t offOldbuttons;
 	ptrdiff_t offOnground;
 	ptrdiff_t offIUser1;
+
+	ptrdiff_t offFlags;
+	ptrdiff_t offInDuck;
+	ptrdiff_t offCmd;
+	ptrdiff_t offVelocity;
+	ptrdiff_t offWaterlevel;
 
 	ptrdiff_t offBhopcap;
 	ptrdiff_t pBhopcapWindows;

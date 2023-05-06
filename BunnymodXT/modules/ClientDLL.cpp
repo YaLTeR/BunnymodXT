@@ -40,6 +40,11 @@ extern "C" void __cdecl HUD_PostRunCmd(local_state_s* from, local_state_s* to, u
 	return ClientDLL::HOOKED_HUD_PostRunCmd(from, to, cmd, runfuncs, time, random_seed);
 }
 
+extern "C" void __cdecl CL_CreateMove(float frametime, usercmd_s *cmd, int active)
+{
+	return ClientDLL::HOOKED_CL_CreateMove(frametime, cmd, active);
+}
+
 extern "C" void __cdecl HUD_Frame(double time)
 {
 	return ClientDLL::HOOKED_HUD_Frame(time);
@@ -172,6 +177,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_AddEntity), reinterpret_cast<void*>(HOOKED_HUD_AddEntity));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_CL_IsThirdPerson), reinterpret_cast<void*>(HOOKED_CL_IsThirdPerson));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Shutdown), reinterpret_cast<void*>(HOOKED_HUD_Shutdown));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_CL_CreateMove), reinterpret_cast<void*>(HOOKED_CL_CreateMove));
 
 	if (needToIntercept)
 	{
@@ -204,7 +210,10 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CHudFlashlight__drawNightVision, HOOKED_CHudFlashlight__drawNightVision,
 			ORIG_CHud__DrawHudNightVision, HOOKED_CHud__DrawHudNightVision,
 			ORIG_CHud__DrawHudFiberCamera, HOOKED_CHud__DrawHudFiberCamera,
-			ORIG_CHudIcons__Draw, HOOKED_CHudIcons__Draw);
+			ORIG_CHudIcons__Draw, HOOKED_CHudIcons__Draw,
+			ORIG_PM_Duck, HOOKED_PM_Duck,
+			ORIG_PM_UnDuck, HOOKED_PM_UnDuck,
+			ORIG_CL_CreateMove, HOOKED_CL_CreateMove);
 	}
 
 	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
@@ -247,7 +256,10 @@ void ClientDLL::Unhook()
 			ORIG_CHudFlashlight__drawNightVision,
 			ORIG_CHud__DrawHudNightVision,
 			ORIG_CHud__DrawHudFiberCamera,
-			ORIG_CHudIcons__Draw);
+			ORIG_CHudIcons__Draw,
+			ORIG_PM_Duck,
+			ORIG_PM_UnDuck,
+			ORIG_CL_CreateMove);
 	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -262,6 +274,7 @@ void ClientDLL::Unhook()
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_AddEntity));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_CL_IsThirdPerson));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Shutdown));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_CL_CreateMove));
 
 	Clear();
 }
@@ -314,10 +327,18 @@ void ClientDLL::Clear()
 	ORIG_IN_DeactivateMouse = nullptr;
 	ORIG_CL_IsThirdPerson = nullptr;
 	ORIG_HUD_Shutdown = nullptr;
+	ORIG_PM_Duck = nullptr;
+	ORIG_PM_UnDuck = nullptr;
+	ORIG_CL_CreateMove = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
 	offIUser1 = 0;
+	offCmd = 0;
+	offInDuck = 0;
+	offFlags = 0;
+	offVelocity = 0;
+	offWaterlevel = 0;
 	offBhopcap = 0;
 	pBhopcapWindows = 0;
 	memset(originalBhopcapInsn, 0, sizeof(originalBhopcapInsn));
@@ -354,6 +375,11 @@ void ClientDLL::FindStuff()
 			offOldbuttons = 200;
 			offOnground = 224;
 			offIUser1 = 508;
+			offCmd = 283736;
+			offInDuck = 0x90;
+			offFlags = 0xB8;
+			offVelocity = 92;
+			offWaterlevel = 0xE4;
 			if (pattern == patterns::shared::PM_Jump.cend()) // Linux.
 			{
 				void *bhopcapAddr;
@@ -399,11 +425,15 @@ void ClientDLL::FindStuff()
 					break;
 				case 8: // Half-Payne
 				case 9: // DSM-Demo-1
+					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 8);
+					break;
 				case 13: // CoF-5936
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 8);
+					is_cof_client = true;
 					break;
 				case 15: // CoF-Mod-155-Client
 					ppmove = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(ORIG_PM_Jump) + 9);
+					is_cof_client = true;
 					break;
 				}
 			}
@@ -536,6 +566,12 @@ void ClientDLL::FindStuff()
 	auto fCHudIcons__Draw = FindAsync(
 		ORIG_CHudIcons__Draw,
 		patterns::client::CHudIcons__Draw);
+	auto fPM_Duck = FindAsync(
+		ORIG_PM_Duck,
+		patterns::client::PM_Duck);
+	auto fPM_UnDuck = FindAsync(
+		ORIG_PM_UnDuck,
+		patterns::client::PM_UnDuck);
 
 	ORIG_PM_PlayerMove = reinterpret_cast<_PM_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "PM_PlayerMove")); // For Linux.
 	ORIG_PM_ClipVelocity = reinterpret_cast<_PM_ClipVelocity>(MemUtils::GetSymbolAddress(m_Handle, "PM_ClipVelocity")); // For Linux.
@@ -572,6 +608,12 @@ void ClientDLL::FindStuff()
 		EngineDevMsg("[client dll] Found HUD_PostRunCmd at %p.\n", ORIG_HUD_PostRunCmd);
 	else
 		EngineDevWarning("[client dll] Could not find HUD_PostRunCmd.\n");
+
+	ORIG_CL_CreateMove = reinterpret_cast<_CL_CreateMove>(MemUtils::GetSymbolAddress(m_Handle, "CL_CreateMove"));
+	if (ORIG_CL_CreateMove)
+		EngineDevMsg("[client dll] Found CL_CreateMove at %p.\n", ORIG_CL_CreateMove);
+	else
+		EngineDevWarning("[client dll] Could not find CL_CreateMove.\n");
 
 	ORIG_HUD_Frame = reinterpret_cast<_HUD_Frame>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Frame"));
 	if (ORIG_HUD_Frame) {
@@ -774,6 +816,24 @@ void ClientDLL::FindStuff()
 			} else {
 				EngineDevWarning("[client dll] Could not find V_PunchAxis.\n");
 			}
+		}
+	}
+
+	{
+		auto pattern = fPM_Duck.get();
+		if (ORIG_PM_Duck) {
+			EngineDevMsg("[client dll] Found PM_Duck at %p (using the %s pattern).\n", ORIG_PM_Duck, pattern->name());
+		} else {
+			EngineDevWarning("[client dll] Could not find PM_Duck.\n");
+		}
+	}
+
+	{
+		auto pattern = fPM_UnDuck.get();
+		if (ORIG_PM_UnDuck) {
+			EngineDevMsg("[client dll] Found PM_UnDuck at %p (using the %s pattern).\n", ORIG_PM_UnDuck, pattern->name());
+		} else {
+			EngineDevWarning("[client dll] Could not find PM_UnDuck.\n");
 		}
 	}
 
@@ -1072,6 +1132,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_HUD_AddEntity) {
 		REG(bxt_show_hidden_entities_clientside);
+		REG(bxt_show_triggers_legacy_alpha);
 		REG(bxt_show_only_players);
 		REG(bxt_disable_brush_entities);
 		REG(bxt_disable_sprite_entities);
@@ -1084,7 +1145,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_game_alpha);
 	}
 
-	if (ORIG_CHudFlashlight__drawNightVision_Linux || ORIG_CHudFlashlight__drawNightVision || ORIG_CHud__DrawHudNightVision_Linux || ORIG_CHud__DrawHudNightVision ) {
+	if (ORIG_CHudFlashlight__drawNightVision_Linux || ORIG_CHudFlashlight__drawNightVision || ORIG_CHud__DrawHudNightVision_Linux || ORIG_CHud__DrawHudNightVision) {
 		REG(bxt_disable_nightvision_sprite);
 	}
 
@@ -1098,6 +1159,13 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if ((ORIG_CHudHealth__DrawDamage || ORIG_CHudHealth__DrawDamage_Linux) && ORIG_ScaleColors) {
 		REG(bxt_hud_game_alpha_damage);
+	}
+
+	if (is_cof_client) {
+		if (ORIG_PM_Duck)
+			REG(bxt_cof_slowdown_if_use_on_ground_prediction);
+		if (ORIG_PM_UnDuck)
+			REG(bxt_cof_enable_ducktap_prediction);
 	}
 	#undef REG
 }
@@ -1757,6 +1825,11 @@ HOOK_DEF_6(ClientDLL, void, __cdecl, HUD_PostRunCmd, local_state_s*, from, local
 	return ORIG_HUD_PostRunCmd(from, to, cmd, runfuncs, time, seed);
 }
 
+HOOK_DEF_3(ClientDLL, void, __cdecl, CL_CreateMove, float, frametime, usercmd_s*, cmd, int, active)
+{
+	ORIG_CL_CreateMove(frametime, cmd, active);
+}
+
 HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 {
 	ORIG_HUD_Frame(time);
@@ -2264,4 +2337,35 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_Shutdown)
 {
 	ORIG_HUD_Shutdown();
 	Unhook();
+}
+
+HOOK_DEF_0(ClientDLL, void, __cdecl, PM_Duck)
+{
+	ORIG_PM_Duck();
+
+	if (ppmove && CVars::bxt_cof_slowdown_if_use_on_ground_prediction.GetBool()) {
+		auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
+		int *onground = reinterpret_cast<int*>(pmove + offOnground);
+		usercmd_t *cmd = reinterpret_cast<usercmd_t*>(pmove + offCmd);
+		float *velocity = reinterpret_cast<float*>(pmove + offVelocity);
+
+		if ((*onground != -1) && (cmd->buttons & IN_USE)) {
+			velocity[0] *= 0.3f;
+			velocity[1] *= 0.3f;
+			velocity[2] *= 0.3f;
+		}
+	}
+}
+
+HOOK_DEF_0(ClientDLL, void, __cdecl, PM_UnDuck)
+{
+	if (ppmove && offFlags && offInDuck && CVars::bxt_cof_enable_ducktap_prediction.GetBool()) {
+		auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
+		int *flags = reinterpret_cast<int*>(pmove + offFlags);
+		qboolean *inDuck = reinterpret_cast<qboolean*>(pmove + offInDuck);
+		*flags |= FL_DUCKING;
+		*inDuck = false;
+	}
+
+	ORIG_PM_UnDuck();
 }

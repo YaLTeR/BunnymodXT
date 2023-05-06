@@ -6425,9 +6425,11 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		if (ORIG_R_PreDrawViewModel)
 			RegisterCVar(CVars::bxt_remove_viewmodel);
 	}
-	RegisterCVar(CVars::bxt_show_hidden_entities);
-	RegisterCVar(CVars::bxt_show_triggers_legacy);
-	RegisterCVar(CVars::bxt_show_triggers_legacy_alpha);
+	if (ORIG_SV_AddToFullPack)
+	{
+		RegisterCVar(CVars::bxt_show_hidden_entities);
+		RegisterCVar(CVars::bxt_show_triggers_legacy);
+	}
 	if (ORIG_PM_CheckStuck)
 		RegisterCVar(CVars::bxt_fire_on_stuck);
 

@@ -1907,7 +1907,7 @@ namespace patterns
 
 		PATTERNS(CHudHealth__DrawPain,
 			"HL-Steampipe",
-			"83 EC 10 56 8B F1 D9 46",
+			"83 EC 10 56 8B F1 D9 46 ?? D8 1D",
 			"Echoes",
 			"55 8B EC 83 EC 54 56 89 4D",
 			"AoMDC",
@@ -1917,11 +1917,11 @@ namespace patterns
 			"TWHL-Tower-2",
 			"55 8B EC 83 EC 14 D9 05 ?? ?? ?? ?? 56 8B F1",
 			"CStrike-Latest",
-			"83 EC 14 56 8B F1 D9 46",
+			"83 EC 14 56 8B F1 D9 46 ?? D8 1D",
 			"Sven-v525",
 			"83 EC 18 0F 57 C9",
 			"BShift-WON-1001",
-			"83 EC 10 56 8B F1 D9 86",
+			"83 EC 10 56 8B F1 D9 86 ?? ?? ?? ?? D8 1D",
 			"HL-1202",
 			"83 EC 10 53 56 57 8B F1 F7 81 ?? ?? ?? ?? FF FF FF 7F"
 		);

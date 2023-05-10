@@ -45,6 +45,11 @@ extern "C" void __cdecl CL_CreateMove(float frametime, usercmd_s *cmd, int activ
 	return ClientDLL::HOOKED_CL_CreateMove(frametime, cmd, active);
 }
 
+extern "C" void __cdecl HUD_PlayerMove(struct playermove_s* ppmove, int server)
+{
+	return ClientDLL::HOOKED_HUD_PlayerMove(ppmove, server);
+}
+
 extern "C" void __cdecl HUD_Frame(double time)
 {
 	return ClientDLL::HOOKED_HUD_Frame(time);
@@ -178,6 +183,7 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_CL_IsThirdPerson), reinterpret_cast<void*>(HOOKED_CL_IsThirdPerson));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_Shutdown), reinterpret_cast<void*>(HOOKED_HUD_Shutdown));
 	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_CL_CreateMove), reinterpret_cast<void*>(HOOKED_CL_CreateMove));
+	MemUtils::AddSymbolLookupHook(moduleHandle, reinterpret_cast<void*>(ORIG_HUD_PlayerMove), reinterpret_cast<void*>(HOOKED_HUD_PlayerMove));
 
 	if (needToIntercept)
 	{
@@ -213,7 +219,8 @@ void ClientDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CHudIcons__Draw, HOOKED_CHudIcons__Draw,
 			ORIG_PM_Duck, HOOKED_PM_Duck,
 			ORIG_PM_UnDuck, HOOKED_PM_UnDuck,
-			ORIG_CL_CreateMove, HOOKED_CL_CreateMove);
+			ORIG_CL_CreateMove, HOOKED_CL_CreateMove,
+			ORIG_HUD_PlayerMove, HOOKED_HUD_PlayerMove);
 	}
 
 	// HACK: on Windows we don't get a LoadLibrary for SDL2, so when starting using the injector
@@ -259,7 +266,8 @@ void ClientDLL::Unhook()
 			ORIG_CHudIcons__Draw,
 			ORIG_PM_Duck,
 			ORIG_PM_UnDuck,
-			ORIG_CL_CreateMove);
+			ORIG_CL_CreateMove,
+			ORIG_HUD_PlayerMove);
 	}
 
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Init));
@@ -275,6 +283,7 @@ void ClientDLL::Unhook()
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_CL_IsThirdPerson));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_Shutdown));
 	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_CL_CreateMove));
+	MemUtils::RemoveSymbolLookupHook(m_Handle, reinterpret_cast<void*>(ORIG_HUD_PlayerMove));
 
 	Clear();
 }
@@ -330,6 +339,7 @@ void ClientDLL::Clear()
 	ORIG_PM_Duck = nullptr;
 	ORIG_PM_UnDuck = nullptr;
 	ORIG_CL_CreateMove = nullptr;
+	ORIG_HUD_PlayerMove = nullptr;
 	ppmove = nullptr;
 	offOldbuttons = 0;
 	offOnground = 0;
@@ -614,6 +624,12 @@ void ClientDLL::FindStuff()
 		EngineDevMsg("[client dll] Found CL_CreateMove at %p.\n", ORIG_CL_CreateMove);
 	else
 		EngineDevWarning("[client dll] Could not find CL_CreateMove.\n");
+
+	ORIG_HUD_PlayerMove = reinterpret_cast<_HUD_PlayerMove>(MemUtils::GetSymbolAddress(m_Handle, "HUD_PlayerMove"));
+	if (ORIG_HUD_PlayerMove)
+		EngineDevMsg("[client dll] Found HUD_PlayerMove at %p.\n", ORIG_HUD_PlayerMove);
+	else
+		EngineDevWarning("[client dll] Could not find HUD_PlayerMove.\n");
 
 	ORIG_HUD_Frame = reinterpret_cast<_HUD_Frame>(MemUtils::GetSymbolAddress(m_Handle, "HUD_Frame"));
 	if (ORIG_HUD_Frame) {
@@ -1220,7 +1236,11 @@ void ClientDLL::StudioAdjustViewmodelAttachments(Vector &vOrigin)
 void ClientDLL::GetViewAngles(float *va)
 {
 	auto &hw = HwDLL::GetInstance();
-	if (hw.viewangles)
+	if (pEngfuncs && hw.pEngStudio)
+	{
+		pEngfuncs->GetViewAngles(va);
+	}
+	else if (hw.viewangles)
 	{
 		va[0] = hw.viewangles->x;
 		va[1] = hw.viewangles->y;
@@ -1231,7 +1251,11 @@ void ClientDLL::GetViewAngles(float *va)
 void ClientDLL::SetViewAngles(float *va)
 {
 	auto &hw = HwDLL::GetInstance();
-	if (hw.viewangles)
+	if (pEngfuncs && hw.pEngStudio)
+	{
+		pEngfuncs->SetViewAngles(va);
+	}
+	else if (hw.viewangles)
 	{
 		hw.viewangles->x = va[0];
 		hw.viewangles->y = va[1];
@@ -1242,9 +1266,19 @@ void ClientDLL::SetViewAngles(float *va)
 cl_entity_t* ClientDLL::GetLocalPlayer()
 {
 	auto &hw = HwDLL::GetInstance();
-	int pl_num = *hw.playernum;
-
-	return (*hw.cl_entities) + pl_num + 1;
+	if (pEngfuncs && hw.pEngStudio)
+	{
+		return pEngfuncs->GetLocalPlayer();
+	}
+	else if (hw.cl_entities && hw.playernum)
+	{
+		int pl_num = *hw.playernum;
+		return (*hw.cl_entities) + pl_num + 1;
+	} 
+	else 
+	{
+		return NULL;
+	}
 }
 
 const char* ClientDLL::GetLevelName()
@@ -1253,6 +1287,8 @@ const char* ClientDLL::GetLevelName()
 
 	if (hw.is_sdk10)
 		return GetLevelNameSv();
+	else if (pEngfuncs && hw.pEngStudio)
+		return pEngfuncs->pfnGetLevelName();
 	else
 		return GetLevelNameCl();
 }
@@ -1284,12 +1320,26 @@ const char* ClientDLL::GetLevelNameSv()
 
 cl_entity_t* ClientDLL::GetViewModel()
 {
-	return HwDLL::GetInstance().viewent;
+	auto& hw = HwDLL::GetInstance();
+
+	if (hw.pEngStudio && pEngfuncs)
+		return pEngfuncs->GetViewModel();
+	else if (hw.viewent)
+		return hw.viewent;
+	else
+		return NULL;
 }
 
 cl_entity_t* ClientDLL::GetCurrentEntity()
 {
-	return *HwDLL::GetInstance().currententity;
+	auto& hw = HwDLL::GetInstance();
+
+	if (hw.pEngStudio)
+		return hw.pEngStudio->GetCurrentEntity();
+	else if (hw.currententity)
+		return *hw.currententity;
+	else
+		return NULL;
 }
 
 void ClientDLL::FileBase(const char *in, char *out)
@@ -1677,7 +1727,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 	float right_offset = CVars::bxt_viewmodel_ofs_right.GetFloat();
 	float up_offset = CVars::bxt_viewmodel_ofs_up.GetFloat();
 
-	if (pEngfuncs) {
+	if (pEngfuncs && HwDLL::GetInstance().pEngStudio) {
 		auto view = GetViewModel();
 
 		if (!paused) {
@@ -1830,6 +1880,11 @@ HOOK_DEF_3(ClientDLL, void, __cdecl, CL_CreateMove, float, frametime, usercmd_s*
 	ORIG_CL_CreateMove(frametime, cmd, active);
 }
 
+HOOK_DEF_2(ClientDLL, void, __cdecl, HUD_PlayerMove, struct playermove_s*, ppmove, int, server)
+{
+	ORIG_HUD_PlayerMove(ppmove, server);
+}
+
 HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 {
 	ORIG_HUD_Frame(time);
@@ -1917,8 +1972,8 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioCalcAttachme
 
 	if (pEngfuncs && hw.pEngStudio)
 	{
-		auto currententity = hw.pEngStudio->GetCurrentEntity();
-		if (currententity == GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
+		auto currententity = GetCurrentEntity();
+		if (currententity == GetViewModel() && hw.NeedViewmodelAdjustments())
 			insideStudioCalcAttachmentsViewmodel = true;
 	}
 	ORIG_CStudioModelRenderer__StudioCalcAttachments(thisptr);
@@ -1931,8 +1986,8 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioCalcAttachments
 
 	if (pEngfuncs && hw.pEngStudio)
 	{
-		auto currententity = hw.pEngStudio->GetCurrentEntity();
-		if (currententity == GetViewModel() && HwDLL::GetInstance().NeedViewmodelAdjustments())
+		auto currententity = GetCurrentEntity();
+		if (currententity == GetViewModel() && hw.NeedViewmodelAdjustments())
 			insideStudioCalcAttachmentsViewmodel = true;
 	}
 	ORIG_CStudioModelRenderer__StudioCalcAttachments_Linux(thisptr);
@@ -1982,7 +2037,7 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioSetupBones, 
 	auto pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(pStudioHeader) +
 		pStudioHeader->seqindex) + pCurrentEntity->curstate.sequence;
 
-	if (pEngfuncs) {
+	if (pEngfuncs && HwDLL::GetInstance().pEngStudio) {
 		if (pCurrentEntity == GetViewModel()) {
 			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
 			{
@@ -2033,7 +2088,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linu
 	auto pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(pStudioHeader) +
 		pStudioHeader->seqindex) + pCurrentEntity->curstate.sequence;
 
-	if (pEngfuncs) {
+	if (pEngfuncs && HwDLL::GetInstance().pEngStudio) {
 		if (pCurrentEntity == GetViewModel()) {
 			if (orig_righthand_not_found && CVars::cl_righthand.GetFloat() > 0)
 			{
@@ -2130,7 +2185,7 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel,
 
 	int old_rendermode = pCurrentEntity->curstate.rendermode;
 
-	if (pEngfuncs) {
+	if (pEngfuncs && HwDLL::GetInstance().pEngStudio) {
 		if (pCurrentEntity == GetViewModel()) {
 			if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
 				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
@@ -2156,7 +2211,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Lin
 
 	int old_rendermode = pCurrentEntity->curstate.rendermode;
 
-	if (pEngfuncs) {
+	if (pEngfuncs && HwDLL::GetInstance().pEngStudio) {
 		if (pCurrentEntity == GetViewModel()) {
 			if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
 				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);

@@ -4343,7 +4343,7 @@ struct HwDLL::Cmd_BXT_Get_SteamID_In_Demo
 		auto& cl = ClientDLL::GetInstance();
 		if (hw.is_steamid_build && hw.IsPlayingbackDemo())
 		{
-			int player = cl.pEngfuncs->GetLocalPlayer()->index;
+			int player = cl.GetLocalPlayer()->index;
 			player_info_s* player_info = hw.pEngStudio->PlayerInfo(player - 1);
 
 			hw.ORIG_Con_Printf("Steam ID: %" PRIu64 "\n", player_info->m_nSteamID);
@@ -6393,12 +6393,10 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	}
 	if (ORIG_SV_SetMoveVars && movevars)
 		RegisterCVar(CVars::bxt_force_zmax);
-	if (ORIG_Host_ValidSave && !is_sdk10)
-	{
+	if (pEngStudio)
 		RegisterCVar(CVars::bxt_viewmodel_semitransparent);
-		RegisterCVar(CVars::bxt_viewmodel_disable_idle);
-		RegisterCVar(CVars::bxt_viewmodel_disable_equip);
-	}
+	RegisterCVar(CVars::bxt_viewmodel_disable_idle);
+	RegisterCVar(CVars::bxt_viewmodel_disable_equip);
 	if (ORIG_R_Clear) {
 		RegisterCVar(CVars::bxt_clear_color);
 		RegisterCVar(CVars::bxt_force_clear);
@@ -6419,7 +6417,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	if (ORIG_R_SetFrustum && scr_fov_value)
 		RegisterCVar(CVars::bxt_force_fov);
 	if (ORIG_R_DrawViewModel) {
-		if (ORIG_Host_ValidSave && !is_sdk10)
+		if (pEngStudio)
 			RegisterCVar(CVars::bxt_viewmodel_fov);
 
 		if (ORIG_R_PreDrawViewModel)
@@ -7472,7 +7470,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 
 	if (is_paranoia)
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
-	else if (!is_sdk10 && cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
+	else if (pEngStudio && cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in other mods (example: CS 1.6)
 	else
 		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
@@ -8610,7 +8608,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioCalcAttachments)
 	auto &cl = ClientDLL::GetInstance();
 
 	if (cl.pEngfuncs && pEngStudio) {
-		auto current = pEngStudio->GetCurrentEntity();
+		auto current = cl.GetCurrentEntity();
 		if (current == cl.GetViewModel() && NeedViewmodelAdjustments())
 			insideRStudioCalcAttachmentsViewmodel = true;
 	}
@@ -8666,8 +8664,8 @@ HOOK_DEF_3(HwDLL, void, __cdecl, VGuiWrap2_NotifyOfServerConnect, const char*, g
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioSetupBones)
 {
-	if (pstudiohdr) {
-		auto& cl = ClientDLL::GetInstance();
+	auto& cl = ClientDLL::GetInstance();
+	if (pstudiohdr && cl.GetCurrentEntity()) {
 		auto current = cl.GetCurrentEntity();
 		auto pseqdesc = reinterpret_cast<mstudioseqdesc_t*>(reinterpret_cast<byte*>(*pstudiohdr) +
 			(*pstudiohdr)->seqindex) + current->curstate.sequence;
@@ -8779,7 +8777,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 {
 	if (pEngStudio) {
 		auto& cl = ClientDLL::GetInstance();
-		auto current = pEngStudio->GetCurrentEntity();
+		auto current = cl.GetCurrentEntity();
 
 		int old_rendermode = current->curstate.rendermode;
 

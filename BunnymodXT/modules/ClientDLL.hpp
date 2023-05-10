@@ -53,6 +53,7 @@ class ClientDLL : public IHookableNameFilter
 	HOOK_DECL(void, __cdecl, PM_Duck)
 	HOOK_DECL(void, __cdecl, PM_UnDuck)
 	HOOK_DECL(void, __cdecl, CL_CreateMove, float frametime, usercmd_s *cmd, int active)
+	HOOK_DECL(void, __cdecl, HUD_PlayerMove, struct playermove_s* ppmove, int server)
 
 public:
 	static ClientDLL& GetInstance()

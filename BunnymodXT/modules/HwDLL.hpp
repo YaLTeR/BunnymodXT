@@ -372,7 +372,12 @@ public:
 	bool is_sdk10 = false;
 	bool is_bshift_won = false;
 	bool is_jumpbutton_found = false;
+
+	#ifdef _WIN32
 	bool is_steamid_build = false;
+	#else
+	bool is_steamid_build = true;
+	#endif
 
 	bool set_default_player_index = true;
 	int player_index = 1;

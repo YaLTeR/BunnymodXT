@@ -592,10 +592,10 @@ namespace TriangleDrawing
 		const auto& normalzs = input.normalzs;
 		const auto& frame_bulk_starts = input.frame_bulk_starts;
 
-		const auto show_from_last_frames = CVars::bxt_tas_editor_show_from_last_frames.GetInt();
-		const auto start_frame = show_from_last_frames <= 0 || 
-			(unsigned) show_from_last_frames >= input.player_datas.size() ? 
-				1 : input.player_datas.size() - show_from_last_frames;
+		const auto show_only_last_frames = CVars::bxt_tas_editor_show_only_last_frames.GetInt();
+		const auto start_frame = show_only_last_frames <= 0 || 
+			(unsigned) show_only_last_frames >= input.player_datas.size() ? 
+				1 : input.player_datas.size() - show_only_last_frames;
 
 		if (input.frame_bulks.size() == 0)
 			return;
@@ -1624,7 +1624,8 @@ namespace TriangleDrawing
 
 			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
 				if (frame < start_frame) {
-					// Match inner advancing when skip showing some frame bulks
+					// Incrementing next_frame_bulk_start_index 
+					// when frames are skipped to correctly render perpendicular line.
 					while (next_frame_bulk_start_index + 1 != frame_bulk_starts.size()
 							&& frame == frame_bulk_starts[next_frame_bulk_start_index])
 						++next_frame_bulk_start_index;

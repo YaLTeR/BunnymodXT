@@ -1762,6 +1762,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_AddToFullPack)
 	{
 		REG(bxt_show_hidden_entities);
+		REG(bxt_show_hidden_entities_classname);
 		REG(bxt_show_triggers_legacy);
 	}
 	if (pAddToFullPack_PVS_Byte)
@@ -2677,7 +2678,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
 	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
 
-	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool()) {
+	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool() && (CVars::bxt_show_hidden_entities_classname.IsEmpty() || !std::strcmp(classname, CVars::bxt_show_hidden_entities_classname.GetString().c_str()))) {
 		bool show = ent->v.rendermode != kRenderNormal && ent->v.rendermode != kRenderGlow;
 		switch (CVars::bxt_show_hidden_entities.GetInt()) {
 		case 1:

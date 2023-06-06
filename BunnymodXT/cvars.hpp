@@ -225,7 +225,8 @@
 	X(bxt_splits_print_times_at_end, "1") \
 	X(bxt_splits_autorecord_on_first_split, "") \
 	X(bxt_splits_start_timer_on_first_split, "0") \
-	X(bxt_splits_end_on_last_split, "0")
+	X(bxt_splits_end_on_last_split, "0") \
+	X(bxt_show_hidden_entities_classname, "")
 
 class CVarWrapper
 {

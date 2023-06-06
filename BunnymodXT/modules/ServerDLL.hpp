@@ -110,6 +110,8 @@ public:
 	void SetStamina(bool makeItZero);
 
 	bool is_cof = false; // Cry of Fear-specific
+	bool is_cof_old_stats = false; // Cry of Fear-specific
+	ptrdiff_t offplayerstats; // Cry of Fear-specific
 	ptrdiff_t offm_iKeypadNumber; // Cry of Fear-specific
 	ptrdiff_t offm_fStamina; // Cry of Fear-specific
 	ptrdiff_t offm_iPadlockNumber; // Cry of Fear-specific

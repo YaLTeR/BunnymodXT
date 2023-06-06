@@ -333,6 +333,7 @@ void ServerDLL::Clear()
 	offm_iPrimaryAmmoType = 0;
 
 	// Cry of Fear-specific
+	offplayerstats = 0;
 	offm_iKeypadNumber = 0;
 	offm_bInfiniteStamina = 0;
 	offm_fStamina = 0;
@@ -644,6 +645,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offplayerstats = 0x604;
 				offm_iKeypadNumber = 0x1ED0;
 				offm_fStamina = 0x2080;
 				offm_bInfiniteStamina = 0x2078;
@@ -653,6 +655,7 @@ void ServerDLL::FindStuff()
 				offm_old_iAmmo = 284;
 				offm_CMultiManager_index = 224;
 				is_cof = true;
+				is_cof_old_stats = true;
 				break;
 			case 26: // CoF-Mod-11
 				offm_rgAmmoLast = 0x2444;
@@ -660,6 +663,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offplayerstats = 0x608;
 				offm_iKeypadNumber = 0x1ED4;
 				offm_fStamina = 0x2084;
 				offm_bInfiniteStamina = 0x207C;
@@ -669,6 +673,7 @@ void ServerDLL::FindStuff()
 				offm_old_iAmmo = 284;
 				offm_CMultiManager_index = 224;
 				is_cof = true;
+				is_cof_old_stats = true;
 				break;
 			case 27: // CoF-Mod-12
 				offm_rgAmmoLast = 0x2450;
@@ -676,6 +681,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offplayerstats = 0x614;
 				offm_iKeypadNumber = 0x1EE0;
 				offm_fStamina = 0x2090;
 				offm_bInfiniteStamina = 0x2088;
@@ -686,6 +692,7 @@ void ServerDLL::FindStuff()
 				offm_iPlayerSaveLock = 0x4A8;
 				offm_CMultiManager_index = 224;
 				is_cof = true;
+				is_cof_old_stats = true;
 				break;
 			case 28: // CoF-Mod-13-135
 				offm_rgAmmoLast = 0x2460;
@@ -693,6 +700,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				//offplayerstats = 0x;
 				offm_iKeypadNumber = 0x1EF0;
 				offm_fStamina = 0x20A0;
 				offm_bInfiniteStamina = 0x2098;
@@ -710,6 +718,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				offplayerstats = 0x624;
 				offm_iKeypadNumber = 0x1EF4;
 				offm_fStamina = 0x20A4;
 				offm_bInfiniteStamina = 0x209C;
@@ -727,6 +736,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				//offplayerstats = 0x;
 				offm_iKeypadNumber = 0x1F04;
 				offm_fStamina = 0x20B4;
 				offm_bInfiniteStamina = 0x20AC;
@@ -743,6 +753,7 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD0;
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
+				//offplayerstats = 0x;
 				offm_iKeypadNumber = 0x2040;
 				offm_fStamina = 0x21F0;
 				offm_bInfiniteStamina = 0x21E8;

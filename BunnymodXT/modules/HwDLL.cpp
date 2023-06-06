@@ -4372,21 +4372,54 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		if (is_ent_player_failed)
 			return;
 
-		if (sv.offm_iKeypadNumber && sv.offm_iPadlockNumber)
+		if (sv.is_cof)
 		{
 			void* classPtr = ent->v.pContainingEntity->pvPrivateData;
 			uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-			int* m_iKeypadNumber = reinterpret_cast<int*>(thisAddr + sv.offm_iKeypadNumber);
-			int* m_iPadlockNumber = reinterpret_cast<int*>(thisAddr + sv.offm_iPadlockNumber);
 
-			std::ostringstream ss_padlock;
-
-			for (int i = 1; i < 5; i++)
+			if (sv.offm_iKeypadNumber)
 			{
-				ss_padlock << m_iPadlockNumber[i];
+				int* m_iKeypadNumber = reinterpret_cast<int*>(thisAddr + sv.offm_iKeypadNumber);
+				hw.ORIG_Con_Printf("Keypad code [CoF]: %d\n", *m_iKeypadNumber);
 			}
 
-			hw.ORIG_Con_Printf("Keypad code [CoF]: %d\nPadlock code [CoF]: %s\n", *m_iKeypadNumber, ss_padlock.str().c_str());
+			if (sv.offm_iPadlockNumber)
+			{
+				int* m_iPadlockNumber = reinterpret_cast<int*>(thisAddr + sv.offm_iPadlockNumber);
+
+				std::ostringstream ss_padlock;
+
+				for (int i = 1; i < 5; i++)
+				{
+					ss_padlock << m_iPadlockNumber[i];
+				}
+
+				hw.ORIG_Con_Printf("Padlock code [CoF]: %s\n", ss_padlock.str().c_str());
+			}
+
+			if (sv.offplayerstats)
+			{
+				ptrdiff_t pshots_fired;
+				if (sv.is_cof_old_stats)
+					pshots_fired = 0x0;
+				else
+					pshots_fired = 0x4;
+				ptrdiff_t pshots_hit = 0x4 + pshots_fired;
+				ptrdiff_t psyringes_used = 0x8 + pshots_fired;
+				ptrdiff_t pshots_missed = 0xC + pshots_fired;
+				ptrdiff_t pgunaccuracy = 0x10 + pshots_fired;
+				ptrdiff_t ptimessaved = 0x14 + pshots_fired;
+				void* playerstats = reinterpret_cast<void*>(thisAddr + sv.offplayerstats);
+				uintptr_t playerstatsAddr = reinterpret_cast<uintptr_t>(playerstats);
+				int* shots_fired = reinterpret_cast<int*>(playerstatsAddr + pshots_fired);
+				int* shots_hit = reinterpret_cast<int*>(playerstatsAddr + pshots_hit);
+				int* syringes_used = reinterpret_cast<int*>(playerstatsAddr + psyringes_used);
+				int* shots_missed = reinterpret_cast<int*>(playerstatsAddr + pshots_missed);
+				float* gunaccuracy = reinterpret_cast<float*>(playerstatsAddr + pgunaccuracy);
+				int* timessaved = reinterpret_cast<int*>(playerstatsAddr + ptimessaved);
+
+				hw.ORIG_Con_Printf("Fired: %d\nHit: %d\nMissed: %d\nSyringes used: %d\nGun accuracy: %f\nTimes saved: %d\n", *shots_fired, *shots_hit, *shots_missed, *syringes_used, *gunaccuracy, *timessaved);
+			}
 		}
 
 		const auto& mvtype = ent->v.movetype;

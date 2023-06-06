@@ -368,7 +368,10 @@ public:
 	bool Called_Timer = false;
 
 	bool is_won_build = false;
+	bool is_steam_build = false;
+	bool is_1712_build = false;
 	bool is_cof_steam = false; // Cry of Fear-specific
+	bool is_sven_525 = false;
 	bool is_sdk10 = false;
 	bool is_bshift_won = false;
 	bool is_jumpbutton_found = false;

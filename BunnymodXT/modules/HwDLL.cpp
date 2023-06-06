@@ -1551,17 +1551,21 @@ void HwDLL::FindStuff()
 				case 0: // HL-Steampipe
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 181);
 					is_steamid_build = true;
+					is_steam_build = true;
 					break;
 				case 1: // HL-4554
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 226);
 					is_steamid_build = true;
+					is_steam_build = true;
 					break;
 				case 2: // HL-NGHL
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 203);
+					is_steam_build = true;
 					break;
 				case 3: // HL-WON-1712
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 1456);
 					is_won_build = true;
+					is_1712_build = true;
 					break;
 				case 4: // CoF-5936
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 230);
@@ -1978,6 +1982,7 @@ void HwDLL::FindStuff()
 					svs = reinterpret_cast<server_static_t*>(*reinterpret_cast<uintptr_t*>(f + 40) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 118);
 					offActiveAddr = *reinterpret_cast<uintptr_t*>(f + 0xF);
+					is_sven_525 = true;
 					break;
 				case 3: // HL-1202
 					psv = *reinterpret_cast<void**>(f + 14);
@@ -2005,10 +2010,6 @@ void HwDLL::FindStuff()
 					svs = reinterpret_cast<server_static_t*>(*reinterpret_cast<uintptr_t*>(f + 63) - 0);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 97);
 					offActiveAddr = *reinterpret_cast<uintptr_t*>(f + 0x13);
-					// For unknown reason the automatic search through functions to sv.models / sv.edicts does not work only in the Blue Shift WON engine
-					// I double-checked the offsets to addresses and they are correct, so I decided to hardcode the offsets only for that build.
-					offModels = 0x210F8;
-					offEdicts = 0x23204;
 					is_sdk10 = true;
 					break;
 				}
@@ -2020,7 +2021,7 @@ void HwDLL::FindStuff()
 			patterns::engine::NUM_FOR_EDICT,
 			[&](auto pattern) {
 				auto f = reinterpret_cast<uintptr_t>(NUM_FOR_EDICT);
-				if (offActiveAddr && !offEdicts)
+				if (offActiveAddr)
 				{
 					switch (pattern - patterns::engine::NUM_FOR_EDICT.cbegin())
 					{
@@ -2039,6 +2040,19 @@ void HwDLL::FindStuff()
 						offEdicts = *reinterpret_cast<uintptr_t*>(f + 0xB) - offActiveAddr;
 						break;
 					}
+				}
+				else
+				{
+					if (is_steam_build)
+						offEdicts = 0x3BC60;
+					else if (is_1712_build)
+						offEdicts = 0x3BA20;
+					else if (is_sdk10)
+						offEdicts = 0x23204;
+					else if (is_cof_steam)
+						offEdicts = 0x52160;
+					else if (is_sven_525)
+						offEdicts = 0x4A1560;
 				}
 			});
 
@@ -2117,7 +2131,7 @@ void HwDLL::FindStuff()
 			patterns::engine::ModelFrames,
 			[&](auto pattern) {
 				auto f = reinterpret_cast<uintptr_t>(ModelFrames);
-				if (offActiveAddr && !offModels)
+				if (offActiveAddr)
 				{
 					switch (pattern - patterns::engine::ModelFrames.cbegin())
 					{
@@ -2133,6 +2147,19 @@ void HwDLL::FindStuff()
 						offModels = *reinterpret_cast<uintptr_t*>(f + 0x19) - offActiveAddr;
 						break;
 					}
+				}
+				else
+				{
+					if (is_steam_build)
+						offModels = 0x30950;
+					else if (is_1712_build)
+						offModels = 0x30910;
+					else if (is_sdk10)
+						offModels = 0x210F8;
+					else if (is_cof_steam)
+						offModels = 0x41D50;
+					else if (is_sven_525)
+						offModels = 0x276150;
 				}
 			});
 

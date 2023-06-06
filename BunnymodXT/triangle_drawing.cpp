@@ -593,9 +593,10 @@ namespace TriangleDrawing
 		const auto& frame_bulk_starts = input.frame_bulk_starts;
 
 		const auto show_only_last_frames = CVars::bxt_tas_editor_show_only_last_frames.GetInt();
-		const auto start_frame = show_only_last_frames <= 0 || 
-			(unsigned) show_only_last_frames >= input.player_datas.size() ? 
-				1 : input.player_datas.size() - show_only_last_frames;
+		unsigned start_frame = 1;
+		if (show_only_last_frames > 0 && (unsigned) show_only_last_frames < input.player_datas.size()) {
+			start_frame = input.player_datas.size() - show_only_last_frames;
+		}
 
 		if (input.frame_bulks.size() == 0)
 			return;

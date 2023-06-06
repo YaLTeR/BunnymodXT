@@ -796,6 +796,7 @@ void HwDLL::Clear()
 	simorg = nullptr;
 	simvel = nullptr;
 	cl_paused = nullptr;
+	cl_time = nullptr;
 	playernum = nullptr;
 	levelname = nullptr;
 	viewent = nullptr;
@@ -938,6 +939,7 @@ void HwDLL::FindStuff()
 			simorg = reinterpret_cast<Vector*>(reinterpret_cast<uintptr_t>(pcl) + 0x2ac08);
 			simvel = reinterpret_cast<Vector*>(reinterpret_cast<uintptr_t>(pcl) + 0x2ac14);
 			cl_paused = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(pcl) + 0x2af60);
+			cl_time = reinterpret_cast<double*>(reinterpret_cast<uintptr_t>(pcl) + 0x2af94);
 			playernum = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(pcl) + 0x19bca8);
 			levelname = reinterpret_cast<char*>(reinterpret_cast<uintptr_t>(pcl) + 0x1a34b8);
 			viewent = reinterpret_cast<cl_entity_t*>(reinterpret_cast<uintptr_t>(pcl) + 0x1a34fc);
@@ -2068,6 +2070,33 @@ void HwDLL::FindStuff()
 				}
 			});
 
+		void* CL_FxBlend;
+		auto fCL_FxBlend = FindAsync(
+			CL_FxBlend,
+			patterns::engine::CL_FxBlend,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::CL_FxBlend.cbegin())
+				{
+				default:
+				case 0: // HL-SteamPipe
+					cl_time = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(CL_FxBlend) + 0x3a);
+					break;
+				case 1: // HL-4554
+				case 4: // HL-1202
+					cl_time = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(CL_FxBlend) + 0x40);
+					break;
+				case 2: // CoF-5936
+					cl_time = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(CL_FxBlend) + 0x4f);
+					break;
+				case 3: // Sven-v525
+					cl_time = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(CL_FxBlend) + 0x2a);
+					break;
+				case 5: // BShift-WON-1001
+					cl_time = *reinterpret_cast<double**>(reinterpret_cast<uintptr_t>(CL_FxBlend) + 0x2f);
+					break;
+				}
+			});
+
 		void* ModelFrames;
 		auto fModelFrames = FindAsync(
 			ModelFrames,
@@ -2808,6 +2837,17 @@ void HwDLL::FindStuff()
 			}
 			else {
 				EngineDevWarning("[hw dll] Could not find CL_EntityNum.\n");
+			}
+		}
+
+		{
+			auto pattern = fCL_FxBlend.get();
+			if (CL_FxBlend) {
+				EngineDevMsg("[hw dll] Found CL_FxBlend at %p (using the %s pattern).\n", CL_FxBlend, pattern->name());
+				EngineDevMsg("[hw dll] Found cl.time at %p.\n", cl_time);
+			}
+			else {
+				EngineDevWarning("[hw dll] Could not find CL_FxBlend.\n");
 			}
 		}
 

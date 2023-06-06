@@ -517,6 +517,7 @@ namespace CustomHud
 			out.precision(precision);
 
 			auto time = ServerDLL::GetInstance().GetTime();
+			auto cl_time = ClientDLL::GetInstance().GetTime();
 			auto v_forward = ClientDLL::GetInstance().AnglesToForward(player.viewangles);
 			float flDamage = 200;
 			if (time < 4.0f)
@@ -525,9 +526,12 @@ namespace CustomHud
 			auto vel_gain = v_forward * flDamage * 5;
 			auto ups = static_cast<int>(trunc(length(vel_gain[0], vel_gain[1])));
 
-			out << "Server time: " << time << "\n";
+			if (CVars::bxt_hud_quickgauss.GetInt() == 3)
+				out << "Client time: " << cl_time << "\n";
+			else
+				out << "Server time: " << time << "\n";
 
-			if (CVars::bxt_hud_quickgauss.GetInt() != 2)
+			if ((CVars::bxt_hud_quickgauss.GetInt() != 2) && (CVars::bxt_hud_quickgauss.GetInt() != 3))
 				out << "Qgauss dmg: " << flDamage << "\n" << "Qgauss boost: " << ups;
 
 			DrawMultilineString(x, y, out.str());

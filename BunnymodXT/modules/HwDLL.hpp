@@ -595,6 +595,7 @@ public:
 	Vector *simvel; // cl.simvel
 	int* cl_paused; // cl.paused
 	cl_entity_t **cl_entities;
+	double* cl_time; // cl.time
 	int *playernum; // cl.playernum
 	char *levelname; // cl.levelname
 	cl_entity_t *viewent; // cl.viewent

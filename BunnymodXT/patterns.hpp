@@ -224,6 +224,21 @@ namespace patterns
 			"8B 4C 24 ?? 8D 41 ?? 3D FE 1F 00 00"
 		);
 
+		PATTERNS(CL_FxBlend,
+			"HL-SteamPipe",
+			"55 8B EC 83 EC 0C 56 8B 75 ?? DB 86",
+			"HL-4554",
+			"55 8B EC 83 E4 F8 83 EC 14 56 8B 75",
+			"CoF-5936",
+			"55 8B EC 83 EC 4C 8B 45 ?? DB 80",
+			"Sven-v525",
+			"53 56 8B 74 24 ?? DB 86",
+			"HL-1202",
+			"83 EC 0C 53 56 8B 74 24 ?? 57 DB 06",
+			"BShift-WON-1001",
+			"83 EC 0C 56 8B 74 24 ?? DB 06"
+		);
+
 		PATTERNS(Host_Tell_f,
 			"HL-SteamPipe",
 			"55 8B EC 83 EC 40 A1 ?? ?? ?? ?? 56 83 F8 01 75 0A E8 ?? ?? ?? ?? 5E 8B E5 5D C3 E8 ?? ?? ?? ?? 83 F8 03 0F 8C ?? ?? ?? ?? E8",

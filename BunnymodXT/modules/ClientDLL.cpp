@@ -1342,6 +1342,14 @@ cl_entity_t* ClientDLL::GetCurrentEntity()
 		return NULL;
 }
 
+float ClientDLL::GetTime()
+{
+	if (HwDLL::GetInstance().cl_time)
+		return static_cast<float>(*HwDLL::GetInstance().cl_time);
+
+	return 0.0f;
+}
+
 void ClientDLL::FileBase(const char *in, char *out)
 {
 	int len, start, end;

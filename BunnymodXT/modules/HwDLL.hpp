@@ -453,6 +453,8 @@ protected:
 	_MSG_WriteByte ORIG_MSG_WriteByte;
 	typedef int(__cdecl* _PM_CheckStuck) ();
 	_PM_CheckStuck ORIG_PM_CheckStuck; // Engine implementation of PM_CheckStuck in older WON versions
+	typedef void(__cdecl *_R_LoadSkys) ();
+	_R_LoadSkys ORIG_R_LoadSkys;
 
 	void FindStuff();
 
@@ -567,6 +569,7 @@ protected:
 	struct Cmd_BXT_Test_Output;
 	struct Cmd_BXT_SetPause;
 	struct Cmd_BXT_UnPause;
+	struct Cmd_BXT_Set_Skybox;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();
@@ -655,6 +658,7 @@ protected:
 	ptrdiff_t pGL_EndRendering_VID_FlipScreen_Bytes;
 	qboolean *cofSaveHack; // Cry of Fear-specific
 	cmd_source_t *cmd_source;
+	int *gLoadSky;
 
 	int framesTillExecuting;
 	bool executing;

@@ -480,6 +480,7 @@ protected:
 	struct Cmd_BXT_CH_Monster_Set_Origin;
 	struct Cmd_BXT_CH_Client_Set_Velocity;
 	struct Cmd_BXT_CH_Client_Set_Armor;
+	struct Cmd_BXT_CH_Client_Toggle_Noclip;
 	struct Cmd_BXT_Get_Origin_And_Angles;
 	struct Cmd_BXT_Get_Server_Time;
 	struct Cmd_Multiwait;

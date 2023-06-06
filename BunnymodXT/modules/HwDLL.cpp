@@ -4067,6 +4067,51 @@ struct HwDLL::Cmd_BXT_CH_Client_Set_Velocity
 	}
 };
 
+struct HwDLL::Cmd_BXT_CH_Client_Toggle_Noclip
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		const auto& serv = ServerDLL::GetInstance();
+		float view[3], end[3];
+		ClientDLL::GetInstance().SetupTraceVectors(view, end);
+
+		const auto tr = serv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+
+		if (tr.pHit)
+		{
+			const auto ent = tr.pHit;
+
+			if (ent->v.flags & FL_CLIENT)
+			{
+				if (ent->v.movetype == MOVETYPE_NOCLIP)
+					ent->v.movetype = MOVETYPE_WALK;
+				else
+					ent->v.movetype = MOVETYPE_NOCLIP;
+			}
+		}
+	}
+
+	static void handler(int num)
+	{
+		auto& hw = HwDLL::GetInstance();
+
+		edict_t* edicts;
+		hw.GetEdicts(&edicts);
+
+		edict_t* ent = edicts + num;
+		bool is_ent_failed = hw.CheckIfEntityIsValidAndPlayer(ent, num, true, true);
+		if (is_ent_failed)
+			return;
+
+		if (ent->v.movetype == MOVETYPE_NOCLIP)
+			ent->v.movetype = MOVETYPE_WALK;
+		else
+			ent->v.movetype = MOVETYPE_NOCLIP;
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_Get_Velocity
 {
 	NO_USAGE();
@@ -6519,6 +6564,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Monster_Set_Origin, Handler<int>, Handler<float, float, float>, Handler<float, float, float, int>, Handler<float, float, float, int, const char *>>("bxt_ch_monster_set_origin");
 	wrapper::AddCheat<Cmd_BXT_CH_Client_Set_Armor, Handler<float>, Handler<float, int>>("bxt_ch_client_set_armor");
 	wrapper::AddCheat<Cmd_BXT_CH_Client_Set_Velocity, Handler<float, float, float>, Handler<float, float, float, int>>("bxt_ch_client_set_velocity");
+	wrapper::AddCheat<Cmd_BXT_CH_Client_Toggle_Noclip, Handler<>, Handler<int>>("bxt_ch_client_toggle_noclip");
 	wrapper::AddCheat<
 		Cmd_BXT_CH_Set_Velocity_Angles,
 		Handler<float>,

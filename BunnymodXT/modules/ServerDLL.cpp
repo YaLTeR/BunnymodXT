@@ -340,6 +340,7 @@ void ServerDLL::Clear()
 	offm_iPadlockNumber = 0;
 	offm_old_iAmmo = 0;
 	offm_iPlayerSaveLock = 0;
+	offm_bDodgeDisabled = 0;
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -646,6 +647,7 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				offplayerstats = 0x604;
+				offm_bDodgeDisabled = 0x1D79;
 				offm_iKeypadNumber = 0x1ED0;
 				offm_fStamina = 0x2080;
 				offm_bInfiniteStamina = 0x2078;
@@ -664,6 +666,7 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				offplayerstats = 0x608;
+				offm_bDodgeDisabled = 0x1D7D;
 				offm_iKeypadNumber = 0x1ED4;
 				offm_fStamina = 0x2084;
 				offm_bInfiniteStamina = 0x207C;
@@ -682,6 +685,7 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				offplayerstats = 0x614;
+				offm_bDodgeDisabled = 0x1D89;
 				offm_iKeypadNumber = 0x1EE0;
 				offm_fStamina = 0x2090;
 				offm_bInfiniteStamina = 0x2088;
@@ -701,6 +705,7 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				//offplayerstats = 0x;
+				offm_bDodgeDisabled = 0x1D99;
 				offm_iKeypadNumber = 0x1EF0;
 				offm_fStamina = 0x20A0;
 				offm_bInfiniteStamina = 0x2098;
@@ -719,6 +724,7 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				offplayerstats = 0x624;
+				offm_bDodgeDisabled = 0x1D9D;
 				offm_iKeypadNumber = 0x1EF4;
 				offm_fStamina = 0x20A4;
 				offm_bInfiniteStamina = 0x209C;
@@ -737,6 +743,7 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				//offplayerstats = 0x;
+				offm_bDodgeDisabled = 0x1DAD;
 				offm_iKeypadNumber = 0x1F04;
 				offm_fStamina = 0x20B4;
 				offm_bInfiniteStamina = 0x20AC;
@@ -754,6 +761,7 @@ void ServerDLL::FindStuff()
 				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				//offplayerstats = 0x;
+				offm_bDodgeDisabled = 0x1EE9;
 				offm_iKeypadNumber = 0x2040;
 				offm_fStamina = 0x21F0;
 				offm_bInfiniteStamina = 0x21E8;
@@ -1817,6 +1825,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_cof_disable_viewpunch_from_jump);
 	if (ORIG_ShiftMonsters && is_cof)
 		REG(bxt_cof_disable_monsters_teleport_to_spawn_after_load);
+	if (offm_bDodgeDisabled && is_cof)
+		REG(bxt_cof_remove_dodgetoggle_hud_text);
 	if (HwDLL::GetInstance().is_jumpbutton_found && ORIG_CBasePlayer__Jump && offm_afButtonPressed)
 		REG(bxt_autojump);
 	#ifndef SDK10_BUILD
@@ -2816,6 +2826,18 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 		#else
 			ORIG_CBasePlayer__GiveNamedItem_Linux(classPtr, HwDLL::GetInstance().GetString(iszItem));
 		#endif
+	} else if (CVars::bxt_cof_remove_dodgetoggle_hud_text.GetBool() && offm_bDodgeDisabled && (std::strcmp(cmd, "dodgetoggle") == 0)) {
+		bool *m_bDodgeDisabled = reinterpret_cast<bool*>(thisAddr + offm_bDodgeDisabled);
+		if (*m_bDodgeDisabled)
+		{
+			*m_bDodgeDisabled = false;
+			HwDLL::GetInstance().ORIG_Con_Printf("Dodge enabled\n");
+		}
+		else
+		{
+			*m_bDodgeDisabled = true;
+			HwDLL::GetInstance().ORIG_Con_Printf("Dodge disabled\n");
+		}
 	} else {
 		ORIG_ClientCommand(pEntity);
 		return;

@@ -210,6 +210,7 @@ protected:
 	ptrdiff_t offm_bInfiniteStamina; // Cry of Fear-specific
 	ptrdiff_t offm_old_iAmmo; // Cry of Fear-specific
 	ptrdiff_t offm_iPlayerSaveLock; // Cry of Fear-specific
+	ptrdiff_t offm_bDodgeDisabled; // Cry of Fear-specific
 
 	ptrdiff_t offm_CMultiManager_index;
 	ptrdiff_t offm_afButtonPressed;

@@ -4472,7 +4472,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.ORIG_Con_Printf("Gravity: %f\n", ent->v.gravity);
 		hw.ORIG_Con_Printf("Friction: %f\n", ent->v.friction);
 		std::ostringstream out_flags;
-		hw.GetFlags(out_flags, hw.player_index);
+		hw.GetPlayerFlags(out_flags, hw.player_index);
 		hw.ORIG_Con_Printf("%s", out_flags.str().c_str());
 		hw.ORIG_Con_Printf("v_angle: %f %f %f\n", v_angle.x, v_angle.y, v_angle.z);
 		hw.ORIG_Con_Printf("Origin: %f %f %f\n", orin.x, orin.y, orin.z);
@@ -4480,32 +4480,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.ORIG_Con_Printf("Basevelocity: %f %f %f; XY = %f; XYZ = %f\n", basevel.x, basevel.y, basevel.z, basevel.Length2D(), basevel.Length());
 		hw.ORIG_Con_Printf("Server punchangle: %f %f %f\n", punch.x, punch.y, punch.z);
 		std::ostringstream out_buttons;
-		out_buttons << "Button: ";
-		if (ent->v.button & IN_JUMP)
-			out_buttons << "IN_JUMP; ";
-		if (ent->v.button & IN_DUCK)
-			out_buttons << "IN_DUCK; ";
-		if (ent->v.button & IN_FORWARD)
-			out_buttons << "IN_FORWARD; ";
-		if (ent->v.button & IN_BACK)
-			out_buttons << "IN_BACK; ";
-		if (ent->v.button & IN_MOVELEFT)
-			out_buttons << "IN_MOVELEFT; ";
-		if (ent->v.button & IN_MOVERIGHT)
-			out_buttons << "IN_MOVERIGHT; ";
-		if (ent->v.button & IN_ATTACK)
-			out_buttons << "IN_ATTACK; ";
-		if (ent->v.button & IN_ATTACK2)
-			out_buttons << "IN_ATTACK2; ";
-		if (ent->v.button & IN_RELOAD)
-			out_buttons << "IN_RELOAD; ";
-		if (ent->v.button & IN_USE)
-			out_buttons << "IN_USE; ";
-		if (ent->v.button & IN_LEFT)
-			out_buttons << "IN_LEFT; ";
-		if (ent->v.button & IN_RIGHT)
-			out_buttons << "IN_RIGHT; ";
-		out_buttons << '\n';
+		hw.GetPlayerButtons(out_buttons, hw.player_index);
 		hw.ORIG_Con_Printf("%s", out_buttons.str().c_str());
 
 		#ifndef SDK10_BUILD
@@ -7751,7 +7726,7 @@ const char *HwDLL::GetSolidName(int solid)
 	}
 }
 
-void HwDLL::GetFlags(std::ostringstream &out, int index)
+void HwDLL::GetPlayerFlags(std::ostringstream &out, int index)
 {
 	const auto& hw = HwDLL::GetInstance();
 	edict_t* edicts;
@@ -7817,6 +7792,41 @@ void HwDLL::GetFlags(std::ostringstream &out, int index)
 		out << "FL_KILLME; ";
 	if (ent->v.flags & FL_DORMANT)
 		out << "FL_DORMANT; ";
+	out << '\n';
+}
+
+void HwDLL::GetPlayerButtons(std::ostringstream &out, int index)
+{
+	const auto& hw = HwDLL::GetInstance();
+	edict_t* edicts;
+	hw.GetEdicts(&edicts);
+	const edict_t* ent = edicts + index;
+
+	out << "Button: ";
+	if (ent->v.button & IN_JUMP)
+		out << "IN_JUMP; ";
+	if (ent->v.button & IN_DUCK)
+		out << "IN_DUCK; ";
+	if (ent->v.button & IN_FORWARD)
+		out << "IN_FORWARD; ";
+	if (ent->v.button & IN_BACK)
+		out << "IN_BACK; ";
+	if (ent->v.button & IN_MOVELEFT)
+		out << "IN_MOVELEFT; ";
+	if (ent->v.button & IN_MOVERIGHT)
+		out << "IN_MOVERIGHT; ";
+	if (ent->v.button & IN_ATTACK)
+		out << "IN_ATTACK; ";
+	if (ent->v.button & IN_ATTACK2)
+		out << "IN_ATTACK2; ";
+	if (ent->v.button & IN_RELOAD)
+		out << "IN_RELOAD; ";
+	if (ent->v.button & IN_USE)
+		out << "IN_USE; ";
+	if (ent->v.button & IN_LEFT)
+		out << "IN_LEFT; ";
+	if (ent->v.button & IN_RIGHT)
+		out << "IN_RIGHT; ";
 	out << '\n';
 }
 

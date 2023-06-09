@@ -4456,6 +4456,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		const auto& punch = ent->v.punchangle;
 		const auto& v_angle = ent->v.v_angle;
 		const auto& orin = ent->v.origin;
+		const auto& rnmode = ent->v.rendermode;
 
 		#ifndef SDK10_BUILD
 		if (cl.pEngfuncs && (hw.player_index == 1))
@@ -4472,7 +4473,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.ORIG_Con_Printf("Gravity: %f\n", ent->v.gravity);
 		hw.ORIG_Con_Printf("Friction: %f\n", ent->v.friction);
 		std::ostringstream out_flags;
-		hw.GetPlayerFlags(out_flags, hw.player_index);
+		hw.GetFlags(out_flags, hw.player_index);
 		hw.ORIG_Con_Printf("%s", out_flags.str().c_str());
 		hw.ORIG_Con_Printf("v_angle: %f %f %f\n", v_angle.x, v_angle.y, v_angle.z);
 		hw.ORIG_Con_Printf("Origin: %f %f %f\n", orin.x, orin.y, orin.z);
@@ -4480,11 +4481,12 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.ORIG_Con_Printf("Basevelocity: %f %f %f; XY = %f; XYZ = %f\n", basevel.x, basevel.y, basevel.z, basevel.Length2D(), basevel.Length());
 		hw.ORIG_Con_Printf("Server punchangle: %f %f %f\n", punch.x, punch.y, punch.z);
 		std::ostringstream out_button;
-		hw.GetPlayerButtons(out_button, hw.player_index);
+		hw.GetButton(out_button, hw.player_index);
 		hw.ORIG_Con_Printf("%s", out_button.str().c_str());
 		std::ostringstream out_effects;
-		hw.GetPlayerEffects(out_effects, hw.player_index);
+		hw.GetEffects(out_effects, hw.player_index);
 		hw.ORIG_Con_Printf("%s", out_effects.str().c_str());
+		hw.ORIG_Con_Printf("Rendermode: %d (%s)\n", rnmode, hw.GetRenderModeName(sld));
 
 		#ifndef SDK10_BUILD
 		hw.ORIG_Con_Printf("bInDuck: %d\n", ent->v.bInDuck);
@@ -7729,7 +7731,21 @@ const char *HwDLL::GetSolidName(int solid)
 	}
 }
 
-void HwDLL::GetPlayerFlags(std::ostringstream &out, int index)
+const char *HwDLL::GetRenderModeName(int rendermode)
+{
+	switch (solid)
+	{
+		case kRenderNormal:             return "Normal";
+		case kRenderTransColor:         return "Transparent-color";
+		case kRenderTransTexture:       return "Transparent-texture";
+		case kRenderGlow:               return "Glow";
+		case kRenderTransAlpha:         return "Transparent-alpha";
+		case kRenderTransAdd:           return "Transparent-add";
+		default:                        return "Unknown";
+	}
+}
+
+void HwDLL::GetFlags(std::ostringstream &out, int index)
 {
 	const auto& hw = HwDLL::GetInstance();
 	edict_t* edicts;
@@ -7798,7 +7814,7 @@ void HwDLL::GetPlayerFlags(std::ostringstream &out, int index)
 	out << '\n';
 }
 
-void HwDLL::GetPlayerButtons(std::ostringstream &out, int index)
+void HwDLL::GetButton(std::ostringstream &out, int index)
 {
 	const auto& hw = HwDLL::GetInstance();
 	edict_t* edicts;
@@ -7833,7 +7849,7 @@ void HwDLL::GetPlayerButtons(std::ostringstream &out, int index)
 	out << '\n';
 }
 
-void HwDLL::GetPlayerEffects(std::ostringstream &out, int index)
+void HwDLL::GetEffects(std::ostringstream &out, int index)
 {
 	const auto& hw = HwDLL::GetInstance();
 	edict_t* edicts;

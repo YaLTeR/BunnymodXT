@@ -590,9 +590,10 @@ public:
 	HLStrafe::MovementVars GetMovementVars();
 	const char* GetMovetypeName(int moveType);
 	const char* GetSolidName(int solid);
-	void GetPlayerFlags(std::ostringstream &out, int index);
-	void GetPlayerButtons(std::ostringstream &out, int index);
-	void GetPlayerEffects(std::ostringstream &out, int index);
+	const char* GetRenderModeName(int rendermode);
+	void GetFlags(std::ostringstream &out, int index);
+	void GetButton(std::ostringstream &out, int index);
+	void GetEffects(std::ostringstream &out, int index);
 	void GetOriginOfEntity(Vector& origin, const edict_t* ent);
 	bool CheckIfEntityIsValidAndPlayer(const edict_t* ent, int ent_number, bool check_for_player, bool print_message);
 	void SetPlayerIndexToDefaultIfNecessary();

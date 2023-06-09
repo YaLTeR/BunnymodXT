@@ -7893,6 +7893,7 @@ void HwDLL::GetEffects(std::ostringstream &out, int index)
 	hw.GetEdicts(&edicts);
 	const edict_t* ent = edicts + index;
 
+	out << "Effects: ";
 	if (ent->v.effects & EF_BRIGHTFIELD)
 		out << "EF_BRIGHTFIELD; ";
 	if (ent->v.effects & EF_MUZZLEFLASH)

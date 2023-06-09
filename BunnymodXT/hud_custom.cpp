@@ -903,9 +903,22 @@ namespace CustomHud
 
 					out << "Renderfx: " << ent->v.renderfx << '\n';
 
-					if ((ent->v.model != 0) && (CVars::bxt_hud_entity_info.GetInt() == 3)) {
+					if ((ent->v.model != 0) && (CVars::bxt_hud_entity_info.GetInt() == 3)) 
+					{
 						const char *model = hw.GetString(ent->v.model);
 						out << "Model: " << model;
+					}
+					else if (CVars::bxt_hud_entity_info.GetInt() == 4)
+					{
+						out << "Rendermode: " << ent->v.rendermode << '\n';
+					}
+					else if (CVars::bxt_hud_entity_info.GetInt() == 5)
+					{
+						out << "Renderamt: " << ent->v.renderamt << '\n';
+					}
+					else if (CVars::bxt_hud_entity_info.GetInt() == 6)
+					{
+						out << "Rendercolor: " << ent->v.rendercolor.x << " " << ent->v.rendercolor.y << " " << ent->v.rendercolor.z << '\n';
 					}
 				}
 			}

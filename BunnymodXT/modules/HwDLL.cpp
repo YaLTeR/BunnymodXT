@@ -4492,6 +4492,8 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.ORIG_Con_Printf("Renderamt: %f\n", ent->v.renderamt);
 		hw.ORIG_Con_Printf("Rendercolor: %f %f %f\n", rncolor.x, rncolor.y, rncolor.z);
 		hw.ORIG_Con_Printf("Renderfx: %d (%s)\n", rnfx, hw.GetRenderFxName(rnfx));
+		hw.ORIG_Con_Printf("Sequence: %d\n", ent->v.sequence);
+		hw.ORIG_Con_Printf("Gaitsequence: %d\n", ent->v.gaitsequence);
 
 		#ifndef SDK10_BUILD
 		hw.ORIG_Con_Printf("bInDuck: %d\n", ent->v.bInDuck);

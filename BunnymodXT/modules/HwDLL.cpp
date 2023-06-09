@@ -4479,9 +4479,12 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.ORIG_Con_Printf("Velocity: %f %f %f; XY = %f; XYZ = %f\n", vel.x, vel.y, vel.z, vel.Length2D(), vel.Length());
 		hw.ORIG_Con_Printf("Basevelocity: %f %f %f; XY = %f; XYZ = %f\n", basevel.x, basevel.y, basevel.z, basevel.Length2D(), basevel.Length());
 		hw.ORIG_Con_Printf("Server punchangle: %f %f %f\n", punch.x, punch.y, punch.z);
-		std::ostringstream out_buttons;
-		hw.GetPlayerButtons(out_buttons, hw.player_index);
-		hw.ORIG_Con_Printf("%s", out_buttons.str().c_str());
+		std::ostringstream out_button;
+		hw.GetPlayerButtons(out_button, hw.player_index);
+		hw.ORIG_Con_Printf("%s", out_button.str().c_str());
+		std::ostringstream out_effects;
+		hw.GetPlayerEffects(out_effects, hw.player_index);
+		hw.ORIG_Con_Printf("%s", out_effects.str().c_str());
 
 		#ifndef SDK10_BUILD
 		hw.ORIG_Con_Printf("bInDuck: %d\n", ent->v.bInDuck);
@@ -7827,6 +7830,32 @@ void HwDLL::GetPlayerButtons(std::ostringstream &out, int index)
 		out << "IN_LEFT; ";
 	if (ent->v.button & IN_RIGHT)
 		out << "IN_RIGHT; ";
+	out << '\n';
+}
+
+void HwDLL::GetPlayerEffects(std::ostringstream &out, int index)
+{
+	const auto& hw = HwDLL::GetInstance();
+	edict_t* edicts;
+	hw.GetEdicts(&edicts);
+	const edict_t* ent = edicts + index;
+
+	if (ent->v.effects & EF_BRIGHTFIELD)
+		out << "EF_BRIGHTFIELD; ";
+	if (ent->v.effects & EF_MUZZLEFLASH)
+		out << "EF_MUZZLEFLASH; ";
+	if (ent->v.effects & EF_BRIGHTLIGHT)
+		out << "EF_BRIGHTLIGHT; ";
+	if (ent->v.effects & EF_DIMLIGHT)
+		out << "EF_DIMLIGHT; ";
+	if (ent->v.effects & EF_INVLIGHT)
+		out << "EF_INVLIGHT; ";
+	if (ent->v.effects & EF_NOINTERP)
+		out << "EF_NOINTERP; ";
+	if (ent->v.effects & EF_LIGHT)
+		out << "EF_LIGHT; ";
+	if (ent->v.effects & EF_NODRAW)
+		out << "EF_NODRAW; ";
 	out << '\n';
 }
 

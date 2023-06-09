@@ -4457,6 +4457,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		const auto& v_angle = ent->v.v_angle;
 		const auto& orin = ent->v.origin;
 		const auto& rnmode = ent->v.rendermode;
+		const auto& rncolor = ent->v.rendercolor;
 		const auto& rnfx = ent->v.renderfx;
 
 		#ifndef SDK10_BUILD
@@ -4488,6 +4489,8 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.GetEffects(out_effects, hw.player_index);
 		hw.ORIG_Con_Printf("%s", out_effects.str().c_str());
 		hw.ORIG_Con_Printf("Rendermode: %d (%s)\n", rnmode, hw.GetRenderModeName(rnmode));
+		hw.ORIG_Con_Printf("Renderamt: %f\n", ent->v.renderamt);
+		hw.ORIG_Con_Printf("Rendercolor: %f %f %f\n", rncolor.x, rncolor.y, rncolor.z);
 		hw.ORIG_Con_Printf("Renderfx: %d (%s)\n", rnfx, hw.GetRenderFxName(rnfx));
 
 		#ifndef SDK10_BUILD

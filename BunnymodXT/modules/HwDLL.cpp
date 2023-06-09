@@ -4471,28 +4471,9 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		hw.ORIG_Con_Printf("Max health: %f\n", ent->v.max_health);
 		hw.ORIG_Con_Printf("Gravity: %f\n", ent->v.gravity);
 		hw.ORIG_Con_Printf("Friction: %f\n", ent->v.friction);
-		std::ostringstream out;
-		out << "Flags: ";
-		if (ent->v.flags & FL_CONVEYOR)
-			out << "FL_CONVEYOR; ";
-		if (ent->v.flags & FL_INWATER)
-			out << "FL_INWATER; ";
-		if (ent->v.flags & FL_GODMODE)
-			out << "FL_GODMODE; ";
-		if (ent->v.flags & FL_NOTARGET)
-			out << "FL_NOTARGET; ";
-		if (ent->v.flags & FL_ONGROUND)
-			out << "FL_ONGROUND; ";
-		if (ent->v.flags & FL_WATERJUMP)
-			out << "FL_WATERJUMP; ";
-		if (ent->v.flags & FL_FROZEN)
-			out << "FL_FROZEN; ";
-		if (ent->v.flags & FL_DUCKING)
-			out << "FL_DUCKING; ";
-		if (ent->v.flags & FL_ONTRAIN)
-			out << "FL_ONTRAIN; ";
-		out << '\n';
-		hw.ORIG_Con_Printf("%s", out.str().c_str());
+		std::ostringstream out_flags;
+		hw.GetFlags(out_flags, hw.player_index);
+		hw.ORIG_Con_Printf("%s", out_flags.str().c_str());
 		hw.ORIG_Con_Printf("v_angle: %f %f %f\n", v_angle.x, v_angle.y, v_angle.z);
 		hw.ORIG_Con_Printf("Origin: %f %f %f\n", orin.x, orin.y, orin.z);
 		hw.ORIG_Con_Printf("Velocity: %f %f %f; XY = %f; XYZ = %f\n", vel.x, vel.y, vel.z, vel.Length2D(), vel.Length());
@@ -7768,6 +7749,75 @@ const char *HwDLL::GetSolidName(int solid)
 		case SOLID_BSP:                 return "BSP";
 		default:                        return "Unknown";
 	}
+}
+
+void HwDLL::GetFlags(std::ostringstream &out, int index)
+{
+	const auto& hw = HwDLL::GetInstance();
+	edict_t* edicts;
+	hw.GetEdicts(&edicts);
+	const edict_t* ent = edicts + index;
+
+	out << "Flags: ";
+	if (ent->v.flags & FL_FLY)
+		out << "FL_FLY; ";
+	if (ent->v.flags & FL_SWIM)
+		out << "FL_SWIM; ";
+	if (ent->v.flags & FL_CONVEYOR)
+		out << "FL_CONVEYOR; ";
+	if (ent->v.flags & FL_INWATER)
+		out << "FL_INWATER; ";
+	if (ent->v.flags & FL_MONSTER)
+		out << "FL_MONSTER; ";
+	if (ent->v.flags & FL_GODMODE)
+		out << "FL_GODMODE; ";
+	if (ent->v.flags & FL_NOTARGET)
+		out << "FL_NOTARGET; ";
+	if (ent->v.flags & FL_SKIPLOCALHOST)
+		out << "FL_SKIPLOCALHOST; ";
+	if (ent->v.flags & FL_ONGROUND)
+		out << "FL_ONGROUND; ";
+	if (ent->v.flags & FL_PARTIALGROUND)
+		out << "FL_PARTIALGROUND; ";
+	if (ent->v.flags & FL_WATERJUMP)
+		out << "FL_WATERJUMP; ";
+	if (ent->v.flags & FL_FROZEN)
+		out << "FL_FROZEN; ";
+	if (ent->v.flags & FL_FAKECLIENT)
+		out << "FL_FAKECLIENT; ";
+	if (ent->v.flags & FL_DUCKING)
+		out << "FL_DUCKING; ";
+	if (ent->v.flags & FL_FLOAT)
+		out << "FL_FLOAT; ";
+	if (ent->v.flags & FL_GRAPHED)
+		out << "FL_GRAPHED; ";
+	if (ent->v.flags & FL_IMMUNE_WATER)
+		out << "FL_IMMUNE_WATER; ";
+	if (ent->v.flags & FL_IMMUNE_SLIME)
+		out << "FL_IMMUNE_SLIME; ";
+	if (ent->v.flags & FL_IMMUNE_LAVA)
+		out << "FL_IMMUNE_LAVA; ";
+	if (ent->v.flags & FL_PROXY)
+		out << "FL_PROXY; ";
+	if (ent->v.flags & FL_ALWAYSTHINK)
+		out << "FL_ALWAYSTHINK; ";
+	if (ent->v.flags & FL_BASEVELOCITY)
+		out << "FL_BASEVELOCITY; ";
+	if (ent->v.flags & FL_MONSTERCLIP)
+		out << "FL_MONSTERCLIP; ";
+	if (ent->v.flags & FL_ONTRAIN)
+		out << "FL_ONTRAIN; ";
+	if (ent->v.flags & FL_WORLDBRUSH)
+		out << "FL_WORLDBRUSH; ";
+	if (ent->v.flags & FL_SPECTATOR)
+		out << "FL_SPECTATOR; ";
+	if (ent->v.flags & FL_CUSTOMENTITY)
+		out << "FL_CUSTOMENTITY; ";
+	if (ent->v.flags & FL_KILLME)
+		out << "FL_KILLME; ";
+	if (ent->v.flags & FL_DORMANT)
+		out << "FL_DORMANT; ";
+	out << '\n';
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)

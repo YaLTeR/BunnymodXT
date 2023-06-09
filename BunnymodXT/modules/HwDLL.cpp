@@ -4450,6 +4450,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		}
 
 		const auto& mvtype = ent->v.movetype;
+		const auto& sld = ent->v.solid;
 		const auto& vel = ent->v.velocity;
 		const auto& basevel = ent->v.basevelocity;
 		const auto& punch = ent->v.punchangle;
@@ -4462,6 +4463,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		#endif
 		hw.ORIG_Con_Printf("Index: %d\n", hw.player_index);
 		hw.ORIG_Con_Printf("Movetype: %d (%s)\n", mvtype, hw.GetMovetypeName(mvtype));
+		hw.ORIG_Con_Printf("Solid: %d (%s)\n", sld, hw.GetSolidName(sld));
 		hw.ORIG_Con_Printf("Health: %f\n", ent->v.health);
 		hw.ORIG_Con_Printf("Armor: %f\n", ent->v.armorvalue);
 		hw.ORIG_Con_Printf("Waterlevel: %d\n", ent->v.waterlevel);
@@ -7751,6 +7753,19 @@ const char* HwDLL::GetMovetypeName(int moveType)
 		case MOVETYPE_BOUNCEMISSILE:    return "Bounce-missile";
 		case MOVETYPE_FOLLOW:           return "Follow";
 		case MOVETYPE_PUSHSTEP:         return "Push-step";
+		default:                        return "Unknown";
+	}
+}
+
+const char *HwDLL::GetSolidName(int solid)
+{
+	switch (solid)
+	{
+		case SOLID_NOT:                 return "Not";
+		case SOLID_TRIGGER:             return "Trigger";
+		case SOLID_BBOX:                return "Bounding-box";
+		case SOLID_SLIDEBOX:            return "Slide-box";
+		case SOLID_BSP:                 return "BSP";
 		default:                        return "Unknown";
 	}
 }

@@ -7740,7 +7740,7 @@ const char *HwDLL::GetSolidName(int solid)
 
 const char *HwDLL::GetRenderModeName(int rendermode)
 {
-	switch (solid)
+	switch (rendermode)
 	{
 		case kRenderNormal:             return "Normal";
 		case kRenderTransColor:         return "Transparent-color";
@@ -7754,7 +7754,7 @@ const char *HwDLL::GetRenderModeName(int rendermode)
 
 const char *HwDLL::GetRenderFxName(int renderfx)
 {
-	switch (solid)
+	switch (renderfx)
 	{
 		case kRenderFxNone:             return "None";
 		case kRenderFxPulseSlow:        return "Pulse-slow";

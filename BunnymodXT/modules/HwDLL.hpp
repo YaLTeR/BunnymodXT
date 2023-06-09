@@ -591,6 +591,7 @@ public:
 	const char* GetMovetypeName(int moveType);
 	const char* GetSolidName(int solid);
 	const char* GetRenderModeName(int rendermode);
+	const char* GetRenderFxName(int renderfx);
 	void GetFlags(std::ostringstream &out, int index);
 	void GetButton(std::ostringstream &out, int index);
 	void GetEffects(std::ostringstream &out, int index);

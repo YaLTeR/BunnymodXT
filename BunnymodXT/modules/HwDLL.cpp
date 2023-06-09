@@ -4457,6 +4457,7 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		const auto& v_angle = ent->v.v_angle;
 		const auto& orin = ent->v.origin;
 		const auto& rnmode = ent->v.rendermode;
+		const auto& rnfx = ent->v.renderfx;
 
 		#ifndef SDK10_BUILD
 		if (cl.pEngfuncs && (hw.player_index == 1))
@@ -4486,7 +4487,8 @@ struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 		std::ostringstream out_effects;
 		hw.GetEffects(out_effects, hw.player_index);
 		hw.ORIG_Con_Printf("%s", out_effects.str().c_str());
-		hw.ORIG_Con_Printf("Rendermode: %d (%s)\n", rnmode, hw.GetRenderModeName(sld));
+		hw.ORIG_Con_Printf("Rendermode: %d (%s)\n", rnmode, hw.GetRenderModeName(rnmode));
+		hw.ORIG_Con_Printf("Renderfx: %d (%s)\n", rnfx, hw.GetRenderFxName(rnfx));
 
 		#ifndef SDK10_BUILD
 		hw.ORIG_Con_Printf("bInDuck: %d\n", ent->v.bInDuck);
@@ -7741,6 +7743,36 @@ const char *HwDLL::GetRenderModeName(int rendermode)
 		case kRenderGlow:               return "Glow";
 		case kRenderTransAlpha:         return "Transparent-alpha";
 		case kRenderTransAdd:           return "Transparent-add";
+		default:                        return "Unknown";
+	}
+}
+
+const char *HwDLL::GetRenderFxName(int renderfx)
+{
+	switch (solid)
+	{
+		case kRenderFxNone:             return "None";
+		case kRenderFxPulseSlow:        return "Pulse-slow";
+		case kRenderFxPulseFast:        return "Pulse-fast";
+		case kRenderFxPulseSlowWide:    return "Pulse-slow-wide";
+		case kRenderFxPulseFastWide:    return "Pulse-fast-wide";
+		case kRenderFxFadeSlow:         return "Fade-slow";
+		case kRenderFxFadeFast:         return "Fade-fast";
+		case kRenderFxSolidSlow:        return "Solid-slow";
+		case kRenderFxSolidFast:        return "Solid-fast";
+		case kRenderFxStrobeSlow:       return "Strobe-slow";
+		case kRenderFxStrobeFast:       return "Strobe-fast";
+		case kRenderFxStrobeFaster:     return "Strobe-faster";
+		case kRenderFxFlickerSlow:      return "Flicker-slow";
+		case kRenderFxFlickerFast:      return "Flicker-fast";
+		case kRenderFxNoDissipation:    return "No dissipation";
+		case kRenderFxDistort:          return "Distort";
+		case kRenderFxHologram:         return "Hologram";
+		case kRenderFxDeadPlayer:       return "Dead player";
+		case kRenderFxExplode:          return "Explode";
+		case kRenderFxGlowShell:        return "Glowing shell";
+		case kRenderFxClampMinScale:    return "Clamp min scale";
+		case kRenderFxLightMultiplier:  return "Light multiplier";
 		default:                        return "Unknown";
 	}
 }

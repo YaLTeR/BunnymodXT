@@ -338,6 +338,21 @@ extern "C" void __cdecl R_ForceCvars(qboolean mp)
 {
 	return HwDLL::HOOKED_R_ForceCvars(mp);
 }
+
+extern "C" void __cdecl CL_Restore(const char *mapName)
+{
+	return HwDLL::HOOKED_CL_Restore(mapName);
+}
+
+extern "C" void __cdecl CL_SignonReply()
+{
+	return HwDLL::HOOKED_CL_SignonReply();
+}
+
+extern "C" void __cdecl Sequence_OnLevelLoad(const char *fileName)
+{
+	return HwDLL::HOOKED_Sequence_OnLevelLoad(fileName);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -474,6 +489,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_LoadAdjacentEntities);
 			MemUtils::MarkAsExecutable(ORIG_JumpButton);
 			MemUtils::MarkAsExecutable(ORIG_PlayerMove);
+			MemUtils::MarkAsExecutable(ORIG_CL_Restore);
+			MemUtils::MarkAsExecutable(ORIG_CL_SignonReply);
+			MemUtils::MarkAsExecutable(ORIG_Sequence_OnLevelLoad);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -545,7 +563,10 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_V_RenderView, HOOKED_V_RenderView,
 			ORIG_LoadAdjacentEntities, HOOKED_LoadAdjacentEntities,
 			ORIG_JumpButton, HOOKED_JumpButton,
-			ORIG_PlayerMove, HOOKED_PlayerMove);
+			ORIG_PlayerMove, HOOKED_PlayerMove,
+			ORIG_CL_Restore, HOOKED_CL_Restore,
+			ORIG_CL_SignonReply, HOOKED_CL_SignonReply,
+			ORIG_Sequence_OnLevelLoad, HOOKED_Sequence_OnLevelLoad);
 	}
 
 	#ifdef _WIN32
@@ -637,7 +658,10 @@ void HwDLL::Unhook()
 			ORIG_V_RenderView,
 			ORIG_LoadAdjacentEntities,
 			ORIG_JumpButton,
-			ORIG_PlayerMove);
+			ORIG_PlayerMove,
+			ORIG_CL_Restore,
+			ORIG_CL_SignonReply,
+			ORIG_Sequence_OnLevelLoad);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -754,6 +778,9 @@ void HwDLL::Clear()
 	ORIG_PlayerMove = nullptr;
 	ORIG_PM_CheckStuck = nullptr;
 	ORIG_R_LoadSkys = nullptr;
+	ORIG_CL_Restore = nullptr;
+	ORIG_CL_SignonReply = nullptr;
+	ORIG_Sequence_OnLevelLoad = nullptr;
 	cantJumpNextTime.clear();
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
@@ -951,6 +978,7 @@ void HwDLL::FindStuff()
 		cls = MemUtils::GetSymbolAddress(m_Handle, "cls");
 		if (cls) {
 			EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
+			signon = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(cls) + 0x3408);
 			demorecording = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(cls) + 0x405c);
 			demoplayback = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(cls) + 0x4060);
 		} else
@@ -1185,6 +1213,24 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found GL_BuildLightmaps at %p.\n", ORIG_GL_BuildLightmaps);
 		else
 			EngineDevWarning("[hw dll] Could not find GL_BuildLightmaps.\n");
+
+		ORIG_CL_Restore = reinterpret_cast<_CL_Restore>(MemUtils::GetSymbolAddress(m_Handle, "CL_Restore"));
+		if (ORIG_R_ForceCvars)
+			EngineDevMsg("[hw dll] Found CL_Restore at %p.\n", ORIG_CL_Restore);
+		else
+			EngineDevWarning("[hw dll] Could not find CL_Restore.\n");
+
+		ORIG_CL_SignonReply = reinterpret_cast<_CL_SignonReply>(MemUtils::GetSymbolAddress(m_Handle, "CL_SignonReply"));
+		if (ORIG_CL_SignonReply)
+			EngineDevMsg("[hw dll] Found CL_SignonReply at %p.\n", ORIG_CL_SignonReply);
+		else
+			EngineDevWarning("[hw dll] Could not find CL_SignonReply.\n");
+
+		ORIG_Sequence_OnLevelLoad = reinterpret_cast<_Sequence_OnLevelLoad>(MemUtils::GetSymbolAddress(m_Handle, "Sequence_OnLevelLoad"));
+		if (ORIG_Sequence_OnLevelLoad)
+			EngineDevMsg("[hw dll] Found Sequence_OnLevelLoad at %p.\n", ORIG_Sequence_OnLevelLoad);
+		else
+			EngineDevWarning("[hw dll] Could not find Sequence_OnLevelLoad.\n");
 
 		if (!pcl || !cls || !psv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
@@ -1484,6 +1530,8 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(V_RenderView)
 		DEF_FUTURE(LoadAdjacentEntities)
 		DEF_FUTURE(PlayerMove)
+		DEF_FUTURE(CL_Restore)
+		DEF_FUTURE(Sequence_OnLevelLoad)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -2617,6 +2665,31 @@ void HwDLL::FindStuff()
 			}
 		);
 
+		auto fCL_SignonReply = FindAsync(
+			ORIG_CL_SignonReply,
+			patterns::engine::CL_SignonReply,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::CL_SignonReply.cbegin())
+				{
+				case 0: // SteamPipe.
+				case 5: // CoF-5936.
+					signon = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_CL_SignonReply) + 0xA);
+					break;
+				case 1: // 4554.
+				case 2: // HL-WON-1712.
+					signon = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_CL_SignonReply) + 1);
+					break;
+				case 3: // HL-1202.
+				case 4: // BShift-WON-1001.
+					signon = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_CL_SignonReply) + 0xB);
+					break;
+				case 6: // Sven-v525.
+					signon = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_CL_SignonReply) + 0x16);
+					break;
+				}
+			}
+		);
+
 		auto fR_LoadSkys = FindAsync(
 			ORIG_R_LoadSkys,
 			patterns::engine::R_LoadSkys,
@@ -3136,6 +3209,16 @@ void HwDLL::FindStuff()
 		}
 
 		{
+			auto pattern = fCL_SignonReply.get();
+			if (ORIG_CL_SignonReply) {
+				EngineDevMsg("[hw dll] Found CL_SignonReply at %p (using the %s pattern).\n", ORIG_CL_SignonReply, pattern->name());
+				EngineDevMsg("[hw dll] Found cls.signon at %p.\n", signon);
+			} else {
+				EngineDevWarning("[hw dll] Could not find CL_SignonReply.\n");
+			}
+		}
+
+		{
 			auto pattern = fR_LoadSkys.get();
 			if (ORIG_R_LoadSkys) {
 				EngineDevMsg("[hw dll] Found R_LoadSkys at %p (using the %s pattern).\n", ORIG_R_LoadSkys, pattern->name());
@@ -3308,6 +3391,8 @@ void HwDLL::FindStuff()
 		GET_FUTURE(V_RenderView);
 		GET_FUTURE(LoadAdjacentEntities);
 		GET_FUTURE(PlayerMove);
+		GET_FUTURE(CL_Restore);
+		GET_FUTURE(Sequence_OnLevelLoad);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -9520,3 +9605,18 @@ HOOK_DEF_0(HwDLL, void, __cdecl, JumpButton)
 	if (CVars::bxt_autojump.GetBool())
 		*oldbuttons = orig_oldbuttons;
 }
+
+HOOK_DEF_1(HwDLL, void, __cdecl, CL_Restore, const char*, mapName)
+{
+	ORIG_CL_Restore(mapName);
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, CL_SignonReply)
+{
+	ORIG_CL_SignonReply();
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, Sequence_OnLevelLoad, const char*, fileName)
+{
+	ORIG_Sequence_OnLevelLoad(fileName);
+} 

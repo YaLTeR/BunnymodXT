@@ -92,6 +92,9 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, LoadAdjacentEntities, char* pOldLevel, char* pLandmarkName)
 	HOOK_DECL(void, __cdecl, JumpButton) // Engine implementation of PM_Jump in older WON versions
 	HOOK_DECL(void, __cdecl, PlayerMove, qboolean server) // Engine implementation of PM_PlayerMove in older WON versions
+	HOOK_DECL(void, __cdecl, CL_Restore, const char *mapName)
+	HOOK_DECL(void, __cdecl, CL_SignonReply)
+	HOOK_DECL(void, __cdecl, Sequence_OnLevelLoad, const char *fileName)
 
 	struct sizebuf_t
 	{
@@ -654,6 +657,7 @@ protected:
 	char *sv_areanodes;
 	sizebuf_t *cmd_text;
 	double *host_frametime;
+	int *signon; // cls.signon
 	int *demorecording; // cls.demorecording
 	int *demoplayback; // cls.demoplayback
 	cmdalias_t* cmd_alias;

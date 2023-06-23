@@ -100,6 +100,48 @@ namespace RuntimeData
 			uint8_t pos;
 		};
 
+		// Decrypting filter.
+		class decrypt_filter : public boost::iostreams::input_filter {
+		public:
+			template<typename Source>
+			int get(Source& src) {
+				if(pos == 0) {
+					if(!fill_buffer(src))
+						return EOF;
+
+					decrypt();
+				}
+
+				int buf_char = (int)buffer[pos];
+				pos = (pos + 1) % 8;
+
+				return buf_char;
+			}
+
+		private:
+			void decrypt() {
+				TEA::decrypt(reinterpret_cast<uint32_t*>(buffer.data()), KEY);
+			}
+
+			template<typename Source>
+			bool fill_buffer(Source& src) {
+				for(int i = pos; i < 8; ++i)
+				{
+					int c = boost::iostreams::get(src);
+
+					if (c == EOF || c == boost::iostreams::WOULD_BLOCK)
+						return false;
+
+					buffer[i] = (uint8_t)c;
+				}
+
+				return true;
+			}
+
+			std::array<uint8_t, 8> buffer;
+			uint8_t pos;
+		};
+
 		// Filter that escapes special characters.
 		class escape_filter : public boost::iostreams::dual_use_filter {
 		public:

@@ -336,6 +336,16 @@ extern "C" qboolean __cdecl CL_CheckGameDirectory(char *gamedir)
 {
 	return HwDLL::HOOKED_CL_CheckGameDirectory(gamedir);
 }
+
+extern "C" int __cdecl ValidStuffText(char *buf)
+{
+	return HwDLL::HOOKED_ValidStuffText(buf);
+}
+
+extern "C" qboolean __cdecl CL_ReadDemoMessage_OLD()
+{
+	return HwDLL::HOOKED_CL_ReadDemoMessage_OLD();
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -458,6 +468,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_SCR_NetGraph);
 			MemUtils::MarkAsExecutable(ORIG_Host_Shutdown);
 			MemUtils::MarkAsExecutable(ORIG_ReleaseEntityDlls);
+			MemUtils::MarkAsExecutable(ORIG_ValidStuffText);
+			MemUtils::MarkAsExecutable(ORIG_CL_ReadDemoMessage_OLD);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -518,6 +530,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory,
 			ORIG_SaveGameSlot, HOOKED_SaveGameSlot,
 			ORIG_ReleaseEntityDlls, HOOKED_ReleaseEntityDlls,
+			ORIG_ValidStuffText, HOOKED_ValidStuffText,
+			ORIG_CL_ReadDemoMessage_OLD, HOOKED_CL_ReadDemoMessage_OLD,
 			ORIG_Host_Shutdown, HOOKED_Host_Shutdown);
 	}
 
@@ -600,6 +614,8 @@ void HwDLL::Unhook()
 			ORIG_CL_CheckGameDirectory,
 			ORIG_SaveGameSlot,
 			ORIG_ReleaseEntityDlls,
+			ORIG_ValidStuffText,
+			ORIG_CL_ReadDemoMessage_OLD,
 			ORIG_Host_Shutdown);
 	}
 
@@ -698,6 +714,8 @@ void HwDLL::Clear()
 	ORIG_SCR_DrawPause = nullptr;
 	ORIG_Host_Shutdown = nullptr;
 	ORIG_ReleaseEntityDlls = nullptr;
+	ORIG_ValidStuffText = nullptr;
+	ORIG_CL_ReadDemoMessage_OLD = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1017,6 +1035,18 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find CL_CheckGameDirectory.\n");
 
+		ORIG_ValidStuffText = reinterpret_cast<_ValidStuffText>(MemUtils::GetSymbolAddress(m_Handle, "ValidStuffText"));
+		if (ORIG_ValidStuffText)
+			EngineDevMsg("[hw dll] Found ValidStuffText at %p.\n", ORIG_ValidStuffText);
+		else
+			EngineDevWarning("[hw dll] Could not find ValidStuffText.\n");
+
+		ORIG_CL_ReadDemoMessage_OLD = reinterpret_cast<_CL_ReadDemoMessage_OLD>(MemUtils::GetSymbolAddress(m_Handle, "CL_ReadDemoMessage_OLD"));
+		if (ORIG_CL_ReadDemoMessage_OLD)
+			EngineDevMsg("[hw dll] Found CL_ReadDemoMessage_OLD at %p.\n", ORIG_CL_ReadDemoMessage_OLD);
+		else
+			EngineDevWarning("[hw dll] Could not find CL_ReadDemoMessage_OLD.\n");
+
 		if (!cls || !psv || !svs || !svmove || !ppmove || !host_client || !sv_player || !sv_areanodes || !cmd_text || !cmd_alias || !host_frametime || !cvar_vars || !movevars || !ORIG_SV_AddLinksToPM || !ORIG_SV_SetMoveVars)
 			ORIG_Cbuf_Execute = nullptr;
 
@@ -1299,6 +1329,8 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(SCR_DrawPause)
 		DEF_FUTURE(Host_Shutdown)
 		DEF_FUTURE(ReleaseEntityDlls)
+		DEF_FUTURE(ValidStuffText)
+		DEF_FUTURE(CL_ReadDemoMessage_OLD)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -2337,6 +2369,8 @@ void HwDLL::FindStuff()
 		GET_FUTURE(SCR_DrawPause);
 		GET_FUTURE(Host_Shutdown);
 		GET_FUTURE(ReleaseEntityDlls);
+		GET_FUTURE(ValidStuffText);
+		GET_FUTURE(CL_ReadDemoMessage_OLD);
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -7590,4 +7624,38 @@ HOOK_DEF_0(HwDLL, void, __cdecl, ReleaseEntityDlls)
 {
 	ServerDLL::GetInstance().Unhook();
 	ORIG_ReleaseEntityDlls();
+}
+
+HOOK_DEF_1(HwDLL, qboolean, __cdecl, ValidStuffText, char*, buf)
+{	
+	auto rv = ORIG_ValidStuffText(buf);
+	if(!insideCL_ReadDemoMessage)
+		return rv;
+
+	const size_t header_length = sizeof("//BXTD0") - 1;
+	if(strncmp("//BXTD0", buf, header_length) != 0)
+		return rv;
+
+	int cmd_length = strnlen(buf, 64);
+	runtimeDataBuffer.insert(runtimeDataBuffer.end(), buf + header_length, buf + cmd_length);
+
+	// Loads in demos do not set executing to true, which prevents timer from running.
+	int *state = reinterpret_cast<int*>(cls);
+	if(*state == 5)
+		executing = true;
+
+	return rv;
+}
+
+HOOK_DEF_0(HwDLL, qboolean, __cdecl, CL_ReadDemoMessage_OLD)
+{
+	// CL_ReadDemoMessage_OLD calls ValidStuffText to check if the demo commands are valid
+	insideCL_ReadDemoMessage = true;
+	auto rv = ORIG_CL_ReadDemoMessage_OLD();
+	insideCL_ReadDemoMessage = false;
+
+	RuntimeData::ProcessRuntimeData(runtimeDataBuffer);
+	runtimeDataBuffer.clear();
+
+	return rv;
 }

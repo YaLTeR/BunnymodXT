@@ -24,6 +24,7 @@ namespace CustomHud
 	void UpdatePlayerInfoInaccurate(float vel[3], float org[3]);
 
 	void TimePassed(double time);
+	void SetTime(int hours, int minutes, int seconds, double remainder);
 	void ResetTime();
 	void SetCountingTime(bool counting);
 	void SetInvalidRun(bool invalidated);

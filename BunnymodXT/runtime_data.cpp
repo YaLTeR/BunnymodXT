@@ -510,22 +510,43 @@ namespace RuntimeData
 	}
 
 	// Visitor applied to each Data object found in demo.
-	class demo_data_visitor : public boost::static_visitor<>
-	{
+	class demo_data_visitor : public boost::static_visitor<> {
 	public:
-		void operator()(const RuntimeData::Time& t) const {}
+		void operator()(const RuntimeData::Time& t) const {
+			CustomHud::SetTime((int)t.hours, (int)t.minutes, (int)t.seconds, t.remainder);
+		}
+
+		void operator()(const RuntimeData::CommandExecution& e) const {
+			for (const auto& cmd : cmd_whitelist) {
+				if (e.command.rfind(cmd, 0) == 0) {
+					HwDLL::GetInstance().ORIG_Cbuf_InsertText(e.command.c_str());
+					HwDLL::GetInstance().ORIG_Cbuf_InsertText("\n");
+				}
+			}
+		}
+		
+		void operator()(const RuntimeData::GameEndMarker& m) const {
+			CustomHud::SetCountingTime(false);
+		}
+
 		void operator()(const RuntimeData::PlayerHealth& p) const {}
 		void operator()(const RuntimeData::VersionInfo& v) const {}
 		void operator()(const RuntimeData::CVarValues& v) const {}
 		void operator()(const RuntimeData::BoundCommand& c) const {}
 		void operator()(const RuntimeData::AliasExpansion& e) const {}
 		void operator()(const RuntimeData::ScriptExecution& e) const {}
-		void operator()(const RuntimeData::CommandExecution& e) const {}
-		void operator()(const RuntimeData::GameEndMarker& m) const {}
 		void operator()(const RuntimeData::LoadedModules& m) const {}
 		void operator()(const RuntimeData::CustomTriggerCommand& c) const {}
 		void operator()(const RuntimeData::Edicts& e) const {}
-		void operator()(const RuntimeData::SplitMarker& m) const { }
+		void operator()(const RuntimeData::SplitMarker& m) const {}
+
+	private:
+		// bxt commands that should be executed when found during demo playback
+		const std::vector<std::string> cmd_whitelist =  {
+			"bxt_timer_stop",
+			"bxt_timer_start",
+			"bxt_timer_reset"
+		};
 	};
 
 	void ProcessRuntimeData(std::vector<char>& data) {

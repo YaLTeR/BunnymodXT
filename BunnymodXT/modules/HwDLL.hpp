@@ -81,6 +81,8 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, SCR_NetGraph)
 	HOOK_DECL(void, __cdecl, Host_Shutdown)
 	HOOK_DECL(void, __cdecl, ReleaseEntityDlls)
+	HOOK_DECL(qboolean, __cdecl, ValidStuffText, char* buf)
+	HOOK_DECL(qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 
 	struct cmdbuf_t
 	{
@@ -725,4 +727,7 @@ protected:
 	bool insideHideGameUI;
 
 	bool extendPlayerTraceDistanceLimit;
+
+	bool insideCL_ReadDemoMessage;
+	std::vector<char> runtimeDataBuffer;
 };

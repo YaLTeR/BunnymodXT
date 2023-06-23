@@ -782,6 +782,16 @@ namespace patterns
 			"CoF-5936",
 			"55 8B EC 83 EC 08 C7 45 ?? ?? ?? ?? ?? A1 ?? ?? ?? ?? 6B C0 0C"
 		);
+
+		PATTERNS(ValidStuffText,
+			"HL-SteamPipe",
+			"55 8B EC 53 56 57 BB 01 00 00 00 E8 E0 9D 03 00 85 C0 74 10 A1 ?? ?? ?? ?? 85 C0 75 07 5F 8B C3 5E 5B 5D C3"
+		);
+
+		PATTERNS(CL_ReadDemoMessage_OLD,
+			"HL-SteamPipe",
+			"55 8B EC B8 74 00 01 00 E8 66 6D 0F 00 A1 ?? ?? ?? ?? 53 33 DB 56 3B C3 57"
+		);
 	}
 
 	namespace server

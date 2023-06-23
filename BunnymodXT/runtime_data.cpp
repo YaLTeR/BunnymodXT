@@ -368,6 +368,118 @@ namespace RuntimeData
 		boost::apply_visitor(save_visitor<Archive>(archive), data);
 	}
 
+	template<class Archive>
+	void load(Archive& archive, Data& data)
+	{
+		RuntimeDataType data_type;
+		archive(data_type);
+
+		switch (data_type)
+		{
+			case RuntimeDataType::VERSION_INFO: {
+				VersionInfo v;
+				archive(v.build_number);
+				archive(v.bxt_version);
+
+				data = v;
+				break;
+			}
+			case RuntimeDataType::CVAR_VALUES: {
+				CVarValues v;
+				archive(v);
+				data = v;
+				break;
+			}
+			case RuntimeDataType::TIME: {
+				Time t;
+				archive(t.hours);
+				archive(t.minutes);
+				archive(t.seconds);
+				archive(t.remainder);
+				data = t;
+				break;
+			}
+			case RuntimeDataType::BOUND_COMMAND: {
+				BoundCommand c;
+				archive(c.command);
+				data = c;
+				break;
+			}
+			case RuntimeDataType::ALIAS_EXPANSION: {
+				AliasExpansion e;
+				archive(e.name);
+				archive(e.command);
+				data = e;
+				break;
+			}
+			case RuntimeDataType::SCRIPT_EXECUTION: {
+				ScriptExecution e;
+				archive(e.filename);
+				archive(e.contents);
+				data = e;
+				break;
+			}
+			case RuntimeDataType::COMMAND_EXECUTION: {
+				CommandExecution e;
+				archive(e.command);
+				data = e;
+				break;
+			}
+			case RuntimeDataType::GAME_END_MARKER: {
+				GameEndMarker m;
+				data = m;
+				break;
+			}
+			case RuntimeDataType::LOADED_MODULES: {
+				LoadedModules m;
+				archive(m.filenames);
+				data = m;
+				break;
+			}
+			case RuntimeDataType::CUSTOM_TRIGGER_COMMAND: {
+				CustomTriggerCommand c;
+				archive(c.corner_min.x);
+				archive(c.corner_min.y);
+				archive(c.corner_min.z);
+				archive(c.corner_max.x);
+				archive(c.corner_max.y);
+				archive(c.corner_max.z);
+				archive(c.command);
+				data = c;
+				break;
+			}
+			case RuntimeDataType::EDICTS: {
+				Edicts e;
+				archive(e.edicts);
+				data = e;
+				break;
+			}
+			case RuntimeDataType::PLAYERHEALTH: {
+				PlayerHealth p;
+				archive(p.health);
+				data = p;
+				break;
+			}
+			case RuntimeDataType::SPLIT_MARKER: {
+				SplitMarker m;
+				archive(m.corner_min.x);
+				archive(m.corner_min.y);
+				archive(m.corner_min.z);
+				archive(m.corner_max.x);
+				archive(m.corner_max.y);
+				archive(m.corner_max.z);
+				archive(m.name);
+				archive(m.map_name);
+				data = m;
+				break;
+			}
+			default: {
+				EngineDevWarning("Read unknown RuntimeDataType %d\n", data_type);
+				break;
+			}
+		}
+	}
+
 	void Add(Data data) {
 		stored_data.push_back(std::move(data));
 	}

@@ -80,4 +80,6 @@ namespace RuntimeData
 	void Add(Data data);
 	void Clear();
 	void SaveStored();
+
+	void ProcessRuntimeData(std::vector<char>& data);
 }

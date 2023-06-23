@@ -8,6 +8,7 @@
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/operations.hpp>
+#include <boost/iostreams/device/array.hpp>
 #include <boost/variant.hpp>
 
 #define CEREAL_SIZE_TYPE uint32_t
@@ -27,6 +28,7 @@ namespace RuntimeData
 
 		// Macro so that we can initialize arrays with it.
 		#define HEADER "//BXTD0"
+		constexpr size_t HEADER_LENGTH = sizeof(HEADER) - 1;
 
 		enum class RuntimeDataType : uint8_t {
 			VERSION_INFO = 1,
@@ -505,5 +507,49 @@ namespace RuntimeData
 		oa(stored_data);
 
 		Clear();
+	}
+
+	// Visitor applied to each Data object found in demo.
+	class demo_data_visitor : public boost::static_visitor<>
+	{
+	public:
+		void operator()(const RuntimeData::Time& t) const {}
+		void operator()(const RuntimeData::PlayerHealth& p) const {}
+		void operator()(const RuntimeData::VersionInfo& v) const {}
+		void operator()(const RuntimeData::CVarValues& v) const {}
+		void operator()(const RuntimeData::BoundCommand& c) const {}
+		void operator()(const RuntimeData::AliasExpansion& e) const {}
+		void operator()(const RuntimeData::ScriptExecution& e) const {}
+		void operator()(const RuntimeData::CommandExecution& e) const {}
+		void operator()(const RuntimeData::GameEndMarker& m) const {}
+		void operator()(const RuntimeData::LoadedModules& m) const {}
+		void operator()(const RuntimeData::CustomTriggerCommand& c) const {}
+		void operator()(const RuntimeData::Edicts& e) const {}
+		void operator()(const RuntimeData::SplitMarker& m) const { }
+	};
+
+	void ProcessRuntimeData(std::vector<char>& data) {
+		if(data.empty())
+			return;
+
+		boost::iostreams::filtering_istream in;
+		in.push(decrypt_filter());
+		in.push(escape_filter());
+		in.push(boost::iostreams::array_source(
+			data.data(),
+			data.size()
+		));
+
+		cereal::BinaryInputArchive ia(in);
+		std::vector<Data> demo_data;
+		
+		try {
+			ia(demo_data);
+		} catch (...) {
+			EngineDevWarning("Could not parse runtime data.\n");
+		}
+
+		for(const auto& d : demo_data)
+			boost::apply_visitor(demo_data_visitor(), d);
 	}
 }

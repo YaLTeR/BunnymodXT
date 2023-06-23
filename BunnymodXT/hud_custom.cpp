@@ -1868,6 +1868,10 @@ namespace CustomHud
 			milliseconds };
 	}
 
+	void SetTime(int h, int m, int s, double r) {
+		hours = h, minutes = m, seconds = s, timeRemainder = r;
+	}
+
 	bool GetCountingTime()
 	{
 		return countingTime;

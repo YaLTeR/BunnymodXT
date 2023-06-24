@@ -3,6 +3,7 @@
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
+#include <util.hpp>
 #include "ServerDLL.hpp"
 #include "ClientDLL.hpp"
 #include "HwDLL.hpp"
@@ -310,6 +311,9 @@ void ServerDLL::Clear()
 	pCS_Bhopcap_Windows = 0;
 	offm_pClientActiveItem = 0;
 	offm_CMultiManager_index = 0;
+	pU_Random = nullptr;
+	offglSeed = 0;
+	offseed_table = 0;
 
 	// Cry of Fear-specific
 	offm_bInfiniteStamina = 0;
@@ -806,6 +810,7 @@ void ServerDLL::FindStuff()
 	auto fCBasePlayer__ViewPunch = FindAsync(ORIG_CBasePlayer__ViewPunch, patterns::server::CBasePlayer__ViewPunch);
 	auto fCBasePlayer__Jump = FindAsync(ORIG_CBasePlayer__Jump, patterns::server::CBasePlayer__Jump);
 	auto fCBaseDoor__DoorActivate = FindAsync(ORIG_CBaseDoor__DoorActivate, patterns::server::CBaseDoor__DoorActivate);
+	auto fU_Random = FindFunctionAsync(pU_Random, "U_Random", patterns::server::U_Random);
 
 	uintptr_t pDispatchRestore;
 	auto fDispatchRestore = FindAsync(
@@ -1548,6 +1553,25 @@ void ServerDLL::FindStuff()
 			}
 			else
 				EngineDevWarning("[server dll] Could not find CBaseEntity::FireBulletsPlayer.\n");
+		}
+	}
+
+	{
+		auto pattern = fU_Random.get();
+		if (pU_Random) {
+			EngineDevMsg("[server dll] Found U_Random at %p (using the %s pattern).\n", pU_Random, pattern->name());
+			offglSeed = 0x2;
+			offseed_table = 0x22;
+		} else {
+			pU_Random = reinterpret_cast<void*>(MemUtils::GetSymbolAddress(m_Handle, "_Z8U_Randomv"));
+			if (pU_Random) {
+				EngineDevMsg("[server dll] Found U_Random [Linux] at %p\n", pU_Random);
+				offglSeed = 0x2;
+				offseed_table = 0x16;
+			} else {
+				EngineDevWarning("[server dll] Could not find U_Random.\n");
+				EngineWarning("TAS bullet spread prediction is not available.\n");
+			}
 		}
 	}
 
@@ -3025,9 +3049,93 @@ HOOK_DEF_10(ServerDLL, void, __cdecl, CBaseEntity__FireBullets_Linux, void*, thi
 	fireBullets_count = 0;
 }
 
+unsigned int SU_Random(unsigned int& static_glSeed, unsigned int *seed_table) 
+{ 
+	static_glSeed *= 69069; 
+	static_glSeed += seed_table[ static_glSeed & 0xff ];
+ 
+	return ( ++static_glSeed & 0x0fffffff ); 
+} 
+
+void SU_Srand(unsigned int& static_glSeed, unsigned int *seed_table, unsigned int seed)
+{
+	static_glSeed = seed_table[ seed & 0xff ];
+}
+
+float SUTIL_SharedRandomFloat(unsigned int& static_glSeed, unsigned int *seed_table, unsigned int seed, float low, float high)
+{
+	unsigned int range;
+
+	SU_Srand(static_glSeed, seed_table, (int)seed + (int) low + (int) high );
+
+	SU_Random(static_glSeed, seed_table);
+	SU_Random(static_glSeed, seed_table);
+
+	range = high - low;
+	if ( !range )
+	{
+		return low;
+	}
+	else
+	{
+		int tensixrand;
+		float offset;
+
+		tensixrand = SU_Random(static_glSeed, seed_table) & 65535;
+
+		offset = (float)tensixrand / 65536.0;
+
+		return (low + offset * range );
+	}
+}
+
+bool ServerDLL::FireBulletsPlayer_Predict(double result[3], Vector vecSrc, Vector vecDirShooting, Vector vecSpread, unsigned long cShots, int shared_rand)
+{
+	auto &hw = HwDLL::GetInstance();
+	Vector vecRight = hw.ppGlobals->v_right;
+	Vector vecUp = hw.ppGlobals->v_up;
+	float x, y;
+
+	auto static_glSeed = **reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offglSeed);
+	auto seed_table = *reinterpret_cast<unsigned int**>(reinterpret_cast<uintptr_t>(pU_Random) + offseed_table);
+	auto previous_glSeed = static_glSeed;
+
+	for ( unsigned long iShot = 1; iShot <= cShots; iShot++ )
+	{
+		x = SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + iShot, -0.5, 0.5 ) + SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 1 + iShot ) , -0.5, 0.5 );
+		y = SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 2 + iShot ), -0.5, 0.5 ) + SUTIL_SharedRandomFloat(static_glSeed, seed_table, shared_rand + ( 3 + iShot ), -0.5, 0.5 );
+
+		Vector vecDir = vecDirShooting +
+						x * vecSpread.x * vecRight +
+						y * vecSpread.y * vecUp;
+		Vector vecEnd;
+
+		vecEnd = vecSrc + vecDir * 8192;
+
+		result[0] = vecEnd.x;
+		result[1] = vecEnd.y;
+		result[2] = vecEnd.z;
+	}
+
+	return static_glSeed == previous_glSeed;
+}
+
 HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, thisptr, int, edx, float, param1, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand)
 {
 	fireBulletsPlayer_count = cShots;
+	double end[3];
+	auto &hw = HwDLL::GetInstance();
+	if (
+		offseed_table && offglSeed &&
+		hw.runningFrames && 
+		hw.StrafeState.Parameters.Type == HLTAS::ConstraintsType::LOOK_AT &&
+		(unsigned int)hw.StrafeState.Parameters.Parameters.LookAt.Action
+		)
+	{
+		FireBulletsPlayer_Predict(end, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand);
+		double src[3] = {vecSrc.x, vecSrc.y, vecSrc.z};
+		hw.LookAtDoBulletPrediction(src, end);
+	}
 	ORIG_CBaseEntity__FireBulletsPlayer(thisptr, edx, param1, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	// just in case
 	fireBulletsPlayer_count = 0;
@@ -3036,6 +3144,19 @@ HOOK_DEF_13(ServerDLL, void, __fastcall, CBaseEntity__FireBulletsPlayer, void*, 
 HOOK_DEF_11(ServerDLL, Vector, __cdecl, CBaseEntity__FireBulletsPlayer_Linux,void*, thisptr, unsigned long, cShots, Vector, vecSrc, Vector, vecDirShooting, Vector, vecSpread, float, flDistance, int, iBulletType, int, iTracerFreq, int, iDamage, entvars_t*, pevAttacker, int, shared_rand)
 {
 	fireBulletsPlayer_count = cShots;
+	double end[3];
+	auto &hw = HwDLL::GetInstance();
+	if (
+		offseed_table && offglSeed &&
+		hw.runningFrames && 
+		hw.StrafeState.Parameters.Type == HLTAS::ConstraintsType::LOOK_AT &&
+		(unsigned int)hw.StrafeState.Parameters.Parameters.LookAt.Action && 
+		FireBulletsPlayer_Predict(end, vecSrc, vecDirShooting, vecSpread, cShots, shared_rand)
+		)
+	{
+		double src[3] = {vecSrc.x, vecSrc.y, vecSrc.z};
+		hw.LookAtDoBulletPrediction(src, end);
+	}
 	auto ret = ORIG_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 	// just in case
 	fireBulletsPlayer_count = 0;

@@ -1224,6 +1224,7 @@ namespace TriangleDrawing
 						parameters.Parameters.LookAt.X = hw.tas_editor_set_target_yaw_look_at_x;
 						parameters.Parameters.LookAt.Y = hw.tas_editor_set_target_yaw_look_at_y;
 						parameters.Parameters.LookAt.Z = hw.tas_editor_set_target_yaw_look_at_z;
+						parameters.Parameters.LookAt.Action = hw.tas_editor_set_target_yaw_look_at_action;
 					} else if (hw.tas_editor_set_target_yaw_velocity_lock) {
 						parameters.Type = HLTAS::ConstraintsType::VELOCITY_LOCK;
 					}

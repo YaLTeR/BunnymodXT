@@ -108,6 +108,8 @@ public:
 	bool is_cof = false; // Cry of Fear-specific
 	ptrdiff_t offm_fStamina; // Cry of Fear-specific
 
+	bool FireBulletsPlayer_Predict(double result[3], Vector vecSrc, Vector vecDirShooting, Vector vecSpread, unsigned long cShots, int shared_rand);
+
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};
 	ServerDLL(const ServerDLL&);
@@ -221,6 +223,10 @@ protected:
 	std::deque<TASLogger::Collision> secondFlyMoveTouchQueue;
 
 	std::unordered_map<int, bool> cantJumpNextTime;
+
+	void *pU_Random;
+	ptrdiff_t offglSeed;
+	ptrdiff_t offseed_table;
 
 	unsigned long fireBulletsPlayer_count = 0;
 	unsigned long fireBullets_count = 0;

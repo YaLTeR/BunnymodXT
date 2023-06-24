@@ -304,6 +304,7 @@ public:
 	float tas_editor_set_target_yaw_look_at_x;
 	float tas_editor_set_target_yaw_look_at_y;
 	float tas_editor_set_target_yaw_look_at_z;
+	HLTAS::LookAtAction tas_editor_set_target_yaw_look_at_action;
 	bool tas_editor_set_yaw;
 	float tas_editor_set_yaw_yaw;
 	bool tas_editor_set_pitch;
@@ -348,6 +349,8 @@ public:
 
 	void TimerReset();
 	void TimerStart();
+
+	void LookAtDoBulletPrediction(double src[3], double end[3]);
 
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
@@ -604,13 +607,13 @@ protected:
 	std::string saveName;
 public:
 	std::string frametime0ms;
-protected:
-	bool runningFrames;
-	bool wasRunningFrames;
 	size_t currentFramebulk;
+	size_t currentRepeat;
+	bool runningFrames;
+protected:
+	bool wasRunningFrames;
 	size_t preExecFramebulk = 0;
 	size_t totalFramebulks;
-	size_t currentRepeat;
 	size_t movementFrameCounter;
 	bool thisFrameIs0ms;
 	bool SharedRNGSeedPresent;
@@ -725,4 +728,10 @@ protected:
 	bool insideHideGameUI;
 
 	bool extendPlayerTraceDistanceLimit;
+
+public:
+	bool LookAtActionSplit;
+	float LookAtActionViewangles[2];
+	size_t LookAtActionBulk;
+	size_t LookAtActionRepeat;
 };

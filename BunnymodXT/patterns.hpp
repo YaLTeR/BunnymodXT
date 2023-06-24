@@ -1148,6 +1148,11 @@ namespace patterns
 			"CoF-5936",
 			"55 8B EC 83 EC 0C 56 8B F1 8B 0D"
 		);
+
+		PATTERNS(U_Random,
+			"HL-SteamPipe",
+			"8B 0D ?? ?? ?? ?? 8D 04 89 C1 E0 08 2B C1 8D 04 C0 8D 04 41"
+		);
 	}
 
 	namespace client

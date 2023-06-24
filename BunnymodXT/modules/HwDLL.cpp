@@ -806,6 +806,9 @@ void HwDLL::Clear()
 	tas_editor_set_run_point_and_save = false;
 	free_cam_active = false;
 	extendPlayerTraceDistanceLimit = false;
+	LookAtActionSplit = false;
+	LookAtActionBulk = 0;
+	LookAtActionRepeat = 0;
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -2408,6 +2411,9 @@ void HwDLL::ResetStateBeforeTASPlayback()
 	clearedImpulsesForTheFirstTime = false;
 	TargetYawOverrideIndex = 0;
 	TargetYawOverrides.clear();
+	LookAtActionSplit = false;
+	LookAtActionBulk = 0;
+	LookAtActionRepeat = 0;
 }
 
 void HwDLL::StartTASPlayback()
@@ -4008,9 +4014,20 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Change_Type
 	}
 };
 
+static HLTAS::LookAtAction LookAt_Action_Parse(const char* what)
+{
+	if (!strcmp(what, "attack2")) {
+		return HLTAS::LookAtAction::ATTACK2;
+	} else if (!strcmp(what, "attack")) {
+		return HLTAS::LookAtAction::ATTACK;
+	} else {
+		return HLTAS::LookAtAction::NONE;
+	}
+}
+
 struct HwDLL::Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type
 {
-	USAGE("Usage: bxt_tas_editor_set_target_yaw_type <type>\n Set type of target_yaw for a point in the camera editor. Valid types (currently supported) are velocity_lock and look_at [entity <index>] [<x> <y> <z>].\n");
+	USAGE("Usage: bxt_tas_editor_set_target_yaw_type <type>\n Set type of target_yaw for a point in the camera editor. Valid types (currently supported) are velocity_lock and look_at [entity <index>] <x> <y> <z>. Origin values are required for look_at\n");
 
 	static void handler(const char *what)
 	{
@@ -4021,27 +4038,40 @@ struct HwDLL::Cmd_BXT_TAS_Editor_Set_Target_Yaw_Type
 		} else {
 			unsigned int entity;
 			float x = 0, y = 0, z = 0;
+			char action[16];
 			hw.tas_editor_set_target_yaw_look_at_entity = 0;
 			hw.tas_editor_set_target_yaw_look_at_x = 0;
 			hw.tas_editor_set_target_yaw_look_at_y = 0;
 			hw.tas_editor_set_target_yaw_look_at_z = 0;
+			hw.tas_editor_set_target_yaw_look_at_action = HLTAS::LookAtAction::NONE;
 
-			int scan_entity = sscanf(what, "look_at entity %d %f %f %f", &entity, &x, &y, &z);
-			if (scan_entity) {
+			int scan = sscanf(what, "look_at entity %d %f %f %f %s", &entity, &x, &y, &z, action);
+			if (scan) {
 				hw.tas_editor_set_target_yaw_look_at = true;
 				hw.tas_editor_set_target_yaw_look_at_entity = entity;
 
-				if (scan_entity == 4) {
-					hw.tas_editor_set_target_yaw_look_at_x = x;
-					hw.tas_editor_set_target_yaw_look_at_y = y;
-					hw.tas_editor_set_target_yaw_look_at_z = z;
-				}
-			} else if (sscanf(what, "look_at %f %f %f", &x, &y, &z) == 3) {
+				hw.tas_editor_set_target_yaw_look_at_x = x;
+				hw.tas_editor_set_target_yaw_look_at_y = y;
+				hw.tas_editor_set_target_yaw_look_at_z = z;
+
+				if (scan == 5)
+					hw.tas_editor_set_target_yaw_look_at_action = LookAt_Action_Parse(action);
+
+				return;
+			}
+
+			scan = sscanf(what, "look_at %f %f %f %s", &x, &y, &z, action);
+			if (scan) {
 				hw.tas_editor_set_target_yaw_look_at = true;
 				hw.tas_editor_set_target_yaw_look_at_entity = 0;
 				hw.tas_editor_set_target_yaw_look_at_x = x;
 				hw.tas_editor_set_target_yaw_look_at_y = y;
 				hw.tas_editor_set_target_yaw_look_at_z = z;
+
+				if (scan == 4)
+					hw.tas_editor_set_target_yaw_look_at_action = LookAt_Action_Parse(action);
+
+				return;
 			}
 		}
 	}
@@ -6418,6 +6448,94 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 				newTASFilename.clear();
 				newTASResult.Clear();
 			}
+
+			if (LookAtActionSplit) {
+				LookAtActionSplit = false;
+				auto curr_bulk = input.GetFrame(LookAtActionBulk);
+
+				if (LookAtActionRepeat == 0) {
+					// There is a chance repeat value will be 0, which indicates the first frame of the bulk
+					// This will subtract the repeat to get correct repeat and maybe bulk
+					--LookAtActionBulk;
+					curr_bulk = input.GetFrame(LookAtActionBulk);
+					// Subtract 1 because maybe it counts from 0.
+					LookAtActionRepeat = curr_bulk.GetRepeats() - 1;
+				} else {
+					// On the same framebulk so go back by one
+					--LookAtActionRepeat;
+				}
+
+				auto parameter_yaw_frame = curr_bulk;
+				auto parameter_lookat_frame = curr_bulk;
+
+				auto parameter_yaw = HLTAS::AlgorithmParameters {};
+				parameter_yaw.Type = HLTAS::ConstraintsType::YAW;
+				parameter_yaw.Parameters.Yaw.Yaw = LookAtActionViewangles[1];
+				parameter_yaw.Parameters.Yaw.Constraints = 0;
+				parameter_yaw_frame.SetAlgorithmParameters(parameter_yaw);
+
+				auto parameter_lookat = HLTAS::AlgorithmParameters {};
+				parameter_lookat.Type = HLTAS::ConstraintsType::LOOK_AT;
+				parameter_lookat.Parameters.LookAt.X = StrafeState.Parameters.Parameters.LookAt.X;
+				parameter_lookat.Parameters.LookAt.Y = StrafeState.Parameters.Parameters.LookAt.Y;
+				parameter_lookat.Parameters.LookAt.Z = StrafeState.Parameters.Parameters.LookAt.Z;
+				parameter_lookat.Parameters.LookAt.Entity = StrafeState.Parameters.Parameters.LookAt.Entity;
+				parameter_lookat.Parameters.LookAt.Action = StrafeState.Parameters.Parameters.LookAt.Action;
+				parameter_lookat_frame.SetAlgorithmParameters(parameter_lookat);
+
+				// Option to remove the look_at line
+				// if (!input.GetFrame(LookAtActionBulk-1).IsMovement()) {
+				// 	input.RemoveFrame(LookAtActionBulk-1);
+				// 	--LookAtActionBulk;
+				// 	--totalFramebulks;
+				// }
+
+				// Split from beginning to not including shootable frame
+				if (input.SplitFrame(LookAtActionBulk, LookAtActionRepeat)) {
+					++LookAtActionBulk;
+					++totalFramebulks;
+					LookAtActionRepeat = 0;
+				}
+
+				// Regardless whether it can split or not, action frame will be the repeat 0 of the current framebulk
+				if (input.SplitFrame(LookAtActionBulk, 1)) {
+					++totalFramebulks;
+				}
+
+				// Now action frame is one frame
+				auto action = input.GetFrames()[LookAtActionBulk];
+				action.SetPitch(LookAtActionViewangles[0]);
+				switch (StrafeState.Parameters.Parameters.LookAt.Action) {
+					case HLTAS::LookAtAction::ATTACK:
+						action.SetAttack(true);
+						break;
+					case HLTAS::LookAtAction::ATTACK2:
+						action.SetAttack2(true);
+						break;
+					case HLTAS::LookAtAction::NONE:
+					default:
+						break;
+				}
+
+				// Insert frames accordingly
+				input.RemoveFrame(LookAtActionBulk);
+				input.InsertFrame(LookAtActionBulk, parameter_lookat_frame);
+				input.InsertFrame(LookAtActionBulk, action);
+				input.InsertFrame(LookAtActionBulk, parameter_yaw_frame);
+
+				// Move on to next frame. Plus 2 because one parameter frame and then movement frame.
+				currentFramebulk = LookAtActionBulk + 2;
+				totalFramebulks += 2;
+				currentRepeat = 0;
+
+				// It is saved every frame involves shooting
+				std::ifstream file(hltas_filename);
+				auto error = input.Save(hltas_filename);
+				if (error.Code == HLTAS::ErrorCode::OK)
+					ORIG_Con_Printf("Modified with compensated view angles\n");
+				else
+					ORIG_Con_Printf("Error saving current TAS file modified with compensated view angles\n: %s\n", HLTAS::GetErrorMessage(error).c_str());
+			}
 		}
 
 		InsertCommands();
@@ -6672,6 +6790,37 @@ void HwDLL::FreeCamTick()
 	cameraOverrideOrigin[0] += direction[0];
 	cameraOverrideOrigin[1] += direction[1];
 	cameraOverrideOrigin[2] += direction[2];
+}
+
+void HwDLL::LookAtDoBulletPrediction(double src[3], double end[3])
+{
+	double result[2];
+	double view[3] = {
+		StrafeState.Parameters.Parameters.LookAt.X, 
+		StrafeState.Parameters.Parameters.LookAt.Y, 
+		StrafeState.Parameters.Parameters.LookAt.Z
+	};
+	HLStrafe::VecAdd<float, double, 3>(StrafeState.TargetYawLookAtOrigin, view, view);
+
+	HLStrafe::VecSubtract<double, double, 3>(view, src, view);
+	HLStrafe::VecSubtract<double, double, 3>(end, src, end);
+
+	auto curr_yaw = std::asin(ppGlobals->v_right.x);
+	auto curr_pitch = std::acos(ppGlobals->v_up.z);
+
+	HLStrafe::GetViewanglesTwoVec<double, double, double>(result, view, end);
+
+	// std::printf("Pitch: %f Yaw: %f before bulk %u repeat %u\n",
+	// 	(curr_pitch + result[0]) * HLStrafe::M_RAD2DEG, (curr_yaw + result[1]) * HLStrafe::M_RAD2DEG,
+	// 	currentFramebulk,
+	// 	currentRepeat
+	// 	);
+	
+	LookAtActionViewangles[0] = (curr_pitch + result[0]) * HLStrafe::M_RAD2DEG;
+	LookAtActionViewangles[1] = (curr_yaw + result[1]) * HLStrafe::M_RAD2DEG;
+	LookAtActionSplit = true;
+	LookAtActionBulk = currentFramebulk;
+	LookAtActionRepeat = currentRepeat;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SeedRandomNumberGenerator)

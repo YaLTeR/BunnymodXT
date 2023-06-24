@@ -592,6 +592,12 @@ namespace TriangleDrawing
 		const auto& normalzs = input.normalzs;
 		const auto& frame_bulk_starts = input.frame_bulk_starts;
 
+		const auto show_only_last_frames = CVars::bxt_tas_editor_show_only_last_frames.GetInt();
+		unsigned start_frame = 1;
+		if (show_only_last_frames > 0 && (unsigned) show_only_last_frames < input.player_datas.size()) {
+			start_frame = input.player_datas.size() - show_only_last_frames;
+		}
+
 		if (input.frame_bulks.size() == 0)
 			return;
 
@@ -698,6 +704,9 @@ namespace TriangleDrawing
 
 				float selected_px_dist = INFINITY;
 				for (const auto& key_frame : key_frames) {
+					if (key_frame.frame < start_frame)
+						continue;
+
 					const auto origin = Vector(player_datas[key_frame.frame].Origin);
 					auto disp = origin - view;
 					if (DotProduct(forward, disp) > 0) {
@@ -722,7 +731,7 @@ namespace TriangleDrawing
 			auto smoothing_region_it = large_enough_same_yaw_regions.cbegin();
 
 			// Draw the camera angles.
-			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
+			for (size_t frame = start_frame; frame < player_datas.size(); ++frame) {
 				const auto origin = Vector(player_datas[frame].Origin);
 
 				float brightness = 0.4f;
@@ -748,7 +757,7 @@ namespace TriangleDrawing
 			float closest_frame_px_dist = INFINITY;
 
 			// Draw the path.
-			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
+			for (size_t frame = start_frame; frame < player_datas.size(); ++frame) {
 				const auto origin = Vector(player_datas[frame].Origin);
 
 				float brightness;
@@ -792,6 +801,9 @@ namespace TriangleDrawing
 			for (const auto& item : key_frames) {
 				const auto frame = item.frame;
 				const auto& line = input.frame_bulks[item.frame_bulk_index];
+
+				if (frame < start_frame)
+					continue;
 
 				if (item.frame_bulk_index == selection.frame_bulk_index && item.frame == selection.last_frame)
 					pTriAPI->Color4f(1, 1, 1, 1);
@@ -1551,6 +1563,8 @@ namespace TriangleDrawing
 			} else {
 				for (size_t i = 1; i < frame_bulk_starts.size(); ++i) {
 					auto frame = frame_bulk_starts[i];
+					if (frame < start_frame)
+						continue;
 
 					const auto origin = Vector(player_datas[frame].Origin);
 					auto disp = origin - view;
@@ -1610,6 +1624,14 @@ namespace TriangleDrawing
 			Vector last_shown_view_angle_origin;
 
 			for (size_t frame = 1; frame < player_datas.size(); ++frame) {
+				if (frame < start_frame) {
+					// Incrementing next_frame_bulk_start_index 
+					// when frames are skipped to correctly render perpendicular line.
+					while (next_frame_bulk_start_index + 1 != frame_bulk_starts.size()
+							&& frame == frame_bulk_starts[next_frame_bulk_start_index])
+						++next_frame_bulk_start_index;
+					continue;
+				}
 				const auto origin = Vector(player_datas[frame].Origin);
 
 				// Draw the pushables.

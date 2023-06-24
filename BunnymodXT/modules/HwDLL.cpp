@@ -5074,6 +5074,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_tas_editor_apply_smoothing_over_s);
 	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_duration);
 	RegisterCVar(CVars::_bxt_tas_editor_apply_smoothing_high_weight_multiplier);
+	RegisterCVar(CVars::bxt_tas_editor_show_only_last_frames);
 	RegisterCVar(CVars::bxt_disable_vgui);
 	RegisterCVar(CVars::bxt_wallhack);
 	RegisterCVar(CVars::bxt_wallhack_additive);

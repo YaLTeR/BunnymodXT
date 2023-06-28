@@ -2510,6 +2510,12 @@ void HwDLL::StartTASPlayback()
 		SetTASLogging(false);
 	}
 
+	// Store current sensitivity if it is not zero (which can occur when doing bxt_tas_loadscript while a TAS is already playing).
+	auto currentSensitivity = CVars::sensitivity.GetFloat();
+	if (currentSensitivity != 0)
+		sensitivityToRestore = currentSensitivity;
+	ORIG_Cbuf_InsertText("sensitivity 0\n");
+
 	if (!load_command.empty()) {
 		load_command += '\n';
 		ORIG_Cbuf_InsertText(load_command.c_str());
@@ -4983,6 +4989,11 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 			CallOnTASPlaybackStopped();
 			runningFrames = false;
 			ORIG_Cbuf_InsertText("host_framerate 0;_bxt_norefresh 0;_bxt_min_frametime 0;bxt_taslog 0\n");
+			if (sensitivityToRestore != 0) {
+				std::ostringstream ss;
+				ss << "sensitivity " << sensitivityToRestore << "\n";
+				ORIG_Cbuf_InsertText(ss.str().c_str());
+			}
 
 			assert(movementFrameCounter >= 1);
 			tas_editor_input.first_frame_counter_value = movementFrameCounter - 1;
@@ -5138,6 +5149,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	CVars::default_fov.Assign(FindCVar("default_fov"));
 	CVars::skill.Assign(FindCVar("skill"));
 	CVars::host_framerate.Assign(FindCVar("host_framerate"));
+	CVars::sensitivity.Assign(FindCVar("sensitivity"));
 
 	FindCVarsIfNeeded();
 
@@ -5918,6 +5930,11 @@ void HwDLL::InsertCommands()
 	} else {
 		if (wasRunningFrames) {
 			ORIG_Cbuf_InsertText("host_framerate 0;_bxt_min_frametime 0;bxt_taslog 0\n");
+			if (sensitivityToRestore != 0) {
+				std::ostringstream ss;
+				ss << "sensitivity " << sensitivityToRestore << "\n";
+				ORIG_Cbuf_InsertText(ss.str().c_str());
+			}
 
 			if (!demoName.empty()) {
 				ORIG_Cbuf_InsertText("stop\n");

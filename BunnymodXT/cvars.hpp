@@ -16,7 +16,8 @@
 	X(fps_max) \
 	X(default_fov) \
 	X(skill) \
-	X(host_framerate)
+	X(host_framerate) \
+	X(sensitivity)
 
 #define DEFINE_CVARS(X) \
 	X(_bxt_taslog, "0") \

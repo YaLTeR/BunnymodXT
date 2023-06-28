@@ -401,7 +401,7 @@ void EditedInput::run_script_in_second_game() {
 	// Send the message to the client.
 	std::ostringstream oss;
 	oss << "_bxt_tas_script_generation " << current_generation
-	    << ";sensitivity 0;volume 0;MP3Volume 0;bxt_tas_norefresh_until_last_frames 1";
+	    << ";volume 0;MP3Volume 0;bxt_tas_norefresh_until_last_frames 1";
 
 	if (input.ToString(simulation_ipc::message.script, sizeof(simulation_ipc::message.script)).Code == HLTAS::ErrorCode::OK) {
 		oss << ";_bxt_tas_client_load_received_script\n";

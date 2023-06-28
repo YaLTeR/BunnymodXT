@@ -622,6 +622,7 @@ protected:
 	unsigned LoadingSeedCounter;
 	size_t TargetYawOverrideIndex;
 	std::vector<float> TargetYawOverrides;
+	float sensitivityToRestore = 0;
 public:
 	bool ButtonsPresent;
 	HLTAS::StrafeButtons Buttons;

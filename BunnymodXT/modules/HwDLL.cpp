@@ -4941,6 +4941,12 @@ extern "C" DLLEXPORT void bxt_tas_load_script_from_string(const char *script)
 	hw.StartTASPlayback();
 }
 
+extern "C" DLLEXPORT int bxt_is_tas_editor_active()
+{
+	auto& hw = HwDLL::GetInstance();
+	return hw.tas_editor_mode != TASEditorMode::DISABLED;
+}
+
 void HwDLL::SetTASEditorMode(TASEditorMode mode)
 {
 	auto& cl = ClientDLL::GetInstance();
@@ -4986,7 +4992,12 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 				input.RemoveFrame(currentFramebulk);
 			}
 
+			// Set this early here because bxt-rs TAS studio will check this in CallOnTASPlaybackStopped()
+			// to make sure the user isn't trying to run two TAS editors at once.
+			tas_editor_mode = mode;
+
 			CallOnTASPlaybackStopped();
+
 			runningFrames = false;
 			ORIG_Cbuf_InsertText("host_framerate 0;_bxt_norefresh 0;_bxt_min_frametime 0;bxt_taslog 0\n");
 			if (sensitivityToRestore != 0) {

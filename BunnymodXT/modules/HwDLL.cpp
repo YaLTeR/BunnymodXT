@@ -764,6 +764,8 @@ void HwDLL::Clear()
 	LoadingSeedCounter = 0;
 	TargetYawOverrideIndex = 0;
 	TargetYawOverrides.clear();
+	RenderYawOverrideIndex = 0;
+	RenderYawOverrides.clear();
 	lastLoadedMap.clear();
 	isOverridingCamera = false;
 	isOffsettingCamera = false;
@@ -2428,6 +2430,8 @@ void HwDLL::ResetTASPlaybackState()
 	clearedImpulsesForTheFirstTime = false;
 	TargetYawOverrideIndex = 0;
 	TargetYawOverrides.clear();
+	RenderYawOverrideIndex = 0;
+	RenderYawOverrides.clear();
 }
 
 void HwDLL::StartTASPlayback()
@@ -5005,6 +5009,8 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 				ss << "sensitivity " << sensitivityToRestore << "\n";
 				ORIG_Cbuf_InsertText(ss.str().c_str());
 			}
+			RenderYawOverrides.clear();
+			RenderYawOverrideIndex = 0;
 
 			assert(movementFrameCounter >= 1);
 			tas_editor_input.first_frame_counter_value = movementFrameCounter - 1;
@@ -5499,6 +5505,13 @@ void HwDLL::InsertCommands()
 					StrafeState.TargetYawOverrideActive = true;
 				}
 
+				if (RenderYawOverrideIndex == RenderYawOverrides.size()) {
+					RenderYawOverrides.clear();
+					RenderYawOverrideIndex = 0;
+				} else {
+					RenderYawOverrideIndex += 1;
+				}
+
 				f.ResetAutofuncs();
 
 				resulting_frame.SetPitch(p.Pitch);
@@ -5912,6 +5925,9 @@ void HwDLL::InsertCommands()
 				StrafeState.TargetYawOverrideActive = true;
 				StrafeState.TargetYawOverride = TargetYawOverrides[0];
 				TargetYawOverrideIndex = 1;
+			} else if (!f.RenderYawOverride.empty()) {
+				RenderYawOverrides = f.RenderYawOverride;
+				RenderYawOverrideIndex = 0;
 			}
 
 			currentFramebulk++;
@@ -5921,6 +5937,9 @@ void HwDLL::InsertCommands()
 		if (currentFramebulk >= totalFramebulks) {
 			CallOnTASPlaybackStopped();
 			runningFrames = false;
+
+			RenderYawOverrides.clear();
+			RenderYawOverrideIndex = 0;
 
 			if (!exportFilename.empty()) {
 				auto error = exportResult.Save(exportFilename);

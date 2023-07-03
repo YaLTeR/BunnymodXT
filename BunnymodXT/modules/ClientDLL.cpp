@@ -1480,6 +1480,10 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 
 	ORIG_V_CalcRefdef(pparams);
 
+	if (hwDLL.RenderYawOverrideIndex != 0 && hwDLL.RenderYawOverrideIndex <= hwDLL.RenderYawOverrides.size()) {
+		pparams->viewangles[1] = hwDLL.RenderYawOverrides[hwDLL.RenderYawOverrideIndex - 1];
+	}
+
 	float forward_offset = CVars::bxt_viewmodel_ofs_forward.GetFloat();
 	float right_offset = CVars::bxt_viewmodel_ofs_right.GetFloat();
 	float up_offset = CVars::bxt_viewmodel_ofs_up.GetFloat();

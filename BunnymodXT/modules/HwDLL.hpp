@@ -624,6 +624,8 @@ protected:
 	std::vector<float> TargetYawOverrides;
 	float sensitivityToRestore = 0;
 public:
+	size_t RenderYawOverrideIndex;
+	std::vector<float> RenderYawOverrides;
 	bool ButtonsPresent;
 	HLTAS::StrafeButtons Buttons;
 	HLStrafe::CurrentState StrafeState;

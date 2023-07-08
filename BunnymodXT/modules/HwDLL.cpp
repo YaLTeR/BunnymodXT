@@ -5935,11 +5935,7 @@ void HwDLL::InsertCommands()
 
 		// Ran through all frames.
 		if (currentFramebulk >= totalFramebulks) {
-			CallOnTASPlaybackStopped();
 			runningFrames = false;
-
-			RenderYawOverrides.clear();
-			RenderYawOverrideIndex = 0;
 
 			if (!exportFilename.empty()) {
 				auto error = exportResult.Save(exportFilename);
@@ -5959,6 +5955,16 @@ void HwDLL::InsertCommands()
 		}
 	} else {
 		if (wasRunningFrames) {
+			RenderYawOverrides.clear();
+			RenderYawOverrideIndex = 0;
+
+			if (bxt_on_tas_playback_frame) {
+				// We don't use the return value here because we stop anyway.
+				CallOnTASPlaybackFrame();
+			}
+
+			CallOnTASPlaybackStopped();
+
 			ORIG_Cbuf_InsertText("host_framerate 0;_bxt_min_frametime 0;bxt_taslog 0\n");
 			if (sensitivityToRestore != 0) {
 				std::ostringstream ss;

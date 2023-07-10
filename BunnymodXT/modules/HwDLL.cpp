@@ -5446,6 +5446,12 @@ void HwDLL::InsertCommands()
 					}
 				}
 
+				StrafeState.ConstantYawSpeed = false;
+				if ((f.GetDir() == HLTAS::StrafeDir::LEFT || f.GetDir() == HLTAS::StrafeDir::RIGHT) && f.GetYawPresent()) {
+					StrafeState.ConstantYawSpeed = true;
+					StrafeState.ConstantYawSpeedValue = f.GetYaw();
+				}
+
 				simulation_ipc::send_simulated_frame_to_server(simulation_ipc::SimulatedFrame {
 					CVars::_bxt_tas_script_generation.GetUint(),
 					movementFrameCounter++,

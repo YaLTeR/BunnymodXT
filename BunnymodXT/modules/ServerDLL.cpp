@@ -2574,17 +2574,47 @@ void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float
 	else if (is_trigger)
 	{
 		classname += 8;
-		if (std::strcmp(classname, "changelevel") == 0) {
+		if (std::strcmp(classname, "autosave") == 0) {
+			// Grey
+			r = 128;
+			g = 128;
+			b = 128;
+		}
+		else if (std::strcmp(classname, "cdaudio") == 0) {
+			// Olive
+			r = 128;
+			g = 128;
+			b = 0;
+		}
+		else if (std::strcmp(classname, "changelevel") == 0) {
 			// Bright green
 			r = 79;
 			g = 255;
 			b = 10;
+		}
+		else if (std::strcmp(classname, "endsection") == 0) {
+			// Brown
+			r = 150;
+			g = 75;
+			b = 0;
+		}
+		else if (std::strcmp(classname, "gravity") == 0) {
+			// Steel blue
+			r = 70;
+			g = 130;
+			b = 180;
 		}
 		else if (std::strcmp(classname, "hurt") == 0) {
 			// Red
 			r = 255;
 			g = 0;
 			b = 0;
+		}
+		else if (std::strcmp(classname, "monsterjump") == 0) {
+			// Brown Sand
+			r = 238;
+			g = 154;
+			b = 77;
 		}
 		else if (std::strcmp(classname, "multiple") == 0) {
 			// Blue

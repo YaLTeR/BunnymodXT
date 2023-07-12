@@ -74,6 +74,8 @@
 	X(bxt_timer_autostop, "1") \
 	X(bxt_show_hidden_entities, "0") \
 	X(bxt_show_hidden_entities_clientside, "0") \
+	X(bxt_show_hidden_entities_clientside_alpha, "255") \
+	X(bxt_show_hidden_entities_clientside_type, "1") \
 	X(bxt_show_triggers_legacy, "0") \
 	X(bxt_show_triggers_legacy_alpha, "120") \
 	X(bxt_show_pickup_bbox, "0") \

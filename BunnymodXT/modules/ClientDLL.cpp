@@ -1148,6 +1148,8 @@ void ClientDLL::RegisterCVarsAndCommands()
 
 	if (ORIG_HUD_AddEntity) {
 		REG(bxt_show_hidden_entities_clientside);
+		REG(bxt_show_hidden_entities_clientside_alpha);
+		REG(bxt_show_hidden_entities_clientside_type);
 		REG(bxt_show_triggers_legacy_alpha);
 		REG(bxt_show_only_players);
 		REG(bxt_disable_beams);
@@ -2133,9 +2135,13 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linu
 
 HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent, char*, modelname)
 {
-	if (CVars::bxt_show_hidden_entities_clientside.GetBool()) {
-		if (ent->curstate.rendermode != kRenderNormal)
-			ent->curstate.renderamt = 255;
+	if (CVars::bxt_show_hidden_entities_clientside.GetBool()) 
+	{
+		if (CVars::bxt_show_hidden_entities_clientside_type.GetBool() || (ent->curstate.renderamt == 0))
+		{
+			if (ent->curstate.rendermode != kRenderNormal)
+				ent->curstate.renderamt = std::clamp(CVars::bxt_show_hidden_entities_clientside_alpha.GetInt(), 0, 255);
+		}
 	}
 
 	if (ent->curstate.rendermode == kRenderTransColor && ent->curstate.renderfx == kRenderFxTrigger && CVars::bxt_show_triggers_legacy.GetBool())

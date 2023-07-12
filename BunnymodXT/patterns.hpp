@@ -1957,7 +1957,7 @@ namespace patterns
 
 		PATTERNS(CHudHealth__DrawDamage,
 			"HL-Steampipe",
-			"83 EC 10 53 8B D9 8B",
+			"83 EC 10 53 8B D9 8B 83 ?? ?? ?? ?? 85 C0 0F 84 ?? ?? ?? ?? D9 44 24",
 			"HL-WON",
 			"83 EC 10 55 8B E9 57",
 			"Echoes",

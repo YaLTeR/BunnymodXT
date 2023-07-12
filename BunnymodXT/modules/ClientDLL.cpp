@@ -1150,6 +1150,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_show_hidden_entities_clientside);
 		REG(bxt_show_triggers_legacy_alpha);
 		REG(bxt_show_only_players);
+		REG(bxt_disable_beams);
 		REG(bxt_disable_brush_entities);
 		REG(bxt_disable_sprite_entities);
 		REG(bxt_disable_studio_entities);
@@ -2144,6 +2145,9 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 		return 0;
 
 	if (CVars::bxt_disable_brush_entities.GetBool() && ((!CVars::sv_cheats.GetBool() && ent->player) || (ent->model->type == mod_brush && ent->curstate.rendermode != kRenderTransColor && ent->curstate.renderfx != kRenderFxTrigger)))
+		return 0;
+
+	if (CVars::bxt_disable_beams.GetBool() && (ent->model->type == mod_sprite) && (ent->curstate.entityType & ENTITY_BEAM))
 		return 0;
 
 	if ((CVars::bxt_disable_sprite_entities.GetBool() && ent->model->type == mod_sprite) || (CVars::bxt_disable_studio_entities.GetBool() && ent->model->type == mod_studio))

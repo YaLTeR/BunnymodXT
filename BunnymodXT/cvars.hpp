@@ -96,6 +96,7 @@
 	X(bxt_cof_disable_viewpunch_from_jump, "0") \
 	X(cl_righthand, "0") \
 	X(bxt_remove_punchangles, "0") \
+	X(bxt_disable_beams, "0") \
 	X(bxt_disable_brush_entities, "0") \
 	X(bxt_disable_sprite_entities, "0") \
 	X(bxt_disable_studio_entities, "0") \

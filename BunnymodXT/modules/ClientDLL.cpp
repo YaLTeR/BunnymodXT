@@ -2153,19 +2153,15 @@ HOOK_DEF_3(ClientDLL, int, __cdecl, HUD_AddEntity, int, type, cl_entity_s*, ent,
 	if ((CVars::bxt_disable_sprite_entities.GetBool() && ent->model->type == mod_sprite) || (CVars::bxt_disable_studio_entities.GetBool() && ent->model->type == mod_studio))
 		return 0;
 
-	if (pEngfuncs)
+	if (HwDLL::GetInstance().IsPlayingbackDemo())
 	{
-		if (CVars::bxt_disable_player_corpses.GetBool() && ent->curstate.renderfx == kRenderFxDeadPlayer && HwDLL::GetInstance().IsPlayingbackDemo())
+		if (CVars::bxt_disable_player_corpses.GetBool() && ent->curstate.renderfx == kRenderFxDeadPlayer)
 			return 0;
 
-		if (ppmove)
-		{
-			auto pmove = reinterpret_cast<uintptr_t>(*ppmove);
-			int* iuser2 = reinterpret_cast<int*>(pmove + (offIUser1 + 4));
-
-			if (CVars::bxt_hide_other_players.GetBool() && ent->player && HwDLL::GetInstance().IsPlayingbackDemo() && ent->index != *iuser2)
-				return 0;
-		}
+		#ifndef SDK10_BUILD
+		if (CVars::bxt_hide_other_players.GetBool() && ent->player && ent->index != ent->curstate.iuser2)
+			return 0;
+		#endif
 	}
 
 	return ORIG_HUD_AddEntity(type, ent, modelname);

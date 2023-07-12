@@ -9264,7 +9264,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 		float our_aspect_ratio = ScreenWidth / ScreenHeight;
 
 		float fov = *scr_fov_value;
-		float calculated_fov = std::atan(std::tan(fov*M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f/M_PI;
+		float calculated_fov = static_cast<float>(std::atan(std::tan(fov*M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f/M_PI);
 
 		*scr_fov_value = std::clamp(calculated_fov, 10.0f, 150.0f); // Engine does the clamp of FOV if less 10 or higher than 150, let's do it too!
 		

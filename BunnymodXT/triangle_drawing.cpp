@@ -178,9 +178,10 @@ namespace TriangleDrawing
 
 			const char *classname = HwDLL::GetInstance().GetString(ent->v.classname);
 			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-			bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+			bool is_ladder = std::strcmp(classname, "func_ladder") == 0;
+			bool is_stairs_cof = std::strcmp(classname, "func_stairs") == 0; // Cry of Fear
 
-			if (!is_trigger && !is_ladder)
+			if (!is_trigger && !is_ladder && !is_stairs_cof)
 				continue;
 
 			const model_t *model = HwDLL::GetInstance().GetModelByIndex(ent->v.modelindex);

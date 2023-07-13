@@ -5575,7 +5575,7 @@ void HwDLL::PrintEntity(std::ostringstream &out, int index)
 
 	out << "; hp: " << ent->v.health;
 
-	if ((!strncmp(classname, "func_door", 9)) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
+	if ((!strncmp(classname, "func_door", 9)) || (!strcmp(classname, "func_rotating")) || (!strcmp(classname, "func_train")))
 		out << "; dmg: " << ent->v.dmg;
 
 	Vector origin;
@@ -5724,9 +5724,9 @@ void HwDLL::GetOriginOfEntity(Vector& origin, const edict_t* ent)
 	const auto& hw = HwDLL::GetInstance();
 	const char* classname = hw.GetString(ent->v.classname);
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-	bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
-	bool is_water = std::strncmp(classname, "func_water", 10) == 0;
+	bool is_ladder = std::strcmp(classname, "func_ladder") == 0;
+	bool is_friction = std::strcmp(classname, "func_friction") == 0;
+	bool is_water = std::strcmp(classname, "func_water") == 0;
 
 	// Credits to 'goldsrc_monitor' tool for their code to get origin of entities
 	if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)

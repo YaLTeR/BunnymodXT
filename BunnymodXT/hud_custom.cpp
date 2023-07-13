@@ -869,7 +869,9 @@ namespace CustomHud
 
 				out << "HP: " << ent->v.health << '\n';
 
-				if (strstr(classname, "func_door") != NULL)
+				bool is_door = std::strncmp(classname, "func_door", 9) == 0;
+
+				if (is_door)
 				{
 					// https://github.com/ValveSoftware/halflife/blob/master/dlls/doors.h#L27-L28
 					if (ent->v.spawnflags & 256)
@@ -883,7 +885,7 @@ namespace CustomHud
 						out << "Monsters: Can open" << '\n';
 				}
 
-				if ((strstr(classname, "func_door") != NULL) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
+				if (is_door || (!strcmp(classname, "func_rotating")) || (!strcmp(classname, "func_train")))
 					out << "Damage: " << ent->v.dmg << '\n';
 
 				if (CVars::bxt_hud_entity_info.GetInt() >= 2)

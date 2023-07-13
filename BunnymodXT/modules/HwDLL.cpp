@@ -9488,9 +9488,10 @@ HOOK_DEF_3(HwDLL, int, __cdecl, SV_AddToFullPack, struct entity_state_s*, state,
 
 	const char *classname = ppGlobals->pStringBase + ent->v.classname;
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+	bool is_ladder = std::strcmp(classname, "func_ladder") == 0;
+	bool not_triggers = !is_trigger && !is_ladder;
 
-	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool() && (CVars::bxt_show_hidden_entities_classname.IsEmpty() || !std::strcmp(classname, CVars::bxt_show_hidden_entities_classname.GetString().c_str()))) {
+	if (not_triggers && CVars::bxt_show_hidden_entities.GetBool() && (CVars::bxt_show_hidden_entities_classname.IsEmpty() || !std::strcmp(classname, CVars::bxt_show_hidden_entities_classname.GetString().c_str()))) {
 		bool show = ent->v.rendermode != kRenderNormal && ent->v.rendermode != kRenderGlow;
 		switch (CVars::bxt_show_hidden_entities.GetInt()) {
 		case 1:
@@ -9506,7 +9507,7 @@ HOOK_DEF_3(HwDLL, int, __cdecl, SV_AddToFullPack, struct entity_state_s*, state,
 			ent->v.effects &= ~EF_NODRAW;
 			ent->v.rendermode = kRenderNormal;
 		}
-	} else if ((is_trigger || is_ladder) && CVars::bxt_show_triggers_legacy.GetBool()) {
+	} else if (!not_triggers && CVars::bxt_show_triggers_legacy.GetBool()) {
 		ent->v.effects &= ~EF_NODRAW;
 		ent->v.rendermode = kRenderTransColor;
 		if (ent->v.solid == SOLID_NOT && std::strcmp(classname + 8, "transition") != 0)

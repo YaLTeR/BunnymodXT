@@ -2560,97 +2560,68 @@ void ServerDLL::DoAutoStopTasks()
 void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float &b)
 {
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-	if (!is_trigger && !is_ladder)
+	bool is_ladder = std::strcmp(classname, "func_ladder") == 0;
+	bool is_stairs_cof = std::strcmp(classname, "func_stairs") == 0; // Cry of Fear
+	if (!is_trigger && !is_ladder && !is_stairs_cof)
 		return;
 
 	if (is_ladder)
 	{
-		// Sky
-		r = 102;
-		g = 178;
-		b = 255;
+		r = 102; g = 178; b = 255; // Sky
+	}
+	else if (is_stairs_cof)
+	{
+		r = 255; g = 254; b = 255;
 	}
 	else if (is_trigger)
 	{
 		classname += 8;
 		if (std::strcmp(classname, "autosave") == 0) {
-			// Grey
-			r = 128;
-			g = 128;
-			b = 128;
-		}
-		else if (std::strcmp(classname, "cdaudio") == 0) {
-			// Olive
-			r = 128;
-			g = 128;
-			b = 0;
-		}
-		else if (std::strcmp(classname, "changelevel") == 0) {
-			// Bright green
-			r = 79;
-			g = 255;
-			b = 10;
-		}
-		else if (std::strcmp(classname, "endsection") == 0) {
-			// Brown
-			r = 150;
-			g = 75;
-			b = 0;
-		}
-		else if (std::strcmp(classname, "gravity") == 0) {
-			// Steel blue
-			r = 70;
-			g = 130;
-			b = 180;
-		}
-		else if (std::strcmp(classname, "hurt") == 0) {
-			// Red
-			r = 255;
-			g = 0;
-			b = 0;
-		}
-		else if (std::strcmp(classname, "monsterjump") == 0) {
-			// Brown Sand
-			r = 238;
-			g = 154;
-			b = 77;
-		}
-		else if (std::strcmp(classname, "multiple") == 0) {
-			// Blue
-			r = 0;
-			g = 0;
-			b = 255;
-		}
-		else if (std::strcmp(classname, "once") == 0) {
-			// Cyan
-			r = 0;
-			g = 255;
-			b = 255;
-		}
-		else if (std::strcmp(classname, "push") == 0) {
-			// Bright yellow
-			r = 255;
-			g = 255;
-			b = 0;
-		}
-		else if (std::strcmp(classname, "teleport") == 0) {
-			// Dull green
-			r = 81;
-			g = 147;
-			b = 49;
-		}
-		else if (std::strcmp(classname, "transition") == 0) {
-			// Magenta
-			r = 203;
-			g = 103;
-			b = 212;
-		}
-		else {
-			// White
-			r = 255;
-			g = 255;
-			b = 255;
+			r = 128; g = 128; b = 128; // Grey
+		} else if (std::strcmp(classname, "cdaudio") == 0) {
+			r = 128; g = 128; b = 0; // Olive
+		} else if (std::strcmp(classname, "changelevel") == 0) {
+			r = 79; g = 255; b = 10; // Bright green
+		} else if (std::strcmp(classname, "endsection") == 0) {
+			r = 150; g = 75; b = 0; // Brown
+		} else if (std::strcmp(classname, "gravity") == 0) {
+			r = 70; g = 130; b = 180; // Steel blue
+		} else if (std::strcmp(classname, "hurt") == 0) {
+			r = 255; g = 0; b = 0; // Red
+		} else if (std::strcmp(classname, "monsterjump") == 0) {
+			r = 238; g = 154; b = 77; // Brown Sand
+		} else if (std::strcmp(classname, "multiple") == 0) {
+			r = 0; g = 0; b = 255; // Blue
+		} else if (std::strcmp(classname, "once") == 0) {
+			r = 0; g = 255; b = 255; // Cyan
+		} else if (std::strcmp(classname, "push") == 0) {
+			r = 255; g = 255; b = 0; // Bright yellow
+		} else if (std::strcmp(classname, "teleport") == 0) {
+			r = 81; g = 147; b = 49; // Dull green
+		} else if (std::strcmp(classname, "transition") == 0) {
+			r = 203; g = 103; b = 212; // Magenta
+		} else if (std::strcmp(classname, "xen_return") == 0) { // HL: Opposing Force
+			r = 254; g = 255; b = 255;
+		} else if (std::strcmp(classname, "usetool") == 0) { // CS: Condition Zero Deleted Scenes
+			r = 253; g = 255; b = 255;
+		} else if (std::strcmp(classname, "stealth") == 0) { // CS: Condition Zero Deleted Scenes
+			r = 252; g = 255; b = 255;
+		} else if (std::strcmp(classname, "tank") == 0) { // Gunman Chronicles
+			r = 251; g = 255; b = 255;
+		} else if (std::strcmp(classname, "tankoutofgas") == 0) { // Gunman Chronicles
+			r = 250; g = 255; b = 255;
+		} else if (std::strcmp(classname, "tankshell") == 0) { // Gunman Chronicles
+			r = 249; g = 255; b = 255;
+		} else if (std::strcmp(classname, "coop_changelevel") == 0) { // Cry of Fear
+			r = 248; g = 255; b = 255;
+		} else if (std::strcmp(classname, "cofteleport") == 0) { // Cry of Fear
+			r = 247; g = 255; b = 255;
+		} else if (std::strcmp(classname, "checkbrush") == 0) { // Cry of Fear
+			r = 246; g = 255; b = 255;
+		} else if (std::strcmp(classname, "booksimon") == 0) { // Cry of Fear
+			r = 245; g = 255; b = 255;
+		} else {
+			r = 255; g = 255; b = 255; // White
 		}
 	}
 }
@@ -2658,8 +2629,9 @@ void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float
 void ServerDLL::GetTriggerAlpha(const char *classname, bool inactive, bool additive, float &a)
 {
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-	if (!is_trigger && !is_ladder)
+	bool is_ladder = std::strcmp(classname, "func_ladder") == 0;
+	bool is_stairs_cof = std::strcmp(classname, "func_stairs") == 0; // Cry of Fear
+	if (!is_trigger && !is_ladder && !is_stairs_cof)
 		return;
 
 	// The alpha should be lower in additive modes.
@@ -2727,9 +2699,11 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 
 	const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + ent->v.classname;
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+	bool is_ladder = std::strcmp(classname, "func_ladder") == 0;
+	bool is_stairs_cof = std::strcmp(classname, "func_stairs") == 0; // Cry of Fear
+	bool not_triggers = !is_trigger && !is_ladder && !is_stairs_cof;
 
-	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool() && (CVars::bxt_show_hidden_entities_classname.IsEmpty() || !std::strcmp(classname, CVars::bxt_show_hidden_entities_classname.GetString().c_str()))) {
+	if (not_triggers && CVars::bxt_show_hidden_entities.GetBool() && (CVars::bxt_show_hidden_entities_classname.IsEmpty() || !std::strcmp(classname, CVars::bxt_show_hidden_entities_classname.GetString().c_str()))) {
 		bool show = ent->v.rendermode != kRenderNormal && ent->v.rendermode != kRenderGlow;
 		switch (CVars::bxt_show_hidden_entities.GetInt()) {
 		case 1:
@@ -2745,7 +2719,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 			ent->v.effects &= ~EF_NODRAW;
 			ent->v.rendermode = kRenderNormal;
 		}
-	} else if (!is_trigger && CVars::bxt_show_hidden_entities_clientside.GetBool()) {
+	} else if (not_triggers && CVars::bxt_show_hidden_entities_clientside.GetBool()) {
 		if (ent->v.effects & EF_NODRAW)
 		{
 			ent->v.effects &= ~EF_NODRAW;
@@ -2756,7 +2730,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 				ent->v.rendermode = kRenderTransTexture;
 		}
 	}
-	else if ((is_trigger || is_ladder) && CVars::bxt_show_triggers_legacy.GetBool()) {
+	else if (!not_triggers && CVars::bxt_show_triggers_legacy.GetBool()) {
 		ent->v.effects &= ~EF_NODRAW;
 		ent->v.renderamt = 0;
 		ent->v.rendermode = kRenderTransColor;

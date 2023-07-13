@@ -862,7 +862,7 @@ void ClientDLL::FindStuff()
 			if (ORIG_HistoryResource__DrawAmmoHistory_Linux) {
 				EngineDevMsg("[client dll] Found HistoryResource::DrawAmmoHistory [Linux] at %p.\n", ORIG_HistoryResource__DrawAmmoHistory_Linux);
 			} else {
-				EngineDevWarning("[client dll] Could not find HistoryResource::DrawAmmoHistory [Linux].\n");
+				EngineDevWarning("[client dll] Could not find HistoryResource::DrawAmmoHistory.\n");
 			}
 		}
 	}
@@ -876,7 +876,7 @@ void ClientDLL::FindStuff()
 			if (ORIG_CHudHealth__DrawDamage_Linux) {
 				EngineDevMsg("[client dll] Found CHudHealth::DrawDamage [Linux] at %p.\n", ORIG_CHudHealth__DrawDamage_Linux);
 			} else {
-				EngineDevWarning("[client dll] Could not find CHudHealth::DrawDamage [Linux].\n");
+				EngineDevWarning("[client dll] Could not find CHudHealth::DrawDamage.\n");
 			}
 		}
 	}
@@ -890,7 +890,7 @@ void ClientDLL::FindStuff()
 			if (ORIG_CHudHealth__DrawPain_Linux) {
 				EngineDevMsg("[client dll] Found CHudHealth::DrawPain [Linux] at %p.\n", ORIG_CHudHealth__DrawPain_Linux);
 			} else {
-				EngineDevWarning("[client dll] Could not find CHudHealth::DrawPain [Linux].\n");
+				EngineDevWarning("[client dll] Could not find CHudHealth::DrawPain.\n");
 			}
 		}
 	}
@@ -904,7 +904,7 @@ void ClientDLL::FindStuff()
 			if (ORIG_CHudFlashlight__drawNightVision_Linux) {
 				EngineDevMsg("[client dll] Found CHudFlashlight::drawNightVision [Linux] at %p.\n", ORIG_CHudFlashlight__drawNightVision_Linux);
 			} else {
-				EngineDevWarning("[client dll] Could not find HudFlashlight::drawNightVision [Linux].\n");
+				EngineDevWarning("[client dll] Could not find HudFlashlight::drawNightVision.\n");
 				EngineWarning("[client dll] Disabling Opposing Force nightvision sprite is unavailable.\n");
 			}
 		}
@@ -919,7 +919,7 @@ void ClientDLL::FindStuff()
 			if (ORIG_CHud__DrawHudNightVision_Linux) {
 				EngineDevMsg("[client dll] Found CHud::DrawHudNightVision [Linux] at %p.\n", ORIG_CHud__DrawHudNightVision_Linux);
 			} else {
-				EngineDevWarning("[client dll] Could not find CHud::DrawHudNightVision [Linux].\n");
+				EngineDevWarning("[client dll] Could not find CHud::DrawHudNightVision.\n");
 			}
 		}
 	}
@@ -933,7 +933,7 @@ void ClientDLL::FindStuff()
 			if (ORIG_CHud__DrawHudFiberCamera_Linux) {
 				EngineDevMsg("[client dll] Found CHud::DrawHudFiberCamera [Linux] at %p.\n", ORIG_CHud__DrawHudFiberCamera_Linux);
 			} else {
-				EngineDevWarning("[client dll] Could not find CHud::DrawHudFiberCamera [Linux].\n");
+				EngineDevWarning("[client dll] Could not find CHud::DrawHudFiberCamera.\n");
 			}
 		}
 	}
@@ -947,7 +947,7 @@ void ClientDLL::FindStuff()
 			if (ORIG_CHudIcons__Draw_Linux) {
 				EngineDevMsg("[client dll] Found CHudIcons::Draw [Linux] at %p.\n", ORIG_CHudIcons__Draw_Linux);
 			} else {
-				EngineDevWarning("[client dll] Could not find CHudIcons::Draw [Linux].\n");
+				EngineDevWarning("[client dll] Could not find CHudIcons::Draw.\n");
 			}
 		}
 	}

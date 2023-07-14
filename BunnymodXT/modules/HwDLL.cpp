@@ -779,6 +779,7 @@ void HwDLL::Clear()
 	hltas_filename.clear();
 	newTASFilename.clear();
 	newTASResult.Clear();
+	newTASIsForStudio = false;
 	libTASExportFile.close();
 
 	tas_editor_mode = TASEditorMode::DISABLED;
@@ -2649,6 +2650,118 @@ struct HwDLL::Cmd_BXT_TAS_Split
 	}
 };
 
+extern "C" DLLEXPORT void bxt_tas_new(const char *filename, const char *command, const char *frametime, int is_for_tas_studio)
+{
+	auto &hw = HwDLL::GetInstance();
+
+	const auto bhopcap = CVars::bxt_bhopcap.GetBool();
+	// Assumption: FPS below 1000 is a hard limit, which means we definitely can't set it higher than 1000.
+	const auto zero_ms_ducktap = !strcmp(frametime, "0.001");
+
+	hw.newTASFilename = std::string(filename) + ".hltas";
+	hw.newTASResult.Clear();
+	hw.newTASIsForStudio = (is_for_tas_studio != 0);
+
+	std::ostringstream oss;
+	oss << HLStrafe::MAX_SUPPORTED_VERSION;
+	hw.newTASResult.SetProperty("hlstrafe_version", oss.str());
+
+	std::string load_command(command);
+	std::string first_frame_comment(" The load_command above will load the map");
+
+	// Automatically check and put in some of the more common custom cvar settings.
+	if (!bhopcap)
+		load_command += ";bxt_bhopcap 0;bxt_bhopcap_prediction 0";
+
+	if (CVars::sv_maxspeed.GetFloat() != 320) // HLKZ uses 300.
+	{
+		// TODO: this check would malfunction for mods with custom sv_maxspeed when TASing with
+		// sv_maxspeed = 320. Is there any way to query the default sv_maxspeed instead?
+		load_command += ";sv_maxspeed " + std::to_string(CVars::sv_maxspeed.GetFloat());
+	}
+
+	if (load_command != command) {
+		first_frame_comment += ", set up custom console variable values,";
+	}
+
+	load_command += ";bxt_timer_reset";
+	first_frame_comment += " and reset the timer.";
+
+	first_frame_comment += "\n\n Enable vectorial strafing. This makes the camera movement very smooth.";
+
+	hw.newTASResult.SetProperty("load_command", load_command);
+
+	load_command += "\n";
+	hw.ORIG_Cbuf_InsertText(load_command.c_str());
+
+	if (zero_ms_ducktap)
+		hw.newTASResult.SetProperty("frametime0ms", "0.0000000001");
+
+	HLTAS::Frame frame;
+	frame.SetAlgorithm(HLTAS::StrafingAlgorithm::VECTORIAL);
+	frame.Comments = first_frame_comment;
+	hw.newTASResult.PushFrame(frame);
+
+	frame = HLTAS::Frame();
+	HLTAS::AlgorithmParameters parameters;
+	parameters.Type = HLTAS::ConstraintsType::VELOCITY_LOCK;
+	parameters.Parameters.VelocityLock.Constraints = 0;
+	frame.SetAlgorithmParameters(parameters);
+	frame.Comments = " Vectorial strafing will make the player look towards where he's moving.";
+	hw.newTASResult.PushFrame(frame);
+
+	// The frame bulk for waiting for the load.
+	frame = HLTAS::Frame();
+	frame.Frametime = frametime;
+	frame.Comments = " Wait for the game to fully load.";
+
+	hw.newTASResult.PushFrame(frame);
+
+	// The actual first frame bulk with some reasonable defaults.
+	frame = HLTAS::Frame();
+	frame.Frametime = frametime;
+	frame.SetRepeats(static_cast<unsigned>(1 / std::atof(frametime)));
+	frame.Strafe = true;
+	frame.SetDir(HLTAS::StrafeDir::YAW);
+	frame.SetType(HLTAS::StrafeType::MAXACCEL);
+	frame.Lgagst = true;
+
+	frame.Comments = " The default settings are: \n"
+	                 " - s03 (speed increasing strafing),\n"
+	                 " - lgagst (leave ground at optimal speed),\n";
+
+	if (bhopcap) {
+		frame.Ducktap = true;
+
+		if (zero_ms_ducktap) {
+			frame.SetDucktap0ms(true);
+			frame.Comments += " - 0ms ducktap without ground friction (since the bunnyhop cap was detected and the FPS is 1000),\n";
+		} else {
+			frame.Comments += " - regular ducktap (since the bunnyhop cap was detected and the FPS is below 1000),\n";
+		}
+	} else {
+		frame.Autojump = true;
+		frame.Comments += " - autojump,\n";
+	}
+	frame.Dbc = true;
+	frame.Comments += " - automatic duck before collision.";
+
+	if (!is_for_tas_studio)
+		frame.Commands = "stop;bxt_timer_stop;pause;bxt_tas_editor 1";
+
+	hw.newTASResult.PushFrame(frame);
+
+	if (!is_for_tas_studio)
+	{
+		// A blank frame bulk in the end since currently it's dropped in the TAS editor.
+		// TODO: remove when TAS editor is better.
+		frame.Comments.clear();
+		frame.Commands.clear();
+		frame.SetRepeats(1);
+		hw.newTASResult.PushFrame(frame);
+	}
+}
+
 struct HwDLL::Cmd_BXT_TAS_New
 {
 	USAGE("Usage: bxt_tas_new <filename> <starting command> <FPS>\n Creates a new TAS script ready to use with the TAS editor.\n\n"
@@ -2661,7 +2774,7 @@ struct HwDLL::Cmd_BXT_TAS_New
 	{
 		auto &hw = HwDLL::GetInstance();
 
-		std::string frametime;
+		const char *frametime;
 		switch (fps) {
 			case 1000:
 				frametime = "0.001";
@@ -2684,105 +2797,7 @@ struct HwDLL::Cmd_BXT_TAS_New
 				return;
 		}
 
-		const auto bhopcap = CVars::bxt_bhopcap.GetBool();
-		// Assumption: FPS below 1000 is a hard limit, which means we definitely can't set it higher than 1000.
-		const auto zero_ms_ducktap = (fps == 1000);
-
-		hw.newTASFilename = std::string(filename) + ".hltas";
-		hw.newTASResult.Clear();
-
-		std::ostringstream oss;
-		oss << HLStrafe::MAX_SUPPORTED_VERSION;
-		hw.newTASResult.SetProperty("hlstrafe_version", oss.str());
-
-		std::string load_command(command);
-		std::string first_frame_comment(" The load_command above will load the map");
-
-		// Automatically check and put in some of the more common custom cvar settings.
-		if (!bhopcap)
-			load_command += ";bxt_bhopcap 0;bxt_bhopcap_prediction 0";
-
-		if (CVars::sv_maxspeed.GetFloat() != 320) // HLKZ uses 300.
-		{
-			// TODO: this check would malfunction for mods with custom sv_maxspeed when TASing with
-			// sv_maxspeed = 320. Is there any way to query the default sv_maxspeed instead?
-			load_command += ";sv_maxspeed " + std::to_string(CVars::sv_maxspeed.GetFloat());
-		}
-
-		if (load_command != command) {
-			first_frame_comment += ", set up custom console variable values,";
-		}
-
-		load_command += ";bxt_timer_reset";
-		first_frame_comment += " and reset the timer.";
-
-		first_frame_comment += "\n\n Enable vectorial strafing. This makes the camera movement very smooth.";
-
-		hw.newTASResult.SetProperty("load_command", load_command);
-
-		load_command += "\n";
-		hw.ORIG_Cbuf_InsertText(load_command.c_str());
-
-		if (zero_ms_ducktap)
-			hw.newTASResult.SetProperty("frametime0ms", "0.0000000001");
-
-		HLTAS::Frame frame;
-		frame.SetAlgorithm(HLTAS::StrafingAlgorithm::VECTORIAL);
-		frame.Comments = first_frame_comment;
-		hw.newTASResult.PushFrame(frame);
-
-		frame = HLTAS::Frame();
-		HLTAS::AlgorithmParameters parameters;
-		parameters.Type = HLTAS::ConstraintsType::VELOCITY_LOCK;
-		parameters.Parameters.VelocityLock.Constraints = 0;
-		frame.SetAlgorithmParameters(parameters);
-		frame.Comments = " Vectorial strafing will make the player look towards where he's moving.";
-		hw.newTASResult.PushFrame(frame);
-
-		// The frame bulk for waiting for the load.
-		frame = HLTAS::Frame();
-		frame.Frametime = frametime;
-		frame.Comments = " Wait for the game to fully load.";
-
-		hw.newTASResult.PushFrame(frame);
-
-		// The actual first frame bulk with some reasonable defaults.
-		frame = HLTAS::Frame();
-		frame.Frametime = frametime;
-		frame.SetRepeats(static_cast<unsigned>(1 / std::atof(frametime.c_str())));
-		frame.Strafe = true;
-		frame.SetDir(HLTAS::StrafeDir::YAW);
-		frame.SetType(HLTAS::StrafeType::MAXACCEL);
-		frame.Lgagst = true;
-
-		frame.Comments = " The default settings are: \n"
-		                 " - s03 (speed increasing strafing),\n"
-		                 " - lgagst (leave ground at optimal speed),\n";
-
-		if (bhopcap) {
-			frame.Ducktap = true;
-
-			if (zero_ms_ducktap) {
-				frame.SetDucktap0ms(true);
-				frame.Comments += " - 0ms ducktap without ground friction (since the bunnyhop cap was detected and the FPS is 1000),\n";
-			} else {
-				frame.Comments += " - regular ducktap (since the bunnyhop cap was detected and the FPS is below 1000),\n";
-			}
-		} else {
-			frame.Autojump = true;
-			frame.Comments += " - autojump,\n";
-		}
-		frame.Dbc = true;
-		frame.Comments += " - automatic duck before collision.";
-		frame.Commands = "stop;bxt_timer_stop;pause;bxt_tas_editor 1";
-		hw.newTASResult.PushFrame(frame);
-
-		// A blank frame bulk in the end since currently it's dropped in the TAS editor.
-		// TODO: remove when TAS editor is better.
-		frame.Comments.clear();
-		frame.Commands.clear();
-		frame.SetRepeats(1);
-		hw.newTASResult.PushFrame(frame);
+		bxt_tas_new(filename, command, frametime, 0);
 	}
 };
 
@@ -6485,9 +6500,22 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 				} else {
 					auto error = newTASResult.Save(newTASFilename);
 					if (error.Code == HLTAS::ErrorCode::OK)
-						ORIG_Con_Printf("New TAS has been created successfully. Use this bind for launching it:\n bind / \"bxt_tas_loadscript %s\"\n", newTASFilename.c_str());
+					{
+						if (newTASIsForStudio)
+						{
+							std::ostringstream ss;
+							ss << "_bxt_tas_studio_convert_hltas_from_bxt_tas_new \"" << newTASFilename << "\"\n";
+							ORIG_Cbuf_InsertText(ss.str().c_str());
+						}
+						else
+						{
+							ORIG_Con_Printf("New TAS has been created successfully. Use this bind for launching it:\n bind / \"bxt_tas_loadscript %s\"\n", newTASFilename.c_str());
+						}
+					}
 					else
+					{
 						ORIG_Con_Printf("Error saving the new TAS: %s\n", HLTAS::GetErrorMessage(error).c_str());
+					}
 				}
 
 				newTASFilename.clear();

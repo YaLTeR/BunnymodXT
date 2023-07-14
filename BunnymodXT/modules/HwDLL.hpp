@@ -637,8 +637,11 @@ protected:
 	HLTAS::Input exportResult;
 	std::string splitFilename;
 	HLTAS::Input splitResult;
+public:
 	std::string newTASFilename;
 	HLTAS::Input newTASResult;
+	bool newTASIsForStudio;
+protected:
 	std::ofstream libTASExportFile;
 
 public:

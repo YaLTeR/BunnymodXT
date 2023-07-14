@@ -2764,7 +2764,7 @@ extern "C" DLLEXPORT void bxt_tas_new(const char *filename, const char *command,
 
 struct HwDLL::Cmd_BXT_TAS_New
 {
-	USAGE("Usage: bxt_tas_new <filename> <starting command> <FPS>\n Creates a new TAS script ready to use with the TAS editor.\n\n"
+	USAGE("Usage: bxt_tas_new <filename> <starting command> <FPS>\n Creates a new TAS script ready to use with the TAS editor 1. If you're looking to use the TAS studio, use bxt_tas_studio_new instead with the same arguments.\n\n"
 	      " filename is the filename of the script that will be created. The .hltas extension will be added automatically.\n\n"
 	      " starting command is the command to launch the map or load the save which the TAS will start from, for example \"map c1a0\" or \"load tas-start\".\n\n"
 	      " FPS is the initial FPS for the TAS, for example 100 or 250 or 1000.\n\n"

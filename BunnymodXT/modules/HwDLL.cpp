@@ -5037,12 +5037,14 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 		}
 	}
 
-	if (mode == TASEditorMode::EDIT) {
-		cl.SetMouseState(false);
-		SDL::GetInstance().SetRelativeMouseMode(false);
-	} else {
-		cl.SetMouseState(true);
-		SDL::GetInstance().SetRelativeMouseMode(true);
+	if (mode != tas_editor_mode) {
+		if (mode == TASEditorMode::EDIT) {
+			cl.SetMouseState(false);
+			SDL::GetInstance().SetRelativeMouseMode(false);
+		} else {
+			cl.SetMouseState(true);
+			SDL::GetInstance().SetRelativeMouseMode(true);
+		}
 	}
 
 	tas_editor_mode = mode;

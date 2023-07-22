@@ -6768,7 +6768,7 @@ void HwDLL::FreeCamTick()
 
 	// No easy access to +speed unfortunately.
 	if (buttons & IN_ALT1)
-		step *= 2;
+		step *= 4;
 	if (buttons & IN_DUCK)
 		step /= 2;
 

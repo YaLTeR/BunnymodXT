@@ -733,12 +733,12 @@ void HwDLL::Clear()
 	autoRecordNow = false;
 	insideHost_Loadgame_f = false;
 	insideHost_Reload_f = false;
-	offActiveAddr = 0;
 	pcl = nullptr;
 	cls = nullptr;
 	psv = nullptr;
 	lastRecordedHealth = 0;
 	offTime = 0;
+	offWorldmodel = 0;
 	offModels = 0;
 	offNumEdicts = 0;
 	offMaxEdicts = 0;
@@ -871,6 +871,7 @@ void HwDLL::FindStuff()
 		if (psv) {
 			EngineDevMsg("[hw dll] Found sv at %p.\n", psv);
 			offTime = 0xc;
+			offWorldmodel = 296;
 			offModels = 0x30948;
 			offNumEdicts = 0x3bc50;
 			offMaxEdicts = 0x3bc54;
@@ -1285,7 +1286,6 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(RandomLong)
 		DEF_FUTURE(SCR_BeginLoadingPlaque)
 		DEF_FUTURE(PM_PlayerTrace)
-		DEF_FUTURE(Host_FilterTime)
 		DEF_FUTURE(V_FadeAlpha)
 		DEF_FUTURE(V_ApplyShake)
 		DEF_FUTURE(R_DrawSkyBox)
@@ -1634,91 +1634,38 @@ void HwDLL::FindStuff()
 				case 0: // HL-Steampipe
 					psv = *reinterpret_cast<void**>(f + 19);
 					offTime = 0x10;
+					offWorldmodel = 304; // 1712: 240
+					offModels = 0x30950; // 1712: 0x30910
+					offNumEdicts = 0x3bc58;
+					offMaxEdicts = 0x3bc5c;
+					offEdicts = 0x3bc60; // 1712: 0x3ba20
 					ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
 						*reinterpret_cast<ptrdiff_t*>(f + 33)
 						+ (f + 37)
 						);
+					pcl = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 86) - 0x2AF80);
 					cls = *reinterpret_cast<void**>(f + 69);
 					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 122);
-					offActiveAddr = *reinterpret_cast<uintptr_t*>(f + 0x13);
 					break;
 				case 1: // CoF-5936
 					psv = *reinterpret_cast<void**>(f + 50);
 					offTime = 0x10;
+					offWorldmodel = 304;
+					offModels = 0x41D50;
+					offNumEdicts = 0x52158;
+					offMaxEdicts = 0x5215C;
+					offEdicts = 0x52160;
 					ORIG_Con_Printf = reinterpret_cast<_Con_Printf>(
 						*reinterpret_cast<ptrdiff_t*>(f + 63)
 						+ (f + 67)
 						);
+					pcl = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 140) - 0x3BF88);
 					cls = *reinterpret_cast<void**>(f + 105);
 					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 79) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 182);
-					offActiveAddr = *reinterpret_cast<uintptr_t*>(f + 0x32);
 					cofSaveHack = *reinterpret_cast<qboolean**>(f + 21);
 					is_cof_steam = true;
-					break;
-				}
-			});
-
-		void* NUM_FOR_EDICT;
-		auto fNUM_FOR_EDICT = FindAsync(
-			NUM_FOR_EDICT,
-			patterns::engine::NUM_FOR_EDICT,
-			[&](auto pattern) {
-				auto f = reinterpret_cast<uintptr_t>(NUM_FOR_EDICT);
-				switch (pattern - patterns::engine::NUM_FOR_EDICT.cbegin())
-				{
-				default:
-				case 0: // HL-Steampipe
-					offEdicts = *reinterpret_cast<uintptr_t*>(f + 8) - offActiveAddr;
-					break;
-				case 1: // HL-4554
-					offEdicts = *reinterpret_cast<uintptr_t*>(f + 6) - offActiveAddr;
-					break;
-				case 2: // CoF-5936
-					offEdicts = *reinterpret_cast<uintptr_t*>(f + 9) - offActiveAddr;
-					break;
-				}
-			});
-
-		void* CL_EntityNum;
-		auto fCL_EntityNum = FindAsync(
-			CL_EntityNum,
-			patterns::engine::CL_EntityNum,
-			[&](auto pattern) {
-				auto f = reinterpret_cast<uintptr_t>(CL_EntityNum);
-				switch (pattern - patterns::engine::CL_EntityNum.cbegin())
-				{
-				default:
-				case 0: // HL-Steampipe
-					pcl = *reinterpret_cast<void**>(f + 0x12);
-					break;
-				case 1: // HL-4554
-					pcl = *reinterpret_cast<void**>(f + 0x10);
-					break;
-				case 2: // CoF-5936
-					pcl = *reinterpret_cast<void**>(f + 0x13);
-					break;
-				}
-			});
-
-		void* ModelFrames;
-		auto fModelFrames = FindAsync(
-			ModelFrames,
-			patterns::engine::ModelFrames,
-			[&](auto pattern) {
-				auto f = reinterpret_cast<uintptr_t>(ModelFrames);
-				switch (pattern - patterns::engine::ModelFrames.cbegin())
-				{
-				default:
-				case 0: // HL-Steampipe
-					offModels = *reinterpret_cast<uintptr_t*>(f + 0x14) - offActiveAddr;
-					break;
-				case 1: // HL-4554
-					offModels = *reinterpret_cast<uintptr_t*>(f + 0x12) - offActiveAddr;
-					break;
-				case 2: // CoF-5936
-					offModels = *reinterpret_cast<uintptr_t*>(f + 0x19) - offActiveAddr;
 					break;
 				}
 			});
@@ -1773,6 +1720,22 @@ void HwDLL::FindStuff()
 				ORIG_SV_AddLinksToPM = reinterpret_cast<_SV_AddLinksToPM>(
 					*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(MiddleOfSV_RunCmd) + 25)
 					+ reinterpret_cast<uintptr_t>(MiddleOfSV_RunCmd) + 29);
+			});
+
+		auto fHost_FilterTime = FindAsync(
+			ORIG_Host_FilterTime,
+			patterns::engine::Host_FilterTime,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::Host_FilterTime.cbegin())
+				{
+				case 2: // HL-WON-1712
+					offWorldmodel = 240; // 6153: 304
+					offModels = 0x30910; // 6153: 0x30950
+					offNumEdicts = 0x3ba18;
+					offMaxEdicts = 0x3ba1c;
+					offEdicts = 0x3ba20; // 6153: 0x3bc60
+					break;
+				}
 			});
 
 		auto fHost_Changelevel2_f = FindAsync(
@@ -2080,6 +2043,7 @@ void HwDLL::FindStuff()
 			auto pattern = fHost_ValidSave.get();
 			if (ORIG_Host_ValidSave) {
 				EngineDevMsg("[hw dll] Found Host_ValidSave at %p (using the %s pattern).\n", ORIG_Host_ValidSave, pattern->name());
+				EngineDevMsg("[hw dll] Found cl at %p.\n", pcl);
 				EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
 				EngineDevMsg("[hw dll] Found sv at %p.\n", psv);
 				EngineDevMsg("[hw dll] Found svs at %p.\n", svs);
@@ -2090,41 +2054,6 @@ void HwDLL::FindStuff()
 				EngineDevWarning("[hw dll] Could not find Host_ValidSave.\n");
 				EngineWarning("[hw dll] Quick saving in Cry of Fear is not available.\n");
 				ORIG_Cbuf_Execute = nullptr;
-			}
-		}
-
-		{
-			auto pattern = fNUM_FOR_EDICT.get();
-			if (NUM_FOR_EDICT) {
-				EngineDevMsg("[hw dll] Found NUM_FOR_EDICT at %p (using the %s pattern).\n", NUM_FOR_EDICT, pattern->name());
-				EngineDevMsg("[hw dll] Offset to sv.edicts is %p.\n", offEdicts);
-				offMaxEdicts = offEdicts - 0x4;
-				offNumEdicts = offEdicts - 0x8;
-			}
-			else {
-				EngineDevWarning("[hw dll] Could not find NUM_FOR_EDICT.\n");
-			}
-		}
-
-		{
-			auto pattern = fCL_EntityNum.get();
-			if (CL_EntityNum) {
-				EngineDevMsg("[hw dll] Found CL_EntityNum at %p (using the %s pattern).\n", CL_EntityNum, pattern->name());
-				EngineDevMsg("[hw dll] Found cl at %p.\n", pcl);
-			}
-			else {
-				EngineDevWarning("[hw dll] Could not find CL_EntityNum.\n");
-			}
-		}
-
-		{
-			auto pattern = fModelFrames.get();
-			if (ModelFrames) {
-				EngineDevMsg("[hw dll] Found ModelFrames at %p (using the %s pattern).\n", ModelFrames, pattern->name());
-				EngineDevMsg("[hw dll] Offset to sv.models is %p.\n", offModels);
-			}
-			else {
-				EngineDevWarning("[hw dll] Could not find ModelFrames.\n");
 			}
 		}
 

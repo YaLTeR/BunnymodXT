@@ -5972,32 +5972,35 @@ void HwDLL::InsertCommands()
 		}
 	} else {
 		if (wasRunningFrames) {
-			RenderYawOverrides.clear();
-			RenderYawOverrideIndex = 0;
+			if (resetState == ResetState::NORMAL) {
+				RenderYawOverrides.clear();
+				RenderYawOverrideIndex = 0;
 
-			if (bxt_on_tas_playback_frame) {
-				// We don't use the return value here because we stop anyway.
-				CallOnTASPlaybackFrame();
+				if (bxt_on_tas_playback_frame) {
+					// We don't use the return value here because we stop anyway.
+					CallOnTASPlaybackFrame();
+				}
+
+				CallOnTASPlaybackStopped();
+
+				ORIG_Cbuf_InsertText("host_framerate 0;_bxt_min_frametime 0;bxt_taslog 0\n");
+				if (sensitivityToRestore != 0) {
+					std::ostringstream ss;
+					ss << "sensitivity " << sensitivityToRestore << "\n";
+					ORIG_Cbuf_InsertText(ss.str().c_str());
+				}
+
+				if (!demoName.empty()) {
+					ORIG_Cbuf_InsertText("stop\n");
+					recording = false;
+				}
+				if (!saveName.empty()) {
+					std::ostringstream ss;
+					ss << "save " << saveName.c_str() << "\n";
+					ORIG_Cbuf_InsertText(ss.str().c_str());
+				}
 			}
 
-			CallOnTASPlaybackStopped();
-
-			ORIG_Cbuf_InsertText("host_framerate 0;_bxt_min_frametime 0;bxt_taslog 0\n");
-			if (sensitivityToRestore != 0) {
-				std::ostringstream ss;
-				ss << "sensitivity " << sensitivityToRestore << "\n";
-				ORIG_Cbuf_InsertText(ss.str().c_str());
-			}
-
-			if (!demoName.empty()) {
-				ORIG_Cbuf_InsertText("stop\n");
-				recording = false;
-			}
-			if (!saveName.empty()) {
-				std::ostringstream ss;
-				ss << "save " << saveName.c_str() << "\n";
-				ORIG_Cbuf_InsertText(ss.str().c_str());
-			}
 			ResetButtons();
 			currentKeys.ResetStates();
 			CountingSharedRNGSeed = false;

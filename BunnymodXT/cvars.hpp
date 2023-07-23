@@ -53,6 +53,7 @@
 	X(bxt_viewmodel_semitransparent, "0") \
 	X(bxt_clear_color, "") \
 	X(bxt_force_fov, "0") \
+	X(bxt_fix_widescreen_fov, "0") \
 	X(bxt_force_clear, "0") \
 	X(bxt_fix_mouse_horizontal_limit, "0") \
 	X(bxt_hud_game_color, "") \

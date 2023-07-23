@@ -5133,7 +5133,10 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_tas_ducktap_priority);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
+	{
 		RegisterCVar(CVars::bxt_force_fov);
+		RegisterCVar(CVars::bxt_fix_widescreen_fov);
+	}
 
 	if (ORIG_R_DrawViewModel)
 		RegisterCVar(CVars::bxt_viewmodel_fov);
@@ -7450,6 +7453,22 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 {
 	if (CVars::bxt_force_fov.GetFloat() >= 1.0)
 		*scr_fov_value = CVars::bxt_force_fov.GetFloat();
+
+	if (CVars::bxt_fix_widescreen_fov.GetBool())
+	{
+		float ScreenWidth = static_cast<float>(CustomHud::GetScreenInfo().iWidth);
+		float ScreenHeight = static_cast<float>(CustomHud::GetScreenInfo().iHeight);
+
+		float def_aspect_ratio = 3.0f / 4.0f;
+		float our_aspect_ratio = ScreenWidth / ScreenHeight;
+
+		float fov = *scr_fov_value;
+		float calculated_fov = static_cast<float>(std::atan(std::tan(fov*M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f/M_PI);
+
+		*scr_fov_value = std::clamp(calculated_fov, 10.0f, 150.0f); // Engine does the clamp of FOV if less 10 or higher than 150, let's do it too!
+
+		// Although, it could be extended to 1 for min. value and 180 for max. value
+	}
 
 	ORIG_R_SetFrustum();
 }

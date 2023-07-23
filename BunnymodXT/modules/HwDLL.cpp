@@ -7451,6 +7451,9 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 {
+	if (CVars::bxt_force_fov.GetFloat() >= 1.0)
+		*scr_fov_value = CVars::bxt_force_fov.GetFloat();
+
 	if (CVars::bxt_fix_widescreen_fov.GetBool())
 	{
 		float ScreenWidth = static_cast<float>(CustomHud::GetScreenInfo().iWidth);
@@ -7465,10 +7468,6 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 		*scr_fov_value = std::clamp(calculated_fov, 10.0f, 150.0f); // Engine does the clamp of FOV if less 10 or higher than 150, let's do it too!
 
 		// Although, it could be extended to 1 for min. value and 180 for max. value
-	}
-	else if (CVars::bxt_force_fov.GetFloat() >= 1.0)
-	{
-		*scr_fov_value = CVars::bxt_force_fov.GetFloat();
 	}
 
 	ORIG_R_SetFrustum();

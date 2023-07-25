@@ -2725,13 +2725,13 @@ extern "C" DLLEXPORT void bxt_tas_new(const char *filename, const char *command,
 	}
 }
 
-struct HwDLL::Cmd_BXT_TAS_New
+struct HwDLL::Cmd_BXT_TAS_Editor_New
 {
-	USAGE("Usage: bxt_tas_new <filename> <starting command> <FPS>\n Creates a new TAS script ready to use with the TAS editor 1. If you're looking to use the TAS studio, use bxt_tas_studio_new instead with the same arguments.\n\n"
+	USAGE("Usage: bxt_tas_editor_new <filename> <starting command> <FPS>\n Creates a new TAS script ready to use with the TAS editor 1. If you're looking to use the TAS studio, use bxt_tas_studio_new instead with the same arguments.\n\n"
 	      " filename is the filename of the script that will be created. The .hltas extension will be added automatically.\n\n"
 	      " starting command is the command to launch the map or load the save which the TAS will start from, for example \"map c1a0\" or \"load tas-start\".\n\n"
 	      " FPS is the initial FPS for the TAS, for example 100 or 250 or 1000.\n\n"
-	      " Example:\n  bxt_tas_new full-game \"map c1a0\" 100\n");
+	      " Example:\n  bxt_tas_editor_new full-game \"map c1a0\" 100\n");
 
 	static void handler(const char *filename, const char *command, int fps)
 	{
@@ -5169,7 +5169,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_ExportScript, Handler<const char *>>("bxt_tas_exportscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportLibTASInput, Handler<const char *>>("bxt_tas_export_libtas_input");
 	wrapper::Add<Cmd_BXT_TAS_Split, Handler<const char *>>("bxt_tas_split");
-	wrapper::Add<Cmd_BXT_TAS_New, Handler<const char *, const char *, int>>("bxt_tas_new");
+	wrapper::Add<Cmd_BXT_TAS_Editor_New, Handler<const char *, const char *, int>>("bxt_tas_editor_new");
 	wrapper::Add<Cmd_BXT_TAS_Check_Position, Handler<float, float, float>>("_bxt_tas_check_position");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Health, Handler<float>>("bxt_ch_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Armor, Handler<float>>("bxt_ch_set_armor");

@@ -307,11 +307,6 @@ extern "C" void __cdecl R_SetFrustum()
 	HwDLL::HOOKED_R_SetFrustum();
 }
 
-extern "C" void __cdecl ClientDLL_CalcRefdef(ref_params_s *pparams)
-{
-	ClientDLL::HOOKED_V_CalcRefdef(pparams);
-}
-
 extern "C" void __cdecl SPR_Set(HSPRITE_HL hSprite, int r, int g, int b)
 {
 	HwDLL::HOOKED_SPR_Set(hSprite, r, g, b);

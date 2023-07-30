@@ -210,6 +210,9 @@
 	X(bxt_viewmodel_ofs_right, "0") \
 	X(bxt_viewmodel_ofs_up, "0") \
 	X(bxt_viewmodel_bob_angled, "0") \
+	X(bxt_viewmodel_restore_viewroll, "0") \
+	X(bxt_viewmodel_viewrollangle, "2.0") \
+	X(bxt_viewmodel_viewrollspeed, "200") \
 	X(bxt_show_bullets, "0") \
 	X(bxt_show_bullets_enemy, "0") \
 	X(bxt_anglespeed_cap, "1") \

@@ -973,6 +973,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_viewmodel_ofs_up);
 		REG(bxt_viewmodel_bob_angled);
 		REG(bxt_remove_punchangles);
+		REG(bxt_viewmodel_restore_viewroll);
+		REG(bxt_viewmodel_viewrollangle);
+		REG(bxt_viewmodel_viewrollspeed);
 	}
 
 	if (ORIG_HUD_Init)
@@ -1479,6 +1482,19 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 
 	if (unlock_camera)
 		pparams->paused = false;
+
+	auto restore_view_roll = CVars::bxt_viewmodel_restore_viewroll.GetBool();
+
+	// We set the rollspeed and rollangle values here before calling the original V_CalcRefDef
+	// These two values are not used for anything else in the original function apart from
+	// applying the view rolling effect, so it is safe to edit them here.
+	if (restore_view_roll) {
+		auto rollangle = CVars::bxt_viewmodel_viewrollangle.GetFloat();
+		auto rollspeed = CVars::bxt_viewmodel_viewrollspeed.GetFloat();
+
+		pparams->movevars->rollangle = rollangle;
+		pparams->movevars->rollspeed = rollspeed;
+	}
 
 	ORIG_V_CalcRefdef(pparams);
 

@@ -1483,7 +1483,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 	if (unlock_camera)
 		pparams->paused = false;
 
-	auto restore_view_roll = CVars::bxt_viewmodel_restore_viewroll.GetBool();
+	auto restore_view_roll = CVars::bxt_viewmodel_restore_viewroll.GetBool() && CVars::sv_cheats.GetBool();
 
 	// We set the rollspeed and rollangle values here before calling the original V_CalcRefDef
 	// These two values are not used for anything else in the original function apart from

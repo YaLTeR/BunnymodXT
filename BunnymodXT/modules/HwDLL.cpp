@@ -5407,7 +5407,7 @@ void HwDLL::InsertCommands()
 				StrafeState.TargetYawLookAtOrigin[0] = 0;
 				StrafeState.TargetYawLookAtOrigin[1] = 0;
 				StrafeState.TargetYawLookAtOrigin[2] = 0;
-				if (StrafeState.Parameters.Parameters.LookAt.Entity > 0) {
+				if (StrafeState.Parameters.Type == HLTAS::ConstraintsType::LOOK_AT && StrafeState.Parameters.Parameters.LookAt.Entity > 0) {
 					edict_t *edicts;
 					const int numEdicts = GetEdicts(&edicts);
 

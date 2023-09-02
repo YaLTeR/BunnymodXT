@@ -28,7 +28,6 @@ namespace RuntimeData
 
 		// Macro so that we can initialize arrays with it.
 		#define HEADER "//BXTD0"
-		constexpr size_t HEADER_LENGTH = sizeof(HEADER) - 1;
 
 		enum class RuntimeDataType : uint8_t {
 			VERSION_INFO = 1,

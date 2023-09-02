@@ -23,6 +23,7 @@ namespace CustomTriggers
 	public:
 		Trigger(Vector corner1, Vector corner2);
 		Trigger(Vector corner1, Vector corner2, std::string command);
+		virtual ~Trigger() = default;
 
 		std::pair<Vector, Vector> get_corner_positions() const;
 		const std::string& get_command() const;

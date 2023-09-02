@@ -97,10 +97,20 @@ namespace discord_integration
 					if (gameDir && gameDir[0])
 					{
 						cl.FileBase(gameDir, gd);
+
+						// Yes GCC we know this can be truncated.
+						#if defined(__GNUC__) && !defined(__clang__)
+						#pragma GCC diagnostic push
+						#pragma GCC diagnostic ignored "-Wformat-truncation"
+						#endif
 						if (hw.ORIG_build_number)
 							snprintf(buffer_details, sizeof(buffer_details), "Game: %s | Build: %i", gd, hw.ORIG_build_number());
 						else
 							snprintf(buffer_details, sizeof(buffer_details), "Game: %s", gd);
+						#if defined(__GNUC__) && !defined(__clang__)
+						#pragma GCC diagnostic pop
+						#endif
+
 						presence.details = buffer_details;
 					}
 
@@ -113,10 +123,18 @@ namespace discord_integration
 							// Adjust map_name to lowercase
 							cl.ConvertToLowerCase(map_name);
 
+							// Yes GCC we know this can be truncated.
+							#if defined(__GNUC__) && !defined(__clang__)
+							#pragma GCC diagnostic push
+							#pragma GCC diagnostic ignored "-Wformat-truncation"
+							#endif
 							if (hw.ORIG_build_number)
 								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s | Build: %i", map_name, gd, hw.ORIG_build_number());
 							else
 								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s", map_name, gd);
+							#if defined(__GNUC__) && !defined(__clang__)
+							#pragma GCC diagnostic pop
+							#endif
 
 							presence.largeImageText = map_name;
 							presence.details = buffer_details;

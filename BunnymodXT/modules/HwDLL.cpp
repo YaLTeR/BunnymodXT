@@ -3160,7 +3160,7 @@ struct HwDLL::Cmd_Minus_BXT_CH_Hook
 	}
 };
 
-Vector HwDLL::Ch_Hook_Vel_Vector() {
+void HwDLL::ChHookPlayer() {
 	// safety for player
 	auto pl = HwDLL::GetInstance().GetPlayerEdict();
 	pl->v.health = 6969.f;
@@ -3168,7 +3168,7 @@ Vector HwDLL::Ch_Hook_Vel_Vector() {
 	const auto HOOK_VEL = 1337.f;
 	const auto target = (ch_hook_point - Vector(player.Origin)).Normalize() * HOOK_VEL;
 
-	return target;
+	pl->v.velocity = target;
 }
 
 struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
@@ -6583,11 +6583,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 	insideCbuf_Execute = false;
 
 	if (ch_hook) {
-		edict_t *pl = GetPlayerEdict();
-
-		if (pl) {
-			pl->v.velocity = Ch_Hook_Vel_Vector();
-		}
+		ChHookPlayer();
 	}
 
 	ClientDLL::GetInstance().SetAngleSpeedCap(CVars::bxt_anglespeed_cap.GetBool());

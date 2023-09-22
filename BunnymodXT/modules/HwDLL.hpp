@@ -744,6 +744,6 @@ protected:
 protected:
 	bool ch_hook;
 	Vector ch_hook_point;
-	Vector Ch_Hook_Vel_Vector();
+	void ChHookPlayer();
 	float ch_hook_hp_before;
 };

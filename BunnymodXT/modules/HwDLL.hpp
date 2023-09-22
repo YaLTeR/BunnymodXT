@@ -505,6 +505,8 @@ protected:
 	struct Cmd_BXT_Splits_Track_Z;
 	struct Cmd_BXT_Splits_Place_Up;
 	struct Cmd_BXT_Splits_Place_Down;
+	struct Cmd_Plus_BXT_CH_Hook;
+	struct Cmd_Minus_BXT_CH_Hook;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();
@@ -738,4 +740,10 @@ protected:
 
 	bool insideCL_ReadDemoMessage;
 	std::vector<char> runtimeDataBuffer;
+
+protected:
+	bool ch_hook;
+	Vector ch_hook_point;
+	Vector Ch_Hook_Vel_Vector();
+	float ch_hook_hp_before;
 };

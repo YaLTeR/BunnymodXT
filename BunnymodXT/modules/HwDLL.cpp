@@ -794,6 +794,10 @@ void HwDLL::Clear()
 	newTASResult.Clear();
 	newTASIsForStudio = false;
 	libTASExportFile.close();
+	ch_hook = false;
+	ch_hook_point = Vector();
+	ch_hook_hp_before = 0;
+
 
 	tas_editor_mode = TASEditorMode::DISABLED;
 	tas_editor_input = EditedInput();
@@ -3104,6 +3108,69 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 	}
 };
 
+struct HwDLL::Cmd_Plus_BXT_CH_Hook
+{
+	NO_USAGE();
+
+	static void handler()
+	{	
+		auto& hw = HwDLL::GetInstance();
+		hw.ch_hook = true;
+
+		float view[3], end[3];
+		ClientDLL::GetInstance().SetupTraceVectors(view, end);
+
+		auto pl = hw.GetPlayerEdict();
+
+		if (!pl)
+			return;
+
+		const auto tr = ServerDLL::GetInstance().TraceLine(view, end, 0, pl);
+
+		hw.ch_hook_point = tr.vecEndPos;
+		hw.ch_hook_hp_before = pl->v.health;
+	}
+
+	static void handler(int)
+	{
+		handler();
+	}
+};
+
+struct HwDLL::Cmd_Minus_BXT_CH_Hook
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+		hw.ch_hook = false;
+
+		auto pl = hw.GetPlayerEdict();
+
+		if (!pl)
+			return;
+
+		pl->v.health = hw.ch_hook_hp_before;
+	}
+
+	static void handler(int)
+	{
+		handler();
+	}
+};
+
+Vector HwDLL::Ch_Hook_Vel_Vector() {
+	// safety for player
+	auto pl = HwDLL::GetInstance().GetPlayerEdict();
+	pl->v.health = 6969.f;
+
+	const auto HOOK_VEL = 1337.f;
+	const auto target = (ch_hook_point - Vector(player.Origin)).Normalize() * HOOK_VEL;
+
+	return target;
+}
+
 struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 {
 	NO_USAGE();
@@ -5180,6 +5247,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Cmd_BXT_CH_Set_Velocity_Angles,
 		Handler<float>,
 		Handler<float, float, float>>("bxt_ch_set_vel_angles");
+	wrapper::AddCheat<Cmd_Plus_BXT_CH_Hook, Handler<>, Handler<int>>("+bxt_ch_hook");
+	wrapper::AddCheat<Cmd_Minus_BXT_CH_Hook, Handler<>, Handler<int>>("-bxt_ch_hook");
 	wrapper::Add<
 		Cmd_BXT_Set_Angles,
 		Handler<float, float>,
@@ -6512,6 +6581,14 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		LoadingSeedCounter++;
 	}
 	insideCbuf_Execute = false;
+
+	if (ch_hook) {
+		edict_t *pl = GetPlayerEdict();
+
+		if (pl) {
+			pl->v.velocity = Ch_Hook_Vel_Vector();
+		}
+	}
 
 	ClientDLL::GetInstance().SetAngleSpeedCap(CVars::bxt_anglespeed_cap.GetBool());
 

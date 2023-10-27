@@ -353,6 +353,8 @@ public:
 	void TimerReset();
 	void TimerStart();
 
+	int tas_studio_norefresh_override = 0;
+
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
 	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};

@@ -3162,11 +3162,29 @@ struct HwDLL::Cmd_Minus_BXT_CH_Hook
 
 void HwDLL::ChHookPlayer() {
 	// safety for player
-	auto pl = HwDLL::GetInstance().GetPlayerEdict();
-	pl->v.health = 6969.f;
+	auto &hw = HwDLL::GetInstance();
 
-	const auto HOOK_VEL = 1337.f;
-	const auto target = (ch_hook_point - Vector(player.Origin)).Normalize() * HOOK_VEL;
+	auto pl = hw.GetPlayerEdict();
+	auto pEngfuncs = ClientDLL::GetInstance().pEngfuncs;
+
+	auto m_iBeam = pEngfuncs->pEventAPI->EV_FindModelIndex( "sprites/smoke.spr" );
+
+	pEngfuncs->pEfxAPI->R_BeamPoints(
+		player.Origin, // start
+		ch_hook_point, // end
+		m_iBeam, // model
+		hw.GetFrameTime() * 2.0, // life
+		0.5, // width
+		0.0, // amp
+		64, // brightness
+		0, // irrelevant
+		0,
+		0,
+		255, // color
+		128,
+		0);
+
+	const auto target = (ch_hook_point - Vector(player.Origin)).Normalize() * CVars::bxt_ch_hook_speed.GetFloat();
 
 	pl->v.velocity = target;
 }
@@ -5193,6 +5211,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_disable_world);
 	RegisterCVar(CVars::bxt_disable_particles);
 	RegisterCVar(CVars::bxt_tas_ducktap_priority);
+	RegisterCVar(CVars::bxt_ch_hook_speed);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 	{

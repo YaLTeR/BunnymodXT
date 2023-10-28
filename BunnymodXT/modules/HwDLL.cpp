@@ -796,7 +796,6 @@ void HwDLL::Clear()
 	libTASExportFile.close();
 	ch_hook = false;
 	ch_hook_point = Vector();
-	ch_hook_hp_before = 0;
 
 
 	tas_editor_mode = TASEditorMode::DISABLED;
@@ -3128,7 +3127,6 @@ struct HwDLL::Cmd_Plus_BXT_CH_Hook
 		const auto tr = ServerDLL::GetInstance().TraceLine(view, end, 0, pl);
 
 		hw.ch_hook_point = tr.vecEndPos;
-		hw.ch_hook_hp_before = pl->v.health;
 	}
 
 	static void handler(int)
@@ -3143,15 +3141,7 @@ struct HwDLL::Cmd_Minus_BXT_CH_Hook
 
 	static void handler()
 	{
-		auto& hw = HwDLL::GetInstance();
-		hw.ch_hook = false;
-
-		auto pl = hw.GetPlayerEdict();
-
-		if (!pl)
-			return;
-
-		pl->v.health = hw.ch_hook_hp_before;
+		HwDLL::GetInstance().ch_hook = false;
 	}
 
 	static void handler(int)
@@ -3173,7 +3163,7 @@ void HwDLL::ChHookPlayer() {
 		player.Origin, // start
 		ch_hook_point, // end
 		m_iBeam, // model
-		hw.GetFrameTime() * 2.0, // life
+		hw.GetFrameTime() * 2.0f, // life
 		0.5, // width
 		0.0, // amp
 		64, // brightness

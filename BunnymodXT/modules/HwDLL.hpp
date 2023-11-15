@@ -518,6 +518,8 @@ protected:
 	struct Cmd_BXT_Splits_Place_Down;
 	struct Cmd_Plus_BXT_CH_Hook;
 	struct Cmd_Minus_BXT_CH_Hook;
+	struct Cmd_BXT_CH_CheckPoint;
+	struct Cmd_BXT_CH_GoCheck;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();
@@ -758,4 +760,11 @@ protected:
 	Vector ch_hook_point;
 	void ChHookPlayer();
 	float ch_hook_hp_before;
+
+protected:
+	bool ch_checkpoint_is_set;
+	Vector ch_checkpoint_origin;
+	Vector ch_checkpoint_vel;
+	Vector ch_checkpoint_viewangles;
+	bool ch_checkpoint_is_duck;
 };

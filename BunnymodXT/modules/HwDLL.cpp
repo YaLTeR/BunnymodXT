@@ -3266,6 +3266,9 @@ struct HwDLL::Cmd_BXT_CH_GoCheck
 		// not moving after go check
 		pl->v.velocity = Vector(0, 0, 0);
 
+		// annoying punchangle
+		pl->v.punchangle = Vector(0, 0, 0);
+
 		if (CVars::bxt_ch_checkpoint_with_vel.GetBool())
 			pl->v.velocity = hw.ch_checkpoint_vel;
 

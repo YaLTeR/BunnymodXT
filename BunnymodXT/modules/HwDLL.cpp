@@ -3259,8 +3259,8 @@ struct HwDLL::Cmd_BXT_CH_GoCheck
 		cl.pEngfuncs->SetViewAngles(hw.ch_checkpoint_viewangles);
 
 		if (hw.ch_checkpoint_is_duck) {
-			pl->v.flags |= 1 << 14;
-			pl->v.button |= 1 << 2;
+			pl->v.flags |= FL_DUCKING;
+			pl->v.button |= IN_DUCK;
 		}
 
 		// not moving after go check
@@ -3270,8 +3270,11 @@ struct HwDLL::Cmd_BXT_CH_GoCheck
 			pl->v.velocity = hw.ch_checkpoint_vel;
 
 		pl->v.origin = hw.ch_checkpoint_origin;
+
 		// for CS 1.6 stamina reset
-		pl->v.fuser2 = 0;
+		static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
+		if (is_cstrike) 
+			pl->v.fuser2 = 0;
 	}
 };
 

@@ -877,7 +877,7 @@ void HwDLL::FindStuff()
 		} else
 			EngineDevWarning("[hw dll] Could not find sv.\n");
 
-		svs = reinterpret_cast<svs_t*>(MemUtils::GetSymbolAddress(m_Handle, "svs"));
+		svs = reinterpret_cast<server_static_t*>(MemUtils::GetSymbolAddress(m_Handle, "svs"));
 		if (svs) {
 			EngineDevMsg("[hw dll] Found svs at %p.\n", svs);
 			offEdict = 0x4a84;
@@ -1643,7 +1643,7 @@ void HwDLL::FindStuff()
 						);
 					pcl = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 86) - 0x2AF80);
 					cls = *reinterpret_cast<void**>(f + 69);
-					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
+					svs = reinterpret_cast<server_static_t*>(*reinterpret_cast<uintptr_t*>(f + 45) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 122);
 					break;
 				case 1: // CoF-5936
@@ -1660,7 +1660,7 @@ void HwDLL::FindStuff()
 						);
 					pcl = reinterpret_cast<void*>(*reinterpret_cast<uintptr_t*>(f + 140) - 0x3BF88);
 					cls = *reinterpret_cast<void**>(f + 105);
-					svs = reinterpret_cast<svs_t*>(*reinterpret_cast<uintptr_t*>(f + 79) - 8);
+					svs = reinterpret_cast<server_static_t*>(*reinterpret_cast<uintptr_t*>(f + 79) - 8);
 					offEdict = *reinterpret_cast<ptrdiff_t*>(f + 182);
 					cofSaveHack = *reinterpret_cast<qboolean**>(f + 21);
 					is_cof_steam = true;
@@ -5384,7 +5384,7 @@ void HwDLL::InsertCommands()
 
 				resulting_frame.SetRepeats(1);
 
-				if (svs->num_clients >= 1) {
+				if (svs->maxclients >= 1) {
 					edict_t *pl = GetPlayerEdict();
 					if (pl) {
 						player.Origin[0] = pl->v.origin[0];
@@ -6047,7 +6047,7 @@ void HwDLL::InsertCommands()
 
 		// Manual autofuncs.
 		if (autojump || ducktap || jumpbug) {
-			if (svs->num_clients >= 1) {
+			if (svs->maxclients >= 1) {
 				edict_t *pl = GetPlayerEdict();
 				if (pl) {
 					player.Origin[0] = pl->v.origin[0];
@@ -6283,7 +6283,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	if (!is_cstrike && !is_czero && !is_tfc)
 		vars.UseSlow = true;
 
-	if (svs->num_clients >= 1) {
+	if (svs->maxclients >= 1) {
 		edict_t *pl = GetPlayerEdict();
 		if (pl) {
 			vars.EntFriction = pl->v.friction;
@@ -6625,7 +6625,7 @@ void HwDLL::SetPlayerVelocity(float velocity[3])
 
 bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& health, float& armorvalue, int& waterlevel, float& stamina)
 {
-	if (!svs || svs->num_clients < 1)
+	if (!svs || svs->maxclients < 1)
 		return false;
 
 	edict_t *pl = GetPlayerEdict();
@@ -6676,7 +6676,7 @@ HLStrafe::TraceResult HwDLL::CameraTrace(float max_distance)
 }
 
 void HwDLL::StartTracing(bool extendDistanceLimit) {
-	if (!ORIG_PM_PlayerTrace || svs->num_clients < 1) {
+	if (!ORIG_PM_PlayerTrace || svs->maxclients < 1) {
 		return;
 	}
 
@@ -6696,7 +6696,7 @@ void HwDLL::StartTracing(bool extendDistanceLimit) {
 }
 
 void HwDLL::StopTracing() {
-	if (!ORIG_PM_PlayerTrace || svs->num_clients < 1) {
+	if (!ORIG_PM_PlayerTrace || svs->maxclients < 1) {
 		return;
 	}
 
@@ -6708,7 +6708,7 @@ void HwDLL::StopTracing() {
 HLStrafe::TraceResult HwDLL::UnsafePlayerTrace(const float start[3], const float end[3], HLStrafe::HullType hull) {
 	auto tr = HLStrafe::TraceResult{};
 
-	if (!ORIG_PM_PlayerTrace || svs->num_clients < 1) {
+	if (!ORIG_PM_PlayerTrace || svs->maxclients < 1) {
 		tr.Fraction = 1.f;
 		tr.EndPos[0] = end[0];
 		tr.EndPos[1] = end[1];
@@ -6777,7 +6777,7 @@ void HwDLL::SaveInitialDataToDemo()
 
 void HwDLL::UpdateCustomTriggersAndSplits()
 {
-	if (!svs || svs->num_clients < 1)
+	if (!svs || svs->maxclients < 1)
 		return;
 
 	edict_t *pl = GetPlayerEdict();

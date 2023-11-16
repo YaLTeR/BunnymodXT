@@ -7528,9 +7528,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 
 HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 {
-	if (CVars::bxt_force_fov.GetFloat() >= 1.0)
-		*scr_fov_value = CVars::bxt_force_fov.GetFloat();
+	if (CVars::bxt_force_fov.GetBool())
+		*scr_fov_value = std::clamp(CVars::bxt_force_fov.GetFloat(), 1.0f, 179.0f);
 
+	static float prev_calculated_fov;
 	if (CVars::bxt_fix_widescreen_fov.GetBool())
 	{
 		float ScreenWidth = static_cast<float>(CustomHud::GetScreenInfo().iWidth);
@@ -7540,11 +7541,17 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 		float our_aspect_ratio = ScreenWidth / ScreenHeight;
 
 		float fov = *scr_fov_value;
-		float calculated_fov = static_cast<float>(std::atan(std::tan(fov*M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f/M_PI);
 
-		*scr_fov_value = std::clamp(calculated_fov, 10.0f, 150.0f); // Engine does the clamp of FOV if less 10 or higher than 150, let's do it too!
+		if (fov != prev_calculated_fov)
+		{
+			float calculated_fov = static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
+			*scr_fov_value = std::clamp(calculated_fov, 10.0f, 150.0f);
 
-		// Although, it could be extended to 1 for min. value and 180 for max. value
+			// Engine does the clamp of FOV if less 10 or higher than 150
+			// Although, it could be extended to 1 for min. value and 179 for max. value
+
+			prev_calculated_fov = calculated_fov;
+		}
 	}
 
 	ORIG_R_SetFrustum();

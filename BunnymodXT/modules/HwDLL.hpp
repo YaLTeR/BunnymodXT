@@ -93,11 +93,11 @@ class HwDLL : public IHookableNameFilterOrdered
 		unsigned cursize;
 	};
 
-	struct svs_t
+	struct server_static_t
 	{
-		char unk[4];
+		int dll_initialized;
 		client_t *clients;
-		int num_clients;
+		int maxclients;
 	};
 
 	struct Key
@@ -216,7 +216,7 @@ public:
 		return *reinterpret_cast<double *>(reinterpret_cast<uintptr_t>(psv) + offTime);
 	}
 	inline edict_t* GetPlayerEdict() const {
-		if (!svs || svs->num_clients == 0)
+		if (!svs || svs->maxclients == 0)
 			return nullptr;
 
 		return *reinterpret_cast<edict_t**>(reinterpret_cast<uintptr_t>(svs->clients) + offEdict);
@@ -553,7 +553,7 @@ protected:
 	ptrdiff_t offNumEdicts;
 	ptrdiff_t offMaxEdicts;
 	ptrdiff_t offEdicts;
-	svs_t *svs;
+	server_static_t *svs;
 	ptrdiff_t offEdict;
 	void *svmove;
 	void **ppmove;

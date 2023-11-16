@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 3.12)
 
 option(COF "Set COF_BUILD preprocessor flag if enabled" OFF)
 option(SOFT "Set SOFTWARE_BUILD preprocessor flag if enabled" OFF)
+option(HLSDK10 "Set HLSDK10_BUILD preprocessor flag if enabled" OFF)
 
 set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
@@ -63,6 +64,10 @@ if (MSVC)
 
 	if (SOFT)
 		add_definitions(-DSOFTWARE_BUILD)
+	endif()
+
+	if (HLSDK10)
+		add_definitions(-DHLSDK10_BUILD)
 	endif()
 else ()
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium-m -mfpmath=387 -mno-sse -g -Wall -Wextra -Wno-unused-parameter")

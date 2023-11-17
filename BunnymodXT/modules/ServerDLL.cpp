@@ -1253,16 +1253,19 @@ void ServerDLL::FindStuff()
 		ORIG_GetEntityAPI = reinterpret_cast<_GetEntityAPI>(MemUtils::GetSymbolAddress(m_Handle, "GetEntityAPI"));
 		if (ORIG_GetEntityAPI) {
 			DLL_FUNCTIONS funcs;
-			if (ORIG_GetEntityAPI(&funcs, 140)) {
+			if (ORIG_GetEntityAPI(&funcs, INTERFACE_VERSION)) {
 				// Gets our hooked addresses on Windows.
 				ORIG_ClientCommand = funcs.pfnClientCommand;
-				ORIG_PM_Move = funcs.pfnPM_Move;
-				ORIG_AddToFullPack = funcs.pfnAddToFullPack;
-				ORIG_CmdStart = funcs.pfnCmdStart;
 				EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
-				EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
-				EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
-				EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
+				if (INTERFACE_VERSION == 140)
+				{
+					ORIG_PM_Move = funcs.pfnPM_Move;
+					ORIG_AddToFullPack = funcs.pfnAddToFullPack;
+					ORIG_CmdStart = funcs.pfnCmdStart;
+					EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
+					EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+					EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
+				}
 			} else {
 				EngineDevWarning("[server dll] Could not get the server DLL function table.\n");
 				EngineWarning("Serverside shared RNG manipulation and usercommand logging are not available.\n");

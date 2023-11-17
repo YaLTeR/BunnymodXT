@@ -151,13 +151,20 @@ typedef struct cl_enginefuncs_s
 	// text message system
 	client_textmessage_t		*( *pfnTextMessageGet )		( const char *pName );
 	int							( *pfnDrawCharacter )		( int x, int y, int number, int r, int g, int b );
+
+	// Functions below are present only in builds > 676 (Half-Life: Day One)
+
 	int							( *pfnDrawConsoleString )	( int x, int y, char *string );
 	void						( *pfnDrawSetTextColor )	( float r, float g, float b );
 	void						( *pfnDrawConsoleStringLen )(  const char *string, int *length, int *height );
 
 	void						( *pfnConsolePrint )		( const char *string );
+
+	// Functions below are present only in builds > 738 (WON 1.0)
+
 	void						( *pfnCenterPrint )			( const char *string );
 
+	// Functions below are present only in builds > 1202 (WON 1.0.1.6)
 
 // Added for user input processing
 	int							( *GetWindowCenterX )		( void );
@@ -226,7 +233,7 @@ typedef struct cl_enginefuncs_s
 	struct demo_api_s			*pDemoAPI;
 	struct net_api_s			*pNetAPI;
 
-	// Functions below are present only in builds > 1712
+	// Functions below are present only in builds > 1712 (WON 1.1.0.7)
 
 	struct IVoiceTweak_s		*pVoiceTweak;
 

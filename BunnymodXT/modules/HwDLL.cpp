@@ -845,6 +845,8 @@ void HwDLL::Clear()
 	free_cam_active = false;
 	extendPlayerTraceDistanceLimit = false;
 
+	tas_studio_norefresh_override = 0;
+
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
 		ResetTASPlaybackState();
@@ -2365,6 +2367,16 @@ void HwDLL::CallOnTASPlaybackStopped() {
 	}
 }
 
+extern "C" DLLEXPORT int bxt_tas_norefresh_until_last_frames() {
+	return CVars::bxt_tas_norefresh_until_last_frames.GetInt();
+}
+
+// Sets the effective frame to stop norefresh when using TAS Studio.
+extern "C" DLLEXPORT void bxt_tas_studio_norefresh_override(int stop_frame) {
+	auto &hw = HwDLL::GetInstance();
+	hw.tas_studio_norefresh_override = stop_frame;
+}
+
 void HwDLL::ResetTASPlaybackState()
 {
 	CallOnTASPlaybackStopped();
@@ -2459,6 +2471,10 @@ void HwDLL::StartTASPlayback()
 		}
 
 		auto norefresh_until_frames = CVars::bxt_tas_norefresh_until_last_frames.GetInt();
+		if (tas_studio_norefresh_override > 0 && norefresh_until_frames > 0) {
+			norefresh_until_frames = tas_studio_norefresh_override;
+		}
+
 		if (norefresh_until_frames > 0 && totalFrames > static_cast<size_t>(norefresh_until_frames))
 			ORIG_Cbuf_InsertText("_bxt_norefresh 1\n");
 
@@ -2497,6 +2513,8 @@ struct HwDLL::Cmd_BXT_TAS_LoadScript
 		if (hw.resetState != ResetState::NORMAL)
 			return;
 
+		hw.tas_studio_norefresh_override = 0;
+		
 		hw.ResetTASPlaybackState();
 		hw.hltas_filename = fileName;
 
@@ -5720,6 +5738,10 @@ void HwDLL::InsertCommands()
 
 				--totalFrames;
 				auto norefresh_until_frames = CVars::bxt_tas_norefresh_until_last_frames.GetInt();
+
+				if (tas_studio_norefresh_override > 0 && norefresh_until_frames > 0)
+					norefresh_until_frames = tas_studio_norefresh_override;
+
 				if (norefresh_until_frames > 0 && totalFrames <= static_cast<size_t>(norefresh_until_frames)
 						&& CVars::_bxt_norefresh.GetBool())
 					ORIG_Cbuf_InsertText("_bxt_norefresh 0\n");
@@ -5992,6 +6014,8 @@ void HwDLL::InsertCommands()
 		// Ran through all frames.
 		if (currentFramebulk >= totalFramebulks) {
 			runningFrames = false;
+
+			tas_studio_norefresh_override = 0;
 
 			if (!exportFilename.empty()) {
 				auto error = exportResult.Save(exportFilename);

@@ -27,6 +27,7 @@
 	X(_bxt_save_runtime_data_in_demos, "1") \
 	X(_bxt_tas_script_generation, "1337") \
 	X(bxt_taslog_filename, "taslogger.log") \
+	X(bxt_allow_keypresses_in_demo, "0") \
 	X(bxt_autopause, "0") \
 	X(bxt_interprocess_enable, "0") \
 	X(bxt_shake_remove, "0") \

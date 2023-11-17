@@ -1244,25 +1244,25 @@ void ServerDLL::FindStuff()
 	ORIG_ClientCommand = reinterpret_cast<_ClientCommand>(MemUtils::GetSymbolAddress(m_Handle, "_Z13ClientCommandP7edict_s"));
 	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move"));
 
-	if (ORIG_CmdStart && ORIG_AddToFullPack && ORIG_ClientCommand && ORIG_PM_Move) {
-		EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
-		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+	if (ORIG_ClientCommand && ORIG_PM_Move && ORIG_AddToFullPack && ORIG_CmdStart) {
 		EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 		EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
+		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+		EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
 	} else {
 		ORIG_GetEntityAPI = reinterpret_cast<_GetEntityAPI>(MemUtils::GetSymbolAddress(m_Handle, "GetEntityAPI"));
 		if (ORIG_GetEntityAPI) {
 			DLL_FUNCTIONS funcs;
 			if (ORIG_GetEntityAPI(&funcs, 140)) {
 				// Gets our hooked addresses on Windows.
-				ORIG_CmdStart = funcs.pfnCmdStart;
-				ORIG_AddToFullPack = funcs.pfnAddToFullPack;
 				ORIG_ClientCommand = funcs.pfnClientCommand;
 				ORIG_PM_Move = funcs.pfnPM_Move;
-				EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
-				EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+				ORIG_AddToFullPack = funcs.pfnAddToFullPack;
+				ORIG_CmdStart = funcs.pfnCmdStart;
 				EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 				EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
+				EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
+				EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
 			} else {
 				EngineDevWarning("[server dll] Could not get the server DLL function table.\n");
 				EngineWarning("Serverside shared RNG manipulation and usercommand logging are not available.\n");

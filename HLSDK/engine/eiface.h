@@ -15,11 +15,11 @@
 #ifndef EIFACE_H
 #define EIFACE_H
 
-#ifdef HLDEMO_BUILD
-#define INTERFACE_VERSION       001
-#else  // !HLDEMO_BUILD, i.e., regular version of HL
+#ifdef HLSDK10_BUILD
+#define INTERFACE_VERSION		138
+#else
 #define INTERFACE_VERSION		140
-#endif // !HLDEMO_BUILD
+#endif
 
 #include <stdio.h>
 #include "custom.h"

@@ -10,9 +10,15 @@
 #ifdef _WIN32
 #pragma once
 #endif
+
+#ifdef HLSDK10_BUILD
+#define	MAX_ENT_LEAFS	24
+#else
 #define	MAX_ENT_LEAFS	48
+#endif
 
 #include "progdefs.h"
+#include "../common/entity_state.h"
 
 /*
 	Size of 'edict_t' in HLSDK 1.0 is 0x2C8 (712)
@@ -26,10 +32,17 @@ struct edict_s
 	qboolean	free;
 	int			serialnumber;
 	link_t		area;				// linked to a division node or leaf
-	
+
+	#ifndef HLSDK10_BUILD
 	int			headnode;			// -1 to use normal leaf check
+	#endif
+
 	int			num_leafs;
 	short		leafnums[MAX_ENT_LEAFS];
+
+	#ifdef HLSDK10_BUILD
+	entity_state_t	baseline;
+	#endif
 
 	float		freetime;			// sv.time when the object was freed
 

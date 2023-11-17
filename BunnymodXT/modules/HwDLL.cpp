@@ -864,6 +864,7 @@ void HwDLL::FindStuff()
 		if (cls) {
 			EngineDevMsg("[hw dll] Found cls at %p.\n", cls);
 			demorecording = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(cls) + 0x405c);
+			demoplayback = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(cls) + 0x4060);
 		} else
 			EngineDevWarning("[hw dll] Could not find cls.\n");
 
@@ -1546,6 +1547,7 @@ void HwDLL::FindStuff()
 				}
 
 				demorecording = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_CL_Stop_f) + offset);
+				demoplayback = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(demorecording) + 0x4);
 			});
 
 		void *SCR_DrawFPS;
@@ -2136,6 +2138,7 @@ void HwDLL::FindStuff()
 			if (ORIG_CL_Stop_f) {
 				EngineDevMsg("[hw dll] Found CL_Stop_f at %p (using the %s pattern).\n", ORIG_CL_Stop_f, pattern->name());
 				EngineDevMsg("[hw dll] Found demorecording at %p.\n", demorecording);
+				EngineDevMsg("[hw dll] Found demoplayback at %p.\n", demoplayback);
 			} else {
 				EngineDevWarning("[hw dll] Could not find CL_Stop_f.\n");
 				ORIG_Cbuf_Execute = nullptr;

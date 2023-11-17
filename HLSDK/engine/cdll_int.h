@@ -314,7 +314,11 @@ typedef struct cl_enginefuncs_s
 #include "../common/in_buttons.h"
 #endif
 
+#ifdef HLSDK10_BUILD
+#define CLDLL_INTERFACE_VERSION		6
+#else
 #define CLDLL_INTERFACE_VERSION		7
+#endif
 
 extern void ClientDLL_Init( void ); // from cdll_int.c
 extern void ClientDLL_Shutdown( void );

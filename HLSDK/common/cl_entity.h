@@ -68,6 +68,11 @@ typedef struct cl_entity_s cl_entity_t;
 #include "entity_state.h"
 #endif
 
+/*
+	Size of 'cl_entity_t' in HLSDK 1.0 is 0x1A0 (416)
+	Size of 'cl_entity_t' in HLSDK 2.0 is 0xBB8 (3000)
+	Size of 'cl_entity_t' in James Bond 007: Nightfire (PC) is 0xD08 (3336)
+*/
 
 struct cl_entity_s
 {

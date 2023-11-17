@@ -571,6 +571,7 @@ protected:
 	cmdbuf_t *cmd_text;
 	double *host_frametime;
 	int *demorecording;
+	int *demoplayback;
 	cmdalias_t* cmd_alias;
 	cvar_t **cvar_vars;
 	movevars_t *movevars;

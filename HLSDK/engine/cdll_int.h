@@ -155,7 +155,11 @@ typedef struct cl_enginefuncs_s
 	// Functions below are present only in builds > 676 (Half-Life: Day One)
 
 	int							( *pfnDrawConsoleString )	( int x, int y, char *string );
+
+	#ifndef HLSDK10_BUILD
 	void						( *pfnDrawSetTextColor )	( float r, float g, float b );
+	#endif
+
 	void						( *pfnDrawConsoleStringLen )(  const char *string, int *length, int *height );
 
 	void						( *pfnConsolePrint )		( const char *string );

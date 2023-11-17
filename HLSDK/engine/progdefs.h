@@ -54,6 +54,13 @@ typedef struct
 	vec3_t		vecLandmarkOffset;
 } globalvars_t;
 
+/*
+	Size of 'entvars_t' in HLSDK 1.0 [Day One - WON 1.0.0.8] is 0x1F0 (496)
+	Size of 'entvars_t' in HLSDK 1.0 [WON 1.0.0.9 - 1.0.1.6] is 0x1EC (492)
+	Size of 'entvars_t' in HLSDK 2.0, Sven Co-op is 0x2A4 (676)
+	Size of 'entvars_t' in Cry of Fear [Steam] is 0x2AC (684)
+	Size of 'entvars_t' in James Bond 007: Nightfire [PC] is 0x2C0 (704)
+*/
 
 typedef struct entvars_s
 {
@@ -113,7 +120,7 @@ typedef struct entvars_s
 	int			light_level;
 
 	#ifdef COF_BUILD
-	byte		unknown[4];
+	byte		cof_unknown[4];
 	#endif
 
 	int			sequence;		// animation sequence
@@ -224,8 +231,7 @@ typedef struct entvars_s
 	edict_t		*euser4;
 
 	#ifdef COF_BUILD
-	byte		unknown2[4];	// actual location unknown, required for pointer arithmetic
-								// to work when we iterate through edicts.
+	byte		cof_unknown2[4];
 	#endif
 } entvars_t;
 

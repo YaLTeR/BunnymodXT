@@ -14,6 +14,13 @@
 
 #include "progdefs.h"
 
+/*
+	Size of 'edict_t' in HLSDK 1.0 is 0x2C8 (712)
+	Size of 'edict_t' in HLSDK 2.0, Sven Co-op is 0x324 (804)
+	Size of 'edict_t' in Cry of Fear [Steam] is 0x32C (812)
+	Size of 'edict_t' in James Bond 007: Nightfire [PC] is 0x3E0 (992)
+*/
+
 struct edict_s
 {
 	qboolean	free;

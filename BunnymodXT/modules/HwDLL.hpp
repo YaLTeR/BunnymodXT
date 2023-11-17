@@ -93,12 +93,21 @@ class HwDLL : public IHookableNameFilterOrdered
 		unsigned cursize;
 	};
 
+	#ifdef HLSDK10_BUILD
+	struct server_static_t
+	{
+		int maxclients;
+		byte align[28684];
+		client_t *clients;
+	};
+	#else
 	struct server_static_t
 	{
 		int dll_initialized;
 		client_t *clients;
 		int maxclients;
 	};
+	#endif
 
 	struct Key
 	{

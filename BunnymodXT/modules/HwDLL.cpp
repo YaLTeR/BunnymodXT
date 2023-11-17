@@ -5223,6 +5223,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_disable_particles);
 	RegisterCVar(CVars::bxt_tas_ducktap_priority);
 	RegisterCVar(CVars::bxt_ch_hook_speed);
+	RegisterCVar(CVars::bxt_allow_keypresses_in_demo);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 	{
@@ -7191,11 +7192,22 @@ HOOK_DEF_1(HwDLL, void, __cdecl, Cmd_TokenizeString, char*, text)
 
 HOOK_DEF_2(HwDLL, void, __cdecl, Key_Event, int, key, int, down)
 {
+	bool demo_ret_bool = false;
+	int demo_ret_value = 0;
+
+	if (CVars::bxt_allow_keypresses_in_demo.GetBool() && demoplayback)
+	{
+		demo_ret_value = *demoplayback;
+		*demoplayback = 0;
+		demo_ret_bool = true;
+	}
+
 	insideKeyEvent = true;
-
 	ORIG_Key_Event(key, down);
-
 	insideKeyEvent = false;
+
+	if (demo_ret_bool)
+		*demoplayback = demo_ret_value;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cmd_Exec_f)

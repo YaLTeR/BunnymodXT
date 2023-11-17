@@ -199,6 +199,9 @@ typedef struct enginefuncs_s
 	void        (*pfnEndSection)            (const char *pszSectionName); // trigger_endsection
 	int 		(*pfnCompareFileTime)       (char *filename1, char *filename2, int *iCompare);
 	void        (*pfnGetGameDir)            (char *szGetGameDir);
+
+	// Functions below are present only in builds > 676 (Half-Life: Day One)
+
 	void		(*pfnCvar_RegisterVariable) (cvar_t *variable);
 	void        (*pfnFadeClientVolume)      (const edict_t *pEdict, int fadePercent, int fadeOutSeconds, int holdTime, int fadeInSeconds);
 	void        (*pfnSetClientMaxspeed)     (const edict_t *pEdict, float fNewMaxspeed);
@@ -210,6 +213,9 @@ typedef struct enginefuncs_s
 	void		(*pfnSetKeyValue)			(char *infobuffer, char *key, char *value);
 	void		(*pfnSetClientKeyValue)		(int clientIndex, char *infobuffer, char *key, char *value);
 	int			(*pfnIsMapValid)			(char *filename);
+
+	// Functions below are present only in builds > 738 (WON 1.0)
+
 	void		(*pfnStaticDecal)			( const float *origin, int decalIndex, int entityIndex, int modelIndex );
 	int			(*pfnPrecacheGeneric)		(char* s);
 	int			(*pfnGetPlayerUserId)		(edict_t *e ); // returns the server assigned userid for this player.  useful for logging frags, etc.  returns -1 if the edict couldn't be found in the list of clients
@@ -217,6 +223,8 @@ typedef struct enginefuncs_s
 	int			(*pfnIsDedicatedServer)		(void);// is this a dedicated server?
 	cvar_t		*(*pfnCVarGetPointer)		(const char *szVarName);
 	unsigned int (*pfnGetPlayerWONId)		(edict_t *e); // returns the server assigned WONid for this player.  useful for logging frags, etc.  returns -1 if the edict couldn't be found in the list of clients
+
+	// Functions below are present only in builds > 1202 (WON 1.0.1.6)
 
 	// YWB 8/1/99 TFF Physics additions
 	void		(*pfnInfo_RemoveKey)		( char *s, const char *key );
@@ -254,7 +262,7 @@ typedef struct enginefuncs_s
 
 	void		(*pfnAddServerCommand)		( const char *cmd_name, void (*function) (void) ); 
 
-	// Functions below are present only in builds > 1712
+	// Functions below are present only in builds > 1712 (WON 1.1.0.7)
 
 	// For voice communications, set which clients hear eachother.
 	// NOTE: these functions take player entity indices (starting at 1).
@@ -453,6 +461,8 @@ typedef struct
 	void			(*pfnSpectatorConnect)		( edict_t *pEntity );
 	void			(*pfnSpectatorDisconnect)	( edict_t *pEntity );
 	void			(*pfnSpectatorThink)		( edict_t *pEntity );
+
+	// Functions below are present only in builds > 1202 (WON 1.0.1.6)
 
 	// Notify game .dll that engine is going to shut down.  Allows mod authors to set a breakpoint.
 	void			(*pfnSys_Error)			( const char *error_string );

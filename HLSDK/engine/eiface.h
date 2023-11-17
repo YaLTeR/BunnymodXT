@@ -442,7 +442,11 @@ typedef struct
 	void			(*pfnClientUserInfoChanged)( edict_t *pEntity, char *infobuffer );
 
 	void			(*pfnServerActivate)	( edict_t *pEdictList, int edictCount, int clientMax );
+
+	#ifndef HLSDK10_BUILD
 	void			(*pfnServerDeactivate)	( void );
+	#endif
+
 
 	void			(*pfnPlayerPreThink)	( edict_t *pEntity );
 	void			(*pfnPlayerPostThink)	( edict_t *pEntity );

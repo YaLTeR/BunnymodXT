@@ -796,6 +796,8 @@ void HwDLL::Clear()
 	libTASExportFile.close();
 	ch_hook = false;
 	ch_hook_point = Vector();
+	ch_checkpoint_is_set = false;
+	ch_checkpoint_is_duck = false;
 
 
 	tas_editor_mode = TASEditorMode::DISABLED;
@@ -3200,6 +3202,85 @@ void HwDLL::ChHookPlayer() {
 	pl->v.velocity = target;
 }
 
+struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		auto pl = hw.GetPlayerEdict();
+
+		if (!pl)
+			return;
+
+		auto is_duck = pl->v.button & (IN_DUCK) || pl->v.flags & (FL_DUCKING);
+
+		if (CVars::bxt_ch_checkpoint_onground_only.GetBool() && !(pl->v.flags & (FL_ONGROUND))) {
+			auto is_ladder = pl->v.movetype == MOVETYPE_FLY;
+
+			auto origin_z_offset = pl->v.origin + Vector(0, 0, -2);
+			auto tr = hw.PlayerTrace(pl->v.origin, 
+				origin_z_offset, is_duck ? HLStrafe::HullType::DUCKED : HLStrafe::HullType::NORMAL, 0);
+
+			auto is_slide = tr.PlaneNormal[2] < (1 / std::sqrt(2)) && 0.f < tr.PlaneNormal[2];
+
+			if (!(is_ladder || is_slide))
+				return;
+		}
+
+		hw.ch_checkpoint_is_set = true;
+		hw.ch_checkpoint_origin = pl->v.origin;
+		hw.ch_checkpoint_vel = pl->v.velocity;
+		hw.ch_checkpoint_viewangles = pl->v.v_angle;
+		hw.ch_checkpoint_is_duck = is_duck;
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		if (!hw.ch_checkpoint_is_set)
+			return;
+
+		auto &cl = ClientDLL::GetInstance();
+
+		auto pl = hw.GetPlayerEdict();
+
+		if (!pl)
+			return;
+
+		cl.pEngfuncs->SetViewAngles(hw.ch_checkpoint_viewangles);
+
+		if (hw.ch_checkpoint_is_duck) {
+			pl->v.flags |= FL_DUCKING;
+			pl->v.button |= IN_DUCK;
+		}
+
+		// not moving after go check
+		pl->v.velocity = Vector(0, 0, 0);
+
+		// annoying punchangle
+		pl->v.punchangle = Vector(0, 0, 0);
+
+		if (CVars::bxt_ch_checkpoint_with_vel.GetBool())
+			pl->v.velocity = hw.ch_checkpoint_vel;
+
+		pl->v.origin = hw.ch_checkpoint_origin;
+
+		// for CS 1.6 stamina reset
+		static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
+		if (is_cstrike) 
+			pl->v.fuser2 = 0;
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
 {
 	NO_USAGE();
@@ -5224,6 +5305,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_tas_ducktap_priority);
 	RegisterCVar(CVars::bxt_ch_hook_speed);
 	RegisterCVar(CVars::bxt_allow_keypresses_in_demo);
+	RegisterCVar(CVars::bxt_ch_checkpoint_with_vel);
+	RegisterCVar(CVars::bxt_ch_checkpoint_onground_only);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 	{
@@ -5280,6 +5363,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Handler<float, float, float>>("bxt_ch_set_vel_angles");
 	wrapper::AddCheat<Cmd_Plus_BXT_CH_Hook, Handler<>, Handler<int>>("+bxt_ch_hook");
 	wrapper::AddCheat<Cmd_Minus_BXT_CH_Hook, Handler<>, Handler<int>>("-bxt_ch_hook");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Create, Handler<>>("bxt_ch_checkpoint_create");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_GoTo, Handler<>>("bxt_ch_checkpoint_goto");
 	wrapper::Add<
 		Cmd_BXT_Set_Angles,
 		Handler<float, float>,
@@ -6417,8 +6502,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 		pauseOnTheFirstFrame = true;
 	}
 
-	if (*state != 5 && *state != 4)
+	if (*state != 5 && *state != 4) {
 		executing = false;
+		ch_checkpoint_is_set = false;
+	}
 
 	insideCbuf_Execute = true;
 	ORIG_Cbuf_Execute(); // executing might change inside if we had some kind of load command in the buffer.

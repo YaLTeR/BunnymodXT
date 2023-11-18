@@ -3202,7 +3202,7 @@ void HwDLL::ChHookPlayer() {
 	pl->v.velocity = target;
 }
 
-struct HwDLL::Cmd_BXT_CH_CheckPoint
+struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 {
 	NO_USAGE();
 
@@ -3238,7 +3238,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint
 	}
 };
 
-struct HwDLL::Cmd_BXT_CH_GoCheck
+struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 {
 	NO_USAGE();
 
@@ -5363,8 +5363,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Handler<float, float, float>>("bxt_ch_set_vel_angles");
 	wrapper::AddCheat<Cmd_Plus_BXT_CH_Hook, Handler<>, Handler<int>>("+bxt_ch_hook");
 	wrapper::AddCheat<Cmd_Minus_BXT_CH_Hook, Handler<>, Handler<int>>("-bxt_ch_hook");
-	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint, Handler<>>("bxt_ch_checkpoint");
-	wrapper::AddCheat<Cmd_BXT_CH_GoCheck, Handler<>>("bxt_ch_gocheck");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Create, Handler<>>("bxt_ch_checkpoint_create");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_GoTo, Handler<>>("bxt_ch_checkpoint_goto");
 	wrapper::Add<
 		Cmd_BXT_Set_Angles,
 		Handler<float, float>,

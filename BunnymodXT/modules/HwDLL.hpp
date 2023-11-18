@@ -518,8 +518,8 @@ protected:
 	struct Cmd_BXT_Splits_Place_Down;
 	struct Cmd_Plus_BXT_CH_Hook;
 	struct Cmd_Minus_BXT_CH_Hook;
-	struct Cmd_BXT_CH_CheckPoint;
-	struct Cmd_BXT_CH_GoCheck;
+	struct Cmd_BXT_CH_CheckPoint_Create;
+	struct Cmd_BXT_CH_CheckPoint_GoTo;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();

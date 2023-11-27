@@ -130,6 +130,9 @@
 	X(bxt_hud_quickgauss, "0") \
 	X(bxt_hud_quickgauss_offset, "") \
 	X(bxt_hud_quickgauss_anchor, "0.5 0") \
+	X(bxt_hud_checkpoint, "0") \
+	X(bxt_hud_checkpoint_offset, "") \
+	X(bxt_hud_checkpoint_anchor, "0.5 0") \
 	X(bxt_hud_velocity, "0") \
 	X(bxt_hud_velocity_offset, "") \
 	X(bxt_hud_velocity_anchor, "1 0") \

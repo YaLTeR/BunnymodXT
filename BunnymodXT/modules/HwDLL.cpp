@@ -3502,7 +3502,15 @@ struct HwDLL::Cmd_BXT_Get_SteamID_From_Demo
 			int player = cl.pEngfuncs->GetLocalPlayer()->index;
 			player_info_s* player_info = hw.pEngStudio->PlayerInfo(player - 1);
 
-			hw.ORIG_Con_Printf("Steam ID: %" PRIu64 "\n", player_info->m_nSteamID);
+			const uint64 STEAMID64_CONST = 76561197960265728; // 0x110000100000000
+			const unsigned long STEAMID32 = static_cast<unsigned long>(player_info->m_nSteamID);
+			const uint64 STEAMID32_TO_64 = STEAMID64_CONST + STEAMID32;
+
+			hw.ORIG_Con_Printf("SteamID32: %" PRIu64 "\n", STEAMID32);
+
+			std::ostringstream ss;
+			ss << "SteamID64: " << STEAMID32_TO_64 << "\n";
+			hw.ORIG_Con_Printf(ss.str().c_str());
 		}
 	}
 };

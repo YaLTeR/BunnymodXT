@@ -219,6 +219,7 @@ public:
 	inline bool IsActive() { return (psv && *reinterpret_cast<int*>(psv)); }
 
 	inline bool IsRecordingDemo() const { return demorecording && *demorecording == 1; }
+	inline bool IsPlayingbackDemo() const { return demoplayback && *demoplayback == 1; }
 	void StoreCommand(const char* command);
 
 	inline double GetTime() const {
@@ -352,6 +353,12 @@ public:
 
 	bool Called_Timer = false;
 
+	#ifdef _WIN32
+	bool is_steamid_build = false;
+	#else
+	bool is_steamid_build = true;
+	#endif
+
 	bool is_cof_steam = false; // Cry of Fear-specific
 
 	int CallOnTASPlaybackFrame();
@@ -436,6 +443,7 @@ protected:
 	struct Cmd_BXT_CH_Monster_Set_Origin;
 	struct Cmd_BXT_Get_Origin_And_Angles;
 	struct Cmd_BXT_Get_Server_Time;
+	struct Cmd_BXT_Get_SteamID_From_Demo;
 	struct Cmd_Multiwait;
 	struct Cmd_BXT_Camera_Fixed;
 	struct Cmd_BXT_Camera_Clear;

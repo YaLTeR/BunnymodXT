@@ -1397,9 +1397,11 @@ void HwDLL::FindStuff()
 				default:
 				case 0: // HL-Steampipe
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 181);
+					is_steamid_build = true;
 					break;
 				case 1: // HL-4554
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 226);
+					is_steamid_build = true;
 					break;
 				case 2: // HL-NGHL
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 203);
@@ -1409,6 +1411,7 @@ void HwDLL::FindStuff()
 					break;
 				case 4: // CoF-5936
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 230);
+					is_steamid_build = true;
 					break;
 				}
 			});
@@ -3486,6 +3489,24 @@ struct HwDLL::Cmd_BXT_Get_Server_Time
 	}
 };
 
+struct HwDLL::Cmd_BXT_Get_SteamID_From_Demo
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		auto& hw = HwDLL::GetInstance();
+		auto& cl = ClientDLL::GetInstance();
+		if (hw.is_steamid_build && hw.IsPlayingbackDemo())
+		{
+			int player = cl.pEngfuncs->GetLocalPlayer()->index;
+			player_info_s* player_info = hw.pEngStudio->PlayerInfo(player - 1);
+
+			hw.ORIG_Con_Printf("Steam ID: %" PRIu64 "\n", player_info->m_nSteamID);
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Autojump_Down
 {
 	NO_USAGE();
@@ -5370,6 +5391,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Handler<float, float>,
 		Handler<float, float, float>>("bxt_set_angles");
 	wrapper::Add<Cmd_BXT_Get_Server_Time, Handler<>>("bxt_get_server_time");
+	wrapper::Add<Cmd_BXT_Get_SteamID_From_Demo, Handler<>>("bxt_get_steamid_from_demo");
 	wrapper::Add<
 		Cmd_Multiwait,
 		Handler<>,

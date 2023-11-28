@@ -136,6 +136,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CTriggerSave__SaveTouch, HOOKED_CTriggerSave__SaveTouch,
 			ORIG_CChangeLevel__UseChangeLevel, HOOKED_CChangeLevel__UseChangeLevel,
 			ORIG_CChangeLevel__TouchChangeLevel, HOOKED_CChangeLevel__TouchChangeLevel,
+			ORIG_CTriggerCamera__FollowTarget, HOOKED_CTriggerCamera__FollowTarget,
 			ORIG_CBaseMonster__Killed, HOOKED_CBaseMonster__Killed,
 			ORIG_CBaseEntity__FireBullets, HOOKED_CBaseEntity__FireBullets,
 			ORIG_CBaseEntity__FireBullets_Linux, HOOKED_CBaseEntity__FireBullets_Linux,
@@ -186,6 +187,7 @@ void ServerDLL::Unhook()
 			ORIG_CTriggerSave__SaveTouch,
 			ORIG_CChangeLevel__UseChangeLevel,
 			ORIG_CChangeLevel__TouchChangeLevel,
+			ORIG_CTriggerCamera__FollowTarget,
 			ORIG_CBaseEntity__FireBullets,
 			ORIG_CBaseEntity__FireBullets_Linux,
 			ORIG_CBaseEntity__FireBulletsPlayer,
@@ -254,6 +256,7 @@ void ServerDLL::Clear()
 	ORIG_CTriggerSave__SaveTouch_Linux = nullptr;
 	ORIG_CChangeLevel__UseChangeLevel = nullptr;
 	ORIG_CChangeLevel__TouchChangeLevel = nullptr;
+	ORIG_CTriggerCamera__FollowTarget = nullptr;
 	ORIG_PM_CheckStuck = nullptr;
 	ORIG_CBaseEntity__FireBullets = nullptr;
 	ORIG_CBaseEntity__FireBullets_Linux = nullptr;
@@ -1206,6 +1209,15 @@ void ServerDLL::FindStuff()
 		}
 	}
 
+	ORIG_CTriggerCamera__FollowTarget = reinterpret_cast<_CTriggerCamera__FollowTarget>(MemUtils::GetSymbolAddress(m_Handle, "?FollowTarget@CTriggerCamera@@QAEXXZ"));
+	{
+		if (ORIG_CTriggerCamera__FollowTarget) {
+			EngineDevMsg("[server dll] Found CTriggerCamera::FollowTarget at %p.\n", ORIG_CTriggerCamera__FollowTarget);
+		} else {
+			EngineDevWarning("[server dll] Could not find CTriggerCamera::FollowTarget.\n");
+		}
+	}
+
 	ORIG_CBaseButton__ButtonUse = reinterpret_cast<_CBaseButton__ButtonUse>(MemUtils::GetSymbolAddress(m_Handle, "?ButtonUse@CBaseButton@@QAEXPAVCBaseEntity@@0W4USE_TYPE@@M@Z"));
 	{
 		if (ORIG_CBaseButton__ButtonUse) {
@@ -1613,6 +1625,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_cof_disable_viewpunch_from_jump);
 	if (ORIG_ShiftMonsters && is_cof)
 		REG(bxt_cof_disable_monsters_teleport_to_spawn_after_load);
+	if (ORIG_CTriggerCamera__FollowTarget && is_cof)
+		REG(bxt_cof_allow_to_skip_all_cutscenes);
 
 	REG(bxt_splits_print);
 	REG(bxt_splits_print_times_at_end);
@@ -2966,6 +2980,33 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 	ServerDLL::GetInstance().ClearBulletsTrace();
 
 	return ORIG_CChangeLevel__TouchChangeLevel(thisptr, edx, pOther);
+}
+
+HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerCamera__FollowTarget, void*, thisptr)
+{
+	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	if (pev)
+	{
+		bool ret = false;
+		auto oldSpawnFlags = pev->spawnflags;
+		if (CVars::bxt_cof_allow_to_skip_all_cutscenes.GetBool())
+		{
+			if (pev->spawnflags & 1024) // "Unskippable" flag from .fgd
+			{
+				pev->spawnflags &= ~1024;
+				ret = true;
+			}
+		}
+
+		ORIG_CTriggerCamera__FollowTarget(thisptr);
+
+		if (ret)
+			pev->spawnflags = oldSpawnFlags;
+	}
+	else 
+	{
+		ORIG_CTriggerCamera__FollowTarget(thisptr);
+	}
 }
 
 void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)

@@ -797,8 +797,6 @@ protected:
 	std::vector<Vector> ch_checkpoint_vel;
 	std::vector<Vector> ch_checkpoint_viewangles;
 	std::vector<bool> ch_checkpoint_is_duck;
-	unsigned long ch_checkpoint_id_goto_specified = 0;
-	unsigned long ch_checkpoint_id_remove_specified = 0;
 
 public:
 	bool is_big_map = false;

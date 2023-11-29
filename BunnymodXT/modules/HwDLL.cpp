@@ -3322,7 +3322,7 @@ void HwDLL::ChHookPlayer() {
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 {
-	USAGE("Usage: bxt_ch_checkpoint_create\n");
+	USAGE("Usage: bxt_ch_checkpoint_create\nCreates the checkpoint.\n");
 
 	static void handler()
 	{
@@ -3363,21 +3363,26 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 
 	static void handler()
 	{
+		handler(HwDLL::GetInstance().ch_checkpoint_total);
+	}
+
+	static void handler(unsigned long id)
+	{
 		auto &hw = HwDLL::GetInstance();
 
 		if (!hw.ch_checkpoint_is_set)
-		{
-			hw.ch_checkpoint_id_goto_specified = 0; // Reset ID
 			return;
-		}
 
 		auto &cl = ClientDLL::GetInstance();
 
 		auto pl = hw.GetPlayerEdict();
 
-		if (!pl || hw.ch_checkpoint_is_duck.empty())
+		if (!pl)
+			return;
+
+		if (hw.ch_checkpoint_is_duck.empty())
 		{
-			hw.ch_checkpoint_id_goto_specified = 0; // Reset ID
+			hw.ORIG_Con_Printf("There are no checkpoints!\n");
 			return;
 		}
 
@@ -3386,13 +3391,13 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 		Vector cp_viewangles;
 		bool cp_is_duck;
 
-		if ((hw.ch_checkpoint_id_goto_specified > 0) && (hw.ch_checkpoint_is_duck.size() >= hw.ch_checkpoint_id_goto_specified)) // If ID is more than 0 and the size of std::vector is greater than the specified ID, we are fine!
+		if ((id > 0) && (hw.ch_checkpoint_is_duck.size() >= id)) // If ID is more than 0 and the size of std::vector is not less than the specified ID, we are fine!
 		{
-			cp_origin = *(hw.ch_checkpoint_origin.begin() + (hw.ch_checkpoint_id_goto_specified - 1));
-			cp_vel = *(hw.ch_checkpoint_vel.begin() + (hw.ch_checkpoint_id_goto_specified - 1));
-			cp_viewangles = *(hw.ch_checkpoint_viewangles.begin() + (hw.ch_checkpoint_id_goto_specified - 1));
-			cp_is_duck = *(hw.ch_checkpoint_is_duck.begin() + (hw.ch_checkpoint_id_goto_specified - 1));
-			hw.ch_checkpoint_current = hw.ch_checkpoint_id_goto_specified;
+			cp_origin = hw.ch_checkpoint_origin[id - 1];
+			cp_vel = hw.ch_checkpoint_vel[id - 1];
+			cp_viewangles = hw.ch_checkpoint_viewangles[id - 1];
+			cp_is_duck = hw.ch_checkpoint_is_duck[id - 1];
+			hw.ch_checkpoint_current = id;
 		}
 		else // Otherwise we will use the last element
 		{
@@ -3402,8 +3407,6 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 			cp_is_duck = hw.ch_checkpoint_is_duck.back();
 			hw.ch_checkpoint_current = hw.ch_checkpoint_total;
 		}
-
-		hw.ch_checkpoint_id_goto_specified = 0; // Reset ID
 
 		cl.pEngfuncs->SetViewAngles(cp_viewangles);
 
@@ -3427,31 +3430,23 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 		if (hw.is_cstrike_dir) 
 			pl->v.fuser2 = 0;
 	}
-
-	static void handler(unsigned long id)
-	{
-		HwDLL::GetInstance().ch_checkpoint_id_goto_specified = id; // Set ID
-		handler();
-	}
 };
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Current
 {
-	USAGE("Usage: bxt_ch_checkpoint_current\n");
+	USAGE("Usage: bxt_ch_checkpoint_current\nGo to current checkpoint.\n");
 
 	static void handler()
 	{
 		auto &hw = HwDLL::GetInstance();
 
-		std::ostringstream ss;
-		ss << "bxt_ch_checkpoint_goto " << hw.ch_checkpoint_current << "\n";
-		hw.ORIG_Cbuf_AddText(ss.str().c_str());
+		HwDLL::Cmd_BXT_CH_CheckPoint_GoTo::handler(hw.ch_checkpoint_current);
 	}
 };
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Reset
 {
-	USAGE("Usage: bxt_ch_checkpoint_reset\n");
+	USAGE("Usage: bxt_ch_checkpoint_reset\nReset the checkpoints.\n");
 
 	static void handler()
 	{
@@ -3462,6 +3457,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Reset
 		hw.ch_checkpoint_viewangles.clear();
 		hw.ch_checkpoint_is_duck.clear();
 		hw.ch_checkpoint_total = hw.ch_checkpoint_current = 0;
+		hw.ORIG_Con_Printf("Cleared the checkpoints.\n");
 	}
 };
 
@@ -3471,13 +3467,15 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove
 
 	static void handler()
 	{
+		handler(HwDLL::GetInstance().ch_checkpoint_total);
+	}
+
+	static void handler(unsigned long id)
+	{
 		auto &hw = HwDLL::GetInstance();
 		if (!hw.ch_checkpoint_is_duck.empty())
 		{
-			int id;
-			if ((hw.ch_checkpoint_id_remove_specified > 0) && (hw.ch_checkpoint_is_duck.size() >= hw.ch_checkpoint_id_remove_specified)) // If ID is more than 0 and the size of std::vector is greater than the specified ID, we are fine!
-				id = static_cast<int>(hw.ch_checkpoint_id_remove_specified);
-			else // Otherwise we will use the last element
+			if ((id < 1) || (hw.ch_checkpoint_is_duck.size() < id)) // If ID is less than 1 or greater than the size of std::vector, use the last element!
 				id = hw.ch_checkpoint_total;
 
 			if (hw.ch_checkpoint_current == id) // Is ID equal to the current checkpoint? Well, then decrement both counters!
@@ -3494,21 +3492,18 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove
 			hw.ch_checkpoint_vel.erase(hw.ch_checkpoint_vel.begin() + (id - 1));
 			hw.ch_checkpoint_viewangles.erase(hw.ch_checkpoint_viewangles.begin() + (id - 1));
 			hw.ch_checkpoint_is_duck.erase(hw.ch_checkpoint_is_duck.begin() + (id - 1));
+			hw.ORIG_Con_Printf("Removed the checkpoint with %lu id.\n", id);
 		}
-
-		hw.ch_checkpoint_id_remove_specified = 0; // Reset ID
-	}
-
-	static void handler(unsigned long id)
-	{
-		HwDLL::GetInstance().ch_checkpoint_id_remove_specified = id; // Set ID
-		handler();
+		else
+		{
+			hw.ORIG_Con_Printf("There are no checkpoints!\n");
+		}
 	}
 };
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Next
 {
-	USAGE("Usage: bxt_ch_checkpoint_next\n");
+	USAGE("Usage: bxt_ch_checkpoint_next\nGo to the next checkpoint.\n");
 
 	static void handler()
 	{
@@ -3519,18 +3514,23 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Next
 			if (hw.ch_checkpoint_total > hw.ch_checkpoint_current) // Don't increment if next element is greater than total count
 			{
 				hw.ch_checkpoint_current++;
-
-				std::ostringstream ss;
-				ss << "bxt_ch_checkpoint_goto " << hw.ch_checkpoint_current << "\n";
-				hw.ORIG_Cbuf_AddText(ss.str().c_str());
+				HwDLL::Cmd_BXT_CH_CheckPoint_GoTo::handler(hw.ch_checkpoint_current);
 			}
+			else
+			{
+				hw.ORIG_Con_Printf("Not possible go to the next checkpoint, since the current checkpoint is the last one!\n");
+			}
+		}
+		else
+		{
+			hw.ORIG_Con_Printf("There are no checkpoints!\n");
 		}
 	}
 };
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Prev
 {
-	USAGE("Usage: bxt_ch_checkpoint_prev\n");
+	USAGE("Usage: bxt_ch_checkpoint_prev\nGo to the previous checkpoint\n");
 
 	static void handler()
 	{
@@ -3541,11 +3541,16 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Prev
 			if (hw.ch_checkpoint_current > 1) // Don't decrement if we have less than 2 elements
 			{
 				hw.ch_checkpoint_current--;
-
-				std::ostringstream ss;
-				ss << "bxt_ch_checkpoint_goto " << hw.ch_checkpoint_current << "\n";
-				hw.ORIG_Cbuf_AddText(ss.str().c_str());
+				HwDLL::Cmd_BXT_CH_CheckPoint_GoTo::handler(hw.ch_checkpoint_current);
 			}
+			else
+			{
+				hw.ORIG_Con_Printf("Not possible go to the previous checkpoint, since there are less than two of them!\n");
+			}
+		}
+		else
+		{
+			hw.ORIG_Con_Printf("There are no checkpoints!\n");
 		}
 	}
 };

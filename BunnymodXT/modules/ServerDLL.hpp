@@ -59,6 +59,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, ShiftMonsters, Vector origin)
 	HOOK_DECL(void, __fastcall, CBasePlayer__ViewPunch, void* thisptr, int edx, float p, float y, float r)
 	HOOK_DECL(void, __fastcall, CBasePlayer__Jump, void* thisptr)
+	HOOK_DECL(void, __fastcall, CTriggerCamera__FollowTarget, void* thisptr)
 
 public:
 	static ServerDLL& GetInstance()

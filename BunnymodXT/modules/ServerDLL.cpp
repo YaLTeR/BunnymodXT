@@ -1626,7 +1626,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 	if (ORIG_ShiftMonsters && is_cof)
 		REG(bxt_cof_disable_monsters_teleport_to_spawn_after_load);
 	if (ORIG_CTriggerCamera__FollowTarget && is_cof)
-		REG(bxt_cof_allow_to_skip_all_cutscenes);
+		REG(bxt_cof_allow_skipping_all_cutscenes);
 
 	REG(bxt_splits_print);
 	REG(bxt_splits_print_times_at_end);
@@ -2987,20 +2987,20 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerCamera__FollowTarget, void*, thi
 	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 	if (pev)
 	{
-		bool ret = false;
+		bool changed = false;
 		auto oldSpawnFlags = pev->spawnflags;
-		if (CVars::bxt_cof_allow_to_skip_all_cutscenes.GetBool())
+		if (CVars::bxt_cof_allow_skipping_all_cutscenes.GetBool())
 		{
 			if (pev->spawnflags & 1024) // "Unskippable" flag from .fgd
 			{
 				pev->spawnflags &= ~1024;
-				ret = true;
+				changed = true;
 			}
 		}
 
 		ORIG_CTriggerCamera__FollowTarget(thisptr);
 
-		if (ret)
+		if (changed)
 			pev->spawnflags = oldSpawnFlags;
 	}
 	else 

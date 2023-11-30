@@ -540,6 +540,7 @@ protected:
 	struct Cmd_BXT_CH_CheckPoint_GoTo;
 	struct Cmd_BXT_Enable_Big_Map;
 	struct Cmd_BXT_CH_CheckPoint_Remove;
+	struct Cmd_BXT_CH_CheckPoint_Remove_After;
 	struct Cmd_BXT_CH_CheckPoint_Reset;
 	struct Cmd_BXT_CH_CheckPoint_Next;
 	struct Cmd_BXT_CH_CheckPoint_Prev;

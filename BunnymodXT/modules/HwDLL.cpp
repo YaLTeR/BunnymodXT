@@ -3501,6 +3501,35 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove
 	}
 };
 
+struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove_After
+{
+	USAGE("Usage: bxt_ch_checkpoint_remove_after [id]\nDeletes the checkpoints following id.\n");
+
+	static void handler(unsigned long id)
+	{
+		auto &hw = HwDLL::GetInstance();
+		if (!hw.ch_checkpoint_is_duck.empty())
+		{
+			if ((id > 0) && (hw.ch_checkpoint_is_duck.size() > id)) // If ID is more than 0 and the size of std::vector is greater than the specified ID, we are fine!
+			{
+				if (hw.ch_checkpoint_current > id) // If the current checkpoint has an ID greater than the specified one, then we equate it to the specified one.
+					hw.ch_checkpoint_current = id;
+
+				hw.ch_checkpoint_origin.erase(hw.ch_checkpoint_origin.begin() + id, hw.ch_checkpoint_origin.end());
+				hw.ch_checkpoint_vel.erase(hw.ch_checkpoint_vel.begin() + id, hw.ch_checkpoint_vel.end());
+				hw.ch_checkpoint_viewangles.erase(hw.ch_checkpoint_viewangles.begin() + id, hw.ch_checkpoint_viewangles.end());
+				hw.ch_checkpoint_is_duck.erase(hw.ch_checkpoint_is_duck.begin() + id, hw.ch_checkpoint_is_duck.end());
+				hw.ch_checkpoint_total = id;
+				hw.ORIG_Con_Printf("Removed the checkpoints following %lu id.\n", id);
+			}
+		}
+		else
+		{
+			hw.ORIG_Con_Printf("There are no checkpoints!\n");
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Next
 {
 	USAGE("Usage: bxt_ch_checkpoint_next\nGo to the next checkpoint.\n");
@@ -5728,6 +5757,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Create, Handler<>>("bxt_ch_checkpoint_create");
 	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_GoTo, Handler<>, Handler<unsigned long>>("bxt_ch_checkpoint_goto");
 	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Remove, Handler<>, Handler<unsigned long>>("bxt_ch_checkpoint_remove");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Remove_After, Handler<unsigned long>>("bxt_ch_checkpoint_remove_after");
 	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Reset, Handler<>>("bxt_ch_checkpoint_reset");
 	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Next, Handler<>>("bxt_ch_checkpoint_next");
 	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Prev, Handler<>>("bxt_ch_checkpoint_prev");

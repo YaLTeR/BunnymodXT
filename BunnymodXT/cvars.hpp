@@ -17,7 +17,8 @@
 	X(default_fov) \
 	X(skill) \
 	X(host_framerate) \
-	X(sensitivity)
+	X(sensitivity) \
+	X(coop)
 
 #define DEFINE_CVARS(X) \
 	X(_bxt_taslog, "0") \
@@ -64,6 +65,7 @@
 	X(bxt_remove_viewmodel, "0") \
 	X(bxt_disable_world, "0") \
 	X(bxt_disable_particles, "0") \
+	X(bxt_fix_changelevel_in_coop, "0") \
 	X(bxt_fire_on_stuck, "") \
 	X(bxt_autojump, "0") \
 	X(bxt_autojump_priority, "1") \

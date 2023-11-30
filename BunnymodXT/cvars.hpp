@@ -233,8 +233,8 @@
 	X(bxt_splits_start_timer_on_first_split, "0") \
 	X(bxt_splits_end_on_last_split, "0") \
 	X(bxt_ch_hook_speed, "869") \
-	X(bxt_ch_checkpoint_with_vel, "0") \
-	X(bxt_ch_checkpoint_onground_only, "1")
+	X(bxt_ch_checkpoint_with_vel, "1") \
+	X(bxt_ch_checkpoint_onground_only, "0")
 
 class CVarWrapper
 {

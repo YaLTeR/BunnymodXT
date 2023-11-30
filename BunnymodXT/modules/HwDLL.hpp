@@ -76,6 +76,9 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, Draw_FillRGBA, int x, int y, int w, int h, int r, int g, int b, int a)
 	HOOK_DECL(void, __cdecl, PF_traceline_DLL, const Vector* v1, const Vector* v2, int fNoMonsters, edict_t* pentToSkip, TraceResult* ptr)
 	HOOK_DECL(qboolean, __cdecl, CL_CheckGameDirectory, char *gamedir)
+	HOOK_DECL(qboolean, __cdecl, Cvar_Command)
+	HOOK_DECL(qboolean, __cdecl, Cvar_CommandWithPrivilegeCheck, qboolean bIsPrivileged)
+	HOOK_DECL(void, __cdecl, R_ForceCvars, qboolean mp)
 	HOOK_DECL(int, __cdecl, Host_ValidSave)
 	HOOK_DECL(int, __cdecl, SaveGameSlot, const char* pSaveName, const char* pSaveComment)
 	HOOK_DECL(void, __cdecl, SCR_NetGraph)
@@ -420,6 +423,8 @@ protected:
 	_VGuiWrap2_IsGameUIVisible ORIG_VGuiWrap2_IsGameUIVisible;
 	typedef void(__cdecl *_SCR_DrawPause) ();
 	_SCR_DrawPause ORIG_SCR_DrawPause;
+	typedef void(__cdecl *_GL_BuildLightmaps) ();
+	_GL_BuildLightmaps ORIG_GL_BuildLightmaps;
 
 	void FindStuff();
 

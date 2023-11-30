@@ -332,6 +332,21 @@ extern "C" qboolean __cdecl CL_CheckGameDirectory(char *gamedir)
 	return HwDLL::HOOKED_CL_CheckGameDirectory(gamedir);
 }
 
+extern "C" qboolean __cdecl Cvar_Command()
+{
+	return HwDLL::HOOKED_Cvar_Command();
+}
+
+extern "C" qboolean __cdecl Cvar_CommandWithPrivilegeCheck(qboolean bIsPrivileged)
+{
+	return HwDLL::HOOKED_Cvar_CommandWithPrivilegeCheck(bIsPrivileged);
+}
+
+extern "C" void __cdecl R_ForceCvars(qboolean mp)
+{
+	return HwDLL::HOOKED_R_ForceCvars(mp);
+}
+
 extern "C" int __cdecl ValidStuffText(char *buf)
 {
 	return HwDLL::HOOKED_ValidStuffText(buf);
@@ -458,6 +473,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
 			MemUtils::MarkAsExecutable(ORIG_PF_traceline_DLL);
 			MemUtils::MarkAsExecutable(ORIG_CL_CheckGameDirectory);
+			MemUtils::MarkAsExecutable(ORIG_Cvar_Command);
+			MemUtils::MarkAsExecutable(ORIG_Cvar_CommandWithPrivilegeCheck);
+			MemUtils::MarkAsExecutable(ORIG_R_ForceCvars);
 			MemUtils::MarkAsExecutable(ORIG_Host_ValidSave);
 			MemUtils::MarkAsExecutable(ORIG_SaveGameSlot);
 			MemUtils::MarkAsExecutable(ORIG_SCR_NetGraph);
@@ -523,6 +541,9 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
 			ORIG_PF_traceline_DLL, HOOKED_PF_traceline_DLL,
 			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory,
+			ORIG_Cvar_Command, HOOKED_Cvar_Command,
+			ORIG_Cvar_CommandWithPrivilegeCheck, HOOKED_Cvar_CommandWithPrivilegeCheck,
+			ORIG_R_ForceCvars, HOOKED_R_ForceCvars,
 			ORIG_SaveGameSlot, HOOKED_SaveGameSlot,
 			ORIG_ReleaseEntityDlls, HOOKED_ReleaseEntityDlls,
 			ORIG_ValidStuffText, HOOKED_ValidStuffText,
@@ -607,6 +628,9 @@ void HwDLL::Unhook()
 			ORIG_Draw_FillRGBA,
 			ORIG_PF_traceline_DLL,
 			ORIG_CL_CheckGameDirectory,
+			ORIG_Cvar_Command,
+			ORIG_Cvar_CommandWithPrivilegeCheck,
+			ORIG_R_ForceCvars,
 			ORIG_SaveGameSlot,
 			ORIG_ReleaseEntityDlls,
 			ORIG_ValidStuffText,
@@ -702,6 +726,10 @@ void HwDLL::Clear()
 	ORIG_Draw_FillRGBA = nullptr;
 	ORIG_PF_traceline_DLL = nullptr;
 	ORIG_CL_CheckGameDirectory = nullptr;
+	ORIG_Cvar_Command = nullptr;
+	ORIG_Cvar_CommandWithPrivilegeCheck = nullptr;
+	ORIG_R_ForceCvars = nullptr;
+	ORIG_GL_BuildLightmaps = nullptr;
 	ORIG_CL_HudMessage = nullptr;
 	ORIG_SaveGameSlot = nullptr;
 	ORIG_SCR_NetGraph = nullptr;
@@ -1038,6 +1066,30 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found CL_CheckGameDirectory at %p.\n", ORIG_CL_CheckGameDirectory);
 		else
 			EngineDevWarning("[hw dll] Could not find CL_CheckGameDirectory.\n");
+		
+		ORIG_Cvar_Command = reinterpret_cast<_Cvar_Command>(MemUtils::GetSymbolAddress(m_Handle, "Cvar_Command"));
+		if (ORIG_Cvar_Command)
+			EngineDevMsg("[hw dll] Found Cvar_Command at %p.\n", ORIG_Cvar_Command);
+		else
+			EngineDevWarning("[hw dll] Could not find Cvar_Command.\n");
+
+		ORIG_Cvar_CommandWithPrivilegeCheck = reinterpret_cast<_Cvar_CommandWithPrivilegeCheck>(MemUtils::GetSymbolAddress(m_Handle, "Cvar_CommandWithPrivilegeCheck"));
+		if (ORIG_Cvar_CommandWithPrivilegeCheck)
+			EngineDevMsg("[hw dll] Found Cvar_CommandWithPrivilegeCheck at %p.\n", ORIG_Cvar_CommandWithPrivilegeCheck);
+		else
+			EngineDevWarning("[hw dll] Could not find Cvar_CommandWithPrivilegeCheck.\n");
+
+		ORIG_R_ForceCvars = reinterpret_cast<_R_ForceCvars>(MemUtils::GetSymbolAddress(m_Handle, "R_ForceCvars"));
+		if (ORIG_R_ForceCvars)
+			EngineDevMsg("[hw dll] Found R_ForceCvars at %p.\n", ORIG_R_ForceCvars);
+		else
+			EngineDevWarning("[hw dll] Could not find R_ForceCvars.\n");
+
+		ORIG_GL_BuildLightmaps = reinterpret_cast<_GL_BuildLightmaps>(MemUtils::GetSymbolAddress(m_Handle, "GL_BuildLightmaps"));
+		if (ORIG_GL_BuildLightmaps)
+			EngineDevMsg("[hw dll] Found GL_BuildLightmaps at %p.\n", ORIG_GL_BuildLightmaps);
+		else
+			EngineDevWarning("[hw dll] Could not find GL_BuildLightmaps.\n");
 
 		ORIG_ValidStuffText = reinterpret_cast<_ValidStuffText>(MemUtils::GetSymbolAddress(m_Handle, "ValidStuffText"));
 		if (ORIG_ValidStuffText)
@@ -1325,6 +1377,10 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Draw_FillRGBA)
 		DEF_FUTURE(PF_traceline_DLL)
 		DEF_FUTURE(CL_CheckGameDirectory)
+		DEF_FUTURE(Cvar_Command)
+		DEF_FUTURE(Cvar_CommandWithPrivilegeCheck)
+		DEF_FUTURE(R_ForceCvars)
+		DEF_FUTURE(GL_BuildLightmaps)
 		DEF_FUTURE(SaveGameSlot)
 		DEF_FUTURE(CL_HudMessage)
 		DEF_FUTURE(SCR_NetGraph)
@@ -2297,6 +2353,10 @@ void HwDLL::FindStuff()
 		GET_FUTURE(Draw_FillRGBA);
 		GET_FUTURE(PF_traceline_DLL);
 		GET_FUTURE(CL_CheckGameDirectory);
+		GET_FUTURE(Cvar_Command);
+		GET_FUTURE(Cvar_CommandWithPrivilegeCheck);
+		GET_FUTURE(R_ForceCvars);
+		GET_FUTURE(GL_BuildLightmaps);
 		GET_FUTURE(Host_Noclip_f);
 		GET_FUTURE(Host_Notarget_f);
 		GET_FUTURE(SaveGameSlot);
@@ -5337,6 +5397,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_ch_checkpoint_with_vel);
 	RegisterCVar(CVars::bxt_ch_checkpoint_onground_only);
 
+	if (ORIG_Cvar_Command || ORIG_Cvar_CommandWithPrivilegeCheck || ORIG_R_ForceCvars)
+		RegisterCVar(CVars::bxt_disable_cheats_check_in_demo);
 	if (ORIG_R_SetFrustum && scr_fov_value)
 	{
 		RegisterCVar(CVars::bxt_force_fov);
@@ -5353,6 +5415,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	CVars::fps_max.Assign(FindCVar("fps_max"));
 	CVars::default_fov.Assign(FindCVar("default_fov"));
 	CVars::skill.Assign(FindCVar("skill"));
+	CVars::gl_monolights.Assign(FindCVar("gl_monolights"));
+	CVars::r_fullbright.Assign(FindCVar("r_fullbright"));
 	CVars::host_framerate.Assign(FindCVar("host_framerate"));
 	CVars::sensitivity.Assign(FindCVar("sensitivity"));
 
@@ -7768,6 +7832,74 @@ HOOK_DEF_1(HwDLL, qboolean, __cdecl, CL_CheckGameDirectory, char*, gamedir)
 		return true;
 	else
 		return ORIG_CL_CheckGameDirectory(gamedir);
+}
+
+HOOK_DEF_0(HwDLL, qboolean, __cdecl, Cvar_Command)
+{
+	int *state;
+	int orig_state;
+	bool return_orig_value = false;
+
+	// We can avoid the multiplayer check if cls.state <= 1
+	if (cls && CVars::bxt_disable_cheats_check_in_demo.GetBool() && IsPlayingbackDemo())
+	{
+		state = reinterpret_cast<int*>(cls);
+		orig_state = *state;
+		*state = 1;
+		return_orig_value = true;
+	}
+
+	auto ret = ORIG_Cvar_Command();
+	if (return_orig_value)
+		*state = orig_state;
+
+	return ret;
+}
+
+HOOK_DEF_1(HwDLL, qboolean, __cdecl, Cvar_CommandWithPrivilegeCheck, qboolean, bIsPrivileged)
+{
+	int *state;
+	int orig_state;
+	bool return_orig_value = false;
+
+	// We can avoid the multiplayer check if cls.state <= 1
+	if (cls && CVars::bxt_disable_cheats_check_in_demo.GetBool() && IsPlayingbackDemo())
+	{
+		state = reinterpret_cast<int*>(cls);
+		orig_state = *state;
+		*state = 1;
+		return_orig_value = true;
+	}
+
+	auto ret = ORIG_Cvar_CommandWithPrivilegeCheck(bIsPrivileged);
+	if (return_orig_value)
+		*state = orig_state;
+
+	return ret;
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, R_ForceCvars, qboolean, mp)
+{
+	static bool is_monolights_changed = CVars::gl_monolights.GetBool();
+	static bool is_fullbright_changed = CVars::r_fullbright.GetBool();
+
+	if (CVars::bxt_disable_cheats_check_in_demo.GetBool() && IsPlayingbackDemo())
+	{
+		if ((is_monolights_changed != CVars::gl_monolights.GetBool()) || (is_fullbright_changed != CVars::r_fullbright.GetBool()))
+		{
+			// Update "gl_monolights" and "r_fullbright" in real-time (code from R_ForceCvars does that too!)
+			if (ORIG_GL_BuildLightmaps)
+				ORIG_GL_BuildLightmaps();
+		}
+		is_monolights_changed = CVars::gl_monolights.GetBool();
+		is_fullbright_changed = CVars::r_fullbright.GetBool();
+		return;
+	}
+
+	ORIG_R_ForceCvars(mp);
+
+	is_monolights_changed = CVars::gl_monolights.GetBool();
+	is_fullbright_changed = CVars::r_fullbright.GetBool();
 }
 
 HOOK_DEF_0(HwDLL, int, __cdecl, Host_ValidSave)

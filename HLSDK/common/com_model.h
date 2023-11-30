@@ -423,7 +423,7 @@ typedef struct player_info_s
 
 	char	hashedcdkey[16];
 
-	uint64	m_nSteamID;
+	steamid_t	m_nSteamID;
 } player_info_t;
 
 #endif // #define COM_MODEL_H

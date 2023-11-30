@@ -7,12 +7,12 @@
 #define _USE_MATH_DEFINES
 #include <Windows.h>
 #include <process.h>
-typedef unsigned __int64 uint64;
+typedef unsigned __int64 steamid_t;
 #else
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <mqueue.h>
-typedef unsigned long long uint64;
+typedef unsigned long long steamid_t;
 #endif
 
 #if defined(__GNUC__)

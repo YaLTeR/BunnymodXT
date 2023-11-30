@@ -139,6 +139,11 @@ protected:
 	typedef void(__fastcall *_CoF_CBasePlayer__GiveNamedItem)(void *thisptr, int edx, const char *pszName, bool deletewhendropped);
 	_CoF_CBasePlayer__GiveNamedItem ORIG_CoF_CBasePlayer__GiveNamedItem;
 
+	typedef int(__cdecl *_DispatchSpawn)(edict_t *pent);
+	_DispatchSpawn ORIG_DispatchSpawn;
+	typedef void(__cdecl *_DispatchTouch)(edict_t *pentTouched, edict_t *pentOther);
+	_DispatchTouch ORIG_DispatchTouch;
+
 	typedef bool (__fastcall *_IsPlayer)(void *thisptr);
 	typedef void (__fastcall *_Center)(void *thisptr, int edx, Vector *center);
 
@@ -155,6 +160,8 @@ protected:
 
 	void DoWouldCrashMessage();
 	void CoFChanges();
+
+	void GiveNamedItem(entvars_t *pev, int istr);
 
 	void **ppmove;
 	ptrdiff_t offPlayerIndex;

@@ -269,6 +269,8 @@ void ServerDLL::Clear()
 	ORIG_CTriggerCamera__FollowTarget = nullptr;
 	ORIG_PM_CheckStuck = nullptr;
 	ORIG_CBaseEntity__FireBullets = nullptr;
+	ORIG_DispatchSpawn = nullptr;
+	ORIG_DispatchTouch = nullptr;
 	ORIG_CBaseEntity__FireBullets_Linux = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer_Linux = nullptr;
@@ -1264,12 +1266,16 @@ void ServerDLL::FindStuff()
 		}
 	}
 
+	ORIG_DispatchSpawn = reinterpret_cast<_DispatchSpawn>(MemUtils::GetSymbolAddress(m_Handle, "_Z13DispatchSpawnP7edict_s"));
+	ORIG_DispatchTouch = reinterpret_cast<_DispatchTouch>(MemUtils::GetSymbolAddress(m_Handle, "_Z13DispatchTouchP7edict_sS0_"));
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
 	ORIG_AddToFullPack = reinterpret_cast<_AddToFullPack>(MemUtils::GetSymbolAddress(m_Handle, "_Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh"));
 	ORIG_ClientCommand = reinterpret_cast<_ClientCommand>(MemUtils::GetSymbolAddress(m_Handle, "_Z13ClientCommandP7edict_s"));
 	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move"));
 
-	if (ORIG_ClientCommand && ORIG_PM_Move && ORIG_AddToFullPack && ORIG_CmdStart) {
+	if (ORIG_DispatchSpawn && ORIG_DispatchTouch && ORIG_ClientCommand && ORIG_PM_Move && ORIG_AddToFullPack && ORIG_CmdStart) {
+		EngineDevMsg("[server dll] Found DispatchSpawn at %p.\n", ORIG_DispatchSpawn);
+		EngineDevMsg("[server dll] Found DispatchTouch at %p.\n", ORIG_DispatchTouch);
 		EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 		EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
 		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
@@ -1280,7 +1286,11 @@ void ServerDLL::FindStuff()
 			DLL_FUNCTIONS funcs;
 			if (ORIG_GetEntityAPI(&funcs, INTERFACE_VERSION)) {
 				// Gets our hooked addresses on Windows.
+				ORIG_DispatchSpawn = funcs.pfnSpawn;
+				ORIG_DispatchTouch = funcs.pfnTouch;
 				ORIG_ClientCommand = funcs.pfnClientCommand;
+				EngineDevMsg("[server dll] Found DispatchSpawn at %p.\n", ORIG_DispatchSpawn);
+				EngineDevMsg("[server dll] Found DispatchTouch at %p.\n", ORIG_DispatchTouch);
 				EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 				if (INTERFACE_VERSION == 140)
 				{
@@ -2639,6 +2649,28 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 	} else {
 		ORIG_ClientCommand(pEntity);
 		return;
+	}
+}
+
+void ServerDLL::GiveNamedItem(entvars_t *pev, int istr)
+{
+	auto &hw = HwDLL::GetInstance();
+
+	if (pEngfuncs && hw.ppGlobals && ORIG_DispatchSpawn && ORIG_DispatchTouch)
+	{
+		edict_t *pent = pEngfuncs->pfnCreateNamedEntity(istr);
+		if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent))
+		{
+			#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
+			ALERT (at_console, "NULL Ent in GiveNamedItem!\n");
+			#undef ALERT
+			return;
+		}
+		pent->v.origin = pev->origin;
+		pent->v.spawnflags |= SF_NORESPAWN;
+
+		ORIG_DispatchSpawn(pent);
+		ORIG_DispatchTouch(pent, pev->pContainingEntity);
 	}
 }
 

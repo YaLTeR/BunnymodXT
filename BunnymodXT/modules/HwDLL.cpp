@@ -5119,9 +5119,15 @@ struct HwDLL::Cmd_BXT_Splits_Place_Down
 	}
 };
 
-struct HwDLL::Cmd_BXT_Set_Skybox
+struct HwDLL::Cmd_BXT_Skybox_Reload
 {
-	USAGE("Usage: bxt_set_skybox <name>\n");
+	USAGE("Usage: bxt_skybox_reload\n bxt_skybox_reload <name>\n");
+
+	static void handler()
+	{
+		if (!CVars::bxt_skybox_name.IsEmpty())
+			handler(CVars::bxt_skybox_name.GetString().c_str());
+	}
 
 	static void handler(const char *name)
 	{
@@ -5325,6 +5331,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_fade_remove);
 	RegisterCVar(CVars::bxt_shake_remove);
 	RegisterCVar(CVars::bxt_skybox_remove);
+	RegisterCVar(CVars::bxt_skybox_name);
 	RegisterCVar(CVars::bxt_water_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
@@ -5471,7 +5478,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>, Handler<const char*>, Handler<const char*, const char*>>("bxt_print_entities");
 	wrapper::Add<Cmd_BXT_Print_Entities_By_Index, Handler<int>, Handler<int, int>>("bxt_print_entities_by_index");
-	wrapper::Add<Cmd_BXT_Set_Skybox, Handler<const char*>>("bxt_set_skybox");
+	wrapper::Add<Cmd_BXT_Skybox_Reload, Handler<>, Handler<const char*>>("bxt_skybox_reload");
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Resimulate, Handler<>>("bxt_tas_editor_resimulate");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Apply_Smoothing, Handler<>>("bxt_tas_editor_apply_smoothing");

@@ -33,6 +33,7 @@
 	X(bxt_shake_remove, "0") \
 	X(bxt_fade_remove, "0") \
 	X(bxt_skybox_remove, "0") \
+	X(bxt_skybox_name, "") \
 	X(bxt_water_remove, "0") \
 	X(bxt_stop_demo_on_changelevel, "0") \
 	X(bxt_tas_editor_simulate_for_ms, "40") \

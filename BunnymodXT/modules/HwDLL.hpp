@@ -496,7 +496,7 @@ protected:
 	struct Cmd_BXT_FreeCam;
 	struct Cmd_BXT_Print_Entities;
 	struct Cmd_BXT_Print_Entities_By_Index;
-	struct Cmd_BXT_Set_Skybox;
+	struct Cmd_BXT_Skybox_Reload;
 	struct Cmd_BXT_TAS_Become_Simulator_Client;
 	struct Cmd_BXT_TAS_Server_Send_Command;
 	struct Cmd_BXT_TAS_Client_Load_Received_Script;

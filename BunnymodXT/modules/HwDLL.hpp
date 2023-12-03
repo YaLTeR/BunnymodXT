@@ -25,6 +25,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(long double, __cdecl, RandomFloat, float a1, float a2)
 	HOOK_DECL(long, __cdecl, RandomLong, long low, long high)
 	HOOK_DECL(void, __cdecl, Host_Changelevel2_f)
+	HOOK_DECL(void, __cdecl, PF_changelevel_I, char *s1, char *s2)
 	HOOK_DECL(void, __cdecl, SCR_BeginLoadingPlaque)
 	HOOK_DECL(int, __cdecl, Host_FilterTime, float timePassed)
 	HOOK_DECL(int, __cdecl, V_FadeAlpha)

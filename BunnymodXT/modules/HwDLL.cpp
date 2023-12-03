@@ -63,6 +63,11 @@ extern "C" void __cdecl Host_Changelevel2_f()
 	return HwDLL::HOOKED_Host_Changelevel2_f();
 }
 
+extern "C" void __cdecl PF_changelevel_I(char *s1, char *s2)
+{
+	return HwDLL::HOOKED_PF_changelevel_I(s1, s2);
+}
+
 extern "C" void __cdecl SCR_BeginLoadingPlaque()
 {
 	return HwDLL::HOOKED_SCR_BeginLoadingPlaque();
@@ -415,6 +420,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_RandomFloat);
 			MemUtils::MarkAsExecutable(ORIG_RandomLong);
 			MemUtils::MarkAsExecutable(ORIG_Host_Changelevel2_f);
+			MemUtils::MarkAsExecutable(ORIG_PF_changelevel_I);
 			MemUtils::MarkAsExecutable(ORIG_SCR_BeginLoadingPlaque);
 			MemUtils::MarkAsExecutable(ORIG_Host_FilterTime);
 			MemUtils::MarkAsExecutable(ORIG_V_FadeAlpha);
@@ -478,6 +484,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_RandomFloat, HOOKED_RandomFloat,
 			ORIG_RandomLong, HOOKED_RandomLong,
 			ORIG_Host_Changelevel2_f, HOOKED_Host_Changelevel2_f,
+			ORIG_PF_changelevel_I, HOOKED_PF_changelevel_I,
 			ORIG_SCR_BeginLoadingPlaque, HOOKED_SCR_BeginLoadingPlaque,
 			ORIG_Host_FilterTime, HOOKED_Host_FilterTime,
 			ORIG_Host_ValidSave, HOOKED_Host_ValidSave,
@@ -562,6 +569,7 @@ void HwDLL::Unhook()
 			ORIG_RandomFloat,
 			ORIG_RandomLong,
 			ORIG_Host_Changelevel2_f,
+			ORIG_PF_changelevel_I,
 			ORIG_SCR_BeginLoadingPlaque,
 			ORIG_Host_FilterTime,
 			ORIG_Host_ValidSave,
@@ -630,6 +638,7 @@ void HwDLL::Clear()
 	ORIG_RandomFloat = nullptr;
 	ORIG_RandomLong = nullptr;
 	ORIG_Host_Changelevel2_f = nullptr;
+	ORIG_PF_changelevel_I = nullptr;
 	ORIG_SCR_BeginLoadingPlaque = nullptr;
 	ORIG_Host_FilterTime = nullptr;
 	ORIG_Host_ValidSave = nullptr;
@@ -968,6 +977,12 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found SV_WriteEntitiesToClient at %p.\n", ORIG_SV_WriteEntitiesToClient);
 		else
 			EngineDevWarning("[hw dll] Could not find SV_WriteEntitiesToClient.\n");
+
+		ORIG_PF_changelevel_I = reinterpret_cast<_PF_changelevel_I>(MemUtils::GetSymbolAddress(m_Handle, "PF_changelevel_I"));
+		if (ORIG_PF_changelevel_I)
+			EngineDevMsg("[hw dll] Found PF_changelevel_I at %p.\n", ORIG_PF_changelevel_I);
+		else
+			EngineDevWarning("[hw dll] Could not find PF_changelevel_I.\n");
 
 		ORIG_SV_SetMoveVars = reinterpret_cast<_SV_SetMoveVars>(MemUtils::GetSymbolAddress(m_Handle, "SV_SetMoveVars"));
 		if (ORIG_SV_SetMoveVars)
@@ -1324,6 +1339,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(Key_Event)
 		DEF_FUTURE(SV_AddLinksToPM_)
 		DEF_FUTURE(SV_WriteEntitiesToClient)
+		DEF_FUTURE(PF_changelevel_I)
 		DEF_FUTURE(VGuiWrap_Paint)
 		DEF_FUTURE(DispatchDirectUserMsg)
 		DEF_FUTURE(EmitWaterPolys)
@@ -2326,6 +2342,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(PF_GetPhysicsKeyValue);
 		GET_FUTURE(SV_AddLinksToPM_);
 		GET_FUTURE(SV_WriteEntitiesToClient);
+		GET_FUTURE(PF_changelevel_I);
 		GET_FUTURE(VGuiWrap_Paint);
 		GET_FUTURE(DispatchDirectUserMsg);
 		GET_FUTURE(EmitWaterPolys);
@@ -5398,6 +5415,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_remove_fps_limit);
 	RegisterCVar(CVars::bxt_disable_world);
 	RegisterCVar(CVars::bxt_disable_particles);
+	RegisterCVar(CVars::bxt_fix_changelevel_in_coop);
 	RegisterCVar(CVars::bxt_tas_ducktap_priority);
 	RegisterCVar(CVars::bxt_ch_hook_speed);
 	RegisterCVar(CVars::bxt_allow_keypresses_in_demo);
@@ -5422,6 +5440,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	CVars::skill.Assign(FindCVar("skill"));
 	CVars::host_framerate.Assign(FindCVar("host_framerate"));
 	CVars::sensitivity.Assign(FindCVar("sensitivity"));
+	CVars::coop.Assign(FindCVar("coop"));
 
 	FindCVarsIfNeeded();
 
@@ -7106,6 +7125,15 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Host_Changelevel2_f)
 	insideHost_Changelevel2_f = true;
 	ORIG_Host_Changelevel2_f();
 	insideHost_Changelevel2_f = false;
+}
+
+HOOK_DEF_2(HwDLL, void, __cdecl, PF_changelevel_I, char*, s1, char*, s2)
+{
+	// If landmark name is empty (s2), then the function will call "changelevel" instead of "changelevel2"
+	if (CVars::bxt_fix_changelevel_in_coop.GetBool() && CVars::coop.GetBool())
+		ORIG_PF_changelevel_I(s1, NULL);
+	else
+		ORIG_PF_changelevel_I(s1, s2);
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, SCR_BeginLoadingPlaque)

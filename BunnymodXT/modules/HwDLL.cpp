@@ -7033,7 +7033,7 @@ HOOK_DEF_2(HwDLL, void, __cdecl, PF_changelevel_I, char*, s1, char*, s2)
 {
 	// If landmark name is empty (s2), then the function will call "changelevel" instead of "changelevel2"
 	if (CVars::bxt_fix_changelevel_in_coop.GetBool() && CVars::coop.GetBool())
-		ORIG_PF_changelevel_I(s1, 0);
+		ORIG_PF_changelevel_I(s1, NULL);
 	else
 		ORIG_PF_changelevel_I(s1, s2);
 }

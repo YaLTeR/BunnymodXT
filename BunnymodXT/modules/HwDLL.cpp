@@ -637,6 +637,7 @@ void HwDLL::Clear()
 	ORIG_V_FadeAlpha = nullptr;
 	ORIG_V_ApplyShake = nullptr;
 	ORIG_R_DrawSkyBox = nullptr;
+	ORIG_R_LoadSkys = nullptr;
 	ORIG_SCR_UpdateScreen = nullptr;
 	ORIG_SV_Frame = nullptr;
 	ORIG_SV_SpawnServer = nullptr;
@@ -749,6 +750,7 @@ void HwDLL::Clear()
 	host_frametime = nullptr;
 	cvar_vars = nullptr;
 	movevars = nullptr;
+	gLoadSky = nullptr;
 	pHost_FilterTime_FPS_Cap_Byte = 0;
 	cofSaveHack = nullptr;
 	noclip_anglehack = nullptr;
@@ -972,6 +974,18 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found SV_SetMoveVars at %p.\n", ORIG_SV_SetMoveVars);
 		else
 			EngineDevWarning("[hw dll] Could not find SV_SetMoveVars.\n");
+
+		ORIG_R_LoadSkys = reinterpret_cast<_R_LoadSkys>(MemUtils::GetSymbolAddress(m_Handle, "R_LoadSkys"));
+		if (ORIG_R_LoadSkys)
+			EngineDevMsg("[hw dll] Found R_LoadSkys at %p.\n", ORIG_R_LoadSkys);
+		else
+			EngineDevWarning("[hw dll] Could not find R_LoadSkys.\n");
+
+		gLoadSky = reinterpret_cast<int*>(MemUtils::GetSymbolAddress(m_Handle, "gLoadSky"));
+		if (gLoadSky)
+			EngineDevMsg("[hw dll] Found gLoadSky at %p.\n", gLoadSky);
+		else
+			EngineDevWarning("[hw dll] Could not find gLoadSky.\n");
 
 		ORIG_R_StudioCalcAttachments = reinterpret_cast<_R_StudioCalcAttachments>(MemUtils::GetSymbolAddress(m_Handle, "R_StudioCalcAttachments"));
 		if (ORIG_R_StudioCalcAttachments)
@@ -1889,6 +1903,26 @@ void HwDLL::FindStuff()
 			}
 		);
 
+		auto fR_LoadSkys = FindAsync(
+			ORIG_R_LoadSkys,
+			patterns::engine::R_LoadSkys,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::R_LoadSkys.cbegin())
+				{
+				case 0: // SteamPipe.
+					gLoadSky = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_R_LoadSkys) + 7);
+					break;
+				case 1: // HL-4554.
+				case 2: // HL-WON-1712.
+					gLoadSky = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_R_LoadSkys) + 4);
+					break;
+				case 3: // CoF-5936
+					gLoadSky = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ORIG_R_LoadSkys) + 0x12);
+					break;
+				}
+			}
+		);
+
 		auto fR_StudioCalcAttachments = FindAsync(
 			ORIG_R_StudioCalcAttachments,
 			patterns::engine::R_StudioCalcAttachments,
@@ -2191,6 +2225,16 @@ void HwDLL::FindStuff()
 				EngineDevMsg("[hw dll] Found movevars at %p.\n", movevars);
 			} else {
 				EngineDevWarning("[hw dll] Could not find SV_SetMoveVars.\n");
+			}
+		}
+
+		{
+			auto pattern = fR_LoadSkys.get();
+			if (ORIG_R_LoadSkys) {
+				EngineDevMsg("[hw dll] Found R_LoadSkys at %p (using the %s pattern).\n", ORIG_R_LoadSkys, pattern->name());
+				EngineDevMsg("[hw dll] Found gLoadSky at %p.\n", gLoadSky);
+			} else {
+				EngineDevWarning("[hw dll] Could not find R_LoadSkys.\n");
 			}
 		}
 
@@ -5104,6 +5148,28 @@ struct HwDLL::Cmd_BXT_Splits_Place_Down
 	}
 };
 
+struct HwDLL::Cmd_BXT_Skybox_Reload
+{
+	USAGE("Usage: bxt_skybox_reload\n bxt_skybox_reload <name>\n");
+
+	static void handler()
+	{
+		if (!CVars::bxt_skybox_name.IsEmpty())
+			handler(CVars::bxt_skybox_name.GetString().c_str());
+	}
+
+	static void handler(const char *name)
+	{
+		auto &hw = HwDLL::GetInstance();
+		if (hw.ORIG_R_LoadSkys && hw.gLoadSky && hw.movevars)
+		{
+			*hw.gLoadSky = 1; // Same as calling R_InitSky() function
+			strncpy(hw.movevars->skyName, name, sizeof(hw.movevars->skyName) - 1);
+			hw.ORIG_R_LoadSkys();
+		}
+	}
+};
+
 extern "C" DLLEXPORT void bxt_tas_load_script_from_string(const char *script)
 {
 	auto& hw = HwDLL::GetInstance();
@@ -5294,6 +5360,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_fade_remove);
 	RegisterCVar(CVars::bxt_shake_remove);
 	RegisterCVar(CVars::bxt_skybox_remove);
+	RegisterCVar(CVars::bxt_skybox_name);
 	RegisterCVar(CVars::bxt_water_remove);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
@@ -5441,6 +5508,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_FreeCam, Handler<int>>("bxt_freecam");
 	wrapper::Add<Cmd_BXT_Print_Entities, Handler<>, Handler<const char*>, Handler<const char*, const char*>>("bxt_print_entities");
 	wrapper::Add<Cmd_BXT_Print_Entities_By_Index, Handler<int>, Handler<int, int>>("bxt_print_entities_by_index");
+	wrapper::Add<Cmd_BXT_Skybox_Reload, Handler<>, Handler<const char*>>("bxt_skybox_reload");
 
 	wrapper::Add<Cmd_BXT_TAS_Editor_Resimulate, Handler<>>("bxt_tas_editor_resimulate");
 	wrapper::Add<Cmd_BXT_TAS_Editor_Apply_Smoothing, Handler<>>("bxt_tas_editor_apply_smoothing");

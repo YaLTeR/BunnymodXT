@@ -414,6 +414,8 @@ protected:
 	_PF_GetPhysicsKeyValue ORIG_PF_GetPhysicsKeyValue;
 	typedef void(__cdecl *_CL_RecordHUDCommand) (const char* cmdname);
 	_CL_RecordHUDCommand ORIG_CL_RecordHUDCommand;
+	typedef void(__cdecl *_R_LoadSkys) ();
+	_R_LoadSkys ORIG_R_LoadSkys;
 	typedef void(__cdecl *_CL_HudMessage) (const char *pMessage);
 	_CL_HudMessage ORIG_CL_HudMessage;
 	typedef int(__cdecl *_VGuiWrap2_IsGameUIVisible) ();
@@ -502,6 +504,7 @@ protected:
 	struct Cmd_BXT_FreeCam;
 	struct Cmd_BXT_Print_Entities;
 	struct Cmd_BXT_Print_Entities_By_Index;
+	struct Cmd_BXT_Skybox_Reload;
 	struct Cmd_BXT_TAS_Become_Simulator_Client;
 	struct Cmd_BXT_TAS_Server_Send_Command;
 	struct Cmd_BXT_TAS_Client_Load_Received_Script;
@@ -589,6 +592,7 @@ protected:
 	float *scr_fov_value;
 	ptrdiff_t pHost_FilterTime_FPS_Cap_Byte;
 	qboolean *cofSaveHack; // Cry of Fear-specific
+	int *gLoadSky;
 
 	int framesTillExecuting;
 	bool executing;

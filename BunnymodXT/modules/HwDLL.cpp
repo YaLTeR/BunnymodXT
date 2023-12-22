@@ -471,10 +471,12 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_ReleaseEntityDlls);
 			MemUtils::MarkAsExecutable(ORIG_ValidStuffText);
 			MemUtils::MarkAsExecutable(ORIG_CL_ReadDemoMessage_OLD);
+			MemUtils::MarkAsExecutable(ORIG_NLoadBlobFileClient);
 		}
 
 		MemUtils::Intercept(moduleName,
 			ORIG_LoadAndDecryptHwDLL, HOOKED_LoadAndDecryptHwDLL,
+			ORIG_NLoadBlobFileClient, HOOKED_NLoadBlobFileClient,
 			ORIG_Cbuf_Execute, HOOKED_Cbuf_Execute,
 			ORIG_Cbuf_AddText, HOOKED_Cbuf_AddText,
 			ORIG_Cbuf_InsertTextLines, HOOKED_Cbuf_InsertTextLines,
@@ -538,6 +540,14 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	}
 
 	#ifdef _WIN32
+		if (IsSecureClient())
+			MessageBox(
+				NULL,
+				"Encrypted client.dll, many of the BXT features will be unavailable. "
+				"If using the GoldSrc Package, please run one of the provided batch files to start the game instead.",
+				NULL,
+				MB_OK | MB_ICONWARNING
+			);
 		#ifdef COF_BUILD
 		if (!is_cof_steam) {
 			ClientDLL::GetInstance().pEngfuncs = nullptr;
@@ -560,6 +570,7 @@ void HwDLL::Unhook()
 	{
 		MemUtils::RemoveInterception(m_Name,
 			ORIG_LoadAndDecryptHwDLL,
+			ORIG_NLoadBlobFileClient,
 			ORIG_Cbuf_Execute,
 			ORIG_Cbuf_AddText,
 			ORIG_Cbuf_InsertTextLines,
@@ -632,6 +643,7 @@ void HwDLL::Clear()
 {
 	IHookableNameFilterOrdered::Clear();
 	ORIG_LoadAndDecryptHwDLL = nullptr;
+	ORIG_NLoadBlobFileClient = nullptr;
 	ORIG_Cbuf_Execute = nullptr;
 	ORIG_SeedRandomNumberGenerator = nullptr;
 	ORIG_time = nullptr;
@@ -1364,6 +1376,7 @@ void HwDLL::FindStuff()
 		DEF_FUTURE(ReleaseEntityDlls)
 		DEF_FUTURE(ValidStuffText)
 		DEF_FUTURE(CL_ReadDemoMessage_OLD)
+		DEF_FUTURE(NLoadBlobFileClient)
 		#undef DEF_FUTURE
 
 		bool oldEngine = (m_Name.find(L"hl.exe") != std::wstring::npos);
@@ -1431,10 +1444,12 @@ void HwDLL::FindStuff()
 					break;
 				case 1: // HL-4554
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 226);
+					secureClient = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 151);
 					is_steamid_build = true;
 					break;
 				case 2: // HL-NGHL
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 203);
+					secureClient = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 128);
 					break;
 				case 3: // HL-WON-1712
 					ClientDLL::GetInstance().pEngfuncs = *reinterpret_cast<cl_enginefunc_t**>(reinterpret_cast<uintptr_t>(ClientDLL_Init) + 1456);
@@ -2029,6 +2044,8 @@ void HwDLL::FindStuff()
 			if (ClientDLL_Init) {
 				EngineDevMsg("[hw dll] Found ClientDLL_Init at %p (using the %s pattern).\n", ClientDLL_Init, pattern->name());
 				EngineDevMsg("[hw dll] Found cl_enginefuncs at %p.\n", ClientDLL::GetInstance().pEngfuncs);
+				if (secureClient)
+					EngineDevMsg("[hw dll] Found secureClient at %p.\n", secureClient);
 			}
 			else {
 				EngineDevWarning("[hw dll] Could not find ClientDLL_Init.\n");
@@ -2369,6 +2386,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(ReleaseEntityDlls);
 		GET_FUTURE(ValidStuffText);
 		GET_FUTURE(CL_ReadDemoMessage_OLD);
+		GET_FUTURE(NLoadBlobFileClient)
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -7342,6 +7360,22 @@ HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c
 	EngineDevMsg("[hw dll] LoadAndDecryptHwDLL has been called. Rehooking.\n");
 	HwDLL::GetInstance().Unhook();
 	Hooks::HookModule(L"hl.exe");
+}
+
+HOOK_DEF_4(HwDLL, void*, __cdecl, NLoadBlobFileClient, const char*, pstFileName, void*, pblobfootprint, void*, pv, char, floadAsDll)
+{
+	auto ret = ORIG_NLoadBlobFileClient(pstFileName, pblobfootprint, pv, floadAsDll);
+#ifdef _WIN32
+	if (IsSecureClient())
+		MessageBox(
+			NULL,
+			"Encrypted client.dll, many of the BXT features will be unavailable. "
+			"If using the GoldSrc Package, please run one of the provided batch files to start the game instead.",
+			NULL,
+			MB_OK | MB_ICONWARNING
+		);
+#endif
+	return ret;
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, CL_Record_f)

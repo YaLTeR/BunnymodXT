@@ -16,6 +16,7 @@ struct client_t;
 class HwDLL : public IHookableNameFilterOrdered
 {
 	HOOK_DECL(void, __cdecl, LoadAndDecryptHwDLL, int a, void* b, void* c)
+	HOOK_DECL(void*, __cdecl, NLoadBlobFileClient, const char *pstFileName, void *pblobfootprint, void *pv, char fLoadAsDll)
 	HOOK_DECL(void, __cdecl, Cbuf_Execute)
 	HOOK_DECL(void, __cdecl, Cbuf_AddText, const char* text)
 	HOOK_DECL(void, __cdecl, Cbuf_InsertTextLines, const char* text)
@@ -246,6 +247,7 @@ public:
 	inline bool IsValidEdict(const edict_t *edict) const {
 		return edict && !edict->free;
 	}
+	inline bool IsSecureClient() const { return secureClient && *secureClient == 1; }
 
 	inline float GetFrameTime() const {
 		// This is how it's done inside the game.
@@ -594,6 +596,7 @@ protected:
 	ptrdiff_t pHost_FilterTime_FPS_Cap_Byte;
 	qboolean *cofSaveHack; // Cry of Fear-specific
 	int *gLoadSky;
+	int *secureClient;
 
 	int framesTillExecuting;
 	bool executing;

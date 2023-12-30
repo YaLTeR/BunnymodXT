@@ -272,6 +272,19 @@ struct msurface_s
 };
 #endif
 
+typedef struct displaylist_s // Half-Life 25th anniversary update (hardware engine)
+{
+	unsigned gl_displaylist;
+	int rendermode;
+	float scrolloffset;
+	int renderDetailTexture;
+} displaylist_t;
+
+struct msurface_hw_25th_anniversary_t : public msurface_t 
+{
+	displaylist_t displaylist; // Half-Life 25th anniversary update (hardware engine)
+};
+
 typedef struct
 {
 	int			planenum;

@@ -50,14 +50,11 @@ Building on Windows requires
 
 Run the following commands, replacing `path\to\boost\base\dir` with path to the Boost base directory:
 
-    git clone https://github.com/YaLTeR/BunnymodXT
+    git clone https://github.com/YaLTeR/BunnymodXT --recurse-submodules
     cd BunnymodXT
-    git submodule update --init --recursive
-    mkdir build
-    cd build
-    cmake -A Win32 -DBOOST_ROOT=path\to\boost\base\dir -Wno-dev ..
+    cmake -A Win32 -B build -DBOOST_ROOT=path\to\boost\base\dir -Wno-dev
 
-Then compile the `ALL_BUILD` project from the generated VS solution.
+Then compile the `ALL_BUILD` project from the generated VS solution in the `build` folder.
 
 If you want to make a release build, you need to specify `-DCMAKE_BUILD_TYPE=Release` in the `cmake` command line arguments. This is needed because the Rust CMake module uses that variable to determine whether to build the crate in release or debug mode.
 
@@ -86,12 +83,9 @@ Building on Linux requires
 
 Many of these dependencies can be installed from a package manager.
 
-    git clone https://github.com/YaLTeR/BunnymodXT
+    git clone https://github.com/YaLTeR/BunnymodXT --recurse-submodules
     cd BunnymodXT
-    git submodule update --init --recursive
-    mkdir build
-    cd build
-    cmake -Wno-dev ..
-    make
+    cmake -B build -Wno-dev
+    make -C build
 
 Note that `-DBOOST_ROOT` is not required as CMake should be able to find its location in your system. In case it couldn't, you need to specify it manually like the case on Windows.

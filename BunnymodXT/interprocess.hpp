@@ -24,4 +24,10 @@ namespace Interprocess
 	void WriteTimerReset(const Time& time);
 	void WriteTimerStart(const Time& time);
 	void WriteBSALeapOfFaith(const Time& time);
+
+#ifndef _WIN32
+	void InitBunnySplitPipe();
+	void ShutdownBunnySplitPipe();
+	void WriteBunnySplit(const std::vector<char>& data);
+#endif
 }

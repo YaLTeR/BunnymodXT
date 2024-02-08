@@ -5242,8 +5242,9 @@ void ChangeDeltaForBigMap(delta_s *delta)
 {
 	for (int i = 0; i < delta->fieldCount; ++i) {
 		delta_description_s *curr_description = delta->pdd + i;
+		// "origin[0]", "origin[1]", ... so comparing "origin" is enough
 		if (!strncmp(curr_description->fieldName, "origin", 6)) {
-			auto curr_map_size = std::pow(2.0, curr_description->significant_bits) / curr_description->premultiply;
+			auto curr_map_size = (1 << curr_description->significant_bits) / curr_description->premultiply;
 			if (curr_map_size < BIG_MAP_SIZE) {
 				curr_description->significant_bits = (int) std::ceil(std::log(BIG_MAP_SIZE * 2.0f * curr_description->premultiply) / std::log(2));
 			}
@@ -5253,7 +5254,11 @@ void ChangeDeltaForBigMap(delta_s *delta)
 
 struct HwDLL::Cmd_BXT_Enable_Big_Map
 {
-	USAGE("Usage: bxt_enable_big_map\n After entering this command in main menu, you can load maps beyond +-4092 limit.\nDue to shortcomings of the implemenation, you must restart your game in order to revert the effect.\n");
+	USAGE("\
+Usage: bxt_enable_big_map\n\n\
+After entering this command in main menu, you can load maps beyond +-4092 limit.\n\
+Due to shortcomings of the implementation, you must restart your game in order to revert the effect.\n\
+Can be called in command line option when start up the game.\n");
 
 	static void handler()
 	{
@@ -5262,6 +5267,7 @@ struct HwDLL::Cmd_BXT_Enable_Big_Map
 		if (hw.g_sv_delta == NULL)
 			hw.ORIG_Con_Printf("Feature is not supported.\n");
 		else {
+			hw.ORIG_Con_Printf("Big map support enabled.\nCurrent maximum map size is +-%d\n", BIG_MAP_SIZE);
 			hw.is_big_map = true;
 			for (delta_info_s *curr_delta = *reinterpret_cast<delta_info_s**>(hw.g_sv_delta); curr_delta != NULL && curr_delta->delta != NULL; curr_delta = curr_delta->next)
 				ChangeDeltaForBigMap(curr_delta->delta);

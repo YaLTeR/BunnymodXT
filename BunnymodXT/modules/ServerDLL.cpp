@@ -13,6 +13,7 @@
 #include "../runtime_data.hpp"
 #include "../custom_triggers.hpp"
 #include "../splits.hpp"
+#include "../shared.hpp"
 
 // Linux hooks.
 #ifndef _WIN32
@@ -90,6 +91,11 @@ extern "C" Vector __cdecl _ZN11CBaseEntity17FireBulletsPlayerEj6VectorS0_S0_fiii
 {
 	return ServerDLL::HOOKED_CBaseEntity__FireBulletsPlayer_Linux(thisptr, cShots, vecSrc, vecDirShooting, vecSpread, flDistance, iBulletType, iTracerFreq, iDamage, pevAttacker, shared_rand);
 }
+
+extern "C" int __cdecl _ZN11CBaseEntity9IsInWorldEv(void *thisptr)
+{
+	return ServerDLL::HOOKED_CBaseEntity__IsInWorld_Linux(thisptr);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -150,7 +156,9 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CTriggerEndSection__EndSectionTouch, HOOKED_CTriggerEndSection__EndSectionTouch,
 			ORIG_ShiftMonsters, HOOKED_ShiftMonsters,
 			ORIG_PM_Duck, HOOKED_PM_Duck,
-			ORIG_PM_UnDuck, HOOKED_PM_UnDuck);
+			ORIG_PM_UnDuck, HOOKED_PM_UnDuck,
+			ORIG_CBaseEntity__IsInWorld, HOOKED_CBaseEntity__IsInWorld,
+			ORIG_CBaseEntity__IsInWorld_Linux, HOOKED_CBaseEntity__IsInWorld_Linux);
 	}
 }
 
@@ -201,7 +209,9 @@ void ServerDLL::Unhook()
 			ORIG_CTriggerEndSection__EndSectionTouch,
 			ORIG_ShiftMonsters,
 			ORIG_PM_Duck,
-			ORIG_PM_UnDuck);
+			ORIG_PM_UnDuck,
+			ORIG_CBaseEntity__IsInWorld,
+			ORIG_CBaseEntity__IsInWorld_Linux);
 	}
 
 	Clear();
@@ -272,6 +282,8 @@ void ServerDLL::Clear()
 	ORIG_ShiftMonsters = nullptr;
 	ORIG_PM_Duck = nullptr;
 	ORIG_PM_UnDuck = nullptr;
+	ORIG_CBaseEntity__IsInWorld = nullptr;
+	ORIG_CBaseEntity__IsInWorld_Linux = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -809,6 +821,7 @@ void ServerDLL::FindStuff()
 	auto fCBasePlayer__ViewPunch = FindAsync(ORIG_CBasePlayer__ViewPunch, patterns::server::CBasePlayer__ViewPunch);
 	auto fCBasePlayer__Jump = FindAsync(ORIG_CBasePlayer__Jump, patterns::server::CBasePlayer__Jump);
 	auto fCBaseDoor__DoorActivate = FindAsync(ORIG_CBaseDoor__DoorActivate, patterns::server::CBaseDoor__DoorActivate);
+	auto fCBaseEntity__IsInWorld = FindAsync(ORIG_CBaseEntity__IsInWorld, patterns::server::CBaseEntity__IsInWorld);
 
 	uintptr_t pDispatchRestore;
 	auto fDispatchRestore = FindAsync(
@@ -1563,6 +1576,19 @@ void ServerDLL::FindStuff()
 			}
 			else
 				EngineDevWarning("[server dll] Could not find CBaseEntity::FireBulletsPlayer.\n");
+		}
+	}
+
+	{
+		auto pattern = fCBaseEntity__IsInWorld.get();
+		if (ORIG_CBaseEntity__IsInWorld) {
+			EngineDevMsg("[server dll] Found CBaseEntity::IsInWorld at %p (using the %s pattern).\n", ORIG_CBaseEntity__IsInWorld, pattern->name());
+		} else {
+			ORIG_CBaseEntity__IsInWorld_Linux = reinterpret_cast<_CBaseEntity__IsInWorld_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBaseEntity9IsInWorldEv"));
+			if (ORIG_CBaseEntity__IsInWorld_Linux)
+				EngineDevMsg("[server dll] Found CBaseEntity::IsInWorld [Linux] at %p.\n", ORIG_CBaseEntity__IsInWorld_Linux);
+			else
+				EngineDevWarning("[server dll] Could not find CBaseEntity::IsInWorlds.\n");
 		}
 	}
 
@@ -3246,4 +3272,49 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__Jump, void*, thisptr)
 	insideCBasePlayerJump = true;
 	ORIG_CBasePlayer__Jump(thisptr);
 	insideCBasePlayerJump = false;
+}
+
+int BigMapIsInWorld(void* thisptr)
+{
+	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+
+	// Copy pasted from HLSDK, but origin value is changed
+	// Maybe in the future we should also make velocity check to use sv_maxvelocity value,
+	// but I don't see any side effect when going beyond it ever
+	
+	// BOOL CBaseEntity :: IsInWorld( void )
+	// position 
+	if (pev->origin.x >= BIG_MAP_SIZE) return 0;
+	if (pev->origin.y >= BIG_MAP_SIZE) return 0;
+	if (pev->origin.z >= BIG_MAP_SIZE) return 0;
+	if (pev->origin.x <= -BIG_MAP_SIZE) return 0;
+	if (pev->origin.y <= -BIG_MAP_SIZE) return 0;
+	if (pev->origin.z <= -BIG_MAP_SIZE) return 0;
+	// speed
+	if (pev->velocity.x >= 2000) return 0;
+	if (pev->velocity.y >= 2000) return 0;
+	if (pev->velocity.z >= 2000) return 0;
+	if (pev->velocity.x <= -2000) return 0;
+	if (pev->velocity.y <= -2000) return 0;
+	if (pev->velocity.z <= -2000) return 0;
+
+	return 1;
+}
+
+HOOK_DEF_1(ServerDLL, int, __fastcall, CBaseEntity__IsInWorld, void*, thisptr)
+{
+	if (HwDLL::GetInstance().is_big_map) {
+		return BigMapIsInWorld(thisptr);
+	}
+
+	return ORIG_CBaseEntity__IsInWorld(thisptr);
+}
+
+HOOK_DEF_1(ServerDLL, int, __cdecl, CBaseEntity__IsInWorld_Linux, void*, thisptr)
+{
+	if (HwDLL::GetInstance().is_big_map) {
+		return BigMapIsInWorld(thisptr);
+	}
+
+	return ORIG_CBaseEntity__IsInWorld_Linux(thisptr);
 }

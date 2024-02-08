@@ -60,6 +60,8 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CBasePlayer__ViewPunch, void* thisptr, int edx, float p, float y, float r)
 	HOOK_DECL(void, __fastcall, CBasePlayer__Jump, void* thisptr)
 	HOOK_DECL(void, __fastcall, CTriggerCamera__FollowTarget, void* thisptr)
+	HOOK_DECL(int, __fastcall, CBaseEntity__IsInWorld, void* thisptr)
+	HOOK_DECL(int, __cdecl, CBaseEntity__IsInWorld_Linux, void* thisptr)
 
 public:
 	static ServerDLL& GetInstance()
@@ -105,6 +107,8 @@ public:
 	void TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr);
 
 	void SetStamina(bool makeItZero);
+
+	int IsInWorld(Vector origin, Vector velocity, int map_size);
 
 	bool is_cof = false; // Cry of Fear-specific
 	ptrdiff_t offm_fStamina; // Cry of Fear-specific

@@ -872,6 +872,8 @@ void HwDLL::Clear()
 
 	tas_studio_norefresh_override = 0;
 
+	g_sv_delta = nullptr;
+
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
 		ResetTASPlaybackState();
@@ -1314,6 +1316,12 @@ void HwDLL::FindStuff()
 		} else {
 			EngineDevWarning("[hw dll] Could not find R_SetFrustum.\n");
 		}
+
+		g_sv_delta = reinterpret_cast<void**>(MemUtils::GetSymbolAddress(m_Handle, "g_sv_delta"));
+		if (g_sv_delta)
+			EngineDevMsg("[hw dll] Found g_sv_delta at %p.\n", g_sv_delta);
+		else
+			EngineDevWarning("[hw dll] Could not find g_sv_delta.\n");
 	}
 	else
 	{
@@ -2017,6 +2025,20 @@ void HwDLL::FindStuff()
 				}
 			});
 
+		void *SV_LookupDelta;
+		auto fSV_LookupDelta = FindAsync(
+			SV_LookupDelta,
+			patterns::engine::SV_LookupDelta,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::SV_LookupDelta.cbegin())
+				{
+				default:
+				case 0: // HL-SteamPipe.
+					g_sv_delta = *reinterpret_cast<void***>(reinterpret_cast<uintptr_t>(SV_LookupDelta) + 6);
+					break;
+				}
+			});
+
 		{
 			auto pattern = fClientDLL_CheckStudioInterface.get();
 			if (ClientDLL_CheckStudioInterface) {
@@ -2290,6 +2312,17 @@ void HwDLL::FindStuff()
 			} else {
 				EngineDevWarning("[hw dll] Could not find R_StudioSetupBones.\n");
 				EngineWarning("[hw dll] Disabling weapon viewmodel idle or equip sequences is not available.\n");
+			}
+		}
+
+		{
+			auto pattern = fSV_LookupDelta.get();
+			if (SV_LookupDelta) {
+				EngineDevMsg("[hw dll] Found SV_LookupDelta at %p (using the %s pattern).\n", SV_LookupDelta, pattern->name());
+				EngineDevMsg("[hw dll] Found g_sv_delta at %p.\n", g_sv_delta);
+			} else {
+				EngineDevWarning("[hw dll] Could not find SV_LookupDelta.\n");
+				EngineWarning("[hw dll] Loading big maps on the fly is not available.\n");
 			}
 		}
 
@@ -5205,6 +5238,43 @@ struct HwDLL::Cmd_BXT_Skybox_Reload
 	}
 };
 
+void ChangeDeltaForBigMap(delta_s *delta)
+{
+	for (int i = 0; i < delta->fieldCount; ++i) {
+		delta_description_s *curr_description = delta->pdd + i;
+		// "origin[0]", "origin[1]", ... so comparing "origin" is enough
+		if (!strncmp(curr_description->fieldName, "origin", 6)) {
+			auto curr_map_size = (1 << curr_description->significant_bits) / curr_description->premultiply;
+			if (curr_map_size < BIG_MAP_SIZE) {
+				curr_description->significant_bits = (int) std::ceil(std::log(BIG_MAP_SIZE * 2.0f * curr_description->premultiply) / std::log(2));
+			}
+		}
+	}
+}
+
+struct HwDLL::Cmd_BXT_Enable_Big_Map
+{
+	USAGE("\
+Usage: bxt_enable_big_map\n\n\
+After entering this command in main menu, you can load maps beyond +-4096 limit.\n\
+Due to shortcomings of the implementation, you must restart your game in order to revert the effect.\n\
+Can be called as a command line argument when starting up the game.\n");
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		if (hw.g_sv_delta == NULL)
+			hw.ORIG_Con_Printf("Feature is not supported.\n");
+		else {
+			hw.ORIG_Con_Printf("Big map support enabled.\nCurrent maximum map size is +-%d\n", BIG_MAP_SIZE);
+			hw.is_big_map = true;
+			for (delta_info_s *curr_delta = *reinterpret_cast<delta_info_s**>(hw.g_sv_delta); curr_delta != NULL && curr_delta->delta != NULL; curr_delta = curr_delta->next)
+				ChangeDeltaForBigMap(curr_delta->delta);
+		}
+	}
+};
+
 extern "C" DLLEXPORT void bxt_tas_load_script_from_string(const char *script)
 {
 	auto& hw = HwDLL::GetInstance();
@@ -5600,6 +5670,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Splits_Track_Z, Handler<int>, Handler<const char*, int>>("bxt_splits_track_z");
 	wrapper::Add<Cmd_BXT_Splits_Place_Down, Handler<>, Handler<const char*>>("+bxt_splits_place");
 	wrapper::Add<Cmd_BXT_Splits_Place_Up, Handler<>, Handler<const char*>>("-bxt_splits_place");
+	wrapper::Add<Cmd_BXT_Enable_Big_Map, Handler<>>("bxt_enable_big_map");
 }
 
 void HwDLL::InsertCommands()
@@ -7201,6 +7272,11 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 			RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
 
 		lastRecordedHealth = playerhealth;
+
+		int bxt_flags = 0;
+		if (is_big_map)
+			bxt_flags |= BXT_FLAGS_BIG_MAP;
+		RuntimeData::Add(RuntimeData::Flags{bxt_flags});
 	}
 
 	if (runningFrames) {

@@ -5,6 +5,7 @@
 #include "../cvars.hpp"
 #include "taslogger/writer.hpp"
 #include "../input_editor.hpp"
+#include "../shared.hpp"
 
 enum class TASEditorMode {
 	DISABLED,
@@ -534,6 +535,7 @@ protected:
 	struct Cmd_Minus_BXT_CH_Hook;
 	struct Cmd_BXT_CH_CheckPoint_Create;
 	struct Cmd_BXT_CH_CheckPoint_GoTo;
+	struct Cmd_BXT_Enable_Big_Map;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();
@@ -783,4 +785,10 @@ protected:
 	Vector ch_checkpoint_vel;
 	Vector ch_checkpoint_viewangles;
 	bool ch_checkpoint_is_duck;
+
+public:
+	bool is_big_map = false;
+
+protected:
+	void **g_sv_delta;
 };

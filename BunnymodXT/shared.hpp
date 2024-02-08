@@ -20,38 +20,3 @@ enum class EventType : unsigned char {
 #define BUNNYSPLIT_PIPE_NAME "BunnymodXT-BunnySplit"
 
 #define BIG_MAP_SIZE 32768 // +-BIG_MAP_SIZE so 64k x 64k map should have value of 32k
-
-typedef unsigned char uchar;
-typedef void (* encoder_t)(struct delta_s *, uchar *, uchar *);
-
-struct delta_stats_t {
-    int sendcount;
-    int receivedcount;
-};
-
-struct delta_description_s {
-    int fieldType;
-    char fieldName[32];
-    int fieldOffset;
-    short fieldSize;
-    int significant_bits;
-    float premultiply;
-    float postmultiply;
-    short flags;
-    struct delta_stats_t stats;
-};
-
-struct delta_s {
-    int dynamic;
-    int fieldCount;
-    char conditionalencodename[32];
-    encoder_t conditionalencode;
-    struct delta_description_s * pdd;
-};
-
-struct delta_info_s {
-    struct delta_info_s * next;
-    char * name;
-    char * loadfile;
-    delta_s * delta;
-};

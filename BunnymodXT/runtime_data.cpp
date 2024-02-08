@@ -43,6 +43,7 @@ namespace RuntimeData
 			EDICTS,
 			PLAYERHEALTH,
 			SPLIT_MARKER,
+			FLAGS,
 		};
 
 		// Encrypting filter.
@@ -358,6 +359,12 @@ namespace RuntimeData
 				archive(m.map_name);
 			}
 
+			void operator()(const Flags& f) const {
+				archive(RuntimeDataType::FLAGS);
+
+				archive(f.flags);
+			}
+
 		private:
 			Archive& archive;
 		};
@@ -474,6 +481,12 @@ namespace RuntimeData
 				data = m;
 				break;
 			}
+			case RuntimeDataType::FLAGS: {
+				Flags f;
+				archive(f.flags);
+				data = f;
+				break;
+			}
 			default: {
 				EngineDevWarning("Read unknown RuntimeDataType %d\n", data_type);
 				break;
@@ -538,6 +551,7 @@ namespace RuntimeData
 		void operator()(const RuntimeData::CustomTriggerCommand& c) const {}
 		void operator()(const RuntimeData::Edicts& e) const {}
 		void operator()(const RuntimeData::SplitMarker& m) const {}
+		void operator()(const RuntimeData::Flags& f) const {}
 
 	private:
 		// bxt commands that should be executed when found during demo playback

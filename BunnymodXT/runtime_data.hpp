@@ -63,6 +63,10 @@ namespace RuntimeData
 		std::string map_name;
 	};
 
+	struct Flags {
+		int flags;
+	};
+
 	using Data = boost::variant<VersionInfo,
 	                            CVarValues,
 	                            Time,
@@ -75,7 +79,8 @@ namespace RuntimeData
 	                            CustomTriggerCommand,
 	                            Edicts,
 	                            PlayerHealth,
-	                            SplitMarker>;
+	                            SplitMarker,
+	                            Flags>;
 
 	void Add(Data data);
 	void Clear();

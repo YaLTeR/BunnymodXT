@@ -5258,7 +5258,7 @@ struct HwDLL::Cmd_BXT_Enable_Big_Map
 Usage: bxt_enable_big_map\n\n\
 After entering this command in main menu, you can load maps beyond +-4096 limit.\n\
 Due to shortcomings of the implementation, you must restart your game in order to revert the effect.\n\
-Can be called in command line option when start up the game.\n");
+Can be called as a command line argument when starting up the game.\n");
 
 	static void handler()
 	{

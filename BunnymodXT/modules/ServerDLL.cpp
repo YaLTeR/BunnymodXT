@@ -1588,7 +1588,7 @@ void ServerDLL::FindStuff()
 			if (ORIG_CBaseEntity__IsInWorld_Linux)
 				EngineDevMsg("[server dll] Found CBaseEntity::IsInWorld [Linux] at %p.\n", ORIG_CBaseEntity__IsInWorld_Linux);
 			else
-				EngineDevWarning("[server dll] Could not find CBaseEntity::IsInWorlds.\n");
+				EngineDevWarning("[server dll] Could not find CBaseEntity::IsInWorld.\n");
 		}
 	}
 

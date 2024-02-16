@@ -295,7 +295,6 @@ void ServerDLL::Clear()
 	offBhopcap = 0;
 	pBhopcapWindows = 0;
 	pCZDS_Velocity_Byte = 0;
-	pAddToFullPack_PVS_Byte = 0;
 	pCoF_Noclip_Preventing_Check_Byte = 0;
 	pCBasePlayer__Jump_OldButtons_Check_Byte = 0;
 	offm_iClientFOV = 0;
@@ -561,7 +560,6 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xD4;
 				offFuncCenter = 0x100;
 				offFuncObjectCaps = 0x44;
-				spirit_sdk = true;
 				break;
 			case 15: // Echoes
 				offm_rgAmmoLast = 0x5F4;
@@ -569,7 +567,6 @@ void ServerDLL::FindStuff()
 				offFuncIsPlayer = 0xCC;
 				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
-				spirit_sdk = true;
 				break;
 			case 16: // Decay
 				offm_rgAmmoLast = 0x544;
@@ -753,26 +750,6 @@ void ServerDLL::FindStuff()
 			}
 		});
 
-	auto fAddToFullPack_PVS_Byte = FindAsync(
-		pAddToFullPack_PVS_Byte,
-		patterns::server::AddToFullPack_PVS_Byte,
-		[&](auto pattern) {
-			switch (pattern - patterns::server::AddToFullPack_PVS_Byte.cbegin()) {
-			case 0: // HL-SteamPipe
-			case 1: // Parasomnia
-				pAddToFullPack_PVS_Byte += 2;
-				break;
-			case 2: // AoMDC
-				pAddToFullPack_PVS_Byte += 6;
-				break;
-			case 3: // Counter-Strike 1.6
-				pAddToFullPack_PVS_Byte += 17;
-				break;
-			default:
-				assert(false);
-			}
-		});
-
 	auto fCoF_Noclip_Preventing_Check_Byte = FindAsync(
 		pCoF_Noclip_Preventing_Check_Byte,
 		patterns::server::CoF_Noclip_Preventing_Check_Byte,
@@ -904,15 +881,6 @@ void ServerDLL::FindStuff()
 			EngineDevMsg("[server dll] Found CZDS Velocity Reset Byte at %p (using the %s pattern).\n", pCZDS_Velocity_Byte, pattern->name());
 		} else {
 			EngineDevWarning("[server dll] Could not find CZDS Velocity Reset Byte.\n");
-		}
-	}
-
-	{
-		auto pattern = fAddToFullPack_PVS_Byte.get();
-		if (pAddToFullPack_PVS_Byte) {
-			EngineDevMsg("[server dll] Found AddToFullPack PVS Byte at %p (using the %s pattern).\n", pAddToFullPack_PVS_Byte, pattern->name());
-		} else {
-			EngineDevWarning("[server dll] Could not find AddToFullPack PVS Byte.\n");
 		}
 	}
 
@@ -2469,6 +2437,9 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 		return ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);
 	}
 
+	if (CVars::bxt_render_far_entities.GetBool()) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/client.cpp#L1114-L1122
+		pSet = NULL;
+
 	auto oldEffects = ent->v.effects;
 	auto oldRendermode = ent->v.rendermode;
 	auto oldRenderColor = ent->v.rendercolor;
@@ -2477,37 +2448,6 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldFlags = ent->v.flags;
 	auto oldIUser1 = ent->v.iuser1;
 	auto oldIUser2 = ent->v.iuser2;
-
-	static bool is_0x75 = false;
-
-	if (pAddToFullPack_PVS_Byte)
-	{
-		if (CVars::bxt_render_far_entities.GetBool())
-		{
-			if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x75)
-				is_0x75 = true;
-
-			if ((*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x74) || (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0x75))
-				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\xEB"));
-		}
-		else if (*reinterpret_cast<byte*>(pAddToFullPack_PVS_Byte) == 0xEB)
-		{
-			if (is_0x75)
-				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x75"));
-			else
-				MemUtils::ReplaceBytes(reinterpret_cast<void*>(pAddToFullPack_PVS_Byte), 1, reinterpret_cast<const byte*>("\x74"));
-		}
-	}
-
-	if (ClientDLL::GetInstance().DoesGameDirContain("czeror") && CVars::bxt_render_far_entities.GetBool())
-	{
-		ent->v.flags |= FL_IMMUNE_LAVA; // Because the PVS check in AddToFullPack points to '524288' flags bit
-		ent->v.iuser1 = 1; // Similar to above explanation
-		ent->v.iuser2 = 1; // Mappers used on some entities 'nopvs = 1' keyvalue, which is 'iuser2 = 1` in game code
-	}
-
-	if (CVars::bxt_render_far_entities.GetInt() == 2 || (CVars::bxt_render_far_entities.GetBool() && spirit_sdk))
-		ent->v.renderfx = 22; // kRenderFxEntInPVS from Spirit SDK
 
 	const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + ent->v.classname;
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;

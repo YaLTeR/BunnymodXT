@@ -195,7 +195,6 @@ protected:
 
 	ptrdiff_t offBhopcap;
 	ptrdiff_t pCZDS_Velocity_Byte;
-	ptrdiff_t pAddToFullPack_PVS_Byte;
 	ptrdiff_t pBhopcapWindows;
 	byte originalBhopcapInsn[6];
 
@@ -213,7 +212,6 @@ protected:
 	ptrdiff_t offm_pClientActiveItem;
 	ptrdiff_t offm_CMultiManager_index;
 
-	bool spirit_sdk = false;
 	bool is_czeror = false;
 
 	bool callerIsWalkMove;

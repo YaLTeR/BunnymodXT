@@ -1048,17 +1048,6 @@ namespace patterns
 			"53 55 56 8B 74 24 ?? 57 8B CE 8B 06 FF 50"
 		);
 
-		PATTERNS(AddToFullPack_PVS_Byte,
-			"HL-SteamPipe",
-			"3B EE 74 ?? 8B 54 24",
-			"Parasomnia",
-			"3B FE 74 ?? 8B 55",
-			"AoMDC",
-			"8B 45 ?? 3B 45 ?? 74 ?? 8B 4D ?? 51 8B 55 ?? 52 FF 15",
-			"CStrike-Latest",
-			"8B 44 24 ?? 50 55 FF 15 ?? ?? ?? ?? 83 C4 08 85 C0 ??"
-		);
-
 		PATTERNS(CBaseEntity__FireBullets,
 			"HL-SteamPipe-6153",
 			"81 EC FC 00 00 00 A1 ?? ?? ?? ?? 53 55",

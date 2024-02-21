@@ -312,6 +312,7 @@ void ServerDLL::Clear()
 	offBhopcap = 0;
 	offMaxspeed = 0;
 	offClientMaxspeed = 0;
+	offMoveType = 0;
 	pBhopcapWindows = 0;
 	pCZDS_Velocity_Byte = 0;
 	pCBasePlayer__Jump_OldButtons_Check_Byte = 0;
@@ -412,6 +413,7 @@ void ServerDLL::FindStuff()
 			offBasevelocity = 0x74;
 			offMaxspeed = 0x1f4;
 			offClientMaxspeed = 0x1f8;
+			offMoveType = 0xdc;
 		});
 
 	auto fPM_Jump = FindFunctionAsync(
@@ -2811,12 +2813,11 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int,
 	usercmd_t *cmd = reinterpret_cast<usercmd_t*>(pmove + offCmd);
 	float *maxspeed = reinterpret_cast<float*>(pmove + offMaxspeed);
 	float *clientmaxspeed = reinterpret_cast<float*>(pmove + offClientMaxspeed);
+	int *movetype = reinterpret_cast<int*>(pmove + offMoveType);
 
 	auto start_origin = Vector(origin);
 
-	auto &hw = HwDLL::GetInstance();
-
-	if (hw.noclip_anglehack && *hw.noclip_anglehack) {
+	if (*movetype == MOVETYPE_NOCLIP) {
 		auto new_maxspeed = CVars::bxt_ch_noclip_speed.GetFloat();
 
 		ch_noclip_vel_prev_maxspeed = *maxspeed;
@@ -2839,7 +2840,7 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int,
 	 */
 	CustomTriggers::Update(start_origin, Vector(origin), (*flags & FL_DUCKING) != 0);
 
-	if (hw.noclip_anglehack && *hw.noclip_anglehack) {
+	if (*movetype == MOVETYPE_NOCLIP) {
 		*maxspeed = ch_noclip_vel_prev_maxspeed;
 		*clientmaxspeed = ch_noclip_vel_prev_clientmaxspeed;
 	}

@@ -176,6 +176,7 @@ protected:
 	ptrdiff_t offBasevelocity;
 	ptrdiff_t offMaxspeed;
 	ptrdiff_t offClientMaxspeed;
+	ptrdiff_t offMoveType;
 
 	void *pGlobalState;
 

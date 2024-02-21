@@ -3276,10 +3276,8 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__Jump, void*, thisptr)
 
 int ServerDLL::IsInWorld(Vector origin, Vector velocity, int map_size) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.cpp#L706
 {
-	// Copy pasted from HLSDK, but origin value is changed
-	// Maybe in the future we should also make velocity check to use sv_maxvelocity value,
-	// but I don't see any side effect when going beyond it ever
-
+	auto max_velocity = CVars::sv_maxvelocity.GetFloat();
+	
 	// position
 	if (origin.x >= map_size) return 0;
 	if (origin.y >= map_size) return 0;
@@ -3288,12 +3286,12 @@ int ServerDLL::IsInWorld(Vector origin, Vector velocity, int map_size) // https:
 	if (origin.y <= -map_size) return 0;
 	if (origin.z <= -map_size) return 0;
 	// speed
-	if (velocity.x >= 2000) return 0;
-	if (velocity.y >= 2000) return 0;
-	if (velocity.z >= 2000) return 0;
-	if (velocity.x <= -2000) return 0;
-	if (velocity.y <= -2000) return 0;
-	if (velocity.z <= -2000) return 0;
+	if (velocity.x >= max_velocity) return 0;
+	if (velocity.y >= max_velocity) return 0;
+	if (velocity.z >= max_velocity) return 0;
+	if (velocity.x <= -max_velocity) return 0;
+	if (velocity.y <= -max_velocity) return 0;
+	if (velocity.z <= -max_velocity) return 0;
 
 	return 1;
 }

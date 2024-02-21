@@ -1,6 +1,7 @@
 #include "../stdafx.hpp"
 
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <cerrno>
 #include <GL/gl.h>
 #include "../sptlib-wrapper.hpp"
@@ -346,6 +347,11 @@ extern "C" qboolean __cdecl CL_ReadDemoMessage_OLD()
 {
 	return HwDLL::HOOKED_CL_ReadDemoMessage_OLD();
 }
+
+extern "C" void __cdecl LoadThisDll(char *szDllFilename)
+{
+	return HwDLL::HOOKED_LoadThisDll_Linux(szDllFilename);
+}
 #endif
 
 void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -472,6 +478,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_ValidStuffText);
 			MemUtils::MarkAsExecutable(ORIG_CL_ReadDemoMessage_OLD);
 			MemUtils::MarkAsExecutable(ORIG_NLoadBlobFileClient);
+			MemUtils::MarkAsExecutable(ORIG_LoadThisDll);
 		}
 
 		MemUtils::Intercept(moduleName,
@@ -536,7 +543,8 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_ReleaseEntityDlls, HOOKED_ReleaseEntityDlls,
 			ORIG_ValidStuffText, HOOKED_ValidStuffText,
 			ORIG_CL_ReadDemoMessage_OLD, HOOKED_CL_ReadDemoMessage_OLD,
-			ORIG_Host_Shutdown, HOOKED_Host_Shutdown);
+			ORIG_Host_Shutdown, HOOKED_Host_Shutdown,
+			ORIG_LoadThisDll, HOOKED_LoadThisDll);
 	}
 
 	#ifdef _WIN32
@@ -630,7 +638,8 @@ void HwDLL::Unhook()
 			ORIG_ReleaseEntityDlls,
 			ORIG_ValidStuffText,
 			ORIG_CL_ReadDemoMessage_OLD,
-			ORIG_Host_Shutdown);
+			ORIG_Host_Shutdown,
+			ORIG_LoadThisDll);
 	}
 
 	for (auto cvar : CVars::allCVars)
@@ -733,6 +742,8 @@ void HwDLL::Clear()
 	ORIG_ReleaseEntityDlls = nullptr;
 	ORIG_ValidStuffText = nullptr;
 	ORIG_CL_ReadDemoMessage_OLD = nullptr;
+	ORIG_LoadThisDll = nullptr;
+	ORIG_LoadThisDll_Linux = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1322,6 +1333,14 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found g_sv_delta at %p.\n", g_sv_delta);
 		else
 			EngineDevWarning("[hw dll] Could not find g_sv_delta.\n");
+
+		ORIG_LoadThisDll_Linux = reinterpret_cast<_LoadThisDll_Linux>(MemUtils::GetSymbolAddress(m_Handle, "LoadThisDll"));
+		if (ORIG_LoadThisDll_Linux)
+			EngineDevMsg("[hw dll] Found LoadThisDll at %p.\n", ORIG_LoadThisDll_Linux);
+		else {
+			EngineDevWarning("[hw dll] Could not find LoadThisDll.\n");
+			EngineWarning("[hw dll] AmxModX might crash with BunnymodXT.\n");
+		}
 	}
 	else
 	{
@@ -1469,25 +1488,24 @@ void HwDLL::FindStuff()
 				}
 			});
 
-		void* LoadThisDll;
 		auto fLoadThisDll = FindAsync(
-			LoadThisDll,
+			ORIG_LoadThisDll,
 			patterns::engine::LoadThisDll,
 			[&](auto pattern) {
 				switch (pattern - patterns::engine::LoadThisDll.cbegin())
 				{
 				default:
 				case 0: // HL-Steampipe
-					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 95);
-					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 90);
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(ORIG_LoadThisDll) + 95);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(ORIG_LoadThisDll) + 90);
 					break;
 				case 1: // HL-4554
-					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 91);
-					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 86);
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(ORIG_LoadThisDll) + 91);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(ORIG_LoadThisDll) + 86);
 					break;
 				case 2: // HL-WON-1712
-					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 89);
-					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 84);
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(ORIG_LoadThisDll) + 89);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(ORIG_LoadThisDll) + 84);
 					break;
 				case 3: // CoF-5936
 					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 118);
@@ -2076,8 +2094,8 @@ void HwDLL::FindStuff()
 
 		{
 			auto pattern = fLoadThisDll.get();
-			if (LoadThisDll) {
-				EngineDevMsg("[hw dll] Found LoadThisDll at %p (using the %s pattern).\n", LoadThisDll, pattern->name());
+			if (ORIG_LoadThisDll) {
+				EngineDevMsg("[hw dll] Found LoadThisDll at %p (using the %s pattern).\n", ORIG_LoadThisDll, pattern->name());
 				EngineDevMsg("[hw dll] Found g_engfuncsExportedToDlls at %p.\n", ServerDLL::GetInstance().pEngfuncs);
 				EngineDevMsg("[hw dll] Found gGlobalVariables at %p.\n", ppGlobals);
 			}
@@ -2419,7 +2437,8 @@ void HwDLL::FindStuff()
 		GET_FUTURE(ReleaseEntityDlls);
 		GET_FUTURE(ValidStuffText);
 		GET_FUTURE(CL_ReadDemoMessage_OLD);
-		GET_FUTURE(NLoadBlobFileClient)
+		GET_FUTURE(NLoadBlobFileClient);
+		GET_FUTURE(LoadThisDll)
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);
@@ -8052,4 +8071,70 @@ HOOK_DEF_0(HwDLL, qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 	runtimeDataBuffer.clear();
 
 	return rv;
+}
+
+void SwapMetamodDll(char* current_dll_path, const char* new_dll_path) {
+	const std::string filename = std::string(current_dll_path);
+	const auto addons_index = filename.find("addons");
+	auto new_path = filename.substr(0, addons_index) + new_dll_path;
+
+	strcpy(current_dll_path, new_path.c_str());
+}
+
+HOOK_DEF_1(HwDLL, void, __fastcall, LoadThisDll, char*, szDllFilename)
+{
+	// error: ‘const std::string’ {aka ‘const class std::__cxx11::basic_string<char>’} has no member named ‘ends_with’
+	// :smiley:
+	if (boost::ends_with(szDllFilename, "metamod.dll")) {
+		auto &cl = ClientDLL::GetInstance();
+		static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
+
+		EngineDevMsg("[hw dll] AmxModX detected.\n");
+
+		if (is_cstrike) {
+			static const char *cs_windows = "dlls/mp.dll";
+
+			SwapMetamodDll(szDllFilename, cs_windows);
+			EngineDevMsg("[hw dll] Current mod is cstrike. AmxModX is disabled.\n");
+		} else {
+			EngineWarning("[hw dll] Cannot disable AmdModX for current mod. Edit <mod>/liblist.gam to continue.\n");
+
+			if (ORIG_Host_Shutdown)
+				ORIG_Host_Shutdown();
+			else
+				exit(-1);
+		}
+
+	}
+
+	ORIG_LoadThisDll(szDllFilename);
+}
+
+HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll_Linux, char*, szDllFilename)
+{
+	// error: ‘const std::string’ {aka ‘const class std::__cxx11::basic_string<char>’} has no member named ‘ends_with’
+	// :smiley:
+	if (boost::ends_with(szDllFilename, "metamod.so")) {
+		auto &cl = ClientDLL::GetInstance();
+		static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
+
+		EngineDevMsg("[hw dll] AmxModX detected.\n");
+
+		if (is_cstrike) {
+			static const char *cs_linux = "dlls/cs.so";
+
+			SwapMetamodDll(szDllFilename, cs_linux);
+			EngineDevMsg("[hw dll] Current mod is cstrike. AmxModX is disabled.\n");
+		} else {
+			EngineWarning("[hw dll] Cannot disable AmdModX for current mod. Edit <mod>/liblist.gam to continue.\n");
+
+			if (ORIG_Host_Shutdown)
+				ORIG_Host_Shutdown();
+			else
+				exit(-1);
+		}
+
+	}
+
+	ORIG_LoadThisDll_Linux(szDllFilename);
 }

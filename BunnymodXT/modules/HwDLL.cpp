@@ -1508,8 +1508,8 @@ void HwDLL::FindStuff()
 					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(ORIG_LoadThisDll) + 84);
 					break;
 				case 3: // CoF-5936
-					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 118);
-					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(LoadThisDll) + 113);
+					ServerDLL::GetInstance().pEngfuncs = *reinterpret_cast<enginefuncs_t**>(reinterpret_cast<uintptr_t>(ORIG_LoadThisDll) + 118);
+					ppGlobals = *reinterpret_cast<globalvars_t**>(reinterpret_cast<uintptr_t>(ORIG_LoadThisDll) + 113);
 					break;
 				}
 			});

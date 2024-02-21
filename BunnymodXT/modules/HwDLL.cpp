@@ -2437,8 +2437,7 @@ void HwDLL::FindStuff()
 		GET_FUTURE(ReleaseEntityDlls);
 		GET_FUTURE(ValidStuffText);
 		GET_FUTURE(CL_ReadDemoMessage_OLD);
-		GET_FUTURE(NLoadBlobFileClient);
-		GET_FUTURE(LoadThisDll)
+		GET_FUTURE(NLoadBlobFileClient)
 
 		if (oldEngine) {
 			GET_FUTURE(LoadAndDecryptHwDLL);

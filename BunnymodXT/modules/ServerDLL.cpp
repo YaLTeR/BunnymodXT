@@ -2819,12 +2819,15 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int,
 	if (hw.noclip_anglehack && *hw.noclip_anglehack) {
 		auto new_maxspeed = CVars::bxt_ch_noclip_speed.GetFloat();
 
+		ch_noclip_vel_prev_maxspeed = *maxspeed;
+		ch_noclip_vel_prev_clientmaxspeed = *clientmaxspeed;
+
+		if (*clientmaxspeed == 0.0f)
+			*clientmaxspeed = *maxspeed; 
+
 		cmd->forwardmove = cmd->forwardmove / *clientmaxspeed * new_maxspeed;
 		cmd->sidemove = cmd->sidemove / *clientmaxspeed * new_maxspeed;
 		cmd->upmove = cmd->upmove / *clientmaxspeed * new_maxspeed;
-
-		ch_noclip_vel_prev_maxspeed = *maxspeed;
-		ch_noclip_vel_prev_clientmaxspeed = *clientmaxspeed;
 		*maxspeed = *clientmaxspeed = new_maxspeed;
 	}
 

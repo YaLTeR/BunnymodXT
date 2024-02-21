@@ -1324,6 +1324,12 @@ void HwDLL::FindStuff()
 			EngineDevMsg("[hw dll] Found g_sv_delta at %p.\n", g_sv_delta);
 		else
 			EngineDevWarning("[hw dll] Could not find g_sv_delta.\n");
+
+		noclip_anglehack = reinterpret_cast<qboolean*>(MemUtils::GetSymbolAddress(m_Handle, "noclip_anglehack"));
+		if (noclip_anglehack)
+			EngineDevMsg("[hw dll] Found noclip_anglehack at %p.\n", noclip_anglehack);
+		else
+			EngineDevWarning("[hw dll] Could not find noclip_anglehack.\n");
 	}
 	else
 	{

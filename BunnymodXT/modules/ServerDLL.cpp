@@ -15,6 +15,8 @@
 #include "../splits.hpp"
 #include "../shared.hpp"
 
+#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
+
 // Linux hooks.
 #ifndef _WIN32
 extern "C" void __cdecl _Z8CmdStartPK7edict_sPK9usercmd_sj(const edict_t* player, const usercmd_t* cmd, unsigned int random_seed)
@@ -1952,7 +1954,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	if (CVars::bxt_force_duck.GetBool())
 		cmd->buttons |= IN_DUCK;
 
-	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 	{
 		ALERT(at_console, "-- BXT TAS Log Start --\n");
@@ -1978,7 +1979,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		ALERT(at_console, "New onground: %d; new usehull: %d\n", *groundEntity, *reinterpret_cast<int*>(pmove + 0xBC));
 		ALERT(at_console, "-- BXT TAS Log End --\n");
 	}
-	#undef ALERT
 
 	if (hwDLL.IsTASLogging()) {
 		LogPlayerMove(false, pmove);
@@ -2125,7 +2125,6 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 		hwDLL.logWriter.SetArmor(hwDLL.GetPlayerEdict()->v.armorvalue);
 	}
 
-	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 	{
 		ALERT(at_console, "-- CmdStart Start --\n");
@@ -2137,7 +2136,6 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 		ALERT(at_console, "Paused: %s\n", (hwDLL.IsPaused() ? "true" : "false"));
 		ALERT(at_console, "-- CmdStart End --\n");
 	}
-	#undef ALERT
 
 	return ORIG_CmdStart(player, cmd, seed);
 }
@@ -2661,9 +2659,7 @@ void ServerDLL::GiveNamedItem(entvars_t *pev, int istr)
 		edict_t *pent = pEngfuncs->pfnCreateNamedEntity(istr);
 		if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent))
 		{
-			#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
 			ALERT (at_console, "NULL Ent in GiveNamedItem!\n");
-			#undef ALERT
 			return;
 		}
 		pent->v.origin = pev->origin;
@@ -3353,3 +3349,5 @@ HOOK_DEF_1(ServerDLL, int, __cdecl, CBaseEntity__IsInWorld_Linux, void*, thisptr
 
 	return ORIG_CBaseEntity__IsInWorld_Linux(thisptr);
 }
+
+#undef ALERT

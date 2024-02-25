@@ -8087,8 +8087,10 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 			const std::string cs_lib = "dlls/cs";
 			#endif
 
+			EngineDevMsg("[hw dll] Old path to game library: %s\n", szDllFilename);
 			szDllFilename = helper_functions::swap_lib(szDllFilename, cs_lib, "addons");
-			EngineDevMsg("[hw dll] Current mod is cstrike. AmxModX is disabled.\n");
+			EngineDevMsg("[hw dll] New path to game library: %s\n", szDllFilename);
+			EngineDevMsg("[hw dll] AmxModX is disabled.\n");
 		}
 		else
 		{

@@ -23,6 +23,7 @@
 #include "../custom_triggers.hpp"
 #include "../simulation_ipc.hpp"
 #include "../splits.hpp"
+#include "../helper_functions.hpp"
 
 using namespace std::literals;
 
@@ -348,9 +349,9 @@ extern "C" qboolean __cdecl CL_ReadDemoMessage_OLD()
 	return HwDLL::HOOKED_CL_ReadDemoMessage_OLD();
 }
 
-extern "C" void __cdecl LoadThisDll(char *szDllFilename)
+extern "C" void __cdecl LoadThisDll(const char *szDllFilename)
 {
-	return HwDLL::HOOKED_LoadThisDll_Linux(szDllFilename);
+	return HwDLL::HOOKED_LoadThisDll(szDllFilename);
 }
 #endif
 
@@ -743,7 +744,6 @@ void HwDLL::Clear()
 	ORIG_ValidStuffText = nullptr;
 	ORIG_CL_ReadDemoMessage_OLD = nullptr;
 	ORIG_LoadThisDll = nullptr;
-	ORIG_LoadThisDll_Linux = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;
 	ServerDLL::GetInstance().pEngfuncs = nullptr;
@@ -1334,10 +1334,10 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find g_sv_delta.\n");
 
-		ORIG_LoadThisDll_Linux = reinterpret_cast<_LoadThisDll_Linux>(MemUtils::GetSymbolAddress(m_Handle, "LoadThisDll"));
-		if (ORIG_LoadThisDll_Linux)
-			EngineDevMsg("[hw dll] Found LoadThisDll at %p.\n", ORIG_LoadThisDll_Linux);
-		else {
+		ORIG_LoadThisDll = reinterpret_cast<_LoadThisDll>(MemUtils::GetSymbolAddress(m_Handle, "LoadThisDll"));
+		if (ORIG_LoadThisDll) {
+			EngineDevMsg("[hw dll] Found LoadThisDll at %p.\n", ORIG_LoadThisDll);
+		} else {
 			EngineDevWarning("[hw dll] Could not find LoadThisDll.\n");
 			EngineWarning("[hw dll] AmxModX might crash with BunnymodXT.\n");
 		}
@@ -8072,68 +8072,31 @@ HOOK_DEF_0(HwDLL, qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 	return rv;
 }
 
-void SwapMetamodDll(char* current_dll_path, const char* new_dll_path) {
-	const std::string filename = std::string(current_dll_path);
-	const auto addons_index = filename.find("addons");
-	auto new_path = filename.substr(0, addons_index) + new_dll_path;
-
-	strcpy(current_dll_path, new_path.c_str());
-}
-
-HOOK_DEF_1(HwDLL, void, __fastcall, LoadThisDll, char*, szDllFilename)
+HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 {
-	// error: ‘const std::string’ {aka ‘const class std::__cxx11::basic_string<char>’} has no member named ‘ends_with’
-	// :smiley:
-	if (boost::ends_with(szDllFilename, "metamod.dll")) {
-		auto &cl = ClientDLL::GetInstance();
-		static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
-
+	if (boost::ends_with(szDllFilename, helper_functions::add_os_library_extension("metamod").c_str()))
+	{
 		EngineDevMsg("[hw dll] AmxModX detected.\n");
 
-		if (is_cstrike) {
-			static const char *cs_windows = "dlls/mp.dll";
+		static bool is_cstrike = ClientDLL::GetInstance().DoesGameDirMatch("cstrike");
+		if (is_cstrike)
+		{
+			#ifdef _WIN32
+			const std::string cs_lib = "dlls\\mp";
+			#else
+			const std::string cs_lib = "dlls/cs";
+			#endif
 
-			SwapMetamodDll(szDllFilename, cs_windows);
+			szDllFilename = helper_functions::swap_lib(szDllFilename, cs_lib, "addons");
 			EngineDevMsg("[hw dll] Current mod is cstrike. AmxModX is disabled.\n");
-		} else {
-			EngineWarning("[hw dll] Cannot disable AmdModX for current mod. Edit <mod>/liblist.gam to continue.\n");
-
-			if (ORIG_Host_Shutdown)
-				ORIG_Host_Shutdown();
-			else
-				exit(-1);
+		}
+		else
+		{
+			const std::string error_msg = "[hw dll] Cannot disable AmdModX for current mod. Edit <mod>/liblist.gam to continue.\n";
+			helper_functions::crash_if_failed(error_msg);
 		}
 
 	}
 
 	ORIG_LoadThisDll(szDllFilename);
-}
-
-HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll_Linux, char*, szDllFilename)
-{
-	// error: ‘const std::string’ {aka ‘const class std::__cxx11::basic_string<char>’} has no member named ‘ends_with’
-	// :smiley:
-	if (boost::ends_with(szDllFilename, "metamod.so")) {
-		auto &cl = ClientDLL::GetInstance();
-		static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
-
-		EngineDevMsg("[hw dll] AmxModX detected.\n");
-
-		if (is_cstrike) {
-			static const char *cs_linux = "dlls/cs.so";
-
-			SwapMetamodDll(szDllFilename, cs_linux);
-			EngineDevMsg("[hw dll] Current mod is cstrike. AmxModX is disabled.\n");
-		} else {
-			EngineWarning("[hw dll] Cannot disable AmdModX for current mod. Edit <mod>/liblist.gam to continue.\n");
-
-			if (ORIG_Host_Shutdown)
-				ORIG_Host_Shutdown();
-			else
-				exit(-1);
-		}
-
-	}
-
-	ORIG_LoadThisDll_Linux(szDllFilename);
 }

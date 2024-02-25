@@ -86,8 +86,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(void, __cdecl, ReleaseEntityDlls)
 	HOOK_DECL(qboolean, __cdecl, ValidStuffText, char* buf)
 	HOOK_DECL(qboolean, __cdecl, CL_ReadDemoMessage_OLD)
-	HOOK_DECL(void, __fastcall, LoadThisDll, char* szDllFilename)
-	HOOK_DECL(void, __cdecl, LoadThisDll_Linux, char* szDllFilename)
+	HOOK_DECL(void, __cdecl, LoadThisDll, const char* szDllFilename)
 
 	struct cmdbuf_t
 	{

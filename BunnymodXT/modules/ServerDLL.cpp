@@ -1638,6 +1638,7 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_ch_trigger_tp_keeps_momentum_velocity);
 		REG(bxt_ch_trigger_tp_keeps_momentum_velocity_redirect);
 		REG(bxt_ch_trigger_tp_keeps_momentum_viewangles);
+		REG(bxt_ch_trigger_tp_landmark);
 	}
 
 	REG(bxt_splits_print);
@@ -3408,10 +3409,14 @@ void TriggerTpKeepsMomentumRestore(Vector prev_vel, Vector prev_view, Vector pre
 	}
 }
 
+#define STRING(offset)		((const char *)(HwDLL::GetInstance().ppGlobals->pStringBase + (unsigned int)(offset)))
+
 HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, thisptr, int, edx, void*, pOther)
 {
 	auto is_bxt_ch_trigger_tp_keeps_momentum_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_keeps_momentum.GetBool();
+	auto is_bxt_ch_trigger_tp_landmark_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_landmark.GetBool() && pEngfuncs && HwDLL::GetInstance().ppGlobals;
 
+	entvars_t *this_pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pOther) + 4);
 	Vector prev_vel;
 	Vector prev_view;
@@ -3423,6 +3428,16 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, this
 		prev_view = pev->v_angle;
 		prev_angles = pev->angles;
 		prev_basevelocity = pev->basevelocity;
+	}
+
+	if (is_bxt_ch_trigger_tp_landmark_enabled) {
+		edict_t *landmark = pEngfuncs->pfnFindEntityByString(NULL, "targetname", STRING(this_pev->message));
+		ch_trigger_tp_landmark_available = true;
+
+		if (!landmark || landmark->free || !this_pev->message)
+			ch_trigger_tp_landmark_available = false;
+
+		ch_trigger_tp_landmark_offset = Vector(pev->origin) - Vector(landmark->v.origin);
 	}
 
 	ORIG_CBaseTrigger__TeleportTouch(thisptr, edx, pOther);
@@ -3430,12 +3445,24 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, this
 	if (is_bxt_ch_trigger_tp_keeps_momentum_enabled && pev && pEngfuncs && IsPlayer(pev->pContainingEntity)) {
 		TriggerTpKeepsMomentumRestore(prev_vel, prev_vel, prev_angles, prev_basevelocity, pev, pEngfuncs);
 	}
+
+	if (is_bxt_ch_trigger_tp_landmark_enabled && ch_trigger_tp_landmark_available) {
+		pev->origin = pev->origin + ch_trigger_tp_landmark_offset;
+		// have to offset by some HULL because of origin z diff
+		auto is_duck = pev->button & (IN_DUCK) || pev->flags & (FL_DUCKING);
+		if (is_duck)
+			pev->origin[2] -= 19; 
+		else
+			pev->origin[2] -= 37;
+	}
 }
 
 HOOK_DEF_2(ServerDLL, void, __cdecl, CBaseTrigger__TeleportTouch_Linux, void*, thisptr, void*, pOther)
 {
 	auto is_bxt_ch_trigger_tp_keeps_momentum_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_keeps_momentum.GetBool();
+	auto is_bxt_ch_trigger_tp_landmark_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_landmark.GetBool() && pEngfuncs && HwDLL::GetInstance().ppGlobals;
 
+	entvars_t *this_pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pOther) + 4);
 	Vector prev_vel;
 	Vector prev_view;
@@ -3449,10 +3476,30 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, CBaseTrigger__TeleportTouch_Linux, void*, t
 		prev_basevelocity = pev->basevelocity;
 	}
 
+	if (is_bxt_ch_trigger_tp_landmark_enabled) {
+		edict_t *landmark = pEngfuncs->pfnFindEntityByString(NULL, "targetname", STRING(this_pev->message));
+		ch_trigger_tp_landmark_available = true;
+
+		if (!landmark || landmark->free || !this_pev->message)
+			ch_trigger_tp_landmark_available = false;
+
+		ch_trigger_tp_landmark_offset = Vector(pev->origin) - Vector(landmark->v.origin);
+	}
+
 	ORIG_CBaseTrigger__TeleportTouch_Linux(thisptr, pOther);
 
 	if (is_bxt_ch_trigger_tp_keeps_momentum_enabled && pev && pEngfuncs && IsPlayer(pev->pContainingEntity)) {
 		TriggerTpKeepsMomentumRestore(prev_vel, prev_vel, prev_angles, prev_basevelocity, pev, pEngfuncs);
+	}
+
+	if (is_bxt_ch_trigger_tp_landmark_enabled && ch_trigger_tp_landmark_available) {
+		pev->origin = pev->origin + ch_trigger_tp_landmark_offset;
+		// have to offset by some HULL because of origin z diff
+		auto is_duck = pev->button & (IN_DUCK) || pev->flags & (FL_DUCKING);
+		if (is_duck)
+			pev->origin[2] -= 19; 
+		else
+			pev->origin[2] -= 37;
 	}
 }
 

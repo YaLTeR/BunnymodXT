@@ -242,4 +242,7 @@ protected:
 
 	Vector cmdStartOrigin;
 	Vector cmdStartVelocity;
+	
+	Vector ch_trigger_tp_landmark_offset;
+	bool ch_trigger_tp_landmark_available;
 };

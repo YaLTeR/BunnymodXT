@@ -36,4 +36,13 @@ typedef struct cmd_function_s
 	int						flags;
 } cmd_function_t;
 
+typedef struct sizebuf_t
+{
+	char *buffername; // char *
+	unsigned flags; // unsigned short
+	char *data; // byte *
+	unsigned maxsize; // int
+	unsigned cursize; // int
+} sizebuf_s;
+
 #endif

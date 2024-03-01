@@ -14,6 +14,9 @@
 ****/
 #ifndef CVARDEF_H
 #define CVARDEF_H
+#ifdef _WIN32
+#pragma once
+#endif
 
 #define	FCVAR_ARCHIVE		(1<<0)	// set to cause it to be saved to vars.rc
 #define	FCVAR_USERINFO		(1<<1)	// changes the client's info string

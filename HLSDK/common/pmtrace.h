@@ -13,8 +13,11 @@
 *
 ****/
 
-// YaLTeR: modified.
+#if !defined( PMTRACEH )
+#define PMTRACEH
+#ifdef _WIN32
 #pragma once
+#endif
 
 typedef struct
 {
@@ -37,3 +40,5 @@ struct pmtrace_s
                               // Only run on server.
 	int hitgroup;
 };
+
+#endif

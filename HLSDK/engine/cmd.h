@@ -20,6 +20,12 @@ to dissallow the action or forward it to a remote server if the source is
 not apropriate.
 */
 
+#if !defined( CMDH )
+#define CMDH
+#ifdef _WIN32
+#pragma once
+#endif
+
 typedef void (*xcommand_t) (void);
 
 typedef struct cmd_function_s
@@ -29,3 +35,5 @@ typedef struct cmd_function_s
 	xcommand_t				function;
 	int						flags;
 } cmd_function_t;
+
+#endif

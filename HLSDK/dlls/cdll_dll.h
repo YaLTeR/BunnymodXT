@@ -19,6 +19,9 @@
 
 #ifndef CDLL_DLL_H
 #define CDLL_DLL_H
+#ifdef _WIN32
+#pragma once
+#endif
 
 #define MAX_WEAPONS		32		// ???
 

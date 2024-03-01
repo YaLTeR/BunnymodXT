@@ -20,7 +20,11 @@
 // CHud handles the message, calculation, and drawing the HUD
 //
 
-// YaLTeR - Heavily stripped down to contain only useful stuff.
+#if !defined ( HUDH )
+#define HUDH
+#ifdef _WIN32
+#pragma once
+#endif
 
 #define RGB_YELLOWISH 0x00FFA000 //255,160,0
 #define RGB_REDISH 0x00FF1010 //255,16,16
@@ -36,3 +40,5 @@ typedef struct {
 
 #define HUD_ACTIVE	1
 #define HUD_INTERMISSION 2
+
+#endif

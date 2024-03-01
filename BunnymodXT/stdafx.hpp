@@ -59,6 +59,7 @@ using std::ptrdiff_t;
 #include "HLSDK/dlls/doors.h"
 #include "HLSDK/cl_dll/wrect.h"
 #include "HLSDK/cl_dll/hud.h"
+#include "HLSDK/public/keydefs.h"
 #include "HLSDK/common/ref_params.h"
 #include "HLSDK/common/usercmd.h"
 #include "HLSDK/common/triangleapi.h"

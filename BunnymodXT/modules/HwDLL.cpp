@@ -3522,6 +3522,10 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove_After
 				hw.ch_checkpoint_total = id;
 				hw.ORIG_Con_Printf("Removed the checkpoints following %lu id.\n", id);
 			}
+			else
+			{
+				hw.ORIG_Con_Printf("ID is invalid!\n");
+			}
 		}
 		else
 		{

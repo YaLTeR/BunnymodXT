@@ -272,18 +272,26 @@ struct msurface_s
 };
 #endif
 
-typedef struct displaylist_s // Half-Life 25th anniversary update (hardware engine)
+typedef struct mdisplaylist_s
 {
-	unsigned gl_displaylist;
+	unsigned int gl_displaylist;
 	int rendermode;
 	float scrolloffset;
 	int renderDetailTexture;
-} displaylist_t;
+} mdisplaylist_t;
 
+#ifdef __cplusplus
 struct msurface_hw_25th_anniversary_t : public msurface_t 
 {
-	displaylist_t displaylist; // Half-Life 25th anniversary update (hardware engine)
+	mdisplaylist_t displaylist;
 };
+#else
+typedef struct
+{
+	msurface_t surface;
+	mdisplaylist_t displaylist;
+} msurface_hw_25th_anniversary_t;
+#endif
 
 typedef struct
 {

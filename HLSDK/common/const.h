@@ -672,8 +672,6 @@
 #define TE_BOUNCE_SHELL		1
 #define TE_BOUNCE_SHOTSHELL	2
 
-#define	SF_NORESPAWN (1 << 30) // Smiley: This is taken from cbase.h in Half-Life SDK, but it's better to declare it here
-
 // Rendering constants
 enum 
 {	

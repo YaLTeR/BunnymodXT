@@ -55,6 +55,7 @@ using std::ptrdiff_t;
 #include <hlstrafe.hpp>
 
 #include "HLSDK/dlls/extdll.h"
+#include "HLSDK/dlls/cbase.h"
 #include "HLSDK/cl_dll/wrect.h"
 #include "HLSDK/cl_dll/hud.h"
 #include "HLSDK/common/ref_params.h"
@@ -80,16 +81,6 @@ typedef int(*pfnUserMsgHook)(const char *pszName, int iSize, void *pbuf);
 #ifndef M_PI
 const double M_PI = 3.14159265358979323846;
 #endif
-
-const unsigned FCAP_CUSTOMSAVE = 0x00000001;
-const unsigned FCAP_ACROSS_TRANSITION = 0x00000002;
-const unsigned FCAP_MUST_SPAWN = 0x00000004;
-const unsigned FCAP_DONT_SAVE = 0x80000000;
-const unsigned FCAP_IMPULSE_USE = 0x00000008;
-const unsigned FCAP_CONTINUOUS_USE = 0x00000010;
-const unsigned FCAP_ONOFF_USE = 0x00000020;
-const unsigned FCAP_DIRECTIONAL_USE = 0x00000040;
-const unsigned FCAP_MASTER = 0x00000080;
 
 /*
 	Declare a hook. Does the following:

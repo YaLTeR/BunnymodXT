@@ -5,6 +5,12 @@
 #pragma once
 #endif
 
+typedef struct keyname_s
+{
+	char *name;
+	int keynum;
+} keyname_t;
+
 //
 // these are the key numbers that should be passed to Key_Event
 //

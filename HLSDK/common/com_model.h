@@ -40,6 +40,52 @@
 
 #define CACHE_SIZE	32		// used to align key data structures
 
+typedef enum { SPR_SINGLE = 0, SPR_GROUP } spriteframetype_t;
+
+typedef struct mspriteframe_s
+{
+	int width;
+	int height;
+
+	#ifdef SOFTWARE_BUILD
+	void *pcachespot;
+	#endif
+
+	float up, down, left, right;
+
+	#ifdef SOFTWARE_BUILD
+	byte pixels[4];
+	#else
+	int gl_texturenum;
+	#endif
+} mspriteframe_t;
+
+typedef struct mspritegroup_s
+{
+	int numframes;
+	float *intervals;
+	mspriteframe_t *frames[1];
+} mspritegroup_t;
+
+typedef struct mspriteframedesc_s
+{
+	spriteframetype_t type;
+	mspriteframe_t *frameptr;
+} mspriteframedesc_t;
+
+typedef struct msprite_s
+{
+    short type;
+    short texFormat;
+    int maxwidth;
+    int maxheight;
+    int numframes;
+    int paloffset;
+    float beamlength;
+    void *cachespot;
+    mspriteframedesc_t frames[1];
+} msprite_t;
+
 typedef enum
 {
 	mod_brush, 

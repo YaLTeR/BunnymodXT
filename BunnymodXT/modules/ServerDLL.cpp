@@ -3222,9 +3222,9 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Duck)
 		float *velocity = reinterpret_cast<float*>(pmove + offVelocity);
 
 		if ((*onground != -1) && (cmd->buttons & IN_USE)) {
-			velocity[0] *= 0.3f;
-			velocity[1] *= 0.3f;
-			velocity[2] *= 0.3f;
+			velocity[0] *= HL1_SLOWDOWN_PLAYER_BY_USE;
+			velocity[1] *= HL1_SLOWDOWN_PLAYER_BY_USE;
+			velocity[2] *= HL1_SLOWDOWN_PLAYER_BY_USE;
 		}
 	}
 }

@@ -76,6 +76,7 @@ using std::ptrdiff_t;
 #include "HLSDK/engine/cmd.h"
 #include "HLSDK/engine/delta.h"
 #include "HLSDK/engine/render.h"
+#include "HLSDK/engine/parsefunc.h"
 #include "HLSDK/pm_shared/pm_movevars.h"
 
 #include "HLSDK/engine/usermsg.h"

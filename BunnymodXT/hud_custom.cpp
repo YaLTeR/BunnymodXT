@@ -865,13 +865,12 @@ namespace CustomHud
 
 				if (strstr(classname, "func_door") != NULL)
 				{
-					// https://github.com/ValveSoftware/halflife/blob/master/dlls/doors.h#L27-L28
-					if (ent->v.spawnflags & 256)
+					if (ent->v.spawnflags & SF_DOOR_USE_ONLY)
 						out << "Usable: Yes" << '\n';
 					else
 						out << "Usable: No" << '\n';
 
-					if (ent->v.spawnflags & 512)
+					if (ent->v.spawnflags & SF_DOOR_NOMONSTERS)
 						out << "Monsters: Can't open" << '\n';
 					else
 						out << "Monsters: Can open" << '\n';

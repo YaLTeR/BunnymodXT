@@ -56,6 +56,7 @@ using std::ptrdiff_t;
 
 #include "HLSDK/dlls/extdll.h"
 #include "HLSDK/dlls/cbase.h"
+#include "HLSDK/dlls/doors.h"
 #include "HLSDK/cl_dll/wrect.h"
 #include "HLSDK/cl_dll/hud.h"
 #include "HLSDK/common/ref_params.h"

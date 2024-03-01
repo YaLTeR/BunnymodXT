@@ -73,8 +73,9 @@ using std::ptrdiff_t;
 #include "HLSDK/common/engine_launcher_api.h"
 #include "HLSDK/engine/studio.h"
 #include "HLSDK/engine/cmd.h"
-#include "HLSDK/pm_shared/pm_movevars.h"
 #include "HLSDK/engine/delta.h"
+#include "HLSDK/engine/render.h"
+#include "HLSDK/pm_shared/pm_movevars.h"
 
 typedef int(*pfnUserMsgHook)(const char *pszName, int iSize, void *pbuf);
 #include "HLSDK/engine/cdll_int.h"

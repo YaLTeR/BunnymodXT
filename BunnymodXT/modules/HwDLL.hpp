@@ -88,15 +88,6 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 	HOOK_DECL(void, __cdecl, LoadThisDll, const char* szDllFilename)
 
-	struct cmdbuf_t
-	{
-		char *name;
-		unsigned flags;
-		char *data;
-		unsigned maxsize;
-		unsigned cursize;
-	};
-
 	#ifdef HLSDK10_BUILD
 	struct server_static_t
 	{
@@ -596,7 +587,7 @@ protected:
 	void **ppmove;
 	client_t **host_client;
 	char *sv_areanodes;
-	cmdbuf_t *cmd_text;
+	sizebuf_t *cmd_text;
 	double *host_frametime;
 	int *demorecording;
 	int *demoplayback;

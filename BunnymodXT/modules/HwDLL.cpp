@@ -957,7 +957,7 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find sv_areanodes.\n");
 
-		cmd_text = reinterpret_cast<cmdbuf_t*>(MemUtils::GetSymbolAddress(m_Handle, "cmd_text"));
+		cmd_text = reinterpret_cast<sizebuf_t*>(MemUtils::GetSymbolAddress(m_Handle, "cmd_text"));
 		if (cmd_text)
 			EngineDevMsg("[hw dll] Found cmd_text at %p.\n", cmd_text);
 		else
@@ -1540,16 +1540,16 @@ void HwDLL::FindStuff()
 				{
 				case 0: // HL-SteamPipe-8183
 				case 3: // HL-SteamPipe-8308
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
+					cmd_text = reinterpret_cast<sizebuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
 					break;
 				case 1: // HL-SteamPipe
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 11) - offsetof(cmdbuf_t, cursize));
+					cmd_text = reinterpret_cast<sizebuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 11) - offsetof(sizebuf_t, cursize));
 					break;
 				case 2: // HL-NGHL
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 2) - offsetof(cmdbuf_t, cursize));
+					cmd_text = reinterpret_cast<sizebuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 2) - offsetof(sizebuf_t, cursize));
 					break;
 				case 4: // CoF-5936
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 21) - offsetof(cmdbuf_t, cursize));
+					cmd_text = reinterpret_cast<sizebuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 21) - offsetof(sizebuf_t, cursize));
 					break;
 				}
 			});

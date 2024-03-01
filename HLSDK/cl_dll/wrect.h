@@ -7,6 +7,9 @@
 
 #if !defined( WRECTH )
 #define WRECTH
+#ifdef _WIN32
+#pragma once
+#endif
 
 typedef struct rect_s
 {

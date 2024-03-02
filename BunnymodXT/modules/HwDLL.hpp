@@ -371,7 +371,7 @@ public:
 
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
-	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};
+	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"sw.so", L"hl.exe" }) {};
 	HwDLL(const HwDLL&);
 	void operator=(const HwDLL&);
 

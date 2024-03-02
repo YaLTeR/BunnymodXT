@@ -17,6 +17,12 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/archives/binary.hpp>
 
+/*
+	ATTENTION!
+	ALWAYS ADD SAVE NEW DATA TYPES AT THE END OF THE DATA!
+	SO YOU WILL NOT BROKE COMPATIBILITY WITH PARSING OLD DEMOS!
+*/
+
 namespace RuntimeData
 {
 	namespace

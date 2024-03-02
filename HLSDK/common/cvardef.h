@@ -32,6 +32,9 @@ typedef struct cvar_s
 {
 	char	*name;
 	char	*string;
+
+	// Align of structure is exactly the same as in the Quake code and latest GoldSrc engine up to this point.
+
 	int		flags;
 	float	value;
 	struct cvar_s *next;

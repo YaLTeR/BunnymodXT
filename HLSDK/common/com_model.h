@@ -152,6 +152,8 @@ typedef struct texture_s
 	struct texture_s *alternate_anims;	// bmodels in frame 1 use these
 	unsigned	offsets[MIPLEVELS];		// four mip maps stored
 
+	// Align of structure is exactly the same as in the Quake code and latest GoldSrc engine up to this point.
+
 #ifdef SOFTWARE_BUILD
 	unsigned	paloffset;
 #else
@@ -280,6 +282,8 @@ struct msurface_s
 									  // animated lights.
 	color24		*samples;
 	
+	// Align of structure is exactly the same as in the Quake code and latest GoldSrc engine up to this point.
+
 	decal_t		*pdecals;
 };
 #else
@@ -314,6 +318,9 @@ struct msurface_s
 	qboolean	cached_dlight;			// true if dynamic light in cache
 
 	color24         *samples;               // note: this is the actual lightmap data for this surface
+
+	// Align of structure is exactly the same as in the Quake code and latest GoldSrc engine up to this point.
+
 	decal_t         *pdecals;
 };
 #endif

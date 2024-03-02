@@ -7254,7 +7254,6 @@ HLStrafe::TraceResult HwDLL::UnsafePlayerTrace(const float start[3], const float
 	auto oldhull = *usehull;
 	*usehull = static_cast<int>(hull);
 
-	const int PM_NORMAL = 0x00000000;
 	auto pmtr = ORIG_PM_PlayerTrace(start, end, PM_NORMAL, -1);
 
 	*usehull = oldhull;

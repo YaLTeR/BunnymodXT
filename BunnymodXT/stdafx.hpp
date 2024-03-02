@@ -79,6 +79,7 @@ using std::ptrdiff_t;
 #include "HLSDK/engine/parsefunc.h"
 #include "HLSDK/engine/states.h"
 #include "HLSDK/pm_shared/pm_movevars.h"
+#include "HLSDK/pm_shared/pm_defs.h"
 
 #include "HLSDK/engine/usermsg.h"
 #include "HLSDK/engine/cdll_int.h"

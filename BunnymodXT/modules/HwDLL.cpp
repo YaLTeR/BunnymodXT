@@ -3793,7 +3793,6 @@ struct HwDLL::Cmd_BXT_Get_SteamID_From_Demo
 			int player = cl.pEngfuncs->GetLocalPlayer()->index;
 			player_info_s* player_info = hw.pEngStudio->PlayerInfo(player - 1);
 
-			const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 			const unsigned long STEAMID32 = static_cast<unsigned long>(player_info->m_nSteamID);
 			const steamid_t STEAMID32_TO_64 = STEAMID64_CONST + STEAMID32;
 

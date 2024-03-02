@@ -39,6 +39,13 @@ typedef struct cmd_function_s
 	int						flags;
 } cmd_function_t;
 
+typedef enum
+{
+	src_client,		// came in over a net connection as a clc_stringcmd
+					// host_client will be valid during this state.
+	src_command		// from the command buffer
+} cmd_source_t;
+
 typedef struct sizebuf_t
 {
 	char *buffername; // char *

@@ -31,6 +31,8 @@ constexpr float HL1_SLOWDOWN_PLAYER_BY_USE = 0.3f; // https://github.com/ValveSo
 // - Custom constants
 // Constants whose values you set depending on your code and preferences.
 
+constexpr int kRenderFxTrigger = 241; // DO NOT CHANGE THIS VALUE OR YOU WILL BROKE COMPATIBILITY WITH READING SHOW TRIGGERS DATA IN OLD DEMOS! @ Smiley
+
 #define BIG_MAP_SIZE 32768 // +-BIG_MAP_SIZE so 64k x 64k map should have value of 32k
 #define BIG_MAP_MAX_VELOCITY 8192 // +-8192
 

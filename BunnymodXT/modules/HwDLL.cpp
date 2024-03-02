@@ -3082,6 +3082,41 @@ struct HwDLL::Cmd_BXT_CH_Get_Velocity
 	}
 };
 
+#ifdef BXT_DEBUG_DUMP
+struct HwDLL::Cmd_BXT_Debug_Dump
+{
+	USAGE("Usage: bxt_debug_dump <type>\n");
+
+	static void handler(const char *name)
+	{
+		if (!strcmp(name, "sizeof"))
+		{
+			auto &hw = HwDLL::GetInstance();
+			std::ostringstream ss;
+			ss << "edict_t: " << sizeof(edict_t) << "\n"
+			<< "entvars_t: " << sizeof(entvars_t) << "\n"
+			<< "globalvars_t: " << sizeof(globalvars_t) << "\n"
+			<< "entity_state_t: " << sizeof(entity_state_t) << "\n"
+			<< "cl_entity_t: " << sizeof(cl_entity_t) << "\n"
+			<< "cvar_t: " << sizeof(cvar_t) << "\n"
+			<< "cmd_function_t: " << sizeof(cmd_function_t) << "\n"
+			<< "msprite_t: " << sizeof(msprite_t) << "\n"
+			<< "model_t: " << sizeof(model_t) << "\n"
+			<< "msurface_t: " << sizeof(msurface_t) << "\n"
+			<< "clientdata_t: " << sizeof(clientdata_t) << "\n"
+			<< "usercmd_t: " << sizeof(usercmd_t) << "\n"
+			<< "playermove_t: " << sizeof(playermove_t) << "\n"
+			<< "physent_t: " << sizeof(physent_t) << "\n"
+			<< "pmtrace_t: " << sizeof(pmtrace_t) << "\n"
+			<< "movevars_t: " << sizeof(movevars_t) << "\n"
+			<< "player_info_t: " << sizeof(player_info_t) << "\n"
+			<< "refdef_t: " << sizeof(refdef_t) << "\n";
+			hw.ORIG_Con_Printf(ss.str().c_str());
+		}
+	}
+};
+#endif
+
 struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 {
 	USAGE("Usage:\n"
@@ -5747,6 +5782,10 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		CmdFuncs::AddCommand("noclip", ORIG_Host_Noclip_f);
 		CmdFuncs::AddCommand("notarget", ORIG_Host_Notarget_f);
 	}
+
+	#ifdef BXT_DEBUG_DUMP
+	wrapper::Add<Cmd_BXT_Debug_Dump, Handler<const char *>>("bxt_debug_dump");
+	#endif
 
 	wrapper::Add<Cmd_BXT_TAS_LoadScript, Handler<const char *>>("bxt_tas_loadscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportScript, Handler<const char *>>("bxt_tas_exportscript");

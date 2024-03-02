@@ -35,6 +35,8 @@ typedef struct
 	vec3_t		vieworg;
 	vec3_t		viewangles;
 
+	// Align of structure is exactly the same as in the Quake code and latest GoldSrc engine up to this point.
+
 	color24		ambientlight;
 
 	qboolean	onlyClientDraws;

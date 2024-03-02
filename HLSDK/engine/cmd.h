@@ -33,6 +33,9 @@ typedef struct cmd_function_s
 	struct cmd_function_s	*next;
 	char					*name;
 	xcommand_t				function;
+
+	// Align of structure is exactly the same as in the Quake code and latest GoldSrc engine up to this point.
+
 	int						flags;
 } cmd_function_t;
 

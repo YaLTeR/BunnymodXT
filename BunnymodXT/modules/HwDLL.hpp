@@ -423,6 +423,10 @@ protected:
 
 	void FindStuff();
 
+	#ifdef BXT_DEBUG_DUMP
+	struct Cmd_BXT_Debug_Dump;
+	#endif
+
 	struct Cmd_BXT_TAS_LoadScript;
 	struct Cmd_BXT_TAS_ExportScript;
 	struct Cmd_BXT_TAS_ExportLibTASInput;

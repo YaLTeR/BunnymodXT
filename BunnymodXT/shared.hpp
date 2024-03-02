@@ -38,3 +38,6 @@ constexpr float HL1_SLOWDOWN_PLAYER_BY_USE = 0.3f; // https://github.com/ValveSo
 // Used to track individual enabled BXT features from demo.
 
 #define	BXT_FLAGS_BIG_MAP (1<<0)
+
+// - Other constants
+const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000

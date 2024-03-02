@@ -3015,9 +3015,9 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerCamera__FollowTarget, void*, thi
 		auto oldSpawnFlags = pev->spawnflags;
 		if (CVars::bxt_cof_allow_skipping_all_cutscenes.GetBool())
 		{
-			if (pev->spawnflags & 1024) // "Unskippable" flag from .fgd
+			if (pev->spawnflags & COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE) // "Unskippable" flag from .fgd
 			{
-				pev->spawnflags &= ~1024;
+				pev->spawnflags &= ~COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE;
 				changed = true;
 			}
 		}

@@ -16,14 +16,20 @@
 
 Class Hierachy
 
-CBaseEntity
-	CBaseDelay
-		CBaseToggle
-			CBaseItem
-			CBaseMonster
-				CBaseCycler
-				CBasePlayer
-				CBaseGroup
+CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBasePlayerItem -> CBasePlayerWeapon
+CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseButton
+CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseDoor
+CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CBasePlayer
+CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CMonsterMaker
+CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CSquadMonster
+CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CTalkMonster
+CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseTrigger -> CChangeLevel
+CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CMultiManager
+CBaseEntity -> CBaseDelay -> CBreakable -> CPushable
+CBaseEntity -> CBaseDelay -> CTriggerRelay
+CBaseEntity -> CBasePlayerAmmo
+CBaseEntity -> CPointEntity -> CEnvGlobal
+CBaseEntity -> CPointEntity -> CMultiSource
 */
 
 #ifndef CBASE_H

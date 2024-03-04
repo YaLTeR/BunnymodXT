@@ -4785,19 +4785,16 @@ struct HwDLL::Cmd_BXT_Give
 
 	static void handler(const char *classname)
 	{
-		if (CVars::sv_cheats.GetBool())
-		{
-			auto &hw_dll = HwDLL::GetInstance();
-			auto &sv_dll = ServerDLL::GetInstance();
+		auto &hw_dll = HwDLL::GetInstance();
+		auto &sv_dll = ServerDLL::GetInstance();
 
-			void* classPtr = (*hw_dll.sv_player)->pvPrivateData;
-			uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-			entvars_t *pev = *reinterpret_cast<entvars_t**>(thisAddr + 4);
+		void* classPtr = (*hw_dll.sv_player)->pvPrivateData;
+		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
+		entvars_t *pev = *reinterpret_cast<entvars_t**>(thisAddr + 4);
 
-			int iszItem = sv_dll.pEngfuncs->pfnAllocString(classname); // Make a copy of the classname
+		int iszItem = sv_dll.pEngfuncs->pfnAllocString(classname); // Make a copy of the classname
 
-			sv_dll.GiveNamedItem(pev, iszItem);
-		}
+		sv_dll.GiveNamedItem(pev, iszItem);
 	}
 };
 
@@ -5668,7 +5665,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Server_Send_Command, Handler<const char*>>("_bxt_tas_server_send_command");
 	wrapper::Add<Cmd_BXT_TAS_Client_Load_Received_Script, Handler<>>("_bxt_tas_client_load_received_script");
 
-	wrapper::Add<Cmd_BXT_Give, Handler<const char*>>("bxt_give");
+	wrapper::AddCheat<Cmd_BXT_Give, Handler<const char*>>("bxt_give");
 
 	wrapper::Add<Cmd_BXT_Show_Bullets_Clear, Handler<>>("bxt_show_bullets_clear");
 	wrapper::Add<Cmd_BXT_Show_Bullets_Enemy_Clear, Handler<>>("bxt_show_bullets_enemy_clear");

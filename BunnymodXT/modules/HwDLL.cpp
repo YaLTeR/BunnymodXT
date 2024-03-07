@@ -820,7 +820,10 @@ void HwDLL::Clear()
 	ch_hook = false;
 	ch_hook_point = Vector();
 	ch_checkpoint_is_set = false;
-	ch_checkpoint_is_duck = false;
+	ch_checkpoint_origin.clear();
+	ch_checkpoint_vel.clear();
+	ch_checkpoint_viewangles.clear();
+	ch_checkpoint_is_duck.clear();
 
 
 	tas_editor_mode = TASEditorMode::DISABLED;
@@ -3319,7 +3322,7 @@ void HwDLL::ChHookPlayer() {
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 {
-	NO_USAGE();
+	USAGE("Usage: bxt_ch_checkpoint_create\n Creates the checkpoint.\n");
 
 	static void handler()
 	{
@@ -3345,19 +3348,25 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 				return;
 		}
 
+		hw.ch_checkpoint_total++;
+		hw.ch_checkpoint_origin.emplace_back(pl->v.origin);
+		hw.ch_checkpoint_vel.emplace_back(pl->v.velocity);
+		hw.ch_checkpoint_viewangles.emplace_back(pl->v.v_angle);
+		hw.ch_checkpoint_is_duck.emplace_back(is_duck);
 		hw.ch_checkpoint_is_set = true;
-		hw.ch_checkpoint_origin = pl->v.origin;
-		hw.ch_checkpoint_vel = pl->v.velocity;
-		hw.ch_checkpoint_viewangles = pl->v.v_angle;
-		hw.ch_checkpoint_is_duck = is_duck;
 	}
 };
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 {
-	NO_USAGE();
+	USAGE("Usage: bxt_ch_checkpoint_goto [id]\n Go to the last checkpoint.\n If an id is given, go to the checkpoint with the given id.\n");
 
 	static void handler()
+	{
+		handler(HwDLL::GetInstance().ch_checkpoint_total);
+	}
+
+	static void handler(unsigned long id)
 	{
 		auto &hw = HwDLL::GetInstance();
 
@@ -3371,9 +3380,37 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 		if (!pl)
 			return;
 
-		cl.pEngfuncs->SetViewAngles(hw.ch_checkpoint_viewangles);
+		if (hw.ch_checkpoint_is_duck.empty())
+		{
+			hw.ORIG_Con_Printf("There are no checkpoints!\n");
+			return;
+		}
 
-		if (hw.ch_checkpoint_is_duck) {
+		Vector cp_origin;
+		Vector cp_vel;
+		Vector cp_viewangles;
+		bool cp_is_duck;
+
+		if ((id > 0) && (hw.ch_checkpoint_is_duck.size() >= id)) // If ID is more than 0 and the size of std::vector is not less than the specified ID, we are fine!
+		{
+			cp_origin = hw.ch_checkpoint_origin[id - 1];
+			cp_vel = hw.ch_checkpoint_vel[id - 1];
+			cp_viewangles = hw.ch_checkpoint_viewangles[id - 1];
+			cp_is_duck = hw.ch_checkpoint_is_duck[id - 1];
+			hw.ch_checkpoint_current = id;
+		}
+		else // Otherwise we will use the last element
+		{
+			cp_origin = hw.ch_checkpoint_origin.back();
+			cp_vel = hw.ch_checkpoint_vel.back();
+			cp_viewangles = hw.ch_checkpoint_viewangles.back();
+			cp_is_duck = hw.ch_checkpoint_is_duck.back();
+			hw.ch_checkpoint_current = hw.ch_checkpoint_total;
+		}
+
+		cl.pEngfuncs->SetViewAngles(cp_viewangles);
+
+		if (cp_is_duck) {
 			pl->v.flags |= FL_DUCKING;
 			pl->v.button |= IN_DUCK;
 		}
@@ -3385,14 +3422,169 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 		pl->v.punchangle = Vector(0, 0, 0);
 
 		if (CVars::bxt_ch_checkpoint_with_vel.GetBool())
-			pl->v.velocity = hw.ch_checkpoint_vel;
+			pl->v.velocity = cp_vel;
 
-		pl->v.origin = hw.ch_checkpoint_origin;
+		pl->v.origin = cp_origin;
 
 		// for CS 1.6 stamina reset
-		static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
-		if (is_cstrike) 
+		if (hw.is_cstrike_dir) 
 			pl->v.fuser2 = 0;
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_CheckPoint_Current
+{
+	USAGE("Usage: bxt_ch_checkpoint_current\n Go to current checkpoint.\n");
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		HwDLL::Cmd_BXT_CH_CheckPoint_GoTo::handler(hw.ch_checkpoint_current);
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_CheckPoint_Reset
+{
+	USAGE("Usage: bxt_ch_checkpoint_reset\n Reset the checkpoints.\n");
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		hw.ch_checkpoint_origin.clear();
+		hw.ch_checkpoint_vel.clear();
+		hw.ch_checkpoint_viewangles.clear();
+		hw.ch_checkpoint_is_duck.clear();
+		hw.ch_checkpoint_total = hw.ch_checkpoint_current = 0;
+		hw.ORIG_Con_Printf("Cleared the checkpoints.\n");
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove
+{
+	USAGE("Usage: bxt_ch_checkpoint_remove [id]\n Deletes the last checkpoint.\n If an id is given, deletes the checkpoint with the given id.\n");
+
+	static void handler()
+	{
+		handler(HwDLL::GetInstance().ch_checkpoint_total);
+	}
+
+	static void handler(unsigned long id)
+	{
+		auto &hw = HwDLL::GetInstance();
+		if (!hw.ch_checkpoint_is_duck.empty())
+		{
+			if ((id < 1) || (hw.ch_checkpoint_is_duck.size() < id)) // If ID is less than 1 or greater than the size of std::vector, use the last element!
+				id = hw.ch_checkpoint_total;
+
+			if (hw.ch_checkpoint_current == id) // Is ID equal to the current checkpoint? Well, then decrement both counters!
+			{
+				hw.ch_checkpoint_current--;
+				hw.ch_checkpoint_total--;
+			}
+			else // Otherwise we will decrement only total counter
+			{
+				hw.ch_checkpoint_total--;
+			}
+
+			hw.ch_checkpoint_origin.erase(hw.ch_checkpoint_origin.begin() + (id - 1));
+			hw.ch_checkpoint_vel.erase(hw.ch_checkpoint_vel.begin() + (id - 1));
+			hw.ch_checkpoint_viewangles.erase(hw.ch_checkpoint_viewangles.begin() + (id - 1));
+			hw.ch_checkpoint_is_duck.erase(hw.ch_checkpoint_is_duck.begin() + (id - 1));
+			hw.ORIG_Con_Printf("Removed the checkpoint with %lu id.\n", id);
+		}
+		else
+		{
+			hw.ORIG_Con_Printf("There are no checkpoints!\n");
+		}
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove_After
+{
+	USAGE("Usage: bxt_ch_checkpoint_remove_after [id]\n Deletes the checkpoints following id.\n");
+
+	static void handler(unsigned long id)
+	{
+		auto &hw = HwDLL::GetInstance();
+		if (!hw.ch_checkpoint_is_duck.empty())
+		{
+			if ((id > 0) && (hw.ch_checkpoint_is_duck.size() > id)) // If ID is more than 0 and the size of std::vector is greater than the specified ID, we are fine!
+			{
+				if (hw.ch_checkpoint_current > id) // If the current checkpoint has an ID greater than the specified one, then we equate it to the specified one.
+					hw.ch_checkpoint_current = id;
+
+				hw.ch_checkpoint_origin.erase(hw.ch_checkpoint_origin.begin() + id, hw.ch_checkpoint_origin.end());
+				hw.ch_checkpoint_vel.erase(hw.ch_checkpoint_vel.begin() + id, hw.ch_checkpoint_vel.end());
+				hw.ch_checkpoint_viewangles.erase(hw.ch_checkpoint_viewangles.begin() + id, hw.ch_checkpoint_viewangles.end());
+				hw.ch_checkpoint_is_duck.erase(hw.ch_checkpoint_is_duck.begin() + id, hw.ch_checkpoint_is_duck.end());
+				hw.ch_checkpoint_total = id;
+				hw.ORIG_Con_Printf("Removed the checkpoints following %lu id.\n", id);
+			}
+			else
+			{
+				hw.ORIG_Con_Printf("ID is invalid!\n");
+			}
+		}
+		else
+		{
+			hw.ORIG_Con_Printf("There are no checkpoints!\n");
+		}
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_CheckPoint_Next
+{
+	USAGE("Usage: bxt_ch_checkpoint_next\n Go to the next checkpoint.\n");
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		if (!hw.ch_checkpoint_is_duck.empty())
+		{
+			if (hw.ch_checkpoint_total > hw.ch_checkpoint_current) // Don't increment if next element is greater than total count
+			{
+				hw.ch_checkpoint_current++;
+				HwDLL::Cmd_BXT_CH_CheckPoint_GoTo::handler(hw.ch_checkpoint_current);
+			}
+			else
+			{
+				hw.ORIG_Con_Printf("Not possible go to the next checkpoint, since the current checkpoint is the last one!\n");
+			}
+		}
+		else
+		{
+			hw.ORIG_Con_Printf("There are no checkpoints!\n");
+		}
+	}
+};
+
+struct HwDLL::Cmd_BXT_CH_CheckPoint_Prev
+{
+	USAGE("Usage: bxt_ch_checkpoint_prev\n Go to the previous checkpoint\n");
+
+	static void handler()
+	{
+		auto &hw = HwDLL::GetInstance();
+
+		if (!hw.ch_checkpoint_is_duck.empty())
+		{
+			if (hw.ch_checkpoint_current > 1) // Don't decrement if we have less than 2 elements
+			{
+				hw.ch_checkpoint_current--;
+				HwDLL::Cmd_BXT_CH_CheckPoint_GoTo::handler(hw.ch_checkpoint_current);
+			}
+			else
+			{
+				hw.ORIG_Con_Printf("Not possible go to the previous checkpoint, since the current checkpoint is the first one!\n");
+			}
+		}
+		else
+		{
+			hw.ORIG_Con_Printf("There are no checkpoints!\n");
+		}
 	}
 };
 
@@ -5567,7 +5759,13 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_Plus_BXT_CH_Hook, Handler<>, Handler<int>>("+bxt_ch_hook");
 	wrapper::AddCheat<Cmd_Minus_BXT_CH_Hook, Handler<>, Handler<int>>("-bxt_ch_hook");
 	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Create, Handler<>>("bxt_ch_checkpoint_create");
-	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_GoTo, Handler<>>("bxt_ch_checkpoint_goto");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_GoTo, Handler<>, Handler<unsigned long>>("bxt_ch_checkpoint_goto");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Remove, Handler<>, Handler<unsigned long>>("bxt_ch_checkpoint_remove");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Remove_After, Handler<unsigned long>>("bxt_ch_checkpoint_remove_after");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Reset, Handler<>>("bxt_ch_checkpoint_reset");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Next, Handler<>>("bxt_ch_checkpoint_next");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Prev, Handler<>>("bxt_ch_checkpoint_prev");
+	wrapper::AddCheat<Cmd_BXT_CH_CheckPoint_Current, Handler<>>("bxt_ch_checkpoint_current");
 	wrapper::Add<
 		Cmd_BXT_Set_Angles,
 		Handler<float, float>,
@@ -6577,19 +6775,18 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Bounce = CVars::sv_bounce.GetFloat();
 	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
 
-	static bool is_paranoia = cl.DoesGameDirMatch("paranoia");
-	static bool is_cstrike = cl.DoesGameDirMatch("cstrike");
-	static bool is_czero = cl.DoesGameDirMatch("czero");
-	static bool is_tfc = cl.DoesGameDirMatch("tfc");
+	static bool is_paranoia_dir = cl.DoesGameDirMatch("paranoia");
+	is_tfc_dir = cl.DoesGameDirMatch("tfc");
+	is_cstrike_dir = cl.DoesGameDirMatch("cstrike") || cl.DoesGameDirMatch("czero");
 
-	if (is_paranoia)
+	if (is_paranoia_dir)
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
 	else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in other mods (example: CS 1.6)
 	else
 		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
 
-	if (is_cstrike || is_czero) {
+	if (is_cstrike_dir) {
 		vars.BhopcapMultiplier = 0.8f;
 		vars.BhopcapMaxspeedScale = 1.2f;
 		vars.HasStamina = !CVars::bxt_remove_stamina.GetBool();
@@ -6599,7 +6796,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 		vars.BhopcapMaxspeedScale = 1.7f;
 	}
 
-	if (!is_cstrike && !is_czero && !is_tfc)
+	if (!is_cstrike_dir && !is_tfc_dir)
 		vars.UseSlow = true;
 
 	if (svs->maxclients >= 1) {

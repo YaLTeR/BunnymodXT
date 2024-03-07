@@ -528,6 +528,24 @@ namespace CustomHud
 		}
 	}
 
+	static void DrawCheckpoint(float flTime)
+	{
+		if (CVars::bxt_hud_checkpoint.GetBool())
+		{
+			int x, y;
+			GetPosition(CVars::bxt_hud_checkpoint_offset, CVars::bxt_hud_checkpoint_anchor, &x, &y, 150, (si.iCharHeight * 3) + 1);
+
+			std::ostringstream out;
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+
+			auto &hw = HwDLL::GetInstance();
+			out << "Current / total checkpoints: " << hw.ch_checkpoint_current << " " << hw.ch_checkpoint_total << "\n";
+
+			DrawMultilineString(x, y, out.str());
+		}
+	}
+
 	static void DrawOrigin(float flTime)
 	{
 		if (CVars::bxt_hud_origin.GetBool())
@@ -1738,6 +1756,7 @@ namespace CustomHud
 		GetAccurateInfo();
 
 		DrawQuickGauss(flTime);
+		DrawCheckpoint(flTime);
 		DrawHealth(flTime);
 		DrawArmor(flTime);
 		DrawWaterlevel(flTime);

@@ -346,6 +346,9 @@ public:
 
 	int lastRecordedHealth;
 
+	bool is_cstrike_dir = false;
+	bool is_tfc_dir = false;
+
 	globalvars_t *ppGlobals;
 	engine_studio_api_t *pEngStudio;
 	engine_api_t *pEngineAPI;
@@ -536,6 +539,12 @@ protected:
 	struct Cmd_BXT_CH_CheckPoint_Create;
 	struct Cmd_BXT_CH_CheckPoint_GoTo;
 	struct Cmd_BXT_Enable_Big_Map;
+	struct Cmd_BXT_CH_CheckPoint_Remove;
+	struct Cmd_BXT_CH_CheckPoint_Remove_After;
+	struct Cmd_BXT_CH_CheckPoint_Reset;
+	struct Cmd_BXT_CH_CheckPoint_Next;
+	struct Cmd_BXT_CH_CheckPoint_Prev;
+	struct Cmd_BXT_CH_CheckPoint_Current;
 
 	void RegisterCVarsAndCommandsIfNeeded();
 	void InsertCommands();
@@ -779,12 +788,16 @@ protected:
 	void ChHookPlayer();
 	float ch_hook_hp_before;
 
+public:
+	unsigned int ch_checkpoint_current = 0;
+	unsigned int ch_checkpoint_total = 0;
+
 protected:
 	bool ch_checkpoint_is_set;
-	Vector ch_checkpoint_origin;
-	Vector ch_checkpoint_vel;
-	Vector ch_checkpoint_viewangles;
-	bool ch_checkpoint_is_duck;
+	std::vector<Vector> ch_checkpoint_origin;
+	std::vector<Vector> ch_checkpoint_vel;
+	std::vector<Vector> ch_checkpoint_viewangles;
+	std::vector<bool> ch_checkpoint_is_duck;
 
 public:
 	bool is_big_map = false;

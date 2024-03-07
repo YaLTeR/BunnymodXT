@@ -3274,12 +3274,8 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__Jump, void*, thisptr)
 	insideCBasePlayerJump = false;
 }
 
-int ServerDLL::IsInWorld(Vector origin, Vector velocity, int map_size) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.cpp#L706
-{
-	// Copy pasted from HLSDK, but origin value is changed
-	// Maybe in the future we should also make velocity check to use sv_maxvelocity value,
-	// but I don't see any side effect when going beyond it ever
-
+int ServerDLL::IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.cpp#L706
+{	
 	// position
 	if (origin.x >= map_size) return 0;
 	if (origin.y >= map_size) return 0;
@@ -3288,12 +3284,12 @@ int ServerDLL::IsInWorld(Vector origin, Vector velocity, int map_size) // https:
 	if (origin.y <= -map_size) return 0;
 	if (origin.z <= -map_size) return 0;
 	// speed
-	if (velocity.x >= 2000) return 0;
-	if (velocity.y >= 2000) return 0;
-	if (velocity.z >= 2000) return 0;
-	if (velocity.x <= -2000) return 0;
-	if (velocity.y <= -2000) return 0;
-	if (velocity.z <= -2000) return 0;
+	if (velocity.x >= map_max_velocity) return 0;
+	if (velocity.y >= map_max_velocity) return 0;
+	if (velocity.z >= map_max_velocity) return 0;
+	if (velocity.x <= -map_max_velocity) return 0;
+	if (velocity.y <= -map_max_velocity) return 0;
+	if (velocity.z <= -map_max_velocity) return 0;
 
 	return 1;
 }
@@ -3304,7 +3300,7 @@ HOOK_DEF_1(ServerDLL, int, __fastcall, CBaseEntity__IsInWorld, void*, thisptr)
 	{
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev)
-			return IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE);
+			return IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE, BIG_MAP_MAX_VELOCITY);
 	}
 
 	return ORIG_CBaseEntity__IsInWorld(thisptr);
@@ -3316,7 +3312,7 @@ HOOK_DEF_1(ServerDLL, int, __cdecl, CBaseEntity__IsInWorld_Linux, void*, thisptr
 	{
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev)
-			return IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE);
+			return IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE, BIG_MAP_MAX_VELOCITY);
 	}
 
 	return ORIG_CBaseEntity__IsInWorld_Linux(thisptr);

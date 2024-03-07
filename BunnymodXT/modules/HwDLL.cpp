@@ -5441,6 +5441,13 @@ void ChangeDeltaForBigMap(delta_s *delta)
 				curr_description->significant_bits = (int) std::ceil(std::log(BIG_MAP_SIZE * 2.0f * curr_description->premultiply) / std::log(2));
 			}
 		}
+
+		if (!strncmp(curr_description->fieldName, "velocity", 8) || !strncmp(curr_description->fieldName, "basevelocity", 12)) {
+			auto curr_max_vel = (1 << curr_description->significant_bits) / curr_description->premultiply;
+			if (curr_max_vel < BIG_MAP_MAX_VELOCITY) {
+				curr_description->significant_bits = (int) std::ceil(std::log(BIG_MAP_MAX_VELOCITY * 2.0f * curr_description->premultiply) / std::log(2));
+			}
+		}
 	}
 }
 

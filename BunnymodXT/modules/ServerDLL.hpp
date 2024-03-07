@@ -108,7 +108,7 @@ public:
 
 	void SetStamina(bool makeItZero);
 
-	int IsInWorld(Vector origin, Vector velocity, int map_size);
+	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity);
 
 	bool is_cof = false; // Cry of Fear-specific
 	ptrdiff_t offm_fStamina; // Cry of Fear-specific

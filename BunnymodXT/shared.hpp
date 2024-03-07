@@ -20,5 +20,6 @@ enum class EventType : unsigned char {
 #define BUNNYSPLIT_PIPE_NAME "BunnymodXT-BunnySplit"
 
 #define BIG_MAP_SIZE 32768 // +-BIG_MAP_SIZE so 64k x 64k map should have value of 32k
+#define BIG_MAP_MAX_VELOCITY 8192 // +-8192
 
 #define	BXT_FLAGS_BIG_MAP (1<<0)

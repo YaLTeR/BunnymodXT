@@ -15,6 +15,8 @@
 #include "../splits.hpp"
 #include "../shared.hpp"
 
+#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
+
 // Linux hooks.
 #ifndef _WIN32
 extern "C" void __cdecl _Z8CmdStartPK7edict_sPK9usercmd_sj(const edict_t* player, const usercmd_t* cmd, unsigned int random_seed)
@@ -249,9 +251,6 @@ void ServerDLL::Clear()
 	ORIG_CTriggerVolume__Spawn_Linux = nullptr;
 	ORIG_CBasePlayer__ForceClientDllUpdate = nullptr;
 	ORIG_CBasePlayer__ForceClientDllUpdate_Linux = nullptr;
-	ORIG_CBasePlayer__GiveNamedItem = nullptr;
-	ORIG_CBasePlayer__GiveNamedItem_Linux = nullptr;
-	ORIG_CoF_CBasePlayer__GiveNamedItem = nullptr;
 	ORIG_ClientCommand = nullptr;
 	ORIG_CPushable__Move = nullptr;
 	ORIG_CPushable__Move_Linux = nullptr;
@@ -269,6 +268,8 @@ void ServerDLL::Clear()
 	ORIG_CTriggerCamera__FollowTarget = nullptr;
 	ORIG_PM_CheckStuck = nullptr;
 	ORIG_CBaseEntity__FireBullets = nullptr;
+	ORIG_DispatchSpawn = nullptr;
+	ORIG_DispatchTouch = nullptr;
 	ORIG_CBaseEntity__FireBullets_Linux = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer_Linux = nullptr;
@@ -815,8 +816,6 @@ void ServerDLL::FindStuff()
 	auto fPM_CheckStuck = FindFunctionAsync(ORIG_PM_CheckStuck, "PM_CheckStuck", patterns::server::PM_CheckStuck);
 	auto fPM_Duck = FindFunctionAsync(ORIG_PM_Duck, "PM_Duck", patterns::server::PM_Duck);
 	auto fPM_UnDuck = FindAsync(ORIG_PM_UnDuck, patterns::server::PM_UnDuck);
-	auto fCBasePlayer__GiveNamedItem = FindAsync(ORIG_CBasePlayer__GiveNamedItem, patterns::server::CBasePlayer__GiveNamedItem);
-	auto fCoF_CBasePlayer__GiveNamedItem = FindAsync(ORIG_CoF_CBasePlayer__GiveNamedItem, patterns::server::CoF_CBasePlayer__GiveNamedItem);
 	auto fShiftMonsters = FindAsync(ORIG_ShiftMonsters, patterns::server::ShiftMonsters);
 	auto fCBasePlayer__ViewPunch = FindAsync(ORIG_CBasePlayer__ViewPunch, patterns::server::CBasePlayer__ViewPunch);
 	auto fCBasePlayer__Jump = FindAsync(ORIG_CBasePlayer__Jump, patterns::server::CBasePlayer__Jump);
@@ -1073,29 +1072,6 @@ void ServerDLL::FindStuff()
 		});
 
 	{
-		auto pattern = fCBasePlayer__GiveNamedItem.get();
-		if (ORIG_CBasePlayer__GiveNamedItem) {
-			EngineDevMsg("[server dll] Found CBasePlayer::GiveNamedItem at %p (using the %s pattern).\n", ORIG_CBasePlayer__GiveNamedItem, pattern->name());
-		} else {
-			ORIG_CBasePlayer__GiveNamedItem_Linux = reinterpret_cast<_CBasePlayer__GiveNamedItem_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer13GiveNamedItemEPKc"));
-			if (ORIG_CBasePlayer__GiveNamedItem_Linux) {
-				EngineDevMsg("[server dll] Found CBasePlayer::GiveNamedItem [Linux] at %p.\n", ORIG_CBasePlayer__GiveNamedItem_Linux);
-			} else {
-				EngineDevWarning("[server dll] Could not find CBasePlayer::GiveNamedItem.\n");
-			}
-		}
-	}
-
-	{
-		auto pattern = fCoF_CBasePlayer__GiveNamedItem.get();
-		if (ORIG_CoF_CBasePlayer__GiveNamedItem) {
-			EngineDevMsg("[server dll] Found CBasePlayer::GiveNamedItem [CoF] at %p (using the %s pattern).\n", ORIG_CoF_CBasePlayer__GiveNamedItem, pattern->name());
-		} else {
-			EngineDevWarning("[server dll] Could not find CBasePlayer::GiveNamedItem [CoF].\n");
-		}
-	}
-
-	{
 		auto pattern = fCPushable__Move.get();
 		if (ORIG_CPushable__Move) {
 			if (pattern == patterns::server::CPushable__Move.cend())
@@ -1264,12 +1240,16 @@ void ServerDLL::FindStuff()
 		}
 	}
 
+	ORIG_DispatchSpawn = reinterpret_cast<_DispatchSpawn>(MemUtils::GetSymbolAddress(m_Handle, "_Z13DispatchSpawnP7edict_s"));
+	ORIG_DispatchTouch = reinterpret_cast<_DispatchTouch>(MemUtils::GetSymbolAddress(m_Handle, "_Z13DispatchTouchP7edict_sS0_"));
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
 	ORIG_AddToFullPack = reinterpret_cast<_AddToFullPack>(MemUtils::GetSymbolAddress(m_Handle, "_Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh"));
 	ORIG_ClientCommand = reinterpret_cast<_ClientCommand>(MemUtils::GetSymbolAddress(m_Handle, "_Z13ClientCommandP7edict_s"));
 	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move"));
 
-	if (ORIG_ClientCommand && ORIG_PM_Move && ORIG_AddToFullPack && ORIG_CmdStart) {
+	if (ORIG_DispatchSpawn && ORIG_DispatchTouch && ORIG_ClientCommand && ORIG_PM_Move && ORIG_AddToFullPack && ORIG_CmdStart) {
+		EngineDevMsg("[server dll] Found DispatchSpawn at %p.\n", ORIG_DispatchSpawn);
+		EngineDevMsg("[server dll] Found DispatchTouch at %p.\n", ORIG_DispatchTouch);
 		EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 		EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
 		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
@@ -1280,7 +1260,11 @@ void ServerDLL::FindStuff()
 			DLL_FUNCTIONS funcs;
 			if (ORIG_GetEntityAPI(&funcs, INTERFACE_VERSION)) {
 				// Gets our hooked addresses on Windows.
+				ORIG_DispatchSpawn = funcs.pfnSpawn;
+				ORIG_DispatchTouch = funcs.pfnTouch;
 				ORIG_ClientCommand = funcs.pfnClientCommand;
+				EngineDevMsg("[server dll] Found DispatchSpawn at %p.\n", ORIG_DispatchSpawn);
+				EngineDevMsg("[server dll] Found DispatchTouch at %p.\n", ORIG_DispatchTouch);
 				EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 				if (INTERFACE_VERSION == 140)
 				{
@@ -1942,7 +1926,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	if (CVars::bxt_force_duck.GetBool())
 		cmd->buttons |= IN_DUCK;
 
-	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 	{
 		ALERT(at_console, "-- BXT TAS Log Start --\n");
@@ -1968,7 +1951,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 		ALERT(at_console, "New onground: %d; new usehull: %d\n", *groundEntity, *reinterpret_cast<int*>(pmove + 0xBC));
 		ALERT(at_console, "-- BXT TAS Log End --\n");
 	}
-	#undef ALERT
 
 	if (hwDLL.IsTASLogging()) {
 		LogPlayerMove(false, pmove);
@@ -2115,7 +2097,6 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 		hwDLL.logWriter.SetArmor(hwDLL.GetPlayerEdict()->v.armorvalue);
 	}
 
-	#define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 	{
 		ALERT(at_console, "-- CmdStart Start --\n");
@@ -2127,7 +2108,6 @@ HOOK_DEF_3(ServerDLL, void, __cdecl, CmdStart, const edict_t*, player, const use
 		ALERT(at_console, "Paused: %s\n", (hwDLL.IsPaused() ? "true" : "false"));
 		ALERT(at_console, "-- CmdStart End --\n");
 	}
-	#undef ALERT
 
 	return ORIG_CmdStart(player, cmd, seed);
 }
@@ -2603,7 +2583,8 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 	void* classPtr = pEntity->v.pContainingEntity->pvPrivateData;
 	uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 
-	if ((std::strcmp(cmd, "fullupdate") == 0) && offm_iClientFOV && offm_rgAmmoLast) {
+	if ((std::strcmp(cmd, "fullupdate") == 0) && offm_iClientFOV && offm_rgAmmoLast) 
+	{
 		int* m_iClientFOV = reinterpret_cast<int*>(thisAddr + offm_iClientFOV);
 		int* m_rgAmmoLast = reinterpret_cast<int*>(thisAddr + offm_rgAmmoLast);
 
@@ -2626,19 +2607,30 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 			ORIG_CBasePlayer__ForceClientDllUpdate_Linux(classPtr);
 		#endif
 	}
-	else if ((std::strcmp(cmd, "give") == 0) && (ORIG_CBasePlayer__GiveNamedItem || ORIG_CBasePlayer__GiveNamedItem_Linux || ORIG_CoF_CBasePlayer__GiveNamedItem) && CVars::sv_cheats.GetBool()) {
-		int iszItem = pEngfuncs->pfnAllocString(pEngfuncs->pfnCmd_Argv(1)); // Make a copy of the classname
-		#ifdef _WIN32
-			if (is_cof)
-				ORIG_CoF_CBasePlayer__GiveNamedItem(classPtr, 0, HwDLL::GetInstance().GetString(iszItem), false);
-			else
-				ORIG_CBasePlayer__GiveNamedItem(classPtr, 0, HwDLL::GetInstance().GetString(iszItem));
-		#else
-			ORIG_CBasePlayer__GiveNamedItem_Linux(classPtr, HwDLL::GetInstance().GetString(iszItem));
-		#endif
-	} else {
+	else
+	{
 		ORIG_ClientCommand(pEntity);
 		return;
+	}
+}
+
+void ServerDLL::GiveNamedItem(entvars_t *pev, int istr)
+{
+	auto &hw = HwDLL::GetInstance();
+
+	if (pEngfuncs && hw.ppGlobals && ORIG_DispatchSpawn && ORIG_DispatchTouch)
+	{
+		edict_t *pent = pEngfuncs->pfnCreateNamedEntity(istr);
+		if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent))
+		{
+			ALERT (at_console, "NULL Ent in GiveNamedItem!\n");
+			return;
+		}
+		pent->v.origin = pev->origin;
+		pent->v.spawnflags |= SF_NORESPAWN;
+
+		ORIG_DispatchSpawn(pent);
+		ORIG_DispatchTouch(pent, pev->pContainingEntity);
 	}
 }
 
@@ -3317,3 +3309,5 @@ HOOK_DEF_1(ServerDLL, int, __cdecl, CBaseEntity__IsInWorld_Linux, void*, thisptr
 
 	return ORIG_CBaseEntity__IsInWorld_Linux(thisptr);
 }
+
+#undef ALERT

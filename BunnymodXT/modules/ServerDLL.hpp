@@ -113,6 +113,8 @@ public:
 	bool is_cof = false; // Cry of Fear-specific
 	ptrdiff_t offm_fStamina; // Cry of Fear-specific
 
+	void GiveNamedItem(entvars_t *pev, int istr);
+
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};
 	ServerDLL(const ServerDLL&);
@@ -132,12 +134,11 @@ protected:
 	_PM_Ladder ORIG_PM_Ladder;
 	typedef int(__cdecl *_CChangeLevel__InTransitionVolume)(void *pEntity, char *pVolumeName);
 	_CChangeLevel__InTransitionVolume ORIG_CChangeLevel__InTransitionVolume;
-	typedef void(__fastcall *_CBasePlayer__GiveNamedItem)(void *thisptr, int edx, const char *pszName);
-	_CBasePlayer__GiveNamedItem ORIG_CBasePlayer__GiveNamedItem;
-	typedef void(__cdecl *_CBasePlayer__GiveNamedItem_Linux)(void *thisptr, const char *pszName);
-	_CBasePlayer__GiveNamedItem_Linux ORIG_CBasePlayer__GiveNamedItem_Linux;
-	typedef void(__fastcall *_CoF_CBasePlayer__GiveNamedItem)(void *thisptr, int edx, const char *pszName, bool deletewhendropped);
-	_CoF_CBasePlayer__GiveNamedItem ORIG_CoF_CBasePlayer__GiveNamedItem;
+
+	typedef int(__cdecl *_DispatchSpawn)(edict_t *pent);
+	_DispatchSpawn ORIG_DispatchSpawn;
+	typedef void(__cdecl *_DispatchTouch)(edict_t *pentTouched, edict_t *pentOther);
+	_DispatchTouch ORIG_DispatchTouch;
 
 	typedef bool (__fastcall *_IsPlayer)(void *thisptr);
 	typedef void (__fastcall *_Center)(void *thisptr, int edx, Vector *center);

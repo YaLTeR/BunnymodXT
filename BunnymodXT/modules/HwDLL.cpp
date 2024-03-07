@@ -3095,10 +3095,9 @@ struct HwDLL::Cmd_BXT_CH_Get_Velocity
 	}
 };
 
-#ifdef BXT_DEBUG_DUMP
 struct HwDLL::Cmd_BXT_Debug_Dump
 {
-	USAGE("Usage: bxt_debug_dump <type>\n");
+	USAGE("Usage: _bxt_debug_dump <type>\n");
 
 	static void handler(const char *name)
 	{
@@ -3128,7 +3127,6 @@ struct HwDLL::Cmd_BXT_Debug_Dump
 		}
 	}
 };
-#endif
 
 struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 {
@@ -5796,9 +5794,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		CmdFuncs::AddCommand("notarget", ORIG_Host_Notarget_f);
 	}
 
-	#ifdef BXT_DEBUG_DUMP
-	wrapper::Add<Cmd_BXT_Debug_Dump, Handler<const char *>>("bxt_debug_dump");
-	#endif
+	wrapper::Add<Cmd_BXT_Debug_Dump, Handler<const char *>>("_bxt_debug_dump");
 
 	wrapper::Add<Cmd_BXT_TAS_LoadScript, Handler<const char *>>("bxt_tas_loadscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportScript, Handler<const char *>>("bxt_tas_exportscript");

@@ -3322,7 +3322,7 @@ void HwDLL::ChHookPlayer() {
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 {
-	USAGE("Usage: bxt_ch_checkpoint_create\nCreates the checkpoint.\n");
+	USAGE("Usage: bxt_ch_checkpoint_create\n Creates the checkpoint.\n");
 
 	static void handler()
 	{
@@ -3434,7 +3434,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Current
 {
-	USAGE("Usage: bxt_ch_checkpoint_current\nGo to current checkpoint.\n");
+	USAGE("Usage: bxt_ch_checkpoint_current\n Go to current checkpoint.\n");
 
 	static void handler()
 	{
@@ -3446,7 +3446,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Current
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Reset
 {
-	USAGE("Usage: bxt_ch_checkpoint_reset\nReset the checkpoints.\n");
+	USAGE("Usage: bxt_ch_checkpoint_reset\n Reset the checkpoints.\n");
 
 	static void handler()
 	{
@@ -3503,7 +3503,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove_After
 {
-	USAGE("Usage: bxt_ch_checkpoint_remove_after [id]\nDeletes the checkpoints following id.\n");
+	USAGE("Usage: bxt_ch_checkpoint_remove_after [id]\n Deletes the checkpoints following id.\n");
 
 	static void handler(unsigned long id)
 	{
@@ -3536,7 +3536,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove_After
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Next
 {
-	USAGE("Usage: bxt_ch_checkpoint_next\nGo to the next checkpoint.\n");
+	USAGE("Usage: bxt_ch_checkpoint_next\n Go to the next checkpoint.\n");
 
 	static void handler()
 	{
@@ -3563,7 +3563,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Next
 
 struct HwDLL::Cmd_BXT_CH_CheckPoint_Prev
 {
-	USAGE("Usage: bxt_ch_checkpoint_prev\nGo to the previous checkpoint\n");
+	USAGE("Usage: bxt_ch_checkpoint_prev\n Go to the previous checkpoint\n");
 
 	static void handler()
 	{
@@ -3578,7 +3578,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Prev
 			}
 			else
 			{
-				hw.ORIG_Con_Printf("Not possible go to the previous checkpoint, since there are less than two of them!\n");
+				hw.ORIG_Con_Printf("Not possible go to the previous checkpoint, since the current checkpoint is the first one!\n");
 			}
 		}
 		else

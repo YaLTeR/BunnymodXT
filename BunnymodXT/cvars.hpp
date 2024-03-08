@@ -234,7 +234,9 @@
 	X(bxt_splits_end_on_last_split, "0") \
 	X(bxt_ch_hook_speed, "869") \
 	X(bxt_ch_checkpoint_with_vel, "1") \
-	X(bxt_ch_checkpoint_onground_only, "0")
+	X(bxt_ch_checkpoint_onground_only, "0") \
+	X(bxt_ch_fix_sticky_slide, "0") \
+	X(bxt_ch_fix_sticky_slide_offset, "0.01")
 
 class CVarWrapper
 {

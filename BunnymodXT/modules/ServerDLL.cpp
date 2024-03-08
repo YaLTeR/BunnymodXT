@@ -2816,20 +2816,19 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int,
 	int *movetype = reinterpret_cast<int*>(pmove + offMoveType);
 
 	auto start_origin = Vector(origin);
+	auto ch_noclip_vel = CVars::bxt_ch_noclip_speed.GetFloat();
 
-	if (*movetype == MOVETYPE_NOCLIP) {
-		auto new_maxspeed = CVars::bxt_ch_noclip_speed.GetFloat();
-
+	if (*movetype == MOVETYPE_NOCLIP && ch_noclip_vel != 0.f) {
 		ch_noclip_vel_prev_maxspeed = *maxspeed;
 		ch_noclip_vel_prev_clientmaxspeed = *clientmaxspeed;
 
 		if (*clientmaxspeed == 0.0f)
 			*clientmaxspeed = *maxspeed; 
 
-		cmd->forwardmove = cmd->forwardmove / *clientmaxspeed * new_maxspeed;
-		cmd->sidemove = cmd->sidemove / *clientmaxspeed * new_maxspeed;
-		cmd->upmove = cmd->upmove / *clientmaxspeed * new_maxspeed;
-		*maxspeed = *clientmaxspeed = new_maxspeed;
+		cmd->forwardmove = cmd->forwardmove / *clientmaxspeed * ch_noclip_vel;
+		cmd->sidemove = cmd->sidemove / *clientmaxspeed * ch_noclip_vel;
+		cmd->upmove = cmd->upmove / *clientmaxspeed * ch_noclip_vel;
+		*maxspeed = *clientmaxspeed = ch_noclip_vel;
 	}
 
 	ORIG_PM_Move(ppmove, server);

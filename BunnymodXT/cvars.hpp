@@ -237,7 +237,7 @@
 	X(bxt_ch_checkpoint_onground_only, "0") \
 	X(bxt_ch_fix_sticky_slide, "0") \
 	X(bxt_ch_fix_sticky_slide_offset, "0.01") \
-	X(bxt_ch_noclip_speed, "1000")
+	X(bxt_ch_noclip_speed, "0")
 
 class CVarWrapper
 {

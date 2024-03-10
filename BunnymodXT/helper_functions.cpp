@@ -13,17 +13,6 @@ namespace helper_functions
 		#endif
 	}
 
-	std::string add_os_library_extension(std::string str)
-	{
-		#ifdef _WIN32
-		std::string extension = ".dll";
-		#else
-		std::string extension = ".so";
-		#endif
-
-		return str += extension;
-	}
-
 	const char *swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start)
 	{
 		com_fixslashes(new_lib_path);
@@ -31,7 +20,7 @@ namespace helper_functions
 		const std::string filename = current_lib_path;
 		const auto index = filename.find(start);
 		static std::string new_path;
-		new_path = filename.substr(0, index) + add_os_library_extension(new_lib_path).c_str();
+		new_path = filename.substr(0, index) + new_lib_path + DLL_EXTENSION;
 
 		return new_path.c_str();
 	}

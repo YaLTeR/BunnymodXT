@@ -8074,7 +8074,7 @@ HOOK_DEF_0(HwDLL, qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 
 HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 {
-	if (boost::ends_with(szDllFilename, helper_functions::add_os_library_extension("metamod").c_str()))
+	if (boost::ends_with(szDllFilename, "metamod" DLL_EXTENSION))
 	{
 		EngineDevMsg("[hw dll] AmxModX detected.\n");
 

@@ -23,6 +23,7 @@ CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CB
 CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CMonsterMaker
 CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CSquadMonster
 CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CTalkMonster
+CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBasePlatTrain -> CFuncTrain
 CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseTrigger -> CChangeLevel
 CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CMultiManager
 CBaseEntity -> CBaseDelay -> CBreakable -> CPushable

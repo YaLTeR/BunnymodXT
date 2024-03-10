@@ -1,8 +1,5 @@
 #if !defined( STATES_H )
 #define STATES_H
-#ifdef _WIN32
-#pragma once
-#endif
 
 typedef enum 
 {

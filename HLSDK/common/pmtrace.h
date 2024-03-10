@@ -15,9 +15,6 @@
 
 #if !defined( PMTRACEH )
 #define PMTRACEH
-#ifdef _WIN32
-#pragma once
-#endif
 
 typedef struct
 {

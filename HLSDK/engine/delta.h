@@ -1,8 +1,5 @@
 #ifndef DELTA_H
 #define DELTA_H
-#ifdef _WIN32
-#pragma once
-#endif
 
 typedef void (*encoder_t)(struct delta_s *, byte *, byte *);
 

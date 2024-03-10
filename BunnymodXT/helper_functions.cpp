@@ -1,5 +1,6 @@
 #include "stdafx.hpp"
 #include "modules.hpp"
+#include "helper_functions.hpp"
 
 namespace helper_functions
 {
@@ -7,9 +8,9 @@ namespace helper_functions
 	{
 		// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
 		#ifdef _WIN32
-		str = std::regex_replace(str, std::regex("/"), "\\");
+		std::replace(str.begin(), str.end(), '/', '\\');
 		#else
-		str = std::regex_replace(str, std::regex("\\"), "/");
+		std::replace(str.begin(), str.end(), '\\', '/');
 		#endif
 	}
 

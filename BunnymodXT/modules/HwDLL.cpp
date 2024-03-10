@@ -8076,7 +8076,7 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 {
 	if (boost::ends_with(szDllFilename, "metamod" DLL_EXTENSION))
 	{
-		EngineDevMsg("[hw dll] AmxModX detected.\n");
+		EngineDevMsg("[hw dll] Metamod detected.\n");
 
 		static bool is_cstrike = ClientDLL::GetInstance().DoesGameDirMatch("cstrike");
 		if (is_cstrike)
@@ -8090,11 +8090,10 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 			EngineDevMsg("[hw dll] Old path to game library: %s\n", szDllFilename);
 			szDllFilename = helper_functions::swap_lib(szDllFilename, cs_lib, "addons");
 			EngineDevMsg("[hw dll] New path to game library: %s\n", szDllFilename);
-			EngineDevMsg("[hw dll] AmxModX is disabled.\n");
 		}
 		else
 		{
-			const std::string error_msg = "[hw dll] Cannot disable AmdModX for current mod. Edit <mod>/liblist.gam to continue.\n";
+			const std::string error_msg = "[hw dll] Cannot disable AmxModX for current mod. Edit <mod>/liblist.gam to continue.\n";
 			helper_functions::crash_if_failed(error_msg);
 		}
 

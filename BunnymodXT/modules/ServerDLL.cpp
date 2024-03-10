@@ -2599,7 +2599,25 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 
 HOOK_DEF_1(ServerDLL, void, __cdecl, PlayerPostThink, edict_t*, pEntity)
 {
+	bool noclip_set = false;
+	if (pEntity && pEntity->pvPrivateData)
+	{
+		// In Cry of Fear, the developers reset the noclip in the CBasePlayer::PostThink function as a hidden anti-cheat measure.
+		// We will set this ourselves after the original function completes if noclip was actually enabled before.
+		if (CVars::sv_cheats.GetBool())
+		{
+			if (is_cof)
+			{
+				if (pEntity->v.movetype == MOVETYPE_NOCLIP)
+					noclip_set = true;
+			}
+		}
+	}
+
 	ORIG_PlayerPostThink(pEntity);
+
+	if (noclip_set)
+		pEntity->v.movetype = MOVETYPE_NOCLIP;
 }
 
 void ServerDLL::GiveNamedItem(entvars_t *pev, int istr)

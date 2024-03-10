@@ -64,6 +64,11 @@ extern "C" void __cdecl _Z13ClientCommandP7edict_s(edict_t* pEntity)
 	return ServerDLL::HOOKED_ClientCommand(pEntity);
 }
 
+extern "C" void __cdecl _Z15PlayerPostThinkP7edict_s(edict_t* pEntity)
+{
+	return ServerDLL::HOOKED_PlayerPostThink(pEntity);
+}
+
 extern "C" void __cdecl _ZN6CGraph9InitGraphEv(void* thisptr)
 {
 	return ServerDLL::HOOKED_CGraph__InitGraph_Linux(thisptr);
@@ -143,6 +148,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_AddToFullPack, HOOKED_AddToFullPack,
 			ORIG_CTriggerVolume__Spawn, HOOKED_CTriggerVolume__Spawn,
 			ORIG_ClientCommand, HOOKED_ClientCommand,
+			ORIG_PlayerPostThink, HOOKED_PlayerPostThink,
 			ORIG_CPushable__Move, HOOKED_CPushable__Move,
 			ORIG_CBasePlayer__TakeDamage, HOOKED_CBasePlayer__TakeDamage,
 			ORIG_CGraph__InitGraph, HOOKED_CGraph__InitGraph,
@@ -197,6 +203,7 @@ void ServerDLL::Unhook()
 			ORIG_AddToFullPack,
 			ORIG_CTriggerVolume__Spawn,
 			ORIG_ClientCommand,
+			ORIG_PlayerPostThink,
 			ORIG_CPushable__Move,
 			ORIG_CBasePlayer__TakeDamage,
 			ORIG_CGraph__InitGraph,
@@ -260,6 +267,7 @@ void ServerDLL::Clear()
 	ORIG_CBasePlayer__ForceClientDllUpdate = nullptr;
 	ORIG_CBasePlayer__ForceClientDllUpdate_Linux = nullptr;
 	ORIG_ClientCommand = nullptr;
+	ORIG_PlayerPostThink = nullptr;
 	ORIG_CPushable__Move = nullptr;
 	ORIG_CPushable__Move_Linux = nullptr;
 	ORIG_CBasePlayer__TakeDamage = nullptr;
@@ -1218,16 +1226,19 @@ void ServerDLL::FindStuff()
 
 	ORIG_DispatchSpawn = reinterpret_cast<_DispatchSpawn>(MemUtils::GetSymbolAddress(m_Handle, "_Z13DispatchSpawnP7edict_s"));
 	ORIG_DispatchTouch = reinterpret_cast<_DispatchTouch>(MemUtils::GetSymbolAddress(m_Handle, "_Z13DispatchTouchP7edict_sS0_"));
+	ORIG_ClientCommand = reinterpret_cast<_ClientCommand>(MemUtils::GetSymbolAddress(m_Handle, "_Z13ClientCommandP7edict_s"));
+	ORIG_PlayerPostThink = reinterpret_cast<_PlayerPostThink>(MemUtils::GetSymbolAddress(m_Handle, "_Z15PlayerPostThinkP7edict_s"));
+	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move"));
+	ORIG_AddToFullPack = reinterpret_cast<_AddToFullPack>(MemUtils::GetSymbolAddress(m_Handle, "_Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh"));
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
 	ORIG_CmdEnd = reinterpret_cast<_CmdEnd>(MemUtils::GetSymbolAddress(m_Handle, "_Z6CmdEndPK7edict_s"));
-	ORIG_AddToFullPack = reinterpret_cast<_AddToFullPack>(MemUtils::GetSymbolAddress(m_Handle, "_Z13AddToFullPackP14entity_state_siP7edict_sS2_iiPh"));
-	ORIG_ClientCommand = reinterpret_cast<_ClientCommand>(MemUtils::GetSymbolAddress(m_Handle, "_Z13ClientCommandP7edict_s"));
-	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move"));
 
-	if (ORIG_DispatchSpawn && ORIG_DispatchTouch && ORIG_ClientCommand && ORIG_PM_Move && ORIG_AddToFullPack && ORIG_CmdStart && ORIG_CmdEnd) {
+	if (ORIG_DispatchSpawn && ORIG_DispatchTouch && ORIG_ClientCommand && ORIG_PlayerPostThink && 
+		ORIG_PM_Move && ORIG_AddToFullPack && ORIG_CmdStart && ORIG_CmdEnd) {
 		EngineDevMsg("[server dll] Found DispatchSpawn at %p.\n", ORIG_DispatchSpawn);
 		EngineDevMsg("[server dll] Found DispatchTouch at %p.\n", ORIG_DispatchTouch);
 		EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
+		EngineDevMsg("[server dll] Found PlayerPostThink at %p.\n", ORIG_PlayerPostThink);
 		EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
 		EngineDevMsg("[server dll] Found AddToFullPack at %p.\n", ORIG_AddToFullPack);
 		EngineDevMsg("[server dll] Found CmdStart at %p.\n", ORIG_CmdStart);
@@ -1241,9 +1252,11 @@ void ServerDLL::FindStuff()
 				ORIG_DispatchSpawn = funcs.pfnSpawn;
 				ORIG_DispatchTouch = funcs.pfnTouch;
 				ORIG_ClientCommand = funcs.pfnClientCommand;
+				ORIG_PlayerPostThink = funcs.pfnPlayerPostThink;
 				EngineDevMsg("[server dll] Found DispatchSpawn at %p.\n", ORIG_DispatchSpawn);
 				EngineDevMsg("[server dll] Found DispatchTouch at %p.\n", ORIG_DispatchTouch);
 				EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
+				EngineDevMsg("[server dll] Found PlayerPostThink at %p.\n", ORIG_PlayerPostThink);
 				if (INTERFACE_VERSION == 140)
 				{
 					ORIG_PM_Move = funcs.pfnPM_Move;
@@ -2611,6 +2624,11 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, ClientCommand, edict_t*, pEntity)
 		ORIG_ClientCommand(pEntity);
 		return;
 	}
+}
+
+HOOK_DEF_1(ServerDLL, void, __cdecl, PlayerPostThink, edict_t*, pEntity)
+{
+	ORIG_PlayerPostThink(pEntity);
 }
 
 void ServerDLL::GiveNamedItem(entvars_t *pev, int istr)

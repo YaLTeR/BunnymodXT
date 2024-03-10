@@ -35,6 +35,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CTriggerVolume__Spawn, void* thisptr)
 	HOOK_DECL(void, __cdecl, CTriggerVolume__Spawn_Linux, void* thisptr)
 	HOOK_DECL(void, __cdecl, ClientCommand, edict_t* pEntity)
+	HOOK_DECL(void, __cdecl, PlayerPostThink, edict_t* pEntity)
 	HOOK_DECL(void, __fastcall, CPushable__Move, void* thisptr, int edx, void* pOther, int push)
 	HOOK_DECL(void, __cdecl, CPushable__Move_Linux, void* thisptr, void* pOther, int push)
 	HOOK_DECL(int, __fastcall, CBasePlayer__TakeDamage, void* thisptr, int edx, entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType)

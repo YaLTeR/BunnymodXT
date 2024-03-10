@@ -1,8 +1,5 @@
 #if !defined( PARSEFUNC_H )
 #define PARSEFUNC_H
-#ifdef _WIN32
-#pragma once
-#endif
 
 typedef struct clc_func_s
 {

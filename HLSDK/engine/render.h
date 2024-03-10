@@ -1,8 +1,5 @@
 #if !defined( RENDERH )
 #define RENDERH
-#ifdef _WIN32
-#pragma once
-#endif
 
 typedef struct vrect_s
 {

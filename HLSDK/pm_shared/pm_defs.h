@@ -15,7 +15,6 @@
 // pm_defs.h
 #if !defined( PM_DEFSH )
 #define PM_DEFSH
-#pragma once
 
 #define	MAX_PHYSENTS 600 		  // Must have room for all entities in the world.
 #define MAX_MOVEENTS 64

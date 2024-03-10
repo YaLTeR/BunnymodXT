@@ -1,9 +1,6 @@
 // keydefs.h
 #ifndef KEYDEFS_H
 #define KEYDEFS_H
-#ifdef _WIN32
-#pragma once
-#endif
 
 typedef struct keyname_s
 {

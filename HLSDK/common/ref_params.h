@@ -14,9 +14,6 @@
 ****/
 #if !defined( REF_PARAMSH )
 #define REF_PARAMSH
-#ifdef _WIN32
-#pragma once
-#endif
 
 typedef struct ref_params_s
 {

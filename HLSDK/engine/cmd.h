@@ -22,9 +22,6 @@ not apropriate.
 
 #if !defined( CMDH )
 #define CMDH
-#ifdef _WIN32
-#pragma once
-#endif
 
 typedef void (*xcommand_t) (void);
 

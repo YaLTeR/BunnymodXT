@@ -34,9 +34,6 @@ CBaseEntity -> CPointEntity -> CMultiSource
 
 #ifndef CBASE_H
 #define CBASE_H
-#ifdef _WIN32
-#pragma once
-#endif
 
 // These are caps bits to indicate what an object's capabilities (currently used for save/restore and level transitions)
 const unsigned FCAP_CUSTOMSAVE = 0x00000001;

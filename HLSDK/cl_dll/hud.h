@@ -22,9 +22,6 @@
 
 #if !defined ( HUDH )
 #define HUDH
-#ifdef _WIN32
-#pragma once
-#endif
 
 #define RGB_YELLOWISH 0x00FFA000 //255,160,0
 #define RGB_REDISH 0x00FF1010 //255,16,16

@@ -15,10 +15,14 @@ namespace helper_functions
 
 	const char *swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start)
 	{
-		com_fixslashes(new_lib_path);
-
 		const std::string filename = current_lib_path;
 		const auto index = filename.find(start);
+
+		if (index == std::string::npos)
+			return current_lib_path;
+
+		com_fixslashes(new_lib_path);
+
 		static std::string new_path;
 		new_path = filename.substr(0, index) + new_lib_path + DLL_EXTENSION;
 

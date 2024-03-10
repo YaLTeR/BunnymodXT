@@ -37,8 +37,6 @@ namespace helper_functions
 		MessageBox(NULL, str.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
 		#endif
 
-		ClientDLL::GetInstance().pEngfuncs = nullptr;
-		ServerDLL::GetInstance().pEngfuncs = nullptr;
-		HwDLL::GetInstance().ppGlobals = nullptr;
+		std::exit(1);
 	}
 };

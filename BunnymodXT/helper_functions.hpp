@@ -4,8 +4,10 @@ namespace helper_functions
 {
 	#ifdef _WIN32
 	#define DLL_EXTENSION ".dll"
+	#define PATH_SLASH '\\'
 	#else
 	#define DLL_EXTENSION ".so"
+	#define PATH_SLASH '/'
 	#endif
 
 	void com_fixslashes(std::string &str);

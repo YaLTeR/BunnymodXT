@@ -19,7 +19,8 @@ namespace helper_functions
 		const std::string filename = current_lib_path;
 		const auto index = filename.find(start);
 
-		if (index == std::string::npos)
+		if ((index == std::string::npos) || // String not found in current path.
+			((index > 0) && (filename[index - 1] != PATH_SLASH))) // Previous character from the specified start is not a slash.
 			return current_lib_path;
 
 		com_fixslashes(new_lib_path);

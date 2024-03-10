@@ -561,7 +561,6 @@ public:
 
 	bool ducktap;
 	edict_t **sv_player;
-	qboolean *noclip_anglehack;
 protected:
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);

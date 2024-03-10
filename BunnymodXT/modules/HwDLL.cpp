@@ -774,7 +774,6 @@ void HwDLL::Clear()
 	gLoadSky = nullptr;
 	pHost_FilterTime_FPS_Cap_Byte = 0;
 	cofSaveHack = nullptr;
-	noclip_anglehack = nullptr;
 	frametime_remainder = nullptr;
 	pstudiohdr = nullptr;
 	scr_fov_value = nullptr;
@@ -2008,26 +2007,6 @@ void HwDLL::FindStuff()
 				}
 			});
 
-		void *CL_RegisterResources;
-		auto fCL_RegisterResources = FindAsync(
-			CL_RegisterResources,
-			patterns::engine::CL_RegisterResources,
-			[&](auto pattern) {
-				switch (pattern - patterns::engine::CL_RegisterResources.cbegin())
-				{
-				default:
-				case 0: // CoF-5936.
-					noclip_anglehack = *reinterpret_cast<qboolean**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 216);
-					break;
-				case 1: // Steampipe.
-					noclip_anglehack = *reinterpret_cast<qboolean**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 237);
-					break;
-				case 2: // 4554.
-					noclip_anglehack = *reinterpret_cast<qboolean**>(reinterpret_cast<uintptr_t>(CL_RegisterResources) + 204);
-					break;
-				}
-			});
-
 		void *SV_LookupDelta;
 		auto fSV_LookupDelta = FindAsync(
 			SV_LookupDelta,
@@ -2125,16 +2104,6 @@ void HwDLL::FindStuff()
 				EngineDevMsg("[hw dll] Found scr_fov_value at %p.\n", scr_fov_value);
 			} else {
 				EngineDevWarning("[hw dll] Could not find R_SetFrustum.\n");
-			}
-		}
-
-		{
-			auto pattern = fCL_RegisterResources.get();
-			if (CL_RegisterResources) {
-				EngineDevMsg("[hw dll] Found CL_RegisterResources at %p (using the %s pattern).\n", CL_RegisterResources, pattern->name());
-				EngineDevMsg("[hw dll] Found noclip_anglehack at %p.\n", noclip_anglehack);
-			} else {
-				EngineDevWarning("[hw dll] Could not find CL_RegisterResources.\n");
 			}
 		}
 

@@ -8075,6 +8075,7 @@ HOOK_DEF_0(HwDLL, qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 {
 	auto oldszDllFilename = szDllFilename;
+	std::string newszDllFilename;
 
 	if (boost::ends_with(szDllFilename, "metamod" DLL_EXTENSION))
 	{
@@ -8092,7 +8093,8 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 			#endif
 
 			EngineDevMsg("[hw dll] Old path to game library: %s\n", szDllFilename);
-			szDllFilename = helper_functions::swap_lib(szDllFilename, cs_lib, "addons").c_str();
+			newszDllFilename = helper_functions::swap_lib(szDllFilename, cs_lib, "addons");
+			szDllFilename = newszDllFilename.c_str();
 			EngineDevMsg("[hw dll] New path to game library: %s\n", szDllFilename);
 
 			if (!strcmp(szDllFilename, oldszDllFilename))

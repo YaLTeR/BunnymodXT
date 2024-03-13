@@ -14,7 +14,7 @@ namespace helper_functions
 		#endif
 	}
 
-	const char *swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start)
+	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start)
 	{
 		const std::string filename = current_lib_path;
 		const auto index = filename.find(start);
@@ -25,10 +25,9 @@ namespace helper_functions
 
 		com_fixslashes(new_lib_path);
 
-		static std::string new_path;
-		new_path = filename.substr(0, index) + new_lib_path + DLL_EXTENSION;
+		std::string new_path = filename.substr(0, index) + new_lib_path + DLL_EXTENSION;
 
-		return new_path.c_str();
+		return new_path;
 	}
 
 	void crash_if_failed(std::string str)

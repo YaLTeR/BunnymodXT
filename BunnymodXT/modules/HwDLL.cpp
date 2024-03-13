@@ -8092,7 +8092,7 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 			#endif
 
 			EngineDevMsg("[hw dll] Old path to game library: %s\n", szDllFilename);
-			szDllFilename = helper_functions::swap_lib(szDllFilename, cs_lib, "addons");
+			szDllFilename = helper_functions::swap_lib(szDllFilename, cs_lib, "addons").c_str();
 			EngineDevMsg("[hw dll] New path to game library: %s\n", szDllFilename);
 
 			if (!strcmp(szDllFilename, oldszDllFilename))

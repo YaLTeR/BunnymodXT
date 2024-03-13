@@ -46,7 +46,6 @@ typedef unsigned long long steamid_t;
 #include <vector>
 #include <unordered_map>
 #include <utility>
-#include <regex>
 
 using std::uintptr_t;
 using std::size_t;

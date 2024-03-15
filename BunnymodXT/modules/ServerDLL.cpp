@@ -3430,7 +3430,10 @@ void TriggerTpKeepsMomentumRestore(Vector prev_vel, Vector prev_view, Vector pre
 	}
 
 	if (CVars::bxt_ch_trigger_tp_keeps_momentum_viewangles.GetBool()) {
-		pev->fixangle = 0; // cannot change angle if it is 1
+		// In HLSDK, due to some inheritance stuffs, pevToucher's viewangles is changed differently.
+		// In and only in TeleportTouch, pev->fixangle is set to 1.
+		// If not set back to 0, we cannot set our viewangles, due to inheritance stuffs.
+		pev->fixangle = 0;
 		pev->v_angle = prev_view;
 		pev->angles = prev_angles;
 	}

@@ -45,6 +45,26 @@ namespace helper_functions
 		return static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
 	}
 
+	std::string get_movetype(int movetype)
+	{
+		switch (movetype)
+		{
+			case MOVETYPE_NONE:             return "MOVETYPE_NONE";
+			case MOVETYPE_WALK:             return "MOVETYPE_WALK";
+			case MOVETYPE_STEP:             return "MOVETYPE_STEP";
+			case MOVETYPE_FLY:              return "MOVETYPE_FLY";
+			case MOVETYPE_TOSS:             return "MOVETYPE_TOSS";
+			case MOVETYPE_PUSH:             return "MOVETYPE_PUSH";
+			case MOVETYPE_NOCLIP:           return "MOVETYPE_NOCLIP";
+			case MOVETYPE_FLYMISSILE:       return "MOVETYPE_FLYMISSILE";
+			case MOVETYPE_BOUNCE:           return "MOVETYPE_BOUNCE";
+			case MOVETYPE_BOUNCEMISSILE:    return "MOVETYPE_BOUNCEMISSILE";
+			case MOVETYPE_FOLLOW:           return "MOVETYPE_FOLLOW";
+			case MOVETYPE_PUSHSTEP:         return "MOVETYPE_PUSHSTEP";
+			default:                        return "Unknown";
+		}
+	}
+
 	std::string get_flags(int flags)
 	{
 		std::ostringstream out;

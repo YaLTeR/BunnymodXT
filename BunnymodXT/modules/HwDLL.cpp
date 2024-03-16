@@ -558,17 +558,11 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 				MB_OK | MB_ICONWARNING
 			);
 		#ifdef COF_BUILD
-		if (!is_cof_steam) {
-			ClientDLL::GetInstance().pEngfuncs = nullptr;
-			ServerDLL::GetInstance().pEngfuncs = nullptr;
-			MessageBox(NULL, "Loaded Bunnymod XT (CoF Steam version) in non-CoF game! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
-		}
+		if (!is_cof_steam)
+			helper_functions::crash_if_failed("Loaded Bunnymod XT (CoF Steam version) in non-CoF game! Download the right version!");
 		#else
-		if (is_cof_steam) {
-			ClientDLL::GetInstance().pEngfuncs = nullptr;
-			ServerDLL::GetInstance().pEngfuncs = nullptr;
-			MessageBox(NULL, "Loaded BunnymodXT (HL version) in CoF Steam! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
-		}
+		if (is_cof_steam)
+			helper_functions::crash_if_failed("Loaded BunnymodXT (HL version) in CoF Steam! Download the right version!");
 		#endif
 	#endif
 }
@@ -3793,14 +3787,13 @@ struct HwDLL::Cmd_BXT_Get_SteamID_From_Demo
 			int player = cl.pEngfuncs->GetLocalPlayer()->index;
 			player_info_s* player_info = hw.pEngStudio->PlayerInfo(player - 1);
 
-			const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 			const unsigned long STEAMID32 = static_cast<unsigned long>(player_info->m_nSteamID);
-			const steamid_t STEAMID32_TO_64 = STEAMID64_CONST + STEAMID32;
+			const steamid_t STEAMID32_TO_64 = helper_functions::get_steam_id_64(STEAMID32);
 
 			hw.ORIG_Con_Printf("SteamID32: %" PRIu64 "\n", STEAMID32);
 
 			std::ostringstream ss;
-			ss << "SteamID64: " << STEAMID32_TO_64 << "\n";
+			ss << "SteamID64: " << STEAMID32_TO_64 << "\n" << "SteamID: " << helper_functions::get_steam_id(STEAMID32) << "\n";
 			hw.ORIG_Con_Printf(ss.str().c_str());
 		}
 	}
@@ -8118,10 +8111,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 
 		if (fov != prev_calculated_fov)
 		{
-			float calculated_fov = static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
+			float calculated_fov = helper_functions::adjust_fov_for_widescreen(fov, def_aspect_ratio, our_aspect_ratio);
 			*scr_fov_value = std::clamp(calculated_fov, 10.0f, 150.0f);
 
-			// Engine does the clamp of FOV if less 10 or higher than 150
+			// Engine does the clamp of FOV if less 10 or higher than 150 in SCR_CalcRefdef function
 			// Although, it could be extended to 1 for min. value and 179 for max. value
 
 			prev_calculated_fov = calculated_fov;

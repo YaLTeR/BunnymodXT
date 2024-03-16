@@ -6,7 +6,6 @@ namespace helper_functions
 {
 	void com_fixslashes(std::string &str)
 	{
-		// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
 		#ifdef _WIN32
 		std::replace(str.begin(), str.end(), '/', '\\');
 		#else
@@ -44,5 +43,72 @@ namespace helper_functions
 	float adjust_fov_for_widescreen(float fov, float def_aspect_ratio, float our_aspect_ratio)
 	{
 		return static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
+	}
+
+	bool IsBSPModel(int solid, int movetype)
+	{
+		if ((solid == SOLID_BSP) || (movetype == MOVETYPE_PUSHSTEP))
+			return true;
+		else
+			return false;
+	}
+
+	bool IsBSPModel(const edict_t *ent)
+	{
+		return IsBSPModel(ent->v.solid, ent->v.movetype);
+	}
+
+	bool ReflectGauss(int solid, int movetype, float takedamage)
+	{
+		if (!IsBSPModel(solid, movetype))
+			return false;
+
+		if (!takedamage)
+			return false;
+
+		return true;
+	}
+
+	bool ReflectGauss(const edict_t *ent)
+	{
+		return ReflectGauss(ent->v.solid, ent->v.movetype, ent->v.takedamage);
+	}
+
+	Vector Center(Vector absmin, Vector absmax)
+	{
+		return (absmin + absmax) * 0.5;
+	}
+
+	Vector Center(const edict_t *ent)
+	{
+		return Center(ent->v.absmin, ent->v.absmax);
+	}
+
+	Vector EyePosition(Vector origin, Vector view_ofs)
+	{
+		return origin + view_ofs;
+	}
+
+	Vector EyePosition(const edict_t *ent)
+	{
+		return EyePosition(ent->v.origin, ent->v.view_ofs);
+	}
+
+	bool Intersects(Vector absmin1, Vector absmax1, Vector absmin2, Vector absmax2)
+	{
+		if (absmin1.x > absmax2.x ||
+			absmin1.y > absmax2.y ||
+			absmin1.z > absmax2.z ||
+			absmax1.x < absmin2.x ||
+			absmax1.y < absmin2.y ||
+			absmax1.y < absmin2.y)
+			return false;
+
+		return true;
+	}
+
+	bool Intersects(const edict_t *ent1, const edict_t *ent2)
+	{
+		return Intersects(ent1->v.absmin, ent1->v.absmax, ent2->v.absmin, ent2->v.absmax);
 	}
 };

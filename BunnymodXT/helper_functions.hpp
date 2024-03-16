@@ -15,6 +15,12 @@ namespace helper_functions
 	void crash_if_failed(std::string str);
 	float adjust_fov_for_widescreen(float fov, float def_aspect_ratio, float our_aspect_ratio);
 
+	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.cpp#L706
+	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity);
+	int IsInWorld(const edict_t *ent, int map_size, int map_max_velocity);
+
+	bool IsPlayer(const edict_t *ent);
+
 	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.h#L197-L198
 	bool IsBSPModel(int solid, int movetype);
 	bool IsBSPModel(const edict_t *ent);

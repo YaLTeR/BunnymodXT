@@ -94,7 +94,7 @@ namespace helper_functions
 	{
 		size_t string_length = str.size();
 		// We must round the total number of chunks to the next value if it is not an integer in order for the remaining characters to be drawed.
-		size_t count_chunks = std::ceil(static_cast<double>(string_length) / max_string_length);
+		size_t count_chunks = static_cast<size_t>(std::ceil(static_cast<double>(string_length) / max_string_length));
 
 		for (size_t chunk = 0; chunk < count_chunks; chunk++)
 		{
@@ -336,6 +336,8 @@ namespace helper_functions
 			if ((index < 1) || (index > hw.ppGlobals->maxClients)) // gGlobalVariables.maxClients = svs.maxclients
 				return false;
 		}
+
+		return true;
 	}
 
 	bool IsBSPModel(int solid, int movetype)

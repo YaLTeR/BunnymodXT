@@ -558,17 +558,11 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 				MB_OK | MB_ICONWARNING
 			);
 		#ifdef COF_BUILD
-		if (!is_cof_steam) {
-			ClientDLL::GetInstance().pEngfuncs = nullptr;
-			ServerDLL::GetInstance().pEngfuncs = nullptr;
-			MessageBox(NULL, "Loaded Bunnymod XT (CoF Steam version) in non-CoF game! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
-		}
+		if (!is_cof_steam)
+			helper_functions::crash_if_failed("Loaded Bunnymod XT (CoF Steam version) in non-CoF game! Download the right version!");
 		#else
-		if (is_cof_steam) {
-			ClientDLL::GetInstance().pEngfuncs = nullptr;
-			ServerDLL::GetInstance().pEngfuncs = nullptr;
-			MessageBox(NULL, "Loaded BunnymodXT (HL version) in CoF Steam! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
-		}
+		if (is_cof_steam)
+			helper_functions::crash_if_failed("Loaded BunnymodXT (HL version) in CoF Steam! Download the right version!");
 		#endif
 	#endif
 }

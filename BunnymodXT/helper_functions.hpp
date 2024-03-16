@@ -18,6 +18,7 @@ namespace helper_functions
 	bool is_entity_give_infinite_health(const edict_t* ent)
 	std::string get_flags(int flags);
 	std::string get_movetype(int movetype);
+	std::string get_solid(int solid);
 	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length);
 	void convert_to_lowercase(const char *str);
 

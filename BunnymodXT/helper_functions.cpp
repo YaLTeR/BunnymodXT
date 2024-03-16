@@ -106,6 +106,19 @@ namespace helper_functions
 		}
 	}
 
+	std::string get_solid(int solid)
+	{
+		switch (movetype)
+		{
+			case SOLID_NOT:                   return "SOLID_NOT";
+			case SOLID_TRIGGER:               return "SOLID_TRIGGER";
+			case SOLID_BBOX:                  return "SOLID_BBOX";
+			case SOLID_SLIDEBOX:              return "SOLID_SLIDEBOX";
+			case SOLID_BSP:                   return "SOLID_BSP";
+			default:                          return "Unknown";
+		}
+	}
+
 	std::string get_movetype(int movetype)
 	{
 		switch (movetype)

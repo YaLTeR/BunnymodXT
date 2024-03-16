@@ -106,16 +106,86 @@ namespace helper_functions
 		}
 	}
 
+	std::string get_renderfx(int renderfx)
+	{
+		switch (renderfx)
+		{
+			RET_CASE_STR(kRenderFxNone)
+			RET_CASE_STR(kRenderFxPulseSlow)
+			RET_CASE_STR(kRenderFxPulseFast)
+			RET_CASE_STR(kRenderFxPulseSlowWide)
+			RET_CASE_STR(kRenderFxPulseFastWide)
+			RET_CASE_STR(kRenderFxFadeSlow)
+			RET_CASE_STR(kRenderFxFadeFast)
+			RET_CASE_STR(kRenderFxSolidSlow)
+			RET_CASE_STR(kRenderFxSolidFast)
+			RET_CASE_STR(kRenderFxStrobeSlow)
+			RET_CASE_STR(kRenderFxStrobeFast)
+			RET_CASE_STR(kRenderFxStrobeFaster)
+			RET_CASE_STR(kRenderFxFlickerSlow)
+			RET_CASE_STR(kRenderFxFlickerFast)
+			RET_CASE_STR(kRenderFxNoDissipation)
+			RET_CASE_STR(kRenderFxDistort)
+			RET_CASE_STR(kRenderFxHologram)
+			RET_CASE_STR(kRenderFxDeadPlayer)
+			RET_CASE_STR(kRenderFxExplode)
+			RET_CASE_STR(kRenderFxGlowShell)
+			RET_CASE_STR(kRenderFxClampMinScale)
+			default: return "Unknown";
+		}
+	}
+
+	std::string get_rendermode(int rendermode)
+	{
+		switch (rendermode)
+		{
+			RET_CASE_STR(kRenderNormal)
+			RET_CASE_STR(kRenderTransColor)
+			RET_CASE_STR(kRenderTransTexture)
+			RET_CASE_STR(kRenderGlow)
+			RET_CASE_STR(kRenderTransAlpha)
+			RET_CASE_STR(kRenderTransAdd)
+			default: return "Unknown";
+		}
+	}
+
+	std::string get_effects(int effects)
+	{
+		std::ostringstream out;
+		out << "Effects: ";
+
+		#define FLAG(fl) \
+		if (effects & fl) \
+			out << "" #fl "; ";
+
+		// The flags here were arranged in order from smallest to highest bits.
+		FLAG(EF_BRIGHTFIELD);
+		FLAG(EF_MUZZLEFLASH);
+		FLAG(EF_BRIGHTLIGHT);
+		FLAG(EF_DIMLIGHT);
+		FLAG(EF_INVLIGHT);
+		FLAG(EF_NOINTERP);
+		FLAG(EF_LIGHT);
+		FLAG(EF_NODRAW);
+
+		out << '\n';
+
+		#undef FLAG
+
+		return out.str();
+	}
+
+
 	std::string get_solid(int solid)
 	{
-		switch (movetype)
+		switch (solid)
 		{
-			case SOLID_NOT:                   return "SOLID_NOT";
-			case SOLID_TRIGGER:               return "SOLID_TRIGGER";
-			case SOLID_BBOX:                  return "SOLID_BBOX";
-			case SOLID_SLIDEBOX:              return "SOLID_SLIDEBOX";
-			case SOLID_BSP:                   return "SOLID_BSP";
-			default:                          return "Unknown";
+			RET_CASE_STR(SOLID_NOT)
+			RET_CASE_STR(SOLID_TRIGGER)
+			RET_CASE_STR(SOLID_BBOX)
+			RET_CASE_STR(SOLID_SLIDEBOX)
+			RET_CASE_STR(SOLID_BSP)
+			default: return "Unknown";
 		}
 	}
 
@@ -123,19 +193,19 @@ namespace helper_functions
 	{
 		switch (movetype)
 		{
-			case MOVETYPE_NONE:             return "MOVETYPE_NONE";
-			case MOVETYPE_WALK:             return "MOVETYPE_WALK";
-			case MOVETYPE_STEP:             return "MOVETYPE_STEP";
-			case MOVETYPE_FLY:              return "MOVETYPE_FLY";
-			case MOVETYPE_TOSS:             return "MOVETYPE_TOSS";
-			case MOVETYPE_PUSH:             return "MOVETYPE_PUSH";
-			case MOVETYPE_NOCLIP:           return "MOVETYPE_NOCLIP";
-			case MOVETYPE_FLYMISSILE:       return "MOVETYPE_FLYMISSILE";
-			case MOVETYPE_BOUNCE:           return "MOVETYPE_BOUNCE";
-			case MOVETYPE_BOUNCEMISSILE:    return "MOVETYPE_BOUNCEMISSILE";
-			case MOVETYPE_FOLLOW:           return "MOVETYPE_FOLLOW";
-			case MOVETYPE_PUSHSTEP:         return "MOVETYPE_PUSHSTEP";
-			default:                        return "Unknown";
+			RET_CASE_STR(MOVETYPE_NONE)
+			RET_CASE_STR(MOVETYPE_WALK)
+			RET_CASE_STR(MOVETYPE_STEP)
+			RET_CASE_STR(MOVETYPE_FLY)
+			RET_CASE_STR(MOVETYPE_TOSS)
+			RET_CASE_STR(MOVETYPE_PUSH)
+			RET_CASE_STR(MOVETYPE_NOCLIP)
+			RET_CASE_STR(MOVETYPE_FLYMISSILE)
+			RET_CASE_STR(MOVETYPE_BOUNCE)
+			RET_CASE_STR(MOVETYPE_BOUNCEMISSILE)
+			RET_CASE_STR(MOVETYPE_FOLLOW)
+			RET_CASE_STR(MOVETYPE_PUSHSTEP)
+			default: return "Unknown";
 		}
 	}
 

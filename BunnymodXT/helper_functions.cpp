@@ -45,6 +45,32 @@ namespace helper_functions
 		return static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
 	}
 
+	bool is_entity_give_infinite_health(const edict_t* ent)
+	{
+		/*
+			An explanation of how to determine whether an entity can give you health when blocking it:
+
+			When you block an entity, the Blocked function of that entity class is called
+			In the Blocked function the TakeDamage function is called with the value in the flDamage parameter taken from pev->dmg
+			The value that the mapper sets in the map editor for the "dmg" parameter will be set in pev->dmg (this is handled in EntvarsKeyvalue server function)
+			Well, if pev->dmg is still a negative value when calling this TakeDamage function
+			Then, in this case the game begins not to take your health, but to give it more instead
+		*/
+
+		auto &hw = HwDLL::GetInstance();
+
+		const char* classname = hw.GetString(ent->v.classname);
+		if ((!strncmp(classname, "func_door", 9)) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/doors.cpp#L712
+		|| (!strcmp(classname, "func_rotating")) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/bmodels.cpp#L716
+		|| (!strcmp(classname, "func_train"))) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/plats.cpp#L683
+		{
+			if (ent->v.dmg < 0.0f)
+				return true;
+		}
+
+		return false;
+	}
+
 	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity)
 	{
 		/*

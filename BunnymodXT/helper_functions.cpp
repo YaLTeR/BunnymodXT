@@ -45,6 +45,16 @@ namespace helper_functions
 		return static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
 	}
 
+	void convert_to_lowercase(const char *str)
+	{
+		unsigned char *str_lw = (unsigned char *)str;
+		while (*str_lw) 
+		{
+			*str_lw = tolower(*str_lw);
+			str_lw++;
+		}
+	}
+
 	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length)
 	{
 		size_t string_length = str.size();

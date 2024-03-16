@@ -40,4 +40,9 @@ namespace helper_functions
 
 		std::exit(1);
 	}
+
+	float adjust_fov_for_widescreen(float fov, float def_aspect_ratio, float our_aspect_ratio)
+	{
+		return static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
+	}
 };

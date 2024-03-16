@@ -1,5 +1,7 @@
 #pragma once
 
+#define RET_CASE_STR(c) case c: return "" #c "";
+
 #ifdef _WIN32
 	#define DLL_EXTENSION ".dll"
 	#define PATH_SLASH '\\'
@@ -15,7 +17,10 @@ namespace helper_functions
 	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start);
 	void crash_if_failed(std::string str);
 	float adjust_fov_for_widescreen(float fov, float def_aspect_ratio, float our_aspect_ratio);
-	bool is_entity_give_infinite_health(const edict_t* ent)
+	bool is_entity_give_infinite_health(const edict_t* ent);
+	std::string get_renderfx(int renderfx);
+	std::string get_rendermode(int rendermode);
+	std::string get_effects(int effects);
 	std::string get_flags(int flags);
 	std::string get_movetype(int movetype);
 	std::string get_solid(int solid);

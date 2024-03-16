@@ -174,6 +174,9 @@ protected:
 	ptrdiff_t offInDuck;
 	ptrdiff_t offFlags;
 	ptrdiff_t offBasevelocity;
+	ptrdiff_t offMaxspeed;
+	ptrdiff_t offClientMaxspeed;
+	ptrdiff_t offMoveType;
 
 	void *pGlobalState;
 
@@ -238,4 +241,7 @@ protected:
 
 	Vector cmdStartOrigin;
 	Vector cmdStartVelocity;
+
+	float ch_noclip_vel_prev_maxspeed;
+	float ch_noclip_vel_prev_clientmaxspeed;
 };

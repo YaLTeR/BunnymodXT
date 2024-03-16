@@ -45,6 +45,59 @@ namespace helper_functions
 		return static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
 	}
 
+	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity)
+	{
+		/*
+			We specifically return int instead of bool
+			Because we are returning this custom function instead of the original one in specific case
+			And the type of the original function is BOOL, which is int
+		*/
+		
+		// position
+		if (origin.x >= map_size) return 0;
+		if (origin.y >= map_size) return 0;
+		if (origin.z >= map_size) return 0;
+		if (origin.x <= -map_size) return 0;
+		if (origin.y <= -map_size) return 0;
+		if (origin.z <= -map_size) return 0;
+		// speed
+		if (velocity.x >= map_max_velocity) return 0;
+		if (velocity.y >= map_max_velocity) return 0;
+		if (velocity.z >= map_max_velocity) return 0;
+		if (velocity.x <= -map_max_velocity) return 0;
+		if (velocity.y <= -map_max_velocity) return 0;
+		if (velocity.z <= -map_max_velocity) return 0;
+
+		return 1;
+	}
+
+	int IsInWorld(const edict_t *ent, int map_size, int map_max_velocity)
+	{
+		return IsInWorld(ent->v.origin, ent->v.velocity, map_size, map_max_velocity);
+	}
+
+	bool IsPlayer(const edict_t *ent)
+	{
+		// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/player.cpp#L2850
+
+		auto &hw = HwDLL::GetInstance();
+		auto &sv = ServerDLL::GetInstance();
+
+		if (strcmp(hw.GetString(ent->v.classname), "player") != 0)
+			return false;
+
+		if (!(ent->v.flags & FL_CLIENT))
+			return false;
+
+		if (sv.pEngfuncs && hw.ppGlobals)
+		{
+			int index = sv.pEngfuncs->pfnIndexOfEdict(ent);
+
+			if ((index < 1) || (index > hw.ppGlobals->maxClients)) // gGlobalVariables.maxClients = svs.maxclients
+				return false;
+		}
+	}
+
 	bool IsBSPModel(int solid, int movetype)
 	{
 		if ((solid == SOLID_BSP) || (movetype == MOVETYPE_PUSHSTEP))

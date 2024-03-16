@@ -17,6 +17,7 @@ namespace helper_functions
 	bool is_entity_give_infinite_health(const edict_t* ent)
 	std::string get_flags(int flags);
 	std::string get_movetype(int movetype);
+	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length);
 
 	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.cpp#L706
 	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity);

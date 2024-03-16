@@ -45,6 +45,22 @@ namespace helper_functions
 		return static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
 	}
 
+	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length)
+	{
+		size_t string_length = str.size();
+		// We must round the total number of chunks to the next value if it is not an integer in order for the remaining characters to be drawed.
+		size_t count_chunks = std::ceil(static_cast<double>(string_length) / max_string_length);
+
+		for (size_t chunk = 0; chunk < count_chunks; chunk++)
+		{
+			std::string result = str.substr(chunk * max_string_length, max_string_length);
+
+			// Don't start a new chunk on a newline, because we don't want to break the sequence of text!
+			// Instead, the newlines must be specified in the text itself!
+			HwDLL::GetInstance().ORIG_Con_Printf("%s", result.c_str());
+		}
+	}
+
 	std::string get_movetype(int movetype)
 	{
 		switch (movetype)

@@ -180,6 +180,7 @@ set (HEADER_FILES
 	BunnymodXT/input_editor.hpp
 	BunnymodXT/simulation_ipc.hpp
 	BunnymodXT/splits.hpp
+	BunnymodXT/helper_functions.hpp
 	BunnymodXT/git_revision.hpp)
 
 set (SOURCE_FILES
@@ -206,6 +207,7 @@ set (SOURCE_FILES
 	BunnymodXT/input_editor.cpp
 	BunnymodXT/simulation_ipc.cpp
 	BunnymodXT/splits.cpp
+	BunnymodXT/helper_functions.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/BunnymodXT/git_revision.cpp)
 
 if (MSVC)

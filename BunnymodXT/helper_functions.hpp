@@ -10,6 +10,8 @@
 	#define PATH_SLASH '/'
 #endif
 
+const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
+
 namespace helper_functions
 {
 	void com_fixslashes(std::string &str); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
@@ -26,6 +28,10 @@ namespace helper_functions
 	std::string get_solid(int solid);
 	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length);
 	void convert_to_lowercase(const char *str);
+
+	// https://developer.valvesoftware.com/wiki/SteamID
+	std::string get_steam_id(const unsigned long steamID32);
+	steamid_t get_steam_id_64(const unsigned long steamID32);
 
 	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.cpp#L706
 	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity);

@@ -90,6 +90,18 @@ namespace helper_functions
 		}
 	}
 
+	std::string get_steam_id(const unsigned long steamID32)
+	{
+		std::ostringstream ss;
+		ss << "STEAM_0:" << ((steamID32 % 2) ? 1 : 0) << ":" << (steamID32 / 2) << "\n";
+		return ss.str();
+	}
+
+	steamid_t get_steam_id_64(const unsigned long steamID32)
+	{
+		return STEAMID64_CONST + steamID32;
+	}
+
 	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length)
 	{
 		size_t string_length = str.size();

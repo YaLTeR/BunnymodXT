@@ -45,6 +45,56 @@ namespace helper_functions
 		return static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
 	}
 
+	std::string get_flags(int flags)
+	{
+		std::ostringstream out;
+		out << "Flags: ";
+
+		#define FLAG(fl) \
+		if (flags & fl) \
+			out << "" #fl "; ";
+
+		// The flags here were arranged in order from smallest to highest bits.
+		FLAG(FL_FLY);
+		FLAG(FL_SWIM);
+		FLAG(FL_CONVEYOR);
+		FLAG(FL_CLIENT);
+		FLAG(FL_INWATER);
+		FLAG(FL_MONSTER);
+		FLAG(FL_GODMODE);
+		FLAG(FL_NOTARGET);
+		FLAG(FL_SKIPLOCALHOST);
+		FLAG(FL_ONGROUND);
+		FLAG(FL_PARTIALGROUND);
+		FLAG(FL_WATERJUMP);
+		FLAG(FL_FROZEN);
+		FLAG(FL_FAKECLIENT);
+		FLAG(FL_DUCKING);
+		FLAG(FL_FLOAT);
+		FLAG(FL_GRAPHED);
+		FLAG(FL_IMMUNE_WATER);
+		FLAG(FL_IMMUNE_SLIME);
+		FLAG(FL_IMMUNE_LAVA);
+		FLAG(FL_PROXY);
+		FLAG(FL_ALWAYSTHINK);
+		FLAG(FL_BASEVELOCITY);
+		FLAG(FL_MONSTERCLIP);
+		FLAG(FL_ONTRAIN);
+		FLAG(FL_WORLDBRUSH);
+		FLAG(FL_SPECTATOR);
+		// unknown
+		// unknown
+		FLAG(FL_CUSTOMENTITY);
+		FLAG(FL_KILLME);
+		FLAG(FL_DORMANT);
+
+		out << '\n';
+
+		#undef FLAG
+
+		return out.str();
+	}
+
 	bool is_entity_give_infinite_health(const edict_t* ent)
 	{
 		/*

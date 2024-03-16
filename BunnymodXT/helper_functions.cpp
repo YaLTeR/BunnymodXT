@@ -13,6 +13,41 @@ namespace helper_functions
 		#endif
 	}
 
+	void com_filebase(const char *in, char *out)
+	{
+		int len, start, end;
+
+		len = strlen(in);
+	
+		// scan backward for '.'
+		end = len - 1;
+		while (end && in[end] != '.' && in[end] != '/' && in[end] != '\\')
+			end--;
+	
+		if (in[end] != '.')		// no '.', copy to end
+			end = len - 1;
+		else 
+			end--;					// Found ',', copy to left of '.'
+
+		// Scan backward for '/'
+		start = len - 1;
+		while (start >= 0 && in[start] != '/' && in[start] != '\\')
+			start--;
+
+		if (in[start] != '/' && in[start] != '\\')
+			start = 0;
+		else 
+			start++;
+
+		// Length of new sting
+		len = end - start + 1;
+
+		// Copy partial string
+		strncpy(out, &in[start], len);
+		// Terminate it
+		out[len] = 0;
+	}
+
 	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start)
 	{
 		const std::string filename = current_lib_path;

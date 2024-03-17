@@ -40,6 +40,52 @@
 
 #define CACHE_SIZE	32		// used to align key data structures
 
+typedef enum { SPR_SINGLE = 0, SPR_GROUP } spriteframetype_t;
+
+typedef struct mspriteframe_s
+{
+	int width;
+	int height;
+
+	#ifdef SOFTWARE_BUILD
+	void *pcachespot;
+	#endif
+
+	float up, down, left, right;
+
+	#ifdef SOFTWARE_BUILD
+	byte pixels[4];
+	#else
+	int gl_texturenum;
+	#endif
+} mspriteframe_t;
+
+typedef struct mspritegroup_s
+{
+	int numframes;
+	float *intervals;
+	mspriteframe_t *frames[1];
+} mspritegroup_t;
+
+typedef struct mspriteframedesc_s
+{
+	spriteframetype_t type;
+	mspriteframe_t *frameptr;
+} mspriteframedesc_t;
+
+typedef struct msprite_s
+{
+    short type;
+    short texFormat;
+    int maxwidth;
+    int maxheight;
+    int numframes;
+    int paloffset;
+    float beamlength;
+    void *cachespot;
+    mspriteframedesc_t frames[1];
+} msprite_t;
+
 typedef enum
 {
 	mod_brush, 
@@ -105,6 +151,8 @@ typedef struct texture_s
 	struct texture_s *anim_next;		// in the animation sequence
 	struct texture_s *alternate_anims;	// bmodels in frame 1 use these
 	unsigned	offsets[MIPLEVELS];		// four mip maps stored
+
+	// Align of structure is exactly the same as in the Quake code and latest GoldSrc engine up to this point.
 
 #ifdef SOFTWARE_BUILD
 	unsigned	paloffset;
@@ -234,6 +282,8 @@ struct msurface_s
 									  // animated lights.
 	color24		*samples;
 	
+	// Align of structure is exactly the same as in the Quake code and latest GoldSrc engine up to this point.
+
 	decal_t		*pdecals;
 };
 #else
@@ -268,22 +318,33 @@ struct msurface_s
 	qboolean	cached_dlight;			// true if dynamic light in cache
 
 	color24         *samples;               // note: this is the actual lightmap data for this surface
+
+	// Align of structure is exactly the same as in the Quake code and latest GoldSrc engine up to this point.
+
 	decal_t         *pdecals;
 };
 #endif
 
-typedef struct displaylist_s // Half-Life 25th anniversary update (hardware engine)
+typedef struct mdisplaylist_s
 {
-	unsigned gl_displaylist;
+	unsigned int gl_displaylist;
 	int rendermode;
 	float scrolloffset;
 	int renderDetailTexture;
-} displaylist_t;
+} mdisplaylist_t;
 
+#ifdef __cplusplus
 struct msurface_hw_25th_anniversary_t : public msurface_t 
 {
-	displaylist_t displaylist; // Half-Life 25th anniversary update (hardware engine)
+	mdisplaylist_t displaylist;
 };
+#else
+typedef struct
+{
+	msurface_t surface;
+	mdisplaylist_t displaylist;
+} msurface_hw_25th_anniversary_t;
+#endif
 
 typedef struct
 {

@@ -173,7 +173,7 @@ struct entity_state_s
 };
 #endif
 
-#define MAX_PHYSINFO_STRING 256
+#include "../pm_shared/pm_info.h"
 typedef struct clientdata_s
 {
 	vec3_t				origin;
@@ -214,7 +214,7 @@ typedef struct clientdata_s
 
 	int					deadflag;
 
-	char				physinfo[ MAX_PHYSINFO_STRING ];
+	char				physinfo[MAX_PHYSINFO_STRING];
 
 	// For mods
 	int					iuser1;

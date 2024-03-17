@@ -20,6 +20,9 @@ to dissallow the action or forward it to a remote server if the source is
 not apropriate.
 */
 
+#if !defined( CMDH )
+#define CMDH
+
 typedef void (*xcommand_t) (void);
 
 typedef struct cmd_function_s
@@ -27,5 +30,26 @@ typedef struct cmd_function_s
 	struct cmd_function_s	*next;
 	char					*name;
 	xcommand_t				function;
+
+	// Align of structure is exactly the same as in the Quake code and latest GoldSrc engine up to this point.
+
 	int						flags;
 } cmd_function_t;
+
+typedef enum
+{
+	src_client,		// came in over a net connection as a clc_stringcmd
+					// host_client will be valid during this state.
+	src_command		// from the command buffer
+} cmd_source_t;
+
+typedef struct sizebuf_t
+{
+	char *buffername; // char *
+	unsigned flags; // unsigned short
+	char *data; // byte *
+	unsigned maxsize; // int
+	unsigned cursize; // int
+} sizebuf_s;
+
+#endif

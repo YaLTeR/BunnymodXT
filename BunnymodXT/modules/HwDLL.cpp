@@ -957,7 +957,7 @@ void HwDLL::FindStuff()
 		else
 			EngineDevWarning("[hw dll] Could not find sv_areanodes.\n");
 
-		cmd_text = reinterpret_cast<cmdbuf_t*>(MemUtils::GetSymbolAddress(m_Handle, "cmd_text"));
+		cmd_text = reinterpret_cast<sizebuf_t*>(MemUtils::GetSymbolAddress(m_Handle, "cmd_text"));
 		if (cmd_text)
 			EngineDevMsg("[hw dll] Found cmd_text at %p.\n", cmd_text);
 		else
@@ -1540,16 +1540,16 @@ void HwDLL::FindStuff()
 				{
 				case 0: // HL-SteamPipe-8183
 				case 3: // HL-SteamPipe-8308
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
+					cmd_text = reinterpret_cast<sizebuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 3));
 					break;
 				case 1: // HL-SteamPipe
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 11) - offsetof(cmdbuf_t, cursize));
+					cmd_text = reinterpret_cast<sizebuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 11) - offsetof(sizebuf_t, cursize));
 					break;
 				case 2: // HL-NGHL
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 2) - offsetof(cmdbuf_t, cursize));
+					cmd_text = reinterpret_cast<sizebuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 2) - offsetof(sizebuf_t, cursize));
 					break;
 				case 4: // CoF-5936
-					cmd_text = reinterpret_cast<cmdbuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 21) - offsetof(cmdbuf_t, cursize));
+					cmd_text = reinterpret_cast<sizebuf_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_Cbuf_Execute) + 21) - offsetof(sizebuf_t, cursize));
 					break;
 				}
 			});
@@ -3082,6 +3082,39 @@ struct HwDLL::Cmd_BXT_CH_Get_Velocity
 	}
 };
 
+struct HwDLL::Cmd_BXT_Debug_Dump
+{
+	USAGE("Usage: _bxt_debug_dump <type>\n");
+
+	static void handler(const char *name)
+	{
+		if (!strcmp(name, "sizeof"))
+		{
+			auto &hw = HwDLL::GetInstance();
+			std::ostringstream ss;
+			ss << "edict_t: " << sizeof(edict_t) << "\n"
+			<< "entvars_t: " << sizeof(entvars_t) << "\n"
+			<< "globalvars_t: " << sizeof(globalvars_t) << "\n"
+			<< "entity_state_t: " << sizeof(entity_state_t) << "\n"
+			<< "cl_entity_t: " << sizeof(cl_entity_t) << "\n"
+			<< "cvar_t: " << sizeof(cvar_t) << "\n"
+			<< "cmd_function_t: " << sizeof(cmd_function_t) << "\n"
+			<< "msprite_t: " << sizeof(msprite_t) << "\n"
+			<< "model_t: " << sizeof(model_t) << "\n"
+			<< "msurface_t: " << sizeof(msurface_t) << "\n"
+			<< "clientdata_t: " << sizeof(clientdata_t) << "\n"
+			<< "usercmd_t: " << sizeof(usercmd_t) << "\n"
+			<< "playermove_t: " << sizeof(playermove_t) << "\n"
+			<< "physent_t: " << sizeof(physent_t) << "\n"
+			<< "pmtrace_t: " << sizeof(pmtrace_t) << "\n"
+			<< "movevars_t: " << sizeof(movevars_t) << "\n"
+			<< "player_info_t: " << sizeof(player_info_t) << "\n"
+			<< "refdef_t: " << sizeof(refdef_t) << "\n";
+			hw.ORIG_Con_Printf(ss.str().c_str());
+		}
+	}
+};
+
 struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 {
 	USAGE("Usage:\n"
@@ -3793,7 +3826,6 @@ struct HwDLL::Cmd_BXT_Get_SteamID_From_Demo
 			int player = cl.pEngfuncs->GetLocalPlayer()->index;
 			player_info_s* player_info = hw.pEngStudio->PlayerInfo(player - 1);
 
-			const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 			const unsigned long STEAMID32 = static_cast<unsigned long>(player_info->m_nSteamID);
 			const steamid_t STEAMID32_TO_64 = STEAMID64_CONST + STEAMID32;
 
@@ -5749,6 +5781,8 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		CmdFuncs::AddCommand("notarget", ORIG_Host_Notarget_f);
 	}
 
+	wrapper::Add<Cmd_BXT_Debug_Dump, Handler<const char *>>("_bxt_debug_dump");
+
 	wrapper::Add<Cmd_BXT_TAS_LoadScript, Handler<const char *>>("bxt_tas_loadscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportScript, Handler<const char *>>("bxt_tas_exportscript");
 	wrapper::Add<Cmd_BXT_TAS_ExportLibTASInput, Handler<const char *>>("bxt_tas_export_libtas_input");
@@ -7254,7 +7288,6 @@ HLStrafe::TraceResult HwDLL::UnsafePlayerTrace(const float start[3], const float
 	auto oldhull = *usehull;
 	*usehull = static_cast<int>(hull);
 
-	const int PM_NORMAL = 0x00000000;
 	auto pmtr = ORIG_PM_PlayerTrace(start, end, PM_NORMAL, -1);
 
 	*usehull = oldhull;

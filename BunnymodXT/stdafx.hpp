@@ -56,8 +56,10 @@ using std::ptrdiff_t;
 
 #include "HLSDK/dlls/extdll.h"
 #include "HLSDK/dlls/cbase.h"
+#include "HLSDK/dlls/doors.h"
 #include "HLSDK/cl_dll/wrect.h"
 #include "HLSDK/cl_dll/hud.h"
+#include "HLSDK/public/keydefs.h"
 #include "HLSDK/common/ref_params.h"
 #include "HLSDK/common/usercmd.h"
 #include "HLSDK/common/triangleapi.h"
@@ -70,12 +72,17 @@ using std::ptrdiff_t;
 #include "HLSDK/common/r_efx.h"
 #include "HLSDK/common/r_studioint.h"
 #include "HLSDK/common/engine_launcher_api.h"
+#include "HLSDK/common/entity_types.h"
 #include "HLSDK/engine/studio.h"
 #include "HLSDK/engine/cmd.h"
-#include "HLSDK/pm_shared/pm_movevars.h"
 #include "HLSDK/engine/delta.h"
+#include "HLSDK/engine/render.h"
+#include "HLSDK/engine/parsefunc.h"
+#include "HLSDK/engine/states.h"
+#include "HLSDK/pm_shared/pm_movevars.h"
+#include "HLSDK/pm_shared/pm_defs.h"
 
-typedef int(*pfnUserMsgHook)(const char *pszName, int iSize, void *pbuf);
+#include "HLSDK/engine/usermsg.h"
 #include "HLSDK/engine/cdll_int.h"
 
 #ifndef M_PI

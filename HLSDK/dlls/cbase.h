@@ -23,6 +23,7 @@ CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CB
 CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CMonsterMaker
 CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CSquadMonster
 CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseMonster -> CTalkMonster
+CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBasePlatTrain -> CFuncTrain
 CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CBaseTrigger -> CChangeLevel
 CBaseEntity -> CBaseDelay -> CBaseAnimating -> CBaseToggle -> CMultiManager
 CBaseEntity -> CBaseDelay -> CBreakable -> CPushable
@@ -34,9 +35,6 @@ CBaseEntity -> CPointEntity -> CMultiSource
 
 #ifndef CBASE_H
 #define CBASE_H
-#ifdef _WIN32
-#pragma once
-#endif
 
 // These are caps bits to indicate what an object's capabilities (currently used for save/restore and level transitions)
 const unsigned FCAP_CUSTOMSAVE = 0x00000001;

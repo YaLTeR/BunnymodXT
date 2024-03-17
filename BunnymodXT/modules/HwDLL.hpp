@@ -88,15 +88,6 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 	HOOK_DECL(void, __cdecl, LoadThisDll, const char* szDllFilename)
 
-	struct cmdbuf_t
-	{
-		char *name;
-		unsigned flags;
-		char *data;
-		unsigned maxsize;
-		unsigned cursize;
-	};
-
 	#ifdef HLSDK10_BUILD
 	struct server_static_t
 	{
@@ -381,7 +372,7 @@ public:
 
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
-	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"hl.exe" }) {};
+	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"sw.so", L"hl.exe" }) {};
 	HwDLL(const HwDLL&);
 	void operator=(const HwDLL&);
 
@@ -432,6 +423,8 @@ protected:
 	_SCR_DrawPause ORIG_SCR_DrawPause;
 
 	void FindStuff();
+
+	struct Cmd_BXT_Debug_Dump;
 
 	struct Cmd_BXT_TAS_LoadScript;
 	struct Cmd_BXT_TAS_ExportScript;
@@ -596,7 +589,7 @@ protected:
 	void **ppmove;
 	client_t **host_client;
 	char *sv_areanodes;
-	cmdbuf_t *cmd_text;
+	sizebuf_t *cmd_text;
 	double *host_frametime;
 	int *demorecording;
 	int *demoplayback;

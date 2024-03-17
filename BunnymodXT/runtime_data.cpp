@@ -17,6 +17,8 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/archives/binary.hpp>
 
+// Attention! New runtime data types must be added AT THE END, to keep compatibility with parsing old demos.
+
 namespace RuntimeData
 {
 	namespace

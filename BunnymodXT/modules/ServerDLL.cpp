@@ -3015,9 +3015,9 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerCamera__FollowTarget, void*, thi
 		auto oldSpawnFlags = pev->spawnflags;
 		if (CVars::bxt_cof_allow_skipping_all_cutscenes.GetBool())
 		{
-			if (pev->spawnflags & 1024) // "Unskippable" flag from .fgd
+			if (pev->spawnflags & COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE) // "Unskippable" flag from .fgd
 			{
-				pev->spawnflags &= ~1024;
+				pev->spawnflags &= ~COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE;
 				changed = true;
 			}
 		}
@@ -3228,9 +3228,9 @@ HOOK_DEF_0(ServerDLL, void, __cdecl, PM_Duck)
 		float *velocity = reinterpret_cast<float*>(pmove + offVelocity);
 
 		if ((*onground != -1) && (cmd->buttons & IN_USE)) {
-			velocity[0] *= 0.3f;
-			velocity[1] *= 0.3f;
-			velocity[2] *= 0.3f;
+			velocity[0] *= HL1_SLOWDOWN_PLAYER_BY_USE;
+			velocity[1] *= HL1_SLOWDOWN_PLAYER_BY_USE;
+			velocity[2] *= HL1_SLOWDOWN_PLAYER_BY_USE;
 		}
 	}
 }

@@ -113,6 +113,11 @@ extern "C" void __cdecl _ZN12CBaseTrigger13TeleportTouchEP11CBaseEntity(void* th
 {
 	return ServerDLL::HOOKED_CBaseTrigger__TeleportTouch_Linux(thisptr, pOther);
 }
+
+extern "C" void __cdecl _Z16DispatchKeyValueP7edict_sP14KeyValueData_s(edict_t* pentKeyvalue, KeyValueData* pkvd)
+{
+	return ServerDLL::HOOKED_DispatchKeyValue(pentKeyvalue, pkvd);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -295,6 +300,7 @@ void ServerDLL::Clear()
 	ORIG_CBaseEntity__FireBullets = nullptr;
 	ORIG_DispatchSpawn = nullptr;
 	ORIG_DispatchTouch = nullptr;
+	ORIG_DispatchKeyValue = nullptr;
 	ORIG_CBaseEntity__FireBullets_Linux = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer_Linux = nullptr;
@@ -357,6 +363,8 @@ void ServerDLL::Clear()
 	offm_fStamina = 0;
 	offm_old_iAmmo = 0;
 	offm_iPlayerSaveLock = 0;
+
+	tpLandmarks.clear();
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -1216,6 +1224,7 @@ void ServerDLL::FindStuff()
 
 	ORIG_DispatchSpawn = reinterpret_cast<_DispatchSpawn>(MemUtils::GetSymbolAddress(m_Handle, "_Z13DispatchSpawnP7edict_s"));
 	ORIG_DispatchTouch = reinterpret_cast<_DispatchTouch>(MemUtils::GetSymbolAddress(m_Handle, "_Z13DispatchTouchP7edict_sS0_"));
+	ORIG_DispatchKeyValue = reinterpret_cast<_DispatchKeyValue>(MemUtils::GetSymbolAddress(m_Handle, "_Z16DispatchKeyValueP7edict_sP14KeyValueData_s"));
 	ORIG_ClientCommand = reinterpret_cast<_ClientCommand>(MemUtils::GetSymbolAddress(m_Handle, "_Z13ClientCommandP7edict_s"));
 	ORIG_PlayerPostThink = reinterpret_cast<_PlayerPostThink>(MemUtils::GetSymbolAddress(m_Handle, "_Z15PlayerPostThinkP7edict_s"));
 	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move"));
@@ -1223,10 +1232,11 @@ void ServerDLL::FindStuff()
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
 	ORIG_CmdEnd = reinterpret_cast<_CmdEnd>(MemUtils::GetSymbolAddress(m_Handle, "_Z6CmdEndPK7edict_s"));
 
-	if (ORIG_DispatchSpawn && ORIG_DispatchTouch && ORIG_ClientCommand && ORIG_PlayerPostThink && 
+	if (ORIG_DispatchSpawn && ORIG_DispatchTouch && ORIG_DispatchKeyValue && ORIG_ClientCommand && ORIG_PlayerPostThink && 
 		ORIG_PM_Move && ORIG_AddToFullPack && ORIG_CmdStart && ORIG_CmdEnd) {
 		EngineDevMsg("[server dll] Found DispatchSpawn at %p.\n", ORIG_DispatchSpawn);
 		EngineDevMsg("[server dll] Found DispatchTouch at %p.\n", ORIG_DispatchTouch);
+		EngineDevMsg("[server dll] Found DispatchKeyValue at %p.\n", ORIG_DispatchKeyValue);
 		EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 		EngineDevMsg("[server dll] Found PlayerPostThink at %p.\n", ORIG_PlayerPostThink);
 		EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
@@ -1241,10 +1251,12 @@ void ServerDLL::FindStuff()
 				// Gets our hooked addresses on Windows.
 				ORIG_DispatchSpawn = funcs.pfnSpawn;
 				ORIG_DispatchTouch = funcs.pfnTouch;
+				ORIG_DispatchKeyValue = funcs.pfnKeyValue;
 				ORIG_ClientCommand = funcs.pfnClientCommand;
 				ORIG_PlayerPostThink = funcs.pfnPlayerPostThink;
 				EngineDevMsg("[server dll] Found DispatchSpawn at %p.\n", ORIG_DispatchSpawn);
 				EngineDevMsg("[server dll] Found DispatchTouch at %p.\n", ORIG_DispatchTouch);
+				EngineDevMsg("[server dll] Found DispatchKeyValue at %p.\n", ORIG_DispatchKeyValue);
 				EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 				EngineDevMsg("[server dll] Found PlayerPostThink at %p.\n", ORIG_PlayerPostThink);
 				if (INTERFACE_VERSION == 140)
@@ -3411,6 +3423,69 @@ void TriggerTpKeepsMomentumRestore(Vector prev_vel, Vector prev_view, Vector pre
 
 #define STRING(offset)		((const char *)(HwDLL::GetInstance().ppGlobals->pStringBase + (unsigned int)(offset)))
 
+HOOK_DEF_2(ServerDLL, void, __cdecl, DispatchKeyValue, edict_t*, pentKeyvalue, KeyValueData*, pkvd)
+{
+	if (pkvd && pentKeyvalue
+		&& pkvd->szClassName // some entities don't have classname, this avoids crash.
+		&& !strcmp(pkvd->szClassName, "trigger_teleport") 
+		&& !strcmp(pkvd->szKeyName, "landmark")
+		) {
+
+		edict_t *edicts;
+		HwDLL::GetInstance().GetEdicts(&edicts);
+		const auto index = pentKeyvalue - edicts;
+
+		tpLandmarks[index] = pkvd->szValue;
+	}
+
+	ORIG_DispatchKeyValue(pentKeyvalue, pkvd);
+}
+
+// std::optional is at least C++17 :DDDDDDDDDDDDDDDDDDDDDDD
+std::tuple<bool, Vector> TriggerTpLandmarkBefore(bool work, entvars_t *this_pev, entvars_t *pev, enginefuncs_t *pEngfuncs)
+{
+	if (!work)
+		return std::make_tuple(false, Vector());
+
+	edict_t *edicts;
+	HwDLL::GetInstance().GetEdicts(&edicts);
+	int index = this_pev->pContainingEntity - edicts;
+	const auto tpLandmarks = ServerDLL::GetInstance().tpLandmarks;
+
+	if (!tpLandmarks.count(index))
+		return std::make_tuple(false, Vector());
+
+	auto what = tpLandmarks.at(index);
+	edict_t *landmark = pEngfuncs->pfnFindEntityByString(NULL, "targetname", what.c_str());
+	auto available = true;
+
+	if (!landmark
+		|| landmark->free
+		)
+		available = false;
+
+	if (available)
+		return std::make_tuple(true, Vector(pev->origin) - Vector(landmark->v.origin));
+
+	return std::make_tuple(false, Vector());
+}
+
+void TriggerTpLandmarkAfter(entvars_t *pev, Vector offset)
+{
+	pev->origin = pev->origin + offset;
+	// have to offset by some HULL because of origin z diff
+	auto is_duck = pev->button & (IN_DUCK) || pev->flags & (FL_DUCKING);
+	if (is_duck)
+		pev->origin[2] -= 19; 
+	else
+		pev->origin[2] -= 37;
+}
+
+void ServerDLL::ClearTPLandmarks()
+{
+	tpLandmarks.clear();
+}
+
 HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, thisptr, int, edx, void*, pOther)
 {
 	auto is_bxt_ch_trigger_tp_keeps_momentum_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_keeps_momentum.GetBool();
@@ -3430,15 +3505,7 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, this
 		prev_basevelocity = pev->basevelocity;
 	}
 
-	if (is_bxt_ch_trigger_tp_landmark_enabled) {
-		edict_t *landmark = pEngfuncs->pfnFindEntityByString(NULL, "targetname", STRING(this_pev->message));
-		ch_trigger_tp_landmark_available = true;
-
-		if (!landmark || landmark->free || !this_pev->message)
-			ch_trigger_tp_landmark_available = false;
-
-		ch_trigger_tp_landmark_offset = Vector(pev->origin) - Vector(landmark->v.origin);
-	}
+	const auto landmark_info = TriggerTpLandmarkBefore(is_bxt_ch_trigger_tp_landmark_enabled, this_pev, pev, pEngfuncs);
 
 	ORIG_CBaseTrigger__TeleportTouch(thisptr, edx, pOther);
 
@@ -3446,14 +3513,8 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, this
 		TriggerTpKeepsMomentumRestore(prev_vel, prev_vel, prev_angles, prev_basevelocity, pev, pEngfuncs);
 	}
 
-	if (is_bxt_ch_trigger_tp_landmark_enabled && ch_trigger_tp_landmark_available) {
-		pev->origin = pev->origin + ch_trigger_tp_landmark_offset;
-		// have to offset by some HULL because of origin z diff
-		auto is_duck = pev->button & (IN_DUCK) || pev->flags & (FL_DUCKING);
-		if (is_duck)
-			pev->origin[2] -= 19; 
-		else
-			pev->origin[2] -= 37;
+	if (is_bxt_ch_trigger_tp_landmark_enabled && std::get<0>(landmark_info)) {
+		TriggerTpLandmarkAfter(pev, std::get<1>(landmark_info));
 	}
 }
 
@@ -3476,15 +3537,7 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, CBaseTrigger__TeleportTouch_Linux, void*, t
 		prev_basevelocity = pev->basevelocity;
 	}
 
-	if (is_bxt_ch_trigger_tp_landmark_enabled) {
-		edict_t *landmark = pEngfuncs->pfnFindEntityByString(NULL, "targetname", STRING(this_pev->message));
-		ch_trigger_tp_landmark_available = true;
-
-		if (!landmark || landmark->free || !this_pev->message)
-			ch_trigger_tp_landmark_available = false;
-
-		ch_trigger_tp_landmark_offset = Vector(pev->origin) - Vector(landmark->v.origin);
-	}
+	const auto landmark_info = TriggerTpLandmarkBefore(is_bxt_ch_trigger_tp_landmark_enabled, this_pev, pev, pEngfuncs);
 
 	ORIG_CBaseTrigger__TeleportTouch_Linux(thisptr, pOther);
 
@@ -3492,14 +3545,8 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, CBaseTrigger__TeleportTouch_Linux, void*, t
 		TriggerTpKeepsMomentumRestore(prev_vel, prev_vel, prev_angles, prev_basevelocity, pev, pEngfuncs);
 	}
 
-	if (is_bxt_ch_trigger_tp_landmark_enabled && ch_trigger_tp_landmark_available) {
-		pev->origin = pev->origin + ch_trigger_tp_landmark_offset;
-		// have to offset by some HULL because of origin z diff
-		auto is_duck = pev->button & (IN_DUCK) || pev->flags & (FL_DUCKING);
-		if (is_duck)
-			pev->origin[2] -= 19; 
-		else
-			pev->origin[2] -= 37;
+	if (is_bxt_ch_trigger_tp_landmark_enabled && std::get<0>(landmark_info)) {
+		TriggerTpLandmarkAfter(pev, std::get<1>(landmark_info));
 	}
 }
 

@@ -66,6 +66,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(int, __cdecl, CBaseEntity__IsInWorld_Linux, void* thisptr)
 	HOOK_DECL(void, __fastcall, CBaseTrigger__TeleportTouch, void* thisptr, int edx, void* pOther)
 	HOOK_DECL(void, __cdecl, CBaseTrigger__TeleportTouch_Linux, void* thisptr, void* pOther)
+	HOOK_DECL(void, __cdecl, DispatchKeyValue, edict_t* pentKeyvalue, KeyValueData* pkvd)
 
 public:
 	static ServerDLL& GetInstance()
@@ -242,7 +243,8 @@ protected:
 
 	Vector cmdStartOrigin;
 	Vector cmdStartVelocity;
-	
-	Vector ch_trigger_tp_landmark_offset;
-	bool ch_trigger_tp_landmark_available;
+
+public:
+	std::unordered_map<int, std::string> tpLandmarks;
+	void ClearTPLandmarks();
 };

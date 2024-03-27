@@ -7529,6 +7529,7 @@ HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, cha
 	if (ret) {
 		Interprocess::WriteMapChange(CustomHud::GetTime(), server);
 		lastLoadedMap = server;
+		ServerDLL::GetInstance().ClearTPLandmarks();
 	}
 
 	if (insideHost_Loadgame_f) {

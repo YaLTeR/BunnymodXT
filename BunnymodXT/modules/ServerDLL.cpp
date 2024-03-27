@@ -3437,6 +3437,7 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, DispatchKeyValue, edict_t*, pentKeyvalue, K
 
 		tpLandmarks[index] = pkvd->szValue;
 		pkvd->fHandled = 1;
+		printf("handled!!!!\n");
 	}
 
 	ORIG_DispatchKeyValue(pentKeyvalue, pkvd);
@@ -3490,7 +3491,7 @@ void ServerDLL::ClearTPLandmarks()
 HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, thisptr, int, edx, void*, pOther)
 {
 	auto is_bxt_ch_trigger_tp_keeps_momentum_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_keeps_momentum.GetBool();
-	auto is_bxt_ch_trigger_tp_landmark_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_landmark.GetBool() && pEngfuncs && HwDLL::GetInstance().ppGlobals;
+	auto is_bxt_ch_trigger_tp_landmark_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_landmark.GetBool() && HwDLL::GetInstance().ppGlobals;
 
 	entvars_t *this_pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pOther) + 4);
@@ -3514,8 +3515,10 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, this
 		TriggerTpKeepsMomentumRestore(prev_vel, prev_vel, prev_angles, prev_basevelocity, pev, pEngfuncs);
 	}
 
+	printf("enabled %d pEngfuncs is %d\n", is_bxt_ch_trigger_tp_landmark_enabled, pEngfuncs == NULL);
 	if (is_bxt_ch_trigger_tp_landmark_enabled && std::get<0>(landmark_info)) {
 		TriggerTpLandmarkAfter(pev, std::get<1>(landmark_info));
+		printf("the offset %f\n", std::get<1>(landmark_info).Length2D());
 	}
 }
 

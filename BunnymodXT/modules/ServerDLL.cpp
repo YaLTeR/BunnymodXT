@@ -3437,7 +3437,7 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, DispatchKeyValue, edict_t*, pentKeyvalue, K
 
 		tpLandmarks[index] = pkvd->szValue;
 		pkvd->fHandled = 1;
-		printf("handled!!!!\n");
+		EngineDevWarning("handled!!!!\n");
 	}
 
 	ORIG_DispatchKeyValue(pentKeyvalue, pkvd);
@@ -3515,10 +3515,10 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, this
 		TriggerTpKeepsMomentumRestore(prev_vel, prev_vel, prev_angles, prev_basevelocity, pev, pEngfuncs);
 	}
 
-	printf("enabled %d pEngfuncs is %d\n", is_bxt_ch_trigger_tp_landmark_enabled, pEngfuncs == NULL);
+	EngineDevWarning("enabled %d pEngfuncs is %d\n", is_bxt_ch_trigger_tp_landmark_enabled, pEngfuncs == NULL);
 	if (is_bxt_ch_trigger_tp_landmark_enabled && std::get<0>(landmark_info)) {
 		TriggerTpLandmarkAfter(pev, std::get<1>(landmark_info));
-		printf("the offset %f\n", std::get<1>(landmark_info).Length2D());
+		EngineDevWarning("the offset %f\n", std::get<1>(landmark_info).Length2D());
 	}
 }
 

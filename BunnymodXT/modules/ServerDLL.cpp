@@ -3436,7 +3436,7 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, DispatchKeyValue, edict_t*, pentKeyvalue, K
 		const auto index = pentKeyvalue - edicts;
 
 		tpLandmarks[index] = pkvd->szValue;
-		pkvd->fHandled = TRUE;
+		pkvd->fHandled = 1;
 	}
 
 	ORIG_DispatchKeyValue(pentKeyvalue, pkvd);

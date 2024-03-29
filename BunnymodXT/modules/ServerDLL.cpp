@@ -184,7 +184,8 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_CBaseEntity__IsInWorld, HOOKED_CBaseEntity__IsInWorld,
 			ORIG_CBaseEntity__IsInWorld_Linux, HOOKED_CBaseEntity__IsInWorld_Linux,
 			ORIG_CBaseTrigger__TeleportTouch, HOOKED_CBaseTrigger__TeleportTouch,
-			ORIG_CBaseTrigger__TeleportTouch_Linux, HOOKED_CBaseTrigger__TeleportTouch_Linux);
+			ORIG_CBaseTrigger__TeleportTouch_Linux, HOOKED_CBaseTrigger__TeleportTouch_Linux,
+			ORIG_DispatchKeyValue, HOOKED_DispatchKeyValue);
 	}
 }
 
@@ -241,7 +242,8 @@ void ServerDLL::Unhook()
 			ORIG_CBaseEntity__IsInWorld,
 			ORIG_CBaseEntity__IsInWorld_Linux,
 			ORIG_CBaseTrigger__TeleportTouch,
-			ORIG_CBaseTrigger__TeleportTouch_Linux);
+			ORIG_CBaseTrigger__TeleportTouch_Linux,
+			ORIG_DispatchKeyValue);
 	}
 
 	Clear();
@@ -3421,12 +3423,11 @@ void TriggerTpKeepsMomentumRestore(Vector prev_vel, Vector prev_view, Vector pre
 	}
 }
 
-#define STRING(offset)		((const char *)(HwDLL::GetInstance().ppGlobals->pStringBase + (unsigned int)(offset)))
-
 HOOK_DEF_2(ServerDLL, void, __cdecl, DispatchKeyValue, edict_t*, pentKeyvalue, KeyValueData*, pkvd)
 {
 	if (pkvd && pentKeyvalue
 		&& pkvd->szClassName // some entities don't have classname, this avoids crash.
+		&& pkvd->szKeyName && pkvd->szValue // just to make sure
 		&& !strcmp(pkvd->szClassName, "trigger_teleport") 
 		&& !strcmp(pkvd->szKeyName, "landmark")
 		) {
@@ -3436,37 +3437,32 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, DispatchKeyValue, edict_t*, pentKeyvalue, K
 		const auto index = pentKeyvalue - edicts;
 
 		tpLandmarks[index] = pkvd->szValue;
-		pkvd->fHandled = 1;
-		EngineDevWarning("handled!!!!\n");
+		// Don't set pkvd->fHandled = 1, 
+		// as some games could handle the same cases for the same entities, 
+		// which means you won't give the game a chance to read that data!
+		// -- _Smiley
+		// pkvd->fHandled = 1;
 	}
 
 	ORIG_DispatchKeyValue(pentKeyvalue, pkvd);
 }
 
 // std::optional is at least C++17 :DDDDDDDDDDDDDDDDDDDDDDD
-std::tuple<bool, Vector> TriggerTpLandmarkBefore(bool work, entvars_t *this_pev, entvars_t *pev, enginefuncs_t *pEngfuncs)
+std::tuple<bool, Vector> TriggerTpLandmarkBefore(bool enabled, entvars_t *this_pev, entvars_t *pev, enginefuncs_t *pEngfuncs)
 {
-	if (!work)
+	if (!enabled)
 		return std::make_tuple(false, Vector());
 
-	edict_t *edicts;
-	HwDLL::GetInstance().GetEdicts(&edicts);
-	int index = this_pev->pContainingEntity - edicts;
+	const auto index = ServerDLL::GetInstance().pEngfuncs->pfnIndexOfEdict(this_pev->pContainingEntity);
 	const auto tpLandmarks = ServerDLL::GetInstance().tpLandmarks;
 
 	if (!tpLandmarks.count(index))
 		return std::make_tuple(false, Vector());
 
-	auto what = tpLandmarks.at(index);
-	edict_t *landmark = pEngfuncs->pfnFindEntityByString(NULL, "targetname", what.c_str());
-	auto available = true;
+	const auto landmarkName = tpLandmarks.at(index);
+	const edict_t *landmark = pEngfuncs->pfnFindEntityByString(NULL, "targetname", landmarkName.c_str());
 
-	if (!landmark
-		|| landmark->free
-		)
-		available = false;
-
-	if (available)
+	if (HwDLL::GetInstance().IsValidEdict(landmark))
 		return std::make_tuple(true, Vector(pev->origin) - Vector(landmark->v.origin));
 
 	return std::make_tuple(false, Vector());
@@ -3476,11 +3472,14 @@ void TriggerTpLandmarkAfter(entvars_t *pev, Vector offset)
 {
 	pev->origin = pev->origin + offset;
 	// have to offset by some HULL because of origin z diff
-	auto is_duck = pev->button & (IN_DUCK) || pev->flags & (FL_DUCKING);
-	if (is_duck)
-		pev->origin[2] -= 19; 
-	else
-		pev->origin[2] -= 37;
+	const auto is_duck = pev->button & (IN_DUCK) || pev->flags & (FL_DUCKING);
+	const Vector VEC_HULL_MIN(-16, -16, -36);
+	const Vector VEC_DUCK_HULL_MIN(-16, -16, -18);
+	const auto hull_offset = is_duck ? VEC_DUCK_HULL_MIN : VEC_HULL_MIN;
+
+	pev->origin[2] += hull_offset[2];
+	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/triggers.cpp#L1908
+	pev->origin[2] -= 1;
 }
 
 void ServerDLL::ClearTPLandmarks()
@@ -3515,10 +3514,8 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, this
 		TriggerTpKeepsMomentumRestore(prev_vel, prev_vel, prev_angles, prev_basevelocity, pev, pEngfuncs);
 	}
 
-	EngineDevWarning("enabled %d pEngfuncs is %d\n", is_bxt_ch_trigger_tp_landmark_enabled, pEngfuncs == NULL);
 	if (is_bxt_ch_trigger_tp_landmark_enabled && std::get<0>(landmark_info)) {
 		TriggerTpLandmarkAfter(pev, std::get<1>(landmark_info));
-		EngineDevWarning("the offset %f\n", std::get<1>(landmark_info).Length2D());
 	}
 }
 

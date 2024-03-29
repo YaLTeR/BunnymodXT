@@ -821,6 +821,10 @@ void HwDLL::Clear()
 	TargetYawOverrides.clear();
 	RenderYawOverrideIndex = 0;
 	RenderYawOverrides.clear();
+	PitchOverrideIndex = 0;
+	PitchOverrides.clear();
+	RenderPitchOverrideIndex = 0;
+	RenderPitchOverrides.clear();
 	lastLoadedMap.clear();
 	isOverridingCamera = false;
 	isOffsettingCamera = false;
@@ -2541,6 +2545,10 @@ void HwDLL::ResetTASPlaybackState()
 	TargetYawOverrides.clear();
 	RenderYawOverrideIndex = 0;
 	RenderYawOverrides.clear();
+	PitchOverrideIndex = 0;
+	PitchOverrides.clear();
+	RenderPitchOverrideIndex = 0;
+	RenderPitchOverrides.clear();
 }
 
 void HwDLL::StartTASPlayback()
@@ -5639,6 +5647,8 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 			}
 			RenderYawOverrides.clear();
 			RenderYawOverrideIndex = 0;
+			RenderPitchOverrides.clear();
+			RenderPitchOverrideIndex = 0;
 
 			assert(movementFrameCounter >= 1);
 			tas_editor_input.first_frame_counter_value = movementFrameCounter - 1;
@@ -6169,6 +6179,25 @@ void HwDLL::InsertCommands()
 					RenderYawOverrideIndex += 1;
 				}
 
+				if (PitchOverrideIndex == PitchOverrides.size()) {
+					PitchOverrides.clear();
+					PitchOverrideIndex = 0;
+				}
+
+				if (PitchOverrides.empty()) {
+					StrafeState.PitchOverrideActive = false;
+				} else {
+					StrafeState.PitchOverride = PitchOverrides[PitchOverrideIndex++];
+					StrafeState.PitchOverrideActive = true;
+				}
+
+				if (RenderPitchOverrideIndex == RenderPitchOverrides.size()) {
+					RenderPitchOverrides.clear();
+					RenderPitchOverrideIndex = 0;
+				} else {
+					RenderPitchOverrideIndex += 1;
+				}
+
 				f.ResetAutofuncs();
 
 				resulting_frame.SetPitch(p.Pitch);
@@ -6589,6 +6618,14 @@ void HwDLL::InsertCommands()
 			} else if (!f.RenderYawOverride.empty()) {
 				RenderYawOverrides = f.RenderYawOverride;
 				RenderYawOverrideIndex = 0;
+			} else if (!f.PitchOverride.empty()) {
+				PitchOverrides = f.PitchOverride;
+				StrafeState.PitchOverrideActive = true;
+				StrafeState.PitchOverride = PitchOverrides[0];
+				PitchOverrideIndex = 1;
+			} else if (!f.RenderPitchOverride.empty()) {
+				RenderPitchOverrides = f.RenderPitchOverride;
+				RenderPitchOverrideIndex = 0;
 			}
 
 			currentFramebulk++;
@@ -6621,6 +6658,8 @@ void HwDLL::InsertCommands()
 			if (resetState == ResetState::NORMAL) {
 				RenderYawOverrides.clear();
 				RenderYawOverrideIndex = 0;
+				RenderPitchOverrides.clear();
+				RenderPitchOverrideIndex = 0;
 
 				if (bxt_on_tas_playback_frame) {
 					// We don't use the return value here because we stop anyway.

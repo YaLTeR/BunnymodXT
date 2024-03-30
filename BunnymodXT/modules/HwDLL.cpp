@@ -2487,6 +2487,14 @@ extern "C" DLLEXPORT void bxt_tas_studio_norefresh_override(int stop_frame) {
 	hw.tas_studio_norefresh_override = stop_frame;
 }
 
+extern "C" DLLEXPORT void bxt_tas_studio_freecam_set_origin(std::array<float, 3> origin) {
+	auto &hw = HwDLL::GetInstance();
+
+	hw.cameraOverrideOrigin[0] = origin[0];
+	hw.cameraOverrideOrigin[1] = origin[1];
+	hw.cameraOverrideOrigin[2] = origin[2];
+}
+
 void HwDLL::ResetTASPlaybackState()
 {
 	CallOnTASPlaybackStopped();

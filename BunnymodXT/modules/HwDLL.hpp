@@ -360,6 +360,8 @@ public:
 
 	bool is_cof_steam = false; // Cry of Fear-specific
 
+	// For bxt-rs rendered view playback.
+	std::array<float, 3> GetRenderedViewangles();
 	int CallOnTASPlaybackFrame();
 	void CallOnTASPlaybackStopped();
 	void ResetTASPlaybackState();

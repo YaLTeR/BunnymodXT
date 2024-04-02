@@ -32,6 +32,7 @@ struct on_tas_playback_frame_data {
 	unsigned strafe_cycle_frame_count;
 	std::array<float, 4> prev_predicted_trace_fractions;
 	std::array<float, 4> prev_predicted_trace_normal_zs;
+	std::array<float, 5> accelerated_yawspeed;
 };
 
 // Change the variable name if you change the parameters!
@@ -2468,6 +2469,16 @@ int HwDLL::CallOnTASPlaybackFrame() {
 		StrafeState.StrafeCycleFrameCount,
 		PrevFractions,
 		PrevNormalzs,
+		std::array<float, 5>{
+			StrafeState.AcceleratedYawSpeedValue,
+			StrafeState.AcceleratedYawSpeedStart,
+			StrafeState.AcceleratedYawSpeedTarget,
+			StrafeState.AcceleratedYawSpeedAccel,
+			// Eh, meow?
+			static_cast<float>(
+				static_cast<unsigned int>(
+					static_cast<unsigned char>(StrafeState.AcceleratedYawSpeedDir)))
+		},
 	});
 }
 

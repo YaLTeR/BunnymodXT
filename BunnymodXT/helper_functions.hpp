@@ -30,6 +30,19 @@ namespace helper_functions
 	// Please add type/flags determining functions (e.g. get_flags, get_movetype) to the end of the .cpp file!
 	// Any other functions should be added before them for better readability!
 
+	inline void rgb_to_float(float &r, float &g, float &b)
+	{
+		r = std::clamp(r / 255.0f, 0.0f, 1.0f);
+		g = std::clamp(g / 255.0f, 0.0f, 1.0f);
+		b = std::clamp(b / 255.0f, 0.0f, 1.0f);
+	}
+
+	inline void rgba_to_float(float &r, float &g, float &b, float &a)
+	{
+		rgb_to_float(r, g, b);
+		a = std::clamp(a / 255.0f, 0.0f, 1.0f);
+	}
+
 	double ret_bxt_time();
 	void com_fixslashes(std::string &str); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
 	void com_filebase(const char *in, char *out); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/cl_dll/hud.cpp#L537

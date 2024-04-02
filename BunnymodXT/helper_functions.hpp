@@ -43,6 +43,12 @@ namespace helper_functions
 		a = std::clamp(a / 255.0f, 0.0f, 1.0f);
 	}
 
+
+	// entvars_t from HLSDK 1.0 does not have such variables, for this reason wrappers were made
+	int ret_entvars_bInDuck(const edict_t* ent);
+	int ret_entvars_flDuckTime(const edict_t* ent);
+	float ret_entvars_fuser2(const edict_t* ent);
+
 	double ret_bxt_time();
 	void com_fixslashes(std::string &str); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
 	void com_filebase(const char *in, char *out); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/cl_dll/hud.cpp#L537

@@ -4,6 +4,33 @@
 
 namespace helper_functions
 {
+	int ret_entvars_bInDuck(const edict_t *ent)
+	{
+		#ifndef HLSDK10_BUILD
+		return ent->v.bInDuck;
+		#endif
+
+		return 0;
+	}
+
+	int ret_entvars_flDuckTime(const edict_t *ent)
+	{
+		#ifndef HLSDK10_BUILD
+		return ent->v.flDuckTime;
+		#endif
+
+		return 0;
+	}
+
+	float ret_entvars_fuser2(const edict_t *ent)
+	{
+		#ifndef HLSDK10_BUILD
+		return ent->v.fuser2;
+		#endif
+
+		return 0.0f;
+	}
+
 	static byte *gpBuf;
 	static int giSize, giRead, giBadRead;
 	void BEGIN_READ(void *buf, int size)

@@ -235,7 +235,8 @@ namespace helper_functions
 
 	float adjust_fov_for_widescreen(float fov, float def_aspect_ratio, float our_aspect_ratio)
 	{
-		return static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
+		float calculated_fov = static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
+		return std::clamp(calculated_fov, 1.0f, 179.0f);
 	}
 
 	void convert_to_lowercase(const char *str)

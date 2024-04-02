@@ -43,6 +43,8 @@ namespace helper_functions
 	std::string get_flags(int flags);
 	std::string get_movetype(int movetype);
 	std::string get_solid(int solid);
+	std::string get_monster_triggercondition(int m_iTriggerCondition);
+	std::string get_monster_task(int iTask);
 	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length);
 	void convert_to_lowercase(const char *str);
 

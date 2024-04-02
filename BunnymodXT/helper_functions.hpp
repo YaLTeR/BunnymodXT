@@ -31,6 +31,7 @@ namespace helper_functions
 	void com_filebase(const char *in, char *out); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/cl_dll/hud.cpp#L537
 	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start);
 	void crash_if_failed(std::string str);
+	bool is_valid_index_and_edict(int index);
 	float adjust_fov_for_widescreen(float fov, float def_aspect_ratio, float our_aspect_ratio);
 	bool is_entity_give_infinite_health(const edict_t* ent);
 	std::string get_renderfx(int renderfx);

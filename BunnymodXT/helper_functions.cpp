@@ -206,6 +206,28 @@ namespace helper_functions
 		std::exit(1);
 	}
 
+	bool is_valid_index_and_edict(int index)
+	{
+		auto& hw = HwDLL::GetInstance();
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+
+		if (numEdicts > index)
+		{
+			const edict_t *ent = edicts + index;
+			if (hw.IsValidEdict(ent))
+				return true;
+			else
+				hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", index);
+		}
+		else
+		{
+			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", index, numEdicts);
+		}
+
+		return false;
+	}
+
 	float adjust_fov_for_widescreen(float fov, float def_aspect_ratio, float our_aspect_ratio)
 	{
 		return static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);

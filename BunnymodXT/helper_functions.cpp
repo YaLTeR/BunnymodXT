@@ -304,6 +304,11 @@ namespace helper_functions
 		}
 	}
 
+	void split_console_print_to_chunks(std::string str)
+	{
+		split_console_print_to_chunks(str, MAXPRINTMSG);
+	}
+
 	bool is_entity_give_infinite_health(const edict_t* ent)
 	{
 		/*

@@ -10,6 +10,8 @@
 	#define PATH_SLASH '/'
 #endif
 
+#define MAXPRINTMSG 4096 // Con_Printf is limited to 4096 characters.
+
 const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 
 namespace helper_functions
@@ -66,6 +68,7 @@ namespace helper_functions
 	std::string get_monster_triggercondition(int m_iTriggerCondition);
 	std::string get_monster_task(int iTask);
 	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length);
+	void split_console_print_to_chunks(std::string str);
 	void convert_to_lowercase(const char *str);
 
 	// https://developer.valvesoftware.com/wiki/SteamID

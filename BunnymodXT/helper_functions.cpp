@@ -135,6 +135,11 @@ namespace helper_functions
 		return (float)(READ_SHORT() * (360.0 / 65536));
 	}
 
+	double ret_bxt_time()
+	{
+		return (CustomHud::GetTime().hours * 60 * 60) + (CustomHud::GetTime().minutes * 60) + CustomHud::GetTime().seconds + (CustomHud::GetTime().milliseconds / 1000);
+	}
+
 	void com_fixslashes(std::string &str)
 	{
 		#ifdef _WIN32

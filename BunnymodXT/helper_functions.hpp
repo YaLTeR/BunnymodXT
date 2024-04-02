@@ -27,6 +27,9 @@ namespace helper_functions
 	float READ_ANGLE();
 	float READ_HIRESANGLE();
 
+	// Please add type/flags determining functions (e.g. get_flags, get_movetype) to the end of the .cpp file!
+	// Any other functions should be added before them for better readability!
+
 	void com_fixslashes(std::string &str); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
 	void com_filebase(const char *in, char *out); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/cl_dll/hud.cpp#L537
 	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start);

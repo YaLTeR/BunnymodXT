@@ -271,159 +271,6 @@ namespace helper_functions
 		}
 	}
 
-	std::string get_renderfx(int renderfx)
-	{
-		switch (renderfx)
-		{
-			RET_CASE_STR(kRenderFxNone)
-			RET_CASE_STR(kRenderFxPulseSlow)
-			RET_CASE_STR(kRenderFxPulseFast)
-			RET_CASE_STR(kRenderFxPulseSlowWide)
-			RET_CASE_STR(kRenderFxPulseFastWide)
-			RET_CASE_STR(kRenderFxFadeSlow)
-			RET_CASE_STR(kRenderFxFadeFast)
-			RET_CASE_STR(kRenderFxSolidSlow)
-			RET_CASE_STR(kRenderFxSolidFast)
-			RET_CASE_STR(kRenderFxStrobeSlow)
-			RET_CASE_STR(kRenderFxStrobeFast)
-			RET_CASE_STR(kRenderFxStrobeFaster)
-			RET_CASE_STR(kRenderFxFlickerSlow)
-			RET_CASE_STR(kRenderFxFlickerFast)
-			RET_CASE_STR(kRenderFxNoDissipation)
-			RET_CASE_STR(kRenderFxDistort)
-			RET_CASE_STR(kRenderFxHologram)
-			RET_CASE_STR(kRenderFxDeadPlayer)
-			RET_CASE_STR(kRenderFxExplode)
-			RET_CASE_STR(kRenderFxGlowShell)
-			RET_CASE_STR(kRenderFxClampMinScale)
-			default: return "Unknown";
-		}
-	}
-
-	std::string get_rendermode(int rendermode)
-	{
-		switch (rendermode)
-		{
-			RET_CASE_STR(kRenderNormal)
-			RET_CASE_STR(kRenderTransColor)
-			RET_CASE_STR(kRenderTransTexture)
-			RET_CASE_STR(kRenderGlow)
-			RET_CASE_STR(kRenderTransAlpha)
-			RET_CASE_STR(kRenderTransAdd)
-			default: return "Unknown";
-		}
-	}
-
-	std::string get_effects(int effects)
-	{
-		std::ostringstream out;
-		out << "Effects: ";
-
-		#define FLAG(fl) \
-		if (effects & fl) \
-			out << "" #fl "; ";
-
-		// The flags here were arranged in order from smallest to highest bits.
-		FLAG(EF_BRIGHTFIELD);
-		FLAG(EF_MUZZLEFLASH);
-		FLAG(EF_BRIGHTLIGHT);
-		FLAG(EF_DIMLIGHT);
-		FLAG(EF_INVLIGHT);
-		FLAG(EF_NOINTERP);
-		FLAG(EF_LIGHT);
-		FLAG(EF_NODRAW);
-
-		out << '\n';
-
-		#undef FLAG
-
-		return out.str();
-	}
-
-
-	std::string get_solid(int solid)
-	{
-		switch (solid)
-		{
-			RET_CASE_STR(SOLID_NOT)
-			RET_CASE_STR(SOLID_TRIGGER)
-			RET_CASE_STR(SOLID_BBOX)
-			RET_CASE_STR(SOLID_SLIDEBOX)
-			RET_CASE_STR(SOLID_BSP)
-			default: return "Unknown";
-		}
-	}
-
-	std::string get_movetype(int movetype)
-	{
-		switch (movetype)
-		{
-			RET_CASE_STR(MOVETYPE_NONE)
-			RET_CASE_STR(MOVETYPE_WALK)
-			RET_CASE_STR(MOVETYPE_STEP)
-			RET_CASE_STR(MOVETYPE_FLY)
-			RET_CASE_STR(MOVETYPE_TOSS)
-			RET_CASE_STR(MOVETYPE_PUSH)
-			RET_CASE_STR(MOVETYPE_NOCLIP)
-			RET_CASE_STR(MOVETYPE_FLYMISSILE)
-			RET_CASE_STR(MOVETYPE_BOUNCE)
-			RET_CASE_STR(MOVETYPE_BOUNCEMISSILE)
-			RET_CASE_STR(MOVETYPE_FOLLOW)
-			RET_CASE_STR(MOVETYPE_PUSHSTEP)
-			default: return "Unknown";
-		}
-	}
-
-	std::string get_flags(int flags)
-	{
-		std::ostringstream out;
-		out << "Flags: ";
-
-		#define FLAG(fl) \
-		if (flags & fl) \
-			out << "" #fl "; ";
-
-		// The flags here were arranged in order from smallest to highest bits.
-		FLAG(FL_FLY);
-		FLAG(FL_SWIM);
-		FLAG(FL_CONVEYOR);
-		FLAG(FL_CLIENT);
-		FLAG(FL_INWATER);
-		FLAG(FL_MONSTER);
-		FLAG(FL_GODMODE);
-		FLAG(FL_NOTARGET);
-		FLAG(FL_SKIPLOCALHOST);
-		FLAG(FL_ONGROUND);
-		FLAG(FL_PARTIALGROUND);
-		FLAG(FL_WATERJUMP);
-		FLAG(FL_FROZEN);
-		FLAG(FL_FAKECLIENT);
-		FLAG(FL_DUCKING);
-		FLAG(FL_FLOAT);
-		FLAG(FL_GRAPHED);
-		FLAG(FL_IMMUNE_WATER);
-		FLAG(FL_IMMUNE_SLIME);
-		FLAG(FL_IMMUNE_LAVA);
-		FLAG(FL_PROXY);
-		FLAG(FL_ALWAYSTHINK);
-		FLAG(FL_BASEVELOCITY);
-		FLAG(FL_MONSTERCLIP);
-		FLAG(FL_ONTRAIN);
-		FLAG(FL_WORLDBRUSH);
-		FLAG(FL_SPECTATOR);
-		// unknown
-		// unknown
-		FLAG(FL_CUSTOMENTITY);
-		FLAG(FL_KILLME);
-		FLAG(FL_DORMANT);
-
-		out << '\n';
-
-		#undef FLAG
-
-		return out.str();
-	}
-
 	bool is_entity_give_infinite_health(const edict_t* ent)
 	{
 		/*
@@ -570,5 +417,157 @@ namespace helper_functions
 	bool Intersects(const edict_t *ent1, const edict_t *ent2)
 	{
 		return Intersects(ent1->v.absmin, ent1->v.absmax, ent2->v.absmin, ent2->v.absmax);
+	}
+
+	// Below this comment are only functions for determining type or flags!
+
+	std::string get_renderfx(int renderfx)
+	{
+		switch (renderfx)
+		{
+			RET_CASE_STR(kRenderFxNone)
+			RET_CASE_STR(kRenderFxPulseSlow)
+			RET_CASE_STR(kRenderFxPulseFast)
+			RET_CASE_STR(kRenderFxPulseSlowWide)
+			RET_CASE_STR(kRenderFxPulseFastWide)
+			RET_CASE_STR(kRenderFxFadeSlow)
+			RET_CASE_STR(kRenderFxFadeFast)
+			RET_CASE_STR(kRenderFxSolidSlow)
+			RET_CASE_STR(kRenderFxSolidFast)
+			RET_CASE_STR(kRenderFxStrobeSlow)
+			RET_CASE_STR(kRenderFxStrobeFast)
+			RET_CASE_STR(kRenderFxStrobeFaster)
+			RET_CASE_STR(kRenderFxFlickerSlow)
+			RET_CASE_STR(kRenderFxFlickerFast)
+			RET_CASE_STR(kRenderFxNoDissipation)
+			RET_CASE_STR(kRenderFxDistort)
+			RET_CASE_STR(kRenderFxHologram)
+			RET_CASE_STR(kRenderFxDeadPlayer)
+			RET_CASE_STR(kRenderFxExplode)
+			RET_CASE_STR(kRenderFxGlowShell)
+			RET_CASE_STR(kRenderFxClampMinScale)
+			default: return "Unknown";
+		}
+	}
+
+	std::string get_rendermode(int rendermode)
+	{
+		switch (rendermode)
+		{
+			RET_CASE_STR(kRenderNormal)
+			RET_CASE_STR(kRenderTransColor)
+			RET_CASE_STR(kRenderTransTexture)
+			RET_CASE_STR(kRenderGlow)
+			RET_CASE_STR(kRenderTransAlpha)
+			RET_CASE_STR(kRenderTransAdd)
+			default: return "Unknown";
+		}
+	}
+
+	std::string get_effects(int effects)
+	{
+		std::ostringstream out;
+
+		#define FLAG(fl) \
+		if (effects & fl) \
+			out << "" #fl "; ";
+
+		// The flags here were arranged in order from smallest to highest bits.
+		FLAG(EF_BRIGHTFIELD);
+		FLAG(EF_MUZZLEFLASH);
+		FLAG(EF_BRIGHTLIGHT);
+		FLAG(EF_DIMLIGHT);
+		FLAG(EF_INVLIGHT);
+		FLAG(EF_NOINTERP);
+		FLAG(EF_LIGHT);
+		FLAG(EF_NODRAW);
+
+		out << '\n';
+
+		#undef FLAG
+
+		return out.str();
+	}
+
+	std::string get_solid(int solid)
+	{
+		switch (solid)
+		{
+			RET_CASE_STR(SOLID_NOT)
+			RET_CASE_STR(SOLID_TRIGGER)
+			RET_CASE_STR(SOLID_BBOX)
+			RET_CASE_STR(SOLID_SLIDEBOX)
+			RET_CASE_STR(SOLID_BSP)
+			default: return "Unknown";
+		}
+	}
+
+	std::string get_movetype(int movetype)
+	{
+		switch (movetype)
+		{
+			RET_CASE_STR(MOVETYPE_NONE)
+			RET_CASE_STR(MOVETYPE_WALK)
+			RET_CASE_STR(MOVETYPE_STEP)
+			RET_CASE_STR(MOVETYPE_FLY)
+			RET_CASE_STR(MOVETYPE_TOSS)
+			RET_CASE_STR(MOVETYPE_PUSH)
+			RET_CASE_STR(MOVETYPE_NOCLIP)
+			RET_CASE_STR(MOVETYPE_FLYMISSILE)
+			RET_CASE_STR(MOVETYPE_BOUNCE)
+			RET_CASE_STR(MOVETYPE_BOUNCEMISSILE)
+			RET_CASE_STR(MOVETYPE_FOLLOW)
+			RET_CASE_STR(MOVETYPE_PUSHSTEP)
+			default: return "Unknown";
+		}
+	}
+
+	std::string get_flags(int flags)
+	{
+		std::ostringstream out;
+
+		#define FLAG(fl) \
+		if (flags & fl) \
+			out << "" #fl "; ";
+
+		// The flags here were arranged in order from smallest to highest bits.
+		FLAG(FL_FLY);
+		FLAG(FL_SWIM);
+		FLAG(FL_CONVEYOR);
+		FLAG(FL_CLIENT);
+		FLAG(FL_INWATER);
+		FLAG(FL_MONSTER);
+		FLAG(FL_GODMODE);
+		FLAG(FL_NOTARGET);
+		FLAG(FL_SKIPLOCALHOST);
+		FLAG(FL_ONGROUND);
+		FLAG(FL_PARTIALGROUND);
+		FLAG(FL_WATERJUMP);
+		FLAG(FL_FROZEN);
+		FLAG(FL_FAKECLIENT);
+		FLAG(FL_DUCKING);
+		FLAG(FL_FLOAT);
+		FLAG(FL_GRAPHED);
+		FLAG(FL_IMMUNE_WATER);
+		FLAG(FL_IMMUNE_SLIME);
+		FLAG(FL_IMMUNE_LAVA);
+		FLAG(FL_PROXY);
+		FLAG(FL_ALWAYSTHINK);
+		FLAG(FL_BASEVELOCITY);
+		FLAG(FL_MONSTERCLIP);
+		FLAG(FL_ONTRAIN);
+		FLAG(FL_WORLDBRUSH);
+		FLAG(FL_SPECTATOR);
+		// unknown
+		// unknown
+		FLAG(FL_CUSTOMENTITY);
+		FLAG(FL_KILLME);
+		FLAG(FL_DORMANT);
+
+		out << '\n';
+
+		#undef FLAG
+
+		return out.str();
 	}
 };

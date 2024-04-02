@@ -14,6 +14,19 @@ const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 
 namespace helper_functions
 {
+	// https://github.com/ValveSoftware/halflife/blob/master/common/parsemsg.cpp
+	void BEGIN_READ(void *buf, int size);
+	int READ_CHAR();
+	int READ_BYTE();
+	int READ_SHORT();
+	int READ_WORD();
+	int READ_LONG();
+	float READ_FLOAT();
+	char* READ_STRING();
+	float READ_COORD();
+	float READ_ANGLE();
+	float READ_HIRESANGLE();
+
 	void com_fixslashes(std::string &str); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
 	void com_filebase(const char *in, char *out); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/cl_dll/hud.cpp#L537
 	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start);

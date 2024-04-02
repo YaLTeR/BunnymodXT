@@ -4,6 +4,137 @@
 
 namespace helper_functions
 {
+	static byte *gpBuf;
+	static int giSize, giRead, giBadRead;
+	void BEGIN_READ(void *buf, int size)
+	{
+		giRead = 0;
+		giBadRead = 0;
+		giSize = size;
+		gpBuf = (byte*)buf;
+	}
+
+	int READ_SHARED(int type, int size)
+	{
+		int c;
+
+		if (giRead + size > giSize)
+		{
+			giBadRead = 1;
+			return -1;
+		}
+
+		switch (type)
+		{
+			case 0: // READ_CHAR
+				c = (signed char)gpBuf[giRead];
+				break;
+			case 1: // READ_BYTE
+				c = (unsigned char)gpBuf[giRead];
+				break;
+			case 2: // READ_SHORT
+				c = (short)(gpBuf[giRead] + (gpBuf[giRead + 1] << 8));
+				break;
+			case 3: // READ_LONG
+				c = gpBuf[giRead] + (gpBuf[giRead + 1] << 8) + (gpBuf[giRead + 2] << 16) + (gpBuf[giRead + 3] << 24);
+				break;
+			default:
+				break;
+		}
+
+		giRead += size;
+
+		return c;
+	}
+
+	int READ_CHAR()
+	{
+		return READ_SHARED(0, 1);
+	}
+
+	int READ_BYTE()
+	{
+		return READ_SHARED(1, 1);
+	}
+
+	int READ_SHORT()
+	{
+		return READ_SHARED(2, 2);
+	}
+
+	int READ_WORD()
+	{
+		return READ_SHORT();
+	}
+
+	int READ_LONG()
+	{
+		return READ_SHARED(3, 4);
+	}
+
+	float READ_FLOAT()
+	{
+		union
+		{
+			byte b[4];
+			float f;
+			int l;
+		} dat;
+
+		for (int i = 0; i < 4; i++)
+		{
+			dat.b[i] = gpBuf[giRead + i];
+		}
+
+		giRead += 4;
+
+		//dat.l = LittleLong(dat.l);
+
+		return dat.f;
+	}
+
+	char* READ_STRING()
+	{
+		static char string[2048];
+		int l, c;
+
+		string[0] = 0;
+		l = 0;
+
+		do
+		{
+			if (giRead + 1 > giSize)
+				break; // no more characters
+
+			c = READ_CHAR();
+
+			if (c == -1 || c == 0)
+				break;
+
+			string[l] = c;
+			l++;
+		} while (l < sizeof(string) - 1);
+
+		string[l] = 0;
+
+		return string;
+	}
+
+	float READ_COORD()
+	{
+		return (float)(READ_SHORT() * (1.0 / 8));
+	}
+
+	float READ_ANGLE()
+	{
+		return (float)(READ_CHAR() * (360.0 / 256));
+	}
+
+	float READ_HIRESANGLE()
+	{
+		return (float)(READ_SHORT() * (360.0 / 65536));
+	}
+
 	void com_fixslashes(std::string &str)
 	{
 		#ifdef _WIN32

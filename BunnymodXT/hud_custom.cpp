@@ -13,6 +13,8 @@
 
 #include "modules/HwDLL.hpp"
 
+#include "helper_functions.hpp"
+
 namespace CustomHud
 {
 	static const float FADE_DURATION_JUMPSPEED = 0.7f;
@@ -451,9 +453,7 @@ namespace CustomHud
 			std::istringstream ss(CVars::con_color.GetString());
 			ss >> r >> g >> b;
 
-			consoleColor[0] = r / 255.0f;
-			consoleColor[1] = g / 255.0f;
-			consoleColor[2] = b / 255.0f;
+			helper_functions::rgb_to_float(consoleColor, r, g, b);
 		}
 
 		// Default: yellowish.

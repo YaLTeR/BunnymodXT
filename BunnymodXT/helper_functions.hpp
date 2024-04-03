@@ -55,10 +55,23 @@ namespace helper_functions
 		b = std::clamp(b / 255.0f, 0.0f, 1.0f);
 	}
 
+	inline void rgb_to_float(float *dest, unsigned r, unsigned g, unsigned b)
+	{
+		dest[0] = std::clamp(r / 255, 0.0f, 1.0f);
+		dest[1] = std::clamp(g / 255, 0.0f, 1.0f);
+		dest[2] = std::clamp(b / 255, 0.0f, 1.0f);
+	}
+
 	inline void rgba_to_float(float &r, float &g, float &b, float &a)
 	{
 		rgb_to_float(r, g, b);
 		a = std::clamp(a / 255.0f, 0.0f, 1.0f);
+	}
+
+	inline void rgba_to_float(float *dest, unsigned r, unsigned g, unsigned b, unsigned a)
+	{
+		rgb_to_float(dest, r, g, b);
+		dest[3] = std::clamp(a / 255, 0.0f, 1.0f);
 	}
 
 	// entvars_t from HLSDK 1.0 does not have such variables, for this reason wrappers were made

@@ -4620,7 +4620,7 @@ void HwDLL::PrintEntity(std::ostringstream &out, int index)
 
 	out << "; hp: " << ent->v.health;
 
-	if ((!strncmp(classname, "func_door", 9)) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
+	if (helper_functions::is_entity_give_infinite_health(ent))
 		out << "; dmg: " << ent->v.dmg;
 
 	Vector origin;

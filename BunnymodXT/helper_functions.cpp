@@ -43,7 +43,7 @@ namespace helper_functions
 
 	int READ_SHARED(int type, int size)
 	{
-		int c;
+		int c = -1;
 
 		if (giRead + size > giSize)
 		{

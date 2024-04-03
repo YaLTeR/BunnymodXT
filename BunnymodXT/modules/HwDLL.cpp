@@ -2470,14 +2470,14 @@ int HwDLL::CallOnTASPlaybackFrame() {
 		PrevFractions,
 		PrevNormalzs,
 		std::array<float, 5>{
-			StrafeState.AcceleratedYawSpeedValue,
-			StrafeState.AcceleratedYawSpeedStart,
-			StrafeState.AcceleratedYawSpeedTarget,
-			StrafeState.AcceleratedYawSpeedAccel,
+			StrafeState.MaxAccelYawOffsetValue,
+			StrafeState.MaxAccelYawOffsetStart,
+			StrafeState.MaxAccelYawOffsetTarget,
+			StrafeState.MaxAccelYawOffsetAccel,
 			// Eh, meow?
 			static_cast<float>(
 				static_cast<unsigned int>(
-					static_cast<unsigned char>(StrafeState.AcceleratedYawSpeedDir)))
+					static_cast<unsigned char>(StrafeState.MaxAccelYawOffsetDir)))
 		},
 	});
 }

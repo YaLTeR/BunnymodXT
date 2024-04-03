@@ -115,6 +115,19 @@ public:
 
 	void SetupTraceVectors(float start[3], float end[3]);
 
+	/*
+		Set the 'interface_preserved_eng_cl' variable to 'false' only if the 'cl_enginefunc_t' is completely different from what is presented in our headers and you are not going to modify it
+		If only a few functions got added/removed in the middle of interface, then this can be fixed as one of the option by using preprocessor directives (#ifdef, #elif, #ifndef, #if) and releasing a separate build for that version, then it wouldn't require to change that variable
+	*/
+	bool interface_preserved_eng_cl = true;
+
+	std::string gamedir_clean; // Game directory that has been converted to lower case, cleared from the game path and initialized once.
+
+	// WRAPPER FUNCTIONS STARTS HERE
+	std::string GetLevelName();
+	std::string GetGameDirectory();
+	// WRAPPER FUNCTIONS END HERE
+
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};
 	ClientDLL(const ClientDLL&);

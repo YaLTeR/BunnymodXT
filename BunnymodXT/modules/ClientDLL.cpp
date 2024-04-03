@@ -1284,6 +1284,50 @@ bool ClientDLL::DoesMapNameContain(const char *map)
 	return std::strstr(map_name, map);
 }
 
+std::string ClientDLL::GetLevelName()
+{
+	std::string mapname = "";
+
+	const char *map_name = "";
+	if (interface_preserved_eng_cl && pEngfuncs) // && !hw.is_hlsdk10
+	{
+		map_name = pEngfuncs->pfnGetLevelName();
+	}
+
+	if (map_name && map_name[0])
+	{
+		char mn[64];
+		helper_functions::com_filebase(map_name, mn);
+		helper_functions::convert_to_lowercase(mn);
+		mapname = mn;
+	}
+
+	return mapname;
+}
+
+std::string ClientDLL::GetGameDirectory()
+{
+	if (!gamedir_clean.empty())
+		return gamedir_clean;
+
+	auto &sv = ServerDLL::GetInstance();
+	const char *game_dir = "";
+	if (sv.interface_preserved_eng_sv && sv.pEngfuncs)
+	{
+		sv.pEngfuncs->pfnGetGameDir(const_cast<char*>(game_dir));
+	}
+
+	if (game_dir && game_dir[0])
+	{
+		char gd[260];
+		helper_functions::com_filebase(game_dir, gd);
+		helper_functions::convert_to_lowercase(gd);
+		gamedir_clean = gd;
+	}
+
+	return gamedir_clean;
+}
+
 void ClientDLL::SetAngleSpeedCap(bool capped)
 {
 	if (!pCS_AngleSpeedCap && !pCS_AngleSpeedCap_Linux) {

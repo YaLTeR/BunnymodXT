@@ -276,6 +276,42 @@ namespace helper_functions
 		}
 	}
 
+	bool does_gamedir_starts_with(const char *game, size_t len)
+	{
+		std::string gamedir = ClientDLL::GetInstance().GetGameDirectory();
+		if (!gamedir.empty() && !strncmp(gamedir.c_str(), game, len))
+			return true;
+
+		return false;
+	}
+
+	bool does_gamedir_match(const char *game)
+	{
+		std::string gamedir = ClientDLL::GetInstance().GetGameDirectory();
+		if (!gamedir.empty() && !strcmp(gamedir.c_str(), game))
+			return true;
+
+		return false;
+	}
+
+	bool does_mapname_starts_with(const char *map, size_t len)
+	{
+		std::string mapname = ClientDLL::GetInstance().GetLevelName();
+		if (!mapname.empty() && !strncmp(mapname.c_str(), map, len))
+			return true;
+
+		return false;
+	}
+
+	bool does_mapname_match(const char *map)
+	{
+		std::string mapname = ClientDLL::GetInstance().GetLevelName();
+		if (!mapname.empty() && !strcmp(mapname.c_str(), map))
+			return true;
+
+		return false;
+	}
+
 	std::string get_steam_id(const unsigned long steamID32)
 	{
 		std::ostringstream ss;

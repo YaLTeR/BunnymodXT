@@ -45,11 +45,25 @@ namespace helper_functions
 		a = std::clamp(a / 255.0f, 0.0f, 1.0f);
 	}
 
-
 	// entvars_t from HLSDK 1.0 does not have such variables, for this reason wrappers were made
 	int ret_entvars_bInDuck(const edict_t* ent);
 	int ret_entvars_flDuckTime(const edict_t* ent);
 	float ret_entvars_fuser2(const edict_t* ent);
+
+	bool does_gamedir_starts_with(const char *game, size_t len);
+	bool does_gamedir_match(const char *game);
+	bool does_mapname_starts_with(const char *map, size_t len);
+	bool does_mapname_match(const char *map);
+	// This is done in order to find out the length of string at the compile-time
+	// We subtract 1 from sizeof due of the null terminator
+	#define HF_DoesGameDirStartsWith(game) \
+		helper_functions::does_gamedir_starts_with(game, sizeof(game) - 1);
+	#define HF_DoesMapNameStartsWith(map) \
+		helper_functions::does_mapname_starts_with(game, sizeof(map) - 1);
+	#define HF_DoesGameDirMatch(game) \
+		helper_functions::does_gamedir_match(game);
+	#define HF_DoesMapNameMatch(map) \
+		helper_functions::does_mapname_match(map);
 
 	double ret_bxt_time();
 	void com_fixslashes(std::string &str); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680

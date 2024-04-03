@@ -117,6 +117,12 @@ public:
 
 	void GiveNamedItem(entvars_t *pev, int istr);
 
+	/*
+		Set the 'interface_preserved_eng_sv' variable to 'false' only if the 'enginefuncs_t' is completely different from what is presented in our headers and you are not going to modify it
+		If only a few functions got added/removed in the middle of interface, then this can be fixed as one of the option by using preprocessor directives (#ifdef, #elif, #ifndef, #if) and releasing a separate build for that version, then it wouldn't require to change that variable
+	*/
+	bool interface_preserved_eng_sv = true;
+
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};
 	ServerDLL(const ServerDLL&);

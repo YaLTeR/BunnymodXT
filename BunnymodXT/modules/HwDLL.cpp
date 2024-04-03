@@ -753,6 +753,7 @@ void HwDLL::Clear()
 	autoRecordDemoName.clear();
 	autoRecordDemoNumber = 1;
 	autoRecordNow = false;
+	ClientDLL::GetInstance().gamedir_clean.clear();
 	insideHost_Loadgame_f = false;
 	insideHost_Reload_f = false;
 	pcl = nullptr;

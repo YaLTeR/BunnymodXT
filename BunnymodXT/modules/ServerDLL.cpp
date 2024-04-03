@@ -966,37 +966,37 @@ void ServerDLL::FindStuff()
 			if (ORIG_CBasePlayer__ForceClientDllUpdate_Linux) {
 				offm_rgAmmoLast = 0x56C; // 6153: 0x568
 				offm_iClientFOV = 0x4C4; // 6153: 0x4C0
-				if (ClientDLL::GetInstance().DoesGameDirContain("czeror")) {
+				if (HF_DoesGameDirStartsWith("czeror")) {
 					offm_rgAmmoLast = 0x554; // 6153: 0x550
 					offm_iClientFOV = 0x8B0; // 6153: 0x8AC
 					offFuncIsPlayer = 0xA8;
 					offFuncCenter = 0xDC;
 					offFuncObjectCaps = 0x18;
 				}
-				if (ClientDLL::GetInstance().DoesGameDirContain("bshift")) {
+				if (HF_DoesGameDirStartsWith("bshift")) {
 					offm_rgAmmoLast = 0x568; // 8684: 0x56C
 					offm_iClientFOV = 0x4C0; // 8684: 0x4C4
 				}
-				if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike") || ClientDLL::GetInstance().DoesGameDirMatch("czero")) {
+				if (HF_DoesGameDirMatch("cstrike") || HF_DoesGameDirMatch("czero")) {
 					offm_rgAmmoLast = 0x674;
 					offm_iClientFOV = 0x5C4;
 					offFuncIsPlayer = 0xA0;
 					offFuncCenter = 0xCC;
 					offFuncObjectCaps = 0x18;
 				}
-				if (ClientDLL::GetInstance().DoesGameDirMatch("tfc")) {
+				if (HF_DoesGameDirMatch("tfc")) {
 					offm_rgAmmoLast = 0x98C; // 6153: 0x988
 					offm_iClientFOV = 0x8E0; // 6153: 0x8DC
 					offFuncObjectCaps = 0x1C;
 				}
-				if (ClientDLL::GetInstance().DoesGameDirMatch("dod")) {
+				if (HF_DoesGameDirMatch("dod")) {
 					offm_rgAmmoLast = 0x4F8; // 6153: 0x4F4
 					offm_iClientFOV = 0x448; // 6153: 0x444
 					offFuncIsPlayer = 0xB4;
 					offFuncCenter = 0xE0;
 					offFuncObjectCaps = 0x20;
 				}
-				if (ClientDLL::GetInstance().DoesGameDirMatch("dmc")) {
+				if (HF_DoesGameDirMatch("dmc")) {
 					offm_rgAmmoLast = 0x534;
 					offm_iClientFOV = 0x48C;
 				}
@@ -1078,7 +1078,7 @@ void ServerDLL::FindStuff()
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;
-				if (ClientDLL::GetInstance().DoesGameDirContain("czeror"))
+				if (HF_DoesGameDirStartsWith("czeror"))
 					size_CNode = 0x60;
 				else
 					size_CNode = 0x58;
@@ -2158,7 +2158,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->targetname) {
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
-			if (!std::strcmp(targetname, "sheriffs_chppr") && ClientDLL::GetInstance().DoesGameDirContain("hunger")) { // They Hunger Episode 3
+			if (!std::strcmp(targetname, "sheriffs_chppr") && HF_DoesGameDirStartsWith("hunger")) { // They Hunger Episode 3
 				DoAutoStopTasks();
 			}
 		}
@@ -2173,7 +2173,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CBreakable__Die, void*, thisptr, int, ed
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->target) {
 			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
-			if (!std::strcmp(target, "BLOOOM") && ClientDLL::GetInstance().DoesGameDirContain("czeror")) { // CSCZDS
+			if (!std::strcmp(target, "BLOOOM") && HF_DoesGameDirStartsWith("czeror")) { // CSCZDS
 				DoAutoStopTasks();
 			}
 		}
@@ -2188,7 +2188,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CBreakable__Die_Linux, void*, thisptr)
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->target) {
 			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
-			if (!std::strcmp(target, "BLOOOM") && ClientDLL::GetInstance().DoesGameDirContain("czeror")) {
+			if (!std::strcmp(target, "BLOOOM") && HF_DoesGameDirStartsWith("czeror")) {
 				DoAutoStopTasks();
 			}
 		}
@@ -2217,7 +2217,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->target) {
 			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
-			if (!std::strcmp(target, "oil_spouts1_mm") && ClientDLL::GetInstance().DoesGameDirContain("hunger")) { // They Hunger Episode 2
+			if (!std::strcmp(target, "oil_spouts1_mm") && HF_DoesGameDirStartsWith("hunger")) { // They Hunger Episode 2
 				DoAutoStopTasks();
 			}
 		}
@@ -2236,7 +2236,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 			char pVolumeName[] = "lm15";
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 
-			if (!std::strcmp(targetname, "rocket_dr") && ClientDLL::GetInstance().DoesGameDirMatch("lm_txp") // The Xeno Project
+			if (!std::strcmp(targetname, "rocket_dr") && HF_DoesGameDirMatch("lm_txp") // The Xeno Project
 				&& ORIG_CChangeLevel__InTransitionVolume(classPtr, pVolumeName))
 				DoAutoStopTasks();
 		}
@@ -2251,7 +2251,7 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, in
 		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev && pev->classname) {
 			const char* classname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->classname;
-			if (!std::strcmp(classname, "monster_gargantua") && ClientDLL::GetInstance().DoesGameDirMatch("tetsu0_cot")) {
+			if (!std::strcmp(classname, "monster_gargantua") && HF_DoesGameDirMatch("tetsu0_cot")) {
 				DoAutoStopTasks();
 			}
 		}
@@ -2304,29 +2304,27 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 
 void ServerDLL::OnMultiManagerFired(const char *targetname)
 {
-	auto &cl = ClientDLL::GetInstance();
-
-	if ((!std::strcmp(targetname, "roll_the_credits") && cl.DoesGameDirContain("bshift")) // Blue Shift
-		|| (!std::strcmp(targetname, "youwinmulti") && cl.DoesGameDirContain("rewolf")) // Gunman Chronicles
-		|| (!std::strcmp(targetname, "previctory_mm") && cl.DoesGameDirContain("decay")) // Decay
-		|| (!std::strcmp(targetname, "stairscene_mngr") && cl.DoesGameDirContain("hunger")) // They Hunger Episode 1
-		|| (!std::strcmp(targetname, "boot_radio_seq") && cl.DoesGameDirContain("gearbox")) // Opposing Force: Boot Camp
-		|| (!std::strcmp(targetname, "telmm") && cl.DoesGameDirMatch("biglolly")) // Big Lolly
-		|| (!std::strcmp(targetname, "mm_player_camera1") && cl.DoesGameDirMatch("htc")) // HTC
-		|| (!std::strcmp(targetname, "multimanager_1") && cl.DoesGameDirMatch("construction")) // Construction
-		|| (!std::strcmp(targetname, "the_endgame_mm") && cl.DoesGameDirMatch("gloom")) // The Gloom
-		|| (!std::strcmp(targetname, "endbox_mm0") && cl.DoesGameDirContain("echoes")) // Echoes
-		|| (!std::strcmp(targetname, "sendmm") && cl.DoesGameDirMatch("minimicus"))  // Minimicus
-		|| (!std::strcmp(targetname, "kill2") && cl.DoesGameDirMatch("before")) // Before
-		|| (!std::strcmp(targetname, "tele_in") && cl.DoesGameDirMatch("plague")) // Plague
-		|| (!std::strcmp(targetname, "exit_seq") && cl.DoesGameDirMatch("timeline2") && cl.DoesMapNameMatch("ice29")) // Timeline 2
-		|| (!std::strcmp(targetname, "spawn_garg_sci_mm") && cl.DoesGameDirMatch("steamlink")) // Uplink
-		|| (!std::strcmp(targetname, "fc_mm1") && cl.DoesGameDirMatch("hc")) // Hazardous Course 2
-		|| (!std::strcmp(targetname, "medicosprey") && cl.DoesGameDirMatch("visitors")) // Visitors
-		|| (!std::strcmp(targetname, "change_mm") && cl.DoesGameDirMatch("wantedsp") && cl.DoesMapNameMatch("want36")) // Wanted
-		|| (!std::strcmp(targetname, "multiend1") && cl.DoesGameDirMatch("cryoffear") && !cl.DoesMapNameContain("cof_suicide")) // Cry of Fear (Ending 1, 2, 3)
-		|| (!std::strcmp(targetname, "multicrash") && cl.DoesGameDirMatch("cryoffear")) // Cry of Fear (Ending 5)
-		|| (!std::strcmp(targetname, "multicoopend") && cl.DoesGameDirMatch("cryoffear"))) { // Cry of Fear (Co-op)
+	if (!std::strcmp(targetname, "spawn_garg_sci_mm") // Half-Life: Uplink
+		|| !std::strcmp(targetname, "boot_radio_seq") // Half-Life: Opposing Force (Boot Camp)
+		|| (!std::strcmp(targetname, "roll_the_credits") && HF_DoesGameDirStartsWith("bshift")) // Half-Life: Blue Shift
+		|| (!std::strcmp(targetname, "youwinmulti") && HF_DoesGameDirStartsWith("rewolf")) // Gunman Chronicles
+		|| (!std::strcmp(targetname, "previctory_mm") && HF_DoesGameDirStartsWith("decay")) // Decay
+		|| (!std::strcmp(targetname, "stairscene_mngr") && HF_DoesGameDirStartsWith("hunger")) // They Hunger Episode 1
+		|| (!std::strcmp(targetname, "telmm") && HF_DoesGameDirMatch("biglolly")) // Big Lolly
+		|| (!std::strcmp(targetname, "mm_player_camera1") && HF_DoesGameDirMatch("htc")) // HTC
+		|| (!std::strcmp(targetname, "multimanager_1") && HF_DoesGameDirMatch("construction")) // Construction
+		|| (!std::strcmp(targetname, "the_endgame_mm") && HF_DoesGameDirMatch("gloom")) // The Gloom
+		|| (!std::strcmp(targetname, "endbox_mm0") && HF_DoesGameDirStartsWith("echoes")) // Echoes
+		|| (!std::strcmp(targetname, "sendmm") && HF_DoesGameDirMatch("minimicus"))  // Minimicus
+		|| (!std::strcmp(targetname, "kill2") && HF_DoesGameDirMatch("before")) // Before
+		|| (!std::strcmp(targetname, "tele_in") && HF_DoesGameDirMatch("plague")) // Plague
+		|| (!std::strcmp(targetname, "exit_seq") && HF_DoesGameDirMatch("timeline2") && HF_DoesMapNameMatch("ice29")) // Timeline 2
+		|| (!std::strcmp(targetname, "fc_mm1") && HF_DoesGameDirMatch("hc")) // Hazardous Course 2
+		|| (!std::strcmp(targetname, "medicosprey") && HF_DoesGameDirMatch("visitors")) // Visitors
+		|| (!std::strcmp(targetname, "change_mm") && HF_DoesGameDirMatch("wantedsp") && HF_DoesMapNameMatch("want36")) // Wanted
+		|| (!std::strcmp(targetname, "multiend1") && HF_DoesGameDirMatch("cryoffear") && !HF_DoesMapNameStartsWith("cof_suicide")) // Cry of Fear (Ending 1, 2, 3)
+		|| (!std::strcmp(targetname, "multicrash") && HF_DoesGameDirMatch("cryoffear")) // Cry of Fear (Ending 5)
+		|| (!std::strcmp(targetname, "multicoopend") && HF_DoesGameDirMatch("cryoffear"))) { // Cry of Fear (Co-op)
 		DoAutoStopTasks();
 	}
 

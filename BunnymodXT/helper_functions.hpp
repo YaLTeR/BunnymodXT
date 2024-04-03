@@ -14,6 +14,22 @@
 
 const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 
+// Usage:
+// if (!strncmp(var, HF_StrAndLen("test")))
+#define HF_StrAndLen(str) \
+	str, sizeof(str) - 1
+
+// This is done in order to find out the length of string at the compile-time
+// We subtract 1 from sizeof due of the null terminator
+#define HF_DoesGameDirStartsWith(game) \
+	helper_functions::does_gamedir_starts_with(game, sizeof(game) - 1)
+#define HF_DoesMapNameStartsWith(map) \
+	helper_functions::does_mapname_starts_with(map, sizeof(map) - 1)
+#define HF_DoesGameDirMatch(game) \
+	helper_functions::does_gamedir_match(game)
+#define HF_DoesMapNameMatch(map) \
+	helper_functions::does_mapname_match(map)
+
 namespace helper_functions
 {
 	// https://github.com/ValveSoftware/halflife/blob/master/common/parsemsg.cpp
@@ -54,16 +70,6 @@ namespace helper_functions
 	bool does_gamedir_match(const char *game);
 	bool does_mapname_starts_with(const char *map, size_t len);
 	bool does_mapname_match(const char *map);
-	// This is done in order to find out the length of string at the compile-time
-	// We subtract 1 from sizeof due of the null terminator
-	#define HF_DoesGameDirStartsWith(game) \
-		helper_functions::does_gamedir_starts_with(game, sizeof(game) - 1);
-	#define HF_DoesMapNameStartsWith(map) \
-		helper_functions::does_mapname_starts_with(game, sizeof(map) - 1);
-	#define HF_DoesGameDirMatch(game) \
-		helper_functions::does_gamedir_match(game);
-	#define HF_DoesMapNameMatch(map) \
-		helper_functions::does_mapname_match(map);
 
 	double ret_bxt_time();
 	void com_fixslashes(std::string &str); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
@@ -81,9 +87,12 @@ namespace helper_functions
 	std::string get_solid(int solid);
 	std::string get_monster_triggercondition(int m_iTriggerCondition);
 	std::string get_monster_task(int iTask);
+	std::string get_difficulty(int skill);
 	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length);
 	void split_console_print_to_chunks(std::string str);
 	void convert_to_lowercase(const char *str);
+	int build_number(const char *date);
+	int build_number();
 
 	// https://developer.valvesoftware.com/wiki/SteamID
 	std::string get_steam_id(const unsigned long steamID32);

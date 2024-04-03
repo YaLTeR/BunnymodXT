@@ -164,7 +164,8 @@ namespace helper_functions
 
 	double ret_bxt_time()
 	{
-		return (CustomHud::GetTime().hours * 60 * 60) + (CustomHud::GetTime().minutes * 60) + CustomHud::GetTime().seconds + (CustomHud::GetTime().milliseconds / 1000);
+		const auto& gt = CustomHud::GetTime();
+		return (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds + (gt.milliseconds / 1000);
 	}
 
 	void com_fixslashes(std::string &str)
@@ -371,6 +372,49 @@ namespace helper_functions
 		return false;
 	}
 
+	int build_number(const char *date)
+	{
+		const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+		const char mond[12] = { 31,    28,    31,    30,    31,    30,    31,    31,    30,    31,    30,    31 };
+
+		#ifdef _WIN32
+		#define Q_strncasecmp _strnicmp
+		#else
+		#define Q_strncasecmp strncasecmp
+		#endif
+
+		int m = 0, d = 0, y = 0, build = 0;
+		for (m = 0; m < 11; m++)
+		{
+			if (Q_strncasecmp(&date[0], mon[m], 3) == 0)
+				break;
+			d += mond[m];
+		}
+
+		#undef Q_strncasecmp
+
+		d += atoi(&date[4]) - 1;
+		y = atoi(&date[7]) - 1900;
+		build = d + (int)((y - 1) * 365.25);
+
+		if (((y % 4) == 0) && m > 1)
+			build += 1;
+
+		#define START_DATE_GOLDSRC 34995 // Used in GoldSrc and Quake builds (Oct 24 1996)
+		#define START_DATE_SOURCE 35739 // Used in builds on the Source Engine (Nov 7 1998)
+		#define START_DATE_HL2_BETA 37527 // Used in builds on the Source Engine before the official release of HL2 (Sep 30 2003)
+
+		build -= START_DATE_GOLDSRC;
+
+		return build;
+	}
+
+	int build_number()
+	{
+		static int build = build_number(__DATE__);
+		return build;
+	}
+
 	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity)
 	{
 		/*
@@ -494,6 +538,17 @@ namespace helper_functions
 	}
 
 	// Below this comment are only functions for determining type or flags!
+
+	std::string get_difficulty(int skill)
+	{
+		switch (skill)
+		{
+			case 1: return "Easy";
+			case 2: return "Normal";
+			case 3: return "Hard";
+			default: return "Unknown";
+		}
+	}
 
 	std::string get_renderfx(int renderfx)
 	{

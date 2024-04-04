@@ -3455,9 +3455,11 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 
 		pl->v.origin = cp_origin;
 
+		#ifndef HLSDK10_BUILD
 		// for CS 1.6 stamina reset
 		if (hw.is_cstrike_dir) 
 			pl->v.fuser2 = 0;
+		#endif
 	}
 };
 
@@ -5963,9 +5965,9 @@ void HwDLL::InsertCommands()
 						player.Velocity[1] = pl->v.velocity[1];
 						player.Velocity[2] = pl->v.velocity[2];
 						player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
-						player.InDuckAnimation = (pl->v.bInDuck != 0);
-						player.DuckTime = static_cast<float>(pl->v.flDuckTime);
-						player.StaminaTime = pl->v.fuser2;
+						player.InDuckAnimation = (RET_EntVars_bInDuck(pl) != 0);
+						player.DuckTime = static_cast<float>(RET_EntVars_flDuckTime(pl));
+						player.StaminaTime = RET_EntVars_fuser2(pl);
 						player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 						if (ORIG_PF_GetPhysicsKeyValue) {
@@ -6632,9 +6634,9 @@ void HwDLL::InsertCommands()
 					player.Velocity[1] = pl->v.velocity[1];
 					player.Velocity[2] = pl->v.velocity[2];
 					player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
-					player.InDuckAnimation = (pl->v.bInDuck != 0);
-					player.DuckTime = static_cast<float>(pl->v.flDuckTime);
-					player.StaminaTime = pl->v.fuser2;
+					player.InDuckAnimation = (RET_EntVars_bInDuck(pl) != 0);
+					player.DuckTime = static_cast<float>(RET_EntVars_flDuckTime(pl));
+					player.StaminaTime = RET_EntVars_fuser2(pl);
 					player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 					if (ORIG_PF_GetPhysicsKeyValue) {
@@ -6762,9 +6764,9 @@ HLStrafe::PlayerData HwDLL::GetPlayerData()
 	player.Velocity[1] = pl->v.velocity[1];
 	player.Velocity[2] = pl->v.velocity[2];
 	player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
-	player.InDuckAnimation = (pl->v.bInDuck != 0);
-	player.DuckTime = static_cast<float>(pl->v.flDuckTime);
-	player.StaminaTime = pl->v.fuser2;
+	player.InDuckAnimation = (RET_EntVars_bInDuck(pl) != 0);
+	player.DuckTime = static_cast<float>(RET_EntVars_flDuckTime(pl));
+	player.StaminaTime = RET_EntVars_fuser2(pl);
 	player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 	if (ORIG_PF_GetPhysicsKeyValue) {
@@ -7224,7 +7226,7 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 		float* m_fStamina = reinterpret_cast<float*>(thisAddr + ServerDLL::GetInstance().offm_fStamina);
 		stamina = *m_fStamina;
 	} else {
-		stamina = pl->v.fuser2;
+		stamina = RET_EntVars_fuser2(pl);
 	}
 
 	return true;

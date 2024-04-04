@@ -14,6 +14,17 @@
 
 const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 
+// entvars_t from HLSDK 1.0 does not have such variables, for this reason wrappers were made
+#ifndef HLSDK10_BUILD
+	#define RET_EntVars_bInDuck(ent) ent->v.bInDuck
+	#define RET_EntVars_flDuckTime(ent) ent->v.flDuckTime
+	#define RET_EntVars_fuser2(ent) ent->v.fuser2
+#else
+	#define RET_EntVars_bInDuck(ent) 0
+	#define RET_EntVars_flDuckTime(ent) 0
+	#define RET_EntVars_fuser2(ent) 0.0f
+#endif
+
 // Usage:
 // if (!strncmp(var, HF_StrAndLen("test")))
 #define HF_StrAndLen(str) \
@@ -73,11 +84,6 @@ namespace helper_functions
 		rgb_to_float(dest, r, g, b);
 		dest[3] = std::clamp(a / 255, 0.0f, 1.0f);
 	}
-
-	// entvars_t from HLSDK 1.0 does not have such variables, for this reason wrappers were made
-	int ret_entvars_bInDuck(const edict_t* ent);
-	int ret_entvars_flDuckTime(const edict_t* ent);
-	float ret_entvars_fuser2(const edict_t* ent);
 
 	bool does_gamedir_starts_with(const char *game, size_t len);
 	bool does_gamedir_match(const char *game);

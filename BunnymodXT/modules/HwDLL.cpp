@@ -3867,6 +3867,17 @@ struct HwDLL::Cmd_BXT_Get_SteamID_From_Demo
 	}
 };
 
+struct HwDLL::Cmd_BXT_Get_ClientMaxSpeed
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		if (ClientDLL::GetInstance().pEngfuncs)
+			HwDLL::GetInstance().ORIG_Con_Printf("Client maxspeed: %f\n", ClientDLL::GetInstance().pEngfuncs->GetClientMaxspeed());
+	}
+};
+
 struct HwDLL::Cmd_BXT_TAS_Autojump_Down
 {
 	NO_USAGE();
@@ -5848,6 +5859,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Handler<float, float, float>>("bxt_set_angles");
 	wrapper::Add<Cmd_BXT_Get_Server_Time, Handler<>>("bxt_get_server_time");
 	wrapper::Add<Cmd_BXT_Get_SteamID_From_Demo, Handler<>>("bxt_get_steamid_from_demo");
+	wrapper::Add<Cmd_BXT_Get_ClientMaxSpeed, Handler<>>("bxt_get_clientmaxspeed");
 	wrapper::Add<
 		Cmd_Multiwait,
 		Handler<>,

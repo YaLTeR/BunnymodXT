@@ -447,6 +447,7 @@ protected:
 	struct Cmd_BXT_Get_Origin_And_Angles;
 	struct Cmd_BXT_Get_Server_Time;
 	struct Cmd_BXT_Get_SteamID_From_Demo;
+	struct Cmd_BXT_Get_ClientMaxSpeed;
 	struct Cmd_Multiwait;
 	struct Cmd_BXT_Camera_Fixed;
 	struct Cmd_BXT_Camera_Clear;

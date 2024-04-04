@@ -85,6 +85,9 @@ namespace helper_functions
 		dest[3] = std::clamp(a / 255.0f, 0.0f, 1.0f);
 	}
 
+	void Draw_FillRGBA(int x, int y, int width, int height, int r, int g, int b, int a);
+	void Draw_FillRGBABlend(int x, int y, int width, int height, int r, int g, int b, int a);
+
 	bool does_gamedir_starts_with(const char *game, size_t len);
 	bool does_gamedir_match(const char *game);
 	bool does_mapname_starts_with(const char *map, size_t len);

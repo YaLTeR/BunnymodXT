@@ -1,6 +1,7 @@
 #include "stdafx.hpp"
 #include "modules.hpp"
 #include "helper_functions.hpp"
+#include <GL/gl.h>
 
 namespace helper_functions
 {
@@ -343,6 +344,41 @@ namespace helper_functions
 		}
 
 		return false;
+	}
+
+	inline void Draw_FillRGBAShared(int x, int y, int width, int height, int r, int g, int b, int a, bool blend)
+	{
+		glDisable(GL_TEXTURE_2D);
+		glEnable(GL_BLEND);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+		if (blend)
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		else
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+		glColor4f(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+
+		glBegin(GL_QUADS);
+			glVertex2f((float)x, (float)y);
+			glVertex2f((float)(x + width), (float)y);
+			glVertex2f((float)(x + width), (float)(y + height));
+			glVertex2f((float)x, (float)(y + height));
+		glEnd();
+
+		glColor3f(1.0f, 1.0f, 1.0f);
+		glEnable(GL_TEXTURE_2D);
+		glDisable(GL_BLEND);
+	}
+
+	void Draw_FillRGBA(int x, int y, int width, int height, int r, int g, int b, int a)
+	{
+		Draw_FillRGBAShared(x, y, width, height, r, g, b, a, false);
+	}
+
+	void Draw_FillRGBABlend(int x, int y, int width, int height, int r, int g, int b, int a)
+	{
+		Draw_FillRGBAShared(x, y, width, height, r, g, b, a, true);
 	}
 
 	int build_number(const char *date)

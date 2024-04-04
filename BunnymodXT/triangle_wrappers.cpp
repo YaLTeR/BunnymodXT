@@ -97,7 +97,7 @@ namespace TriangleWrappers
 		{
 			if (gRenderMode == kRenderTransAlpha)
 			{
-				glColor4ub(x * 255.9, y * 255.9, z * 255.9, w * 255.0);
+				glColor4ub(static_cast<GLubyte>(x * 255.9), static_cast<GLubyte>(y * 255.9), static_cast<GLubyte>(z * 255.9), static_cast<GLubyte>(w * 255.0));
 			}
 			else
 			{
@@ -224,9 +224,11 @@ namespace TriangleWrappers
 		}
 		else if (hw.gWorldToScreen)
 		{
-			float x = hw.gWorldToScreen[0] * point[0] + hw.gWorldToScreen[4] * point[1] + hw.gWorldToScreen[8] * point[2] + hw.gWorldToScreen[12];
-			float y = hw.gWorldToScreen[1] * point[0] + hw.gWorldToScreen[5] * point[1] + hw.gWorldToScreen[9] * point[2] + hw.gWorldToScreen[13];
-			float w = hw.gWorldToScreen[3] * point[0] + hw.gWorldToScreen[7] * point[1] + hw.gWorldToScreen[11] * point[2] + hw.gWorldToScreen[15];
+			auto gWorldToScreen = (*hw.gWorldToScreen);
+
+			float x = gWorldToScreen[0] * point[0] + gWorldToScreen[4] * point[1] + gWorldToScreen[8] * point[2] + gWorldToScreen[12];
+			float y = gWorldToScreen[1] * point[0] + gWorldToScreen[5] * point[1] + gWorldToScreen[9] * point[2] + gWorldToScreen[13];
+			float w = gWorldToScreen[3] * point[0] + gWorldToScreen[7] * point[1] + gWorldToScreen[11] * point[2] + gWorldToScreen[15];
 
 			float invw = 0.0f;
 			if (w != 0.0f)
@@ -250,10 +252,12 @@ namespace TriangleWrappers
 		}
 		else if (hw.gScreenToWorld)
 		{
-			float x = hw.gScreenToWorld[0] * screen[0] + hw.gScreenToWorld[4] * screen[1] + hw.gScreenToWorld[8] * screen[2] + hw.gScreenToWorld[12];
-			float y = hw.gScreenToWorld[1] * screen[0] + hw.gScreenToWorld[5] * screen[1] + hw.gScreenToWorld[9] * screen[2] + hw.gScreenToWorld[13];
-			float z = hw.gScreenToWorld[2] * screen[0] + hw.gScreenToWorld[6] * screen[1] + hw.gScreenToWorld[10] * screen[2] + hw.gScreenToWorld[14];
-			float w = hw.gScreenToWorld[3] * screen[0] + hw.gScreenToWorld[7] * screen[1] + hw.gScreenToWorld[11] * screen[2] + hw.gScreenToWorld[15];
+			auto gScreenToWorld = hw.gScreenToWorld;
+
+			float x = gScreenToWorld[0] * screen[0] + gScreenToWorld[4] * screen[1] + gScreenToWorld[8] * screen[2] + gScreenToWorld[12];
+			float y = gScreenToWorld[1] * screen[0] + gScreenToWorld[5] * screen[1] + gScreenToWorld[9] * screen[2] + gScreenToWorld[13];
+			float z = gScreenToWorld[2] * screen[0] + gScreenToWorld[6] * screen[1] + gScreenToWorld[10] * screen[2] + gScreenToWorld[14];
+			float w = gScreenToWorld[3] * screen[0] + gScreenToWorld[7] * screen[1] + gScreenToWorld[11] * screen[2] + gScreenToWorld[15];
 
 			if (w != 0.0f)
 			{
@@ -353,11 +357,11 @@ namespace TriangleWrappers
 		/* last check */
 		if (0.0 == r3[3]) return 0;
 
-		s = 1.0/r3[3];              /* now back substitute row 3 */
+		s = 1.0f/r3[3];              /* now back substitute row 3 */
 		r3[4] *= s; r3[5] *= s; r3[6] *= s; r3[7] *= s;
 
 		m2 = r2[3];                 /* now back substitute row 2 */
-		s = 1.0/r2[2];
+		s = 1.0f/r2[2];
 		r2[4] = s * (r2[4] - r3[4] * m2), r2[5] = s * (r2[5] - r3[5] * m2),
 		r2[6] = s * (r2[6] - r3[6] * m2), r2[7] = s * (r2[7] - r3[7] * m2);
 		m1 = r1[3];
@@ -368,7 +372,7 @@ namespace TriangleWrappers
 		r0[6] -= r3[6] * m0, r0[7] -= r3[7] * m0;
 
 		m1 = r1[2];                 /* now back substitute row 1 */
-		s = 1.0/r1[1];
+		s = 1.0f/r1[1];
 		r1[4] = s * (r1[4] - r2[4] * m1), r1[5] = s * (r1[5] - r2[5] * m1),
 		r1[6] = s * (r1[6] - r2[6] * m1), r1[7] = s * (r1[7] - r2[7] * m1);
 		m0 = r0[2];
@@ -376,7 +380,7 @@ namespace TriangleWrappers
 		r0[6] -= r2[6] * m0, r0[7] -= r2[7] * m0;
 
 		m0 = r0[1];                 /* now back substitute row 0 */
-		s = 1.0/r0[0];
+		s = 1.0f/r0[0];
 		r0[4] = s * (r0[4] - r1[4] * m0), r0[5] = s * (r0[5] - r1[5] * m0),
 		r0[6] = s * (r0[6] - r1[6] * m0), r0[7] = s * (r0[7] - r1[7] * m0);
 

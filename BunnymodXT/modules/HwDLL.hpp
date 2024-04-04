@@ -370,6 +370,9 @@ public:
 
 	int tas_studio_norefresh_override = 0;
 
+	float **gWorldToScreen;
+	float gScreenToWorld[16];
+
 private:
 	// Make sure to have hl.exe last here, so that it is the lowest priority.
 	HwDLL() : IHookableNameFilterOrdered({ L"hw.dll", L"hw.so", L"sw.dll", L"sw.so", L"hl.exe" }) {};
@@ -389,6 +392,13 @@ public:
 	_Host_Notarget_f ORIG_Host_Notarget_f;
 	typedef void(__cdecl* _Host_Noclip_f) ();
 	_Host_Noclip_f ORIG_Host_Noclip_f;
+
+	typedef void(__cdecl* _VGUI2_ResetCurrentTexture) ();
+	_VGUI2_ResetCurrentTexture ORIG_VGUI2_ResetCurrentTexture;
+	typedef mspriteframe_t*(__cdecl* _R_GetSpriteFrame) (msprite_t *pSprite, int frame);
+	_R_GetSpriteFrame ORIG_R_GetSpriteFrame;
+	typedef void(__cdecl* _GL_Bind) (int texnum);
+	_GL_Bind ORIG_GL_Bind;
 
 	HLStrafe::PlayerData GetPlayerData();
 

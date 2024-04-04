@@ -1183,10 +1183,10 @@ std::string ClientDLL::GetGameDirectory()
 		return gamedir_clean;
 
 	auto &sv = ServerDLL::GetInstance();
-	const char *game_dir = "";
+	char game_dir[260];
 	if (sv.interface_preserved_eng_sv && sv.pEngfuncs)
 	{
-		sv.pEngfuncs->pfnGetGameDir(const_cast<char*>(game_dir));
+		sv.pEngfuncs->pfnGetGameDir(game_dir);
 	}
 
 	if (game_dir && game_dir[0])

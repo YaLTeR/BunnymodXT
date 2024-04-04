@@ -2647,9 +2647,7 @@ bool ServerDLL::IsPlayerMovingPushable(const entvars_t *pevPushable, const entva
 	if (pevToucher->flags & FL_ONGROUND && pevToucher->groundentity && &pevToucher->groundentity->v == pevPushable)
 		return false;
 
-	void *pToucher = pevToucher->pContainingEntity->pvPrivateData;
-	_IsPlayer IsPlayerFunc = *reinterpret_cast<_IsPlayer *>(*reinterpret_cast<uintptr_t *>(pToucher) + offFuncIsPlayer);
-	if (!IsPlayerFunc(pToucher))
+	if (!helper_functions::IsPlayer(pevToucher->pContainingEntity))
 		return false;
 
 	if (push && !(pevToucher->button & (IN_FORWARD | IN_USE)))
@@ -2742,14 +2740,10 @@ HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, 
 			damage.direction[1] = 0.0;
 			damage.direction[2] = 0.0;
 		} else {
-			void *pInflictor = pevInflictor->pContainingEntity->pvPrivateData;
-			_Center playerCenterFunc = *reinterpret_cast<_Center *>(*reinterpret_cast<uintptr_t *>(thisptr) + offFuncCenter);
-			_Center inflictorCenterFunc = *reinterpret_cast<_Center *>(*reinterpret_cast<uintptr_t *>(pInflictor) + offFuncCenter);
+			entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 
-			Vector playerCenter;
-			Vector inflictorCenter;
-			playerCenterFunc(thisptr, edx, &playerCenter);
-			inflictorCenterFunc(pInflictor, edx, &inflictorCenter);
+			Vector playerCenter = helper_functions::Center(pev->pContainingEntity);
+			Vector inflictorCenter = helper_functions::Center(pevInflictor->pContainingEntity);
 			Vector vecDir = playerCenter + Vector(0, 0, 10) - inflictorCenter;
 
 			damage.direction[0] = vecDir.x;

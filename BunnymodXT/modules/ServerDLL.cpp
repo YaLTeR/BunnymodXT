@@ -3214,33 +3214,13 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBasePlayer__Jump, void*, thisptr)
 	insideCBasePlayerJump = false;
 }
 
-int ServerDLL::IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.cpp#L706
-{	
-	// position
-	if (origin.x >= map_size) return 0;
-	if (origin.y >= map_size) return 0;
-	if (origin.z >= map_size) return 0;
-	if (origin.x <= -map_size) return 0;
-	if (origin.y <= -map_size) return 0;
-	if (origin.z <= -map_size) return 0;
-	// speed
-	if (velocity.x >= map_max_velocity) return 0;
-	if (velocity.y >= map_max_velocity) return 0;
-	if (velocity.z >= map_max_velocity) return 0;
-	if (velocity.x <= -map_max_velocity) return 0;
-	if (velocity.y <= -map_max_velocity) return 0;
-	if (velocity.z <= -map_max_velocity) return 0;
-
-	return 1;
-}
-
 HOOK_DEF_1(ServerDLL, int, __fastcall, CBaseEntity__IsInWorld, void*, thisptr)
 {
 	if (HwDLL::GetInstance().is_big_map) 
 	{
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev)
-			return IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE, BIG_MAP_MAX_VELOCITY);
+			return helper_functions::IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE, BIG_MAP_MAX_VELOCITY);
 	}
 
 	return ORIG_CBaseEntity__IsInWorld(thisptr);
@@ -3252,7 +3232,7 @@ HOOK_DEF_1(ServerDLL, int, __cdecl, CBaseEntity__IsInWorld_Linux, void*, thisptr
 	{
 		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
 		if (pev)
-			return IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE, BIG_MAP_MAX_VELOCITY);
+			return helper_functions::IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE, BIG_MAP_MAX_VELOCITY);
 	}
 
 	return ORIG_CBaseEntity__IsInWorld_Linux(thisptr);

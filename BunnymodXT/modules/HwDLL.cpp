@@ -3155,7 +3155,7 @@ struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
+		hw.GetEdicts(&edicts);
 		edict_t* ent = edicts + num;
 
 		ent->v.health = hp;
@@ -3179,7 +3179,7 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
+		hw.GetEdicts(&edicts);
 		edict_t* ent = edicts + num;
 
 		const auto& p_pos = (*hw.sv_player)->v.origin;
@@ -3200,7 +3200,7 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
+		hw.GetEdicts(&edicts);
 		edict_t* ent = edicts + num;
 
 		if (ent->v.flags & FL_MONSTER)
@@ -3237,7 +3237,7 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
+		hw.GetEdicts(&edicts);
 		edict_t* ent = edicts + num;
 
 		if (ent->v.flags & FL_MONSTER)
@@ -3609,16 +3609,16 @@ struct HwDLL::Cmd_BXT_CH_Get_All_Info
 		auto &hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
+		hw.GetEdicts(&edicts);
 		const edict_t *ent = edicts + num;
 
 		out << "Index: " << num << "\n";
 		out << "Classname: " << hw.GetString(ent->v.classname) << "\n";
 
-		if (ent->v.targetname != NULL)
+		if (ent->v.targetname != 0)
 			out << "Targetname: " << hw.GetString(ent->v.targetname) << "\n";
 
-		if (ent->v.target != NULL)
+		if (ent->v.target != 0)
 			out << "Target: " << hw.GetString(ent->v.target) << "\n";
 
 		Vector origin = ent->v.origin;
@@ -4783,7 +4783,7 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 		const auto& hw = HwDLL::GetInstance();
 
 		edict_t *edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
+		hw.GetEdicts(&edicts);
 		const edict_t *ent = edicts + num;
 
 		Vector origin = ent->v.origin;
@@ -6038,7 +6038,6 @@ void HwDLL::InsertCommands()
 						StrafeState.Parameters.Parameters.LookAt.Entity = 0;
 					} else {				
 						const edict_t *ent = edicts + StrafeState.Parameters.Parameters.LookAt.Entity;
-						const entvars_t *pev = &(ent->v);
 						Vector origin = helper_functions::Center(ent);
 
 						StrafeState.TargetYawLookAtOrigin[0] = origin[0];
@@ -7462,8 +7461,6 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 	static bool usePassedTime = false;
 
 	auto minFrametime = CVars::_bxt_min_frametime.GetFloat();
-
-	auto &hw = HwDLL::GetInstance();
 
 	if (pHost_FilterTime_FPS_Cap_Byte)
 	{

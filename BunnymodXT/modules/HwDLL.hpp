@@ -548,7 +548,6 @@ protected:
 	void ResetButtons();
 	void FindCVarsIfNeeded();
 	void PrintEntityInfoShort(std::ostringstream &out, int index);
-	void TeleportMonsterToPosition(float x, float y, float z, int index);
 public:
 	HLStrafe::MovementVars GetMovementVars();
 

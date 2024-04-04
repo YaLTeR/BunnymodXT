@@ -3149,44 +3149,18 @@ struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 
 	static void handler(float hp, int num)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
-
 		edict_t* ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
-			return;
 
 		ent->v.health = hp;
 	}
 };
-
-void HwDLL::TeleportMonsterToPosition(float x, float y, float z, int index)
-{
-	const auto& hw = HwDLL::GetInstance();
-	edict_t* edicts;
-	hw.GetEdicts(&edicts);
-	edict_t* ent = edicts + index;
-	if (!hw.IsValidEdict(ent))
-	{
-		hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", index);
-		return;
-	}
-
-	if (ent->v.flags & FL_MONSTER)
-	{
-		ent->v.origin[0] = x;
-		ent->v.origin[1] = y;
-		ent->v.origin[2] = z;
-	}
-}
 
 struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 {
@@ -3199,40 +3173,35 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 	static void handler(int num)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
+		edict_t* ent = edicts + num;
 
 		const auto& p_pos = (*hw.sv_player)->v.origin;
-		hw.TeleportMonsterToPosition(p_pos[0], p_pos[1], p_pos[2], num);
+
+		if (ent->v.flags & FL_MONSTER)
+		{
+			ent->v.origin[0] = p_pos[0];
+			ent->v.origin[1] = p_pos[1];
+			ent->v.origin[2] = p_pos[2];
+		}
 	}
 
 	static void handler(int num, float off_z)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
-
 		edict_t* ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
-			return;
-		}
 
 		if (ent->v.flags & FL_MONSTER)
 		{
@@ -3262,18 +3231,21 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 	static void handler(float x, float y, float z, int num)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
+		edict_t* ent = edicts + num;
 
-		if (num >= numEdicts)
+		if (ent->v.flags & FL_MONSTER)
 		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
+			ent->v.origin[0] = x;
+			ent->v.origin[1] = y;
+			ent->v.origin[2] = z;
 		}
-
-		hw.TeleportMonsterToPosition(x, y, z, num);
 	}
 };
 
@@ -3630,11 +3602,11 @@ struct HwDLL::Cmd_BXT_CH_Get_All_Info
 
 	static void handler(int num)
 	{
-		std::ostringstream out;
-		auto &hw = HwDLL::GetInstance();
-
 		if (!helper_functions::is_valid_index_and_edict(num))
 			return;
+
+		std::ostringstream out;
+		auto &hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
@@ -4763,25 +4735,12 @@ struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 
 	static void handler(int num)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		const auto& hw = HwDLL::GetInstance();
 
 		std::ostringstream out;
-
-		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
-
-		const edict_t *ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
-			return;
-		}
 
 		HwDLL::GetInstance().PrintEntityInfoShort(out, num);
 
@@ -4818,23 +4777,14 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 
 	static void handler(int num)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		const auto& hw = HwDLL::GetInstance();
 
 		edict_t *edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
-
 		const edict_t *ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
-			return;
-		}
 
 		Vector origin = ent->v.origin;
 		if (helper_functions::IsBSPModel(ent))

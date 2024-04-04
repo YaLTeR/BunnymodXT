@@ -7175,7 +7175,7 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	waterlevel = pl->v.waterlevel;
 
 	if (ServerDLL::GetInstance().is_cof) {
-		void* classPtr = (*sv_player)->v.pContainingEntity->pvPrivateData;
+		void* classPtr = pl->v.pContainingEntity->pvPrivateData;
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 		float* m_fStamina = reinterpret_cast<float*>(thisAddr + ServerDLL::GetInstance().offm_fStamina);
 		stamina = *m_fStamina;
@@ -7297,8 +7297,16 @@ void HwDLL::SaveInitialDataToDemo()
 		RuntimeData::Add(RuntimeData::Edicts{ maxEdicts });
 	}
 
-	auto &hw = HwDLL::GetInstance();
-	lastRecordedHealth = static_cast<int>((*hw.sv_player)->v.health);
+	lastRecordedHealth = 0;
+	
+	if (helper_functions::is_valid_index_and_edict(1)) // Host
+	{
+		edict_t *edicts;
+		GetEdicts(&edicts);
+		edict_t *ent = edicts + 1;
+
+		lastRecordedHealth = static_cast<int>(ent->v.health);
+	}
 
 	RuntimeData::Add(RuntimeData::PlayerHealth{lastRecordedHealth});
 
@@ -7476,17 +7484,23 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 	if (IsRecordingDemo())
 	{
-		int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
+		int playerhealth = 0;
+		
+		if (helper_functions::is_valid_index_and_edict(1)) // Host
+		{
+			edict_t *edicts;
+			GetEdicts(&edicts);
+			edict_t *ent = edicts + 1;
+
+			playerhealth = static_cast<int>(ent->v.health);
+		}
 
 		if (playerhealth != lastRecordedHealth)
 			RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
 
 		lastRecordedHealth = playerhealth;
 
-		int bxt_flags = 0;
-		if (is_big_map)
-			bxt_flags |= BXT_FLAGS_BIG_MAP;
-		RuntimeData::Add(RuntimeData::Flags{bxt_flags});
+		RuntimeData::Add(RuntimeData::Flags{helper_functions::ret_bxt_flags()});
 	}
 
 	if (runningFrames) {

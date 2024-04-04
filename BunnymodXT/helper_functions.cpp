@@ -142,6 +142,20 @@ namespace helper_functions
 		return (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds + (gt.milliseconds / 1000);
 	}
 
+	int ret_bxt_flags()
+	{
+		int bxt_flags = 0;
+
+		auto& hw = HwDLL::GetInstance();
+		//auto& cl = ClientDLL::GetInstance();
+		//auto& sv = ServerDLL::GetInstance();
+
+		if (hw.is_big_map)
+			bxt_flags |= BXT_FLAGS_BIG_MAP;
+
+		return bxt_flags;
+	}
+
 	void com_fixslashes(std::string &str)
 	{
 		#ifdef _WIN32

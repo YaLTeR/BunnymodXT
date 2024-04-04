@@ -94,6 +94,7 @@ namespace helper_functions
 	bool does_mapname_match(const char *map);
 
 	double ret_bxt_time();
+	int ret_bxt_flags();
 	void com_fixslashes(std::string &str); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
 	void com_filebase(const char *in, char *out); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/cl_dll/hud.cpp#L537
 	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start);

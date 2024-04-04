@@ -3619,65 +3619,83 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Prev
 	}
 };
 
-struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
+struct HwDLL::Cmd_BXT_CH_Get_All_Info
 {
-	NO_USAGE();
+	USAGE("Usage: bxt_ch_get_all_info\n bxt_ch_get_all_info <index>\n");
 
 	static void handler()
 	{
-		auto &hw = HwDLL::GetInstance();
-		auto &cl = ClientDLL::GetInstance();
+		handler(1);
+	}
 
-		const auto& mvtype = (*hw.sv_player)->v.movetype;
-		const auto& basevel = (*hw.sv_player)->v.basevelocity;
-		const auto& punch = (*hw.sv_player)->v.punchangle;
-
-		if (cl.pEngfuncs)
-			hw.ORIG_Con_Printf("Client maxspeed: %f\n", cl.pEngfuncs->GetClientMaxspeed());
-		hw.ORIG_Con_Printf("Movetype: %d (%s)\n", mvtype, hw.GetMovetypeName(mvtype));
-		hw.ORIG_Con_Printf("Health: %f\n", (*hw.sv_player)->v.health);
-		hw.ORIG_Con_Printf("Armor: %f\n", (*hw.sv_player)->v.armorvalue);
-		hw.ORIG_Con_Printf("Waterlevel: %d\n", (*hw.sv_player)->v.waterlevel);
-		hw.ORIG_Con_Printf("Watertype: %d\n", (*hw.sv_player)->v.watertype);
-		hw.ORIG_Con_Printf("Max health: %f\n", (*hw.sv_player)->v.max_health);
-		hw.ORIG_Con_Printf("Gravity: %f\n", (*hw.sv_player)->v.gravity);
-		hw.ORIG_Con_Printf("Friction: %f\n", (*hw.sv_player)->v.friction);
+	static void handler(int num)
+	{
 		std::ostringstream out;
-		out << "Flags: ";
-		if ((*hw.sv_player)->v.flags & FL_CONVEYOR)
-			out << "FL_CONVEYOR; ";
-		if ((*hw.sv_player)->v.flags & FL_INWATER)
-			out << "FL_INWATER; ";
-		if ((*hw.sv_player)->v.flags & FL_GODMODE)
-			out << "FL_GODMODE; ";
-		if ((*hw.sv_player)->v.flags & FL_NOTARGET)
-			out << "FL_NOTARGET; ";
-		if ((*hw.sv_player)->v.flags & FL_ONGROUND)
-			out << "FL_ONGROUND; ";
-		if ((*hw.sv_player)->v.flags & FL_WATERJUMP)
-			out << "FL_WATERJUMP; ";
-		if ((*hw.sv_player)->v.flags & FL_FROZEN)
-			out << "FL_FROZEN; ";
-		if ((*hw.sv_player)->v.flags & FL_DUCKING)
-			out << "FL_DUCKING; ";
-		if ((*hw.sv_player)->v.flags & FL_ONTRAIN)
-			out << "FL_ONTRAIN; ";
-		out << '\n';
-		hw.ORIG_Con_Printf("%s", out.str().c_str());
-		hw.ORIG_Con_Printf("bInDuck: %d\n", (*hw.sv_player)->v.bInDuck);
-		hw.ORIG_Con_Printf("Basevelocity: %f %f %f; XY = %f; XYZ = %f\n", basevel.x, basevel.y, basevel.z, basevel.Length2D(), basevel.Length());
-		hw.ORIG_Con_Printf("Server punchangle: %f %f %f\n", punch.x, punch.y, punch.z);
-		hw.ORIG_Con_Printf("iuser1: %d; iuser2: %d; iuser3: %d; iuser4: %d\n", (*hw.sv_player)->v.iuser1, (*hw.sv_player)->v.iuser2, (*hw.sv_player)->v.iuser3, (*hw.sv_player)->v.iuser4);
-		hw.ORIG_Con_Printf("fuser1: %f; fuser2: %f; fuser3: %f; fuser4: %f\n", (*hw.sv_player)->v.fuser1, (*hw.sv_player)->v.fuser2, (*hw.sv_player)->v.fuser3, (*hw.sv_player)->v.fuser4);
+		auto &hw = HwDLL::GetInstance();
 
-		const auto& vusr1 = (*hw.sv_player)->v.vuser1;
-		const auto& vusr2 = (*hw.sv_player)->v.vuser2;
-		const auto& vusr3 = (*hw.sv_player)->v.vuser3;
-		const auto& vusr4 = (*hw.sv_player)->v.vuser4;
-		hw.ORIG_Con_Printf("vuser1: %f %f %f; XY = %f; XYZ = %f\n", vusr1.x, vusr1.y, vusr1.z, vusr1.Length2D(), vusr1.Length());
-		hw.ORIG_Con_Printf("vuser2: %f %f %f; XY = %f; XYZ = %f\n", vusr2.x, vusr2.y, vusr2.z, vusr2.Length2D(), vusr2.Length());
-		hw.ORIG_Con_Printf("vuser3: %f %f %f; XY = %f; XYZ = %f\n", vusr3.x, vusr3.y, vusr3.z, vusr3.Length2D(), vusr3.Length());
-		hw.ORIG_Con_Printf("vuser4: %f %f %f; XY = %f; XYZ = %f\n", vusr4.x, vusr4.y, vusr4.z, vusr4.Length2D(), vusr4.Length());
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
+		edict_t* edicts;
+		const int numEdicts = hw.GetEdicts(&edicts);
+		const edict_t *ent = edicts + num;
+
+		out << "Index: " << num << "\n";
+		out << "Classname: " << hw.GetString(ent->v.classname) << "\n";
+
+		if (ent->v.targetname != NULL)
+			out << "Targetname: " << hw.GetString(ent->v.targetname) << "\n";
+
+		if (ent->v.target != NULL)
+			out << "Target: " << hw.GetString(ent->v.target) << "\n";
+
+		Vector origin = ent->v.origin;
+		if (helper_functions::IsBSPModel(ent))
+		{
+			origin = helper_functions::Center(ent);
+			out << "Origin: " << origin.x << " " << origin.y << " " << origin.z << "\n";
+		}
+		else
+		{
+			out << "Origin: " << origin.x << " " << origin.y << " " << origin.z << "\n";
+			origin = helper_functions::Center(ent);
+			out << "Origin (center): " << origin.x << " " << origin.y << " " << origin.z << "\n";
+		}
+
+		out << "Movetype: " << ent->v.movetype << " (" << helper_functions::get_movetype(ent->v.movetype) << ")" << "\n";
+		out << "Health: " << ent->v.health << "\n";
+		out << "Armor: " << ent->v.armorvalue << "\n";
+		out << "Waterlevel: " << ent->v.waterlevel << "\n";
+		out << "Watertype: " << ent->v.watertype << "\n";
+		out << "Max health: " << ent->v.max_health << "\n";
+		out << "Gravity: " << ent->v.gravity << "\n";
+		out << "Friction: " << ent->v.friction << "\n";
+		out << "Spawnflags (bits): " << ent->v.spawnflags << "\n";
+		out << "Flags: " << helper_functions::get_flags(ent->v.flags);
+		out << "Velocity: " << ent->v.velocity.x << " " << ent->v.velocity.y << " " << ent->v.velocity.z << "; XY = " << ent->v.velocity.Length2D() << "; XYZ = " << ent->v.velocity.Length() << "\n";
+		out << "Basevelocity: " << ent->v.basevelocity.x << " " << ent->v.basevelocity.y << " " << ent->v.basevelocity.z << "; XY = " << ent->v.basevelocity.Length2D() << "; XYZ = " << ent->v.basevelocity.Length() << "\n";
+		out << "Punchangle: " << ent->v.punchangle.x << " " << ent->v.punchangle.y << " " << ent->v.punchangle.z << "\n";
+		out << "Effects: " << helper_functions::get_effects(ent->v.effects);
+		out << "Solid: " << ent->v.solid << " (" << helper_functions::get_solid(ent->v.solid) << ")" << "\n";
+		out << "Renderfx: " << ent->v.renderfx << " (" << helper_functions::get_renderfx(ent->v.renderfx) << ")" << "\n";
+		out << "Renderamt: " << ent->v.renderamt << "\n";
+		out << "Rendermode: " << ent->v.rendermode << " (" << helper_functions::get_rendermode(ent->v.rendermode) << ")" << "\n";
+		out << "Dmg: " << ent->v.dmg << "\n";
+		out << "Takedamage: " << ent->v.takedamage << "\n";
+		out << "view_ofs: " << ent->v.view_ofs.x << " " << ent->v.view_ofs.y << " " << ent->v.view_ofs.z << "\n";
+
+		#ifndef HLSDK10_BUILD
+		out << "flFallVelocity: " << ent->v.flFallVelocity << "\n";
+		out << "bInDuck: " << ent->v.bInDuck << "\n";
+		out << "iuser1: " << ent->v.iuser1 << "; iuser2: " << ent->v.iuser2 << "; iuser3: " << ent->v.iuser3 << "; iuser4: " << ent->v.iuser4 << "\n";
+		out << "fuser1: " << ent->v.fuser1 << "; fuser2: " << ent->v.fuser2 << "; fuser3: " << ent->v.fuser3 << "; fuser4: " << ent->v.fuser4 << "\n";
+		out << "vuser1: " << ent->v.vuser1.x << " " << ent->v.vuser1.y << " " << ent->v.vuser1.z << "; XY = " << ent->v.vuser1.Length2D() << "; XYZ = " << ent->v.vuser1.Length() << "\n";
+		out << "vuser2: " << ent->v.vuser2.x << " " << ent->v.vuser2.y << " " << ent->v.vuser2.z << "; XY = " << ent->v.vuser2.Length2D() << "; XYZ = " << ent->v.vuser2.Length() << "\n";
+		out << "vuser3: " << ent->v.vuser3.x << " " << ent->v.vuser3.y << " " << ent->v.vuser3.z << "; XY = " << ent->v.vuser3.Length2D() << "; XYZ = " << ent->v.vuser3.Length() << "\n";
+		out << "vuser4: " << ent->v.vuser4.x << " " << ent->v.vuser4.y << " " << ent->v.vuser4.z << "; XY = " << ent->v.vuser4.Length2D() << "; XYZ = " << ent->v.vuser4.Length() << "\n";
+		#endif
+
+		hw.ORIG_Con_Printf(out.str().c_str());
 	}
 };
 
@@ -5807,7 +5825,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Velocity, Handler<float, float, float>>("bxt_ch_set_vel");
 	wrapper::AddCheat<Cmd_BXT_CH_Teleport_To_Entity, Handler<int>>("bxt_ch_teleport_to_entity");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
-	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>>("bxt_ch_get_other_player_info");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_All_Info, Handler<>, Handler<int>>("bxt_ch_get_all_info");
 	wrapper::AddCheat<Cmd_BXT_CH_Entity_Set_Health, Handler<float>, Handler<float, int>>("bxt_ch_entity_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Monster_Set_Origin, Handler<int>, Handler<int, float>, Handler<float, float, float>, Handler<float, float, float, int>>("bxt_ch_monster_set_origin");
 	wrapper::AddCheat<
@@ -6892,26 +6910,6 @@ void HwDLL::KeyUp(Key& key)
 	std::ostringstream ss;
 	ss << '-' << key.Name << '\n';
 	ORIG_Cbuf_InsertText(ss.str().c_str());
-}
-
-const char* HwDLL::GetMovetypeName(int moveType)
-{
-	switch (moveType)
-	{
-		case MOVETYPE_NONE:             return "None";
-		case MOVETYPE_WALK:             return "Walk";
-		case MOVETYPE_STEP:             return "Step";
-		case MOVETYPE_FLY:              return "Fly";
-		case MOVETYPE_TOSS:             return "Toss";
-		case MOVETYPE_PUSH:             return "Push";
-		case MOVETYPE_NOCLIP:           return "Noclip";
-		case MOVETYPE_FLYMISSILE:       return "Fly-missile";
-		case MOVETYPE_BOUNCE:           return "Bounce";
-		case MOVETYPE_BOUNCEMISSILE:    return "Bounce-missile";
-		case MOVETYPE_FOLLOW:           return "Follow";
-		case MOVETYPE_PUSHSTEP:         return "Push-step";
-		default:                        return "Unknown";
-	}
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)

@@ -441,7 +441,7 @@ protected:
 	struct Cmd_BXT_CH_Set_Velocity_Angles;
 	struct Cmd_BXT_CH_Teleport_To_Entity;
 	struct Cmd_BXT_CH_Get_Velocity;
-	struct Cmd_BXT_CH_Get_Other_Player_Info;
+	struct Cmd_BXT_CH_Get_All_Info;
 	struct Cmd_BXT_CH_Entity_Set_Health;
 	struct Cmd_BXT_CH_Monster_Set_Origin;
 	struct Cmd_BXT_Get_Origin_And_Angles;
@@ -550,7 +550,6 @@ protected:
 	void TeleportMonsterToPosition(float x, float y, float z, int index);
 public:
 	HLStrafe::MovementVars GetMovementVars();
-	const char* GetMovetypeName(int moveType);
 	void GetOriginOfEntity(Vector& origin, const edict_t* ent);
 
 	bool ducktap;

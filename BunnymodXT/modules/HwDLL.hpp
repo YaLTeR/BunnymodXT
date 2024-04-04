@@ -547,11 +547,10 @@ protected:
 	bool GetNextMovementFrame(HLTAS::Frame& f);
 	void ResetButtons();
 	void FindCVarsIfNeeded();
-	void PrintEntity(std::ostringstream &out, int index);
+	void PrintEntityInfoShort(std::ostringstream &out, int index);
 	void TeleportMonsterToPosition(float x, float y, float z, int index);
 public:
 	HLStrafe::MovementVars GetMovementVars();
-	void GetOriginOfEntity(Vector& origin, const edict_t* ent);
 
 	bool ducktap;
 	edict_t **sv_player;

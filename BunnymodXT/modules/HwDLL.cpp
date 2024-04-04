@@ -4629,7 +4629,7 @@ struct HwDLL::Cmd_BXT_FreeCam
 	}
 };
 
-void HwDLL::PrintEntity(std::ostringstream &out, int index)
+void HwDLL::PrintEntityInfoShort(std::ostringstream &out, int index)
 {
 	const auto& hw = HwDLL::GetInstance();
 	edict_t* edicts;
@@ -4654,10 +4654,23 @@ void HwDLL::PrintEntity(std::ostringstream &out, int index)
 	if (helper_functions::is_entity_give_infinite_health(ent))
 		out << "; dmg: " << ent->v.dmg;
 
-	Vector origin;
-	HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
+	Vector origin = ent->v.origin;
+	if (helper_functions::IsBSPModel(ent))
+	{
+		origin = helper_functions::Center(ent);
+		out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
+	}
+	else
+	{
+		/*
+			We will print the result with and without a Center function
+			Because some entities may not pass the IsBSPModel condition, but their position needs to be calculated based on the center
+		*/
 
-	out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
+		out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
+		origin = helper_functions::Center(ent);
+		out << "; xyz (center): " << origin.x << " " << origin.y << " " << origin.z;
+	}
 
 	out << '\n';
 }
@@ -4693,11 +4706,10 @@ struct HwDLL::Cmd_BXT_Print_Entities
 					continue;
 			}
 
-			HwDLL::GetInstance().PrintEntity(out, e);
+			HwDLL::GetInstance().PrintEntityInfoShort(out, e);
 		}
 
-		auto str = out.str();
-		hw.ORIG_Con_Printf("%s", str.c_str());
+		helper_functions::split_console_print_to_chunks(out.str());
 	}
 
 	static void handler(const char *name)
@@ -4719,11 +4731,10 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			if ((std::strcmp(classname, name) != 0) && (std::strcmp(targetname, name) != 0) && (std::strcmp(target, name) != 0))
 				continue;
 
-			HwDLL::GetInstance().PrintEntity(out, e);
+			HwDLL::GetInstance().PrintEntityInfoShort(out, e);
 		}
 
-		auto str = out.str();
-		hw.ORIG_Con_Printf("%s", str.c_str());
+		helper_functions::split_console_print_to_chunks(out.str());
 	}
 
 	static void handler()
@@ -4739,11 +4750,10 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			if (!hw.IsValidEdict(ent))
 				continue;
 
-			HwDLL::GetInstance().PrintEntity(out, e);
+			HwDLL::GetInstance().PrintEntityInfoShort(out, e);
 		}
 
-		auto str = out.str();
-		hw.ORIG_Con_Printf("%s", str.c_str());
+		helper_functions::split_console_print_to_chunks(out.str());
 	}
 };
 
@@ -4773,7 +4783,7 @@ struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 			return;
 		}
 
-		HwDLL::GetInstance().PrintEntity(out, num);
+		HwDLL::GetInstance().PrintEntityInfoShort(out, num);
 
 		auto str = out.str();
 		hw.ORIG_Con_Printf("%s", str.c_str());
@@ -4795,29 +4805,12 @@ struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 			if ((e < value1) || (e > value2))
 				continue;
 
-			HwDLL::GetInstance().PrintEntity(out, e);
+			HwDLL::GetInstance().PrintEntityInfoShort(out, e);
 		}
 
-		auto str = out.str();
-		hw.ORIG_Con_Printf("%s", str.c_str());
+		helper_functions::split_console_print_to_chunks(out.str());
 	}
 };
-
-void HwDLL::GetOriginOfEntity(Vector& origin, const edict_t* ent)
-{
-	const auto& hw = HwDLL::GetInstance();
-	const char* classname = hw.GetString(ent->v.classname);
-	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-	bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
-	bool is_water = std::strncmp(classname, "func_water", 10) == 0;
-
-	// Credits to 'goldsrc_monitor' tool for their code to get origin of entities
-	if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
-		origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
-	else
-		origin = ent->v.origin;
-}
 
 struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 {
@@ -4843,8 +4836,9 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 			return;
 		}
 
-		Vector origin;
-		HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
+		Vector origin = ent->v.origin;
+		if (helper_functions::IsBSPModel(ent))
+			origin = helper_functions::Center(ent);
 
 		(*hw.sv_player)->v.origin[0] = origin[0];
 		(*hw.sv_player)->v.origin[1] = origin[1];

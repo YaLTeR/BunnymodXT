@@ -883,8 +883,9 @@ namespace CustomHud
 				{
 					out << "Yaw: " << ent->v.angles[1] << '\n';
 
-					Vector origin;
-					HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
+					Vector origin = ent->v.origin;
+					if (helper_functions::IsBSPModel(ent))
+						origin = helper_functions::Center(ent);
 
 					out << "X: " << origin.x << '\n';
 					out << "Y: " << origin.y << '\n';

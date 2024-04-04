@@ -183,8 +183,6 @@ protected:
 
 	void *pGlobalState;
 
-	ptrdiff_t offFuncIsPlayer = 0x9C;
-	ptrdiff_t offFuncCenter = 0xC8;
 	ptrdiff_t offFuncObjectCaps = 0x14;
 
 	ptrdiff_t offNihilanthLevel;

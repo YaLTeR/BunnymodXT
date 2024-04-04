@@ -2,6 +2,7 @@
 
 #include "hud_custom.hpp"
 #include "triangle_utils.hpp"
+#include "triangle_wrappers.hpp"
 
 namespace TriangleUtils
 {
@@ -25,7 +26,7 @@ namespace TriangleUtils
 		return proportion * CustomHud::GetScreenInfo().iHeight;
 	}
 
-	void DrawPyramid(triangleapi_s *pTriAPI, Vector origin, float width, float height)
+	void DrawPyramid(Vector origin, float width, float height)
 	{
 		const float halfWidth = width * 0.5f;
 		Vector bottom[5] = {
@@ -36,19 +37,19 @@ namespace TriangleUtils
 			origin + Vector(halfWidth, halfWidth, 0)
 		};
 
-		pTriAPI->Begin(TRI_QUADS);
+		TriangleWrappers::Begin(TRI_QUADS);
 		for (int i = 0; i < 4; ++i)
-			pTriAPI->Vertex3f(bottom[i].x, bottom[i].y, bottom[i].z);
-		pTriAPI->End();
+			TriangleWrappers::Vertex3f(bottom[i].x, bottom[i].y, bottom[i].z);
+		TriangleWrappers::End();
 
-		pTriAPI->Begin(TRI_TRIANGLE_FAN);
-		pTriAPI->Vertex3f(origin.x, origin.y, origin.z + height);
+		TriangleWrappers::Begin(TRI_TRIANGLE_FAN);
+		TriangleWrappers::Vertex3f(origin.x, origin.y, origin.z + height);
 		for (int i = 0; i < 5; ++i)
-			pTriAPI->Vertex3f(bottom[i].x, bottom[i].y, bottom[i].z);
-		pTriAPI->End();
+			TriangleWrappers::Vertex3f(bottom[i].x, bottom[i].y, bottom[i].z);
+		TriangleWrappers::End();
 	}
 
-	void DrawScreenTriangle(triangleapi_s *pTriAPI, Vector origin, float sideLength)
+	void DrawScreenTriangle(Vector origin, float sideLength)
 	{
 		// The magic number is sqrt(3) / 6
 		const auto baseToCenter = 0.288675135f * sideLength;
@@ -56,7 +57,7 @@ namespace TriangleUtils
 		const auto halfLength = 0.5f * sideLength;
 
 		Vector screenPoints[3];
-		pTriAPI->WorldToScreen(origin, screenPoints[0]);
+		TriangleWrappers::WorldToScreen(origin, screenPoints[0]);
 		screenPoints[0].z = 0.0f;
 		screenPoints[1] = screenPoints[0];
 		screenPoints[2] = screenPoints[0];
@@ -67,16 +68,16 @@ namespace TriangleUtils
 		screenPoints[2].x += halfLength;
 		screenPoints[2].y -= baseToCenter;
 
-		pTriAPI->Begin(TRI_TRIANGLES);
+		TriangleWrappers::Begin(TRI_TRIANGLES);
 		for (int i = 0; i < 3; ++i) {
 			Vector worldPoint;
-			pTriAPI->ScreenToWorld(screenPoints[i], worldPoint);
-			pTriAPI->Vertex3f(worldPoint.x, worldPoint.y, worldPoint.z);
+			TriangleWrappers::ScreenToWorld(screenPoints[i], worldPoint);
+			TriangleWrappers::Vertex3f(worldPoint.x, worldPoint.y, worldPoint.z);
 		}
-		pTriAPI->End();
+		TriangleWrappers::End();
 	}
 
-	void DrawScreenRectangle(triangleapi_s *pTriAPI, Vector2D corner1, Vector2D corner2)
+	void DrawScreenRectangle(Vector2D corner1, Vector2D corner2)
 	{
 		Vector screen_points[4], world_points[4];
 		screen_points[0] = Vector(corner1.x, corner1.y, 0.0f);
@@ -85,121 +86,121 @@ namespace TriangleUtils
 		screen_points[3] = Vector(corner2.x, corner1.y, 0.0f);
 
 		for (int i = 0; i < 4; ++i)
-			pTriAPI->ScreenToWorld(screen_points[i], world_points[i]);
+			TriangleWrappers::ScreenToWorld(screen_points[i], world_points[i]);
 
-		pTriAPI->Begin(TRI_QUADS);
+		TriangleWrappers::Begin(TRI_QUADS);
 
-		pTriAPI->Vertex3fv(world_points[0]);
-		pTriAPI->Vertex3fv(world_points[1]);
-		pTriAPI->Vertex3fv(world_points[2]);
-		pTriAPI->Vertex3fv(world_points[3]);
+		TriangleWrappers::Vertex3fv(world_points[0]);
+		TriangleWrappers::Vertex3fv(world_points[1]);
+		TriangleWrappers::Vertex3fv(world_points[2]);
+		TriangleWrappers::Vertex3fv(world_points[3]);
 
-		pTriAPI->End();
+		TriangleWrappers::End();
 	}
 
-	void DrawAACuboid(triangleapi_s *pTriAPI, Vector corner1, Vector corner2)
+	void DrawAACuboid(Vector corner1, Vector corner2)
 	{
-		pTriAPI->Begin(TRI_QUADS);
+		TriangleWrappers::Begin(TRI_QUADS);
 
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner1.z);
 
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner1.z);
 
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner2.z);
 
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner2.z);
 
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner1.z);
 
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner2.z);
 
-		pTriAPI->End();
+		TriangleWrappers::End();
 	}
 
-	void DrawAACuboidWireframe(triangleapi_s *pTriAPI, Vector corner1, Vector corner2)
+	void DrawAACuboidWireframe(Vector corner1, Vector corner2)
 	{
-		pTriAPI->Begin(TRI_LINES);
+		TriangleWrappers::Begin(TRI_LINES);
 
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner1.z);
 
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner1.z);
 
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner1.z);
 
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner2.z);
 
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner1.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner1.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner2.z);
 
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner1.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner1.x, corner2.y, corner2.z);
-		pTriAPI->Vertex3f(corner2.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner1.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner1.x, corner2.y, corner2.z);
+		TriangleWrappers::Vertex3f(corner2.x, corner2.y, corner2.z);
 
-		pTriAPI->End();
+		TriangleWrappers::End();
 	}
 
-	void DrawLine(triangleapi_s *pTriAPI, Vector start, Vector end)
+	void DrawLine(Vector start, Vector end)
 	{
-		pTriAPI->Begin(TRI_LINES);
-		pTriAPI->Vertex3f(start.x, start.y, start.z);
-		pTriAPI->Vertex3f(end.x, end.y, end.z);
-		pTriAPI->End();
+		TriangleWrappers::Begin(TRI_LINES);
+		TriangleWrappers::Vertex3f(start.x, start.y, start.z);
+		TriangleWrappers::Vertex3f(end.x, end.y, end.z);
+		TriangleWrappers::End();
 	}
 };

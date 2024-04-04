@@ -5,6 +5,7 @@
 
 #include "triangle_drawing.hpp"
 #include "triangle_utils.hpp"
+#include "triangle_wrappers.hpp"
 #include "modules.hpp"
 
 #include "hud_custom.hpp"
@@ -13,29 +14,29 @@ namespace TriangleDrawing
 {
 	static HSPRITE_HL white_sprite = 0;
 
-	static void DrawNodes(triangleapi_s *pTriAPI)
+	static void DrawNodes()
 	{
 		if (!CVars::bxt_show_nodes.GetBool())
 			return;
 
-		pTriAPI->RenderMode(kRenderTransAdd);
-		pTriAPI->CullFace(TRI_NONE);
-		pTriAPI->Color4f(0.722f, 0.0f, 0.341f, 1.0f);
+		TriangleWrappers::RenderMode(kRenderTransAdd);
+		TriangleWrappers::CullFace(TRI_NONE);
+		TriangleWrappers::Color4f(0.722f, 0.0f, 0.341f, 1.0f);
 		for (const Vector *position : ServerDLL::GetInstance().GetNodePositions()) {
-			TriangleUtils::DrawPyramid(pTriAPI, *position, 10, 30);
+			TriangleUtils::DrawPyramid(*position, 10, 30);
 		}
 	}
 
-	static void DrawDisplacerTargets(triangleapi_s* pTriAPI)
+	static void DrawDisplacerTargets()
 	{
 		if (!CVars::bxt_show_displacer_earth_targets.GetBool())
 			return;
 
-		pTriAPI->RenderMode(kRenderTransAdd);
-		pTriAPI->CullFace(TRI_NONE);
-		pTriAPI->Color4f(0.0f, 0.627f, 0.0f, 1.0f);
+		TriangleWrappers::RenderMode(kRenderTransAdd);
+		TriangleWrappers::CullFace(TRI_NONE);
+		TriangleWrappers::Color4f(0.0f, 0.627f, 0.0f, 1.0f);
 		for (const Vector* position : ServerDLL::GetInstance().GetDisplacerTargets()) {
-			TriangleUtils::DrawPyramid(pTriAPI, *position, 5, 15);
+			TriangleUtils::DrawPyramid(*position, 5, 15);
 		}
 	}
 
@@ -68,7 +69,7 @@ namespace TriangleDrawing
 		return sourceVector.Normalize();
 	}
 
-	static void DrawUseableEntities(triangleapi_s *pTriAPI)
+	static void DrawUseableEntities()
 	{
 		if (!CVars::bxt_hud_useables.GetBool())
 			return;
@@ -90,8 +91,8 @@ namespace TriangleDrawing
 		float max_dot = VIEW_FIELD_NARROW;
 		const edict_t* target_object = nullptr;
 
-		pTriAPI->RenderMode(kRenderTransColor);
-		pTriAPI->CullFace(TRI_NONE);
+		TriangleWrappers::RenderMode(kRenderTransColor);
+		TriangleWrappers::CullFace(TRI_NONE);
 
 		const auto useable_entities = ServerDLL::GetInstance().GetUseableEntities(playerOrigin, searchRadius);
 		for (const auto pent : useable_entities) {
@@ -105,7 +106,7 @@ namespace TriangleDrawing
 			}
 		}
 
-		pTriAPI->Color4f(1.0f, 0.0f, 0.0f, 1.0f);
+		TriangleWrappers::Color4f(1.0f, 0.0f, 0.0f, 1.0f);
 
 		for (const auto pent : useable_entities) {
 			if (pent == target_object)
@@ -117,10 +118,9 @@ namespace TriangleDrawing
 			// Prevent drawing entities that are behind us. WorldToScreen doesn't prevent this automatically.
 			if (DotProduct(forward, disp) > 0.0f) {
 				Vector screen_point;
-				pTriAPI->WorldToScreen(bmodelOrigin, screen_point);
+				TriangleWrappers::WorldToScreen(bmodelOrigin, screen_point);
 
 				TriangleUtils::DrawScreenRectangle(
-					pTriAPI,
 					screen_point.Make2D() - half_size,
 					screen_point.Make2D() + half_size
 				);
@@ -130,7 +130,7 @@ namespace TriangleDrawing
 		// Make sure the target object is drawn on top.
 		if (target_object)
 		{
-			pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 1.0f);
+			TriangleWrappers::Color4f(0.0f, 1.0f, 0.0f, 1.0f);
 
 			auto bmodelOrigin = target_object->v.absmin + 0.5 * target_object->v.size;
 			const auto disp = bmodelOrigin - playerOrigin - player->v.view_ofs;
@@ -138,10 +138,9 @@ namespace TriangleDrawing
 			// Prevent drawing entities that are behind us. WorldToScreen doesn't prevent this automatically.
 			if (DotProduct(forward, disp) > 0.0f) {
 				Vector screen_point;
-				pTriAPI->WorldToScreen(bmodelOrigin, screen_point);
+				TriangleWrappers::WorldToScreen(bmodelOrigin, screen_point);
 
 				TriangleUtils::DrawScreenRectangle(
-					pTriAPI,
 					screen_point.Make2D() - half_size,
 					screen_point.Make2D() + half_size
 				);
@@ -160,13 +159,13 @@ namespace TriangleDrawing
 		return s;
 	}
 
-	static void DrawTriggers(triangleapi_s *pTriAPI)
+	static void DrawTriggers()
 	{
 		if (!CVars::bxt_show_triggers.GetBool())
 			return;
 
-		pTriAPI->RenderMode(kRenderTransAdd);
-		pTriAPI->CullFace(TRI_NONE);
+		TriangleWrappers::RenderMode(kRenderTransAdd);
+		TriangleWrappers::CullFace(TRI_NONE);
 
 		const float svTime = static_cast<float>(HwDLL::GetInstance().GetTime());
 		edict_t *edicts;
@@ -202,26 +201,26 @@ namespace TriangleDrawing
 				if (active)
 					a = GetPulsatingAlpha(a, svTime + offset);
 
-				pTriAPI->Color4f(r, g, b, a);
-				pTriAPI->Begin(TRI_POLYGON);
+				TriangleWrappers::Color4f(r, g, b, a);
+				TriangleWrappers::Begin(TRI_POLYGON);
 				for (int j = 0; j < surfs[i].polys->numverts; ++j)
-					pTriAPI->Vertex3fv(surfs[i].polys->verts[j]);
-				pTriAPI->End();
+					TriangleWrappers::Vertex3fv(surfs[i].polys->verts[j]);
+				TriangleWrappers::End();
 			}
 		}
 	}
 
-	static void DrawCustomTriggers(triangleapi_s *pTriAPI)
+	static void DrawCustomTriggers()
 	{
 		if (!CVars::bxt_show_custom_triggers.GetBool())
 			return;
 
-		pTriAPI->CullFace(TRI_NONE);
+		TriangleWrappers::CullFace(TRI_NONE);
 
 		for (const auto& trigger : CustomTriggers::triggers) {
 			auto corner_positions = trigger.get_corner_positions();
 
-			pTriAPI->RenderMode(kRenderTransAdd);
+			TriangleWrappers::RenderMode(kRenderTransAdd);
 
 			if (!CVars::bxt_triggers_color.IsEmpty()) {
 				unsigned r = 0, g = 0, b = 0, a = 0;
@@ -234,20 +233,20 @@ namespace TriangleDrawing
 				triggerColor[2] = b / 255.0f;
 				triggerColor[3] = a / 255.0f;
 
-				pTriAPI->Color4f(triggerColor[0], triggerColor[1], triggerColor[2], triggerColor[3]);
+				TriangleWrappers::Color4f(triggerColor[0], triggerColor[1], triggerColor[2], triggerColor[3]);
 			} else {
-				pTriAPI->Color4f(1.0f, 0.5f, 0.0f, 0.3f);
+				TriangleWrappers::Color4f(1.0f, 0.5f, 0.0f, 0.3f);
 			}
 
-			TriangleUtils::DrawAACuboid(pTriAPI, corner_positions.first, corner_positions.second);
+			TriangleUtils::DrawAACuboid(corner_positions.first, corner_positions.second);
 
-			pTriAPI->RenderMode(kRenderTransColor);
-			pTriAPI->Color4f(0.5f, 0.3f, 0.0f, 1.0f);
-			TriangleUtils::DrawAACuboidWireframe(pTriAPI, corner_positions.first, corner_positions.second);
+			TriangleWrappers::RenderMode(kRenderTransColor);
+			TriangleWrappers::Color4f(0.5f, 0.3f, 0.0f, 1.0f);
+			TriangleUtils::DrawAACuboidWireframe(corner_positions.first, corner_positions.second);
 		}
 	}
 
-	static void DrawAbsMinMax(triangleapi_s *pTriAPI)
+	static void DrawAbsMinMax()
 	{
 		static const std::vector<std::string> PICKABLE_PREFIX{
 			"item_",
@@ -259,7 +258,7 @@ namespace TriangleDrawing
 		if (!CVars::bxt_show_pickup_bbox.GetBool())
 			return;
 
-		pTriAPI->CullFace(TRI_NONE);
+		TriangleWrappers::CullFace(TRI_NONE);
 
 		const auto& hw = HwDLL::GetInstance();
 		const auto& server = ServerDLL::GetInstance();
@@ -289,40 +288,40 @@ namespace TriangleDrawing
 				continue;
 			}
 
-			pTriAPI->RenderMode(kRenderTransAdd);
-			pTriAPI->Color4f(1.0f, 0.6f, 0.0f, 0.3f);
-			TriangleUtils::DrawAACuboid(pTriAPI, ent->v.absmin, ent->v.absmax);
+			TriangleWrappers::RenderMode(kRenderTransAdd);
+			TriangleWrappers::Color4f(1.0f, 0.6f, 0.0f, 0.3f);
+			TriangleUtils::DrawAACuboid(ent->v.absmin, ent->v.absmax);
 		}
 	}
 
-	static void DrawPlayerAbsMinMax(triangleapi_s *pTriAPI)
+	static void DrawPlayerAbsMinMax()
 	{
 		if (!CVars::bxt_show_player_bbox.GetBool())
 			return;
 
-		pTriAPI->CullFace(TRI_NONE);
+		TriangleWrappers::CullFace(TRI_NONE);
 
 		const auto& hw = HwDLL::GetInstance();
 		if (hw.sv_player)
 		{
-			pTriAPI->RenderMode(kRenderTransColor);
-			pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 1.0f);
-			TriangleUtils::DrawAACuboidWireframe(pTriAPI, (*hw.sv_player)->v.absmin, (*hw.sv_player)->v.absmax);
+			TriangleWrappers::RenderMode(kRenderTransColor);
+			TriangleWrappers::Color4f(0.0f, 1.0f, 0.0f, 1.0f);
+			TriangleUtils::DrawAACuboidWireframe((*hw.sv_player)->v.absmin, (*hw.sv_player)->v.absmax);
 			if (CVars::bxt_show_player_bbox.GetInt() == 2)
 			{
-				pTriAPI->RenderMode(kRenderTransAdd);
-				pTriAPI->Color4f(0.0f, 1.0f, 0.0f, 0.1f);
-				TriangleUtils::DrawAACuboid(pTriAPI, (*hw.sv_player)->v.absmin, (*hw.sv_player)->v.absmax);
+				TriangleWrappers::RenderMode(kRenderTransAdd);
+				TriangleWrappers::Color4f(0.0f, 1.0f, 0.0f, 0.1f);
+				TriangleUtils::DrawAACuboid((*hw.sv_player)->v.absmin, (*hw.sv_player)->v.absmax);
 			}
 		}
 	}
 
-	static void DrawMonsterAbsMinMax(triangleapi_s *pTriAPI)
+	static void DrawMonsterAbsMinMax()
 	{
 		if (!CVars::bxt_show_monster_bbox.GetBool())
 			return;
 
-		pTriAPI->CullFace(TRI_NONE);
+		TriangleWrappers::CullFace(TRI_NONE);
 
 		const auto& hw = HwDLL::GetInstance();
 		const auto& server = ServerDLL::GetInstance();
@@ -341,19 +340,19 @@ namespace TriangleDrawing
 
 			if (ent->v.flags & FL_MONSTER)
 			{
-				pTriAPI->RenderMode(kRenderTransColor);
-				pTriAPI->Color4f(1.0f, 0.75f, 0.8f, 1.0f);
-				TriangleUtils::DrawAACuboidWireframe(pTriAPI, ent->v.absmin, ent->v.absmax);
+				TriangleWrappers::RenderMode(kRenderTransColor);
+				TriangleWrappers::Color4f(1.0f, 0.75f, 0.8f, 1.0f);
+				TriangleUtils::DrawAACuboidWireframe(ent->v.absmin, ent->v.absmax);
 				if (CVars::bxt_show_monster_bbox.GetInt() == 2) {
-					pTriAPI->RenderMode(kRenderTransAdd);
-					pTriAPI->Color4f(1.0f, 0.75f, 0.8f, 0.1f);
-					TriangleUtils::DrawAACuboid(pTriAPI, ent->v.absmin, ent->v.absmax);
+					TriangleWrappers::RenderMode(kRenderTransAdd);
+					TriangleWrappers::Color4f(1.0f, 0.75f, 0.8f, 0.1f);
+					TriangleUtils::DrawAACuboid(ent->v.absmin, ent->v.absmax);
 				}
 			}
 		}
 	}
 
-	static void DrawBullets(triangleapi_s* pTriAPI, const std::deque<std::array<Vector, 2>>& points_vec, const std::deque<bool>& hit_vec, byte r, byte g, byte b)
+	static void DrawBullets(const std::deque<std::array<Vector, 2>>& points_vec, const std::deque<bool>& hit_vec, byte r, byte g, byte b)
 	{
 		byte rEnd = 255 - r, gEnd = 255 - g, bEnd = 255 - b;
 
@@ -383,14 +382,14 @@ namespace TriangleDrawing
 				half = points[0] + diffFirstHalf;
 			}
 			
-			pTriAPI->Color4f(r_float, g_float, b_float, hitAlpha);
-			TriangleUtils::DrawLine(pTriAPI, points[0], half);
-			pTriAPI->Color4f(rEnd_float, gEnd_float, bEnd_float, hitAlpha);
-			TriangleUtils::DrawLine(pTriAPI, half, points[1]);
+			TriangleWrappers::Color4f(r_float, g_float, b_float, hitAlpha);
+			TriangleUtils::DrawLine(points[0], half);
+			TriangleWrappers::Color4f(rEnd_float, gEnd_float, bEnd_float, hitAlpha);
+			TriangleUtils::DrawLine(half, points[1]);
 		}
 	}
 
-	static void DrawBulletsEnemyTrace(triangleapi_s* pTriAPI)
+	static void DrawBulletsEnemyTrace()
 	{
 		if (!CVars::bxt_show_bullets_enemy.GetBool())
 			return;
@@ -398,10 +397,10 @@ namespace TriangleDrawing
 		const auto points_vec = ServerDLL::GetInstance().GetBulletsEnemyTrace();
 		const auto hit_vec = ServerDLL::GetInstance().GetBulletsEnemyTraceHit();
 
-		DrawBullets(pTriAPI, points_vec, hit_vec, 255, 0, 144);
+		DrawBullets(points_vec, hit_vec, 255, 0, 144);
 	}
 
-	static void DrawBulletsPlayerTrace(triangleapi_s* pTriAPI)
+	static void DrawBulletsPlayerTrace()
 	{
 		if (!CVars::bxt_show_bullets.GetBool())
 			return;
@@ -409,15 +408,15 @@ namespace TriangleDrawing
 		const auto points_vec = ServerDLL::GetInstance().GetBulletsPlayerTrace();
 		const auto hit_vec = ServerDLL::GetInstance().GetBulletsPlayerTraceHit();
 
-		DrawBullets(pTriAPI, points_vec, hit_vec, 0, 200, 255);
+		DrawBullets(points_vec, hit_vec, 0, 200, 255);
 	}
 
-	static void DrawSplits(triangleapi_s *pTriAPI)
+	static void DrawSplits()
 	{
 		if (!CVars::bxt_show_splits.GetBool())
 			return;
 
-		pTriAPI->CullFace(TRI_NONE);
+		TriangleWrappers::CullFace(TRI_NONE);
 
 		for (const auto& split : Splits::splits) {
 			if (!split.map_name.empty() && split.map_name != HwDLL::GetInstance().lastLoadedMap)
@@ -428,7 +427,7 @@ namespace TriangleDrawing
 
 			auto corner_positions = split.get_corner_positions();
 
-			pTriAPI->RenderMode(kRenderTransAdd);
+			TriangleWrappers::RenderMode(kRenderTransAdd);
 
 			if (!CVars::bxt_splits_color.IsEmpty()) {
 				unsigned r = 0, g = 0, b = 0, a = 0;
@@ -441,16 +440,16 @@ namespace TriangleDrawing
 				triggerColor[2] = b / 255.0f;
 				triggerColor[3] = a / 255.0f;
 
-				pTriAPI->Color4f(triggerColor[0], triggerColor[1], triggerColor[2], triggerColor[3]);
+				TriangleWrappers::Color4f(triggerColor[0], triggerColor[1], triggerColor[2], triggerColor[3]);
 			} else {
-				pTriAPI->Color4f(0.8f, 0.6f, 0.3f, 0.3f);
+				TriangleWrappers::Color4f(0.8f, 0.6f, 0.3f, 0.3f);
 			}
 
-			TriangleUtils::DrawAACuboid(pTriAPI, corner_positions.first, corner_positions.second);
+			TriangleUtils::DrawAACuboid(corner_positions.first, corner_positions.second);
 
-			pTriAPI->RenderMode(kRenderTransColor);
-			pTriAPI->Color4f(0.5f, 0.3f, 0.0f, 1.0f);
-			TriangleUtils::DrawAACuboidWireframe(pTriAPI, corner_positions.first, corner_positions.second);
+			TriangleWrappers::RenderMode(kRenderTransColor);
+			TriangleWrappers::Color4f(0.5f, 0.3f, 0.0f, 1.0f);
+			TriangleUtils::DrawAACuboidWireframe(corner_positions.first, corner_positions.second);
 		}
 	}
 
@@ -504,7 +503,7 @@ namespace TriangleDrawing
 		size_t other_frame;
 	};
 
-	static void DrawTASEditor(triangleapi_s *pTriAPI)
+	static void DrawTASEditor()
 	{
 		using HLStrafe::HullType;
 		using HLTAS::StrafeDir;
@@ -712,7 +711,7 @@ namespace TriangleDrawing
 					if (DotProduct(forward, disp) > 0) {
 						Vector origin_ = origin;
 						Vector screen_point;
-						pTriAPI->WorldToScreen(origin_, screen_point);
+						TriangleWrappers::WorldToScreen(origin_, screen_point);
 						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 						auto dist = (screen_point_px - mouse).Length();
 
@@ -738,19 +737,19 @@ namespace TriangleDrawing
 				if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
 					brightness = 0.2f;
 
-				pTriAPI->Color4f(brightness, brightness, 1, 1);
+				TriangleWrappers::Color4f(brightness, brightness, 1, 1);
 
 				if (smoothing_region_it != large_enough_same_yaw_regions.cend()) {
 					if (frame >= smoothing_region_it->first) {
 						if (frame < smoothing_region_it->second)
-							pTriAPI->Color4f(0, brightness / 0.4f, 0, 1);
+							TriangleWrappers::Color4f(0, brightness / 0.4f, 0, 1);
 						else
 							smoothing_region_it++;
 					}
 				}
 
 				auto forward = cl.AnglesToForward(player_datas[frame].Viewangles);
-				TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 5);
+				TriangleUtils::DrawLine(origin, origin + forward * 5);
 			}
 
 			size_t closest_frame = 0;
@@ -774,10 +773,10 @@ namespace TriangleDrawing
 						frame <= std::max(selection.last_frame, selection.other_frame))
 					brightness = 1;
 
-				pTriAPI->Color4f(brightness, brightness, brightness, 1);
+				TriangleWrappers::Color4f(brightness, brightness, brightness, 1);
 
 				const auto prev_origin = Vector(player_datas[frame - 1].Origin);
-				TriangleUtils::DrawLine(pTriAPI, prev_origin, origin);
+				TriangleUtils::DrawLine(prev_origin, origin);
 
 				// If we want to insert or apply smoothing, we need to find the closest frame.
 				if (hw.tas_editor_insert_point_held || hw.tas_editor_apply_smoothing) {
@@ -785,7 +784,7 @@ namespace TriangleDrawing
 					if (DotProduct(forward, disp) > 0) {
 						Vector origin_ = origin;
 						Vector screen_point;
-						pTriAPI->WorldToScreen(origin_, screen_point);
+						TriangleWrappers::WorldToScreen(origin_, screen_point);
 						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 						auto dist = (screen_point_px - mouse).Length();
 
@@ -806,9 +805,9 @@ namespace TriangleDrawing
 					continue;
 
 				if (item.frame_bulk_index == selection.frame_bulk_index && item.frame == selection.last_frame)
-					pTriAPI->Color4f(1, 1, 1, 1);
+					TriangleWrappers::Color4f(1, 1, 1, 1);
 				else
-					pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
+					TriangleWrappers::Color4f(0.8f, 0.8f, 0.8f, 1);
 
 				Vector prev_origin = player_datas[frame - 1].Origin;
 				Vector origin = player_datas[frame].Origin;
@@ -819,20 +818,20 @@ namespace TriangleDrawing
 				Vector a = origin - perp, b = origin + perp;
 
 				if (line.AlgorithmParametersPresent) {
-					TriangleUtils::DrawLine(pTriAPI, a, b);
+					TriangleUtils::DrawLine(a, b);
 
 					switch (line.GetAlgorithmParameters().Type) {
 						case HLTAS::ConstraintsType::VELOCITY:
 						case HLTAS::ConstraintsType::VELOCITY_AVG:
 						case HLTAS::ConstraintsType::VELOCITY_LOCK:
-							pTriAPI->Color4f(0, 1, 0, 1);
+							TriangleWrappers::Color4f(0, 1, 0, 1);
 							break;
 						case HLTAS::ConstraintsType::YAW:
 						case HLTAS::ConstraintsType::YAW_RANGE:
-							pTriAPI->Color4f(0, 1, 1, 1);
+							TriangleWrappers::Color4f(0, 1, 1, 1);
 							break;
 						case HLTAS::ConstraintsType::LOOK_AT:
-							pTriAPI->Color4f(1, 0, 1, 1);
+							TriangleWrappers::Color4f(1, 0, 1, 1);
 							break;
 					}
 
@@ -840,16 +839,16 @@ namespace TriangleDrawing
 					next_angles[0] = 0;
 					next_angles[2] = 0;
 					auto forward = cl.AnglesToForward(next_angles);
-					TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 20);
+					TriangleUtils::DrawLine(origin, origin + forward * 20);
 				} else if (!line.TargetYawOverride.empty()) {
-					pTriAPI->Color4f(1, 1, 0, 1);
-					TriangleUtils::DrawLine(pTriAPI, a, b);
+					TriangleWrappers::Color4f(1, 1, 0, 1);
+					TriangleUtils::DrawLine(a, b);
 				} else if (line.ChangePresent) {
 					if (item.type == KeyFrameType::FRAME_BULK) {
 						// Draw an arrow head facing back to mark the start of the change.
 						auto diff = (next_origin - origin).Normalize() * 5;
-						TriangleUtils::DrawLine(pTriAPI, a + diff, origin);
-						TriangleUtils::DrawLine(pTriAPI, origin, b + diff);
+						TriangleUtils::DrawLine(a + diff, origin);
+						TriangleUtils::DrawLine(origin, b + diff);
 
 						Vector next_angles = player_datas[frame + 1].Viewangles;
 						next_angles[2] = 0;
@@ -864,13 +863,13 @@ namespace TriangleDrawing
 						}
 
 						auto forward = cl.AnglesToForward(next_angles);
-						pTriAPI->Color4f(1, 0, 0, 1);
-						TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 20);
+						TriangleWrappers::Color4f(1, 0, 0, 1);
+						TriangleUtils::DrawLine(origin, origin + forward * 20);
 					} else {
 						// Draw an arrow head facing forward to mark the end of the change.
 						auto diff = (prev_origin - origin).Normalize() * 5;
-						TriangleUtils::DrawLine(pTriAPI, a + diff, origin);
-						TriangleUtils::DrawLine(pTriAPI, origin, b + diff);
+						TriangleUtils::DrawLine(a + diff, origin);
+						TriangleUtils::DrawLine(origin, b + diff);
 
 						Vector angles = player_datas[frame].Viewangles;
 						angles[2] = 0;
@@ -887,8 +886,8 @@ namespace TriangleDrawing
 						}
 
 						auto forward = cl.AnglesToForward(angles);
-						pTriAPI->Color4f(1, 1, 0, 1);
-						TriangleUtils::DrawLine(pTriAPI, origin, origin + forward * 20);
+						TriangleWrappers::Color4f(1, 1, 0, 1);
+						TriangleUtils::DrawLine(origin, origin + forward * 20);
 					}
 				}
 			}
@@ -903,11 +902,11 @@ namespace TriangleDrawing
 
 					Vector origin_ = player.Origin;
 					Vector screen_point;
-					pTriAPI->WorldToScreen(origin_, screen_point);
+					TriangleWrappers::WorldToScreen(origin_, screen_point);
 					auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 					Vector prev_origin_ = prev_player.Origin;
 					Vector prev_screen_point;
-					pTriAPI->WorldToScreen(prev_origin_, prev_screen_point);
+					TriangleWrappers::WorldToScreen(prev_origin_, prev_screen_point);
 					auto prev_screen_point_px = stw_to_pixels(prev_screen_point.Make2D());
 					saved_lmb_diff = (screen_point_px - prev_screen_point_px).Normalize();
 				} else {
@@ -1326,11 +1325,11 @@ namespace TriangleDrawing
 					const auto& prev_player = player_datas[selection.initial_frame - 1];
 					Vector origin_ = player.Origin;
 					Vector screen_point;
-					pTriAPI->WorldToScreen(origin_, screen_point);
+					TriangleWrappers::WorldToScreen(origin_, screen_point);
 					auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 					Vector prev_origin_ = prev_player.Origin;
 					Vector prev_screen_point;
-					pTriAPI->WorldToScreen(prev_origin_, prev_screen_point);
+					TriangleWrappers::WorldToScreen(prev_origin_, prev_screen_point);
 					auto prev_screen_point_px = stw_to_pixels(prev_screen_point.Make2D());
 					saved_lmb_diff = (screen_point_px - prev_screen_point_px).Normalize();
 				}
@@ -1571,7 +1570,7 @@ namespace TriangleDrawing
 					if (DotProduct(forward, disp) > 0) {
 						Vector origin_ = origin;
 						Vector screen_point;
-						pTriAPI->WorldToScreen(origin_, screen_point);
+						TriangleWrappers::WorldToScreen(origin_, screen_point);
 						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 						auto dist = (screen_point_px - mouse).Length();
 
@@ -1653,22 +1652,22 @@ namespace TriangleDrawing
 
 					if (pushable.water_level >= 1) {
 						if (pushable.did_obbo)
-							pTriAPI->Color4f(0, 1, 1, 1);
+							TriangleWrappers::Color4f(0, 1, 1, 1);
 						else
-							pTriAPI->Color4f(0.4f, 0.4f, 1, 1);
+							TriangleWrappers::Color4f(0.4f, 0.4f, 1, 1);
 					} else {
 						if (pushable.did_obbo)
-							pTriAPI->Color4f(0, 1, 0, 1);
+							TriangleWrappers::Color4f(0, 1, 0, 1);
 						else
-							pTriAPI->Color4f(1, 1, 0, 1);
+							TriangleWrappers::Color4f(1, 1, 0, 1);
 					}
-					TriangleUtils::DrawLine(pTriAPI, last_frame_pushable->origin, pushable.origin);
+					TriangleUtils::DrawLine(last_frame_pushable->origin, pushable.origin);
 				}
 
 				if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
-					pTriAPI->Color4f(0.5f, 0.5f, 0.5f, 1);
+					TriangleWrappers::Color4f(0.5f, 0.5f, 0.5f, 1);
 				else
-					pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
+					TriangleWrappers::Color4f(0.8f, 0.8f, 0.8f, 1);
 
 				if (frame > color_from && frame <= color_to) {
 					// If we bumped into something along the way
@@ -1692,25 +1691,25 @@ namespace TriangleDrawing
 					if (collision) {
 						// Color frames with collision red.
 						if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
-							pTriAPI->Color4f(0.6f, 0, 0, 1);
+							TriangleWrappers::Color4f(0.6f, 0, 0, 1);
 						else
-							pTriAPI->Color4f(1, 0, 0, 1);
+							TriangleWrappers::Color4f(1, 0, 0, 1);
 					} else if (frame > frames_until_non_ground_collision) {
 						// Color frames after collision pink.
 						if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
-							pTriAPI->Color4f(0.6f, 0.4f, 0.4f, 1);
+							TriangleWrappers::Color4f(0.6f, 0.4f, 0.4f, 1);
 						else
-							pTriAPI->Color4f(1, 0.7f, 0.7f, 1);
+							TriangleWrappers::Color4f(1, 0.7f, 0.7f, 1);
 					} else {
 						if (frame >= input.first_predicted_frame && input.received_data_from_second_game)
-							pTriAPI->Color4f(0, 0.6f, 0, 1);
+							TriangleWrappers::Color4f(0, 0.6f, 0, 1);
 						else
-							pTriAPI->Color4f(0, 1, 0, 1);
+							TriangleWrappers::Color4f(0, 1, 0, 1);
 					}
 				}
 
 				const auto prev_origin = Vector(player_datas[frame - 1].Origin);
-				TriangleUtils::DrawLine(pTriAPI, prev_origin, origin);
+				TriangleUtils::DrawLine(prev_origin, origin);
 
 				// Draw the view angle.
 				{
@@ -1723,8 +1722,8 @@ namespace TriangleDrawing
 						last_shown_view_angle = forward;
 						last_shown_view_angle_origin = origin;
 						forward = origin + forward * 5;
-						pTriAPI->Color4f(0.4f, 0.4f, 1, 1);
-						TriangleUtils::DrawLine(pTriAPI, origin, forward);
+						TriangleWrappers::Color4f(0.4f, 0.4f, 1, 1);
+						TriangleUtils::DrawLine(origin, forward);
 					}
 				}
 
@@ -1734,7 +1733,7 @@ namespace TriangleDrawing
 					if (DotProduct(forward, disp) > 0) {
 						Vector origin_ = origin;
 						Vector screen_point;
-						pTriAPI->WorldToScreen(origin_, screen_point);
+						TriangleWrappers::WorldToScreen(origin_, screen_point);
 						auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 						auto dist = (screen_point_px - mouse).Length();
 
@@ -1766,20 +1765,20 @@ namespace TriangleDrawing
 							auto yaw = frame_bulk.GetYaw() * M_DEG2RAD;
 							auto yaw_dir = Vector(static_cast<float>(std::cos(yaw)), static_cast<float>(std::sin(yaw)), 0);
 							yaw_dir *= 20;
-							pTriAPI->Color4f(0.5, 0.5, 1, 1);
-							TriangleUtils::DrawLine(pTriAPI, origin - yaw_dir, origin + yaw_dir);
+							TriangleWrappers::Color4f(0.5, 0.5, 1, 1);
+							TriangleUtils::DrawLine(origin - yaw_dir, origin + yaw_dir);
 						}
 
-						pTriAPI->Color4f(1, 1, 1, 1);
+						TriangleWrappers::Color4f(1, 1, 1, 1);
 
 						if (left_got_pressed) {
 							Vector origin_ = origin;
 							Vector screen_point;
-							pTriAPI->WorldToScreen(origin_, screen_point);
+							TriangleWrappers::WorldToScreen(origin_, screen_point);
 							auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 							Vector prev_origin_ = prev_origin;
 							Vector prev_screen_point;
-							pTriAPI->WorldToScreen(prev_origin_, prev_screen_point);
+							TriangleWrappers::WorldToScreen(prev_origin_, prev_screen_point);
 							auto prev_screen_point_px = stw_to_pixels(prev_screen_point.Make2D());
 							saved_lmb_diff = (screen_point_px - prev_screen_point_px).Normalize();
 						}
@@ -1787,39 +1786,39 @@ namespace TriangleDrawing
 						if (middle_got_pressed) {
 							Vector origin_ = origin;
 							Vector screen_point;
-							pTriAPI->WorldToScreen(origin_, screen_point);
+							TriangleWrappers::WorldToScreen(origin_, screen_point);
 							auto screen_point_px = stw_to_pixels(screen_point.Make2D());
 							Vector prev_origin_ = prev_origin;
 							Vector prev_screen_point;
-							pTriAPI->WorldToScreen(prev_origin_, prev_screen_point);
+							TriangleWrappers::WorldToScreen(prev_origin_, prev_screen_point);
 							auto prev_screen_point_px = stw_to_pixels(prev_screen_point.Make2D());
 							saved_mmb_diff = (screen_point_px - prev_screen_point_px).Normalize();
 						}
 
 						if (right_got_pressed) {
 							Vector a_screen_point;
-							pTriAPI->WorldToScreen(a, a_screen_point);
+							TriangleWrappers::WorldToScreen(a, a_screen_point);
 							auto a_screen_point_px = stw_to_pixels(a_screen_point.Make2D());
 							Vector b_screen_point;
-							pTriAPI->WorldToScreen(b, b_screen_point);
+							TriangleWrappers::WorldToScreen(b, b_screen_point);
 							auto b_screen_point_px = stw_to_pixels(b_screen_point.Make2D());
 							saved_rmb_diff = (a_screen_point_px - b_screen_point_px).Normalize();
 						}
 
 						if (mouse4_got_pressed) {
 							Vector a_screen_point;
-							pTriAPI->WorldToScreen(a, a_screen_point);
+							TriangleWrappers::WorldToScreen(a, a_screen_point);
 							auto a_screen_point_px = stw_to_pixels(a_screen_point.Make2D());
 							Vector b_screen_point;
-							pTriAPI->WorldToScreen(b, b_screen_point);
+							TriangleWrappers::WorldToScreen(b, b_screen_point);
 							auto b_screen_point_px = stw_to_pixels(b_screen_point.Make2D());
 							saved_ms4_diff = (a_screen_point_px - b_screen_point_px).Normalize();
 						}
 					} else {
-						pTriAPI->Color4f(0.8f, 0.8f, 0.8f, 1);
+						TriangleWrappers::Color4f(0.8f, 0.8f, 0.8f, 1);
 					}
 
-					TriangleUtils::DrawLine(pTriAPI, a, b);
+					TriangleUtils::DrawLine(a, b);
 				}
 			}
 
@@ -2373,27 +2372,26 @@ namespace TriangleDrawing
 	void Draw()
 	{
 		auto pEngfuncs = ClientDLL::GetInstance().pEngfuncs;
-		auto pTriAPI = pEngfuncs->pTriAPI;
 
 		if (white_sprite == 0)
 			return;
 
-		if (!pTriAPI->SpriteTexture(const_cast<model_s*>(pEngfuncs->GetSpritePointer(white_sprite)), 0))
+		if (!TriangleWrappers::SpriteTexture(const_cast<model_s*>(pEngfuncs->GetSpritePointer(white_sprite)), 0))
 			return;
 
-		DrawNodes(pTriAPI);
-		DrawDisplacerTargets(pTriAPI);
-		DrawUseableEntities(pTriAPI);
-		DrawTriggers(pTriAPI);
-		DrawCustomTriggers(pTriAPI);
-		DrawAbsMinMax(pTriAPI);
-		DrawPlayerAbsMinMax(pTriAPI);
-		DrawMonsterAbsMinMax(pTriAPI);
-		DrawBulletsEnemyTrace(pTriAPI);
-		DrawBulletsPlayerTrace(pTriAPI);
-		DrawSplits(pTriAPI);
+		DrawNodes();
+		DrawDisplacerTargets();
+		DrawUseableEntities();
+		DrawTriggers();
+		DrawCustomTriggers();
+		DrawAbsMinMax();
+		DrawPlayerAbsMinMax();
+		DrawMonsterAbsMinMax();
+		DrawBulletsEnemyTrace();
+		DrawBulletsPlayerTrace();
+		DrawSplits();
 
-		DrawTASEditor(pTriAPI);
+		DrawTASEditor();
 		ResetTASEditorCommands();
 	}
 }

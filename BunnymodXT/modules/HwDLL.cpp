@@ -23,6 +23,7 @@
 #include "../custom_triggers.hpp"
 #include "../simulation_ipc.hpp"
 #include "../splits.hpp"
+#include "../triangle_wrappers.hpp"
 #include "../helper_functions.hpp"
 
 using namespace std::literals;
@@ -8136,10 +8137,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 		if (cl.pEngfuncs) {
 			if (currententity == cl.pEngfuncs->GetViewModel()) {
 				if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
-				cl.pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
-				cl.pEngfuncs->pTriAPI->Brightness(2);
+				TriangleWrappers::RenderMode(kRenderTransAdd);
+				TriangleWrappers::Brightness(2);
 			} else {
-				cl.pEngfuncs->pTriAPI->RenderMode(old_rendermode); }
+				TriangleWrappers::RenderMode(old_rendermode); }
 			}
 		}
 	}

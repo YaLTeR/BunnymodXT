@@ -11,6 +11,7 @@
 #include "../hud_custom.hpp"
 #include "../triangle_drawing.hpp"
 #include "../discord_integration.hpp"
+#include "../triangle_wrappers.hpp"
 #include <GL/gl.h>
 
 // Linux hooks.
@@ -1704,7 +1705,7 @@ HOOK_DEF_0(ClientDLL, void, __cdecl, HUD_DrawTransparentTriangles)
 		glEnable(GL_TEXTURE_2D);
 
 		// This is required for the WON DLLs.
-		pEngfuncs->pTriAPI->RenderMode(kRenderNormal);
+		TriangleWrappers::RenderMode(kRenderNormal);
 	}
 }
 
@@ -1983,10 +1984,10 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel,
 	if (pEngfuncs) {
 		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
 			if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
-				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
-				pEngfuncs->pTriAPI->Brightness(2);
+				TriangleWrappers::RenderMode(kRenderTransAdd);
+				TriangleWrappers::Brightness(2);
 			} else {
-				pEngfuncs->pTriAPI->RenderMode(old_rendermode);
+				TriangleWrappers::RenderMode(old_rendermode);
 			}
 		}
 	}
@@ -2009,10 +2010,10 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Lin
 	if (pEngfuncs) {
 		if (pCurrentEntity == pEngfuncs->GetViewModel()) {
 			if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
-				pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
-				pEngfuncs->pTriAPI->Brightness(2);
+				TriangleWrappers::RenderMode(kRenderTransAdd);
+				TriangleWrappers::Brightness(2);
 			} else {
-				pEngfuncs->pTriAPI->RenderMode(old_rendermode);
+				TriangleWrappers::RenderMode(old_rendermode);
 			}
 		}
 	}

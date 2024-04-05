@@ -138,8 +138,14 @@ namespace discord_integration
 						presence.largeImageText = map_name;
 						presence.details = buffer_details;
 
-						set_discord_image(hl1_map_name_to_thumbnail, hl1_thumbnail_to_chapter)
-						set_discord_image(op4_map_name_to_thumbnail, op4_thumbnail_to_chapter)
+						if (CVars::bxt_discord_rpc_ignore_gamedir_for_hl_maps.GetBool()
+						|| HF_DoesGameDirStartsWith("valve")
+						|| HF_DoesGameDirMatch("abh")
+						|| HF_DoesGameDirMatch("glitchless"))
+							set_discord_image(hl1_map_name_to_thumbnail, hl1_thumbnail_to_chapter)
+
+						if (CVars::bxt_discord_rpc_ignore_gamedir_for_hl_maps.GetBool() || HF_DoesGameDirStartsWith("gearbox"))
+							set_discord_image(op4_map_name_to_thumbnail, op4_thumbnail_to_chapter)
 
 						if (HF_DoesGameDirStartsWith("bshift"))
 						{

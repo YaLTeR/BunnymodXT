@@ -5727,6 +5727,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_fix_changelevel_in_coop);
 	RegisterCVar(CVars::bxt_tas_ducktap_priority);
 	RegisterCVar(CVars::bxt_ch_hook_speed);
+	RegisterCVar(CVars::bxt_discord_rpc_ignore_gamedir_for_hl_maps);
 	RegisterCVar(CVars::bxt_allow_keypresses_in_demo);
 	RegisterCVar(CVars::bxt_ch_checkpoint_with_vel);
 	RegisterCVar(CVars::bxt_ch_checkpoint_onground_only);

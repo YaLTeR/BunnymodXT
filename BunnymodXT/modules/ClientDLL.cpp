@@ -11,8 +11,9 @@
 #include "../hud_custom.hpp"
 #include "../triangle_drawing.hpp"
 #include "../discord_integration.hpp"
-#include "../triangle_wrappers.hpp"
 #include <GL/gl.h>
+
+#include "../wrappers/triangle_wrappers.hpp"
 
 // Linux hooks.
 #ifndef _WIN32

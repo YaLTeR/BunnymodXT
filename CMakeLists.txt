@@ -174,7 +174,6 @@ set (HEADER_FILES
 	BunnymodXT/stdafx.hpp
 	BunnymodXT/triangle_drawing.hpp
 	BunnymodXT/triangle_utils.hpp
-	BunnymodXT/triangle_wrappers.cpp
 	BunnymodXT/opengl_utils.hpp
 	BunnymodXT/TEA.hpp
 	BunnymodXT/runtime_data.hpp
@@ -182,6 +181,7 @@ set (HEADER_FILES
 	BunnymodXT/simulation_ipc.hpp
 	BunnymodXT/splits.hpp
 	BunnymodXT/helper_functions.hpp
+	BunnymodXT/wrappers/triangle_wrappers.hpp
 	BunnymodXT/git_revision.hpp)
 
 set (SOURCE_FILES
@@ -202,7 +202,6 @@ set (SOURCE_FILES
 	BunnymodXT/hud_custom.cpp
 	BunnymodXT/triangle_drawing.cpp
 	BunnymodXT/triangle_utils.cpp
-	BunnymodXT/triangle_wrappers.cpp
 	BunnymodXT/opengl_utils.cpp
 	BunnymodXT/TEA.cpp
 	BunnymodXT/runtime_data.cpp
@@ -210,6 +209,7 @@ set (SOURCE_FILES
 	BunnymodXT/simulation_ipc.cpp
 	BunnymodXT/splits.cpp
 	BunnymodXT/helper_functions.cpp
+	BunnymodXT/wrappers/triangle_wrappers.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/BunnymodXT/git_revision.cpp)
 
 if (MSVC)

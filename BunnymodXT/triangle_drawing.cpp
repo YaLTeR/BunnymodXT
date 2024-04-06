@@ -5,10 +5,11 @@
 
 #include "triangle_drawing.hpp"
 #include "triangle_utils.hpp"
-#include "triangle_wrappers.hpp"
 #include "modules.hpp"
 
 #include "hud_custom.hpp"
+
+#include "wrappers/triangle_wrappers.hpp"
 
 namespace TriangleDrawing
 {

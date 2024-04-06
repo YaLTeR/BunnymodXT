@@ -2,7 +2,8 @@
 
 #include "hud_custom.hpp"
 #include "triangle_utils.hpp"
-#include "triangle_wrappers.hpp"
+
+#include "wrappers/triangle_wrappers.hpp"
 
 namespace TriangleUtils
 {

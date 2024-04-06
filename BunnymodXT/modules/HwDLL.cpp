@@ -23,8 +23,9 @@
 #include "../custom_triggers.hpp"
 #include "../simulation_ipc.hpp"
 #include "../splits.hpp"
-#include "../triangle_wrappers.hpp"
 #include "../helper_functions.hpp"
+
+#include "../wrappers/triangle_wrappers.hpp"
 
 using namespace std::literals;
 

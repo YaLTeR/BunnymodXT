@@ -1,7 +1,7 @@
 #pragma once
 
-#include "stdafx.hpp"
-#include "modules.hpp"
+#include "../stdafx.hpp"
+#include "../modules.hpp"
 #include <GL/gl.h>
 
 namespace TriangleWrappers

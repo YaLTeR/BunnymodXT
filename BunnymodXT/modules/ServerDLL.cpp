@@ -2980,7 +2980,7 @@ void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int 
 	if (igmon || (!fireBullets_count && !fireBulletsPlayer_count))
 		return;
 
-	const char* SOLID_HIT_ENTITIES[] = {
+	static const char* SOLID_HIT_ENTITIES[] = {
 		"func_breakable",
 		"func_pushable"
 	};

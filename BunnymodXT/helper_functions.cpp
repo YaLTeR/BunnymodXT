@@ -397,8 +397,8 @@ namespace helper_functions
 
 	int build_number(const char *date)
 	{
-		const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-		const char mond[12] = { 31,    28,    31,    30,    31,    30,    31,    31,    30,    31,    30,    31 };
+		static const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+		static const char mond[12] = { 31,    28,    31,    30,    31,    30,    31,    31,    30,    31,    30,    31 };
 
 		#ifdef _WIN32
 		#define Q_strncasecmp _strnicmp

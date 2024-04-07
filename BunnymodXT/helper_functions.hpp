@@ -41,6 +41,10 @@ const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 #define HF_DoesMapNameMatch(map) \
 	helper_functions::does_mapname_match(map)
 
+// Don't remove parentheses from this macro or we're doomed!
+#define HF_IsEntityTrigger(classname) \
+	(!strncmp(classname, "trigger_", 8) || !strcmp(classname, "func_ladder"))
+
 namespace helper_functions
 {
 	// https://github.com/ValveSoftware/halflife/blob/master/common/parsemsg.cpp

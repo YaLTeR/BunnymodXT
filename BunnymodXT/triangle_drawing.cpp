@@ -179,10 +179,8 @@ namespace TriangleDrawing
 				continue;
 
 			const char *classname = HwDLL::GetInstance().GetString(ent->v.classname);
-			bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-			bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
 
-			if (!is_trigger && !is_ladder)
+			if (!HF_IsEntityTrigger(classname))
 				continue;
 
 			const model_t *model = HwDLL::GetInstance().GetModelByIndex(ent->v.modelindex);

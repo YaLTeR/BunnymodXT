@@ -2318,7 +2318,8 @@ void ServerDLL::DoAutoStopTasks()
 void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float &b)
 {
 	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+	bool is_ladder = std::strcmp(classname, "func_ladder") == 0;
+
 	if (!is_trigger && !is_ladder)
 		return;
 
@@ -2385,9 +2386,7 @@ void ServerDLL::GetTriggerColor(const char *classname, float &r, float &g, float
 
 void ServerDLL::GetTriggerAlpha(const char *classname, bool inactive, bool additive, float &a)
 {
-	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-	if (!is_trigger && !is_ladder)
+	if (!HF_IsEntityTrigger(classname))
 		return;
 
 	// The alpha should be lower in additive modes.
@@ -2421,8 +2420,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 	auto oldIUser2 = ent->v.iuser2;
 
 	const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + ent->v.classname;
-	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
+	bool is_trigger = HF_IsEntityTrigger(classname);
 
 	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool()) {
 		bool show = ent->v.rendermode != kRenderNormal && ent->v.rendermode != kRenderGlow;
@@ -2451,7 +2449,7 @@ HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state
 				ent->v.rendermode = kRenderTransTexture;
 		}
 	}
-	else if ((is_trigger || is_ladder) && CVars::bxt_show_triggers_legacy.GetBool()) {
+	else if (is_trigger && CVars::bxt_show_triggers_legacy.GetBool()) {
 		ent->v.effects &= ~EF_NODRAW;
 		ent->v.renderamt = 0;
 		ent->v.rendermode = kRenderTransColor;

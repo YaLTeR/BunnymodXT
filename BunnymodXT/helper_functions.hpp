@@ -116,6 +116,8 @@ namespace helper_functions
 	void convert_to_lowercase(const char *str);
 	int build_number(const char *date);
 	int build_number();
+	bool is_entity_kz_start(const char *targetname);
+	bool is_entity_kz_stop(const char *targetname);
 
 	// https://developer.valvesoftware.com/wiki/SteamID
 	std::string get_steam_id(const unsigned long steamID32);

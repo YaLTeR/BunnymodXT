@@ -438,6 +438,34 @@ namespace helper_functions
 		return build;
 	}
 
+	bool is_entity_kz_start(const char *targetname)
+	{
+		static const char* kz_start[] = {"hlkz_start", "counter_start", "clockstartbutton", "firsttimerelay", "but_start", "counter_start_button", 
+										"multi_start", "timer_startbutton", "start_timer_emi", "gogogo", "startcounter"};
+
+		for (const auto &name : kz_start)
+		{
+			if (!strcmp(targetname, name))
+				return true;
+		}
+
+		return false;
+	}
+
+	bool is_entity_kz_stop(const char *targetname)
+	{
+		static const char* kz_stop[] = {"hlkz_finish", "counter_off", "clockstopbutton", "clockstop", "but_stop", "counter_stop_button", 
+										"multi_stop", "stop_counter", "m_counter_end_emi", "stopcounter"};
+
+		for (const auto &name : kz_stop)
+		{
+			if (!strcmp(targetname, name))
+				return true;
+		}
+
+		return false;
+	}
+
 	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity)
 	{
 		/*

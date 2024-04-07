@@ -486,6 +486,12 @@ namespace helper_functions
 		#endif
 	}
 
+	void UpdateDataAtShutdownSV()
+	{
+	}
+
+// Below this comment are only functions from CBaseEntity or CBasePlayer class!
+
 	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity)
 	{
 		/*
@@ -608,7 +614,7 @@ namespace helper_functions
 		return Intersects(ent1->v.absmin, ent1->v.absmax, ent2->v.absmin, ent2->v.absmax);
 	}
 
-	// Below this comment are only functions for determining type or flags!
+// Below this comment are only functions for determining type or flags!
 
 	std::string get_difficulty(int skill)
 	{

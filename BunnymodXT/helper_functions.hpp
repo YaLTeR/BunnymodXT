@@ -120,6 +120,7 @@ namespace helper_functions
 	bool is_entity_kz_stop(const char *targetname);
 
 	void DisableVSync();
+	void UpdateDataAtShutdownSV(); // Update custom data when disconnected from the server, this should be called in SV_SpawnServer (engine-side) or ServerDeactivate (server-side).
 
 	// https://developer.valvesoftware.com/wiki/SteamID
 	std::string get_steam_id(const unsigned long steamID32);

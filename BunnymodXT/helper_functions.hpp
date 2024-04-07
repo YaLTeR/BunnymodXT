@@ -119,6 +119,8 @@ namespace helper_functions
 	bool is_entity_kz_start(const char *targetname);
 	bool is_entity_kz_stop(const char *targetname);
 
+	void DisableVSync();
+
 	// https://developer.valvesoftware.com/wiki/SteamID
 	std::string get_steam_id(const unsigned long steamID32);
 	steamid_t get_steam_id_64(const unsigned long steamID32);

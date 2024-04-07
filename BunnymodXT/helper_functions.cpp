@@ -466,6 +466,26 @@ namespace helper_functions
 		return false;
 	}
 
+	void DisableVSync()
+	{
+		#ifdef _WIN32
+		static bool check_vsync = true;
+		if (check_vsync)
+		{
+			bool bxtDisableVSync = getenv("BXT_DISABLE_VSYNC");
+			if (bxtDisableVSync)
+			{
+				typedef BOOL(APIENTRY* PFNWGLSWAPINTERVALPROC)(int);
+				PFNWGLSWAPINTERVALPROC wglSwapIntervalEXT = 0;
+				wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress("wglSwapIntervalEXT");
+				if (wglSwapIntervalEXT)
+					wglSwapIntervalEXT(0);
+			}
+			check_vsync = false;
+		}
+		#endif
+	}
+
 	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity)
 	{
 		/*

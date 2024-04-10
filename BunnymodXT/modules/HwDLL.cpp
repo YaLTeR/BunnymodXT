@@ -3097,11 +3097,16 @@ struct HwDLL::Cmd_BXT_Debug_Dump
 			<< "globalvars_t: " << sizeof(globalvars_t) << "\n"
 			<< "entity_state_t: " << sizeof(entity_state_t) << "\n"
 			<< "cl_entity_t: " << sizeof(cl_entity_t) << "\n"
+			<< "packet_entities_t: " << sizeof(packet_entities_t) << "\n"
+			<< "packet_entities_t (25th anniversary): " << sizeof(packet_entities_25th_anniversary_t) << "\n"
+			<< "frame_t: " << sizeof(frame_t) << "\n"
+			<< "frame_t (25th anniversary): " << sizeof(frame_25th_anniversary_t) << "\n"
 			<< "cvar_t: " << sizeof(cvar_t) << "\n"
 			<< "cmd_function_t: " << sizeof(cmd_function_t) << "\n"
 			<< "msprite_t: " << sizeof(msprite_t) << "\n"
 			<< "model_t: " << sizeof(model_t) << "\n"
 			<< "msurface_t: " << sizeof(msurface_t) << "\n"
+			<< "msurface_t (25th anniversary, hw): " << sizeof(msurface_25th_anniversary_hw_t) << "\n"
 			<< "clientdata_t: " << sizeof(clientdata_t) << "\n"
 			<< "usercmd_t: " << sizeof(usercmd_t) << "\n"
 			<< "playermove_t: " << sizeof(playermove_t) << "\n"
@@ -3109,6 +3114,7 @@ struct HwDLL::Cmd_BXT_Debug_Dump
 			<< "pmtrace_t: " << sizeof(pmtrace_t) << "\n"
 			<< "movevars_t: " << sizeof(movevars_t) << "\n"
 			<< "player_info_t: " << sizeof(player_info_t) << "\n"
+			<< "weapon_data_t: " << sizeof(weapon_data_t) << "\n"
 			<< "refdef_t: " << sizeof(refdef_t) << "\n";
 			hw.ORIG_Con_Printf(ss.str().c_str());
 		}

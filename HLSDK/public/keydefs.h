@@ -2,7 +2,7 @@
 #ifndef KEYDEFS_H
 #define KEYDEFS_H
 
-typedef struct keyname_s
+typedef struct
 {
 	char *name;
 	int keynum;

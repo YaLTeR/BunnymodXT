@@ -17,7 +17,7 @@ typedef struct delta_definition_list_s
 	delta_definition_t *pdefinition;
 } delta_definition_list_t;
 
-typedef struct delta_stats_s
+typedef struct
 {
 	int sendcount;
 	int receivedcount;

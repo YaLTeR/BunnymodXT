@@ -72,7 +72,6 @@ using std::ptrdiff_t;
 #include "HLSDK/common/r_efx.h"
 #include "HLSDK/common/r_studioint.h"
 #include "HLSDK/common/engine_launcher_api.h"
-#include "HLSDK/common/entity_types.h"
 #include "HLSDK/common/weaponinfo.h"
 #include "HLSDK/engine/studio.h"
 #include "HLSDK/engine/cmd.h"

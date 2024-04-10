@@ -84,6 +84,7 @@ using std::ptrdiff_t;
 
 #include "HLSDK/engine/usermsg.h"
 #include "HLSDK/engine/cdll_int.h"
+#include "HLSDK/engine/client.h"
 
 #ifndef M_PI
 const double M_PI = 3.14159265358979323846;

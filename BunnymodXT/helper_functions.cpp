@@ -627,6 +627,33 @@ namespace helper_functions
 		}
 	}
 
+	std::string get_typedescription_fieldtype(int fieldType)
+	{
+		switch (fieldType)
+		{
+			RET_CASE_STR(FIELD_FLOAT)
+			RET_CASE_STR(FIELD_STRING)
+			RET_CASE_STR(FIELD_ENTITY)
+			RET_CASE_STR(FIELD_CLASSPTR)
+			RET_CASE_STR(FIELD_EHANDLE)
+			RET_CASE_STR(FIELD_EVARS)
+			RET_CASE_STR(FIELD_EDICT)
+			RET_CASE_STR(FIELD_VECTOR)
+			RET_CASE_STR(FIELD_POSITION_VECTOR)
+			RET_CASE_STR(FIELD_POINTER)
+			RET_CASE_STR(FIELD_INTEGER)
+			RET_CASE_STR(FIELD_FUNCTION)
+			RET_CASE_STR(FIELD_BOOLEAN)
+			RET_CASE_STR(FIELD_SHORT)
+			RET_CASE_STR(FIELD_CHARACTER)
+			RET_CASE_STR(FIELD_TIME)
+			RET_CASE_STR(FIELD_MODELNAME)
+			RET_CASE_STR(FIELD_SOUNDNAME)
+			RET_CASE_STR(FIELD_TYPECOUNT)
+			default: return "Unknown";
+		}
+	}
+
 	std::string get_renderfx(int renderfx)
 	{
 		switch (renderfx)

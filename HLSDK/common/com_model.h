@@ -334,7 +334,7 @@ typedef struct mdisplaylist_s
 } mdisplaylist_t;
 
 #ifdef __cplusplus
-struct msurface_hw_25th_anniversary_t : public msurface_t 
+struct msurface_25th_anniversary_hw_t : public msurface_t 
 {
 	mdisplaylist_t displaylist;
 };
@@ -343,7 +343,7 @@ typedef struct
 {
 	msurface_t surface;
 	mdisplaylist_t displaylist;
-} msurface_hw_25th_anniversary_t;
+} msurface_25th_anniversary_hw_t;
 #endif
 
 typedef struct

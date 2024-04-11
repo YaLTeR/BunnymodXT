@@ -59,6 +59,7 @@ using std::ptrdiff_t;
 #include "HLSDK/dlls/doors.h"
 #include "HLSDK/dlls/schedule.h"
 #include "HLSDK/dlls/monsters.h"
+#include "HLSDK/dlls/util.h"
 #include "HLSDK/cl_dll/wrect.h"
 #include "HLSDK/cl_dll/hud.h"
 #include "HLSDK/public/keydefs.h"

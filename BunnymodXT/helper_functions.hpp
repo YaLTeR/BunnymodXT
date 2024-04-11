@@ -1,6 +1,9 @@
 #pragma once
 
 #define RET_CASE_STR(c) case c: return "" #c "";
+#define PRINT_FLAG(fl) \
+	if (flags & fl) \
+		out << "" #fl "; ";
 
 #ifdef _WIN32
 	#define DLL_EXTENSION ".dll"

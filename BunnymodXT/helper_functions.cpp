@@ -349,7 +349,7 @@ namespace helper_functions
 		auto &hw = HwDLL::GetInstance();
 
 		const char* classname = hw.GetString(ent->v.classname);
-		if ((!strncmp(classname, "func_door", 9)) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/doors.cpp#L712
+		if ((!strcmp(classname, "func_door")) || (!strcmp(classname, "func_door_rotating")) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/doors.cpp#L712
 		|| (!strcmp(classname, "func_rotating")) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/bmodels.cpp#L716
 		|| (!strcmp(classname, "func_train"))) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/plats.cpp#L683
 		{
@@ -810,6 +810,122 @@ namespace helper_functions
 		#undef FLAG
 
 		return out.str();
+	}
+
+	std::string get_spawnflags_breakable(int flags, bool pushable)
+	{
+		std::ostringstream out;
+
+		// The flags here were arranged in order from smallest to highest bits.
+		if (flags & SF_BREAK_TRIGGER_ONLY)
+			out << "Only trigger; ";
+		if (flags & SF_BREAK_TOUCH)
+			out << "Touch; ";
+		if (flags & SF_BREAK_PRESSURE)
+			out << "Pressure; ";
+		// unknown
+		// unknown
+		// unknown
+		// unknown
+		if (pushable && (flags & SF_PUSH_BREAKABLE))
+			out << "Breakable; ";
+		if (flags & SF_BREAK_CROWBAR)
+			out << "Instant crowbar; ";
+
+		out << '\n';
+
+		return out.str();
+	}
+
+	std::string get_spawnflags_door(int flags, bool rotating)
+	{
+		std::ostringstream out;
+
+		/*
+		// The flags here were arranged in order from smallest to highest bits.
+		if (flags & SF_DOOR_START_OPEN)
+			out << "Starts Open; ";
+		if (rotating && (flags & SF_DOOR_ROTATE_BACKWARDS))
+			out << "Reverse Dir; ";
+		// unknown
+		if (flags & SF_DOOR_PASSABLE)
+			out << "Passable; ";
+		if (rotating && (flags & SF_DOOR_ONEWAY))
+			out << "One-way; ";
+		if (flags & SF_DOOR_NO_AUTO_RETURN)
+			out << "Toggle; ";
+		if (rotating && (flags & SF_DOOR_ROTATE_Z))
+			out << "X Axis; ";
+		if (rotating && (flags & SF_DOOR_ROTATE_X))
+			out << "Y Axis; ";
+		if (flags & SF_DOOR_USE_ONLY)
+			out << "Use Only; ";
+		if (flags & SF_DOOR_NOMONSTERS)
+			out << "Monsters Can't; ";
+		*/
+
+		out << '\n';
+
+		return out.str();
+	}
+
+	std::string get_spawnflags_trigger(int flags)
+	{
+		std::ostringstream out;
+
+		// The flags here were arranged in order from smallest to highest bits.
+		if (flags & SF_TRIGGER_ALLOWMONSTERS)
+			out << "Monsters; ";
+		if (flags & SF_TRIGGER_NOCLIENTS)
+			out << "No clients; ";
+		if (flags & SF_TRIGGER_PUSHABLES)
+			out << "Pushables; ";
+
+		out << '\n';
+
+		return out.str();
+	}
+
+	std::string get_spawnflags_monster(int flags)
+	{
+		std::ostringstream out;
+
+		// The flags here were arranged in order from smallest to highest bits.
+		if (flags & SF_MONSTER_WAIT_TILL_SEEN)
+			out << "WaitTillSeen; ";
+		if (flags & SF_MONSTER_GAG)
+			out << "Gag; ";
+		if (flags & SF_MONSTER_HITMONSTERCLIP)
+			out << "MonsterClip; ";
+		// unknown
+		if (flags & SF_MONSTER_PRISONER)
+			out << "Prisoner; ";
+		// unknown
+		// unknown
+		if (flags & SF_MONSTER_WAIT_FOR_SCRIPT)
+			out << "WaitForScript; ";
+		if (flags & SF_MONSTER_PREDISASTER)
+			out << "Pre-Disaster; ";
+		if (flags & SF_MONSTER_FADECORPSE)
+			out << "Fade Corpse; ";
+
+		out << '\n';
+
+		return out.str();
+	}
+
+	std::string get_spawnflags(int spawnflags, const char *classname)
+	{
+		if (!strcmp(classname, "func_breakable"))
+			return get_spawnflags_breakable(spawnflags, false);
+		else if (!strcmp(classname, "func_pushable"))
+			return get_spawnflags_breakable(spawnflags, true);
+		else if (!strcmp(classname, "func_door") || !strcmp(classname, "momentary_door"))
+			return get_spawnflags_door(spawnflags, false);
+		else if (!strcmp(classname, "func_door_rotating"))
+			return get_spawnflags_door(spawnflags, true);
+
+		return "\n";
 	}
 
 	std::string get_monster_triggercondition(int m_iTriggerCondition)

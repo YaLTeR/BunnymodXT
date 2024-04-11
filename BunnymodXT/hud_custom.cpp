@@ -947,17 +947,6 @@ namespace CustomHud
 
 	void DrawSelfgaussInfo(float flTime)
 	{
-		static const char *HITGROUP_STRING[] = {
-			"Generic",
-			"Head",
-			"Chest",
-			"Stomach",
-			"Left Arm",
-			"Right Arm",
-			"Left Leg",
-			"Right Leg"
-		};
-
 		if (CVars::bxt_hud_selfgauss.GetBool())
 		{
 			int x, y;
@@ -975,7 +964,7 @@ namespace CustomHud
 				out.setf(std::ios::fixed);
 				out.precision(precision);
 				out << "Threshold: " << threshold << '\n'
-					<< "Hit Group: " << HITGROUP_STRING[hitGroup];
+					<< "Hit Group: " << helper_functions::get_hitgroup(hitGroup);
 			}
 			else
 			{

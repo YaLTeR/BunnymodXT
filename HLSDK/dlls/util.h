@@ -16,6 +16,18 @@
 #ifndef UTIL_DLLS_H
 #define UTIL_DLLS_H
 
+const Vector VEC_HULL_MIN(-16, -16, -36);
+const Vector VEC_HULL_MAX(16, 16, 36);
+const Vector VEC_VIEW(0, 0, 28);
+
+const Vector VEC_DUCK_HULL_MIN(-16, -16, -18);
+const Vector VEC_DUCK_HULL_MAX(16, 16, 18);
+const Vector VEC_DUCK_VIEW(0, 0, 12);
+
+const Vector VEC_HUMAN_HULL_MIN(-16, -16, 0);
+const Vector VEC_HUMAN_HULL_MAX(16, 16, 72);
+const Vector VEC_HUMAN_HULL_DUCK(16, 16, 36);
+
 // triggers
 #define	SF_TRIGGER_ALLOWMONSTERS	1 // monsters allowed to fire this trigger
 #define	SF_TRIGGER_NOCLIENTS		2 // players not allowed to fire this trigger

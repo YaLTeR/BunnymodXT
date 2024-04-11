@@ -3643,10 +3643,13 @@ struct HwDLL::Cmd_BXT_CH_Get_All_Info
 		out << "Gravity: " << ent->v.gravity << "\n";
 		out << "Friction: " << ent->v.friction << "\n";
 		out << "Spawnflags (bits): " << ent->v.spawnflags << "\n";
+		out << "Spawnflags: " << helper_functions::get_spawnflags(ent->v.spawnflags, hw.GetString(ent->v.classname));
+		out << "Flags (bits): " << ent->v.flags << "\n";
 		out << "Flags: " << helper_functions::get_flags(ent->v.flags);
 		out << "Velocity: " << ent->v.velocity.x << " " << ent->v.velocity.y << " " << ent->v.velocity.z << "; XY = " << ent->v.velocity.Length2D() << "; XYZ = " << ent->v.velocity.Length() << "\n";
 		out << "Basevelocity: " << ent->v.basevelocity.x << " " << ent->v.basevelocity.y << " " << ent->v.basevelocity.z << "; XY = " << ent->v.basevelocity.Length2D() << "; XYZ = " << ent->v.basevelocity.Length() << "\n";
 		out << "Punchangle: " << ent->v.punchangle.x << " " << ent->v.punchangle.y << " " << ent->v.punchangle.z << "\n";
+		out << "Effects (bits): " << ent->v.effects << "\n";
 		out << "Effects: " << helper_functions::get_effects(ent->v.effects);
 		out << "Solid: " << ent->v.solid << " (" << helper_functions::get_solid(ent->v.solid) << ")" << "\n";
 		out << "Renderfx: " << ent->v.renderfx << " (" << helper_functions::get_renderfx(ent->v.renderfx) << ")" << "\n";

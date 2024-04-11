@@ -122,7 +122,7 @@ namespace helper_functions
 	std::string get_difficulty(int skill);
 	std::string get_typedescription_fieldtype(int fieldType);
 	std::string get_hitgroup(int iHitgroup);
-	std::string get_spawnflags(int spawnflags);
+	std::string get_spawnflags(int spawnflags, const char *classname);
 	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length);
 	void split_console_print_to_chunks(std::string str);
 	void convert_to_lowercase(const char *str);

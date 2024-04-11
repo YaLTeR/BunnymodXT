@@ -5,9 +5,11 @@
 #ifdef _WIN32
 	#define DLL_EXTENSION ".dll"
 	#define PATH_SLASH '\\'
+	#define Q_strncasecmp _strnicmp
 #else
 	#define DLL_EXTENSION ".so"
 	#define PATH_SLASH '/'
+	#define Q_strncasecmp strncasecmp
 #endif
 
 #define MAXPRINTMSG 4096 // Con_Printf is limited to 4096 characters.

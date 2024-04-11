@@ -400,12 +400,6 @@ namespace helper_functions
 		static const char *mon[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 		static const char mond[12] = { 31,    28,    31,    30,    31,    30,    31,    31,    30,    31,    30,    31 };
 
-		#ifdef _WIN32
-		#define Q_strncasecmp _strnicmp
-		#else
-		#define Q_strncasecmp strncasecmp
-		#endif
-
 		int m = 0, d = 0, y = 0, build = 0;
 		for (m = 0; m < 11; m++)
 		{
@@ -413,8 +407,6 @@ namespace helper_functions
 				break;
 			d += mond[m];
 		}
-
-		#undef Q_strncasecmp
 
 		d += atoi(&date[4]) - 1;
 		y = atoi(&date[7]) - 1900;

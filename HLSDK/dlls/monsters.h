@@ -23,6 +23,31 @@
 
 */
 
+// Hit Group standards
+#define	HITGROUP_GENERIC	0
+#define	HITGROUP_HEAD		1
+#define	HITGROUP_CHEST		2
+#define	HITGROUP_STOMACH	3
+#define HITGROUP_LEFTARM	4	
+#define HITGROUP_RIGHTARM	5
+#define HITGROUP_LEFTLEG	6
+#define HITGROUP_RIGHTLEG	7
+
+
+// Monster Spawnflags
+#define	SF_MONSTER_WAIT_TILL_SEEN		1// spawnflag that makes monsters wait until player can see them before attacking.
+#define	SF_MONSTER_GAG					2 // no idle noises from this monster
+#define SF_MONSTER_HITMONSTERCLIP		4
+//										8
+#define SF_MONSTER_PRISONER				16 // monster won't attack anyone, no one will attacke him.
+//										32
+//										64
+#define	SF_MONSTER_WAIT_FOR_SCRIPT		128 //spawnflag that makes monsters wait to check for attacking until the script is done or they've been attacked
+#define SF_MONSTER_PREDISASTER			256	//this is a predisaster scientist or barney. Influences how they speak.
+#define SF_MONSTER_FADECORPSE			512 // Fade out corpse after death
+#define SF_MONSTER_FALL_TO_GROUND		0x80000000
+
+
 // trigger conditions for scripted AI
 // these MUST match the CHOICES interface in halflife.fgd for the base monster
 enum 
@@ -51,8 +76,8 @@ enum
 		7 : "Hear World"
 		8 : "Hear Player"
 		9 : "Hear Combat"
-        10: "See Player Unconditional"
-        11: "See Player, Not In Combat"
+		10: "See Player Unconditional"
+		11: "See Player, Not In Combat"
 */
 
 #endif	//MONSTERS_H

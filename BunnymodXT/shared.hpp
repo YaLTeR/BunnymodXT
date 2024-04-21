@@ -24,6 +24,8 @@ enum class EventType : unsigned char {
 // If possible, add a link to their source from the original repositories.
 // Or if those constants got from reverse-engineering, then do not forget to tell about that in the comments.
 
+#define MAXPRINTMSG 4096 // Con_Printf is limited to 4096 characters.
+
 constexpr float HL1_SLOWDOWN_PLAYER_BY_USE = 0.3f; // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/pm_shared/pm_shared.c#L3028
 
 #define COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE 1024 // https://github.com/LogicAndTrick/sledge-formats/blob/9d11ebb3ce6d6d5e80864cf96b235c491a106958/Sledge.Formats.GameData.Tests/Resources/fgd/goldsource/cry-of-fear.fgd#L3720
@@ -42,4 +44,4 @@ constexpr int kRenderFxTrigger = 241; // DO NOT CHANGE THIS VALUE OR YOU WILL BR
 #define	BXT_FLAGS_BIG_MAP (1<<0)
 
 // - Other constants
-const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
+constexpr steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000

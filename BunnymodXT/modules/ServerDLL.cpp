@@ -919,33 +919,35 @@ void ServerDLL::FindStuff()
 		} else {
 			ORIG_CBasePlayer__ForceClientDllUpdate_Linux = reinterpret_cast<_CBasePlayer__ForceClientDllUpdate_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN11CBasePlayer20ForceClientDllUpdateEv"));
 			if (ORIG_CBasePlayer__ForceClientDllUpdate_Linux) {
+				auto &hw = HwDLL::GetInstance();
 				offm_rgAmmoLast = 0x56C; // 6153: 0x568
 				offm_iClientFOV = 0x4C4; // 6153: 0x4C0
-				if (HF_DoesGameDirStartsWith("czeror")) {
-					offm_rgAmmoLast = 0x554; // 6153: 0x550
-					offm_iClientFOV = 0x8B0; // 6153: 0x8AC
-					offFuncObjectCaps = 0x18;
-				}
+				InitGameDirIfNecessary();
 				if (HF_DoesGameDirStartsWith("bshift")) {
 					offm_rgAmmoLast = 0x568; // 8684: 0x56C
 					offm_iClientFOV = 0x4C0; // 8684: 0x4C4
 				}
-				if (HF_DoesGameDirMatch("cstrike") || HF_DoesGameDirMatch("czero")) {
+				else if (hw.is_csczds_dir) {
+					offm_rgAmmoLast = 0x554; // 6153: 0x550
+					offm_iClientFOV = 0x8B0; // 6153: 0x8AC
+					offFuncObjectCaps = 0x18;
+				}
+				else if (hw.is_cs_dir) {
 					offm_rgAmmoLast = 0x674;
 					offm_iClientFOV = 0x5C4;
 					offFuncObjectCaps = 0x18;
 				}
-				if (HF_DoesGameDirMatch("tfc")) {
+				else if (hw.is_tfc_dir) {
 					offm_rgAmmoLast = 0x98C; // 6153: 0x988
 					offm_iClientFOV = 0x8E0; // 6153: 0x8DC
 					offFuncObjectCaps = 0x1C;
 				}
-				if (HF_DoesGameDirMatch("dod")) {
+				else if (hw.is_dod_dir) {
 					offm_rgAmmoLast = 0x4F8; // 6153: 0x4F4
 					offm_iClientFOV = 0x448; // 6153: 0x444
 					offFuncObjectCaps = 0x20;
 				}
-				if (HF_DoesGameDirMatch("dmc")) {
+				else if (HF_DoesGameDirMatch("dmc")) {
 					offm_rgAmmoLast = 0x534;
 					offm_iClientFOV = 0x48C;
 				}
@@ -1027,10 +1029,9 @@ void ServerDLL::FindStuff()
 				offm_pNodes = 0x0C;
 				offm_vecOrigin = 0x00;
 				offm_cNodes = 0x18;
+				size_CNode = 0x58;
 				if (HF_DoesGameDirStartsWith("czeror"))
 					size_CNode = 0x60;
-				else
-					size_CNode = 0x58;
 
 				EngineDevMsg("[server dll] Found CGraph::InitGraph [Linux] at %p.\n", ORIG_CGraph__InitGraph_Linux);
 			} else {
@@ -2253,6 +2254,8 @@ HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*
 
 void ServerDLL::OnMultiManagerFired(const char *targetname)
 {
+	auto &hw = HwDLL::GetInstance();
+
 	if (!std::strcmp(targetname, "spawn_garg_sci_mm") // Half-Life: Uplink
 		|| !std::strcmp(targetname, "boot_radio_seq") // Half-Life: Opposing Force (Boot Camp)
 		|| (!std::strcmp(targetname, "roll_the_credits") && HF_DoesGameDirStartsWith("bshift")) // Half-Life: Blue Shift
@@ -2271,9 +2274,9 @@ void ServerDLL::OnMultiManagerFired(const char *targetname)
 		|| (!std::strcmp(targetname, "fc_mm1") && HF_DoesGameDirMatch("hc")) // Hazardous Course 2
 		|| (!std::strcmp(targetname, "medicosprey") && HF_DoesGameDirMatch("visitors")) // Visitors
 		|| (!std::strcmp(targetname, "change_mm") && HF_DoesGameDirMatch("wantedsp") && HF_DoesMapNameMatch("want36")) // Wanted
-		|| (!std::strcmp(targetname, "multiend1") && HF_DoesGameDirMatch("cryoffear") && !HF_DoesMapNameStartsWith("cof_suicide")) // Cry of Fear (Ending 1, 2, 3)
-		|| (!std::strcmp(targetname, "multicrash") && HF_DoesGameDirMatch("cryoffear")) // Cry of Fear (Ending 5)
-		|| (!std::strcmp(targetname, "multicoopend") && HF_DoesGameDirMatch("cryoffear"))) { // Cry of Fear (Co-op)
+		|| (!std::strcmp(targetname, "multiend1") && hw.is_cof_dir && !HF_DoesMapNameStartsWith("cof_suicide")) // Cry of Fear (Ending 1, 2, 3)
+		|| (!std::strcmp(targetname, "multicrash") && hw.is_cof_dir) // Cry of Fear (Ending 5)
+		|| (!std::strcmp(targetname, "multicoopend") && hw.is_cof_dir)) { // Cry of Fear (Co-op)
 		DoAutoStopTasks();
 	}
 

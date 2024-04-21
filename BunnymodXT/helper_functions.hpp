@@ -35,6 +35,10 @@ const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 	#define RET_EntVars_fuser2(ent) 0.0f
 #endif
 
+#define InitGameDirIfNecessary() \
+	if (ClientDLL::GetInstance().gamedir_clean.empty()) \
+		ClientDLL::GetInstance().GetGameDirectory();
+
 // Usage:
 // if (!strncmp(var, HF_StrAndLen("test")))
 #define HF_StrAndLen(str) \
@@ -154,6 +158,9 @@ namespace helper_functions
 
 	void disable_vsync();
 	void update_data_at_shutdown_sv(); // Update custom data when disconnected from the server, this should be called in SV_SpawnServer (engine-side) or ServerDeactivate (server-side).
+
+	void gamedir_set_booleans(const char *gamedir);
+	void gamedir_reset();
 
 	// https://developer.valvesoftware.com/wiki/SteamID
 	std::string get_steam_id(const unsigned long steamID32);

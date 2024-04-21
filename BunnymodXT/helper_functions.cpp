@@ -482,6 +482,34 @@ namespace helper_functions
 	{
 	}
 
+	void gamedir_set_booleans(const char *gamedir)
+	{
+		if (gamedir && gamedir[0])
+		{
+			auto &hw = HwDLL::GetInstance();
+
+			if (!strcmp(gamedir, "cstrike") || !strcmp(gamedir, "czero"))
+				hw.is_cs_dir = true;
+			else if (!strncmp(gamedir, HF_StrAndLen("czeror")))
+				hw.is_csczds_dir = true;
+			else if (!strcmp(gamedir, "tfc"))
+				hw.is_tfc_dir = true;
+			else if (!strncmp(gamedir, HF_StrAndLen("cryoffear")))
+				hw.is_cof_dir = true;
+			else if (!strcmp(gamedir, "dod"))
+				hw.is_dod_dir = true;
+		}
+	}
+
+	void gamedir_reset()
+	{
+		auto &cl = ClientDLL::GetInstance();
+		auto &hw = HwDLL::GetInstance();
+
+		cl.gamedir_clean.clear();
+		hw.is_cs_dir = hw.is_csczds_dir = hw.is_tfc_dir = hw.is_cof_dir = hw.is_dod_dir = false;
+	}
+
 // Below this comment are only functions from CBaseEntity or CBasePlayer class!
 
 	int IsInWorld(const Vector origin, const Vector velocity, const int map_size, const int map_max_velocity)

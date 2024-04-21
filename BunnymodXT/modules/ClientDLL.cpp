@@ -1195,6 +1195,7 @@ std::string ClientDLL::GetGameDirectory()
 		helper_functions::com_filebase(game_dir, gd);
 		helper_functions::convert_to_lowercase(gd);
 		gamedir_clean = gd;
+		helper_functions::gamedir_set_booleans(gamedir_clean.c_str());
 	}
 
 	return gamedir_clean;
@@ -1770,14 +1771,13 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioSetupBones, 
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linux, void*, thisptr)
 {
-	ptrdiff_t offpCurrentEntity_Linux;
-	ptrdiff_t offpStudioHeader_Linux;
-	if (HF_DoesGameDirMatch("dod")) {
+	ptrdiff_t offpCurrentEntity_Linux = 44;
+	ptrdiff_t offpStudioHeader_Linux = 64;
+	InitGameDirIfNecessary();
+	if (HwDLL::GetInstance().is_dod_dir)
+	{
 		offpCurrentEntity_Linux = 52;
 		offpStudioHeader_Linux = 72;
-	} else {
-		offpCurrentEntity_Linux = 44;
-		offpStudioHeader_Linux = 64;
 	}
 
 	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpCurrentEntity_Linux);
@@ -1898,11 +1898,10 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel,
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Linux, void*, thisptr)
 {
-	ptrdiff_t offpCurrentEntity_Linux;
-	if (HF_DoesGameDirMatch("dod"))
+	ptrdiff_t offpCurrentEntity_Linux = 44;
+	InitGameDirIfNecessary();
+	if (HwDLL::GetInstance().is_dod_dir)
 		offpCurrentEntity_Linux = 52;
-	else
-		offpCurrentEntity_Linux = 44;
 
 	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpCurrentEntity_Linux);
 

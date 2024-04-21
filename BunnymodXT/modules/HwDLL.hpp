@@ -338,8 +338,11 @@ public:
 
 	int lastRecordedHealth;
 
-	bool is_cstrike_dir = false;
+	bool is_cs_dir = false;
+	bool is_csczds_dir = false;
 	bool is_tfc_dir = false;
+	bool is_cof_dir = false;
+	bool is_dod_dir = false;
 
 	globalvars_t *ppGlobals;
 	engine_studio_api_t *pEngStudio;

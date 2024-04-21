@@ -172,7 +172,7 @@ namespace discord_integration
 									presence.largeImageText = gmc_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
 							}
 						}
-						else if (HF_DoesGameDirStartsWith("czeror"))
+						else if (hw.is_csczds_dir)
 						{
 							set_discord_image(czds_map_name_to_thumbnail, czds_thumbnail_to_chapter)
 						}
@@ -252,7 +252,7 @@ namespace discord_integration
 									presence.largeImageText = "They Hunger Episode 3";
 							}
 						}
-						else if (HF_DoesGameDirStartsWith("cryoffear"))
+						else if (hw.is_cof_dir)
 						{
 							set_discord_image(cof_map_name_to_thumbnail, cof_thumbnail_to_chapter)
 						}

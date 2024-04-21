@@ -745,7 +745,7 @@ void HwDLL::Clear()
 	autoRecordDemoName.clear();
 	autoRecordDemoNumber = 1;
 	autoRecordNow = false;
-	ClientDLL::GetInstance().gamedir_clean.clear();
+	helper_functions::gamedir_reset();
 	insideHost_Loadgame_f = false;
 	insideHost_Reload_f = false;
 	pcl = nullptr;
@@ -3419,9 +3419,11 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 
 		pl->v.origin = cp_origin;
 
+		InitGameDirIfNecessary();
+
 		#ifndef HLSDK10_BUILD
 		// for CS 1.6 stamina reset
-		if (hw.is_cstrike_dir) 
+		if (hw.is_cs_dir) 
 			pl->v.fuser2 = 0;
 		#endif
 	}
@@ -6802,10 +6804,9 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Bounce = CVars::sv_bounce.GetFloat();
 	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
 
-	static bool is_paranoia_dir = HF_DoesGameDirMatch("paranoia");
-	is_tfc_dir = HF_DoesGameDirMatch("tfc");
-	is_cstrike_dir = HF_DoesGameDirMatch("cstrike") || HF_DoesGameDirMatch("czero");
+	InitGameDirIfNecessary();
 
+	static bool is_paranoia_dir = HF_DoesGameDirMatch("paranoia");
 	if (is_paranoia_dir)
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
 	else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
@@ -6813,7 +6814,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	else
 		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
 
-	if (is_cstrike_dir) {
+	if (is_cs_dir) {
 		vars.BhopcapMultiplier = 0.8f;
 		vars.BhopcapMaxspeedScale = 1.2f;
 		vars.HasStamina = !CVars::bxt_remove_stamina.GetBool();
@@ -6823,7 +6824,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 		vars.BhopcapMaxspeedScale = 1.7f;
 	}
 
-	if (!is_cstrike_dir && !is_tfc_dir)
+	if (!is_cs_dir && !is_tfc_dir)
 		vars.UseSlow = true;
 
 	if (svs->maxclients >= 1) {
@@ -7894,7 +7895,9 @@ HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap_Paint, int, paintAll)
 
 HOOK_DEF_3(HwDLL, int, __cdecl, DispatchDirectUserMsg, char*, pszName, int, iSize, void*, pBuf)
 {
-	if (HF_DoesGameDirStartsWith("czeror") && !std::strcmp(pszName, "InitHUD"))
+	InitGameDirIfNecessary();
+
+	if (is_csczds_dir && !std::strcmp(pszName, "InitHUD"))
 		return ORIG_DispatchDirectUserMsg(0, iSize, pBuf);
 	else
 		return ORIG_DispatchDirectUserMsg(pszName, iSize, pBuf);
@@ -8280,8 +8283,8 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 
 		bool is_failed = false;
 
-		static bool is_cstrike = HF_DoesGameDirMatch("cstrike");
-		if (is_cstrike)
+		static bool is_cstrike_dir = HF_DoesGameDirMatch("cstrike");
+		if (is_cstrike_dir)
 		{
 			#ifdef _WIN32
 			const std::string cs_lib = "dlls\\mp";

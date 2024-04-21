@@ -97,10 +97,10 @@ namespace helper_functions
 	char* READ_STRING()
 	{
 		static char string[2048];
-		int l, c;
+		unsigned int l = 0;
+		int c;
 
 		string[0] = 0;
-		l = 0;
 
 		do
 		{

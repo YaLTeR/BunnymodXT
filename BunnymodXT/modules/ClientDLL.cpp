@@ -1189,7 +1189,7 @@ std::string ClientDLL::GetGameDirectory()
 		sv.pEngfuncs->pfnGetGameDir(game_dir);
 	}
 
-	if (game_dir && game_dir[0])
+	if (game_dir[0])
 	{
 		char gd[260];
 		helper_functions::com_filebase(game_dir, gd);

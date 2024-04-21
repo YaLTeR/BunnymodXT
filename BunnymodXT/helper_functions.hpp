@@ -9,11 +9,16 @@
 	#define DLL_EXTENSION ".dll"
 	#define PATH_SLASH '\\'
 	#define Q_strncasecmp _strnicmp
+	#define Q_stricmp _stricmp
 #else
 	#define DLL_EXTENSION ".so"
 	#define PATH_SLASH '/'
 	#define Q_strncasecmp strncasecmp
+	#define Q_stricmp strcasecmp
 #endif
+
+#define Q_strcasecmp(s1, s2) \
+	Q_strncasecmp(s1, s2, 99999)
 
 #define MAXPRINTMSG 4096 // Con_Printf is limited to 4096 characters.
 

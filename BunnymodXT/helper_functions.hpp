@@ -80,7 +80,7 @@ namespace helper_functions
 		b = std::clamp(b / 255.0f, 0.0f, 1.0f);
 	}
 
-	inline void rgb_to_float(float *dest, unsigned r, unsigned g, unsigned b)
+	inline void rgb_to_float(float *dest, const unsigned r, const unsigned g, const unsigned b)
 	{
 		dest[0] = std::clamp(r / 255.0f, 0.0f, 1.0f);
 		dest[1] = std::clamp(g / 255.0f, 0.0f, 1.0f);
@@ -93,7 +93,7 @@ namespace helper_functions
 		a = std::clamp(a / 255.0f, 0.0f, 1.0f);
 	}
 
-	inline void rgba_to_float(float *dest, unsigned r, unsigned g, unsigned b, unsigned a)
+	inline void rgba_to_float(float *dest, const unsigned r, const unsigned g, const unsigned b, const unsigned a)
 	{
 		rgb_to_float(dest, r, g, b);
 		dest[3] = std::clamp(a / 255.0f, 0.0f, 1.0f);
@@ -102,9 +102,9 @@ namespace helper_functions
 	void Draw_FillRGBA(int x, int y, int width, int height, int r, int g, int b, int a);
 	void Draw_FillRGBABlend(int x, int y, int width, int height, int r, int g, int b, int a);
 
-	bool does_gamedir_starts_with(const char *game, size_t len);
+	bool does_gamedir_starts_with(const char *game, const size_t len);
 	bool does_gamedir_match(const char *game);
-	bool does_mapname_starts_with(const char *map, size_t len);
+	bool does_mapname_starts_with(const char *map, const size_t len);
 	bool does_mapname_match(const char *map);
 
 	double ret_bxt_time();
@@ -112,24 +112,24 @@ namespace helper_functions
 	void com_fixslashes(std::string &str); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
 	void com_filebase(const char *in, char *out); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/cl_dll/hud.cpp#L537
 	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start);
-	void crash_if_failed(std::string str);
-	bool is_valid_index_and_edict(int index);
-	float adjust_fov_for_widescreen(float fov, float def_aspect_ratio, float our_aspect_ratio);
+	void crash_if_failed(const std::string str);
+	bool is_valid_index_and_edict(const int index);
+	float adjust_fov_for_widescreen(const float fov, const float def_aspect_ratio, const float our_aspect_ratio);
 	bool is_entity_give_infinite_health(const edict_t* ent);
-	std::string get_renderfx(int renderfx);
-	std::string get_rendermode(int rendermode);
-	std::string get_effects(int effects);
-	std::string get_flags(int flags);
-	std::string get_movetype(int movetype);
-	std::string get_solid(int solid);
-	std::string get_monster_triggercondition(int m_iTriggerCondition);
-	std::string get_monster_task(int iTask);
-	std::string get_difficulty(int skill);
-	std::string get_typedescription_fieldtype(int fieldType);
-	std::string get_hitgroup(int iHitgroup);
-	std::string get_spawnflags(int spawnflags, const char *classname);
-	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length);
-	void split_console_print_to_chunks(std::string str);
+	std::string get_renderfx(const int renderfx);
+	std::string get_rendermode(const int rendermode);
+	std::string get_effects(const int effects);
+	std::string get_flags(const int flags);
+	std::string get_movetype(const int movetype);
+	std::string get_solid(const int solid);
+	std::string get_monster_triggercondition(const int m_iTriggerCondition);
+	std::string get_monster_task(const int iTask);
+	std::string get_difficulty(const int skill);
+	std::string get_typedescription_fieldtype(const int fieldType);
+	std::string get_hitgroup(const int iHitgroup);
+	std::string get_spawnflags(const int spawnflags, const char *classname);
+	void split_console_print_to_chunks(const std::string str, const unsigned int max_string_length);
+	void split_console_print_to_chunks(const std::string str);
 	void convert_to_lowercase(const char *str);
 	int build_number(const char *date);
 	int build_number();
@@ -160,33 +160,33 @@ namespace helper_functions
 	steamid_t get_steam_id_64(const unsigned long steamID32);
 
 	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.cpp#L706
-	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity);
-	int IsInWorld(const edict_t *ent, int map_size, int map_max_velocity);
+	int IsInWorld(const Vector origin, const Vector velocity, const int map_size, const int map_max_velocity);
+	int IsInWorld(const edict_t *ent, const int map_size, const int map_max_velocity);
 
 	bool IsPlayer(const edict_t *ent);
 
 	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/player.cpp#L1262-L1266
-	bool IsOnLadder(int movetype);
+	bool IsOnLadder(const int movetype);
 	bool IsOnLadder(const edict_t *ent);
-	bool IsOnLadder(const edict_t *ent, bool is_player);
+	bool IsOnLadder(const edict_t *ent, const bool is_player);
 
-	bool IsNoClipping(int movetype);
+	bool IsNoClipping(const int movetype);
 	bool IsNoClipping(const edict_t *ent);
-	bool IsNoClipping(const edict_t *ent, bool is_player);
+	bool IsNoClipping(const edict_t *ent, const bool is_player);
 
 	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.h#L197-L198
-	bool IsBSPModel(int solid, int movetype);
+	bool IsBSPModel(const int solid, const int movetype);
 	bool IsBSPModel(const edict_t *ent);
-	bool ReflectGauss(int solid, int movetype, float takedamage);
+	bool ReflectGauss(const int solid, const int movetype, const float takedamage);
 	bool ReflectGauss(const edict_t *ent);
 
 	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.h#L336-L337
-	Vector Center(Vector absmin, Vector absmax);
+	Vector Center(const Vector absmin, const Vector absmax);
 	Vector Center(const edict_t *ent);
-	Vector EyePosition(Vector origin, Vector view_ofs);
+	Vector EyePosition(const Vector origin, const Vector view_ofs);
 	Vector EyePosition(const edict_t *ent);
 
 	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.cpp#L673
-	bool Intersects(Vector absmin1, Vector absmax1, Vector absmin2, Vector absmax2);
+	bool Intersects(const Vector absmin1, const Vector absmax1, const Vector absmin2, const Vector absmax2);
 	bool Intersects(const edict_t *ent1, const edict_t *ent2);
 }

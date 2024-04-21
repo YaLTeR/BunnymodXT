@@ -211,12 +211,12 @@ namespace helper_functions
 
 		com_fixslashes(new_lib_path);
 
-		std::string new_path = filename.substr(0, index) + new_lib_path + DLL_EXTENSION;
+		const std::string new_path = filename.substr(0, index) + new_lib_path + DLL_EXTENSION;
 
 		return new_path;
 	}
 
-	void crash_if_failed(std::string str)
+	void crash_if_failed(const std::string str)
 	{
 		EngineWarning("%s", str.c_str());
 
@@ -227,7 +227,7 @@ namespace helper_functions
 		std::exit(1);
 	}
 
-	bool is_valid_index_and_edict(int index)
+	bool is_valid_index_and_edict(const int index)
 	{
 		auto& hw = HwDLL::GetInstance();
 		edict_t* edicts;
@@ -249,9 +249,9 @@ namespace helper_functions
 		return false;
 	}
 
-	float adjust_fov_for_widescreen(float fov, float def_aspect_ratio, float our_aspect_ratio)
+	float adjust_fov_for_widescreen(const float fov, const float def_aspect_ratio, const float our_aspect_ratio)
 	{
-		float calculated_fov = static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
+		const float calculated_fov = static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
 		return std::clamp(calculated_fov, 1.0f, 179.0f);
 	}
 
@@ -265,9 +265,9 @@ namespace helper_functions
 		}
 	}
 
-	bool does_gamedir_starts_with(const char *game, size_t len)
+	bool does_gamedir_starts_with(const char *game, const size_t len)
 	{
-		std::string gamedir = ClientDLL::GetInstance().GetGameDirectory();
+		const std::string gamedir = ClientDLL::GetInstance().GetGameDirectory();
 		if (!gamedir.empty() && !strncmp(gamedir.c_str(), game, len))
 			return true;
 
@@ -276,16 +276,16 @@ namespace helper_functions
 
 	bool does_gamedir_match(const char *game)
 	{
-		std::string gamedir = ClientDLL::GetInstance().GetGameDirectory();
+		const std::string gamedir = ClientDLL::GetInstance().GetGameDirectory();
 		if (!gamedir.empty() && !strcmp(gamedir.c_str(), game))
 			return true;
 
 		return false;
 	}
 
-	bool does_mapname_starts_with(const char *map, size_t len)
+	bool does_mapname_starts_with(const char *map, const size_t len)
 	{
-		std::string mapname = ClientDLL::GetInstance().GetLevelName();
+		const std::string mapname = ClientDLL::GetInstance().GetLevelName();
 		if (!mapname.empty() && !strncmp(mapname.c_str(), map, len))
 			return true;
 
@@ -294,7 +294,7 @@ namespace helper_functions
 
 	bool does_mapname_match(const char *map)
 	{
-		std::string mapname = ClientDLL::GetInstance().GetLevelName();
+		const std::string mapname = ClientDLL::GetInstance().GetLevelName();
 		if (!mapname.empty() && !strcmp(mapname.c_str(), map))
 			return true;
 
@@ -313,15 +313,15 @@ namespace helper_functions
 		return STEAMID64_CONST + steamID32;
 	}
 
-	void split_console_print_to_chunks(std::string str, const unsigned int max_string_length)
+	void split_console_print_to_chunks(const std::string str, const unsigned int max_string_length)
 	{
-		size_t string_length = str.size();
+		const size_t string_length = str.size();
 		// We must round the total number of chunks to the next value if it is not an integer in order for the remaining characters to be drawed.
-		size_t count_chunks = static_cast<size_t>(std::ceil(static_cast<double>(string_length) / max_string_length));
+		const size_t count_chunks = static_cast<size_t>(std::ceil(static_cast<double>(string_length) / max_string_length));
 
 		for (size_t chunk = 0; chunk < count_chunks; chunk++)
 		{
-			std::string result = str.substr(chunk * max_string_length, max_string_length);
+			const std::string result = str.substr(chunk * max_string_length, max_string_length);
 
 			// Don't start a new chunk on a newline, because we don't want to break the sequence of text!
 			// Instead, the newlines must be specified in the text itself!
@@ -329,7 +329,7 @@ namespace helper_functions
 		}
 	}
 
-	void split_console_print_to_chunks(std::string str)
+	void split_console_print_to_chunks(const std::string str)
 	{
 		split_console_print_to_chunks(str, MAXPRINTMSG);
 	}
@@ -426,7 +426,7 @@ namespace helper_functions
 
 	int build_number()
 	{
-		static int build = build_number(__DATE__);
+		static const int build = build_number(__DATE__);
 		return build;
 	}
 
@@ -464,7 +464,7 @@ namespace helper_functions
 		static bool check_vsync = true;
 		if (check_vsync)
 		{
-			bool bxtDisableVSync = getenv("BXT_DISABLE_VSYNC");
+			const bool bxtDisableVSync = getenv("BXT_DISABLE_VSYNC");
 			if (bxtDisableVSync)
 			{
 				typedef BOOL(APIENTRY* PFNWGLSWAPINTERVALPROC)(int);
@@ -484,7 +484,7 @@ namespace helper_functions
 
 // Below this comment are only functions from CBaseEntity or CBasePlayer class!
 
-	int IsInWorld(Vector origin, Vector velocity, int map_size, int map_max_velocity)
+	int IsInWorld(const Vector origin, const Vector velocity, const int map_size, const int map_max_velocity)
 	{
 		/*
 			We specifically return int instead of bool
@@ -510,7 +510,7 @@ namespace helper_functions
 		return 1;
 	}
 
-	int IsInWorld(const edict_t *ent, int map_size, int map_max_velocity)
+	int IsInWorld(const edict_t *ent, const int map_size, const int map_max_velocity)
 	{
 		return IsInWorld(ent->v.origin, ent->v.velocity, map_size, map_max_velocity);
 	}
@@ -539,7 +539,7 @@ namespace helper_functions
 		return true;
 	}
 
-	bool IsOnLadder(int movetype)
+	bool IsOnLadder(const int movetype)
 	{
 		if (movetype == MOVETYPE_FLY)
 			return true;
@@ -552,7 +552,7 @@ namespace helper_functions
 		return IsOnLadder(ent->v.movetype);
 	}
 
-	bool IsOnLadder(const edict_t *ent, bool is_player)
+	bool IsOnLadder(const edict_t *ent, const bool is_player)
 	{
 		if (is_player && !IsPlayer(ent))
 			return false;
@@ -560,7 +560,7 @@ namespace helper_functions
 			return IsOnLadder(ent->v.movetype);
 	}
 
-	bool IsNoClipping(int movetype)
+	bool IsNoClipping(const int movetype)
 	{
 		if (movetype == MOVETYPE_NOCLIP)
 			return true;
@@ -573,7 +573,7 @@ namespace helper_functions
 		return IsNoClipping(ent->v.movetype);
 	}
 
-	bool IsNoClipping(const edict_t *ent, bool is_player)
+	bool IsNoClipping(const edict_t *ent, const bool is_player)
 	{
 		if (is_player && !IsPlayer(ent))
 			return false;
@@ -581,7 +581,7 @@ namespace helper_functions
 			return IsNoClipping(ent->v.movetype);
 	}
 
-	bool IsBSPModel(int solid, int movetype)
+	bool IsBSPModel(const int solid, const int movetype)
 	{
 		if ((solid == SOLID_BSP) || (movetype == MOVETYPE_PUSHSTEP))
 			return true;
@@ -594,7 +594,7 @@ namespace helper_functions
 		return IsBSPModel(ent->v.solid, ent->v.movetype);
 	}
 
-	bool ReflectGauss(int solid, int movetype, float takedamage)
+	bool ReflectGauss(const int solid, const int movetype, const float takedamage)
 	{
 		if (!IsBSPModel(solid, movetype))
 			return false;
@@ -610,7 +610,7 @@ namespace helper_functions
 		return ReflectGauss(ent->v.solid, ent->v.movetype, ent->v.takedamage);
 	}
 
-	Vector Center(Vector absmin, Vector absmax)
+	Vector Center(const Vector absmin, const Vector absmax)
 	{
 		return (absmin + absmax) * 0.5;
 	}
@@ -620,7 +620,7 @@ namespace helper_functions
 		return Center(ent->v.absmin, ent->v.absmax);
 	}
 
-	Vector EyePosition(Vector origin, Vector view_ofs)
+	Vector EyePosition(const Vector origin, const Vector view_ofs)
 	{
 		return origin + view_ofs;
 	}
@@ -630,7 +630,7 @@ namespace helper_functions
 		return EyePosition(ent->v.origin, ent->v.view_ofs);
 	}
 
-	bool Intersects(Vector absmin1, Vector absmax1, Vector absmin2, Vector absmax2)
+	bool Intersects(const Vector absmin1, const Vector absmax1, const Vector absmin2, const Vector absmax2)
 	{
 		if (absmin1.x > absmax2.x ||
 			absmin1.y > absmax2.y ||
@@ -650,7 +650,7 @@ namespace helper_functions
 
 // Below this comment are only functions for determining type or flags!
 
-	std::string get_difficulty(int skill)
+	std::string get_difficulty(const int skill)
 	{
 		switch (skill)
 		{
@@ -661,7 +661,7 @@ namespace helper_functions
 		}
 	}
 
-	std::string get_hitgroup(int iHitgroup)
+	std::string get_hitgroup(const int iHitgroup)
 	{
 		switch (iHitgroup)
 		{
@@ -677,7 +677,7 @@ namespace helper_functions
 		}
 	}
 
-	std::string get_typedescription_fieldtype(int fieldType)
+	std::string get_typedescription_fieldtype(const int fieldType)
 	{
 		switch (fieldType)
 		{
@@ -704,7 +704,7 @@ namespace helper_functions
 		}
 	}
 
-	std::string get_renderfx(int renderfx)
+	std::string get_renderfx(const int renderfx)
 	{
 		switch (renderfx)
 		{
@@ -733,7 +733,7 @@ namespace helper_functions
 		}
 	}
 
-	std::string get_rendermode(int rendermode)
+	std::string get_rendermode(const int rendermode)
 	{
 		switch (rendermode)
 		{
@@ -747,7 +747,7 @@ namespace helper_functions
 		}
 	}
 
-	std::string get_effects(int flags)
+	std::string get_effects(const int flags)
 	{
 		std::ostringstream out;
 
@@ -766,7 +766,7 @@ namespace helper_functions
 		return out.str();
 	}
 
-	std::string get_solid(int solid)
+	std::string get_solid(const int solid)
 	{
 		switch (solid)
 		{
@@ -779,7 +779,7 @@ namespace helper_functions
 		}
 	}
 
-	std::string get_movetype(int movetype)
+	std::string get_movetype(const int movetype)
 	{
 		switch (movetype)
 		{
@@ -799,7 +799,7 @@ namespace helper_functions
 		}
 	}
 
-	std::string get_flags(int flags)
+	std::string get_flags(const int flags)
 	{
 		std::ostringstream out;
 
@@ -842,7 +842,7 @@ namespace helper_functions
 		return out.str();
 	}
 
-	std::string get_spawnflags_breakable(int flags, bool pushable)
+	std::string get_spawnflags_breakable(const int flags, const bool pushable)
 	{
 		std::ostringstream out;
 
@@ -867,7 +867,7 @@ namespace helper_functions
 		return out.str();
 	}
 
-	std::string get_spawnflags_door(int flags, bool rotating)
+	std::string get_spawnflags_door(const int flags, const bool rotating)
 	{
 		std::ostringstream out;
 
@@ -899,7 +899,7 @@ namespace helper_functions
 		return out.str();
 	}
 
-	std::string get_spawnflags_trigger(int flags)
+	std::string get_spawnflags_trigger(const int flags)
 	{
 		std::ostringstream out;
 
@@ -916,7 +916,7 @@ namespace helper_functions
 		return out.str();
 	}
 
-	std::string get_spawnflags_monster(int flags)
+	std::string get_spawnflags_monster(const int flags)
 	{
 		std::ostringstream out;
 
@@ -944,7 +944,7 @@ namespace helper_functions
 		return out.str();
 	}
 
-	std::string get_spawnflags(int spawnflags, const char *classname)
+	std::string get_spawnflags(const int spawnflags, const char *classname)
 	{
 		if (!strcmp(classname, "func_breakable"))
 			return get_spawnflags_breakable(spawnflags, false);
@@ -958,7 +958,7 @@ namespace helper_functions
 		return "\n";
 	}
 
-	std::string get_monster_triggercondition(int m_iTriggerCondition)
+	std::string get_monster_triggercondition(const int m_iTriggerCondition)
 	{
 		switch (m_iTriggerCondition)
 		{
@@ -978,7 +978,7 @@ namespace helper_functions
 		}
 	}
 
-	std::string get_monster_task(int iTask)
+	std::string get_monster_task(const int iTask)
 	{
 		switch (iTask)
 		{

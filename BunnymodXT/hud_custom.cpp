@@ -19,8 +19,6 @@ namespace CustomHud
 {
 	static const float FADE_DURATION_JUMPSPEED = 0.7f;
 
-	static bool initialized = false;
-
 	static SCREENINFO si;
 	static int precision;
 	static float consoleColor[3];
@@ -1669,12 +1667,12 @@ namespace CustomHud
 	void Init()
 	{
 		SpriteList = nullptr;
-		initialized = true;
+		ClientDLL::GetInstance().customhud_initialized = true;
 	}
 
 	void InitIfNecessary()
 	{
-		if (!initialized)
+		if (!ClientDLL::GetInstance().customhud_initialized)
 			Init();
 	}
 

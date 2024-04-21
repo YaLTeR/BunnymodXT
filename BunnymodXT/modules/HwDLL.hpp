@@ -338,6 +338,9 @@ public:
 
 	int lastRecordedHealth;
 
+	bool discord_rpc_initialized = false;
+	bool check_vsync = true;
+
 	bool is_cs_dir = false;
 	bool is_csczds_dir = false;
 	bool is_tfc_dir = false;

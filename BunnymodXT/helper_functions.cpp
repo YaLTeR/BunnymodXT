@@ -461,8 +461,8 @@ namespace helper_functions
 	void disable_vsync()
 	{
 		#ifdef _WIN32
-		static bool check_vsync = true;
-		if (check_vsync)
+		auto &hw = HwDLL::GetInstance();
+		if (hw.check_vsync)
 		{
 			const bool bxtDisableVSync = getenv("BXT_DISABLE_VSYNC");
 			if (bxtDisableVSync)
@@ -473,7 +473,7 @@ namespace helper_functions
 				if (wglSwapIntervalEXT)
 					wglSwapIntervalEXT(0);
 			}
-			check_vsync = false;
+			hw.check_vsync = false;
 		}
 		#endif
 	}

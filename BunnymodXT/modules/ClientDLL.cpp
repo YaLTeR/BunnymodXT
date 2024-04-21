@@ -327,6 +327,7 @@ void ClientDLL::Clear()
 	cantJumpNextTime = false;
 	SeedsQueued = 0;
 	m_Intercepted = false;
+	customhud_initialized = false;
 	last_vieworg = Vector();
 	last_viewangles = Vector();
 	last_viewforward = Vector();
@@ -340,6 +341,7 @@ void ClientDLL::Clear()
 	offVectorTransform = 0;
 	offpCurrentEntity = 0;
 	offpStudioHeader = 0;
+	orig_righthand_not_found = false;
 }
 
 void ClientDLL::FindStuff()

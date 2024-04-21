@@ -822,6 +822,8 @@ void HwDLL::Clear()
 	ch_checkpoint_viewangles.clear();
 	ch_checkpoint_is_duck.clear();
 
+	discord_rpc_initialized = false;
+	check_vsync = true;
 
 	tas_editor_mode = TASEditorMode::DISABLED;
 	tas_editor_input = EditedInput();
@@ -8283,8 +8285,7 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 
 		bool is_failed = false;
 
-		static bool is_cstrike_dir = HF_DoesGameDirMatch("cstrike");
-		if (is_cstrike_dir)
+		if (HF_DoesGameDirMatch("cstrike"))
 		{
 			#ifdef _WIN32
 			const std::string cs_lib = "dlls\\mp";

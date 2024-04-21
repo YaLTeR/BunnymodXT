@@ -379,11 +379,10 @@ namespace discord_integration
 		if (bxtDisableDiscordRPC)
 			return;
 
-		static bool rpc_initialized = false;
-		if (!rpc_initialized)
+		if (!hw.discord_rpc_initialized)
 		{
 			initialize();
-			rpc_initialized = true;
+			hw.discord_rpc_initialized = true;
 		}
 
 		float FPS_current;

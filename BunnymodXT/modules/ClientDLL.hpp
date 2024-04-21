@@ -118,6 +118,8 @@ public:
 	std::string GetGameDirectory();
 	// WRAPPER FUNCTIONS END HERE
 
+	bool customhud_initialized = false;
+
 private:
 	ClientDLL() : IHookableNameFilter({ L"client.dll", L"client.so" }) {};
 	ClientDLL(const ClientDLL&);

@@ -12,6 +12,7 @@ namespace TriangleWrappers
 	auto &hw = HwDLL::GetInstance();
 	auto &cl = ClientDLL::GetInstance();
 
+	static const int g_GL_Modes[7] = {4, 6, 7, 9, 1, 5, 8}; // GL_TRIANGLES, GL_TRIANGLE_FAN, GL_QUADS, GL_POLYGON, GL_LINES, GL_TRIANGLE_STRIP, GL_QUAD_STRIP
 	static int gRenderMode;
 	static float gGlR, gGlG, gGlB, gGlW;
 
@@ -70,7 +71,6 @@ namespace TriangleWrappers
 		{
 			if (hw.ORIG_VGUI2_ResetCurrentTexture)
 				hw.ORIG_VGUI2_ResetCurrentTexture();
-			int g_GL_Modes[7] = {4, 6, 7, 9, 1, 5, 8}; // GL_TRIANGLES, GL_TRIANGLE_FAN, GL_QUADS, GL_POLYGON, GL_LINES, GL_TRIANGLE_STRIP, GL_QUAD_STRIP
 			glBegin(g_GL_Modes[primitiveCode]);
 		}
 	}

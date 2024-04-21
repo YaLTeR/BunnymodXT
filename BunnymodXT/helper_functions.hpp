@@ -136,8 +136,24 @@ namespace helper_functions
 	bool is_entity_kz_start(const char *targetname);
 	bool is_entity_kz_stop(const char *targetname);
 
-	void DisableVSync();
-	void UpdateDataAtShutdownSV(); // Update custom data when disconnected from the server, this should be called in SV_SpawnServer (engine-side) or ServerDeactivate (server-side).
+	inline void allow_multiple_instances() // Make it possible to run multiple Half-Life instances.
+	{
+		#ifdef _WIN32
+		auto mutex = OpenMutexA(SYNCHRONIZE, FALSE, "ValveHalfLifeLauncherMutex");
+		if (!mutex)
+			mutex = OpenMutexA(SYNCHRONIZE, FALSE, "SvenCoopLauncherMutex");
+
+		if (mutex) 
+		{
+			EngineMsg("Releasing the launcher mutex.\n");
+			ReleaseMutex(mutex);
+			CloseHandle(mutex);
+		}
+		#endif
+	}
+
+	void disable_vsync();
+	void update_data_at_shutdown_sv(); // Update custom data when disconnected from the server, this should be called in SV_SpawnServer (engine-side) or ServerDeactivate (server-side).
 
 	// https://developer.valvesoftware.com/wiki/SteamID
 	std::string get_steam_id(const unsigned long steamID32);

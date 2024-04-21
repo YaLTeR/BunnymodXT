@@ -458,7 +458,7 @@ namespace helper_functions
 		return false;
 	}
 
-	void DisableVSync()
+	void disable_vsync()
 	{
 		#ifdef _WIN32
 		static bool check_vsync = true;
@@ -478,7 +478,7 @@ namespace helper_functions
 		#endif
 	}
 
-	void UpdateDataAtShutdownSV()
+	void update_data_at_shutdown_sv()
 	{
 	}
 

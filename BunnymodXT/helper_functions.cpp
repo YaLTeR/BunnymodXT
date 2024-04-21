@@ -539,6 +539,48 @@ namespace helper_functions
 		return true;
 	}
 
+	bool IsOnLadder(int movetype)
+	{
+		if (movetype == MOVETYPE_FLY)
+			return true;
+		else
+			return false;
+	}
+
+	bool IsOnLadder(const edict_t *ent)
+	{
+		return IsOnLadder(ent->v.movetype);
+	}
+
+	bool IsOnLadder(const edict_t *ent, bool is_player)
+	{
+		if (is_player && !IsPlayer(ent))
+			return false;
+		else
+			return IsOnLadder(ent->v.movetype);
+	}
+
+	bool IsNoClipping(int movetype)
+	{
+		if (movetype == MOVETYPE_NOCLIP)
+			return true;
+		else
+			return false;
+	}
+
+	bool IsNoClipping(const edict_t *ent)
+	{
+		return IsNoClipping(ent->v.movetype);
+	}
+
+	bool IsNoClipping(const edict_t *ent, bool is_player)
+	{
+		if (is_player && !IsPlayer(ent))
+			return false;
+		else
+			return IsNoClipping(ent->v.movetype);
+	}
+
 	bool IsBSPModel(int solid, int movetype)
 	{
 		if ((solid == SOLID_BSP) || (movetype == MOVETYPE_PUSHSTEP))

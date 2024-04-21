@@ -165,6 +165,15 @@ namespace helper_functions
 
 	bool IsPlayer(const edict_t *ent);
 
+	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/player.cpp#L1262-L1266
+	bool IsOnLadder(int movetype);
+	bool IsOnLadder(const edict_t *ent);
+	bool IsOnLadder(const edict_t *ent, bool is_player);
+
+	bool IsNoClipping(int movetype);
+	bool IsNoClipping(const edict_t *ent);
+	bool IsNoClipping(const edict_t *ent, bool is_player);
+
 	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/cbase.h#L197-L198
 	bool IsBSPModel(int solid, int movetype);
 	bool IsBSPModel(const edict_t *ent);

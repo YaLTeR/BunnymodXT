@@ -2302,7 +2302,7 @@ void ServerDLL::DoAutoStopTasks()
 	if (CVars::bxt_timer_autostop.GetBool())
 	{
 		if (CustomHud::GetCountingTime())
-			HwDLL::GetInstance().Called_Timer = true;
+			HwDLL::GetInstance().discord_rpc_update_called = true;
 
 		CustomHud::SetCountingTime(false);
 	}
@@ -2671,7 +2671,7 @@ void ServerDLL::DoWouldCrashMessage()
 	CustomHud::SetInvalidRun(true);
 
 	if (CustomHud::GetCountingTime())
-		HwDLL::GetInstance().Called_Timer = true;
+		HwDLL::GetInstance().discord_rpc_update_called = true;
 
 	// Some people might be running with LiveSplit only and hud_saytext CAN be 0, enable timer for those players, so they know
 	if (!CVars::bxt_hud_timer.GetBool())

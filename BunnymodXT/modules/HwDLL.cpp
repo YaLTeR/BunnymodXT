@@ -3747,7 +3747,7 @@ struct HwDLL::Cmd_BXT_Camera_Offset
 void HwDLL::TimerStart()
 {
 	if (!CustomHud::GetCountingTime())
-		HwDLL::GetInstance().Called_Timer = true;
+		HwDLL::GetInstance().discord_rpc_update_called = true;
 
 	CustomHud::SaveTimeToDemo();
 	return CustomHud::SetCountingTime(true);
@@ -3771,7 +3771,7 @@ struct HwDLL::Cmd_BXT_Timer_Stop
 	static void handler()
 	{
 		if (CustomHud::GetCountingTime())
-			HwDLL::GetInstance().Called_Timer = true;
+			HwDLL::GetInstance().discord_rpc_update_called = true;
 
 		CustomHud::SaveTimeToDemo();
 		return CustomHud::SetCountingTime(false);
@@ -3780,11 +3780,10 @@ struct HwDLL::Cmd_BXT_Timer_Stop
 
 void HwDLL::TimerReset()
 {
-	const auto& gt = CustomHud::GetTime();
-	int total_time = (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds;
+	int total_time = static_cast<int>(helper_functions::ret_bxt_time());
 
-	if (gt.milliseconds > 0 || total_time > 0)
-		HwDLL::GetInstance().Called_Timer = true;
+	if (total_time > 0)
+		HwDLL::GetInstance().discord_rpc_update_called = true;
 
 	CustomHud::SaveTimeToDemo();
 	CustomHud::SetInvalidRun(false);

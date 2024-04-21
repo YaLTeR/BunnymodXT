@@ -58,9 +58,9 @@ namespace discord_integration
 
 			inline void update_presence_if_dirty()
 			{
-				if (hw.Called_Timer)
+				if (hw.discord_rpc_update_called)
 				{
-					hw.Called_Timer = false;
+					hw.discord_rpc_update_called = false;
 
 					dirty = true;
 				}
@@ -394,7 +394,7 @@ namespace discord_integration
 		static float FPS_previous = FPS_current;
 
 		if (FPS_current != FPS_previous)
-			hw.Called_Timer = true;
+			hw.discord_rpc_update_called = true;
 
 		FPS_previous = FPS_current;
 

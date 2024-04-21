@@ -356,7 +356,7 @@ public:
 		return ppGlobals->pStringBase + string;
 	}
 
-	bool Called_Timer = false;
+	bool discord_rpc_update_called = false;
 
 	#ifdef _WIN32
 	bool is_steamid_build = false;

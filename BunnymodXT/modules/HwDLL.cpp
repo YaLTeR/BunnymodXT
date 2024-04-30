@@ -834,6 +834,7 @@ void HwDLL::Clear()
 	ch_checkpoint_vel.clear();
 	ch_checkpoint_viewangles.clear();
 	ch_checkpoint_is_duck.clear();
+	ch_checkpoint_gravity.clear();
 
 
 	tas_editor_mode = TASEditorMode::DISABLED;
@@ -3314,6 +3315,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 	static void handler()
 	{
 		auto &hw = HwDLL::GetInstance();
+		auto &cl = ClientDLL::GetInstance();
 
 		auto pl = hw.GetPlayerEdict();
 
@@ -3340,7 +3342,10 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 		hw.ch_checkpoint_vel.emplace_back(pl->v.velocity);
 		hw.ch_checkpoint_viewangles.emplace_back(pl->v.v_angle);
 		hw.ch_checkpoint_is_duck.emplace_back(is_duck);
+		hw.ch_checkpoint_gravity.emplace_back(pl->v.gravity);
 		hw.ch_checkpoint_is_set = true;
+		
+		hw.is_cstrike_dir = cl.DoesGameDirMatch("cstrike") || cl.DoesGameDirMatch("czero");
 	}
 };
 
@@ -3377,6 +3382,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 		Vector cp_vel;
 		Vector cp_viewangles;
 		bool cp_is_duck;
+		float cp_gravity;
 
 		if ((id > 0) && (hw.ch_checkpoint_is_duck.size() >= id)) // If ID is more than 0 and the size of std::vector is not less than the specified ID, we are fine!
 		{
@@ -3384,6 +3390,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 			cp_vel = hw.ch_checkpoint_vel[id - 1];
 			cp_viewangles = hw.ch_checkpoint_viewangles[id - 1];
 			cp_is_duck = hw.ch_checkpoint_is_duck[id - 1];
+			cp_gravity = hw.ch_checkpoint_gravity[id - 1];
 			hw.ch_checkpoint_current = id;
 		}
 		else // Otherwise we will use the last element
@@ -3392,6 +3399,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 			cp_vel = hw.ch_checkpoint_vel.back();
 			cp_viewangles = hw.ch_checkpoint_viewangles.back();
 			cp_is_duck = hw.ch_checkpoint_is_duck.back();
+			cp_gravity = hw.ch_checkpoint_gravity.back();
 			hw.ch_checkpoint_current = hw.ch_checkpoint_total;
 		}
 
@@ -3416,6 +3424,8 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 		// for CS 1.6 stamina reset
 		if (hw.is_cstrike_dir) 
 			pl->v.fuser2 = 0;
+
+		pl->v.gravity = cp_gravity;
 	}
 };
 
@@ -3443,6 +3453,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Reset
 		hw.ch_checkpoint_vel.clear();
 		hw.ch_checkpoint_viewangles.clear();
 		hw.ch_checkpoint_is_duck.clear();
+		hw.ch_checkpoint_gravity.clear();
 		hw.ch_checkpoint_total = hw.ch_checkpoint_current = 0;
 		hw.ORIG_Con_Printf("Cleared the checkpoints.\n");
 	}
@@ -3479,6 +3490,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove
 			hw.ch_checkpoint_vel.erase(hw.ch_checkpoint_vel.begin() + (id - 1));
 			hw.ch_checkpoint_viewangles.erase(hw.ch_checkpoint_viewangles.begin() + (id - 1));
 			hw.ch_checkpoint_is_duck.erase(hw.ch_checkpoint_is_duck.begin() + (id - 1));
+			hw.ch_checkpoint_gravity.erase(hw.ch_checkpoint_gravity.begin() + (id - 1));
 			hw.ORIG_Con_Printf("Removed the checkpoint with %lu id.\n", id);
 		}
 		else
@@ -3506,6 +3518,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove_After
 				hw.ch_checkpoint_vel.erase(hw.ch_checkpoint_vel.begin() + id, hw.ch_checkpoint_vel.end());
 				hw.ch_checkpoint_viewangles.erase(hw.ch_checkpoint_viewangles.begin() + id, hw.ch_checkpoint_viewangles.end());
 				hw.ch_checkpoint_is_duck.erase(hw.ch_checkpoint_is_duck.begin() + id, hw.ch_checkpoint_is_duck.end());
+				hw.ch_checkpoint_gravity.erase(hw.ch_checkpoint_gravity.begin() + id, hw.ch_checkpoint_gravity.end());
 				hw.ch_checkpoint_total = id;
 				hw.ORIG_Con_Printf("Removed the checkpoints following %lu id.\n", id);
 			}

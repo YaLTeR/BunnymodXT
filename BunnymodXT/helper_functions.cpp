@@ -899,7 +899,6 @@ namespace helper_functions
 	{
 		std::ostringstream out;
 
-		/*
 		// The flags here were arranged in order from smallest to highest bits.
 		if (flags & SF_DOOR_START_OPEN)
 			out << "Starts Open; ";
@@ -920,7 +919,6 @@ namespace helper_functions
 			out << "Use Only; ";
 		if (flags & SF_DOOR_NOMONSTERS)
 			out << "Monsters Can't; ";
-		*/
 
 		out << '\n';
 

@@ -82,8 +82,8 @@ namespace discord_integration
 				presence.largeImageKey = "default";
 
 				// Declare these outside of the following block, so they are in scope for Discord_UpdatePresence().
-				const char* map_name = cl.GetLevelName().c_str();
-				const char* game_dir = cl.GetGameDirectory().c_str();
+				const char* map_name = cl.GetLevelName(false).c_str();
+				const char* game_dir = cl.GetGameDirectory(false).c_str();
 				char buffer_details[128];
 
 				#define set_discord_image(imgkey, imgtext) \
@@ -137,6 +137,9 @@ namespace discord_integration
 
 						presence.largeImageText = map_name;
 						presence.details = buffer_details;
+
+						map_name = cl.GetLevelName(true).c_str();
+						game_dir = cl.GetGameDirectory(true).c_str();
 
 						if (CVars::bxt_discord_rpc_ignore_gamedir_for_hl_maps.GetBool()
 						|| HF_DoesGameDirStartsWith("valve")

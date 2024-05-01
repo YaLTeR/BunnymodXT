@@ -5661,7 +5661,7 @@ void HwDLL::SetTASLogging(bool enabled)
 			return;
 		}
 		const int buildNumber = ORIG_build_number ? ORIG_build_number() : -1;
-		const char *gameDir = ClientDLL::GetInstance().GetGameDirectory().c_str();
+		const char *gameDir = ClientDLL::GetInstance().GetGameDirectory(false).c_str();
 		logWriter.StartLog(tasLogFile, BUNNYMODXT_VERSION, buildNumber, gameDir);
 		tasLogging = true;
 		ORIG_Con_Printf("Started TAS logging into %s\n", filename.c_str());

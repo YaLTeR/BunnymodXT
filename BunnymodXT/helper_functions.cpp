@@ -267,7 +267,7 @@ namespace helper_functions
 
 	bool does_gamedir_starts_with(const char *game, const size_t len)
 	{
-		const std::string gamedir = ClientDLL::GetInstance().GetGameDirectory();
+		const std::string gamedir = ClientDLL::GetInstance().GetGameDirectory(true);
 		if (!gamedir.empty() && !strncmp(gamedir.c_str(), game, len))
 			return true;
 
@@ -276,7 +276,7 @@ namespace helper_functions
 
 	bool does_gamedir_match(const char *game)
 	{
-		const std::string gamedir = ClientDLL::GetInstance().GetGameDirectory();
+		const std::string gamedir = ClientDLL::GetInstance().GetGameDirectory(true);
 		if (!gamedir.empty() && !strcmp(gamedir.c_str(), game))
 			return true;
 
@@ -285,7 +285,7 @@ namespace helper_functions
 
 	bool does_mapname_starts_with(const char *map, const size_t len)
 	{
-		const std::string mapname = ClientDLL::GetInstance().GetLevelName();
+		const std::string mapname = ClientDLL::GetInstance().GetLevelName(true);
 		if (!mapname.empty() && !strncmp(mapname.c_str(), map, len))
 			return true;
 
@@ -294,7 +294,7 @@ namespace helper_functions
 
 	bool does_mapname_match(const char *map)
 	{
-		const std::string mapname = ClientDLL::GetInstance().GetLevelName();
+		const std::string mapname = ClientDLL::GetInstance().GetLevelName(true);
 		if (!mapname.empty() && !strcmp(mapname.c_str(), map))
 			return true;
 
@@ -507,6 +507,7 @@ namespace helper_functions
 		auto &hw = HwDLL::GetInstance();
 
 		cl.gamedir_clean.clear();
+		cl.gamedir_clean_lw.clear();
 		hw.is_cs_dir = hw.is_csczds_dir = hw.is_tfc_dir = hw.is_cof_dir = hw.is_dod_dir = false;
 	}
 

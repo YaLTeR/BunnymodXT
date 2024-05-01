@@ -32,8 +32,8 @@
 #endif
 
 #define InitGameDirIfNecessary() \
-	if (ClientDLL::GetInstance().gamedir_clean.empty()) \
-		ClientDLL::GetInstance().GetGameDirectory();
+	if (ClientDLL::GetInstance().gamedir_clean_lw.empty()) \
+		ClientDLL::GetInstance().GetGameDirectory(true);
 
 // Usage:
 // if (!strncmp(var, HF_StrAndLen("test")))

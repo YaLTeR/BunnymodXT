@@ -1158,7 +1158,7 @@ void ClientDLL::StudioAdjustViewmodelAttachments(Vector &vOrigin)
 	vOrigin = last_vieworg + vOut;
 }
 
-std::string ClientDLL::GetLevelName()
+std::string ClientDLL::GetLevelName(bool lowercase)
 {
 	std::string mapname = "";
 
@@ -1170,22 +1170,25 @@ std::string ClientDLL::GetLevelName()
 
 	if (map_name && map_name[0])
 	{
-		char mn[64];
+		char mn[MAX_LEVELNAME_LENGTH];
 		helper_functions::com_filebase(map_name, mn);
-		helper_functions::convert_to_lowercase(mn);
+		if (lowercase)
+			helper_functions::convert_to_lowercase(mn);
 		mapname = mn;
 	}
 
 	return mapname;
 }
 
-std::string ClientDLL::GetGameDirectory()
+std::string ClientDLL::GetGameDirectory(bool lowercase)
 {
-	if (!gamedir_clean.empty())
+	if (lowercase && !gamedir_clean_lw.empty())
+		return gamedir_clean_lw;
+	else if (!gamedir_clean.empty())
 		return gamedir_clean;
 
 	auto &sv = ServerDLL::GetInstance();
-	char game_dir[260];
+	char game_dir[MAX_GAMEDIR_LENGTH];
 	if (sv.interface_preserved_eng_sv && sv.pEngfuncs)
 	{
 		sv.pEngfuncs->pfnGetGameDir(game_dir);
@@ -1193,14 +1196,18 @@ std::string ClientDLL::GetGameDirectory()
 
 	if (game_dir[0])
 	{
-		char gd[260];
+		char gd[MAX_GAMEDIR_LENGTH];
 		helper_functions::com_filebase(game_dir, gd);
-		helper_functions::convert_to_lowercase(gd);
 		gamedir_clean = gd;
-		helper_functions::gamedir_set_booleans(gamedir_clean.c_str());
+		helper_functions::convert_to_lowercase(gd);
+		gamedir_clean_lw = gd;
+		helper_functions::gamedir_set_booleans(gamedir_clean_lw.c_str());
 	}
 
-	return gamedir_clean;
+	if (lowercase)
+		return gamedir_clean_lw;
+	else
+		return gamedir_clean;
 }
 
 void ClientDLL::SetAngleSpeedCap(bool capped)

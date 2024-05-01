@@ -111,11 +111,11 @@ public:
 	*/
 	bool interface_preserved_eng_cl = true;
 
-	std::string gamedir_clean; // Game directory that has been converted to lower case, cleared from the game path and initialized once.
+	std::string gamedir_clean, gamedir_clean_lw; // Game directory that cleared from the game path and initialized once.
 
 	// WRAPPER FUNCTIONS STARTS HERE
-	std::string GetLevelName();
-	std::string GetGameDirectory();
+	std::string GetLevelName(bool lowercase);
+	std::string GetGameDirectory(bool lowercase);
 	// WRAPPER FUNCTIONS END HERE
 
 	bool customhud_initialized = false;

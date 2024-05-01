@@ -20,10 +20,6 @@
 #define Q_strcasecmp(s1, s2) \
 	Q_strncasecmp(s1, s2, 99999)
 
-#define MAXPRINTMSG 4096 // Con_Printf is limited to 4096 characters.
-
-const steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
-
 // entvars_t from HLSDK 1.0 does not have such variables, for this reason wrappers were made
 #ifndef HLSDK10_BUILD
 	#define RET_EntVars_bInDuck(ent) ent->v.bInDuck

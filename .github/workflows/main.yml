@@ -17,7 +17,7 @@ jobs:
         configuration: [Release, Debug]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
         # We need the full history to find the tag
@@ -44,7 +44,7 @@ jobs:
     - name: Build
       run: cmake --build build
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: BunnymodXT-${{ runner.os }}-${{ matrix.configuration }}
         path: build/libBunnymodXT.so
@@ -57,7 +57,7 @@ jobs:
 
     - name: Release
       if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Release'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: 2-BunnymodXT-${{ runner.os }}.7z
         draft: true
@@ -72,7 +72,7 @@ jobs:
       options: --privileged
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
         # We need the full history to find the tag
@@ -83,7 +83,7 @@ jobs:
     # We need the tags for the version string
     - run: git fetch --force --tags
 
-    - uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v5
+    - uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
       with:
         manifest-path: build-aux/flatpak/rs.bxt.BunnymodXT.json
         cache: false
@@ -107,7 +107,7 @@ jobs:
             archive-filename: '3-BunnymodXT-CoFSteam-Windows.7z'
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
         # We need the full history to find the tag
@@ -124,7 +124,7 @@ jobs:
 
     - name: Install Boost
       id: install-boost
-      uses: MarkusJx/install-boost@v2.4.4
+      uses: MarkusJx/install-boost@v2.4.5
       with:
         boost_version: 1.78.0
         platform_version: 2019
@@ -138,7 +138,7 @@ jobs:
     - name: Build
       run: cmake --build build --config ${{ matrix.configuration }} -j $env:NUMBER_OF_PROCESSORS
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: BunnymodXT${{ matrix.artifact-label }}-${{ runner.os }}-${{ matrix.configuration }}
         path: build\${{ matrix.configuration }}\BunnymodXT.dll
@@ -151,7 +151,7 @@ jobs:
 
     - name: Release
       if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Release'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: ${{ matrix.archive-filename }}
         draft: true

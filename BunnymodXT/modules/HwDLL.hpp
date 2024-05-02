@@ -792,6 +792,7 @@ protected:
 	std::vector<Vector> ch_checkpoint_vel;
 	std::vector<Vector> ch_checkpoint_viewangles;
 	std::vector<bool> ch_checkpoint_is_duck;
+	std::vector<float> ch_checkpoint_gravity;
 
 public:
 	bool is_big_map = false;

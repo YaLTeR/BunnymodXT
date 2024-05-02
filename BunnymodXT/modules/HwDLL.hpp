@@ -661,10 +661,14 @@ protected:
 	unsigned LoadingSeedCounter;
 	size_t TargetYawOverrideIndex;
 	std::vector<float> TargetYawOverrides;
+	size_t PitchOverrideIndex;
+	std::vector<float> PitchOverrides;
 	float sensitivityToRestore = 0;
 public:
 	size_t RenderYawOverrideIndex;
 	std::vector<float> RenderYawOverrides;
+	size_t RenderPitchOverrideIndex;
+	std::vector<float> RenderPitchOverrides;
 	bool ButtonsPresent;
 	HLTAS::StrafeButtons Buttons;
 	HLStrafe::CurrentState StrafeState;

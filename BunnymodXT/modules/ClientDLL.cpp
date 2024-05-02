@@ -1505,6 +1505,10 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 		pparams->viewangles[1] = hwDLL.RenderYawOverrides[hwDLL.RenderYawOverrideIndex - 1];
 	}
 
+	if (hwDLL.RenderPitchOverrideIndex != 0 && hwDLL.RenderPitchOverrideIndex <= hwDLL.RenderPitchOverrides.size()) {
+		pparams->viewangles[0] = hwDLL.RenderPitchOverrides[hwDLL.RenderPitchOverrideIndex - 1];
+	}
+
 	float forward_offset = CVars::bxt_viewmodel_ofs_forward.GetFloat();
 	float right_offset = CVars::bxt_viewmodel_ofs_right.GetFloat();
 	float up_offset = CVars::bxt_viewmodel_ofs_up.GetFloat();

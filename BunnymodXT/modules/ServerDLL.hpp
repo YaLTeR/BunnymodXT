@@ -64,6 +64,8 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __fastcall, CTriggerCamera__FollowTarget, void* thisptr)
 	HOOK_DECL(int, __fastcall, CBaseEntity__IsInWorld, void* thisptr)
 	HOOK_DECL(int, __cdecl, CBaseEntity__IsInWorld_Linux, void* thisptr)
+	HOOK_DECL(void, __fastcall, CBaseTrigger__TeleportTouch, void* thisptr, int edx, void* pOther)
+	HOOK_DECL(void, __cdecl, CBaseTrigger__TeleportTouch_Linux, void* thisptr, void* pOther)
 
 public:
 	static ServerDLL& GetInstance()
@@ -116,6 +118,8 @@ public:
 	ptrdiff_t offm_fStamina; // Cry of Fear-specific
 
 	void GiveNamedItem(entvars_t *pev, int istr);
+
+	bool IsPlayer(edict_t *ent);
 
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};

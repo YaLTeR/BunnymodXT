@@ -5071,8 +5071,7 @@ struct HwDLL::Cmd_BXT_Give
 		auto &sv_dll = ServerDLL::GetInstance();
 
 		void* classPtr = (*hw_dll.sv_player)->pvPrivateData;
-		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(thisAddr + 4);
+		auto pev = GET_PEV(classPtr);
 
 		int iszItem = sv_dll.pEngfuncs->pfnAllocString(classname); // Make a copy of the classname
 

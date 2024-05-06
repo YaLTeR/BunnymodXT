@@ -30,6 +30,8 @@ constexpr float HL1_SLOWDOWN_PLAYER_BY_USE = 0.3f; // https://github.com/ValveSo
 
 #define COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE 1024 // https://github.com/LogicAndTrick/sledge-formats/blob/9d11ebb3ce6d6d5e80864cf96b235c491a106958/Sledge.Formats.GameData.Tests/Resources/fgd/goldsource/cry-of-fear.fgd#L3720
 
+constexpr unsigned int off_pev = 4; // CBaseEntity, pev
+
 // - Custom constants
 // Constants whose values you set depending on your code and preferences.
 
@@ -45,3 +47,6 @@ constexpr int kRenderFxTrigger = 241; // DO NOT CHANGE THIS VALUE OR YOU WILL BR
 
 // - Other constants
 constexpr steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
+
+// - Custom macros
+#define GET_PEV(thisptr) *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + off_pev);

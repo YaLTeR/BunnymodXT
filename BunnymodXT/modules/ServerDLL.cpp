@@ -2154,7 +2154,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, COFGeneWorm__DyingThink_Linux, void*, thisp
 HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->targetname) {
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			if (!std::strcmp(targetname, "sheriffs_chppr") && ClientDLL::GetInstance().DoesGameDirContain("hunger")) { // They Hunger Episode 3
@@ -2169,7 +2169,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 HOOK_DEF_2(ServerDLL, void, __fastcall, CBreakable__Die, void*, thisptr, int, edx)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->target) {
 			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
 			if (!std::strcmp(target, "BLOOOM") && ClientDLL::GetInstance().DoesGameDirContain("czeror")) { // CSCZDS
@@ -2184,7 +2184,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CBreakable__Die, void*, thisptr, int, ed
 HOOK_DEF_1(ServerDLL, void, __cdecl, CBreakable__Die_Linux, void*, thisptr)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->target) {
 			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
 			if (!std::strcmp(target, "BLOOOM") && ClientDLL::GetInstance().DoesGameDirContain("czeror")) {
@@ -2201,7 +2201,7 @@ HOOK_DEF_2(ServerDLL, int, __fastcall, CBaseDoor__DoorActivate, void*, thisptr, 
 	auto isActivated = ORIG_CBaseDoor__DoorActivate(thisptr, edx);
 
 	if (isActivated && HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->targetname) {
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			Splits::Activate(targetname);
@@ -2213,7 +2213,7 @@ HOOK_DEF_2(ServerDLL, int, __fastcall, CBaseDoor__DoorActivate, void*, thisptr, 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->target) {
 			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
 			if (!std::strcmp(target, "oil_spouts1_mm") && ClientDLL::GetInstance().DoesGameDirContain("hunger")) { // They Hunger Episode 2
@@ -2228,7 +2228,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 {
 	if (HwDLL::GetInstance().ppGlobals && pEngfuncs) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		edict_t *pPlayer = pEngfuncs->pfnPEntityOfEntIndex(1);
 		if (pev && pev->targetname && pPlayer) {
 			void *classPtr = pPlayer->pvPrivateData;
@@ -2247,7 +2247,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, int, edx, entvars_t*, pevAttacker, int, iGib)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->classname) {
 			const char* classname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->classname;
 			if (!std::strcmp(classname, "monster_gargantua") && ClientDLL::GetInstance().DoesGameDirMatch("tetsu0_cot")) {
@@ -2264,7 +2264,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 	auto &hw = HwDLL::GetInstance();
 
 	if (hw.ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->targetname) {
 			const char *targetname = hw.ppGlobals->pStringBase + pev->targetname;
 			OnMultiManagerFired(targetname);
@@ -2283,7 +2283,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
 	if (HwDLL::GetInstance().ppGlobals && targetName != NULL && pCaller) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
+		auto pev = GET_PEV(pCaller);
 		if(pev && pev->targetname)
 		{
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
@@ -2532,7 +2532,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerVolume__Spawn, void*, thisptr)
 		return;
 	}
 
-	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	auto pev = GET_PEV(thisptr);
 	string_t old_model = pev->model;
 	ORIG_CTriggerVolume__Spawn(thisptr);
 	pev->model = old_model;
@@ -2547,7 +2547,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CTriggerVolume__Spawn_Linux, void*, thisptr
 		return;
 	}
 
-	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	auto pev = GET_PEV(thisptr);
 	string_t old_model = pev->model;
 	ORIG_CTriggerVolume__Spawn_Linux(thisptr);
 	pev->model = old_model;
@@ -2664,8 +2664,8 @@ bool ServerDLL::IsPlayerMovingPushable(const entvars_t *pevPushable, const entva
 
 HOOK_DEF_4(ServerDLL, void, __fastcall, CPushable__Move, void*, thisptr, int, edx, void*, pOther, int, push)
 {
-	const entvars_t *pevToucher = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(pOther) + 4);
-	entvars_t *pevPushable = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	const auto pevToucher = GET_PEV(pOther);
+	auto pevPushable = GET_PEV(thisptr);
 
 	if (IsPlayerMovingPushable(pevPushable, pevToucher, push)) {
 		if (!push)
@@ -2689,8 +2689,8 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CPushable__Move, void*, thisptr, int, ed
 
 HOOK_DEF_3(ServerDLL, void, __cdecl, CPushable__Move_Linux, void*, thisptr, void*, pOther, int, push)
 {
-	const entvars_t *pevToucher = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(pOther) + 4);
-	entvars_t *pevPushable = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	const auto pevToucher = GET_PEV(pOther);
+	auto pevPushable = GET_PEV(thisptr);
 
 	if (IsPlayerMovingPushable(pevPushable, pevToucher, push)) {
 		if (!push)
@@ -3008,7 +3008,7 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerCamera__FollowTarget, void*, thisptr)
 {
-	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	auto pev = GET_PEV(thisptr);
 	if (pev)
 	{
 		bool changed = false;
@@ -3139,7 +3139,7 @@ void ServerDLL::ClearBulletsTrace() {
 HOOK_DEF_6(ServerDLL, void, __fastcall, CBaseButton__ButtonUse, void*, thisptr, int, edx, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev) {
 			if (pev->target) {
 				const char* target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
@@ -3170,7 +3170,7 @@ HOOK_DEF_6(ServerDLL, void, __fastcall, CBaseButton__ButtonUse, void*, thisptr, 
 HOOK_DEF_2(ServerDLL, void, __fastcall, CBaseButton__ButtonTriggerAndWait, void*, thisptr, int, edx)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->target) {
 			// Fire any splitter that matches this button's target's name. This one compared to ButtonUse, should
 			// already have the button's master entity triggered and the button should already be enabled, so it's
@@ -3205,7 +3205,7 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionTouch, voi
 	// trigger_endsection sends you to the menu, effectively stopping the demo,
 	// but not the timer and neither LiveSplit of course, so we have to do it here
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->targetname) {
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			if (!std::strcmp(targetname, "tr_endchange")) {
@@ -3296,7 +3296,7 @@ HOOK_DEF_1(ServerDLL, int, __fastcall, CBaseEntity__IsInWorld, void*, thisptr)
 {
 	if (HwDLL::GetInstance().is_big_map) 
 	{
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev)
 			return IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE, BIG_MAP_MAX_VELOCITY);
 	}
@@ -3308,7 +3308,7 @@ HOOK_DEF_1(ServerDLL, int, __cdecl, CBaseEntity__IsInWorld_Linux, void*, thisptr
 {
 	if (HwDLL::GetInstance().is_big_map) 
 	{
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev)
 			return IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE, BIG_MAP_MAX_VELOCITY);
 	}

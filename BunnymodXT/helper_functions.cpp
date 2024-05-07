@@ -15,9 +15,26 @@ namespace helper_functions
 		gpBuf = (byte*)buf;
 	}
 
-	int READ_SHARED(int type, int size)
+	int READ_SHARED(int type)
 	{
 		int c = -1;
+		int size = 0;
+
+		switch (type)
+		{
+			case 0: // READ_CHAR
+			case 1: // READ_BYTE
+				size = 1;
+				break;
+			case 2: // READ_SHORT
+				size = 2;
+				break;
+			case 3: // READ_LONG
+				size = 4;
+				break;
+			default:
+				break;
+		}
 
 		if (giRead + size > giSize)
 		{
@@ -50,17 +67,17 @@ namespace helper_functions
 
 	int READ_CHAR()
 	{
-		return READ_SHARED(0, 1);
+		return READ_SHARED(0);
 	}
 
 	int READ_BYTE()
 	{
-		return READ_SHARED(1, 1);
+		return READ_SHARED(1);
 	}
 
 	int READ_SHORT()
 	{
-		return READ_SHARED(2, 2);
+		return READ_SHARED(2);
 	}
 
 	int READ_WORD()
@@ -70,7 +87,7 @@ namespace helper_functions
 
 	int READ_LONG()
 	{
-		return READ_SHARED(3, 4);
+		return READ_SHARED(3);
 	}
 
 	float READ_FLOAT()

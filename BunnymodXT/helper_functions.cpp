@@ -368,14 +368,12 @@ namespace helper_functions
 			Then, in this case the game begins not to take your health, but to give it more instead
 		*/
 
-		auto &hw = HwDLL::GetInstance();
-
-		const char* classname = hw.GetString(ent->v.classname);
-		if ((!strcmp(classname, "func_door")) || (!strcmp(classname, "func_door_rotating")) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/doors.cpp#L712
-		|| (!strcmp(classname, "func_rotating")) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/bmodels.cpp#L716
-		|| (!strcmp(classname, "func_train"))) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/plats.cpp#L683
+		if (ent->v.dmg < 0.0f)
 		{
-			if (ent->v.dmg < 0.0f)
+			const char* classname = HwDLL::GetInstance().GetString(ent->v.classname);
+			if ((!strcmp(classname, "func_door")) || (!strcmp(classname, "func_door_rotating")) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/doors.cpp#L712
+			|| (!strcmp(classname, "func_rotating")) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/bmodels.cpp#L716
+			|| (!strcmp(classname, "func_train"))) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/plats.cpp#L683
 				return true;
 		}
 

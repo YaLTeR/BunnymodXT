@@ -16,9 +16,11 @@ namespace TriangleWrappers
 	static int gRenderMode;
 	static float gGlR, gGlG, gGlB, gGlW;
 
+	#define IsTriAPIValid() cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10
+
 	void RenderMode(int mode)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->RenderMode(mode);
 		}
@@ -63,7 +65,7 @@ namespace TriangleWrappers
 
 	void Begin(int primitiveCode)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->Begin(primitiveCode);
 		}
@@ -77,7 +79,7 @@ namespace TriangleWrappers
 
 	void End()
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->End();
 		}
@@ -89,7 +91,7 @@ namespace TriangleWrappers
 
 	void Color4f(float x, float y, float z, float w)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->Color4f(x, y, z, w);
 		}
@@ -112,7 +114,7 @@ namespace TriangleWrappers
 
 	void Color4ub(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->Color4ub(r, g, b, a);
 		}
@@ -128,7 +130,7 @@ namespace TriangleWrappers
 
 	void TexCoord2f(float u, float v)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->TexCoord2f(u, v);
 		}
@@ -140,7 +142,7 @@ namespace TriangleWrappers
 
 	void Vertex3fv(float *worldPnt)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->Vertex3fv(worldPnt);
 		}
@@ -152,7 +154,7 @@ namespace TriangleWrappers
 
 	void Vertex3f(float x, float y, float z)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->Vertex3f(x, y, z);
 		}
@@ -164,7 +166,7 @@ namespace TriangleWrappers
 
 	void Brightness(float x)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->Brightness(x);
 		}
@@ -176,7 +178,7 @@ namespace TriangleWrappers
 
 	void CullFace(TRICULLSTYLE style)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->CullFace(style);
 		}
@@ -196,7 +198,7 @@ namespace TriangleWrappers
 
 	int SpriteTexture(struct model_s *pSpriteModel, int frame)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			return cl.pEngfuncs->pTriAPI->SpriteTexture(pSpriteModel, frame);
 		}
@@ -218,7 +220,7 @@ namespace TriangleWrappers
 
 	int WorldToScreen(vec_t *point, vec_t *screen)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			return cl.pEngfuncs->pTriAPI->WorldToScreen(point, screen);
 		}
@@ -246,7 +248,7 @@ namespace TriangleWrappers
 
 	void ScreenToWorld(vec_t *screen, vec_t *point)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->ScreenToWorld(screen, point);
 		}
@@ -271,7 +273,7 @@ namespace TriangleWrappers
 
 	void GetMatrix(const int pname, float *matrix)
 	{
-		if (cl.interface_preserved_eng_cl && cl.pEngfuncs && !hw.is_hlsdk10)
+		if (IsTriAPIValid())
 		{
 			cl.pEngfuncs->pTriAPI->GetMatrix(pname, matrix);
 		}
@@ -398,4 +400,6 @@ namespace TriangleWrappers
 	#undef MAT
 	#undef SWAP_ROWS
 	}
+
+	#undef IsTriAPIValid
 };

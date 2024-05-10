@@ -223,14 +223,14 @@ namespace helper_functions
 		const auto index = filename.find(start);
 
 		if ((index == std::string::npos) // String not found in current path.
-			|| ((index > 0) && (filename[index - 1] != PATH_SLASH)) // Previous character from the start is not a slash.
+			|| ((index > 0) && (filename[index - 1] != PATH_SLASH)) // Index is greater than 0 and previous character from the start is not a slash.
 			|| (filename[index + start.length()] != PATH_SLASH) // Next character from the end is not a slash.
 			)
 			return current_lib_path;
 
 		com_fixslashes(new_lib_path);
 
-		const std::string new_path = filename.substr(0, index) + new_lib_path + DLL_EXTENSION;
+		const std::string new_path = filename.substr(0, index) + new_lib_path + filename.substr(filename.find_last_of("."));
 
 		return new_path;
 	}

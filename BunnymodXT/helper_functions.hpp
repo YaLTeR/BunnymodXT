@@ -17,8 +17,7 @@
 	#define Q_stricmp strcasecmp
 #endif
 
-#define Q_strcasecmp(s1, s2) \
-	Q_strncasecmp(s1, s2, 99999)
+#define Q_strcasecmp(s1, s2) Q_strncasecmp(s1, s2, 99999)
 
 // entvars_t from HLSDK 1.0 does not have such variables, for this reason wrappers were made
 #ifndef HLSDK10_BUILD
@@ -37,23 +36,17 @@
 
 // Usage:
 // if (!strncmp(var, HF_StrAndLen("test")))
-#define HF_StrAndLen(str) \
-	str, sizeof(str) - 1
+#define HF_StrAndLen(str) str, sizeof(str) - 1
 
 // This is done in order to find out the length of string at the compile-time
 // We subtract 1 from sizeof due of the null terminator
-#define HF_DoesGameDirStartsWith(game) \
-	helper_functions::does_gamedir_starts_with(game, sizeof(game) - 1)
-#define HF_DoesMapNameStartsWith(map) \
-	helper_functions::does_mapname_starts_with(map, sizeof(map) - 1)
-#define HF_DoesGameDirMatch(game) \
-	helper_functions::does_gamedir_match(game)
-#define HF_DoesMapNameMatch(map) \
-	helper_functions::does_mapname_match(map)
+#define HF_DoesGameDirStartsWith(game) helper_functions::does_gamedir_starts_with(game, sizeof(game) - 1)
+#define HF_DoesMapNameStartsWith(map) helper_functions::does_mapname_starts_with(map, sizeof(map) - 1)
+#define HF_DoesGameDirMatch(game) helper_functions::does_gamedir_match(game)
+#define HF_DoesMapNameMatch(map) helper_functions::does_mapname_match(map)
 
 // Don't remove parentheses from this macro or we're doomed!
-#define HF_IsEntityTrigger(classname) \
-	(!strncmp(classname, "trigger_", 8) || !strcmp(classname, "func_ladder"))
+#define HF_IsEntityTrigger(classname) (!strncmp(classname, "trigger_", 8) || !strcmp(classname, "func_ladder"))
 
 namespace helper_functions
 {

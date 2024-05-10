@@ -380,7 +380,7 @@ namespace helper_functions
 		return false;
 	}
 
-	inline void Draw_FillRGBAShared(int x, int y, int width, int height, int r, int g, int b, int a, bool blend)
+	void Draw_FillRGBAShared(int x, int y, int width, int height, int r, int g, int b, int a, bool blend)
 	{
 		glDisable(GL_TEXTURE_2D);
 		glEnable(GL_BLEND);

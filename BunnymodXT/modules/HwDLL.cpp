@@ -25,6 +25,8 @@
 #include "../splits.hpp"
 #include "../helper_functions.hpp"
 
+#include "../wrappers/triangle_wrappers.hpp"
+
 using namespace std::literals;
 
 // Callbacks for bxt-rs.
@@ -8136,10 +8138,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_StudioRenderModel)
 		if (cl.pEngfuncs) {
 			if (currententity == cl.pEngfuncs->GetViewModel()) {
 				if (CVars::bxt_viewmodel_semitransparent.GetBool()) {
-				cl.pEngfuncs->pTriAPI->RenderMode(kRenderTransAdd);
-				cl.pEngfuncs->pTriAPI->Brightness(2);
+				TriangleWrappers::RenderMode(kRenderTransAdd);
+				TriangleWrappers::Brightness(2);
 			} else {
-				cl.pEngfuncs->pTriAPI->RenderMode(old_rendermode); }
+				TriangleWrappers::RenderMode(old_rendermode); }
 			}
 		}
 	}

@@ -365,6 +365,7 @@ public:
 	#endif
 
 	bool is_cof_steam = false; // Cry of Fear-specific
+	bool is_hlsdk10 = false;
 
 	int CallOnTASPlaybackFrame();
 	void CallOnTASPlaybackStopped();

@@ -221,16 +221,18 @@ namespace helper_functions
 	{
 		const std::string filename = current_lib_path;
 		const auto index = filename.find(start);
+		const auto extension = filename.find_last_of(".");
 
 		if ((index == std::string::npos) // String not found in current path.
-			|| ((index > 0) && (filename[index - 1] != PATH_SLASH)) // Index is greater than 0 and previous character from the start is not a slash.
-			|| (filename[index + start.length()] != PATH_SLASH) // Next character from the end is not a slash.
+			|| (extension == std::string::npos) // Extension not found in current path.
+			|| ((index > 0) && (filename[index - 1] != PATH_SLASH)) // Index is greater than 0 and previous character from the start of string is not a slash.
+			|| (filename[index + start.length()] != PATH_SLASH) // Next character from the end of string is not a slash.
 			)
 			return current_lib_path;
 
 		com_fixslashes(new_lib_path);
 
-		const std::string new_path = filename.substr(0, index) + new_lib_path + filename.substr(filename.find_last_of("."));
+		const std::string new_path = filename.substr(0, index) + new_lib_path + filename.substr(extension);
 
 		return new_path;
 	}

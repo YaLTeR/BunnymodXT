@@ -159,6 +159,17 @@ namespace TriangleDrawing
 		s = std::min(s, 1.0f);
 		return s;
 	}
+	
+	template <typename T> void DrawPolygons(const model_t *model, int i)
+	{
+		const T surfs = (T)model->surfaces + model->firstmodelsurface;
+		TriangleWrappers::Begin(TRI_POLYGON);
+		for (int j = 0; j < surfs[i].polys->numverts; ++j)
+		{
+			TriangleWrappers::Vertex3fv(surfs[i].polys->verts[j]);
+		}
+		TriangleWrappers::End();
+	}
 
 	static void DrawTriggers()
 	{
@@ -188,7 +199,6 @@ namespace TriangleDrawing
 				continue;
 
 			const bool active = ent->v.solid != SOLID_NOT || std::strcmp(classname, "trigger_transition") == 0;
-			const msurface_t *surfs = model->surfaces + model->firstmodelsurface;
 			for (int i = 0; i < model->nummodelsurfaces; ++i) {
 				// Offset to make each surface look slightly different
 				const float offset = i * float(M_PI) / 7;
@@ -203,10 +213,7 @@ namespace TriangleDrawing
 					a = GetPulsatingAlpha(a, svTime + offset);
 
 				TriangleWrappers::Color4f(r, g, b, a);
-				TriangleWrappers::Begin(TRI_POLYGON);
-				for (int j = 0; j < surfs[i].polys->numverts; ++j)
-					TriangleWrappers::Vertex3fv(surfs[i].polys->verts[j]);
-				TriangleWrappers::End();
+				DrawPolygons<msurface_t*>(model, i);
 			}
 		}
 	}

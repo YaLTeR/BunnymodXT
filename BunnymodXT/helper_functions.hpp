@@ -104,7 +104,7 @@ namespace helper_functions
 	int ret_bxt_flags();
 	void com_fixslashes(std::string &str); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
 	void com_filebase(const char *in, char *out); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/cl_dll/hud.cpp#L537
-	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start);
+	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, std::string start);
 	void crash_if_failed(const std::string str);
 	bool is_valid_index_and_edict(const int index);
 	float adjust_fov_for_widescreen(const float fov, const float def_aspect_ratio, const float our_aspect_ratio);

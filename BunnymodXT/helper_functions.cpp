@@ -217,13 +217,15 @@ namespace helper_functions
 		out[len] = 0;
 	}
 
-	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, const char *start)
+	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, std::string start)
 	{
 		const std::string filename = current_lib_path;
 		const auto index = filename.find(start);
 
-		if ((index == std::string::npos) || // String not found in current path.
-			((index > 0) && (filename[index - 1] != PATH_SLASH))) // Previous character from the specified start is not a slash.
+		if ((index == std::string::npos) // String not found in current path.
+			|| ((index > 0) && (filename[index - 1] != PATH_SLASH)) // Previous character from the start is not a slash.
+			|| (filename[index + start.length()] != PATH_SLASH) // Next character from the end is not a slash.
+			)
 			return current_lib_path;
 
 		com_fixslashes(new_lib_path);

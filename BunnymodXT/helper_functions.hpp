@@ -66,6 +66,15 @@ namespace helper_functions
 	// Please add type/flags determining functions (e.g. get_flags, get_movetype) to the end of the .cpp file!
 	// Any other functions should be added before them for better readability!
 
+	inline void UTIL_StringToVector(float *pVector, const char *pString) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/cl_dll/hud_spectator.cpp#L208
+	{
+		std::istringstream ss(pString);
+		for (int i = 0; i < 3; ++i)
+		{
+			ss >> pVector[i];
+		}
+	}
+
 	inline void rgb_to_float(float &r, float &g, float &b)
 	{
 		r = std::clamp(r / 255.0f, 0.0f, 1.0f);

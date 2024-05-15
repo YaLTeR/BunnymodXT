@@ -108,6 +108,16 @@ extern "C" int __cdecl _ZN11CBaseEntity9IsInWorldEv(void *thisptr)
 {
 	return ServerDLL::HOOKED_CBaseEntity__IsInWorld_Linux(thisptr);
 }
+
+extern "C" void __cdecl _ZN12CBaseTrigger13TeleportTouchEP11CBaseEntity(void* thisptr, void* pOther)
+{
+	return ServerDLL::HOOKED_CBaseTrigger__TeleportTouch_Linux(thisptr, pOther);
+}
+
+extern "C" void __cdecl _Z16DispatchKeyValueP7edict_sP14KeyValueData_s(edict_t* pentKeyvalue, KeyValueData* pkvd)
+{
+	return ServerDLL::HOOKED_DispatchKeyValue(pentKeyvalue, pkvd);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -172,7 +182,10 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_PM_Duck, HOOKED_PM_Duck,
 			ORIG_PM_UnDuck, HOOKED_PM_UnDuck,
 			ORIG_CBaseEntity__IsInWorld, HOOKED_CBaseEntity__IsInWorld,
-			ORIG_CBaseEntity__IsInWorld_Linux, HOOKED_CBaseEntity__IsInWorld_Linux);
+			ORIG_CBaseEntity__IsInWorld_Linux, HOOKED_CBaseEntity__IsInWorld_Linux,
+			ORIG_CBaseTrigger__TeleportTouch, HOOKED_CBaseTrigger__TeleportTouch,
+			ORIG_CBaseTrigger__TeleportTouch_Linux, HOOKED_CBaseTrigger__TeleportTouch_Linux,
+			ORIG_DispatchKeyValue, HOOKED_DispatchKeyValue);
 	}
 }
 
@@ -227,7 +240,10 @@ void ServerDLL::Unhook()
 			ORIG_PM_Duck,
 			ORIG_PM_UnDuck,
 			ORIG_CBaseEntity__IsInWorld,
-			ORIG_CBaseEntity__IsInWorld_Linux);
+			ORIG_CBaseEntity__IsInWorld_Linux,
+			ORIG_CBaseTrigger__TeleportTouch,
+			ORIG_CBaseTrigger__TeleportTouch_Linux,
+			ORIG_DispatchKeyValue);
 	}
 
 	Clear();
@@ -286,6 +302,7 @@ void ServerDLL::Clear()
 	ORIG_CBaseEntity__FireBullets = nullptr;
 	ORIG_DispatchSpawn = nullptr;
 	ORIG_DispatchTouch = nullptr;
+	ORIG_DispatchKeyValue = nullptr;
 	ORIG_CBaseEntity__FireBullets_Linux = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer = nullptr;
 	ORIG_CBaseEntity__FireBulletsPlayer_Linux = nullptr;
@@ -301,6 +318,8 @@ void ServerDLL::Clear()
 	ORIG_PM_UnDuck = nullptr;
 	ORIG_CBaseEntity__IsInWorld = nullptr;
 	ORIG_CBaseEntity__IsInWorld_Linux = nullptr;
+	ORIG_CBaseTrigger__TeleportTouch = nullptr;
+	ORIG_CBaseTrigger__TeleportTouch_Linux = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -346,6 +365,8 @@ void ServerDLL::Clear()
 	offm_fStamina = 0;
 	offm_old_iAmmo = 0;
 	offm_iPlayerSaveLock = 0;
+
+	tpLandmarks.clear();
 }
 
 bool ServerDLL::CanHook(const std::wstring& moduleFullName)
@@ -1205,6 +1226,7 @@ void ServerDLL::FindStuff()
 
 	ORIG_DispatchSpawn = reinterpret_cast<_DispatchSpawn>(MemUtils::GetSymbolAddress(m_Handle, "_Z13DispatchSpawnP7edict_s"));
 	ORIG_DispatchTouch = reinterpret_cast<_DispatchTouch>(MemUtils::GetSymbolAddress(m_Handle, "_Z13DispatchTouchP7edict_sS0_"));
+	ORIG_DispatchKeyValue = reinterpret_cast<_DispatchKeyValue>(MemUtils::GetSymbolAddress(m_Handle, "_Z16DispatchKeyValueP7edict_sP14KeyValueData_s"));
 	ORIG_ClientCommand = reinterpret_cast<_ClientCommand>(MemUtils::GetSymbolAddress(m_Handle, "_Z13ClientCommandP7edict_s"));
 	ORIG_PlayerPostThink = reinterpret_cast<_PlayerPostThink>(MemUtils::GetSymbolAddress(m_Handle, "_Z15PlayerPostThinkP7edict_s"));
 	ORIG_PM_Move = reinterpret_cast<_PM_Move>(MemUtils::GetSymbolAddress(m_Handle, "PM_Move"));
@@ -1212,10 +1234,11 @@ void ServerDLL::FindStuff()
 	ORIG_CmdStart = reinterpret_cast<_CmdStart>(MemUtils::GetSymbolAddress(m_Handle, "_Z8CmdStartPK7edict_sPK9usercmd_sj"));
 	ORIG_CmdEnd = reinterpret_cast<_CmdEnd>(MemUtils::GetSymbolAddress(m_Handle, "_Z6CmdEndPK7edict_s"));
 
-	if (ORIG_DispatchSpawn && ORIG_DispatchTouch && ORIG_ClientCommand && ORIG_PlayerPostThink && 
+	if (ORIG_DispatchSpawn && ORIG_DispatchTouch && ORIG_DispatchKeyValue && ORIG_ClientCommand && ORIG_PlayerPostThink && 
 		ORIG_PM_Move && ORIG_AddToFullPack && ORIG_CmdStart && ORIG_CmdEnd) {
 		EngineDevMsg("[server dll] Found DispatchSpawn at %p.\n", ORIG_DispatchSpawn);
 		EngineDevMsg("[server dll] Found DispatchTouch at %p.\n", ORIG_DispatchTouch);
+		EngineDevMsg("[server dll] Found DispatchKeyValue at %p.\n", ORIG_DispatchKeyValue);
 		EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 		EngineDevMsg("[server dll] Found PlayerPostThink at %p.\n", ORIG_PlayerPostThink);
 		EngineDevMsg("[server dll] Found PM_Move at %p.\n", ORIG_PM_Move);
@@ -1230,10 +1253,12 @@ void ServerDLL::FindStuff()
 				// Gets our hooked addresses on Windows.
 				ORIG_DispatchSpawn = funcs.pfnSpawn;
 				ORIG_DispatchTouch = funcs.pfnTouch;
+				ORIG_DispatchKeyValue = funcs.pfnKeyValue;
 				ORIG_ClientCommand = funcs.pfnClientCommand;
 				ORIG_PlayerPostThink = funcs.pfnPlayerPostThink;
 				EngineDevMsg("[server dll] Found DispatchSpawn at %p.\n", ORIG_DispatchSpawn);
 				EngineDevMsg("[server dll] Found DispatchTouch at %p.\n", ORIG_DispatchTouch);
+				EngineDevMsg("[server dll] Found DispatchKeyValue at %p.\n", ORIG_DispatchKeyValue);
 				EngineDevMsg("[server dll] Found ClientCommand at %p.\n", ORIG_ClientCommand);
 				EngineDevMsg("[server dll] Found PlayerPostThink at %p.\n", ORIG_PlayerPostThink);
 				if (INTERFACE_VERSION == 140)
@@ -1548,6 +1573,19 @@ void ServerDLL::FindStuff()
 		}
 	}
 
+	{
+		ORIG_CBaseTrigger__TeleportTouch = reinterpret_cast<_CBaseTrigger__TeleportTouch>(MemUtils::GetSymbolAddress(m_Handle, "?TeleportTouch@CBaseTrigger@@QAEXPAVCBaseEntity@@@Z"));
+		if (ORIG_CBaseTrigger__TeleportTouch)
+			EngineDevMsg("[server dll] Found CBaseTrigger::TriggerTouch at %p.\n", ORIG_CBaseTrigger__TeleportTouch);
+		else {
+			ORIG_CBaseTrigger__TeleportTouch_Linux = reinterpret_cast<_CBaseTrigger__TeleportTouch_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN12CBaseTrigger13TeleportTouchEP11CBaseEntity"));
+			if (ORIG_CBaseTrigger__TeleportTouch_Linux)
+				EngineDevMsg("[server dll] Found CBaseTrigger::TriggerTouch [Linux] at %p.\n", ORIG_CBaseTrigger__TeleportTouch_Linux);
+			else
+				EngineDevWarning("[server dll] Could not find CBaseTrigger::TriggerTouch.\n");
+		}
+	}
+
 	if (!pEngfuncs)
 	{
 		pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
@@ -1609,6 +1647,13 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_cof_disable_monsters_teleport_to_spawn_after_load);
 	if (ORIG_CTriggerCamera__FollowTarget && is_cof)
 		REG(bxt_cof_allow_skipping_all_cutscenes);
+	if (ORIG_CBaseTrigger__TeleportTouch || ORIG_CBaseTrigger__TeleportTouch_Linux) {
+		REG(bxt_ch_trigger_tp_keeps_momentum);
+		REG(bxt_ch_trigger_tp_keeps_momentum_velocity);
+		REG(bxt_ch_trigger_tp_keeps_momentum_velocity_redirect);
+		REG(bxt_ch_trigger_tp_keeps_momentum_viewangles);
+		REG(bxt_ch_trigger_tp_landmark);
+	}
 
 	REG(bxt_splits_print);
 	REG(bxt_splits_print_times_at_end);
@@ -3314,6 +3359,196 @@ HOOK_DEF_1(ServerDLL, int, __cdecl, CBaseEntity__IsInWorld_Linux, void*, thisptr
 	}
 
 	return ORIG_CBaseEntity__IsInWorld_Linux(thisptr);
+}
+
+bool ServerDLL::IsPlayer(edict_t *ent)
+{
+	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/player.cpp#L2850
+
+	auto &hw = HwDLL::GetInstance();
+
+	if (strcmp(hw.GetString(ent->v.classname), "player") != 0)
+		return false;
+
+	if (!(ent->v.flags & FL_CLIENT))
+		return false;
+
+	if (pEngfuncs && hw.ppGlobals)
+	{
+		int index = pEngfuncs->pfnIndexOfEdict(ent);
+
+		if ((index < 1) || (index > hw.ppGlobals->maxClients)) // gGlobalVariables.maxClients = svs.maxclients
+			return false;
+	}
+
+	return true;
+}
+
+void TriggerTpKeepsMomentumRestore(Vector prev_vel, Vector prev_view, Vector prev_angles, Vector prev_basevelocity, entvars_t *pev, enginefuncs_t *pEngfuncs)
+{
+	// Set velocity before viewangles because viewangles will mess with the velocity angle for redirection
+	if (CVars::bxt_ch_trigger_tp_keeps_momentum_velocity.GetBool()) {
+		if (CVars::bxt_ch_trigger_tp_keeps_momentum_velocity_redirect.GetBool()) {
+			// https://github.com/fireblizzard/agmod/blob/bf06e4ffd31c1427784685118820e15552803bcb/dlls/triggers.cpp#L1935
+			// After teleportation, pevToucher has the same viewangles as pentTarget.
+			Vector vecAngles = Vector(0, pev->v_angle.y, 0);
+			Vector vecForward;
+
+			pEngfuncs->pfnAngleVectors(vecAngles, vecForward, nullptr, nullptr);
+
+			// For velocity
+			float xy_vel = prev_vel.Length2D();
+
+			pev->velocity.x = vecForward.x * xy_vel;
+			pev->velocity.y = vecForward.y * xy_vel;
+
+			// For base velocity
+			float xy_basevel = prev_basevelocity.Length2D();
+
+			pev->basevelocity.x = vecForward.x * xy_basevel;
+			pev->basevelocity.y = vecForward.y * xy_basevel;
+		} else {
+			pev->velocity = prev_vel;
+			pev->basevelocity = prev_basevelocity;
+		}
+	}
+
+	if (CVars::bxt_ch_trigger_tp_keeps_momentum_viewangles.GetBool()) {
+		// In HLSDK, due to some inheritance stuffs, pevToucher's viewangles is changed differently.
+		// In and only in TeleportTouch, pev->fixangle is set to 1.
+		// If not set back to 0, we cannot set our viewangles, due to inheritance stuffs.
+		pev->fixangle = 0;
+		pev->v_angle = prev_view;
+		pev->angles = prev_angles;
+	}
+}
+
+HOOK_DEF_2(ServerDLL, void, __cdecl, DispatchKeyValue, edict_t*, pentKeyvalue, KeyValueData*, pkvd)
+{
+	if (pkvd && pentKeyvalue
+		&& pkvd->szClassName // some entities don't have classname, this avoids crash.
+		&& pkvd->szKeyName && pkvd->szValue // just to make sure
+		&& !strcmp(pkvd->szClassName, "trigger_teleport") 
+		&& !strcmp(pkvd->szKeyName, "landmark")
+		) {
+
+		edict_t *edicts;
+		HwDLL::GetInstance().GetEdicts(&edicts);
+		const auto index = pentKeyvalue - edicts;
+
+		tpLandmarks[index] = pkvd->szValue;
+		// Don't set pkvd->fHandled = 1, 
+		// as some games could handle the same cases for the same entities, 
+		// which means you won't give the game a chance to read that data!
+		// -- _Smiley
+		// pkvd->fHandled = 1;
+	}
+
+	ORIG_DispatchKeyValue(pentKeyvalue, pkvd);
+}
+
+// std::optional is at least C++17 :DDDDDDDDDDDDDDDDDDDDDDD
+std::tuple<bool, Vector> TriggerTpLandmarkBefore(bool enabled, entvars_t *this_pev, entvars_t *pev, enginefuncs_t *pEngfuncs)
+{
+	if (!enabled)
+		return std::make_tuple(false, Vector());
+
+	const auto index = ServerDLL::GetInstance().pEngfuncs->pfnIndexOfEdict(this_pev->pContainingEntity);
+	const auto tpLandmarks = ServerDLL::GetInstance().tpLandmarks;
+
+	if (!tpLandmarks.count(index))
+		return std::make_tuple(false, Vector());
+
+	const auto landmarkName = tpLandmarks.at(index);
+	const edict_t *landmark = pEngfuncs->pfnFindEntityByString(NULL, "targetname", landmarkName.c_str());
+
+	if (HwDLL::GetInstance().IsValidEdict(landmark))
+		return std::make_tuple(true, Vector(pev->origin) - Vector(landmark->v.origin));
+
+	return std::make_tuple(false, Vector());
+}
+
+void TriggerTpLandmarkAfter(entvars_t *pev, Vector offset)
+{
+	pev->origin = pev->origin + offset;
+	// have to offset by some HULL because of origin z diff
+	const auto is_duck = pev->button & (IN_DUCK) || pev->flags & (FL_DUCKING);
+	const Vector VEC_HULL_MIN(-16, -16, -36);
+	const Vector VEC_DUCK_HULL_MIN(-16, -16, -18);
+	const auto hull_offset = is_duck ? VEC_DUCK_HULL_MIN : VEC_HULL_MIN;
+
+	pev->origin[2] += hull_offset[2];
+	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/triggers.cpp#L1908
+	pev->origin[2] -= 1;
+}
+
+void ServerDLL::ClearTPLandmarks()
+{
+	tpLandmarks.clear();
+}
+
+HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, thisptr, int, edx, void*, pOther)
+{
+	auto is_bxt_ch_trigger_tp_keeps_momentum_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_keeps_momentum.GetBool();
+	auto is_bxt_ch_trigger_tp_landmark_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_landmark.GetBool() && HwDLL::GetInstance().ppGlobals;
+
+	entvars_t *this_pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pOther) + 4);
+	Vector prev_vel;
+	Vector prev_view;
+	Vector prev_angles;
+	Vector prev_basevelocity;
+
+	if (pev) {
+		prev_vel = pev->velocity;
+		prev_view = pev->v_angle;
+		prev_angles = pev->angles;
+		prev_basevelocity = pev->basevelocity;
+	}
+
+	const auto landmark_info = TriggerTpLandmarkBefore(is_bxt_ch_trigger_tp_landmark_enabled, this_pev, pev, pEngfuncs);
+
+	ORIG_CBaseTrigger__TeleportTouch(thisptr, edx, pOther);
+
+	if (is_bxt_ch_trigger_tp_keeps_momentum_enabled && pev && pEngfuncs && IsPlayer(pev->pContainingEntity)) {
+		TriggerTpKeepsMomentumRestore(prev_vel, prev_vel, prev_angles, prev_basevelocity, pev, pEngfuncs);
+	}
+
+	if (is_bxt_ch_trigger_tp_landmark_enabled && std::get<0>(landmark_info)) {
+		TriggerTpLandmarkAfter(pev, std::get<1>(landmark_info));
+	}
+}
+
+HOOK_DEF_2(ServerDLL, void, __cdecl, CBaseTrigger__TeleportTouch_Linux, void*, thisptr, void*, pOther)
+{
+	auto is_bxt_ch_trigger_tp_keeps_momentum_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_keeps_momentum.GetBool();
+	auto is_bxt_ch_trigger_tp_landmark_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_landmark.GetBool() && pEngfuncs && HwDLL::GetInstance().ppGlobals;
+
+	entvars_t *this_pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pOther) + 4);
+	Vector prev_vel;
+	Vector prev_view;
+	Vector prev_angles;
+	Vector prev_basevelocity;
+
+	if (pev) {
+		prev_vel = pev->velocity;
+		prev_view = pev->v_angle;
+		prev_angles = pev->angles;
+		prev_basevelocity = pev->basevelocity;
+	}
+
+	const auto landmark_info = TriggerTpLandmarkBefore(is_bxt_ch_trigger_tp_landmark_enabled, this_pev, pev, pEngfuncs);
+
+	ORIG_CBaseTrigger__TeleportTouch_Linux(thisptr, pOther);
+
+	if (is_bxt_ch_trigger_tp_keeps_momentum_enabled && pev && pEngfuncs && IsPlayer(pev->pContainingEntity)) {
+		TriggerTpKeepsMomentumRestore(prev_vel, prev_vel, prev_angles, prev_basevelocity, pev, pEngfuncs);
+	}
+
+	if (is_bxt_ch_trigger_tp_landmark_enabled && std::get<0>(landmark_info)) {
+		TriggerTpLandmarkAfter(pev, std::get<1>(landmark_info));
+	}
 }
 
 #undef ALERT

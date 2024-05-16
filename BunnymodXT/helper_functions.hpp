@@ -44,7 +44,7 @@
 // We subtract 1 from sizeof due of the null terminator
 #define HF_DoesGameDirStartsWith(game) helper_functions::does_gamedir_starts_with(game, sizeof(game) - 1)
 #define HF_DoesMapNameStartsWith(map) helper_functions::does_mapname_starts_with(map, sizeof(map) - 1)
-#define HF_DoesGameDirMatch(game) helper_functions::does_gamedir_match(game)
+#define HF_DoesGameDirMatch(game) helper_functions::does_gamedir_match(game, true)
 #define HF_DoesMapNameMatch(map) helper_functions::does_mapname_match(map)
 
 // Don't remove parentheses from this macro or we're doomed!
@@ -107,7 +107,7 @@ namespace helper_functions
 	void Draw_FillRGBABlend(int x, int y, int width, int height, int r, int g, int b, int a);
 
 	bool does_gamedir_starts_with(const char *game, const size_t len);
-	bool does_gamedir_match(const char *game);
+	bool does_gamedir_match(const char *game, bool lowercase);
 	bool does_mapname_starts_with(const char *map, const size_t len);
 	bool does_mapname_match(const char *map);
 
@@ -115,7 +115,7 @@ namespace helper_functions
 	int ret_bxt_flags();
 	void com_fixslashes(std::string &str); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
 	void com_filebase(const char *in, char *out); // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/cl_dll/hud.cpp#L537
-	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, std::string start);
+	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, std::string start, bool from_end);
 	void crash_if_failed(const std::string str);
 	bool is_valid_index_and_edict(const int index);
 	float adjust_fov_for_widescreen(const float fov, const float def_aspect_ratio, const float our_aspect_ratio);

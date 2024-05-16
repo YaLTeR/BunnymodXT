@@ -8282,33 +8282,37 @@ HOOK_DEF_0(HwDLL, qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 {
 	const std::string oldszDllFilename = szDllFilename;
-	std::string newszDllFilename;
-	bool is_failed = false;
+	std::string newszDllFilename, game_lib;
+	std::string start = ClientDLL::GetInstance().GetGameDirectory(false);
+	bool find_from_end = false, is_failed = false;
 
 	if (oldszDllFilename.rfind(PATH_SLASH_DOUBLE_QUOTE "metamod.") != std::string::npos) // Dot must be indicated at the end to make it clear that the file extension comes after it
 	{
 		EngineDevMsg("[hw dll] Metamod detected.\n");
 
-		if (HF_DoesGameDirMatch("cstrike"))
+		if (helper_functions::does_gamedir_match("cstrike", false))
 		{
 			#ifdef _WIN32
-			const std::string cs_lib = "dlls\\mp";
+			game_lib = start + "\\dlls\\mp";
 			#else
-			const std::string cs_lib = "dlls/cs";
+			game_lib = start + "/dlls/cs";
 			#endif
-
-			EngineDevMsg("[hw dll] Old path to game library: %s\n", szDllFilename);
-			newszDllFilename = helper_functions::swap_lib(szDllFilename, cs_lib, "addons");
-			szDllFilename = newszDllFilename.c_str();
-			EngineDevMsg("[hw dll] New path to game library: %s\n", szDllFilename);
-
-			if (!strcmp(szDllFilename, oldszDllFilename.c_str()))
-				is_failed = true;
 		}
 		else
 		{
 			is_failed = true;
 		}
+	}
+
+	if (!game_lib.empty())
+	{
+		EngineDevMsg("[hw dll] Old path to game library: %s\n", szDllFilename);
+		newszDllFilename = helper_functions::swap_lib(szDllFilename, game_lib, start, find_from_end);
+		szDllFilename = newszDllFilename.c_str();
+		EngineDevMsg("[hw dll] New path to game library: %s\n", szDllFilename);
+
+		if (!strcmp(szDllFilename, oldszDllFilename.c_str()))
+			is_failed = true;
 	}
 
 	if (is_failed)

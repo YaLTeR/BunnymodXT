@@ -217,11 +217,16 @@ namespace helper_functions
 		out[len] = 0;
 	}
 
-	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, std::string start)
+	std::string swap_lib(const char* current_lib_path, std::string new_lib_path, std::string start, bool from_end)
 	{
 		const std::string filename = current_lib_path;
-		const auto index = filename.find(start);
 		const auto extension = filename.find_last_of(".");
+		size_t index = std::string::npos;
+
+		if (from_end)
+			index = filename.rfind(start);
+		else
+			index = filename.find(start);
 
 		if ((index == std::string::npos) // String not found in current path.
 			|| (extension == std::string::npos) // Extension not found in current path.
@@ -300,9 +305,9 @@ namespace helper_functions
 		return false;
 	}
 
-	bool does_gamedir_match(const char *game)
+	bool does_gamedir_match(const char *game, bool lowercase)
 	{
-		const std::string gamedir = ClientDLL::GetInstance().GetGameDirectory(true);
+		const std::string gamedir = ClientDLL::GetInstance().GetGameDirectory(lowercase);
 		if (!gamedir.empty() && !strcmp(gamedir.c_str(), game))
 			return true;
 

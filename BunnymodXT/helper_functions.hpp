@@ -7,12 +7,14 @@
 
 #ifdef _WIN32
 	#define DLL_EXTENSION ".dll"
-	#define PATH_SLASH '\\'
+	#define PATH_SLASH_SINGLE_QUOTE '\\'
+	#define PATH_SLASH_DOUBLE_QUOTE "\\"
 	#define Q_strncasecmp _strnicmp
 	#define Q_stricmp _stricmp
 #else
 	#define DLL_EXTENSION ".so"
-	#define PATH_SLASH '/'
+	#define PATH_SLASH_SINGLE_QUOTE '/'
+	#define PATH_SLASH_DOUBLE_QUOTE "/"
 	#define Q_strncasecmp strncasecmp
 	#define Q_stricmp strcasecmp
 #endif

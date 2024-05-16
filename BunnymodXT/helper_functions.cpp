@@ -225,8 +225,8 @@ namespace helper_functions
 
 		if ((index == std::string::npos) // String not found in current path.
 			|| (extension == std::string::npos) // Extension not found in current path.
-			|| ((index > 0) && (filename[index - 1] != PATH_SLASH)) // Index is greater than 0 and previous character from the start of string is not a slash.
-			|| (filename[index + start.length()] != PATH_SLASH) // Next character from the end of string is not a slash.
+			|| ((index > 0) && (filename[index - 1] != PATH_SLASH_SINGLE_QUOTE)) // Index is greater than 0 and previous character from the start of string is not a slash.
+			|| (filename[index + start.length()] != PATH_SLASH_SINGLE_QUOTE) // Next character from the end of string is not a slash.
 			)
 			return current_lib_path;
 

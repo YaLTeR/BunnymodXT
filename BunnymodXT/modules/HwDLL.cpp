@@ -8281,14 +8281,13 @@ HOOK_DEF_0(HwDLL, qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 
 HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 {
-	auto oldszDllFilename = szDllFilename;
+	const std::string oldszDllFilename = szDllFilename;
 	std::string newszDllFilename;
+	bool is_failed = false;
 
-	if (boost::ends_with(szDllFilename, "metamod" DLL_EXTENSION))
+	if (oldszDllFilename.rfind(PATH_SLASH_DOUBLE_QUOTE "metamod.") != std::string::npos) // Dot must be indicated at the end to make it clear that the file extension comes after it
 	{
 		EngineDevMsg("[hw dll] Metamod detected.\n");
-
-		bool is_failed = false;
 
 		if (HF_DoesGameDirMatch("cstrike"))
 		{
@@ -8303,19 +8302,19 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 			szDllFilename = newszDllFilename.c_str();
 			EngineDevMsg("[hw dll] New path to game library: %s\n", szDllFilename);
 
-			if (!strcmp(szDllFilename, oldszDllFilename))
+			if (!strcmp(szDllFilename, oldszDllFilename.c_str()))
 				is_failed = true;
 		}
 		else
 		{
 			is_failed = true;
 		}
+	}
 
-		if (is_failed)
-		{
-			const std::string error_msg = "[hw dll] Cannot disable AmxModX for current mod. Edit <mod>/liblist.gam to continue.\n";
-			helper_functions::crash_if_failed(error_msg);
-		}
+	if (is_failed)
+	{
+		const std::string error_msg = "[hw dll] Cannot disable addon for current mod. Edit <mod>/liblist.gam to continue.\n";
+		helper_functions::crash_if_failed(error_msg);
 	}
 
 	ORIG_LoadThisDll(szDllFilename);

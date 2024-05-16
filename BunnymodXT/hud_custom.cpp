@@ -861,7 +861,7 @@ namespace CustomHud
 
 				out << "HP: " << ent->v.health << '\n';
 
-				if (strstr(classname, "func_door") != NULL)
+				if (!strncmp(classname, HF_StrAndLen("func_door")))
 				{
 					if (ent->v.spawnflags & SF_DOOR_USE_ONLY)
 						out << "Usable: Yes" << '\n';

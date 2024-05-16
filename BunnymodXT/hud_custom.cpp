@@ -13,11 +13,11 @@
 
 #include "modules/HwDLL.hpp"
 
+#include "helper_functions.hpp"
+
 namespace CustomHud
 {
 	static const float FADE_DURATION_JUMPSPEED = 0.7f;
-
-	static bool initialized = false;
 
 	static SCREENINFO si;
 	static int precision;
@@ -451,9 +451,7 @@ namespace CustomHud
 			std::istringstream ss(CVars::con_color.GetString());
 			ss >> r >> g >> b;
 
-			consoleColor[0] = r / 255.0f;
-			consoleColor[1] = g / 255.0f;
-			consoleColor[2] = b / 255.0f;
+			helper_functions::rgb_to_float(consoleColor, r, g, b);
 		}
 
 		// Default: yellowish.
@@ -863,7 +861,7 @@ namespace CustomHud
 
 				out << "HP: " << ent->v.health << '\n';
 
-				if (strstr(classname, "func_door") != NULL)
+				if (!strncmp(classname, HF_StrAndLen("func_door")))
 				{
 					if (ent->v.spawnflags & SF_DOOR_USE_ONLY)
 						out << "Usable: Yes" << '\n';
@@ -876,15 +874,16 @@ namespace CustomHud
 						out << "Monsters: Can open" << '\n';
 				}
 
-				if ((strstr(classname, "func_door") != NULL) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
+				if (helper_functions::is_entity_give_infinite_health(ent))
 					out << "Damage: " << ent->v.dmg << '\n';
 
 				if (CVars::bxt_hud_entity_info.GetInt() >= 2)
 				{
 					out << "Yaw: " << ent->v.angles[1] << '\n';
 
-					Vector origin;
-					HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
+					Vector origin = ent->v.origin;
+					if (helper_functions::IsBSPModel(ent))
+						origin = helper_functions::Center(ent);
 
 					out << "X: " << origin.x << '\n';
 					out << "Y: " << origin.y << '\n';
@@ -946,17 +945,6 @@ namespace CustomHud
 
 	void DrawSelfgaussInfo(float flTime)
 	{
-		static const char *HITGROUP_STRING[] = {
-			"Generic",
-			"Head",
-			"Chest",
-			"Stomach",
-			"Left Arm",
-			"Right Arm",
-			"Left Leg",
-			"Right Leg"
-		};
-
 		if (CVars::bxt_hud_selfgauss.GetBool())
 		{
 			int x, y;
@@ -974,7 +962,7 @@ namespace CustomHud
 				out.setf(std::ios::fixed);
 				out.precision(precision);
 				out << "Threshold: " << threshold << '\n'
-					<< "Hit Group: " << HITGROUP_STRING[hitGroup];
+					<< "Hit Group: " << helper_functions::get_hitgroup(hitGroup);
 			}
 			else
 			{
@@ -1679,12 +1667,12 @@ namespace CustomHud
 	void Init()
 	{
 		SpriteList = nullptr;
-		initialized = true;
+		ClientDLL::GetInstance().customhud_initialized = true;
 	}
 
 	void InitIfNecessary()
 	{
-		if (!initialized)
+		if (!ClientDLL::GetInstance().customhud_initialized)
 			Init();
 	}
 

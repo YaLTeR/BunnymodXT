@@ -376,15 +376,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	}
 	m_HookedNumber = number;
 
-#ifdef _WIN32
-	// Make it possible to run multiple Half-Life instances.
-	auto mutex = OpenMutexA(SYNCHRONIZE, FALSE, "ValveHalfLifeLauncherMutex");
-	if (mutex) {
-		EngineMsg("Releasing the launcher mutex.\n");
-		ReleaseMutex(mutex);
-		CloseHandle(mutex);
-	}
-#endif
+	helper_functions::allow_multiple_instances();
 
 	FindStuff();
 
@@ -558,17 +550,11 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 				MB_OK | MB_ICONWARNING
 			);
 		#ifdef COF_BUILD
-		if (!is_cof_steam) {
-			ClientDLL::GetInstance().pEngfuncs = nullptr;
-			ServerDLL::GetInstance().pEngfuncs = nullptr;
-			MessageBox(NULL, "Loaded Bunnymod XT (CoF Steam version) in non-CoF game! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
-		}
+		if (!is_cof_steam)
+			helper_functions::crash_if_failed("Loaded Bunnymod XT (CoF Steam version) in non-CoF game! Download the right version!");
 		#else
-		if (is_cof_steam) {
-			ClientDLL::GetInstance().pEngfuncs = nullptr;
-			ServerDLL::GetInstance().pEngfuncs = nullptr;
-			MessageBox(NULL, "Loaded BunnymodXT (HL version) in CoF Steam! Download the right version!", "Fatal Error", MB_OK | MB_ICONERROR);
-		}
+		if (is_cof_steam)
+			helper_functions::crash_if_failed("Loaded BunnymodXT (HL version) in CoF Steam! Download the right version!");
 		#endif
 	#endif
 }
@@ -759,6 +745,7 @@ void HwDLL::Clear()
 	autoRecordDemoName.clear();
 	autoRecordDemoNumber = 1;
 	autoRecordNow = false;
+	helper_functions::gamedir_reset();
 	insideHost_Loadgame_f = false;
 	insideHost_Reload_f = false;
 	pcl = nullptr;
@@ -835,6 +822,8 @@ void HwDLL::Clear()
 	ch_checkpoint_viewangles.clear();
 	ch_checkpoint_is_duck.clear();
 
+	discord_rpc_initialized = false;
+	check_vsync = true;
 
 	tas_editor_mode = TASEditorMode::DISABLED;
 	tas_editor_input = EditedInput();
@@ -3154,44 +3143,18 @@ struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 
 	static void handler(float hp, int num)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
-
+		hw.GetEdicts(&edicts);
 		edict_t* ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
-			return;
 
 		ent->v.health = hp;
 	}
 };
-
-void HwDLL::TeleportMonsterToPosition(float x, float y, float z, int index)
-{
-	const auto& hw = HwDLL::GetInstance();
-	edict_t* edicts;
-	hw.GetEdicts(&edicts);
-	edict_t* ent = edicts + index;
-	if (!hw.IsValidEdict(ent))
-	{
-		hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", index);
-		return;
-	}
-
-	if (ent->v.flags & FL_MONSTER)
-	{
-		ent->v.origin[0] = x;
-		ent->v.origin[1] = y;
-		ent->v.origin[2] = z;
-	}
-}
 
 struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 {
@@ -3204,40 +3167,35 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 	static void handler(int num)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
+		hw.GetEdicts(&edicts);
+		edict_t* ent = edicts + num;
 
 		const auto& p_pos = (*hw.sv_player)->v.origin;
-		hw.TeleportMonsterToPosition(p_pos[0], p_pos[1], p_pos[2], num);
+
+		if (ent->v.flags & FL_MONSTER)
+		{
+			ent->v.origin[0] = p_pos[0];
+			ent->v.origin[1] = p_pos[1];
+			ent->v.origin[2] = p_pos[2];
+		}
 	}
 
 	static void handler(int num, float off_z)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
-
+		hw.GetEdicts(&edicts);
 		edict_t* ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
-			return;
-		}
 
 		if (ent->v.flags & FL_MONSTER)
 		{
@@ -3267,18 +3225,21 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 
 	static void handler(float x, float y, float z, int num)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		auto& hw = HwDLL::GetInstance();
 
 		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
+		hw.GetEdicts(&edicts);
+		edict_t* ent = edicts + num;
 
-		if (num >= numEdicts)
+		if (ent->v.flags & FL_MONSTER)
 		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
+			ent->v.origin[0] = x;
+			ent->v.origin[1] = y;
+			ent->v.origin[2] = z;
 		}
-
-		hw.TeleportMonsterToPosition(x, y, z, num);
 	}
 };
 
@@ -3460,9 +3421,13 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 
 		pl->v.origin = cp_origin;
 
+		InitGameDirIfNecessary();
+
+		#ifndef HLSDK10_BUILD
 		// for CS 1.6 stamina reset
-		if (hw.is_cstrike_dir) 
+		if (hw.is_cs_dir) 
 			pl->v.fuser2 = 0;
+		#endif
 	}
 };
 
@@ -3622,65 +3587,86 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Prev
 	}
 };
 
-struct HwDLL::Cmd_BXT_CH_Get_Other_Player_Info
+struct HwDLL::Cmd_BXT_CH_Get_All_Info
 {
-	NO_USAGE();
+	USAGE("Usage: bxt_ch_get_all_info\n bxt_ch_get_all_info <index>\n");
 
 	static void handler()
 	{
-		auto &hw = HwDLL::GetInstance();
-		auto &cl = ClientDLL::GetInstance();
+		handler(1);
+	}
 
-		const auto& mvtype = (*hw.sv_player)->v.movetype;
-		const auto& basevel = (*hw.sv_player)->v.basevelocity;
-		const auto& punch = (*hw.sv_player)->v.punchangle;
+	static void handler(int num)
+	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
 
-		if (cl.pEngfuncs)
-			hw.ORIG_Con_Printf("Client maxspeed: %f\n", cl.pEngfuncs->GetClientMaxspeed());
-		hw.ORIG_Con_Printf("Movetype: %d (%s)\n", mvtype, hw.GetMovetypeName(mvtype));
-		hw.ORIG_Con_Printf("Health: %f\n", (*hw.sv_player)->v.health);
-		hw.ORIG_Con_Printf("Armor: %f\n", (*hw.sv_player)->v.armorvalue);
-		hw.ORIG_Con_Printf("Waterlevel: %d\n", (*hw.sv_player)->v.waterlevel);
-		hw.ORIG_Con_Printf("Watertype: %d\n", (*hw.sv_player)->v.watertype);
-		hw.ORIG_Con_Printf("Max health: %f\n", (*hw.sv_player)->v.max_health);
-		hw.ORIG_Con_Printf("Gravity: %f\n", (*hw.sv_player)->v.gravity);
-		hw.ORIG_Con_Printf("Friction: %f\n", (*hw.sv_player)->v.friction);
 		std::ostringstream out;
-		out << "Flags: ";
-		if ((*hw.sv_player)->v.flags & FL_CONVEYOR)
-			out << "FL_CONVEYOR; ";
-		if ((*hw.sv_player)->v.flags & FL_INWATER)
-			out << "FL_INWATER; ";
-		if ((*hw.sv_player)->v.flags & FL_GODMODE)
-			out << "FL_GODMODE; ";
-		if ((*hw.sv_player)->v.flags & FL_NOTARGET)
-			out << "FL_NOTARGET; ";
-		if ((*hw.sv_player)->v.flags & FL_ONGROUND)
-			out << "FL_ONGROUND; ";
-		if ((*hw.sv_player)->v.flags & FL_WATERJUMP)
-			out << "FL_WATERJUMP; ";
-		if ((*hw.sv_player)->v.flags & FL_FROZEN)
-			out << "FL_FROZEN; ";
-		if ((*hw.sv_player)->v.flags & FL_DUCKING)
-			out << "FL_DUCKING; ";
-		if ((*hw.sv_player)->v.flags & FL_ONTRAIN)
-			out << "FL_ONTRAIN; ";
-		out << '\n';
-		hw.ORIG_Con_Printf("%s", out.str().c_str());
-		hw.ORIG_Con_Printf("bInDuck: %d\n", (*hw.sv_player)->v.bInDuck);
-		hw.ORIG_Con_Printf("Basevelocity: %f %f %f; XY = %f; XYZ = %f\n", basevel.x, basevel.y, basevel.z, basevel.Length2D(), basevel.Length());
-		hw.ORIG_Con_Printf("Server punchangle: %f %f %f\n", punch.x, punch.y, punch.z);
-		hw.ORIG_Con_Printf("iuser1: %d; iuser2: %d; iuser3: %d; iuser4: %d\n", (*hw.sv_player)->v.iuser1, (*hw.sv_player)->v.iuser2, (*hw.sv_player)->v.iuser3, (*hw.sv_player)->v.iuser4);
-		hw.ORIG_Con_Printf("fuser1: %f; fuser2: %f; fuser3: %f; fuser4: %f\n", (*hw.sv_player)->v.fuser1, (*hw.sv_player)->v.fuser2, (*hw.sv_player)->v.fuser3, (*hw.sv_player)->v.fuser4);
+		auto &hw = HwDLL::GetInstance();
 
-		const auto& vusr1 = (*hw.sv_player)->v.vuser1;
-		const auto& vusr2 = (*hw.sv_player)->v.vuser2;
-		const auto& vusr3 = (*hw.sv_player)->v.vuser3;
-		const auto& vusr4 = (*hw.sv_player)->v.vuser4;
-		hw.ORIG_Con_Printf("vuser1: %f %f %f; XY = %f; XYZ = %f\n", vusr1.x, vusr1.y, vusr1.z, vusr1.Length2D(), vusr1.Length());
-		hw.ORIG_Con_Printf("vuser2: %f %f %f; XY = %f; XYZ = %f\n", vusr2.x, vusr2.y, vusr2.z, vusr2.Length2D(), vusr2.Length());
-		hw.ORIG_Con_Printf("vuser3: %f %f %f; XY = %f; XYZ = %f\n", vusr3.x, vusr3.y, vusr3.z, vusr3.Length2D(), vusr3.Length());
-		hw.ORIG_Con_Printf("vuser4: %f %f %f; XY = %f; XYZ = %f\n", vusr4.x, vusr4.y, vusr4.z, vusr4.Length2D(), vusr4.Length());
+		edict_t* edicts;
+		hw.GetEdicts(&edicts);
+		const edict_t *ent = edicts + num;
+
+		out << "Index: " << num << "\n";
+		out << "Classname: " << hw.GetString(ent->v.classname) << "\n";
+
+		if (ent->v.targetname != 0)
+			out << "Targetname: " << hw.GetString(ent->v.targetname) << "\n";
+
+		if (ent->v.target != 0)
+			out << "Target: " << hw.GetString(ent->v.target) << "\n";
+
+		Vector origin = ent->v.origin;
+		if (helper_functions::IsBSPModel(ent))
+		{
+			origin = helper_functions::Center(ent);
+			out << "Origin: " << origin.x << " " << origin.y << " " << origin.z << "\n";
+		}
+		else
+		{
+			out << "Origin: " << origin.x << " " << origin.y << " " << origin.z << "\n";
+			origin = helper_functions::Center(ent);
+			out << "Origin (center): " << origin.x << " " << origin.y << " " << origin.z << "\n";
+		}
+
+		out << "Movetype: " << ent->v.movetype << " (" << helper_functions::get_movetype(ent->v.movetype) << ")" << "\n";
+		out << "Health: " << ent->v.health << "\n";
+		out << "Armor: " << ent->v.armorvalue << "\n";
+		out << "Waterlevel: " << ent->v.waterlevel << "\n";
+		out << "Watertype: " << ent->v.watertype << "\n";
+		out << "Max health: " << ent->v.max_health << "\n";
+		out << "Gravity: " << ent->v.gravity << "\n";
+		out << "Friction: " << ent->v.friction << "\n";
+		out << "Spawnflags (bits): " << ent->v.spawnflags << "\n";
+		out << "Spawnflags: " << helper_functions::get_spawnflags(ent->v.spawnflags, hw.GetString(ent->v.classname));
+		out << "Flags (bits): " << ent->v.flags << "\n";
+		out << "Flags: " << helper_functions::get_flags(ent->v.flags);
+		out << "Velocity: " << ent->v.velocity.x << " " << ent->v.velocity.y << " " << ent->v.velocity.z << "; XY = " << ent->v.velocity.Length2D() << "; XYZ = " << ent->v.velocity.Length() << "\n";
+		out << "Basevelocity: " << ent->v.basevelocity.x << " " << ent->v.basevelocity.y << " " << ent->v.basevelocity.z << "; XY = " << ent->v.basevelocity.Length2D() << "; XYZ = " << ent->v.basevelocity.Length() << "\n";
+		out << "Punchangle: " << ent->v.punchangle.x << " " << ent->v.punchangle.y << " " << ent->v.punchangle.z << "\n";
+		out << "Effects (bits): " << ent->v.effects << "\n";
+		out << "Effects: " << helper_functions::get_effects(ent->v.effects);
+		out << "Solid: " << ent->v.solid << " (" << helper_functions::get_solid(ent->v.solid) << ")" << "\n";
+		out << "Renderfx: " << ent->v.renderfx << " (" << helper_functions::get_renderfx(ent->v.renderfx) << ")" << "\n";
+		out << "Renderamt: " << ent->v.renderamt << "\n";
+		out << "Rendermode: " << ent->v.rendermode << " (" << helper_functions::get_rendermode(ent->v.rendermode) << ")" << "\n";
+		out << "Dmg: " << ent->v.dmg << "\n";
+		out << "Takedamage: " << ent->v.takedamage << "\n";
+		out << "view_ofs: " << ent->v.view_ofs.x << " " << ent->v.view_ofs.y << " " << ent->v.view_ofs.z << "\n";
+
+		#ifndef HLSDK10_BUILD
+		out << "flFallVelocity: " << ent->v.flFallVelocity << "\n";
+		out << "bInDuck: " << ent->v.bInDuck << "\n";
+		out << "iuser1: " << ent->v.iuser1 << "; iuser2: " << ent->v.iuser2 << "; iuser3: " << ent->v.iuser3 << "; iuser4: " << ent->v.iuser4 << "\n";
+		out << "fuser1: " << ent->v.fuser1 << "; fuser2: " << ent->v.fuser2 << "; fuser3: " << ent->v.fuser3 << "; fuser4: " << ent->v.fuser4 << "\n";
+		out << "vuser1: " << ent->v.vuser1.x << " " << ent->v.vuser1.y << " " << ent->v.vuser1.z << "; XY = " << ent->v.vuser1.Length2D() << "; XYZ = " << ent->v.vuser1.Length() << "\n";
+		out << "vuser2: " << ent->v.vuser2.x << " " << ent->v.vuser2.y << " " << ent->v.vuser2.z << "; XY = " << ent->v.vuser2.Length2D() << "; XYZ = " << ent->v.vuser2.Length() << "\n";
+		out << "vuser3: " << ent->v.vuser3.x << " " << ent->v.vuser3.y << " " << ent->v.vuser3.z << "; XY = " << ent->v.vuser3.Length2D() << "; XYZ = " << ent->v.vuser3.Length() << "\n";
+		out << "vuser4: " << ent->v.vuser4.x << " " << ent->v.vuser4.y << " " << ent->v.vuser4.z << "; XY = " << ent->v.vuser4.Length2D() << "; XYZ = " << ent->v.vuser4.Length() << "\n";
+		#endif
+
+		hw.ORIG_Con_Printf(out.str().c_str());
 	}
 };
 
@@ -3761,7 +3747,7 @@ struct HwDLL::Cmd_BXT_Camera_Offset
 void HwDLL::TimerStart()
 {
 	if (!CustomHud::GetCountingTime())
-		HwDLL::GetInstance().Called_Timer = true;
+		HwDLL::GetInstance().discord_rpc_update_called = true;
 
 	CustomHud::SaveTimeToDemo();
 	return CustomHud::SetCountingTime(true);
@@ -3785,7 +3771,7 @@ struct HwDLL::Cmd_BXT_Timer_Stop
 	static void handler()
 	{
 		if (CustomHud::GetCountingTime())
-			HwDLL::GetInstance().Called_Timer = true;
+			HwDLL::GetInstance().discord_rpc_update_called = true;
 
 		CustomHud::SaveTimeToDemo();
 		return CustomHud::SetCountingTime(false);
@@ -3794,11 +3780,10 @@ struct HwDLL::Cmd_BXT_Timer_Stop
 
 void HwDLL::TimerReset()
 {
-	const auto& gt = CustomHud::GetTime();
-	int total_time = (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds;
+	double total_time = helper_functions::ret_bxt_time();
 
-	if (gt.milliseconds > 0 || total_time > 0)
-		HwDLL::GetInstance().Called_Timer = true;
+	if (total_time > 0.0)
+		HwDLL::GetInstance().discord_rpc_update_called = true;
 
 	CustomHud::SaveTimeToDemo();
 	CustomHud::SetInvalidRun(false);
@@ -3841,14 +3826,25 @@ struct HwDLL::Cmd_BXT_Get_SteamID_From_Demo
 			player_info_s* player_info = hw.pEngStudio->PlayerInfo(player - 1);
 
 			const unsigned long STEAMID32 = static_cast<unsigned long>(player_info->m_nSteamID);
-			const steamid_t STEAMID32_TO_64 = STEAMID64_CONST + STEAMID32;
+			const steamid_t STEAMID32_TO_64 = helper_functions::get_steam_id_64(STEAMID32);
 
 			hw.ORIG_Con_Printf("SteamID32: %" PRIu64 "\n", STEAMID32);
 
 			std::ostringstream ss;
-			ss << "SteamID64: " << STEAMID32_TO_64 << "\n";
+			ss << "SteamID64: " << STEAMID32_TO_64 << "\n" << "SteamID: " << helper_functions::get_steam_id(STEAMID32) << "\n";
 			hw.ORIG_Con_Printf(ss.str().c_str());
 		}
+	}
+};
+
+struct HwDLL::Cmd_BXT_Get_ClientMaxSpeed
+{
+	NO_USAGE();
+
+	static void handler()
+	{
+		if (ClientDLL::GetInstance().pEngfuncs)
+			HwDLL::GetInstance().ORIG_Con_Printf("Client maxspeed: %f\n", ClientDLL::GetInstance().pEngfuncs->GetClientMaxspeed());
 	}
 };
 
@@ -4603,7 +4599,7 @@ struct HwDLL::Cmd_BXT_FreeCam
 	}
 };
 
-void HwDLL::PrintEntity(std::ostringstream &out, int index)
+void HwDLL::PrintEntityInfoShort(std::ostringstream &out, int index)
 {
 	const auto& hw = HwDLL::GetInstance();
 	edict_t* edicts;
@@ -4625,13 +4621,26 @@ void HwDLL::PrintEntity(std::ostringstream &out, int index)
 
 	out << "; hp: " << ent->v.health;
 
-	if ((!strncmp(classname, "func_door", 9)) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
+	if (helper_functions::is_entity_give_infinite_health(ent))
 		out << "; dmg: " << ent->v.dmg;
 
-	Vector origin;
-	HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
+	Vector origin = ent->v.origin;
+	if (helper_functions::IsBSPModel(ent))
+	{
+		origin = helper_functions::Center(ent);
+		out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
+	}
+	else
+	{
+		/*
+			We will print the result with and without a Center function
+			Because some entities may not pass the IsBSPModel condition, but their position needs to be calculated based on the center
+		*/
 
-	out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
+		out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
+		origin = helper_functions::Center(ent);
+		out << "; xyz (center): " << origin.x << " " << origin.y << " " << origin.z;
+	}
 
 	out << '\n';
 }
@@ -4647,6 +4656,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 		std::ostringstream out;
 
 		bool match_substring = std::strcmp(name2, "*") == 0;
+		bool match_startswith = std::strcmp(name2, "#") == 0;
 
 		edict_t *edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
@@ -4661,17 +4671,21 @@ struct HwDLL::Cmd_BXT_Print_Entities
 				if ((strstr(classname, name1) == 0))
 					continue;
 			}
+			else if (match_startswith)
+			{
+				if ((strncmp(classname, name1, strlen(name1)) != 0))
+					continue;
+			}
 			else
 			{
 				if ((strcmp(classname, name1) != 0) && (strcmp(classname, name2) != 0))
 					continue;
 			}
 
-			HwDLL::GetInstance().PrintEntity(out, e);
+			HwDLL::GetInstance().PrintEntityInfoShort(out, e);
 		}
 
-		auto str = out.str();
-		hw.ORIG_Con_Printf("%s", str.c_str());
+		helper_functions::split_console_print_to_chunks(out.str());
 	}
 
 	static void handler(const char *name)
@@ -4693,11 +4707,10 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			if ((std::strcmp(classname, name) != 0) && (std::strcmp(targetname, name) != 0) && (std::strcmp(target, name) != 0))
 				continue;
 
-			HwDLL::GetInstance().PrintEntity(out, e);
+			HwDLL::GetInstance().PrintEntityInfoShort(out, e);
 		}
 
-		auto str = out.str();
-		hw.ORIG_Con_Printf("%s", str.c_str());
+		helper_functions::split_console_print_to_chunks(out.str());
 	}
 
 	static void handler()
@@ -4713,11 +4726,10 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			if (!hw.IsValidEdict(ent))
 				continue;
 
-			HwDLL::GetInstance().PrintEntity(out, e);
+			HwDLL::GetInstance().PrintEntityInfoShort(out, e);
 		}
 
-		auto str = out.str();
-		hw.ORIG_Con_Printf("%s", str.c_str());
+		helper_functions::split_console_print_to_chunks(out.str());
 	}
 };
 
@@ -4727,27 +4739,14 @@ struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 
 	static void handler(int num)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		const auto& hw = HwDLL::GetInstance();
 
 		std::ostringstream out;
 
-		edict_t* edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
-
-		const edict_t *ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
-			return;
-		}
-
-		HwDLL::GetInstance().PrintEntity(out, num);
+		HwDLL::GetInstance().PrintEntityInfoShort(out, num);
 
 		auto str = out.str();
 		hw.ORIG_Con_Printf("%s", str.c_str());
@@ -4769,29 +4768,12 @@ struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 			if ((e < value1) || (e > value2))
 				continue;
 
-			HwDLL::GetInstance().PrintEntity(out, e);
+			HwDLL::GetInstance().PrintEntityInfoShort(out, e);
 		}
 
-		auto str = out.str();
-		hw.ORIG_Con_Printf("%s", str.c_str());
+		helper_functions::split_console_print_to_chunks(out.str());
 	}
 };
-
-void HwDLL::GetOriginOfEntity(Vector& origin, const edict_t* ent)
-{
-	const auto& hw = HwDLL::GetInstance();
-	const char* classname = hw.GetString(ent->v.classname);
-	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-	bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
-	bool is_water = std::strncmp(classname, "func_water", 10) == 0;
-
-	// Credits to 'goldsrc_monitor' tool for their code to get origin of entities
-	if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
-		origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
-	else
-		origin = ent->v.origin;
-}
 
 struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 {
@@ -4799,26 +4781,18 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 
 	static void handler(int num)
 	{
+		if (!helper_functions::is_valid_index_and_edict(num))
+			return;
+
 		const auto& hw = HwDLL::GetInstance();
 
 		edict_t *edicts;
-		const int numEdicts = hw.GetEdicts(&edicts);
-
-		if (num >= numEdicts)
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d does not exist; there are %d entities in total\n", num, numEdicts);
-			return;
-		}
-
+		hw.GetEdicts(&edicts);
 		const edict_t *ent = edicts + num;
-		if (!hw.IsValidEdict(ent))
-		{
-			hw.ORIG_Con_Printf("Error: entity with index %d is not valid\n", num);
-			return;
-		}
 
-		Vector origin;
-		HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
+		Vector origin = ent->v.origin;
+		if (helper_functions::IsBSPModel(ent))
+			origin = helper_functions::Center(ent);
 
 		(*hw.sv_player)->v.origin[0] = origin[0];
 		(*hw.sv_player)->v.origin[1] = origin[1];
@@ -5693,7 +5667,7 @@ void HwDLL::SetTASLogging(bool enabled)
 			return;
 		}
 		const int buildNumber = ORIG_build_number ? ORIG_build_number() : -1;
-		const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+		const char *gameDir = ClientDLL::GetInstance().GetGameDirectory(false).c_str();
 		logWriter.StartLog(tasLogFile, BUNNYMODXT_VERSION, buildNumber, gameDir);
 		tasLogging = true;
 		ORIG_Con_Printf("Started TAS logging into %s\n", filename.c_str());
@@ -5757,6 +5731,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_fix_changelevel_in_coop);
 	RegisterCVar(CVars::bxt_tas_ducktap_priority);
 	RegisterCVar(CVars::bxt_ch_hook_speed);
+	RegisterCVar(CVars::bxt_discord_rpc_ignore_gamedir_for_hl_maps);
 	RegisterCVar(CVars::bxt_allow_keypresses_in_demo);
 	RegisterCVar(CVars::bxt_ch_checkpoint_with_vel);
 	RegisterCVar(CVars::bxt_ch_checkpoint_onground_only);
@@ -5810,7 +5785,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::AddCheat<Cmd_BXT_CH_Set_Velocity, Handler<float, float, float>>("bxt_ch_set_vel");
 	wrapper::AddCheat<Cmd_BXT_CH_Teleport_To_Entity, Handler<int>>("bxt_ch_teleport_to_entity");
 	wrapper::AddCheat<Cmd_BXT_CH_Get_Velocity, Handler<>>("bxt_ch_get_vel");
-	wrapper::AddCheat<Cmd_BXT_CH_Get_Other_Player_Info, Handler<>>("bxt_ch_get_other_player_info");
+	wrapper::AddCheat<Cmd_BXT_CH_Get_All_Info, Handler<>, Handler<int>>("bxt_ch_get_all_info");
 	wrapper::AddCheat<Cmd_BXT_CH_Entity_Set_Health, Handler<float>, Handler<float, int>>("bxt_ch_entity_set_health");
 	wrapper::AddCheat<Cmd_BXT_CH_Monster_Set_Origin, Handler<int>, Handler<int, float>, Handler<float, float, float>, Handler<float, float, float, int>>("bxt_ch_monster_set_origin");
 	wrapper::AddCheat<
@@ -5833,6 +5808,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		Handler<float, float, float>>("bxt_set_angles");
 	wrapper::Add<Cmd_BXT_Get_Server_Time, Handler<>>("bxt_get_server_time");
 	wrapper::Add<Cmd_BXT_Get_SteamID_From_Demo, Handler<>>("bxt_get_steamid_from_demo");
+	wrapper::Add<Cmd_BXT_Get_ClientMaxSpeed, Handler<>>("bxt_get_clientmaxspeed");
 	wrapper::Add<
 		Cmd_Multiwait,
 		Handler<>,
@@ -5968,9 +5944,9 @@ void HwDLL::InsertCommands()
 						player.Velocity[1] = pl->v.velocity[1];
 						player.Velocity[2] = pl->v.velocity[2];
 						player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
-						player.InDuckAnimation = (pl->v.bInDuck != 0);
-						player.DuckTime = static_cast<float>(pl->v.flDuckTime);
-						player.StaminaTime = pl->v.fuser2;
+						player.InDuckAnimation = (RET_EntVars_bInDuck(pl) != 0);
+						player.DuckTime = static_cast<float>(RET_EntVars_flDuckTime(pl));
+						player.StaminaTime = RET_EntVars_fuser2(pl);
 						player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 						if (ORIG_PF_GetPhysicsKeyValue) {
@@ -6043,7 +6019,7 @@ void HwDLL::InsertCommands()
 
 						pushables[i].index = reinterpret_cast<uintptr_t>(pev);
 
-						Vector origin = pev->origin + ((pev->mins + pev->maxs) / 2.f);
+						Vector origin = helper_functions::Center(ent);
 						pushables[i].origin[0] = origin[0];
 						pushables[i].origin[1] = origin[1];
 						pushables[i].origin[2] = origin[2];
@@ -6067,8 +6043,7 @@ void HwDLL::InsertCommands()
 						StrafeState.Parameters.Parameters.LookAt.Entity = 0;
 					} else {				
 						const edict_t *ent = edicts + StrafeState.Parameters.Parameters.LookAt.Entity;
-						const entvars_t *pev = &(ent->v);
-						Vector origin = pev->origin + ((pev->mins + pev->maxs) / 2.f);
+						Vector origin = helper_functions::Center(ent);
 
 						StrafeState.TargetYawLookAtOrigin[0] = origin[0];
 						StrafeState.TargetYawLookAtOrigin[1] = origin[1];
@@ -6637,9 +6612,9 @@ void HwDLL::InsertCommands()
 					player.Velocity[1] = pl->v.velocity[1];
 					player.Velocity[2] = pl->v.velocity[2];
 					player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
-					player.InDuckAnimation = (pl->v.bInDuck != 0);
-					player.DuckTime = static_cast<float>(pl->v.flDuckTime);
-					player.StaminaTime = pl->v.fuser2;
+					player.InDuckAnimation = (RET_EntVars_bInDuck(pl) != 0);
+					player.DuckTime = static_cast<float>(RET_EntVars_flDuckTime(pl));
+					player.StaminaTime = RET_EntVars_fuser2(pl);
 					player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 					if (ORIG_PF_GetPhysicsKeyValue) {
@@ -6664,8 +6639,6 @@ void HwDLL::InsertCommands()
 			if (ducktap && postype == HLStrafe::PositionType::GROUND && (autojump == false || (autojump == true && CVars::bxt_tas_ducktap_priority.GetBool()))) {
 					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {
 						// This should check against the next frame's origin but meh.
-						const float VEC_HULL_MIN[3] = { -16, -16, -36 };
-						const float VEC_DUCK_HULL_MIN[3] = { -16, -16, -18 };
 						float newOrigin[3];
 						for (std::size_t i = 0; i < 3; ++i)
 							newOrigin[i] = playerCopy.Origin[i] + (VEC_DUCK_HULL_MIN[i] - VEC_HULL_MIN[i]);
@@ -6767,9 +6740,9 @@ HLStrafe::PlayerData HwDLL::GetPlayerData()
 	player.Velocity[1] = pl->v.velocity[1];
 	player.Velocity[2] = pl->v.velocity[2];
 	player.Ducking = (pl->v.flags & FL_DUCKING) != 0;
-	player.InDuckAnimation = (pl->v.bInDuck != 0);
-	player.DuckTime = static_cast<float>(pl->v.flDuckTime);
-	player.StaminaTime = pl->v.fuser2;
+	player.InDuckAnimation = (RET_EntVars_bInDuck(pl) != 0);
+	player.DuckTime = static_cast<float>(RET_EntVars_flDuckTime(pl));
+	player.StaminaTime = RET_EntVars_fuser2(pl);
 	player.Walking = (pl->v.movetype == MOVETYPE_WALK);
 
 	if (ORIG_PF_GetPhysicsKeyValue) {
@@ -6838,10 +6811,9 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Bounce = CVars::sv_bounce.GetFloat();
 	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
 
-	static bool is_paranoia_dir = cl.DoesGameDirMatch("paranoia");
-	is_tfc_dir = cl.DoesGameDirMatch("tfc");
-	is_cstrike_dir = cl.DoesGameDirMatch("cstrike") || cl.DoesGameDirMatch("czero");
+	InitGameDirIfNecessary();
 
+	static bool is_paranoia_dir = HF_DoesGameDirMatch("paranoia");
 	if (is_paranoia_dir)
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
 	else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
@@ -6849,7 +6821,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	else
 		vars.Maxspeed = CVars::sv_maxspeed.GetFloat();
 
-	if (is_cstrike_dir) {
+	if (is_cs_dir) {
 		vars.BhopcapMultiplier = 0.8f;
 		vars.BhopcapMaxspeedScale = 1.2f;
 		vars.HasStamina = !CVars::bxt_remove_stamina.GetBool();
@@ -6859,7 +6831,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 		vars.BhopcapMaxspeedScale = 1.7f;
 	}
 
-	if (!is_cstrike_dir && !is_tfc_dir)
+	if (!is_cs_dir && !is_tfc_dir)
 		vars.UseSlow = true;
 
 	if (svs->maxclients >= 1) {
@@ -6895,26 +6867,6 @@ void HwDLL::KeyUp(Key& key)
 	std::ostringstream ss;
 	ss << '-' << key.Name << '\n';
 	ORIG_Cbuf_InsertText(ss.str().c_str());
-}
-
-const char* HwDLL::GetMovetypeName(int moveType)
-{
-	switch (moveType)
-	{
-		case MOVETYPE_NONE:             return "None";
-		case MOVETYPE_WALK:             return "Walk";
-		case MOVETYPE_STEP:             return "Step";
-		case MOVETYPE_FLY:              return "Fly";
-		case MOVETYPE_TOSS:             return "Toss";
-		case MOVETYPE_PUSH:             return "Push";
-		case MOVETYPE_NOCLIP:           return "Noclip";
-		case MOVETYPE_FLYMISSILE:       return "Fly-missile";
-		case MOVETYPE_BOUNCE:           return "Bounce";
-		case MOVETYPE_BOUNCEMISSILE:    return "Bounce-missile";
-		case MOVETYPE_FOLLOW:           return "Follow";
-		case MOVETYPE_PUSHSTEP:         return "Push-step";
-		default:                        return "Unknown";
-	}
 }
 
 HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
@@ -7224,12 +7176,12 @@ bool HwDLL::TryGettingAccurateInfo(float origin[3], float velocity[3], float& he
 	waterlevel = pl->v.waterlevel;
 
 	if (ServerDLL::GetInstance().is_cof) {
-		void* classPtr = (*sv_player)->v.pContainingEntity->pvPrivateData;
+		void* classPtr = pl->v.pContainingEntity->pvPrivateData;
 		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
 		float* m_fStamina = reinterpret_cast<float*>(thisAddr + ServerDLL::GetInstance().offm_fStamina);
 		stamina = *m_fStamina;
 	} else {
-		stamina = pl->v.fuser2;
+		stamina = RET_EntVars_fuser2(pl);
 	}
 
 	return true;
@@ -7346,8 +7298,16 @@ void HwDLL::SaveInitialDataToDemo()
 		RuntimeData::Add(RuntimeData::Edicts{ maxEdicts });
 	}
 
-	auto &hw = HwDLL::GetInstance();
-	lastRecordedHealth = static_cast<int>((*hw.sv_player)->v.health);
+	lastRecordedHealth = 0;
+	
+	if (helper_functions::is_valid_index_and_edict(1)) // Host
+	{
+		edict_t *edicts;
+		GetEdicts(&edicts);
+		edict_t *ent = edicts + 1;
+
+		lastRecordedHealth = static_cast<int>(ent->v.health);
+	}
 
 	RuntimeData::Add(RuntimeData::PlayerHealth{lastRecordedHealth});
 
@@ -7504,8 +7464,6 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 	auto minFrametime = CVars::_bxt_min_frametime.GetFloat();
 
-	auto &hw = HwDLL::GetInstance();
-
 	if (pHost_FilterTime_FPS_Cap_Byte)
 	{
 		const auto pByte = *reinterpret_cast<byte*>(pHost_FilterTime_FPS_Cap_Byte);
@@ -7525,17 +7483,23 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 
 	if (IsRecordingDemo())
 	{
-		int playerhealth = static_cast<int>((*hw.sv_player)->v.health);
+		int playerhealth = 0;
+		
+		if (helper_functions::is_valid_index_and_edict(1)) // Host
+		{
+			edict_t *edicts;
+			GetEdicts(&edicts);
+			edict_t *ent = edicts + 1;
+
+			playerhealth = static_cast<int>(ent->v.health);
+		}
 
 		if (playerhealth != lastRecordedHealth)
 			RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
 
 		lastRecordedHealth = playerhealth;
 
-		int bxt_flags = 0;
-		if (is_big_map)
-			bxt_flags |= BXT_FLAGS_BIG_MAP;
-		RuntimeData::Add(RuntimeData::Flags{bxt_flags});
+		RuntimeData::Add(RuntimeData::Flags{helper_functions::ret_bxt_flags()});
 	}
 
 	if (runningFrames) {
@@ -7938,7 +7902,9 @@ HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap_Paint, int, paintAll)
 
 HOOK_DEF_3(HwDLL, int, __cdecl, DispatchDirectUserMsg, char*, pszName, int, iSize, void*, pBuf)
 {
-	if (ClientDLL::GetInstance().DoesGameDirContain("czeror") && !std::strcmp(pszName, "InitHUD"))
+	InitGameDirIfNecessary();
+
+	if (is_csczds_dir && !std::strcmp(pszName, "InitHUD"))
 		return ORIG_DispatchDirectUserMsg(0, iSize, pBuf);
 	else
 		return ORIG_DispatchDirectUserMsg(pszName, iSize, pBuf);
@@ -8119,7 +8085,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawParticles)
 
 HOOK_DEF_0(HwDLL, int, __cdecl, BUsesSDLInput)
 {
-	if (ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless") || CVars::bxt_fix_mouse_horizontal_limit.GetBool())
+	if (HF_DoesGameDirMatch("bshift_cutsceneless") || CVars::bxt_fix_mouse_horizontal_limit.GetBool())
 		return true;
 	else
 		return ORIG_BUsesSDLInput();
@@ -8165,10 +8131,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_SetFrustum)
 
 		if (fov != prev_calculated_fov)
 		{
-			float calculated_fov = static_cast<float>(std::atan(std::tan(fov * M_PI / 360.0f) * def_aspect_ratio * our_aspect_ratio) * 360.0f / M_PI);
+			float calculated_fov = helper_functions::adjust_fov_for_widescreen(fov, def_aspect_ratio, our_aspect_ratio);
 			*scr_fov_value = std::clamp(calculated_fov, 10.0f, 150.0f);
 
-			// Engine does the clamp of FOV if less 10 or higher than 150
+			// Engine does the clamp of FOV if less 10 or higher than 150 in SCR_CalcRefdef function
 			// Although, it could be extended to 1 for min. value and 179 for max. value
 
 			prev_calculated_fov = calculated_fov;
@@ -8315,42 +8281,44 @@ HOOK_DEF_0(HwDLL, qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 
 HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 {
-	auto oldszDllFilename = szDllFilename;
-	std::string newszDllFilename;
+	const std::string oldszDllFilename = szDllFilename;
+	std::string newszDllFilename, game_lib;
+	std::string start = ClientDLL::GetInstance().GetGameDirectory(false);
+	bool find_from_end = false, is_failed = false;
 
-	if (boost::ends_with(szDllFilename, "metamod" DLL_EXTENSION))
+	if (oldszDllFilename.rfind(PATH_SLASH_DOUBLE_QUOTE "metamod.") != std::string::npos) // Dot must be indicated at the end to make it clear that the file extension comes after it
 	{
 		EngineDevMsg("[hw dll] Metamod detected.\n");
 
-		bool is_failed = false;
-
-		static bool is_cstrike = ClientDLL::GetInstance().DoesGameDirMatch("cstrike");
-		if (is_cstrike)
+		if (helper_functions::does_gamedir_match("cstrike", false))
 		{
 			#ifdef _WIN32
-			const std::string cs_lib = "dlls\\mp";
+			game_lib = start + "\\dlls\\mp";
 			#else
-			const std::string cs_lib = "dlls/cs";
+			game_lib = start + "/dlls/cs";
 			#endif
-
-			EngineDevMsg("[hw dll] Old path to game library: %s\n", szDllFilename);
-			newszDllFilename = helper_functions::swap_lib(szDllFilename, cs_lib, "addons");
-			szDllFilename = newszDllFilename.c_str();
-			EngineDevMsg("[hw dll] New path to game library: %s\n", szDllFilename);
-
-			if (!strcmp(szDllFilename, oldszDllFilename))
-				is_failed = true;
 		}
 		else
 		{
 			is_failed = true;
 		}
+	}
 
-		if (is_failed)
-		{
-			const std::string error_msg = "[hw dll] Cannot disable AmxModX for current mod. Edit <mod>/liblist.gam to continue.\n";
-			helper_functions::crash_if_failed(error_msg);
-		}
+	if (!game_lib.empty())
+	{
+		EngineDevMsg("[hw dll] Old path to game library: %s\n", szDllFilename);
+		newszDllFilename = helper_functions::swap_lib(szDllFilename, game_lib, start, find_from_end);
+		szDllFilename = newszDllFilename.c_str();
+		EngineDevMsg("[hw dll] New path to game library: %s\n", szDllFilename);
+
+		if (!strcmp(szDllFilename, oldszDllFilename.c_str()))
+			is_failed = true;
+	}
+
+	if (is_failed)
+	{
+		const std::string error_msg = "[hw dll] Cannot disable addon for current mod. Edit <mod>/liblist.gam to continue.\n";
+		helper_functions::crash_if_failed(error_msg);
 	}
 
 	ORIG_LoadThisDll(szDllFilename);

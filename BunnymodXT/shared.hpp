@@ -30,6 +30,9 @@ constexpr float HL1_SLOWDOWN_PLAYER_BY_USE = 0.3f; // https://github.com/ValveSo
 
 #define COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE 1024 // https://github.com/LogicAndTrick/sledge-formats/blob/9d11ebb3ce6d6d5e80864cf96b235c491a106958/Sledge.Formats.GameData.Tests/Resources/fgd/goldsource/cry-of-fear.fgd#L3720
 
+#define MAX_GAMEDIR_LENGTH 260
+#define MAX_LEVELNAME_LENGTH 64
+
 // - Custom constants
 // Constants whose values you set depending on your code and preferences.
 

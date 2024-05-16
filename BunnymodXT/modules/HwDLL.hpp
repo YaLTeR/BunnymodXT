@@ -338,8 +338,14 @@ public:
 
 	int lastRecordedHealth;
 
-	bool is_cstrike_dir = false;
+	bool discord_rpc_initialized = false;
+	bool check_vsync = true;
+
+	bool is_cs_dir = false;
+	bool is_csczds_dir = false;
 	bool is_tfc_dir = false;
+	bool is_cof_dir = false;
+	bool is_dod_dir = false;
 
 	globalvars_t *ppGlobals;
 	engine_studio_api_t *pEngStudio;
@@ -350,7 +356,7 @@ public:
 		return ppGlobals->pStringBase + string;
 	}
 
-	bool Called_Timer = false;
+	bool discord_rpc_update_called = false;
 
 	#ifdef _WIN32
 	bool is_steamid_build = false;
@@ -359,6 +365,7 @@ public:
 	#endif
 
 	bool is_cof_steam = false; // Cry of Fear-specific
+	bool is_hlsdk10 = false;
 
 	int CallOnTASPlaybackFrame();
 	void CallOnTASPlaybackStopped();
@@ -441,12 +448,13 @@ protected:
 	struct Cmd_BXT_CH_Set_Velocity_Angles;
 	struct Cmd_BXT_CH_Teleport_To_Entity;
 	struct Cmd_BXT_CH_Get_Velocity;
-	struct Cmd_BXT_CH_Get_Other_Player_Info;
+	struct Cmd_BXT_CH_Get_All_Info;
 	struct Cmd_BXT_CH_Entity_Set_Health;
 	struct Cmd_BXT_CH_Monster_Set_Origin;
 	struct Cmd_BXT_Get_Origin_And_Angles;
 	struct Cmd_BXT_Get_Server_Time;
 	struct Cmd_BXT_Get_SteamID_From_Demo;
+	struct Cmd_BXT_Get_ClientMaxSpeed;
 	struct Cmd_Multiwait;
 	struct Cmd_BXT_Camera_Fixed;
 	struct Cmd_BXT_Camera_Clear;
@@ -546,12 +554,9 @@ protected:
 	bool GetNextMovementFrame(HLTAS::Frame& f);
 	void ResetButtons();
 	void FindCVarsIfNeeded();
-	void PrintEntity(std::ostringstream &out, int index);
-	void TeleportMonsterToPosition(float x, float y, float z, int index);
+	void PrintEntityInfoShort(std::ostringstream &out, int index);
 public:
 	HLStrafe::MovementVars GetMovementVars();
-	const char* GetMovetypeName(int moveType);
-	void GetOriginOfEntity(Vector& origin, const edict_t* ent);
 
 	bool ducktap;
 	edict_t **sv_player;

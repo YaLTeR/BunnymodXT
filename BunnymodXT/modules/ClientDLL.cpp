@@ -11,6 +11,7 @@
 #include "../hud_custom.hpp"
 #include "../triangle_drawing.hpp"
 #include "../discord_integration.hpp"
+#include "../helper_functions.hpp"
 #include <GL/gl.h>
 
 // Linux hooks.
@@ -326,6 +327,7 @@ void ClientDLL::Clear()
 	cantJumpNextTime = false;
 	SeedsQueued = 0;
 	m_Intercepted = false;
+	customhud_initialized = false;
 	last_vieworg = Vector();
 	last_viewangles = Vector();
 	last_viewforward = Vector();
@@ -339,6 +341,7 @@ void ClientDLL::Clear()
 	offVectorTransform = 0;
 	offpCurrentEntity = 0;
 	offpStudioHeader = 0;
+	orig_righthand_not_found = false;
 }
 
 void ClientDLL::FindStuff()
@@ -1155,132 +1158,56 @@ void ClientDLL::StudioAdjustViewmodelAttachments(Vector &vOrigin)
 	vOrigin = last_vieworg + vOut;
 }
 
-void ClientDLL::FileBase(const char *in, char *out)
+std::string ClientDLL::GetLevelName(bool lowercase)
 {
-	int len, start, end;
+	std::string mapname = "";
 
-	len = strlen(in);
-
-	// scan backward for '.'
-	end = len - 1;
-	while (0 != end && in[end] != '.' && in[end] != '/' && in[end] != '\\')
-		end--;
-
-	if (in[end] != '.')		// no '.', copy to end
-		end = len - 1;
-	else
-		end--;			// Found ',', copy to left of '.'
-
-	// Scan backward for '/'
-	start = len - 1;
-	while (start >= 0 && in[start] != '/' && in[start] != '\\')
-		start--;
-
-	if (in[start] != '/' && in[start] != '\\')
-		start = 0;
-	else
-		start++;
-
-	// Length of new sting
-	len = end - start + 1;
-
-	// Copy partial string
-	strncpy(out, &in[start], len);
-	// Terminate it
-	out[len] = 0;
-}
-
-void ClientDLL::ConvertToLowerCase(const char *str)
-{
-	unsigned char *str_lw = (unsigned char *)str;
-	while (*str_lw) {
-		*str_lw = tolower(*str_lw);
-		str_lw++;
-	}
-}
-
-bool ClientDLL::DoesGameDirMatch(const char *game)
-{
-	if (!pEngfuncs)
-		return false;
-
-	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
-	char gd[1024];
-
-	if (gameDir && gameDir[0])
+	const char *map_name = "";
+	if (interface_preserved_eng_cl && pEngfuncs) // && !hw.is_hlsdk10
 	{
-		FileBase(gameDir, gd);
-		ConvertToLowerCase(gd);
+		map_name = pEngfuncs->pfnGetLevelName();
 	}
 
-	return !std::strcmp(gd, game);
-}
-
-bool ClientDLL::DoesGameDirContain(const char *game)
-{
-	if (!pEngfuncs)
-		return false;
-
-	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
-	char gd[1024];
-
-	if (gameDir && gameDir[0])
+	if (map_name && map_name[0])
 	{
-		FileBase(gameDir, gd);
-		ConvertToLowerCase(gd);
+		char mn[MAX_LEVELNAME_LENGTH];
+		helper_functions::com_filebase(map_name, mn);
+		if (lowercase)
+			helper_functions::convert_to_lowercase(mn);
+		mapname = mn;
 	}
 
-	return std::strstr(gd, game);
+	return mapname;
 }
 
-size_t ClientDLL::GetMapName(char* dest, size_t count)
+std::string ClientDLL::GetGameDirectory(bool lowercase)
 {
-	auto map_path = pEngfuncs->pfnGetLevelName();
+	if (lowercase && !gamedir_clean_lw.empty())
+		return gamedir_clean_lw;
+	else if (!gamedir_clean.empty())
+		return gamedir_clean;
 
-	const char* slash = strrchr(map_path, '/');
-	if (!slash)
-		slash = map_path - 1;
+	auto &sv = ServerDLL::GetInstance();
+	char game_dir[MAX_GAMEDIR_LENGTH];
+	if (sv.interface_preserved_eng_sv && sv.pEngfuncs)
+	{
+		sv.pEngfuncs->pfnGetGameDir(game_dir);
+	}
 
-	const char* dot = strrchr(map_path, '.');
-	if (!dot)
-		dot = map_path + strlen(map_path);
+	if (game_dir[0])
+	{
+		char gd[MAX_GAMEDIR_LENGTH];
+		helper_functions::com_filebase(game_dir, gd);
+		gamedir_clean = gd;
+		helper_functions::convert_to_lowercase(gd);
+		gamedir_clean_lw = gd;
+		helper_functions::gamedir_set_booleans(gamedir_clean_lw.c_str());
+	}
 
-	size_t bytes_to_copy = std::min(count - 1, static_cast<size_t>(dot - slash - 1));
-
-	strncpy(dest, slash + 1, bytes_to_copy);
-	dest[bytes_to_copy] = '\0';
-
-	return bytes_to_copy;
-}
-
-bool ClientDLL::DoesMapNameMatch(const char *map)
-{
-	if (!pEngfuncs)
-		return false;
-
-	char map_name[64];
-
-	GetMapName(map_name, ARRAYSIZE_HL(map_name));
-
-	if (map_name[0])
-		ConvertToLowerCase(map_name);
-
-	return !std::strcmp(map_name, map);
-}
-
-bool ClientDLL::DoesMapNameContain(const char *map)
-{
-	if (!pEngfuncs)
-		return false;
-
-	char map_name[64];
-
-	GetMapName(map_name, ARRAYSIZE_HL(map_name));
-
-	if (map_name[0])
-		ConvertToLowerCase(map_name);
-
-	return std::strstr(map_name, map);
+	if (lowercase)
+		return gamedir_clean_lw;
+	else
+		return gamedir_clean;
 }
 
 void ClientDLL::SetAngleSpeedCap(bool capped)
@@ -1667,22 +1594,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 		orig_forcehltv_found = HwDLL::GetInstance().ORIG_Cmd_FindCmd("dem_forcehltv");
 	}
 
-	#ifdef _WIN32
-	static bool check_vsync = true;
-	if (check_vsync)
-	{
-		bool bxtDisableVSync = getenv("BXT_DISABLE_VSYNC");
-		if (bxtDisableVSync)
-		{
-			typedef BOOL(APIENTRY* PFNWGLSWAPINTERVALPROC)(int);
-			PFNWGLSWAPINTERVALPROC wglSwapIntervalEXT = 0;
-			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress("wglSwapIntervalEXT");
-			if (wglSwapIntervalEXT)
-				wglSwapIntervalEXT(0);
-		}
-		check_vsync = false;
-	}
-	#endif
+	helper_functions::disable_vsync();
 
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 		pEngfuncs->Con_Printf(const_cast<char*>("HUD_Frame time: %f\n"), time);
@@ -1868,14 +1780,13 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioSetupBones, 
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linux, void*, thisptr)
 {
-	ptrdiff_t offpCurrentEntity_Linux;
-	ptrdiff_t offpStudioHeader_Linux;
-	if (DoesGameDirMatch("dod")) {
+	ptrdiff_t offpCurrentEntity_Linux = 44;
+	ptrdiff_t offpStudioHeader_Linux = 64;
+	InitGameDirIfNecessary();
+	if (HwDLL::GetInstance().is_dod_dir)
+	{
 		offpCurrentEntity_Linux = 52;
 		offpStudioHeader_Linux = 72;
-	} else {
-		offpCurrentEntity_Linux = 44;
-		offpStudioHeader_Linux = 64;
 	}
 
 	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpCurrentEntity_Linux);
@@ -1996,11 +1907,10 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel,
 
 HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Linux, void*, thisptr)
 {
-	ptrdiff_t offpCurrentEntity_Linux;
-	if (DoesGameDirMatch("dod"))
+	ptrdiff_t offpCurrentEntity_Linux = 44;
+	InitGameDirIfNecessary();
+	if (HwDLL::GetInstance().is_dod_dir)
 		offpCurrentEntity_Linux = 52;
-	else
-		offpCurrentEntity_Linux = 44;
 
 	auto pCurrentEntity = *reinterpret_cast<cl_entity_t**>(reinterpret_cast<uintptr_t>(thisptr) + offpCurrentEntity_Linux);
 

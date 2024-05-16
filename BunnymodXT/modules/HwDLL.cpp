@@ -4656,6 +4656,7 @@ struct HwDLL::Cmd_BXT_Print_Entities
 		std::ostringstream out;
 
 		bool match_substring = std::strcmp(name2, "*") == 0;
+		bool match_startswith = std::strcmp(name2, "#") == 0;
 
 		edict_t *edicts;
 		const int numEdicts = hw.GetEdicts(&edicts);
@@ -4668,6 +4669,11 @@ struct HwDLL::Cmd_BXT_Print_Entities
 			if (match_substring)
 			{
 				if ((strstr(classname, name1) == 0))
+					continue;
+			}
+			else if (match_startswith)
+			{
+				if ((strncmp(classname, name1, strlen(name1)) != 0))
 					continue;
 			}
 			else

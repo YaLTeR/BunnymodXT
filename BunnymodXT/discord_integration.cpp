@@ -262,9 +262,9 @@ namespace discord_integration
 					}
 				}
 
-				int total_time = static_cast<int>(helper_functions::ret_bxt_time());
+				double total_time = helper_functions::ret_bxt_time();
 				const auto current_timestamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-				start_timestamp = current_timestamp - total_time;
+				start_timestamp = current_timestamp - static_cast<int>(total_time);
 
 				const char *skillName = helper_functions::get_difficulty(CVars::skill.GetInt()).c_str();
 
@@ -294,7 +294,7 @@ namespace discord_integration
 
 					presence.startTimestamp = start_timestamp;
 				}
-				else if ((total_time == 0) && !CustomHud::GetCountingTime())
+				else if ((total_time == 0.0) && !CustomHud::GetCountingTime())
 				{
 					if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback()) {
 						presence.smallImageKey = "discord_brown";
@@ -306,7 +306,7 @@ namespace discord_integration
 
 					presence.startTimestamp = current_timestamp;
 				}
-				else if ((total_time > 0) && !CustomHud::GetCountingTime())
+				else if ((total_time > 0.0) && !CustomHud::GetCountingTime())
 				{
 					snprintf(buffer_stop, sizeof(buffer_stop), "Timer stopped at %d:%02d:%02d.%03d", gt.hours, gt.minutes, gt.seconds, gt.milliseconds);
 					presence.state = buffer_stop;

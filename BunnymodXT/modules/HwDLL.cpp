@@ -3780,9 +3780,9 @@ struct HwDLL::Cmd_BXT_Timer_Stop
 
 void HwDLL::TimerReset()
 {
-	int total_time = static_cast<int>(helper_functions::ret_bxt_time());
+	double total_time = helper_functions::ret_bxt_time();
 
-	if (total_time > 0)
+	if (total_time > 0.0)
 		HwDLL::GetInstance().discord_rpc_update_called = true;
 
 	CustomHud::SaveTimeToDemo();

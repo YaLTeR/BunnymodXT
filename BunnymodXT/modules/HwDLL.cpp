@@ -28,10 +28,19 @@
 using namespace std::literals;
 
 // Callbacks for bxt-rs.
+struct on_tas_playback_frame_max_accel_yaw_offset {
+	float value;
+	float start;
+	float target;
+	float accel;
+	unsigned char dir;
+};
+
 struct on_tas_playback_frame_data {
 	unsigned strafe_cycle_frame_count;
 	std::array<float, 4> prev_predicted_trace_fractions;
 	std::array<float, 4> prev_predicted_trace_normal_zs;
+	on_tas_playback_frame_max_accel_yaw_offset max_accel_yaw_offset;
 };
 
 // Change the variable name if you change the parameters!
@@ -2468,6 +2477,13 @@ int HwDLL::CallOnTASPlaybackFrame() {
 		StrafeState.StrafeCycleFrameCount,
 		PrevFractions,
 		PrevNormalzs,
+		on_tas_playback_frame_max_accel_yaw_offset {
+			StrafeState.MaxAccelYawOffsetValue, // value
+			StrafeState.MaxAccelYawOffsetStart, // start
+			StrafeState.MaxAccelYawOffsetTarget, // target
+			StrafeState.MaxAccelYawOffsetAccel, // accel
+			static_cast<unsigned char>(StrafeState.MaxAccelYawOffsetDir), // dir 
+		},
 	});
 }
 

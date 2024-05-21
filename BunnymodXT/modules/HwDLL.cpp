@@ -32,6 +32,7 @@ struct on_tas_playback_frame_data {
 	unsigned strafe_cycle_frame_count;
 	std::array<float, 4> prev_predicted_trace_fractions;
 	std::array<float, 4> prev_predicted_trace_normal_zs;
+	std::array<float, 3> rendered_viewangles;
 };
 
 // Change the variable name if you change the parameters!
@@ -2460,6 +2461,26 @@ cvar_t* HwDLL::FindCVar(const char* name)
 	return ORIG_Cvar_FindVar(name);
 }
 
+std::array<float, 3> HwDLL::GetRenderedViewangles() {
+	std::array<float, 3> res = {player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]};
+
+	if (!PitchOverrides.empty()) {
+		res[0] = PitchOverrides[PitchOverrideIndex];
+	}
+	if (!RenderPitchOverrides.empty()) {
+		res[0] = RenderPitchOverrides[RenderPitchOverrideIndex];
+	}
+
+	if (!TargetYawOverrides.empty()) {
+		res[1] = TargetYawOverrides[TargetYawOverrideIndex];
+	}
+	if (!RenderYawOverrides.empty()) {
+		res[1] = RenderYawOverrides[RenderYawOverrideIndex];
+	}
+
+	return res;
+}
+
 int HwDLL::CallOnTASPlaybackFrame() {
 	if (!bxt_on_tas_playback_frame)
 		return 0;
@@ -2468,6 +2489,7 @@ int HwDLL::CallOnTASPlaybackFrame() {
 		StrafeState.StrafeCycleFrameCount,
 		PrevFractions,
 		PrevNormalzs,
+		GetRenderedViewangles(),
 	});
 }
 

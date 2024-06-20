@@ -310,6 +310,9 @@ void ServerDLL::Clear()
 	offAngles = 0;
 	offCmd = 0;
 	offBhopcap = 0;
+	offMaxspeed = 0;
+	offClientMaxspeed = 0;
+	offMoveType = 0;
 	pBhopcapWindows = 0;
 	pCZDS_Velocity_Byte = 0;
 	pCBasePlayer__Jump_OldButtons_Check_Byte = 0;
@@ -408,6 +411,9 @@ void ServerDLL::FindStuff()
 			offInDuck = 0x90;
 			offFlags = 0xB8;
 			offBasevelocity = 0x74;
+			offMaxspeed = 0x1f4;
+			offClientMaxspeed = 0x1f8;
+			offMoveType = 0xdc;
 		});
 
 	auto fPM_Jump = FindFunctionAsync(
@@ -1609,6 +1615,8 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_cof_disable_monsters_teleport_to_spawn_after_load);
 	if (ORIG_CTriggerCamera__FollowTarget && is_cof)
 		REG(bxt_cof_allow_skipping_all_cutscenes);
+	if (ORIG_PM_Move)
+		REG(bxt_ch_noclip_speed);
 
 	REG(bxt_splits_print);
 	REG(bxt_splits_print_times_at_end);
@@ -2802,8 +2810,26 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int,
 	auto pmove = reinterpret_cast<uintptr_t>(ppmove);
 	auto origin = reinterpret_cast<float *>(pmove + offOrigin);
 	auto flags = reinterpret_cast<int *>(pmove + offFlags);
+	usercmd_t *cmd = reinterpret_cast<usercmd_t*>(pmove + offCmd);
+	float *maxspeed = reinterpret_cast<float*>(pmove + offMaxspeed);
+	float *clientmaxspeed = reinterpret_cast<float*>(pmove + offClientMaxspeed);
+	int *movetype = reinterpret_cast<int*>(pmove + offMoveType);
 
 	auto start_origin = Vector(origin);
+	auto ch_noclip_vel = CVars::bxt_ch_noclip_speed.GetFloat();
+
+	if (*movetype == MOVETYPE_NOCLIP && ch_noclip_vel != 0.f) {
+		ch_noclip_vel_prev_maxspeed = *maxspeed;
+		ch_noclip_vel_prev_clientmaxspeed = *clientmaxspeed;
+
+		if (*clientmaxspeed == 0.0f)
+			*clientmaxspeed = *maxspeed; 
+
+		cmd->forwardmove = cmd->forwardmove / *clientmaxspeed * ch_noclip_vel;
+		cmd->sidemove = cmd->sidemove / *clientmaxspeed * ch_noclip_vel;
+		cmd->upmove = cmd->upmove / *clientmaxspeed * ch_noclip_vel;
+		*maxspeed = *clientmaxspeed = ch_noclip_vel;
+	}
 
 	ORIG_PM_Move(ppmove, server);
 
@@ -2812,6 +2838,11 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int,
 	 * This is not always the case but it is a good approximation.
 	 */
 	CustomTriggers::Update(start_origin, Vector(origin), (*flags & FL_DUCKING) != 0);
+
+	if (*movetype == MOVETYPE_NOCLIP && ch_noclip_vel != 0.f) {
+		*maxspeed = ch_noclip_vel_prev_maxspeed;
+		*clientmaxspeed = ch_noclip_vel_prev_clientmaxspeed;
+	}
 }
 
 bool ServerDLL::GetGlobalState(const std::string& name, int& state)

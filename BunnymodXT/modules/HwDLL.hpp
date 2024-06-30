@@ -14,6 +14,75 @@ enum class TASEditorMode {
 
 struct client_t;
 
+#define HW_HOOK_LIST(X) \
+	X(NLoadBlobFileClient) \
+	X(Cbuf_Execute) \
+	X(Cbuf_AddText) \
+	X(Cbuf_InsertTextLines) \
+	X(Cmd_TokenizeString) \
+	X(SeedRandomNumberGenerator) \
+	X(time) \
+	X(RandomLong) \
+	X(Host_Changelevel2_f) \
+	X(PF_changelevel_I) \
+	X(SCR_BeginLoadingPlaque) \
+	X(Host_FilterTime) \
+	X(V_FadeAlpha) \
+	X(V_ApplyShake) \
+	X(R_DrawSkyBox) \
+	X(SCR_UpdateScreen) \
+	X(SV_Frame) \
+	X(SV_SpawnServer) \
+	X(CL_Stop_f) \
+	X(Host_Loadgame_f) \
+	X(Host_Reload_f) \
+	X(VGuiWrap2_ConDPrintf) \
+	X(VGuiWrap2_ConPrintf) \
+	X(CL_Record_f) \
+	X(Key_Event) \
+	X(Cmd_Exec_f) \
+	X(R_DrawSequentialPoly) \
+	X(R_Clear) \
+	X(R_DrawViewModel) \
+	X(R_PreDrawViewModel) \
+	X(Mod_LeafPVS) \
+	X(SV_AddLinksToPM_) \
+	X(SV_WriteEntitiesToClient) \
+	X(VGuiWrap_Paint) \
+	X(DispatchDirectUserMsg) \
+	X(SV_SetMoveVars) \
+	X(VectorTransform) \
+	X(R_StudioCalcAttachments) \
+	X(EmitWaterPolys) \
+	X(S_StartDynamicSound) \
+	X(VGuiWrap2_NotifyOfServerConnect) \
+	X(R_StudioSetupBones) \
+	X(MD5Init) \
+	X(MD5Update) \
+	X(MD5Final) \
+	X(MD5Transform) \
+	X(MD5_Hash_File) \
+	X(MD5_Print) \
+	X(CBaseUI__HideGameUI) \
+	X(R_DrawWorld) \
+	X(R_DrawParticles) \
+	X(BUsesSDLInput) \
+	X(R_StudioRenderModel) \
+	X(R_SetFrustum) \
+	X(SPR_Set) \
+	X(DrawCrosshair) \
+	X(Draw_FillRGBA) \
+	X(PF_traceline_DLL) \
+	X(CL_CheckGameDirectory) \
+	X(Host_ValidSave) \
+	X(SaveGameSlot) \
+	X(SCR_NetGraph) \
+	X(Host_Shutdown) \
+	X(ReleaseEntityDlls) \
+	X(ValidStuffText) \
+	X(CL_ReadDemoMessage_OLD) \
+	X(LoadThisDll)
+
 class HwDLL : public IHookableNameFilterOrdered
 {
 	HOOK_DECL(void, __cdecl, LoadAndDecryptHwDLL, int a, void* b, void* c)

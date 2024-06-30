@@ -80,8 +80,7 @@ struct client_t;
 	X(Host_Shutdown) \
 	X(ReleaseEntityDlls) \
 	X(ValidStuffText) \
-	X(CL_ReadDemoMessage_OLD) \
-	X(LoadThisDll)
+	X(CL_ReadDemoMessage_OLD)
 
 class HwDLL : public IHookableNameFilterOrdered
 {

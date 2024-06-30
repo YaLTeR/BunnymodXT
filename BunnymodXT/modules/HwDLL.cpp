@@ -418,133 +418,17 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 		if (ORIG_LoadAndDecryptHwDLL) {
 			// When the old engine loads hw.dll, it marks it as PAGE_READWRITE, without EXECUTE.
 			// So we need to mark stuff as executable manually, otherwise MinHook complains.
-			MemUtils::MarkAsExecutable(ORIG_Cbuf_Execute);
-			MemUtils::MarkAsExecutable(ORIG_Cbuf_AddText);
-			MemUtils::MarkAsExecutable(ORIG_Cbuf_InsertTextLines);
-			MemUtils::MarkAsExecutable(ORIG_Cmd_TokenizeString);
-			MemUtils::MarkAsExecutable(ORIG_SeedRandomNumberGenerator);
-			MemUtils::MarkAsExecutable(ORIG_time);
-			MemUtils::MarkAsExecutable(ORIG_RandomFloat);
-			MemUtils::MarkAsExecutable(ORIG_RandomLong);
-			MemUtils::MarkAsExecutable(ORIG_Host_Changelevel2_f);
-			MemUtils::MarkAsExecutable(ORIG_PF_changelevel_I);
-			MemUtils::MarkAsExecutable(ORIG_SCR_BeginLoadingPlaque);
-			MemUtils::MarkAsExecutable(ORIG_Host_FilterTime);
-			MemUtils::MarkAsExecutable(ORIG_V_FadeAlpha);
-			MemUtils::MarkAsExecutable(ORIG_V_ApplyShake);
-			MemUtils::MarkAsExecutable(ORIG_R_DrawSkyBox);
-			MemUtils::MarkAsExecutable(ORIG_SCR_UpdateScreen);
-			MemUtils::MarkAsExecutable(ORIG_SV_Frame);
-			MemUtils::MarkAsExecutable(ORIG_SV_SpawnServer);
-			MemUtils::MarkAsExecutable(ORIG_CL_Stop_f);
-			MemUtils::MarkAsExecutable(ORIG_Host_Loadgame_f);
-			MemUtils::MarkAsExecutable(ORIG_Host_Reload_f);
-			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConDPrintf);
-			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_ConPrintf);
-			MemUtils::MarkAsExecutable(ORIG_CL_Record_f);
-			MemUtils::MarkAsExecutable(ORIG_Key_Event);
-			MemUtils::MarkAsExecutable(ORIG_Cmd_Exec_f);
-			MemUtils::MarkAsExecutable(ORIG_R_DrawSequentialPoly);
-			MemUtils::MarkAsExecutable(ORIG_R_Clear);
-			MemUtils::MarkAsExecutable(ORIG_R_DrawViewModel);
-			MemUtils::MarkAsExecutable(ORIG_R_PreDrawViewModel);
-			MemUtils::MarkAsExecutable(ORIG_Mod_LeafPVS);
-			MemUtils::MarkAsExecutable(ORIG_SV_AddLinksToPM_);
-			MemUtils::MarkAsExecutable(ORIG_SV_WriteEntitiesToClient);
-			MemUtils::MarkAsExecutable(ORIG_VGuiWrap_Paint);
-			MemUtils::MarkAsExecutable(ORIG_DispatchDirectUserMsg);
-			MemUtils::MarkAsExecutable(ORIG_SV_SetMoveVars);
-			MemUtils::MarkAsExecutable(ORIG_VectorTransform);
-			MemUtils::MarkAsExecutable(ORIG_R_StudioCalcAttachments);
-			MemUtils::MarkAsExecutable(ORIG_EmitWaterPolys);
-			MemUtils::MarkAsExecutable(ORIG_S_StartDynamicSound);
-			MemUtils::MarkAsExecutable(ORIG_VGuiWrap2_NotifyOfServerConnect);
-			MemUtils::MarkAsExecutable(ORIG_R_StudioSetupBones);
-			MemUtils::MarkAsExecutable(ORIG_CBaseUI__HideGameUI);
-			MemUtils::MarkAsExecutable(ORIG_R_DrawWorld);
-			MemUtils::MarkAsExecutable(ORIG_R_DrawParticles);
-			MemUtils::MarkAsExecutable(ORIG_BUsesSDLInput);
-			MemUtils::MarkAsExecutable(ORIG_R_StudioRenderModel);
-			MemUtils::MarkAsExecutable(ORIG_R_SetFrustum);
-			MemUtils::MarkAsExecutable(ORIG_SPR_Set);
-			MemUtils::MarkAsExecutable(ORIG_DrawCrosshair);
-			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
-			MemUtils::MarkAsExecutable(ORIG_PF_traceline_DLL);
-			MemUtils::MarkAsExecutable(ORIG_CL_CheckGameDirectory);
-			MemUtils::MarkAsExecutable(ORIG_Host_ValidSave);
-			MemUtils::MarkAsExecutable(ORIG_SaveGameSlot);
-			MemUtils::MarkAsExecutable(ORIG_SCR_NetGraph);
-			MemUtils::MarkAsExecutable(ORIG_Host_Shutdown);
-			MemUtils::MarkAsExecutable(ORIG_ReleaseEntityDlls);
-			MemUtils::MarkAsExecutable(ORIG_ValidStuffText);
-			MemUtils::MarkAsExecutable(ORIG_CL_ReadDemoMessage_OLD);
-			MemUtils::MarkAsExecutable(ORIG_NLoadBlobFileClient);
+			#define HW_MemUtils_MarkAsExecutable(X) MemUtils::MarkAsExecutable(ORIG_##X);
+			HW_HOOK_LIST(HW_MemUtils_MarkAsExecutable)
+			#undef HW_MemUtils_MarkAsExecutable
 			MemUtils::MarkAsExecutable(ORIG_LoadThisDll);
 		}
 
 		MemUtils::Intercept(moduleName,
 			ORIG_LoadAndDecryptHwDLL, HOOKED_LoadAndDecryptHwDLL,
-			ORIG_NLoadBlobFileClient, HOOKED_NLoadBlobFileClient,
-			ORIG_Cbuf_Execute, HOOKED_Cbuf_Execute,
-			ORIG_Cbuf_AddText, HOOKED_Cbuf_AddText,
-			ORIG_Cbuf_InsertTextLines, HOOKED_Cbuf_InsertTextLines,
-			ORIG_Cmd_TokenizeString, HOOKED_Cmd_TokenizeString,
-			ORIG_SeedRandomNumberGenerator, HOOKED_SeedRandomNumberGenerator,
-			ORIG_time, HOOKED_time,
-			ORIG_RandomFloat, HOOKED_RandomFloat,
-			ORIG_RandomLong, HOOKED_RandomLong,
-			ORIG_Host_Changelevel2_f, HOOKED_Host_Changelevel2_f,
-			ORIG_PF_changelevel_I, HOOKED_PF_changelevel_I,
-			ORIG_SCR_BeginLoadingPlaque, HOOKED_SCR_BeginLoadingPlaque,
-			ORIG_Host_FilterTime, HOOKED_Host_FilterTime,
-			ORIG_Host_ValidSave, HOOKED_Host_ValidSave,
-			ORIG_SCR_NetGraph, HOOKED_SCR_NetGraph,
-			ORIG_V_FadeAlpha, HOOKED_V_FadeAlpha,
-			ORIG_V_ApplyShake, HOOKED_V_ApplyShake,
-			ORIG_R_DrawSkyBox, HOOKED_R_DrawSkyBox,
-			ORIG_SCR_UpdateScreen, HOOKED_SCR_UpdateScreen,
-			ORIG_SV_SpawnServer, HOOKED_SV_SpawnServer,
-			ORIG_SV_Frame, HOOKED_SV_Frame,
-			ORIG_CL_Stop_f, HOOKED_CL_Stop_f,
-			ORIG_Host_Loadgame_f, HOOKED_Host_Loadgame_f,
-			ORIG_Host_Reload_f, HOOKED_Host_Reload_f,
-			ORIG_VGuiWrap2_ConDPrintf, HOOKED_VGuiWrap2_ConDPrintf,
-			ORIG_VGuiWrap2_ConPrintf, HOOKED_VGuiWrap2_ConPrintf,
-			ORIG_CL_Record_f, HOOKED_CL_Record_f,
-			ORIG_Key_Event, HOOKED_Key_Event,
-			ORIG_Cmd_Exec_f, HOOKED_Cmd_Exec_f,
-			ORIG_R_DrawSequentialPoly, HOOKED_R_DrawSequentialPoly,
-			ORIG_R_Clear, HOOKED_R_Clear,
-			ORIG_R_DrawViewModel, HOOKED_R_DrawViewModel,
-			ORIG_R_PreDrawViewModel, HOOKED_R_PreDrawViewModel,
-			ORIG_Mod_LeafPVS, HOOKED_Mod_LeafPVS,
-			ORIG_SV_AddLinksToPM_, HOOKED_SV_AddLinksToPM_,
-			ORIG_SV_WriteEntitiesToClient, HOOKED_SV_WriteEntitiesToClient,
-			ORIG_VGuiWrap_Paint, HOOKED_VGuiWrap_Paint,
-			ORIG_DispatchDirectUserMsg, HOOKED_DispatchDirectUserMsg,
-			ORIG_SV_SetMoveVars, HOOKED_SV_SetMoveVars,
-			ORIG_VectorTransform, HOOKED_VectorTransform,
-			ORIG_R_StudioCalcAttachments, HOOKED_R_StudioCalcAttachments,
-			ORIG_EmitWaterPolys, HOOKED_EmitWaterPolys,
-			ORIG_S_StartDynamicSound, HOOKED_S_StartDynamicSound,
-			ORIG_VGuiWrap2_NotifyOfServerConnect, HOOKED_VGuiWrap2_NotifyOfServerConnect,
-			ORIG_R_StudioSetupBones, HOOKED_R_StudioSetupBones,
-			ORIG_CBaseUI__HideGameUI, HOOKED_CBaseUI__HideGameUI,
-			ORIG_R_DrawWorld, HOOKED_R_DrawWorld,
-			ORIG_R_DrawParticles, HOOKED_R_DrawParticles,
-			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput,
-			ORIG_R_StudioRenderModel, HOOKED_R_StudioRenderModel,
-			ORIG_R_SetFrustum, HOOKED_R_SetFrustum,
-			ORIG_SPR_Set, HOOKED_SPR_Set,
-			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
-			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
-			ORIG_PF_traceline_DLL, HOOKED_PF_traceline_DLL,
-			ORIG_CL_CheckGameDirectory, HOOKED_CL_CheckGameDirectory,
-			ORIG_SaveGameSlot, HOOKED_SaveGameSlot,
-			ORIG_ReleaseEntityDlls, HOOKED_ReleaseEntityDlls,
-			ORIG_ValidStuffText, HOOKED_ValidStuffText,
-			ORIG_CL_ReadDemoMessage_OLD, HOOKED_CL_ReadDemoMessage_OLD,
-			ORIG_Host_Shutdown, HOOKED_Host_Shutdown,
+			#define HW_MemUtils_Intercept(X) ORIG_##X, HOOKED_##X,
+			HW_HOOK_LIST(HW_MemUtils_Intercept)
+			#undef HW_MemUtils_Intercept
 			ORIG_LoadThisDll, HOOKED_LoadThisDll);
 	}
 
@@ -579,67 +463,9 @@ void HwDLL::Unhook()
 	{
 		MemUtils::RemoveInterception(m_Name,
 			ORIG_LoadAndDecryptHwDLL,
-			ORIG_NLoadBlobFileClient,
-			ORIG_Cbuf_Execute,
-			ORIG_Cbuf_AddText,
-			ORIG_Cbuf_InsertTextLines,
-			ORIG_Cmd_TokenizeString,
-			ORIG_SeedRandomNumberGenerator,
-			ORIG_time,
-			ORIG_RandomFloat,
-			ORIG_RandomLong,
-			ORIG_Host_Changelevel2_f,
-			ORIG_PF_changelevel_I,
-			ORIG_SCR_BeginLoadingPlaque,
-			ORIG_Host_FilterTime,
-			ORIG_Host_ValidSave,
-			ORIG_SCR_NetGraph,
-			ORIG_V_FadeAlpha,
-			ORIG_V_ApplyShake,
-			ORIG_R_DrawSkyBox,
-			ORIG_SCR_UpdateScreen,
-			ORIG_SV_SpawnServer,
-			ORIG_SV_Frame,
-			ORIG_CL_Stop_f,
-			ORIG_Host_Loadgame_f,
-			ORIG_Host_Reload_f,
-			ORIG_VGuiWrap2_ConDPrintf,
-			ORIG_VGuiWrap2_ConPrintf,
-			ORIG_CL_Record_f,
-			ORIG_Key_Event,
-			ORIG_Cmd_Exec_f,
-			ORIG_R_DrawSequentialPoly,
-			ORIG_R_Clear,
-			ORIG_R_DrawViewModel,
-			ORIG_R_PreDrawViewModel,
-			ORIG_Mod_LeafPVS,
-			ORIG_SV_AddLinksToPM_,
-			ORIG_SV_WriteEntitiesToClient,
-			ORIG_VGuiWrap_Paint,
-			ORIG_DispatchDirectUserMsg,
-			ORIG_SV_SetMoveVars,
-			ORIG_VectorTransform,
-			ORIG_R_StudioCalcAttachments,
-			ORIG_EmitWaterPolys,
-			ORIG_S_StartDynamicSound,
-			ORIG_VGuiWrap2_NotifyOfServerConnect,
-			ORIG_R_StudioSetupBones,
-			ORIG_CBaseUI__HideGameUI,
-			ORIG_R_DrawWorld,
-			ORIG_R_DrawParticles,
-			ORIG_BUsesSDLInput,
-			ORIG_R_StudioRenderModel,
-			ORIG_R_SetFrustum,
-			ORIG_SPR_Set,
-			ORIG_DrawCrosshair,
-			ORIG_Draw_FillRGBA,
-			ORIG_PF_traceline_DLL,
-			ORIG_CL_CheckGameDirectory,
-			ORIG_SaveGameSlot,
-			ORIG_ReleaseEntityDlls,
-			ORIG_ValidStuffText,
-			ORIG_CL_ReadDemoMessage_OLD,
-			ORIG_Host_Shutdown,
+			#define HW_MemUtils_RemoveInterception(X) ORIG_##X,
+			HW_HOOK_LIST(HW_MemUtils_RemoveInterception)
+			#undef HW_MemUtils_RemoveInterception
 			ORIG_LoadThisDll);
 	}
 
@@ -653,34 +479,14 @@ void HwDLL::Clear()
 {
 	IHookableNameFilterOrdered::Clear();
 	ORIG_LoadAndDecryptHwDLL = nullptr;
-	ORIG_NLoadBlobFileClient = nullptr;
-	ORIG_Cbuf_Execute = nullptr;
-	ORIG_SeedRandomNumberGenerator = nullptr;
-	ORIG_time = nullptr;
+
+	#define HW_Clear(X) ORIG_##X = nullptr;
+	HW_HOOK_LIST(HW_Clear)
+	#undef HW_Clear
+
 	ORIG_RandomFloat = nullptr;
-	ORIG_RandomLong = nullptr;
-	ORIG_Host_Changelevel2_f = nullptr;
-	ORIG_PF_changelevel_I = nullptr;
-	ORIG_SCR_BeginLoadingPlaque = nullptr;
-	ORIG_Host_FilterTime = nullptr;
-	ORIG_Host_ValidSave = nullptr;
-	ORIG_SCR_NetGraph = nullptr;
-	ORIG_V_FadeAlpha = nullptr;
-	ORIG_V_ApplyShake = nullptr;
-	ORIG_R_DrawSkyBox = nullptr;
 	ORIG_R_LoadSkys = nullptr;
-	ORIG_SCR_UpdateScreen = nullptr;
-	ORIG_SV_Frame = nullptr;
-	ORIG_SV_SpawnServer = nullptr;
-	ORIG_CL_Stop_f = nullptr;
-	ORIG_Host_Loadgame_f = nullptr;
-	ORIG_Host_Reload_f = nullptr;
-	ORIG_VGuiWrap2_ConDPrintf = nullptr;
-	ORIG_VGuiWrap2_ConPrintf = nullptr;
 	ORIG_Cbuf_InsertText = nullptr;
-	ORIG_Cbuf_AddText = nullptr;
-	ORIG_Cbuf_InsertTextLines = nullptr;
-	ORIG_Cmd_TokenizeString = nullptr;
 	ORIG_Con_Printf = nullptr;
 	ORIG_Cvar_RegisterVariable = nullptr;
 	ORIG_Cvar_DirectSet = nullptr;
@@ -696,53 +502,11 @@ void HwDLL::Clear()
 	ORIG_SV_AddLinksToPM = nullptr;
 	ORIG_PF_GetPhysicsKeyValue = nullptr;
 	ORIG_CL_RecordHUDCommand = nullptr;
-	ORIG_CL_Record_f = nullptr;
 	ORIG_build_number = nullptr;
-	ORIG_Key_Event = nullptr;
-	ORIG_Cmd_Exec_f = nullptr;
-	ORIG_R_DrawSequentialPoly = nullptr;
-	ORIG_R_Clear = nullptr;
-	ORIG_R_DrawViewModel = nullptr;
-	ORIG_R_PreDrawViewModel = nullptr;
-	ORIG_Mod_LeafPVS = nullptr;
-	ORIG_SV_AddLinksToPM_ = nullptr;
-	ORIG_SV_WriteEntitiesToClient = nullptr;
-	ORIG_VGuiWrap_Paint = nullptr;
-	ORIG_DispatchDirectUserMsg = nullptr;
-	ORIG_SV_SetMoveVars = nullptr;
-	ORIG_R_StudioCalcAttachments = nullptr;
-	ORIG_VectorTransform = nullptr;
-	ORIG_EmitWaterPolys = nullptr;
-	ORIG_S_StartDynamicSound = nullptr;
-	ORIG_VGuiWrap2_NotifyOfServerConnect = nullptr;
-	ORIG_R_StudioSetupBones = nullptr;
-	ORIG_MD5Init = nullptr;
-	ORIG_MD5Update = nullptr;
-	ORIG_MD5Final = nullptr;
-	ORIG_MD5Transform = nullptr;
-	ORIG_MD5_Hash_File = nullptr;
-	ORIG_MD5_Print = nullptr;
-	ORIG_CBaseUI__HideGameUI = nullptr;
 	ORIG_CBaseUI__HideGameUI_Linux = nullptr;
-	ORIG_R_DrawWorld = nullptr;
-	ORIG_R_DrawParticles = nullptr;
-	ORIG_BUsesSDLInput = nullptr;
-	ORIG_R_StudioRenderModel = nullptr;
-	ORIG_R_SetFrustum = nullptr;
-	ORIG_SPR_Set = nullptr;
-	ORIG_DrawCrosshair = nullptr;
-	ORIG_Draw_FillRGBA = nullptr;
-	ORIG_PF_traceline_DLL = nullptr;
-	ORIG_CL_CheckGameDirectory = nullptr;
 	ORIG_CL_HudMessage = nullptr;
-	ORIG_SaveGameSlot = nullptr;
-	ORIG_SCR_NetGraph = nullptr;
 	ORIG_VGuiWrap2_IsGameUIVisible = nullptr;
 	ORIG_SCR_DrawPause = nullptr;
-	ORIG_Host_Shutdown = nullptr;
-	ORIG_ReleaseEntityDlls = nullptr;
-	ORIG_ValidStuffText = nullptr;
-	ORIG_CL_ReadDemoMessage_OLD = nullptr;
 	ORIG_LoadThisDll = nullptr;
 
 	ClientDLL::GetInstance().pEngfuncs = nullptr;

@@ -85,11 +85,6 @@ namespace CustomTriggers
 
 	void Trigger::update(const Vector& player_position, bool ducking)
 	{
-		const Vector VEC_HULL_MIN(-16, -16, -36);
-		const Vector VEC_HULL_MAX(16,  16,  36);
-		const Vector VEC_DUCK_HULL_MIN(-16, -16, -18);
-		const Vector VEC_DUCK_HULL_MAX(16,  16,  18);
-
 		const Vector& hull_max = ducking ? VEC_DUCK_HULL_MAX : VEC_HULL_MAX;
 		const Vector& hull_min = ducking ? VEC_DUCK_HULL_MIN : VEC_HULL_MIN;
 
@@ -111,11 +106,6 @@ namespace CustomTriggers
 
 	void Trigger::update(const Vector& player_position_start, const Vector& player_position_end, bool ducking)
 	{
-		const Vector VEC_HULL_MIN(-16, -16, -36);
-		const Vector VEC_HULL_MAX(16,  16,  36);
-		const Vector VEC_DUCK_HULL_MIN(-16, -16, -18);
-		const Vector VEC_DUCK_HULL_MAX(16,  16,  18);
-
 		const Vector& hull_max = ducking ? VEC_DUCK_HULL_MAX : VEC_HULL_MAX;
 		const Vector& hull_min = ducking ? VEC_DUCK_HULL_MIN : VEC_HULL_MIN;
 

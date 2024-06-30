@@ -6751,8 +6751,6 @@ void HwDLL::InsertCommands()
 			if (ducktap && postype == HLStrafe::PositionType::GROUND && (autojump == false || (autojump == true && CVars::bxt_tas_ducktap_priority.GetBool()))) {
 					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {
 						// This should check against the next frame's origin but meh.
-						const float VEC_HULL_MIN[3] = { -16, -16, -36 };
-						const float VEC_DUCK_HULL_MIN[3] = { -16, -16, -18 };
 						float newOrigin[3];
 						for (std::size_t i = 0; i < 3; ++i)
 							newOrigin[i] = playerCopy.Origin[i] + (VEC_DUCK_HULL_MIN[i] - VEC_HULL_MIN[i]);

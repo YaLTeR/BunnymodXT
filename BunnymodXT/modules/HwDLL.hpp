@@ -88,22 +88,6 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 	HOOK_DECL(void, __cdecl, LoadThisDll, const char* szDllFilename)
 
-	#ifdef HLSDK10_BUILD
-	struct server_static_t
-	{
-		int maxclients;
-		byte align[28684];
-		client_t *clients;
-	};
-	#else
-	struct server_static_t
-	{
-		int dll_initialized;
-		client_t *clients;
-		int maxclients;
-	};
-	#endif
-
 	struct Key
 	{
 		Key(const char* name) : State(0), Name(name) {};

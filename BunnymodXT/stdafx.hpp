@@ -84,6 +84,7 @@ using std::ptrdiff_t;
 #include "HLSDK/pm_shared/pm_defs.h"
 
 #include "HLSDK/engine/usermsg.h"
+#include "HLSDK/engine/server_static.h"
 #include "HLSDK/engine/cdll_int.h"
 #include "HLSDK/engine/client.h"
 

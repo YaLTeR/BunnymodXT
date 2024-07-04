@@ -40,4 +40,24 @@ namespace helper_functions
 
 		std::exit(1);
 	}
+
+	void disable_vsync()
+	{
+		#ifdef _WIN32
+		auto &hw = HwDLL::GetInstance();
+		if (hw.check_vsync)
+		{
+			const bool bxtDisableVSync = getenv("BXT_DISABLE_VSYNC");
+			if (bxtDisableVSync)
+			{
+				typedef BOOL(APIENTRY* PFNWGLSWAPINTERVALPROC)(int);
+				PFNWGLSWAPINTERVALPROC wglSwapIntervalEXT = 0;
+				wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress("wglSwapIntervalEXT");
+				if (wglSwapIntervalEXT)
+					wglSwapIntervalEXT(0);
+			}
+			hw.check_vsync = false;
+		}
+		#endif
+	}
 };

@@ -6,6 +6,9 @@
 #include "taslogger/writer.hpp"
 #include "../input_editor.hpp"
 #include "../shared.hpp"
+#include <GL/gl.h>
+
+typedef void (APIENTRY_HL *qglDepthMask_def)(GLboolean flag);
 
 enum class TASEditorMode {
 	DISABLED,
@@ -558,8 +561,10 @@ public:
 	edict_t **sv_player;
 
 	bool inside_studioapi_GL_StudioDrawShadow = false;
+	qglDepthMask_def orig_qglDepthMask;
 protected:
 	cvar_t *r_shadows;
+	qglDepthMask_def *qglDepthMask;
 
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);

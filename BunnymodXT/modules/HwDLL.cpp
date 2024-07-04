@@ -314,6 +314,11 @@ extern "C" void __cdecl R_SetFrustum()
 	HwDLL::HOOKED_R_SetFrustum();
 }
 
+extern "C" void __cdecl studioapi_GL_StudioDrawShadow()
+{
+	HwDLL::HOOKED_studioapi_GL_StudioDrawShadow();
+}
+
 extern "C" void __cdecl SPR_Set(HSPRITE_HL hSprite, int r, int g, int b)
 {
 	HwDLL::HOOKED_SPR_Set(hSprite, r, g, b);
@@ -466,6 +471,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_BUsesSDLInput);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioRenderModel);
 			MemUtils::MarkAsExecutable(ORIG_R_SetFrustum);
+			MemUtils::MarkAsExecutable(ORIG_studioapi_GL_StudioDrawShadow);
 			MemUtils::MarkAsExecutable(ORIG_SPR_Set);
 			MemUtils::MarkAsExecutable(ORIG_DrawCrosshair);
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
@@ -535,6 +541,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput,
 			ORIG_R_StudioRenderModel, HOOKED_R_StudioRenderModel,
 			ORIG_R_SetFrustum, HOOKED_R_SetFrustum,
+			ORIG_studioapi_GL_StudioDrawShadow, HOOKED_studioapi_GL_StudioDrawShadow,
 			ORIG_SPR_Set, HOOKED_SPR_Set,
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
 			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
@@ -630,6 +637,7 @@ void HwDLL::Unhook()
 			ORIG_BUsesSDLInput,
 			ORIG_R_StudioRenderModel,
 			ORIG_R_SetFrustum,
+			ORIG_studioapi_GL_StudioDrawShadow,
 			ORIG_SPR_Set,
 			ORIG_DrawCrosshair,
 			ORIG_Draw_FillRGBA,
@@ -729,6 +737,7 @@ void HwDLL::Clear()
 	ORIG_BUsesSDLInput = nullptr;
 	ORIG_R_StudioRenderModel = nullptr;
 	ORIG_R_SetFrustum = nullptr;
+	ORIG_studioapi_GL_StudioDrawShadow = nullptr;
 	ORIG_SPR_Set = nullptr;
 	ORIG_DrawCrosshair = nullptr;
 	ORIG_Draw_FillRGBA = nullptr;
@@ -788,6 +797,7 @@ void HwDLL::Clear()
 	frametime_remainder = nullptr;
 	pstudiohdr = nullptr;
 	scr_fov_value = nullptr;
+	r_shadows = nullptr;
 	framesTillExecuting = 0;
 	executing = false;
 	insideCbuf_Execute = false;
@@ -1330,6 +1340,20 @@ void HwDLL::FindStuff()
 			EngineDevWarning("[hw dll] Could not find R_SetFrustum.\n");
 		}
 
+		ORIG_studioapi_GL_StudioDrawShadow = reinterpret_cast<_studioapi_GL_StudioDrawShadow>(MemUtils::GetSymbolAddress(m_Handle, "studioapi_GL_StudioDrawShadow"));
+		if (ORIG_studioapi_GL_StudioDrawShadow) {
+			EngineDevMsg("[hw dll] Found studioapi_GL_StudioDrawShadow at %p.\n", ORIG_studioapi_GL_StudioDrawShadow);
+		} else {
+			EngineDevWarning("[hw dll] Could not find studioapi_GL_StudioDrawShadow.\n");
+		}
+
+		r_shadows = reinterpret_cast<cvar_t*>(MemUtils::GetSymbolAddress(m_Handle, "r_shadows"));
+		if (r_shadows) {
+			EngineDevMsg("[hw dll] Found r_shadows at %p.\n", r_shadows);
+		} else {
+			EngineDevWarning("[hw dll] Could not find r_shadows.\n");
+		}
+
 		g_sv_delta = reinterpret_cast<void**>(MemUtils::GetSymbolAddress(m_Handle, "g_sv_delta"));
 		if (g_sv_delta)
 			EngineDevMsg("[hw dll] Found g_sv_delta at %p.\n", g_sv_delta);
@@ -1586,6 +1610,18 @@ void HwDLL::FindStuff()
 					break;
 				case 2: // CoF-5936
 					scr_fov_value = reinterpret_cast<float*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_SetFrustum) + 7));
+					break;
+				}
+			});
+
+		auto fstudioapi_GL_StudioDrawShadow = FindAsync(
+			ORIG_studioapi_GL_StudioDrawShadow,
+			patterns::engine::studioapi_GL_StudioDrawShadow,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::studioapi_GL_StudioDrawShadow.cbegin())
+				{
+				case 0: // HL-SteamPipe
+					r_shadows = reinterpret_cast<cvar_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_studioapi_GL_StudioDrawShadow) + 0xE) - offsetof(cvar_t, value));
 					break;
 				}
 			});
@@ -2122,6 +2158,16 @@ void HwDLL::FindStuff()
 				EngineDevMsg("[hw dll] Found scr_fov_value at %p.\n", scr_fov_value);
 			} else {
 				EngineDevWarning("[hw dll] Could not find R_SetFrustum.\n");
+			}
+		}
+
+		{
+			auto pattern = fstudioapi_GL_StudioDrawShadow.get();
+			if (ORIG_studioapi_GL_StudioDrawShadow) {
+				EngineDevMsg("[hw dll] Found studioapi_GL_StudioDrawShadow at %p (using the %s pattern).\n", ORIG_studioapi_GL_StudioDrawShadow, pattern->name());
+				EngineDevMsg("[hw dll] Found r_shadows at %p.\n", r_shadows);
+			} else {
+				EngineDevWarning("[hw dll] Could not find studioapi_GL_StudioDrawShadow.\n");
 			}
 		}
 
@@ -5706,6 +5752,13 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		return;
 
 	registeredVarsAndCmds = true;
+
+	if (r_shadows)
+	{
+		ORIG_Cvar_RegisterVariable(r_shadows);
+		CVars::r_shadows.Assign(r_shadows);
+	}
+
 	RegisterCVar(CVars::_bxt_taslog);
 	RegisterCVar(CVars::_bxt_min_frametime);
 	RegisterCVar(CVars::_bxt_tas_script_generation);
@@ -8354,4 +8407,17 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 	}
 
 	ORIG_LoadThisDll(szDllFilename);
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, studioapi_GL_StudioDrawShadow)
+{
+	if (!r_shadows || !CVars::r_shadows.GetBool())
+	{
+		ORIG_studioapi_GL_StudioDrawShadow();
+		return;
+	}
+
+	inside_studioapi_GL_StudioDrawShadow = true;
+	ORIG_studioapi_GL_StudioDrawShadow();
+	inside_studioapi_GL_StudioDrawShadow = false;
 }

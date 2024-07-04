@@ -87,6 +87,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(qboolean, __cdecl, ValidStuffText, char* buf)
 	HOOK_DECL(qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 	HOOK_DECL(void, __cdecl, LoadThisDll, const char* szDllFilename)
+	HOOK_DECL(void, __cdecl, studioapi_GL_StudioDrawShadow)
 
 	#ifdef HLSDK10_BUILD
 	struct server_static_t
@@ -555,7 +556,11 @@ public:
 
 	bool ducktap;
 	edict_t **sv_player;
+
+	bool inside_studioapi_GL_StudioDrawShadow = false;
 protected:
+	cvar_t *r_shadows;
+
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
 	void SaveInitialDataToDemo();

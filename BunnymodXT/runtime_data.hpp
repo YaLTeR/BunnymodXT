@@ -67,6 +67,12 @@ namespace RuntimeData
 		int flags;
 	};
 
+	struct Checksums {
+		std::string client;
+		std::string server;
+		std::string map;
+	};
+
 	using Data = boost::variant<VersionInfo,
 	                            CVarValues,
 	                            Time,
@@ -80,7 +86,8 @@ namespace RuntimeData
 	                            Edicts,
 	                            PlayerHealth,
 	                            SplitMarker,
-	                            Flags>;
+	                            Flags,
+	                            Checksums>;
 
 	void Add(Data data);
 	void Clear();

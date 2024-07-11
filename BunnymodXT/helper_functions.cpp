@@ -4,6 +4,30 @@
 
 namespace helper_functions
 {
+	bool IsPlayer(const edict_t *ent)
+	{
+		// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/player.cpp#L2850
+
+		auto &hw = HwDLL::GetInstance();
+		auto &sv = ServerDLL::GetInstance();
+
+		if (strcmp(hw.GetString(ent->v.classname), "player") != 0)
+			return false;
+
+		if (!(ent->v.flags & FL_CLIENT))
+			return false;
+
+		if (sv.pEngfuncs && hw.ppGlobals)
+		{
+			int index = sv.pEngfuncs->pfnIndexOfEdict(ent);
+
+			if ((index < 1) || (index > hw.ppGlobals->maxClients)) // gGlobalVariables.maxClients = svs.maxclients
+				return false;
+		}
+
+		return true;
+	}
+
 	void com_fixslashes(std::string &str)
 	{
 		// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680

@@ -142,7 +142,6 @@ protected:
 	typedef void(__cdecl *_DispatchTouch)(edict_t *pentTouched, edict_t *pentOther);
 	_DispatchTouch ORIG_DispatchTouch;
 
-	typedef bool (__fastcall *_IsPlayer)(void *thisptr);
 	typedef void (__fastcall *_Center)(void *thisptr, int edx, Vector *center);
 
 #ifdef _WIN32
@@ -177,7 +176,6 @@ protected:
 
 	void *pGlobalState;
 
-	ptrdiff_t offFuncIsPlayer = 0x9C;
 	ptrdiff_t offFuncCenter = 0xC8;
 	ptrdiff_t offFuncObjectCaps = 0x14;
 

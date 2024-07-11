@@ -2623,12 +2623,8 @@ bool ServerDLL::IsPlayerMovingPushable(const entvars_t *pevPushable, const entva
 	if (pevToucher->flags & FL_ONGROUND && pevToucher->groundentity && &pevToucher->groundentity->v == pevPushable)
 		return false;
 
-	/*
-	void *pToucher = pevToucher->pContainingEntity->pvPrivateData;
-	_IsPlayer IsPlayerFunc = *reinterpret_cast<_IsPlayer *>(*reinterpret_cast<uintptr_t *>(pToucher) + offFuncIsPlayer);
-	if (!IsPlayerFunc(pToucher))
+	if (!helper_functions::IsPlayer(pevToucher->pContainingEntity))
 		return false;
-	*/
 
 	if (push && !(pevToucher->button & (IN_FORWARD | IN_USE)))
 		return false;

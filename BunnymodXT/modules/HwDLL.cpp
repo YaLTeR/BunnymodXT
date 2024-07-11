@@ -3407,8 +3407,6 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 		hw.ch_checkpoint_is_duck.emplace_back(is_duck);
 		hw.ch_checkpoint_gravity.emplace_back(pl->v.gravity);
 		hw.ch_checkpoint_is_set = true;
-		
-		hw.is_cstrike_dir = cl.DoesGameDirMatch("cstrike") || cl.DoesGameDirMatch("czero");
 	}
 };
 
@@ -8344,8 +8342,12 @@ HOOK_DEF_0(HwDLL, qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 
 HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 {
+	// LoadThisDll is executed once after a server is initialized. Subsequent server initialization won't trigger LoadThisDll. 
 	auto oldszDllFilename = szDllFilename;
 	std::string newszDllFilename;
+
+	auto &hw = HwDLL::GetInstance();
+	hw.is_cstrike_dir = ClientDLL::GetInstance().DoesGameDirMatch("cstrike");
 
 	if (boost::ends_with(szDllFilename, "metamod" DLL_EXTENSION))
 	{
@@ -8353,8 +8355,7 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 
 		bool is_failed = false;
 
-		static bool is_cstrike = ClientDLL::GetInstance().DoesGameDirMatch("cstrike");
-		if (is_cstrike)
+		if (hw.is_cstrike_dir)
 		{
 			#ifdef _WIN32
 			const std::string cs_lib = "dlls\\mp";

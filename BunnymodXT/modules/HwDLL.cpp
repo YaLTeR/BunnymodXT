@@ -50,7 +50,7 @@ extern "C" {
 	// BXT will call this right before running HLStrafe for every played back frame of a TAS.
 	//
 	// Return value != 0 will cause BXT to stop TAS playback.
-	DLLEXPORT int (*bxt_on_tas_playback_frame)(on_tas_playback_frame_data data);
+	DLLEXPORT int (*bxt_on_tas_playback_frame_v2)(on_tas_playback_frame_data data);
 
 	// BXT will call this when the TAS playback stops.
 	DLLEXPORT void (*bxt_on_tas_playback_stopped)();
@@ -2496,10 +2496,10 @@ std::array<float, 3> HwDLL::GetRenderedViewangles() {
 }
 
 int HwDLL::CallOnTASPlaybackFrame() {
-	if (!bxt_on_tas_playback_frame)
+	if (!bxt_on_tas_playback_frame_v2)
 		return 0;
 
-	return bxt_on_tas_playback_frame(on_tas_playback_frame_data {
+	return bxt_on_tas_playback_frame_v2(on_tas_playback_frame_data {
 		StrafeState.StrafeCycleFrameCount,
 		PrevFractions,
 		PrevNormalzs,
@@ -6149,7 +6149,7 @@ void HwDLL::InsertCommands()
 					pushables,
 				});
 
-				if (bxt_on_tas_playback_frame) {
+				if (bxt_on_tas_playback_frame_v2) {
 					const auto stop = CallOnTASPlaybackFrame();
 					if (stop) {
 						ResetTASPlaybackState();
@@ -6683,7 +6683,7 @@ void HwDLL::InsertCommands()
 				RenderPitchOverrides.clear();
 				RenderPitchOverrideIndex = 0;
 
-				if (bxt_on_tas_playback_frame) {
+				if (bxt_on_tas_playback_frame_v2) {
 					// We don't use the return value here because we stop anyway.
 					CallOnTASPlaybackFrame();
 				}

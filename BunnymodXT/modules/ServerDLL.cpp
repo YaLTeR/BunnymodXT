@@ -2690,19 +2690,10 @@ HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, 
 			damage.direction[1] = 0.0;
 			damage.direction[2] = 0.0;
 		} else {
-			/*
-			void *pInflictor = pevInflictor->pContainingEntity->pvPrivateData;
-			_Center playerCenterFunc = *reinterpret_cast<_Center *>(*reinterpret_cast<uintptr_t *>(thisptr) + offFuncCenter);
-			_Center inflictorCenterFunc = *reinterpret_cast<_Center *>(*reinterpret_cast<uintptr_t *>(pInflictor) + offFuncCenter);
+			entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4); // _Smiley: TODO: replace it with GET_PEV macro once it's merged.
 
-			Vector playerCenter;
-			Vector inflictorCenter;
-			playerCenterFunc(thisptr, edx, &playerCenter);
-			inflictorCenterFunc(pInflictor, edx, &inflictorCenter);
-			*/
-
-			Vector playerCenter;
-			Vector inflictorCenter;
+			Vector playerCenter = helper_functions::Center(pev->pContainingEntity);
+			Vector inflictorCenter = helper_functions::Center(pevInflictor->pContainingEntity);
 			Vector vecDir = playerCenter + Vector(0, 0, 10) - inflictorCenter;
 
 			damage.direction[0] = vecDir.x;

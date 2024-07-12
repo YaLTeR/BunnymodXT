@@ -6043,7 +6043,7 @@ void HwDLL::InsertCommands()
 
 						pushables[i].index = reinterpret_cast<uintptr_t>(pev);
 
-						Vector origin = pev->origin + ((pev->mins + pev->maxs) / 2.f);
+						Vector origin = helper_functions::Center(ent);
 						pushables[i].origin[0] = origin[0];
 						pushables[i].origin[1] = origin[1];
 						pushables[i].origin[2] = origin[2];
@@ -6067,8 +6067,7 @@ void HwDLL::InsertCommands()
 						StrafeState.Parameters.Parameters.LookAt.Entity = 0;
 					} else {				
 						const edict_t *ent = edicts + StrafeState.Parameters.Parameters.LookAt.Entity;
-						const entvars_t *pev = &(ent->v);
-						Vector origin = pev->origin + ((pev->mins + pev->maxs) / 2.f);
+						Vector origin = helper_functions::Center(ent);
 
 						StrafeState.TargetYawLookAtOrigin[0] = origin[0];
 						StrafeState.TargetYawLookAtOrigin[1] = origin[1];

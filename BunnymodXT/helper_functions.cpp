@@ -4,6 +4,16 @@
 
 namespace helper_functions
 {
+	bool IsBSPModel(const int solid, const int movetype)
+	{
+		if ((solid == SOLID_BSP) || (movetype == MOVETYPE_PUSHSTEP))
+			return true;
+
+		return false;
+	}
+
+	bool IsBSPModel(const edict_t *ent) { return IsBSPModel(ent->v.solid, ent->v.movetype); }
+
 	void com_fixslashes(std::string &str)
 	{
 		// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680

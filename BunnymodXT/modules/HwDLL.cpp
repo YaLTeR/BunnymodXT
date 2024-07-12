@@ -41,6 +41,7 @@ struct on_tas_playback_frame_data {
 	std::array<float, 4> prev_predicted_trace_fractions;
 	std::array<float, 4> prev_predicted_trace_normal_zs;
 	on_tas_playback_frame_max_accel_yaw_offset max_accel_yaw_offset;
+	std::array<float, 3> rendered_viewangles;
 };
 
 // Change the variable name if you change the parameters!
@@ -49,7 +50,7 @@ extern "C" {
 	// BXT will call this right before running HLStrafe for every played back frame of a TAS.
 	//
 	// Return value != 0 will cause BXT to stop TAS playback.
-	DLLEXPORT int (*bxt_on_tas_playback_frame)(on_tas_playback_frame_data data);
+	DLLEXPORT int (*bxt_on_tas_playback_frame_v2)(on_tas_playback_frame_data data);
 
 	// BXT will call this when the TAS playback stops.
 	DLLEXPORT void (*bxt_on_tas_playback_stopped)();
@@ -2474,11 +2475,31 @@ cvar_t* HwDLL::FindCVar(const char* name)
 	return ORIG_Cvar_FindVar(name);
 }
 
+std::array<float, 3> HwDLL::GetRenderedViewangles() {
+	std::array<float, 3> res = {player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]};
+
+	if (!PitchOverrides.empty()) {
+		res[0] = PitchOverrides[PitchOverrideIndex];
+	}
+	if (!RenderPitchOverrides.empty()) {
+		res[0] = RenderPitchOverrides[RenderPitchOverrideIndex];
+	}
+
+	if (!TargetYawOverrides.empty()) {
+		res[1] = TargetYawOverrides[TargetYawOverrideIndex];
+	}
+	if (!RenderYawOverrides.empty()) {
+		res[1] = RenderYawOverrides[RenderYawOverrideIndex];
+	}
+
+	return res;
+}
+
 int HwDLL::CallOnTASPlaybackFrame() {
-	if (!bxt_on_tas_playback_frame)
+	if (!bxt_on_tas_playback_frame_v2)
 		return 0;
 
-	return bxt_on_tas_playback_frame(on_tas_playback_frame_data {
+	return bxt_on_tas_playback_frame_v2(on_tas_playback_frame_data {
 		StrafeState.StrafeCycleFrameCount,
 		PrevFractions,
 		PrevNormalzs,
@@ -2489,6 +2510,7 @@ int HwDLL::CallOnTASPlaybackFrame() {
 			StrafeState.MaxAccelYawOffsetAccel, // accel
 			static_cast<unsigned char>(StrafeState.MaxAccelYawOffsetDir), // dir 
 		},
+		GetRenderedViewangles(),
 	});
 }
 
@@ -6127,7 +6149,7 @@ void HwDLL::InsertCommands()
 					pushables,
 				});
 
-				if (bxt_on_tas_playback_frame) {
+				if (bxt_on_tas_playback_frame_v2) {
 					const auto stop = CallOnTASPlaybackFrame();
 					if (stop) {
 						ResetTASPlaybackState();
@@ -6661,7 +6683,7 @@ void HwDLL::InsertCommands()
 				RenderPitchOverrides.clear();
 				RenderPitchOverrideIndex = 0;
 
-				if (bxt_on_tas_playback_frame) {
+				if (bxt_on_tas_playback_frame_v2) {
 					// We don't use the return value here because we stop anyway.
 					CallOnTASPlaybackFrame();
 				}

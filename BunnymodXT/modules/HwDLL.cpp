@@ -4628,8 +4628,7 @@ void HwDLL::PrintEntity(std::ostringstream &out, int index)
 	if ((!strncmp(classname, "func_door", 9)) || (!strncmp(classname, "func_rotating", 13)) || (!strncmp(classname, "func_train", 10)))
 		out << "; dmg: " << ent->v.dmg;
 
-	Vector origin;
-	HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
+	Vector origin = helper_functions::get_origin_of_entity(ent);
 
 	out << "; xyz: " << origin.x << " " << origin.y << " " << origin.z;
 
@@ -4777,22 +4776,6 @@ struct HwDLL::Cmd_BXT_Print_Entities_By_Index
 	}
 };
 
-void HwDLL::GetOriginOfEntity(Vector& origin, const edict_t* ent)
-{
-	const auto& hw = HwDLL::GetInstance();
-	const char* classname = hw.GetString(ent->v.classname);
-	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-	bool is_friction = std::strncmp(classname, "func_friction", 13) == 0;
-	bool is_water = std::strncmp(classname, "func_water", 10) == 0;
-
-	// Credits to 'goldsrc_monitor' tool for their code to get origin of entities
-	if (ent->v.solid == SOLID_BSP || ent->v.movetype == MOVETYPE_PUSHSTEP || is_trigger || is_ladder || is_friction || is_water)
-		origin = ent->v.origin + ((ent->v.mins + ent->v.maxs) / 2.f);
-	else
-		origin = ent->v.origin;
-}
-
 struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 {
 	USAGE("Usage: bxt_ch_teleport_to_entity <index>\n");
@@ -4817,8 +4800,7 @@ struct HwDLL::Cmd_BXT_CH_Teleport_To_Entity
 			return;
 		}
 
-		Vector origin;
-		HwDLL::GetInstance().GetOriginOfEntity(origin, ent);
+		Vector origin = helper_functions::get_origin_of_entity(ent);
 
 		(*hw.sv_player)->v.origin[0] = origin[0];
 		(*hw.sv_player)->v.origin[1] = origin[1];

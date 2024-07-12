@@ -551,7 +551,6 @@ protected:
 public:
 	HLStrafe::MovementVars GetMovementVars();
 	const char* GetMovetypeName(int moveType);
-	void GetOriginOfEntity(Vector& origin, const edict_t* ent);
 
 	bool ducktap;
 	edict_t **sv_player;

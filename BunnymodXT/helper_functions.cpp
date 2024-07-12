@@ -50,4 +50,13 @@ namespace helper_functions
 
 		std::exit(1);
 	}
+
+	Vector get_origin_of_entity(const edict_t* ent)
+	{
+		Vector origin = ent->v.origin;
+		if (IsBSPModel(ent))
+			origin = Center(ent);
+
+		return origin;
+	}
 };

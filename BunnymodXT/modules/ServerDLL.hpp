@@ -142,8 +142,6 @@ protected:
 	typedef void(__cdecl *_DispatchTouch)(edict_t *pentTouched, edict_t *pentOther);
 	_DispatchTouch ORIG_DispatchTouch;
 
-	typedef void (__fastcall *_Center)(void *thisptr, int edx, Vector *center);
-
 #ifdef _WIN32
 	typedef int (__fastcall *_ObjectCaps)(void *thisptr);
 #else
@@ -176,7 +174,6 @@ protected:
 
 	void *pGlobalState;
 
-	ptrdiff_t offFuncCenter = 0xC8;
 	ptrdiff_t offFuncObjectCaps = 0x14;
 
 	ptrdiff_t offNihilanthLevel;

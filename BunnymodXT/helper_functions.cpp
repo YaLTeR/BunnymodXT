@@ -4,6 +4,9 @@
 
 namespace helper_functions
 {
+	Vector Center(const Vector absmin, const Vector absmax) { return (absmin + absmax) * 0.5; }
+	Vector Center(const edict_t *ent) { return Center(ent->v.absmin, ent->v.absmax); }
+
 	bool IsPlayer(const edict_t *ent)
 	{
 		// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/player.cpp#L2850

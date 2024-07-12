@@ -510,34 +510,28 @@ void ServerDLL::FindStuff()
 			case 3: // OP4-WON
 				offm_rgAmmoLast = 0x5C0;
 				offm_iClientFOV = 0x4A4;
-				offFuncCenter = 0xCC;
 				break;
 			case 4: // OpposingForce
 				offm_rgAmmoLast = 0x604;
 				offm_iClientFOV = 0x4E0;
-				offFuncCenter = 0xCC;
 				break;
 			case 5: // OP4-8684
 				offm_rgAmmoLast = 0x608;
 				offm_iClientFOV = 0x4E4;
-				offFuncCenter = 0xCC;
 				break;
 			case 6: // Gunman
 				offm_rgAmmoLast = 0x53C;
 				offm_iClientFOV = 0x47C;
-				offFuncCenter = 0xCC;
 				break;
 			case 7: // CSCZDS
 				offm_rgAmmoLast = 0x53C;
 				offm_iClientFOV = 0x898;
-				offFuncCenter = 0xDC;
 				offFuncObjectCaps = 0x18;
 				is_czeror = true;
 				break;
 			case 8: // CSCZDS-8684
 				offm_rgAmmoLast = 0x540;
 				offm_iClientFOV = 0x89C;
-				offFuncCenter = 0xDC;
 				offFuncObjectCaps = 0x18;
 				is_czeror = true;
 				break;
@@ -548,30 +542,25 @@ void ServerDLL::FindStuff()
 			case 10: // PARANOIA
 				offm_rgAmmoLast = 0x62C;
 				offm_iClientFOV = 0x584;
-				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				break;
 			case 11: // CStrike-Latest
-				offFuncCenter = 0xCC;
 				offFuncObjectCaps = 0x18;
 				break;
 			case 12: // TFC-8684
 				offm_rgAmmoLast = 0x978;
 				offm_iClientFOV = 0x8CC;
-				offFuncCenter = 0xC4;
 				offFuncObjectCaps = 0x18;
 				break;
 			case 13: // TWHL-Tower-2
 			case 14: // Halfquake Trilogy
 				offm_rgAmmoLast = 0x5F4;
 				offm_iClientFOV = 0x548;
-				offFuncCenter = 0x100;
 				offFuncObjectCaps = 0x44;
 				break;
 			case 15: // Echoes
 				offm_rgAmmoLast = 0x5F4;
 				offm_iClientFOV = 0x548;
-				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
 				break;
 			case 16: // Decay
@@ -586,7 +575,6 @@ void ServerDLL::FindStuff()
 			case 18: // Black-Ops
 				offm_rgAmmoLast = 0x554;
 				offm_iClientFOV = 0x4AC;
-				offFuncCenter = 0xD0;
 				break;
 			case 19: // Invasion
 				offm_rgAmmoLast = 0x514;
@@ -595,13 +583,11 @@ void ServerDLL::FindStuff()
 			case 20: // Arctic-Incident
 				offm_rgAmmoLast = 0x5B8;
 				offm_iClientFOV = 0x510;
-				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
 				break;
 			case 21: // HL-Delta
 				offm_rgAmmoLast = 0x5C8;
 				offm_iClientFOV = 0x51C;
-				offFuncCenter = 0xF8;
 				offFuncObjectCaps = 0x3C;
 				break;
 			case 23: // OPBT
@@ -611,7 +597,6 @@ void ServerDLL::FindStuff()
 			case 24: // Parasomnia
 				offm_rgAmmoLast = 0x564;
 				offm_iClientFOV = 0x4B8;
-				offFuncCenter = 0xC4;
 				break;
 			case 26: // AVP2
 				offm_rgAmmoLast = 0x550;
@@ -620,7 +605,6 @@ void ServerDLL::FindStuff()
 			case 27: // CoF-Mod-10
 				offm_rgAmmoLast = 0x2440;
 				offm_iClientFOV = 0x238C;
-				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				offm_fStamina = 0x2080;
 				offm_bInfiniteStamina = 0x2078;
@@ -632,7 +616,6 @@ void ServerDLL::FindStuff()
 			case 28: // CoF-Mod-11
 				offm_rgAmmoLast = 0x2444;
 				offm_iClientFOV = 0x2390;
-				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				offm_fStamina = 0x2084;
 				offm_bInfiniteStamina = 0x207C;
@@ -644,7 +627,6 @@ void ServerDLL::FindStuff()
 			case 29: // CoF-Mod-12
 				offm_rgAmmoLast = 0x2450;
 				offm_iClientFOV = 0x239C;
-				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				offm_fStamina = 0x2090;
 				offm_bInfiniteStamina = 0x2088;
@@ -657,7 +639,6 @@ void ServerDLL::FindStuff()
 			case 30: // CoF-Mod-13-135
 				offm_rgAmmoLast = 0x2460;
 				offm_iClientFOV = 0x23AC;
-				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				offm_fStamina = 0x20A0;
 				offm_bInfiniteStamina = 0x2098;
@@ -670,7 +651,6 @@ void ServerDLL::FindStuff()
 			case 31: // CoF-Mod-14-155
 				offm_rgAmmoLast = 0x2464;
 				offm_iClientFOV = 0x23B0;
-				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				offm_fStamina = 0x20A4;
 				offm_bInfiniteStamina = 0x209C;
@@ -683,7 +663,6 @@ void ServerDLL::FindStuff()
 			case 32: // CoF-Steam-Release
 				offm_rgAmmoLast = 0x2474;
 				offm_iClientFOV = 0x23C0;
-				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				offm_fStamina = 0x20B4;
 				offm_bInfiniteStamina = 0x20AC;
@@ -695,7 +674,6 @@ void ServerDLL::FindStuff()
 			case 33: // CoF-Steam-Latest
 				offm_rgAmmoLast = 0x25C0;
 				offm_iClientFOV = 0x250C;
-				offFuncCenter = 0xFC;
 				offFuncObjectCaps = 0x40;
 				offm_fStamina = 0x21F0;
 				offm_bInfiniteStamina = 0x21E8;
@@ -705,7 +683,6 @@ void ServerDLL::FindStuff()
 				is_cof = true;
 				break;
 			case 34: // DayOfDefeat-Latest
-				offFuncCenter = 0xE0;
 				offFuncObjectCaps = 0x20;
 				break;
 			case 35: // DeathmatchClassic-Latest
@@ -946,7 +923,6 @@ void ServerDLL::FindStuff()
 				if (ClientDLL::GetInstance().DoesGameDirContain("czeror")) {
 					offm_rgAmmoLast = 0x554; // 6153: 0x550
 					offm_iClientFOV = 0x8B0; // 6153: 0x8AC
-					offFuncCenter = 0xDC;
 					offFuncObjectCaps = 0x18;
 				}
 				if (ClientDLL::GetInstance().DoesGameDirContain("bshift")) {
@@ -956,7 +932,6 @@ void ServerDLL::FindStuff()
 				if (ClientDLL::GetInstance().DoesGameDirMatch("cstrike") || ClientDLL::GetInstance().DoesGameDirMatch("czero")) {
 					offm_rgAmmoLast = 0x674;
 					offm_iClientFOV = 0x5C4;
-					offFuncCenter = 0xCC;
 					offFuncObjectCaps = 0x18;
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("tfc")) {
@@ -967,7 +942,6 @@ void ServerDLL::FindStuff()
 				if (ClientDLL::GetInstance().DoesGameDirMatch("dod")) {
 					offm_rgAmmoLast = 0x4F8; // 6153: 0x4F4
 					offm_iClientFOV = 0x448; // 6153: 0x444
-					offFuncCenter = 0xE0;
 					offFuncObjectCaps = 0x20;
 				}
 				if (ClientDLL::GetInstance().DoesGameDirMatch("dmc")) {
@@ -2716,6 +2690,7 @@ HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, 
 			damage.direction[1] = 0.0;
 			damage.direction[2] = 0.0;
 		} else {
+			/*
 			void *pInflictor = pevInflictor->pContainingEntity->pvPrivateData;
 			_Center playerCenterFunc = *reinterpret_cast<_Center *>(*reinterpret_cast<uintptr_t *>(thisptr) + offFuncCenter);
 			_Center inflictorCenterFunc = *reinterpret_cast<_Center *>(*reinterpret_cast<uintptr_t *>(pInflictor) + offFuncCenter);
@@ -2724,6 +2699,10 @@ HOOK_DEF_6(ServerDLL, int, __fastcall, CBasePlayer__TakeDamage, void*, thisptr, 
 			Vector inflictorCenter;
 			playerCenterFunc(thisptr, edx, &playerCenter);
 			inflictorCenterFunc(pInflictor, edx, &inflictorCenter);
+			*/
+
+			Vector playerCenter;
+			Vector inflictorCenter;
 			Vector vecDir = playerCenter + Vector(0, 0, 10) - inflictorCenter;
 
 			damage.direction[0] = vecDir.x;

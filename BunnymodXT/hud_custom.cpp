@@ -7,6 +7,7 @@
 #include "interprocess.hpp"
 #include "runtime_data.hpp"
 #include "opengl_utils.hpp"
+#include "helper_functions.hpp"
 #include "splits.hpp"
 
 #include <GL/gl.h>

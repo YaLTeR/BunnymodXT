@@ -7,6 +7,7 @@
 #include "modules/ServerDLL.hpp"
 #include "modules/HwDLL.hpp"
 #include "cvars.hpp"
+#include "helper_functions.hpp"
 #include "hud_custom.hpp"
 
 using namespace std::literals;

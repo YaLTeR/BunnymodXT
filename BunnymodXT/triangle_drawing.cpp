@@ -3,6 +3,8 @@
 #include "custom_triggers.hpp"
 #include "splits.hpp"
 
+#include "helper_functions.hpp"
+
 #include "triangle_drawing.hpp"
 #include "triangle_utils.hpp"
 #include "modules.hpp"

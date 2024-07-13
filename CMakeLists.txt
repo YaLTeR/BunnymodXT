@@ -181,6 +181,24 @@ set (HEADER_FILES
 	BunnymodXT/simulation_ipc.hpp
 	BunnymodXT/splits.hpp
 	BunnymodXT/helper_functions.hpp
+	BunnymodXT/wrappers/engine-to-client/main.hpp
+	BunnymodXT/wrappers/engine-to-client/cl.hpp
+	BunnymodXT/wrappers/engine-to-client/cls.hpp
+	BunnymodXT/wrappers/engine-to-client/refdef.hpp
+	BunnymodXT/wrappers/engine-to-client/refparams.hpp
+	BunnymodXT/wrappers/engine-to-client/triapi.hpp
+	BunnymodXT/wrappers/engine-to-client/efxapi.hpp
+	BunnymodXT/wrappers/engine-to-client/eventapi.hpp
+	BunnymodXT/wrappers/engine-to-client/demoapi.hpp
+	BunnymodXT/wrappers/engine-to-client/studioapi.hpp
+	BunnymodXT/wrappers/engine-to-server/main.hpp
+	BunnymodXT/wrappers/engine-to-server/sv.hpp
+	BunnymodXT/wrappers/engine-to-server/svs.hpp
+	BunnymodXT/wrappers/engine-to-server/svc.hpp
+	BunnymodXT/wrappers/engine-to-server/globalvars.hpp
+	BunnymodXT/wrappers/engine-to-server/movevars.hpp
+	BunnymodXT/wrappers/engine-to-server/delta.hpp
+	BunnymodXT/wrappers/engine.hpp
 	BunnymodXT/git_revision.hpp)
 
 set (SOURCE_FILES
@@ -208,6 +226,24 @@ set (SOURCE_FILES
 	BunnymodXT/simulation_ipc.cpp
 	BunnymodXT/splits.cpp
 	BunnymodXT/helper_functions.cpp
+	BunnymodXT/wrappers/engine-to-client/main.cpp
+	BunnymodXT/wrappers/engine-to-client/cl.cpp
+	BunnymodXT/wrappers/engine-to-client/cls.cpp
+	BunnymodXT/wrappers/engine-to-client/refdef.cpp
+	BunnymodXT/wrappers/engine-to-client/refparams.cpp
+	BunnymodXT/wrappers/engine-to-client/triapi.cpp
+	BunnymodXT/wrappers/engine-to-client/efxapi.cpp
+	BunnymodXT/wrappers/engine-to-client/eventapi.cpp
+	BunnymodXT/wrappers/engine-to-client/demoapi.cpp
+	BunnymodXT/wrappers/engine-to-client/studioapi.cpp
+	BunnymodXT/wrappers/engine-to-server/main.cpp
+	BunnymodXT/wrappers/engine-to-server/sv.cpp
+	BunnymodXT/wrappers/engine-to-server/svs.cpp
+	BunnymodXT/wrappers/engine-to-server/svc.cpp
+	BunnymodXT/wrappers/engine-to-server/globalvars.cpp
+	BunnymodXT/wrappers/engine-to-server/movevars.cpp
+	BunnymodXT/wrappers/engine-to-server/delta.cpp
+	BunnymodXT/wrappers/engine.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/BunnymodXT/git_revision.cpp)
 
 if (MSVC)

@@ -8,6 +8,7 @@
 #include "HwDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
+#include "../helper_functions.hpp"
 #include "../hud_custom.hpp"
 #include "../interprocess.hpp"
 #include "../runtime_data.hpp"

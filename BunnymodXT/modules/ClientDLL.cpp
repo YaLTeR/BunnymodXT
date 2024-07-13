@@ -11,6 +11,7 @@
 #include "../hud_custom.hpp"
 #include "../triangle_drawing.hpp"
 #include "../discord_integration.hpp"
+#include "../wrappers.hpp"
 #include <GL/gl.h>
 
 // Linux hooks.

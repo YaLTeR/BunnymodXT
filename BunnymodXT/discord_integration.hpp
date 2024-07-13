@@ -8,6 +8,7 @@
 #include "modules/HwDLL.hpp"
 #include "cvars.hpp"
 #include "hud_custom.hpp"
+#include "wrappers.hpp"
 
 using namespace std::literals;
 

@@ -6,6 +6,7 @@
 #include "triangle_drawing.hpp"
 #include "triangle_utils.hpp"
 #include "modules.hpp"
+#include "wrappers.hpp"
 
 #include "hud_custom.hpp"
 

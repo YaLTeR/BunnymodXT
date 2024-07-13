@@ -8,6 +8,7 @@
 #include "runtime_data.hpp"
 #include "opengl_utils.hpp"
 #include "splits.hpp"
+#include "wrappers.hpp"
 
 #include <GL/gl.h>
 

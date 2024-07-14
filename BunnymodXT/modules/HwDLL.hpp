@@ -6,6 +6,9 @@
 #include "taslogger/writer.hpp"
 #include "../input_editor.hpp"
 #include "../shared.hpp"
+#include <GL/gl.h>
+
+typedef void (APIENTRY_HL *qglDepthMask_def)(GLboolean flag);
 
 enum class TASEditorMode {
 	DISABLED,
@@ -87,6 +90,7 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(qboolean, __cdecl, ValidStuffText, char* buf)
 	HOOK_DECL(qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 	HOOK_DECL(void, __cdecl, LoadThisDll, const char* szDllFilename)
+	HOOK_DECL(void, __cdecl, studioapi_GL_StudioDrawShadow)
 
 	#ifdef HLSDK10_BUILD
 	struct server_static_t
@@ -557,7 +561,13 @@ public:
 
 	bool ducktap;
 	edict_t **sv_player;
+
+	bool inside_studioapi_GL_StudioDrawShadow = false;
+	qglDepthMask_def orig_qglDepthMask;
 protected:
+	cvar_t *r_shadows;
+	qglDepthMask_def *qglDepthMask;
+
 	void KeyDown(Key& btn);
 	void KeyUp(Key& btn);
 	void SaveInitialDataToDemo();

@@ -3,7 +3,6 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <cerrno>
-#include <GL/gl.h>
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
 #include <SPTLib/Hooks.hpp>
@@ -324,6 +323,11 @@ extern "C" void __cdecl R_SetFrustum()
 	HwDLL::HOOKED_R_SetFrustum();
 }
 
+extern "C" void __cdecl studioapi_GL_StudioDrawShadow()
+{
+	HwDLL::HOOKED_studioapi_GL_StudioDrawShadow();
+}
+
 extern "C" void __cdecl SPR_Set(HSPRITE_HL hSprite, int r, int g, int b)
 {
 	HwDLL::HOOKED_SPR_Set(hSprite, r, g, b);
@@ -476,6 +480,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			MemUtils::MarkAsExecutable(ORIG_BUsesSDLInput);
 			MemUtils::MarkAsExecutable(ORIG_R_StudioRenderModel);
 			MemUtils::MarkAsExecutable(ORIG_R_SetFrustum);
+			MemUtils::MarkAsExecutable(ORIG_studioapi_GL_StudioDrawShadow);
 			MemUtils::MarkAsExecutable(ORIG_SPR_Set);
 			MemUtils::MarkAsExecutable(ORIG_DrawCrosshair);
 			MemUtils::MarkAsExecutable(ORIG_Draw_FillRGBA);
@@ -545,6 +550,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 			ORIG_BUsesSDLInput, HOOKED_BUsesSDLInput,
 			ORIG_R_StudioRenderModel, HOOKED_R_StudioRenderModel,
 			ORIG_R_SetFrustum, HOOKED_R_SetFrustum,
+			ORIG_studioapi_GL_StudioDrawShadow, HOOKED_studioapi_GL_StudioDrawShadow,
 			ORIG_SPR_Set, HOOKED_SPR_Set,
 			ORIG_DrawCrosshair, HOOKED_DrawCrosshair,
 			ORIG_Draw_FillRGBA, HOOKED_Draw_FillRGBA,
@@ -640,6 +646,7 @@ void HwDLL::Unhook()
 			ORIG_BUsesSDLInput,
 			ORIG_R_StudioRenderModel,
 			ORIG_R_SetFrustum,
+			ORIG_studioapi_GL_StudioDrawShadow,
 			ORIG_SPR_Set,
 			ORIG_DrawCrosshair,
 			ORIG_Draw_FillRGBA,
@@ -739,6 +746,7 @@ void HwDLL::Clear()
 	ORIG_BUsesSDLInput = nullptr;
 	ORIG_R_StudioRenderModel = nullptr;
 	ORIG_R_SetFrustum = nullptr;
+	ORIG_studioapi_GL_StudioDrawShadow = nullptr;
 	ORIG_SPR_Set = nullptr;
 	ORIG_DrawCrosshair = nullptr;
 	ORIG_Draw_FillRGBA = nullptr;
@@ -798,6 +806,8 @@ void HwDLL::Clear()
 	frametime_remainder = nullptr;
 	pstudiohdr = nullptr;
 	scr_fov_value = nullptr;
+	r_shadows = nullptr;
+	qglDepthMask = nullptr;
 	framesTillExecuting = 0;
 	executing = false;
 	insideCbuf_Execute = false;
@@ -1345,6 +1355,27 @@ void HwDLL::FindStuff()
 			EngineDevWarning("[hw dll] Could not find R_SetFrustum.\n");
 		}
 
+		ORIG_studioapi_GL_StudioDrawShadow = reinterpret_cast<_studioapi_GL_StudioDrawShadow>(MemUtils::GetSymbolAddress(m_Handle, "studioapi_GL_StudioDrawShadow"));
+		if (ORIG_studioapi_GL_StudioDrawShadow) {
+			EngineDevMsg("[hw dll] Found studioapi_GL_StudioDrawShadow at %p.\n", ORIG_studioapi_GL_StudioDrawShadow);
+		} else {
+			EngineDevWarning("[hw dll] Could not find studioapi_GL_StudioDrawShadow.\n");
+		}
+
+		r_shadows = reinterpret_cast<cvar_t*>(MemUtils::GetSymbolAddress(m_Handle, "r_shadows"));
+		if (r_shadows) {
+			EngineDevMsg("[hw dll] Found r_shadows at %p.\n", r_shadows);
+		} else {
+			EngineDevWarning("[hw dll] Could not find r_shadows.\n");
+		}
+
+		qglDepthMask = reinterpret_cast<qglDepthMask_def*>(MemUtils::GetSymbolAddress(m_Handle, "qglDepthMask"));
+		if (qglDepthMask) {
+			EngineDevMsg("[hw dll] Found qglDepthMask at %p.\n", qglDepthMask);
+		} else {
+			EngineDevWarning("[hw dll] Could not find qglDepthMask.\n");
+		}
+
 		g_sv_delta = reinterpret_cast<void**>(MemUtils::GetSymbolAddress(m_Handle, "g_sv_delta"));
 		if (g_sv_delta)
 			EngineDevMsg("[hw dll] Found g_sv_delta at %p.\n", g_sv_delta);
@@ -1601,6 +1632,19 @@ void HwDLL::FindStuff()
 					break;
 				case 2: // CoF-5936
 					scr_fov_value = reinterpret_cast<float*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_R_SetFrustum) + 7));
+					break;
+				}
+			});
+
+		auto fstudioapi_GL_StudioDrawShadow = FindAsync(
+			ORIG_studioapi_GL_StudioDrawShadow,
+			patterns::engine::studioapi_GL_StudioDrawShadow,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::studioapi_GL_StudioDrawShadow.cbegin())
+				{
+				case 0: // HL-SteamPipe
+					r_shadows = reinterpret_cast<cvar_t*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_studioapi_GL_StudioDrawShadow) + 0xE) - offsetof(cvar_t, value));
+					qglDepthMask = reinterpret_cast<qglDepthMask_def*>(*reinterpret_cast<uintptr_t*>(reinterpret_cast<uintptr_t>(ORIG_studioapi_GL_StudioDrawShadow) + 0x8));
 					break;
 				}
 			});
@@ -2137,6 +2181,17 @@ void HwDLL::FindStuff()
 				EngineDevMsg("[hw dll] Found scr_fov_value at %p.\n", scr_fov_value);
 			} else {
 				EngineDevWarning("[hw dll] Could not find R_SetFrustum.\n");
+			}
+		}
+
+		{
+			auto pattern = fstudioapi_GL_StudioDrawShadow.get();
+			if (ORIG_studioapi_GL_StudioDrawShadow) {
+				EngineDevMsg("[hw dll] Found studioapi_GL_StudioDrawShadow at %p (using the %s pattern).\n", ORIG_studioapi_GL_StudioDrawShadow, pattern->name());
+				EngineDevMsg("[hw dll] Found r_shadows at %p.\n", r_shadows);
+				EngineDevMsg("[hw dll] Found qglDepthMask at %p.\n", qglDepthMask);
+			} else {
+				EngineDevWarning("[hw dll] Could not find studioapi_GL_StudioDrawShadow.\n");
 			}
 		}
 
@@ -5765,6 +5820,13 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 		return;
 
 	registeredVarsAndCmds = true;
+
+	if (r_shadows)
+	{
+		ORIG_Cvar_RegisterVariable(r_shadows);
+		CVars::r_shadows.Assign(r_shadows);
+	}
+
 	RegisterCVar(CVars::_bxt_taslog);
 	RegisterCVar(CVars::_bxt_min_frametime);
 	RegisterCVar(CVars::_bxt_tas_script_generation);
@@ -8445,4 +8507,48 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 	}
 
 	ORIG_LoadThisDll(szDllFilename);
+}
+
+/*
+	_Smiley:
+
+	The original shadows have a issue with depth fighting.
+	Well in the beginning of original function, glDepthMask(GL_TRUE) is called.
+	I found that if we change it to GL_FALSE and return GL_TRUE at the end of the function, then we can get rid of this issue.
+	
+	I preferred to hook the QGL pointer for this, because accessing glDepthMask from system libraries will be more environment dependent, although of course it does not require finding with patterns/offsets.
+	QGL pointer functions are engine wrappers for GL functions made with the development of Quake 2.
+
+	Of course, we could also use byte patching instead, but this is a dubious solution and generally more limited in actions, although it is simpler to implement.
+
+	The logic behind all this code is so simple: we redirect the QGL pointer to our own wrapper, in which we do what we want, and at the end of the function we return everything back to original state.
+*/
+
+void APIENTRY_HL DepthMask(GLboolean flag)
+{
+	auto& hw = HwDLL::GetInstance();
+
+	if (hw.inside_studioapi_GL_StudioDrawShadow)
+		flag = GL_FALSE;
+
+	hw.orig_qglDepthMask(flag);
+}
+
+HOOK_DEF_0(HwDLL, void, __cdecl, studioapi_GL_StudioDrawShadow)
+{
+	if (!qglDepthMask || !r_shadows || !CVars::r_shadows.GetBool())
+	{
+		ORIG_studioapi_GL_StudioDrawShadow();
+		return;
+	}
+
+	orig_qglDepthMask = *qglDepthMask; // Save the original pointer.
+	*qglDepthMask = DepthMask; // Redirect to our own wrapper.
+
+	inside_studioapi_GL_StudioDrawShadow = true;
+	ORIG_studioapi_GL_StudioDrawShadow();
+	inside_studioapi_GL_StudioDrawShadow = false;
+
+	*qglDepthMask = orig_qglDepthMask; // Restore the original pointer.
+	orig_qglDepthMask(GL_TRUE); // We call qglDepthMask(GL_TRUE) back, since we changed it to GL_FALSE only for the duration of this function.
 }

@@ -18,7 +18,8 @@
 	X(skill) \
 	X(host_framerate) \
 	X(sensitivity) \
-	X(coop)
+	X(coop) \
+	X(r_shadows)
 
 #define DEFINE_CVARS(X) \
 	X(_bxt_taslog, "0") \

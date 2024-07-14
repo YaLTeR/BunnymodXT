@@ -195,10 +195,7 @@ namespace TriangleDrawing
 				float r, g, b, a;
 				ServerDLL::GetTriggerColor(classname, r, g, b);
 				ServerDLL::GetTriggerAlpha(classname, !active, true, a);
-				r /= 255.0f;
-				g /= 255.0f;
-				b /= 255.0f;
-				a /= 255.0f;
+				helper_functions::rgba_to_float(r, g, b, a);
 				if (active)
 					a = GetPulsatingAlpha(a, svTime + offset);
 
@@ -229,10 +226,7 @@ namespace TriangleDrawing
 				ss >> r >> g >> b >> a;
 
 				static float triggerColor[4];
-				triggerColor[0] = r / 255.0f;
-				triggerColor[1] = g / 255.0f;
-				triggerColor[2] = b / 255.0f;
-				triggerColor[3] = a / 255.0f;
+				helper_functions::rgba_to_float(triggerColor, r, g, b, a);
 
 				pTriAPI->Color4f(triggerColor[0], triggerColor[1], triggerColor[2], triggerColor[3]);
 			} else {
@@ -436,10 +430,7 @@ namespace TriangleDrawing
 				ss >> r >> g >> b >> a;
 
 				static float triggerColor[4];
-				triggerColor[0] = r / 255.0f;
-				triggerColor[1] = g / 255.0f;
-				triggerColor[2] = b / 255.0f;
-				triggerColor[3] = a / 255.0f;
+				helper_functions::rgba_to_float(triggerColor, r, g, b, a);
 
 				pTriAPI->Color4f(triggerColor[0], triggerColor[1], triggerColor[2], triggerColor[3]);
 			} else {

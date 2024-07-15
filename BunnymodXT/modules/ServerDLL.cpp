@@ -3504,7 +3504,7 @@ void TriggerTpLandmarkAfter(entvars_t *pev, Vector offset)
 {
 	pev->origin = pev->origin + offset;
 	// have to offset by some HULL because of origin z diff
-	const auto is_duck = pev->button & (IN_DUCK) || pev->flags & (FL_DUCKING);
+	const auto is_duck = pev->bInDuck || pev->flags & (FL_DUCKING);
 	const Vector VEC_HULL_MIN(-16, -16, -36);
 	const Vector VEC_DUCK_HULL_MIN(-16, -16, -18);
 	const auto hull_offset = is_duck ? VEC_DUCK_HULL_MIN : VEC_HULL_MIN;

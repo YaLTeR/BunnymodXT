@@ -766,6 +766,7 @@ void HwDLL::Clear()
 	pcl = nullptr;
 	cls = nullptr;
 	psv = nullptr;
+	check_vsync = true;
 	lastRecordedHealth = 0;
 	offTime = 0;
 	offWorldmodel = 0;

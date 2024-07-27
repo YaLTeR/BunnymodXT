@@ -12,6 +12,7 @@
 #include "../hud_custom.hpp"
 #include "../triangle_drawing.hpp"
 #include "../discord_integration.hpp"
+#include "../helper_functions.hpp"
 #include <GL/gl.h>
 
 // Linux hooks.
@@ -1672,22 +1673,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, HUD_Frame, double, time)
 		orig_forcehltv_found = HwDLL::GetInstance().ORIG_Cmd_FindCmd("dem_forcehltv");
 	}
 
-	#ifdef _WIN32
-	static bool check_vsync = true;
-	if (check_vsync)
-	{
-		bool bxtDisableVSync = getenv("BXT_DISABLE_VSYNC");
-		if (bxtDisableVSync)
-		{
-			typedef BOOL(APIENTRY* PFNWGLSWAPINTERVALPROC)(int);
-			PFNWGLSWAPINTERVALPROC wglSwapIntervalEXT = 0;
-			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALPROC)wglGetProcAddress("wglSwapIntervalEXT");
-			if (wglSwapIntervalEXT)
-				wglSwapIntervalEXT(0);
-		}
-		check_vsync = false;
-	}
-	#endif
+	helper_functions::disable_vsync();
 
 	if (CVars::_bxt_taslog.GetBool() && pEngfuncs)
 		pEngfuncs->Con_Printf(const_cast<char*>("HUD_Frame time: %f\n"), time);

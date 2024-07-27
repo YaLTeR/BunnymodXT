@@ -8,6 +8,7 @@
 #include "HwDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
+#include "../helper_functions.hpp"
 #include "../hud_custom.hpp"
 #include "../interprocess.hpp"
 #include "../runtime_data.hpp"
@@ -108,6 +109,11 @@ extern "C" int __cdecl _ZN11CBaseEntity9IsInWorldEv(void *thisptr)
 {
 	return ServerDLL::HOOKED_CBaseEntity__IsInWorld_Linux(thisptr);
 }
+
+extern "C" void __cdecl _ZN12CBaseTrigger13TeleportTouchEP11CBaseEntity(void* thisptr, void* pOther)
+{
+	return ServerDLL::HOOKED_CBaseTrigger__TeleportTouch_Linux(thisptr, pOther);
+}
 #endif
 
 void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* moduleBase, size_t moduleLength, bool needToIntercept)
@@ -172,7 +178,9 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_PM_Duck, HOOKED_PM_Duck,
 			ORIG_PM_UnDuck, HOOKED_PM_UnDuck,
 			ORIG_CBaseEntity__IsInWorld, HOOKED_CBaseEntity__IsInWorld,
-			ORIG_CBaseEntity__IsInWorld_Linux, HOOKED_CBaseEntity__IsInWorld_Linux);
+			ORIG_CBaseEntity__IsInWorld_Linux, HOOKED_CBaseEntity__IsInWorld_Linux,
+			ORIG_CBaseTrigger__TeleportTouch, HOOKED_CBaseTrigger__TeleportTouch,
+			ORIG_CBaseTrigger__TeleportTouch_Linux, HOOKED_CBaseTrigger__TeleportTouch_Linux);
 	}
 }
 
@@ -227,7 +235,9 @@ void ServerDLL::Unhook()
 			ORIG_PM_Duck,
 			ORIG_PM_UnDuck,
 			ORIG_CBaseEntity__IsInWorld,
-			ORIG_CBaseEntity__IsInWorld_Linux);
+			ORIG_CBaseEntity__IsInWorld_Linux,
+			ORIG_CBaseTrigger__TeleportTouch,
+			ORIG_CBaseTrigger__TeleportTouch_Linux);
 	}
 
 	Clear();
@@ -301,6 +311,8 @@ void ServerDLL::Clear()
 	ORIG_PM_UnDuck = nullptr;
 	ORIG_CBaseEntity__IsInWorld = nullptr;
 	ORIG_CBaseEntity__IsInWorld_Linux = nullptr;
+	ORIG_CBaseTrigger__TeleportTouch = nullptr;
+	ORIG_CBaseTrigger__TeleportTouch_Linux = nullptr;
 	ppmove = nullptr;
 	offPlayerIndex = 0;
 	offOldbuttons = 0;
@@ -310,6 +322,9 @@ void ServerDLL::Clear()
 	offAngles = 0;
 	offCmd = 0;
 	offBhopcap = 0;
+	offMaxspeed = 0;
+	offClientMaxspeed = 0;
+	offMoveType = 0;
 	pBhopcapWindows = 0;
 	pCZDS_Velocity_Byte = 0;
 	pCBasePlayer__Jump_OldButtons_Check_Byte = 0;
@@ -408,6 +423,9 @@ void ServerDLL::FindStuff()
 			offInDuck = 0x90;
 			offFlags = 0xB8;
 			offBasevelocity = 0x74;
+			offMaxspeed = 0x1f4;
+			offClientMaxspeed = 0x1f8;
+			offMoveType = 0xdc;
 		});
 
 	auto fPM_Jump = FindFunctionAsync(
@@ -1548,6 +1566,19 @@ void ServerDLL::FindStuff()
 		}
 	}
 
+	{
+		ORIG_CBaseTrigger__TeleportTouch = reinterpret_cast<_CBaseTrigger__TeleportTouch>(MemUtils::GetSymbolAddress(m_Handle, "?TeleportTouch@CBaseTrigger@@QAEXPAVCBaseEntity@@@Z"));
+		if (ORIG_CBaseTrigger__TeleportTouch)
+			EngineDevMsg("[server dll] Found CBaseTrigger::TriggerTouch at %p.\n", ORIG_CBaseTrigger__TeleportTouch);
+		else {
+			ORIG_CBaseTrigger__TeleportTouch_Linux = reinterpret_cast<_CBaseTrigger__TeleportTouch_Linux>(MemUtils::GetSymbolAddress(m_Handle, "_ZN12CBaseTrigger13TeleportTouchEP11CBaseEntity"));
+			if (ORIG_CBaseTrigger__TeleportTouch_Linux)
+				EngineDevMsg("[server dll] Found CBaseTrigger::TriggerTouch [Linux] at %p.\n", ORIG_CBaseTrigger__TeleportTouch_Linux);
+			else
+				EngineDevWarning("[server dll] Could not find CBaseTrigger::TriggerTouch.\n");
+		}
+	}
+
 	if (!pEngfuncs)
 	{
 		pEngfuncs = reinterpret_cast<enginefuncs_t*>(MemUtils::GetSymbolAddress(m_Handle, "g_engfuncs"));
@@ -1609,6 +1640,14 @@ void ServerDLL::RegisterCVarsAndCommands()
 		REG(bxt_cof_disable_monsters_teleport_to_spawn_after_load);
 	if (ORIG_CTriggerCamera__FollowTarget && is_cof)
 		REG(bxt_cof_allow_skipping_all_cutscenes);
+	if (ORIG_PM_Move)
+		REG(bxt_ch_noclip_speed);
+	if (ORIG_CBaseTrigger__TeleportTouch || ORIG_CBaseTrigger__TeleportTouch_Linux) {
+		REG(bxt_ch_trigger_tp_keeps_momentum);
+		REG(bxt_ch_trigger_tp_keeps_momentum_velocity);
+		REG(bxt_ch_trigger_tp_keeps_momentum_velocity_redirect);
+		REG(bxt_ch_trigger_tp_keeps_momentum_viewangles);
+	}
 
 	REG(bxt_splits_print);
 	REG(bxt_splits_print_times_at_end);
@@ -2154,7 +2193,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, COFGeneWorm__DyingThink_Linux, void*, thisp
 HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->targetname) {
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			if (!std::strcmp(targetname, "sheriffs_chppr") && ClientDLL::GetInstance().DoesGameDirContain("hunger")) { // They Hunger Episode 3
@@ -2169,7 +2208,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CApache__DyingThink, void*, thisptr)
 HOOK_DEF_2(ServerDLL, void, __fastcall, CBreakable__Die, void*, thisptr, int, edx)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->target) {
 			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
 			if (!std::strcmp(target, "BLOOOM") && ClientDLL::GetInstance().DoesGameDirContain("czeror")) { // CSCZDS
@@ -2184,7 +2223,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CBreakable__Die, void*, thisptr, int, ed
 HOOK_DEF_1(ServerDLL, void, __cdecl, CBreakable__Die_Linux, void*, thisptr)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->target) {
 			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
 			if (!std::strcmp(target, "BLOOOM") && ClientDLL::GetInstance().DoesGameDirContain("czeror")) {
@@ -2201,7 +2240,7 @@ HOOK_DEF_2(ServerDLL, int, __fastcall, CBaseDoor__DoorActivate, void*, thisptr, 
 	auto isActivated = ORIG_CBaseDoor__DoorActivate(thisptr, edx);
 
 	if (isActivated && HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->targetname) {
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			Splits::Activate(targetname);
@@ -2213,7 +2252,7 @@ HOOK_DEF_2(ServerDLL, int, __fastcall, CBaseDoor__DoorActivate, void*, thisptr, 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->target) {
 			const char *target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
 			if (!std::strcmp(target, "oil_spouts1_mm") && ClientDLL::GetInstance().DoesGameDirContain("hunger")) { // They Hunger Episode 2
@@ -2228,7 +2267,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorGoUp, void*, thisptr)
 HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 {
 	if (HwDLL::GetInstance().ppGlobals && pEngfuncs) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		edict_t *pPlayer = pEngfuncs->pfnPEntityOfEntIndex(1);
 		if (pev && pev->targetname && pPlayer) {
 			void *classPtr = pPlayer->pvPrivateData;
@@ -2247,7 +2286,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CBaseDoor__DoorHitTop, void*, thisptr)
 HOOK_DEF_4(ServerDLL, void, __fastcall, CBaseMonster__Killed, void*, thisptr, int, edx, entvars_t*, pevAttacker, int, iGib)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->classname) {
 			const char* classname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->classname;
 			if (!std::strcmp(classname, "monster_gargantua") && ClientDLL::GetInstance().DoesGameDirMatch("tetsu0_cot")) {
@@ -2264,7 +2303,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 	auto &hw = HwDLL::GetInstance();
 
 	if (hw.ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->targetname) {
 			const char *targetname = hw.ppGlobals->pStringBase + pev->targetname;
 			OnMultiManagerFired(targetname);
@@ -2283,7 +2322,7 @@ HOOK_DEF_2(ServerDLL, void, __fastcall, CMultiManager__ManagerThink, void*, this
 HOOK_DEF_5(ServerDLL, void, __cdecl, FireTargets_Linux, char*, targetName, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
 	if (HwDLL::GetInstance().ppGlobals && targetName != NULL && pCaller) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pCaller) + 4);
+		auto pev = GET_PEV(pCaller);
 		if(pev && pev->targetname)
 		{
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
@@ -2532,7 +2571,7 @@ HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerVolume__Spawn, void*, thisptr)
 		return;
 	}
 
-	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	auto pev = GET_PEV(thisptr);
 	string_t old_model = pev->model;
 	ORIG_CTriggerVolume__Spawn(thisptr);
 	pev->model = old_model;
@@ -2547,7 +2586,7 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, CTriggerVolume__Spawn_Linux, void*, thisptr
 		return;
 	}
 
-	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	auto pev = GET_PEV(thisptr);
 	string_t old_model = pev->model;
 	ORIG_CTriggerVolume__Spawn_Linux(thisptr);
 	pev->model = old_model;
@@ -2664,8 +2703,8 @@ bool ServerDLL::IsPlayerMovingPushable(const entvars_t *pevPushable, const entva
 
 HOOK_DEF_4(ServerDLL, void, __fastcall, CPushable__Move, void*, thisptr, int, edx, void*, pOther, int, push)
 {
-	const entvars_t *pevToucher = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(pOther) + 4);
-	entvars_t *pevPushable = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	const auto pevToucher = GET_PEV(pOther);
+	auto pevPushable = GET_PEV(thisptr);
 
 	if (IsPlayerMovingPushable(pevPushable, pevToucher, push)) {
 		if (!push)
@@ -2689,8 +2728,8 @@ HOOK_DEF_4(ServerDLL, void, __fastcall, CPushable__Move, void*, thisptr, int, ed
 
 HOOK_DEF_3(ServerDLL, void, __cdecl, CPushable__Move_Linux, void*, thisptr, void*, pOther, int, push)
 {
-	const entvars_t *pevToucher = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(pOther) + 4);
-	entvars_t *pevPushable = *reinterpret_cast<entvars_t **>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	const auto pevToucher = GET_PEV(pOther);
+	auto pevPushable = GET_PEV(thisptr);
 
 	if (IsPlayerMovingPushable(pevPushable, pevToucher, push)) {
 		if (!push)
@@ -2802,8 +2841,26 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int,
 	auto pmove = reinterpret_cast<uintptr_t>(ppmove);
 	auto origin = reinterpret_cast<float *>(pmove + offOrigin);
 	auto flags = reinterpret_cast<int *>(pmove + offFlags);
+	usercmd_t *cmd = reinterpret_cast<usercmd_t*>(pmove + offCmd);
+	float *maxspeed = reinterpret_cast<float*>(pmove + offMaxspeed);
+	float *clientmaxspeed = reinterpret_cast<float*>(pmove + offClientMaxspeed);
+	int *movetype = reinterpret_cast<int*>(pmove + offMoveType);
 
 	auto start_origin = Vector(origin);
+	auto ch_noclip_vel = CVars::bxt_ch_noclip_speed.GetFloat();
+
+	if (*movetype == MOVETYPE_NOCLIP && ch_noclip_vel != 0.f) {
+		ch_noclip_vel_prev_maxspeed = *maxspeed;
+		ch_noclip_vel_prev_clientmaxspeed = *clientmaxspeed;
+
+		if (*clientmaxspeed == 0.0f)
+			*clientmaxspeed = *maxspeed; 
+
+		cmd->forwardmove = cmd->forwardmove / *clientmaxspeed * ch_noclip_vel;
+		cmd->sidemove = cmd->sidemove / *clientmaxspeed * ch_noclip_vel;
+		cmd->upmove = cmd->upmove / *clientmaxspeed * ch_noclip_vel;
+		*maxspeed = *clientmaxspeed = ch_noclip_vel;
+	}
 
 	ORIG_PM_Move(ppmove, server);
 
@@ -2812,6 +2869,11 @@ HOOK_DEF_2(ServerDLL, void, __cdecl, PM_Move, struct playermove_s*, ppmove, int,
 	 * This is not always the case but it is a good approximation.
 	 */
 	CustomTriggers::Update(start_origin, Vector(origin), (*flags & FL_DUCKING) != 0);
+
+	if (*movetype == MOVETYPE_NOCLIP && ch_noclip_vel != 0.f) {
+		*maxspeed = ch_noclip_vel_prev_maxspeed;
+		*clientmaxspeed = ch_noclip_vel_prev_clientmaxspeed;
+	}
 }
 
 bool ServerDLL::GetGlobalState(const std::string& name, int& state)
@@ -3008,7 +3070,7 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerCamera__FollowTarget, void*, thisptr)
 {
-	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+	auto pev = GET_PEV(thisptr);
 	if (pev)
 	{
 		bool changed = false;
@@ -3139,7 +3201,7 @@ void ServerDLL::ClearBulletsTrace() {
 HOOK_DEF_6(ServerDLL, void, __fastcall, CBaseButton__ButtonUse, void*, thisptr, int, edx, void*, pActivator, void*, pCaller, int, useType, float, value)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev) {
 			if (pev->target) {
 				const char* target = HwDLL::GetInstance().ppGlobals->pStringBase + pev->target;
@@ -3170,7 +3232,7 @@ HOOK_DEF_6(ServerDLL, void, __fastcall, CBaseButton__ButtonUse, void*, thisptr, 
 HOOK_DEF_2(ServerDLL, void, __fastcall, CBaseButton__ButtonTriggerAndWait, void*, thisptr, int, edx)
 {
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t* pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->target) {
 			// Fire any splitter that matches this button's target's name. This one compared to ButtonUse, should
 			// already have the button's master entity triggered and the button should already be enabled, so it's
@@ -3205,7 +3267,7 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CTriggerEndSection__EndSectionTouch, voi
 	// trigger_endsection sends you to the menu, effectively stopping the demo,
 	// but not the timer and neither LiveSplit of course, so we have to do it here
 	if (HwDLL::GetInstance().ppGlobals) {
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev && pev->targetname) {
 			const char *targetname = HwDLL::GetInstance().ppGlobals->pStringBase + pev->targetname;
 			if (!std::strcmp(targetname, "tr_endchange")) {
@@ -3296,7 +3358,7 @@ HOOK_DEF_1(ServerDLL, int, __fastcall, CBaseEntity__IsInWorld, void*, thisptr)
 {
 	if (HwDLL::GetInstance().is_big_map) 
 	{
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev)
 			return IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE, BIG_MAP_MAX_VELOCITY);
 	}
@@ -3308,12 +3370,122 @@ HOOK_DEF_1(ServerDLL, int, __cdecl, CBaseEntity__IsInWorld_Linux, void*, thisptr
 {
 	if (HwDLL::GetInstance().is_big_map) 
 	{
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + 4);
+		auto pev = GET_PEV(thisptr);
 		if (pev)
 			return IsInWorld(pev->origin, pev->velocity, BIG_MAP_SIZE, BIG_MAP_MAX_VELOCITY);
 	}
 
 	return ORIG_CBaseEntity__IsInWorld_Linux(thisptr);
+}
+
+bool ServerDLL::IsPlayer(edict_t *ent)
+{
+	// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/player.cpp#L2850
+
+	auto &hw = HwDLL::GetInstance();
+
+	if (strcmp(hw.GetString(ent->v.classname), "player") != 0)
+		return false;
+
+	if (!(ent->v.flags & FL_CLIENT))
+		return false;
+
+	if (pEngfuncs && hw.ppGlobals)
+	{
+		int index = pEngfuncs->pfnIndexOfEdict(ent);
+
+		if ((index < 1) || (index > hw.ppGlobals->maxClients)) // gGlobalVariables.maxClients = svs.maxclients
+			return false;
+	}
+
+	return true;
+}
+
+void TriggerTpKeepsMomentumRestore(Vector prev_vel, Vector prev_view, Vector prev_angles, Vector prev_basevelocity, entvars_t *pev, enginefuncs_t *pEngfuncs)
+{
+	// Set velocity before viewangles because viewangles will mess with the velocity angle for redirection
+	if (CVars::bxt_ch_trigger_tp_keeps_momentum_velocity.GetBool()) {
+		if (CVars::bxt_ch_trigger_tp_keeps_momentum_velocity_redirect.GetBool()) {
+			// https://github.com/fireblizzard/agmod/blob/bf06e4ffd31c1427784685118820e15552803bcb/dlls/triggers.cpp#L1935
+			// After teleportation, pevToucher has the same viewangles as pentTarget.
+			Vector vecAngles = Vector(0, pev->v_angle.y, 0);
+			Vector vecForward;
+
+			pEngfuncs->pfnAngleVectors(vecAngles, vecForward, nullptr, nullptr);
+
+			// For velocity
+			float xy_vel = prev_vel.Length2D();
+
+			pev->velocity.x = vecForward.x * xy_vel;
+			pev->velocity.y = vecForward.y * xy_vel;
+
+			// For base velocity
+			float xy_basevel = prev_basevelocity.Length2D();
+
+			pev->basevelocity.x = vecForward.x * xy_basevel;
+			pev->basevelocity.y = vecForward.y * xy_basevel;
+		} else {
+			pev->velocity = prev_vel;
+			pev->basevelocity = prev_basevelocity;
+		}
+	}
+
+	if (CVars::bxt_ch_trigger_tp_keeps_momentum_viewangles.GetBool()) {
+		// In HLSDK, due to some inheritance stuffs, pevToucher's viewangles is changed differently.
+		// In and only in TeleportTouch, pev->fixangle is set to 1.
+		// If not set back to 0, we cannot set our viewangles, due to inheritance stuffs.
+		pev->fixangle = 0;
+		pev->v_angle = prev_view;
+		pev->angles = prev_angles;
+	}
+}
+
+HOOK_DEF_3(ServerDLL, void, __fastcall, CBaseTrigger__TeleportTouch, void*, thisptr, int, edx, void*, pOther)
+{
+	auto is_bxt_ch_trigger_tp_keeps_momentum_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_keeps_momentum.GetBool();
+
+	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pOther) + 4);
+	Vector prev_vel;
+	Vector prev_view;
+	Vector prev_angles;
+	Vector prev_basevelocity;
+
+	if (pev) {
+		prev_vel = pev->velocity;
+		prev_view = pev->v_angle;
+		prev_angles = pev->angles;
+		prev_basevelocity = pev->basevelocity;
+	}
+
+	ORIG_CBaseTrigger__TeleportTouch(thisptr, edx, pOther);
+
+	if (is_bxt_ch_trigger_tp_keeps_momentum_enabled && pev && pEngfuncs && IsPlayer(pev->pContainingEntity)) {
+		TriggerTpKeepsMomentumRestore(prev_vel, prev_vel, prev_angles, prev_basevelocity, pev, pEngfuncs);
+	}
+}
+
+HOOK_DEF_2(ServerDLL, void, __cdecl, CBaseTrigger__TeleportTouch_Linux, void*, thisptr, void*, pOther)
+{
+	auto is_bxt_ch_trigger_tp_keeps_momentum_enabled = CVars::sv_cheats.GetBool() && CVars::bxt_ch_trigger_tp_keeps_momentum.GetBool();
+
+	entvars_t *pev = *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(pOther) + 4);
+	Vector prev_vel;
+	Vector prev_view;
+	Vector prev_angles;
+	Vector prev_basevelocity;
+
+	if (pev) {
+		prev_vel = pev->velocity;
+		prev_view = pev->v_angle;
+		prev_angles = pev->angles;
+		prev_basevelocity = pev->basevelocity;
+	}
+
+	ORIG_CBaseTrigger__TeleportTouch_Linux(thisptr, pOther);
+
+	if (is_bxt_ch_trigger_tp_keeps_momentum_enabled && pev && pEngfuncs && IsPlayer(pev->pContainingEntity)) {
+		TriggerTpKeepsMomentumRestore(prev_vel, prev_vel, prev_angles, prev_basevelocity, pev, pEngfuncs);
+	}
 }
 
 #undef ALERT

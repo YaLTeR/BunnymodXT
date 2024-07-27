@@ -3,6 +3,8 @@
 #include "custom_triggers.hpp"
 #include "splits.hpp"
 
+#include "helper_functions.hpp"
+
 #include "triangle_drawing.hpp"
 #include "triangle_utils.hpp"
 #include "modules.hpp"
@@ -188,17 +190,18 @@ namespace TriangleDrawing
 				continue;
 
 			const bool active = ent->v.solid != SOLID_NOT || std::strcmp(classname, "trigger_transition") == 0;
+			float r, g, b, a;
+			ServerDLL::GetTriggerColor(classname, r, g, b);
+			ServerDLL::GetTriggerAlpha(classname, !active, true, a);
+			r /= 255.0f;
+			g /= 255.0f;
+			b /= 255.0f;
+			a /= 255.0f;
+
 			const msurface_t *surfs = model->surfaces + model->firstmodelsurface;
 			for (int i = 0; i < model->nummodelsurfaces; ++i) {
 				// Offset to make each surface look slightly different
 				const float offset = i * float(M_PI) / 7;
-				float r, g, b, a;
-				ServerDLL::GetTriggerColor(classname, r, g, b);
-				ServerDLL::GetTriggerAlpha(classname, !active, true, a);
-				r /= 255.0f;
-				g /= 255.0f;
-				b /= 255.0f;
-				a /= 255.0f;
 				if (active)
 					a = GetPulsatingAlpha(a, svTime + offset);
 

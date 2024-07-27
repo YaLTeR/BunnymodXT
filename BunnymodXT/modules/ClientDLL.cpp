@@ -8,6 +8,7 @@
 #include "HwDLL.hpp"
 #include "../patterns.hpp"
 #include "../cvars.hpp"
+#include "../helper_functions.hpp"
 #include "../hud_custom.hpp"
 #include "../triangle_drawing.hpp"
 #include "../discord_integration.hpp"
@@ -1504,6 +1505,10 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, V_CalcRefdef, ref_params_t*, pparams)
 
 	if (hwDLL.RenderYawOverrideIndex != 0 && hwDLL.RenderYawOverrideIndex <= hwDLL.RenderYawOverrides.size()) {
 		pparams->viewangles[1] = hwDLL.RenderYawOverrides[hwDLL.RenderYawOverrideIndex - 1];
+	}
+
+	if (hwDLL.RenderPitchOverrideIndex != 0 && hwDLL.RenderPitchOverrideIndex <= hwDLL.RenderPitchOverrides.size()) {
+		pparams->viewangles[0] = hwDLL.RenderPitchOverrides[hwDLL.RenderPitchOverrideIndex - 1];
 	}
 
 	float forward_offset = CVars::bxt_viewmodel_ofs_forward.GetFloat();

@@ -28,10 +28,20 @@
 using namespace std::literals;
 
 // Callbacks for bxt-rs.
+struct on_tas_playback_frame_max_accel_yaw_offset {
+	float value;
+	float start;
+	float target;
+	float accel;
+	unsigned char dir;
+};
+
 struct on_tas_playback_frame_data {
 	unsigned strafe_cycle_frame_count;
 	std::array<float, 4> prev_predicted_trace_fractions;
 	std::array<float, 4> prev_predicted_trace_normal_zs;
+	on_tas_playback_frame_max_accel_yaw_offset max_accel_yaw_offset;
+	std::array<float, 3> rendered_viewangles;
 };
 
 // Change the variable name if you change the parameters!
@@ -40,7 +50,7 @@ extern "C" {
 	// BXT will call this right before running HLStrafe for every played back frame of a TAS.
 	//
 	// Return value != 0 will cause BXT to stop TAS playback.
-	DLLEXPORT int (*bxt_on_tas_playback_frame)(on_tas_playback_frame_data data);
+	DLLEXPORT int (*bxt_on_tas_playback_frame_v2)(on_tas_playback_frame_data data);
 
 	// BXT will call this when the TAS playback stops.
 	DLLEXPORT void (*bxt_on_tas_playback_stopped)();
@@ -376,15 +386,7 @@ void HwDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* modul
 	}
 	m_HookedNumber = number;
 
-#ifdef _WIN32
-	// Make it possible to run multiple Half-Life instances.
-	auto mutex = OpenMutexA(SYNCHRONIZE, FALSE, "ValveHalfLifeLauncherMutex");
-	if (mutex) {
-		EngineMsg("Releasing the launcher mutex.\n");
-		ReleaseMutex(mutex);
-		CloseHandle(mutex);
-	}
-#endif
+	helper_functions::allow_multiple_instances();
 
 	FindStuff();
 
@@ -813,6 +815,10 @@ void HwDLL::Clear()
 	TargetYawOverrides.clear();
 	RenderYawOverrideIndex = 0;
 	RenderYawOverrides.clear();
+	PitchOverrideIndex = 0;
+	PitchOverrides.clear();
+	RenderPitchOverrideIndex = 0;
+	RenderPitchOverrides.clear();
 	lastLoadedMap.clear();
 	isOverridingCamera = false;
 	isOffsettingCamera = false;
@@ -835,6 +841,7 @@ void HwDLL::Clear()
 	ch_checkpoint_vel.clear();
 	ch_checkpoint_viewangles.clear();
 	ch_checkpoint_is_duck.clear();
+	ch_checkpoint_gravity.clear();
 
 
 	tas_editor_mode = TASEditorMode::DISABLED;
@@ -2461,14 +2468,42 @@ cvar_t* HwDLL::FindCVar(const char* name)
 	return ORIG_Cvar_FindVar(name);
 }
 
+std::array<float, 3> HwDLL::GetRenderedViewangles() {
+	std::array<float, 3> res = {player.Viewangles[0], player.Viewangles[1], player.Viewangles[2]};
+
+	if (!PitchOverrides.empty()) {
+		res[0] = PitchOverrides[PitchOverrideIndex];
+	}
+	if (!RenderPitchOverrides.empty()) {
+		res[0] = RenderPitchOverrides[RenderPitchOverrideIndex];
+	}
+
+	if (!TargetYawOverrides.empty()) {
+		res[1] = TargetYawOverrides[TargetYawOverrideIndex];
+	}
+	if (!RenderYawOverrides.empty()) {
+		res[1] = RenderYawOverrides[RenderYawOverrideIndex];
+	}
+
+	return res;
+}
+
 int HwDLL::CallOnTASPlaybackFrame() {
-	if (!bxt_on_tas_playback_frame)
+	if (!bxt_on_tas_playback_frame_v2)
 		return 0;
 
-	return bxt_on_tas_playback_frame(on_tas_playback_frame_data {
+	return bxt_on_tas_playback_frame_v2(on_tas_playback_frame_data {
 		StrafeState.StrafeCycleFrameCount,
 		PrevFractions,
 		PrevNormalzs,
+		on_tas_playback_frame_max_accel_yaw_offset {
+			StrafeState.MaxAccelYawOffsetValue, // value
+			StrafeState.MaxAccelYawOffsetStart, // start
+			StrafeState.MaxAccelYawOffsetTarget, // target
+			StrafeState.MaxAccelYawOffsetAccel, // accel
+			static_cast<unsigned char>(StrafeState.MaxAccelYawOffsetDir), // dir 
+		},
+		GetRenderedViewangles(),
 	});
 }
 
@@ -2525,6 +2560,10 @@ void HwDLL::ResetTASPlaybackState()
 	TargetYawOverrides.clear();
 	RenderYawOverrideIndex = 0;
 	RenderYawOverrides.clear();
+	PitchOverrideIndex = 0;
+	PitchOverrides.clear();
+	RenderPitchOverrideIndex = 0;
+	RenderPitchOverrides.clear();
 }
 
 void HwDLL::StartTASPlayback()
@@ -3362,6 +3401,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 	static void handler()
 	{
 		auto &hw = HwDLL::GetInstance();
+		auto &cl = ClientDLL::GetInstance();
 
 		auto pl = hw.GetPlayerEdict();
 
@@ -3388,6 +3428,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 		hw.ch_checkpoint_vel.emplace_back(pl->v.velocity);
 		hw.ch_checkpoint_viewangles.emplace_back(pl->v.v_angle);
 		hw.ch_checkpoint_is_duck.emplace_back(is_duck);
+		hw.ch_checkpoint_gravity.emplace_back(pl->v.gravity);
 		hw.ch_checkpoint_is_set = true;
 	}
 };
@@ -3425,6 +3466,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 		Vector cp_vel;
 		Vector cp_viewangles;
 		bool cp_is_duck;
+		float cp_gravity;
 
 		if ((id > 0) && (hw.ch_checkpoint_is_duck.size() >= id)) // If ID is more than 0 and the size of std::vector is not less than the specified ID, we are fine!
 		{
@@ -3432,6 +3474,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 			cp_vel = hw.ch_checkpoint_vel[id - 1];
 			cp_viewangles = hw.ch_checkpoint_viewangles[id - 1];
 			cp_is_duck = hw.ch_checkpoint_is_duck[id - 1];
+			cp_gravity = hw.ch_checkpoint_gravity[id - 1];
 			hw.ch_checkpoint_current = id;
 		}
 		else // Otherwise we will use the last element
@@ -3440,6 +3483,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 			cp_vel = hw.ch_checkpoint_vel.back();
 			cp_viewangles = hw.ch_checkpoint_viewangles.back();
 			cp_is_duck = hw.ch_checkpoint_is_duck.back();
+			cp_gravity = hw.ch_checkpoint_gravity.back();
 			hw.ch_checkpoint_current = hw.ch_checkpoint_total;
 		}
 
@@ -3464,6 +3508,8 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 		// for CS 1.6 stamina reset
 		if (hw.is_cstrike_dir) 
 			pl->v.fuser2 = 0;
+
+		pl->v.gravity = cp_gravity;
 	}
 };
 
@@ -3491,6 +3537,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Reset
 		hw.ch_checkpoint_vel.clear();
 		hw.ch_checkpoint_viewangles.clear();
 		hw.ch_checkpoint_is_duck.clear();
+		hw.ch_checkpoint_gravity.clear();
 		hw.ch_checkpoint_total = hw.ch_checkpoint_current = 0;
 		hw.ORIG_Con_Printf("Cleared the checkpoints.\n");
 	}
@@ -3527,6 +3574,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove
 			hw.ch_checkpoint_vel.erase(hw.ch_checkpoint_vel.begin() + (id - 1));
 			hw.ch_checkpoint_viewangles.erase(hw.ch_checkpoint_viewangles.begin() + (id - 1));
 			hw.ch_checkpoint_is_duck.erase(hw.ch_checkpoint_is_duck.begin() + (id - 1));
+			hw.ch_checkpoint_gravity.erase(hw.ch_checkpoint_gravity.begin() + (id - 1));
 			hw.ORIG_Con_Printf("Removed the checkpoint with %lu id.\n", id);
 		}
 		else
@@ -3554,6 +3602,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Remove_After
 				hw.ch_checkpoint_vel.erase(hw.ch_checkpoint_vel.begin() + id, hw.ch_checkpoint_vel.end());
 				hw.ch_checkpoint_viewangles.erase(hw.ch_checkpoint_viewangles.begin() + id, hw.ch_checkpoint_viewangles.end());
 				hw.ch_checkpoint_is_duck.erase(hw.ch_checkpoint_is_duck.begin() + id, hw.ch_checkpoint_is_duck.end());
+				hw.ch_checkpoint_gravity.erase(hw.ch_checkpoint_gravity.begin() + id, hw.ch_checkpoint_gravity.end());
 				hw.ch_checkpoint_total = id;
 				hw.ORIG_Con_Printf("Removed the checkpoints following %lu id.\n", id);
 			}
@@ -5015,8 +5064,7 @@ struct HwDLL::Cmd_BXT_Give
 		auto &sv_dll = ServerDLL::GetInstance();
 
 		void* classPtr = (*hw_dll.sv_player)->pvPrivateData;
-		uintptr_t thisAddr = reinterpret_cast<uintptr_t>(classPtr);
-		entvars_t *pev = *reinterpret_cast<entvars_t**>(thisAddr + 4);
+		auto pev = GET_PEV(classPtr);
 
 		int iszItem = sv_dll.pEngfuncs->pfnAllocString(classname); // Make a copy of the classname
 
@@ -5613,6 +5661,8 @@ void HwDLL::SetTASEditorMode(TASEditorMode mode)
 			}
 			RenderYawOverrides.clear();
 			RenderYawOverrideIndex = 0;
+			RenderPitchOverrides.clear();
+			RenderPitchOverrideIndex = 0;
 
 			assert(movementFrameCounter >= 1);
 			tas_editor_input.first_frame_counter_value = movementFrameCounter - 1;
@@ -6091,7 +6141,7 @@ void HwDLL::InsertCommands()
 					pushables,
 				});
 
-				if (bxt_on_tas_playback_frame) {
+				if (bxt_on_tas_playback_frame_v2) {
 					const auto stop = CallOnTASPlaybackFrame();
 					if (stop) {
 						ResetTASPlaybackState();
@@ -6141,6 +6191,25 @@ void HwDLL::InsertCommands()
 					RenderYawOverrideIndex = 0;
 				} else {
 					RenderYawOverrideIndex += 1;
+				}
+
+				if (PitchOverrideIndex == PitchOverrides.size()) {
+					PitchOverrides.clear();
+					PitchOverrideIndex = 0;
+				}
+
+				if (PitchOverrides.empty()) {
+					StrafeState.PitchOverrideActive = false;
+				} else {
+					StrafeState.PitchOverride = PitchOverrides[PitchOverrideIndex++];
+					StrafeState.PitchOverrideActive = true;
+				}
+
+				if (RenderPitchOverrideIndex == RenderPitchOverrides.size()) {
+					RenderPitchOverrides.clear();
+					RenderPitchOverrideIndex = 0;
+				} else {
+					RenderPitchOverrideIndex += 1;
 				}
 
 				f.ResetAutofuncs();
@@ -6563,6 +6632,14 @@ void HwDLL::InsertCommands()
 			} else if (!f.RenderYawOverride.empty()) {
 				RenderYawOverrides = f.RenderYawOverride;
 				RenderYawOverrideIndex = 0;
+			} else if (!f.PitchOverride.empty()) {
+				PitchOverrides = f.PitchOverride;
+				StrafeState.PitchOverrideActive = true;
+				StrafeState.PitchOverride = PitchOverrides[0];
+				PitchOverrideIndex = 1;
+			} else if (!f.RenderPitchOverride.empty()) {
+				RenderPitchOverrides = f.RenderPitchOverride;
+				RenderPitchOverrideIndex = 0;
 			}
 
 			currentFramebulk++;
@@ -6595,8 +6672,10 @@ void HwDLL::InsertCommands()
 			if (resetState == ResetState::NORMAL) {
 				RenderYawOverrides.clear();
 				RenderYawOverrideIndex = 0;
+				RenderPitchOverrides.clear();
+				RenderPitchOverrideIndex = 0;
 
-				if (bxt_on_tas_playback_frame) {
+				if (bxt_on_tas_playback_frame_v2) {
 					// We don't use the return value here because we stop anyway.
 					CallOnTASPlaybackFrame();
 				}
@@ -6665,8 +6744,6 @@ void HwDLL::InsertCommands()
 			if (ducktap && postype == HLStrafe::PositionType::GROUND && (autojump == false || (autojump == true && CVars::bxt_tas_ducktap_priority.GetBool()))) {
 					if (!currentKeys.Duck.IsDown() && !playerCopy.InDuckAnimation) {
 						// This should check against the next frame's origin but meh.
-						const float VEC_HULL_MIN[3] = { -16, -16, -36 };
-						const float VEC_DUCK_HULL_MIN[3] = { -16, -16, -18 };
 						float newOrigin[3];
 						for (std::size_t i = 0; i < 3; ++i)
 							newOrigin[i] = playerCopy.Origin[i] + (VEC_DUCK_HULL_MIN[i] - VEC_HULL_MIN[i]);
@@ -8316,8 +8393,12 @@ HOOK_DEF_0(HwDLL, qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 
 HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 {
+	// LoadThisDll is executed once after a server is initialized. Subsequent server initialization won't trigger LoadThisDll. 
 	auto oldszDllFilename = szDllFilename;
 	std::string newszDllFilename;
+
+	auto &hw = HwDLL::GetInstance();
+	hw.is_cstrike_dir = ClientDLL::GetInstance().DoesGameDirMatch("cstrike");
 
 	if (boost::ends_with(szDllFilename, "metamod" DLL_EXTENSION))
 	{
@@ -8325,8 +8406,7 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 
 		bool is_failed = false;
 
-		static bool is_cstrike = ClientDLL::GetInstance().DoesGameDirMatch("cstrike");
-		if (is_cstrike)
+		if (hw.is_cstrike_dir)
 		{
 			#ifdef _WIN32
 			const std::string cs_lib = "dlls\\mp";

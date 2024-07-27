@@ -236,7 +236,12 @@
 	X(bxt_ch_checkpoint_with_vel, "1") \
 	X(bxt_ch_checkpoint_onground_only, "0") \
 	X(bxt_ch_fix_sticky_slide, "0") \
-	X(bxt_ch_fix_sticky_slide_offset, "0.01")
+	X(bxt_ch_fix_sticky_slide_offset, "0.01") \
+	X(bxt_ch_noclip_speed, "0") \
+	X(bxt_ch_trigger_tp_keeps_momentum, "0") \
+	X(bxt_ch_trigger_tp_keeps_momentum_velocity, "1") \
+	X(bxt_ch_trigger_tp_keeps_momentum_velocity_redirect, "0") \
+	X(bxt_ch_trigger_tp_keeps_momentum_viewangles, "1")
 
 class CVarWrapper
 {

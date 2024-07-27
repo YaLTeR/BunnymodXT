@@ -443,6 +443,13 @@ typedef struct model_s
 
 } model_t;
 
+typedef struct spritelist_s
+{
+    model_t *pSprite;
+    char *pName;
+    int frameCount;
+} SPRITELIST;
+
 typedef vec_t vec4_t[4];
 
 typedef struct alight_s

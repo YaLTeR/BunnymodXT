@@ -88,22 +88,6 @@ class HwDLL : public IHookableNameFilterOrdered
 	HOOK_DECL(qboolean, __cdecl, CL_ReadDemoMessage_OLD)
 	HOOK_DECL(void, __cdecl, LoadThisDll, const char* szDllFilename)
 
-	#ifdef HLSDK10_BUILD
-	struct server_static_t
-	{
-		int maxclients;
-		byte align[28684];
-		client_t *clients;
-	};
-	#else
-	struct server_static_t
-	{
-		int dll_initialized;
-		client_t *clients;
-		int maxclients;
-	};
-	#endif
-
 	struct Key
 	{
 		Key(const char* name) : State(0), Name(name) {};
@@ -360,6 +344,8 @@ public:
 
 	bool is_cof_steam = false; // Cry of Fear-specific
 
+	// For bxt-rs rendered view playback.
+	std::array<float, 3> GetRenderedViewangles();
 	int CallOnTASPlaybackFrame();
 	void CallOnTASPlaybackStopped();
 	void ResetTASPlaybackState();
@@ -663,10 +649,14 @@ protected:
 	unsigned LoadingSeedCounter;
 	size_t TargetYawOverrideIndex;
 	std::vector<float> TargetYawOverrides;
+	size_t PitchOverrideIndex;
+	std::vector<float> PitchOverrides;
 	float sensitivityToRestore = 0;
 public:
 	size_t RenderYawOverrideIndex;
 	std::vector<float> RenderYawOverrides;
+	size_t RenderPitchOverrideIndex;
+	std::vector<float> RenderPitchOverrides;
 	bool ButtonsPresent;
 	HLTAS::StrafeButtons Buttons;
 	HLStrafe::CurrentState StrafeState;
@@ -794,6 +784,7 @@ protected:
 	std::vector<Vector> ch_checkpoint_vel;
 	std::vector<Vector> ch_checkpoint_viewangles;
 	std::vector<bool> ch_checkpoint_is_duck;
+	std::vector<float> ch_checkpoint_gravity;
 
 public:
 	bool is_big_map = false;

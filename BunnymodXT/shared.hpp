@@ -45,3 +45,11 @@ constexpr int kRenderFxTrigger = 241; // DO NOT CHANGE THIS VALUE OR YOU WILL BR
 
 // - Other constants
 constexpr steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
+
+// - Custom macros
+
+#define _BXT_STRINGIFY(x) #x
+#define BXT_TOSTRING(x) _BXT_STRINGIFY(x)
+#define BXT_CONCATENATE(x, y) x##y
+#define BXT_CONCATENATE_DETAIL(x, y) BXT_CONCATENATE(x, y)
+#define BXT_FUNC __func__

@@ -7669,6 +7669,9 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawSkyBox)
 HOOK_DEF_3(HwDLL, int, __cdecl, SV_SpawnServer, int, bIsDemo, char*, server, char*, startspot)
 {
 	auto ret = ORIG_SV_SpawnServer(bIsDemo, server, startspot);
+
+	ServerDLL::GetInstance().ClearTPLandmarks();
+
 	if (ret) {
 		Interprocess::WriteMapChange(CustomHud::GetTime(), server);
 		lastLoadedMap = server;

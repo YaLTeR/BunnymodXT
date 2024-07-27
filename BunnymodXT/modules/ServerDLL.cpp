@@ -15,6 +15,7 @@
 #include "../custom_triggers.hpp"
 #include "../splits.hpp"
 #include "../shared.hpp"
+#include "../wrappers.hpp"
 
 #define ALERT(at, format, ...) pEngfuncs->pfnAlertMessage(at, const_cast<char*>(format), ##__VA_ARGS__)
 

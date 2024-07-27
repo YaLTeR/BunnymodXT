@@ -24,6 +24,7 @@
 #include "../simulation_ipc.hpp"
 #include "../splits.hpp"
 #include "../helper_functions.hpp"
+#include "../wrappers.hpp"
 
 using namespace std::literals;
 

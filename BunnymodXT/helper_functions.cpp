@@ -1,6 +1,7 @@
 #include "stdafx.hpp"
 #include "modules.hpp"
 #include "helper_functions.hpp"
+#include "wrappers.hpp"
 
 namespace helper_functions
 {

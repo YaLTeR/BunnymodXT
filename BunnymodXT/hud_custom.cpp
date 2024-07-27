@@ -9,6 +9,7 @@
 #include "opengl_utils.hpp"
 #include "helper_functions.hpp"
 #include "splits.hpp"
+#include "wrappers.hpp"
 
 #include <GL/gl.h>
 

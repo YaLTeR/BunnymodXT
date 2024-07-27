@@ -9,6 +9,7 @@
 #include "cvars.hpp"
 #include "helper_functions.hpp"
 #include "hud_custom.hpp"
+#include "wrappers.hpp"
 
 using namespace std::literals;
 

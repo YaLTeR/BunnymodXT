@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sptlib-wrapper.hpp"
+
 #ifdef _WIN32
 	#define DLL_EXTENSION ".dll"
 	#define PATH_SLASH '\\'

@@ -50,3 +50,81 @@ constexpr steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 
 // - Custom macros
 #define GET_PEV(thisptr) *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + off_pev);
+
+// - Custom enums
+
+/*
+	BXT_ENUM_GAMEDIR_STARTS_WITH, BXT_ENUM_GAMEDIR_MATCH (_Smiley):
+
+	There's really no point in being strict in the ordering of the elements here, so I'll just rank the mods from most to least significant based on my own feelings. Yeah...
+	I also tend to name these IDs after their mods and not their directories, so don't let STARTS_WITH_ or MATCH_ mislead you.
+	And I don't want to use bitwise operations to check the same value for STARTS_WITH_ and MATCH_ flags, because it will really be more confusing for the average user who wants to add autostop and overall it is a more limited solution.
+
+	So the format for filling out looks like this:
+	*_ShortModName, // Mod directory (Full name of the modification)
+*/
+
+typedef enum
+{
+	GAMEDIR_STARTS_WITH_VALVE = 0, // valve (Half-Life)
+	GAMEDIR_STARTS_WITH_OPFOR, // gearbox (Half-Life: Opposing Force)
+	GAMEDIR_STARTS_WITH_CSCZDS, // czeror (Counter-Strike: Condition Zero Deleted Scenes)
+	GAMEDIR_STARTS_WITH_GUNMAN, // rewolf (Gunman Chronicles)
+	GAMEDIR_STARTS_WITH_HUNGER, // Hunger (They Hunger)
+	GAMEDIR_STARTS_WITH_WANTED, // wantedsp (Half-Life: Wanted!)
+	GAMEDIR_STARTS_WITH_AOMDC, // AoMDC (Afraid of Monsters: Director's Cut)
+	GAMEDIR_STARTS_WITH_ECHOES, // echoes (Half-Life: Echoes)
+	GAMEDIR_STARTS_WITH_POKE646, // poke646 (Poke646)
+	GAMEDIR_STARTS_WITH_COF, // CryOfFear (Cry of Fear)
+	GAMEDIR_STARTS_WITH_PARANOIA, // paranoia (PARANOIA)
+	GAMEDIR_STARTS_WITH_BSHIFT // bshift (Half-Life: Blue Shift)
+} BXT_ENUM_GAMEDIR_STARTS_WITH;
+
+typedef enum
+{
+	GAMEDIR_MATCH_VALVE = 0, // valve (Half-Life)
+	GAMEDIR_MATCH_OPFOR, // gearbox (Half-Life: Opposing Force)
+	GAMEDIR_MATCH_CSCZDS, // czeror (Counter-Strike: Condition Zero Deleted Scenes)
+	GAMEDIR_MATCH_GUNMAN, // rewolf (Gunman Chronicles)
+	GAMEDIR_MATCH_HUNGER, // Hunger (They Hunger)
+	GAMEDIR_MATCH_WANTED, // wantedsp (Half-Life: Wanted!)
+	GAMEDIR_MATCH_AOMDC, // AoMDC (Afraid of Monsters: Director's Cut)
+	GAMEDIR_MATCH_ECHOES, // echoes (Half-Life: Echoes)
+	GAMEDIR_MATCH_POKE646, // poke646 (Poke646)
+	GAMEDIR_MATCH_COF, // CryOfFear (Cry of Fear)
+	GAMEDIR_MATCH_PARANOIA, // paranoia (PARANOIA)
+	GAMEDIR_MATCH_BSHIFT, // bshift (Half-Life: Blue Shift)
+	GAMEDIR_MATCH_TWHLTOWER2, // twhltower2 (TWHL Tower 2)
+	GAMEDIR_MATCH_URBICIDE, // hl_urbicide (Half-Life: Urbicide)
+	GAMEDIR_MATCH_VISITORS, // visitors (Half-Life: Visitors)
+	GAMEDIR_MATCH_HLRATS_PARASOMNIA // hrp (Half-Rats: Parasomnia)
+	GAMEDIR_MATCH_DECAY, // decay (Half-Life: Decay, fan-made port)
+	GAMEDIR_MATCH_CAGED, // caged_fgs (Half-Life: C.A.G.E.D)
+	GAMEDIR_MATCH_HC2, // hc (Hazardous Course 2)
+	GAMEDIR_MATCH_BLACKOPS, // blackops (Black Ops)
+	GAMEDIR_MATCH_TIMELINE2, // timeline2 (Timeline 2)
+	GAMEDIR_MATCH_UPLINK, // SteamLink (Half-Life: Uplink)
+	GAMEDIR_MATCH_HALFQUAKE, // hqtrilogy (Halfquake Trilogy)
+	GAMEDIR_MATCH_AZURESHEEP, // azuresheep (Azure Sheep)
+	GAMEDIR_MATCH_HLSWEET, // SHL (Half-Life: Sweet)
+	GAMEDIR_MATCH_BIGLOLLY, // biglolly (Big Lolly)
+	GAMEDIR_MATCH_TXP, // lm_txp (The Xeno Project)
+	GAMEDIR_MATCH_HTC, // htc (Hunt the Cunt)
+	GAMEDIR_MATCH_INVASION, // invasion (Half-Life: Invasion)
+
+	// Multiplayer-only games:
+	GAMEDIR_MATCH_MP_TFC, // tfc (Team Fortress Classic)
+	GAMEDIR_MATCH_MP_CS, // cstrike (Counter-Strike)
+	GAMEDIR_MATCH_MP_CSCZ, // czero (Counter-Strike: Condition Zero)
+	GAMEDIR_MATCH_MP_DOD, // dod (Day of Defeat)
+	GAMEDIR_MATCH_MP_DMC, // dmc (Deathmatch Classic)
+	GAMEDIR_MATCH_MP_RICOCHET, // ricochet (Ricochet)
+
+	// Less worth mods start here:
+	GAMEDIR_MATCH_BEFORE, // before (Half-Life: Before)
+	GAMEDIR_MATCH_CROWBAROFTIME, // tetsu0_cot (Crowbar of Time)
+	GAMEDIR_MATCH_MINIMICUS, // MINIMICUS (Minimicus)
+	GAMEDIR_MATCH_GLOOM, // gloom (Gloom)
+	GAMEDIR_MATCH_CONSTRUCTION, // construction (Construction)
+	GAMEDIR_MATCH_PLAGUE // plague (Plague)
+} BXT_ENUM_GAMEDIR_MATCH;

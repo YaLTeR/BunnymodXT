@@ -26,6 +26,9 @@ namespace helper_functions
 	void convert_to_lowercase(const char *str);
 	void convert_to_lowercase(std::string &str);
 
+	void set_gamedir_starts_with();
+	void set_gamedir_match();
+
 	inline void allow_multiple_instances() // Make it possible to run multiple Half-Life instances.
 	{
 		#ifdef _WIN32

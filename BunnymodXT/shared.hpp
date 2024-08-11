@@ -66,7 +66,7 @@ constexpr steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 
 typedef enum
 {
-	GAMEDIR_STARTS_WITH_VALVE = 0, // valve (Half-Life)
+	GAMEDIR_STARTS_WITH_HL = 0, // valve (Half-Life)
 	GAMEDIR_STARTS_WITH_OPFOR, // gearbox (Half-Life: Opposing Force)
 	GAMEDIR_STARTS_WITH_CSCZDS, // czeror (Counter-Strike: Condition Zero Deleted Scenes)
 	GAMEDIR_STARTS_WITH_GUNMAN, // rewolf (Gunman Chronicles)
@@ -82,7 +82,7 @@ typedef enum
 
 typedef enum
 {
-	GAMEDIR_MATCH_VALVE = 0, // valve (Half-Life)
+	GAMEDIR_MATCH_HL = 0, // valve (Half-Life)
 	GAMEDIR_MATCH_OPFOR, // gearbox (Half-Life: Opposing Force)
 	GAMEDIR_MATCH_CSCZDS, // czeror (Counter-Strike: Condition Zero Deleted Scenes)
 	GAMEDIR_MATCH_GUNMAN, // rewolf (Gunman Chronicles)
@@ -97,7 +97,7 @@ typedef enum
 	GAMEDIR_MATCH_TWHLTOWER2, // twhltower2 (TWHL Tower 2)
 	GAMEDIR_MATCH_URBICIDE, // hl_urbicide (Half-Life: Urbicide)
 	GAMEDIR_MATCH_VISITORS, // visitors (Half-Life: Visitors)
-	GAMEDIR_MATCH_HLRATS_PARASOMNIA // hrp (Half-Rats: Parasomnia)
+	GAMEDIR_MATCH_HLRATS_PARASOMNIA, // hrp (Half-Rats: Parasomnia)
 	GAMEDIR_MATCH_DECAY, // decay (Half-Life: Decay, fan-made port)
 	GAMEDIR_MATCH_CAGED, // caged_fgs (Half-Life: C.A.G.E.D)
 	GAMEDIR_MATCH_HC2, // hc (Hazardous Course 2)

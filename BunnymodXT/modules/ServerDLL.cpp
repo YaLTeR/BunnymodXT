@@ -3108,29 +3108,31 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerCamera__FollowTarget, void*, thisptr)
 {
+	if (!CVars::bxt_cof_allow_skipping_all_cutscenes.GetBool())
+	{
+		ORIG_CTriggerCamera__FollowTarget(thisptr);
+		return;
+	}
+
+	bool changed = false, oldSpawnFlagsCoFUnskippable = false;
 	auto pev = GET_PEV(thisptr);
 	if (pev)
 	{
-		bool changed = false;
-		auto oldSpawnFlags = pev->spawnflags;
 		if (CVars::bxt_cof_allow_skipping_all_cutscenes.GetBool())
 		{
-			if (pev->spawnflags & COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE) // "Unskippable" flag from .fgd
+			oldSpawnFlagsCoFUnskippable = pev->spawnflags & COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE;
+			if (oldSpawnFlagsCoFUnskippable) // "Unskippable" flag from .fgd
 			{
 				pev->spawnflags &= ~COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE;
 				changed = true;
 			}
 		}
-
-		ORIG_CTriggerCamera__FollowTarget(thisptr);
-
-		if (changed)
-			pev->spawnflags = oldSpawnFlags;
 	}
-	else 
-	{
-		ORIG_CTriggerCamera__FollowTarget(thisptr);
-	}
+
+	ORIG_CTriggerCamera__FollowTarget(thisptr);
+
+	if (changed)
+		SET_OR_UNSET_FLAG(oldSpawnFlagsCoFUnskippable, pev->spawnflags, COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE)
 }
 
 void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)

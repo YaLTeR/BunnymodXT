@@ -4,6 +4,10 @@
 
 namespace helper_functions
 {
+	auto &cl = ClientDLL::GetInstance();
+	auto &sv = ServerDLL::GetInstance();
+	auto &hw = HwDLL::GetInstance();
+
 	void com_fixslashes(std::string &str)
 	{
 		// https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/game_shared/bot/nav_file.cpp#L680
@@ -44,7 +48,6 @@ namespace helper_functions
 	void disable_vsync()
 	{
 		#ifdef _WIN32
-		auto &hw = HwDLL::GetInstance();
 		if (hw.check_vsync)
 		{
 			const bool bxtDisableVSync = getenv("BXT_DISABLE_VSYNC");
@@ -63,7 +66,7 @@ namespace helper_functions
 
 	void _com_filebase(const char *in, int &len, int &start)
 	{
-		int len, start, end;
+		int end;
 
 		len = strlen(in);
 
@@ -121,9 +124,27 @@ namespace helper_functions
 		std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c){ return tolower(c); });
 	}
 
+	double ret_bxt_time()
+	{
+		const auto& gt = CustomHud::GetTime();
+		return (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds + (gt.milliseconds / 1000);
+	}
+
+	void reset_gamedir()
+	{
+		hw.gamedir.clear();
+		hw.gamedir_lw.clear();
+		hw.GameDirMatchID = hw.GameDirStartsWithID = -1;
+	}
+
 	void set_gamedir_starts_with()
 	{
-		#define FIND_GAMEDIR_STARTS_WITH(name, id)
+		#define FIND_GAMEDIR_STARTS_WITH(name, id) \
+		if (!hw.GetGameDir().compare(0, sizeof(#name) - 1, #name)) \
+		{ \
+			hw.GameDirStartsWithID = BXT_CONCAT(GAMEDIR_STARTS_WITH_, id); \
+			return; \
+		}
 
 		FIND_GAMEDIR_STARTS_WITH(valve, HL)
 		FIND_GAMEDIR_STARTS_WITH(gearbox, OPFOR)
@@ -143,7 +164,12 @@ namespace helper_functions
 
 	void set_gamedir_match()
 	{
-		#define FIND_GAMEDIR_MATCH(name, id)
+		#define FIND_GAMEDIR_MATCH(name, id) \
+		if (!hw.GetGameDir().compare(#name)) \
+		{ \
+			hw.GameDirMatchID = BXT_CONCAT(GAMEDIR_MATCH_, id); \
+			return; \
+		}
 
 		FIND_GAMEDIR_MATCH(valve, HL)
 		FIND_GAMEDIR_MATCH(gearbox, OPFOR)

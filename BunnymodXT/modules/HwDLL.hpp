@@ -322,9 +322,6 @@ public:
 
 	int lastRecordedHealth;
 
-	bool is_cstrike_dir = false;
-	bool is_tfc_dir = false;
-
 	globalvars_t *ppGlobals;
 	engine_studio_api_t *pEngStudio;
 	engine_api_t *pEngineAPI;
@@ -546,10 +543,33 @@ public:
 	std::string GetGameDir(bool lowercase);
 	std::string GetGameDir();
 	int GameDirMatchID = -1, GameDirStartsWithID = -1;
-	inline void GameDirInit() { if (gamedir.empty()) GetGameDir(); }
-	inline bool _IsGameDirMatch(int val) { GameDirInit(); if (val == GameDirMatchID) ? return true; : return false; }
-	inline bool _IsGameDirStartsWith(int val) { GameDirInit(); if (val == GameDirStartsWithID) ? return true; : return false; }
+
+	inline void GameDirInit() 
+	{ 
+		if (gamedir.empty()) 
+			GetGameDir(); 
+	}
+
+	inline bool _IsGameDirMatch(int val) 
+	{ 
+		GameDirInit();
+		if (val == GameDirMatchID)
+			return true;
+		else
+			return false; 
+	}
+
+	inline bool _IsGameDirStartsWith(int val) 
+	{ 
+		GameDirInit();
+		if (val == GameDirStartsWithID)
+			return true;
+		else
+			return false; 
+	}
 	// End of gamedir block
+
+	int GetBuildNumber();
 
 	bool ducktap;
 	edict_t **sv_player;

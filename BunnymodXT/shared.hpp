@@ -52,6 +52,9 @@ constexpr steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 
 // - Custom macros
 #define GET_PEV(thisptr) *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + off_pev);
+#define BXT_CONCAT(x, y) x##y
+#define IsGameDirMatch(id) HwDLL::GetInstance()._IsGameDirMatch(BXT_CONCAT(GAMEDIR_MATCH_, id))
+#define IsGameDirStartsWith(id) HwDLL::GetInstance()._IsGameDirStartsWith(BXT_CONCAT(GAMEDIR_STARTS_WITH_, id))
 
 // - Custom enums
 

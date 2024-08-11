@@ -753,6 +753,8 @@ void HwDLL::Clear()
 	pEngStudio = nullptr;
 	pEngineAPI = nullptr;
 
+	helper_functions::reset_gamedir();
+
 	registeredVarsAndCmds = false;
 	autojump = false;
 	ducktap = false;
@@ -3136,7 +3138,12 @@ struct HwDLL::Cmd_BXT_Debug_Dump
 
 	static void handler(const char *name)
 	{
-		if (!strcmp(name, "sizeof"))
+		if (!strcmp(name, "gamedir"))
+		{
+			auto &hw = HwDLL::GetInstance();
+			hw.ORIG_Con_Printf("%d, %d, %s, %s\n", hw.GameDirMatchID, hw.GameDirStartsWithID, hw.gamedir.c_str(), hw.gamedir_lw.c_str());
+		}
+		else if (!strcmp(name, "sizeof"))
 		{
 			auto &hw = HwDLL::GetInstance();
 			std::ostringstream ss;
@@ -3401,7 +3408,6 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 	static void handler()
 	{
 		auto &hw = HwDLL::GetInstance();
-		auto &cl = ClientDLL::GetInstance();
 
 		auto pl = hw.GetPlayerEdict();
 
@@ -3506,7 +3512,7 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_GoTo
 		pl->v.origin = cp_origin;
 
 		// for CS 1.6 stamina reset
-		if (hw.is_cstrike_dir) 
+		if (IsGameDirMatch(MP_CS))
 			pl->v.fuser2 = 0;
 
 		pl->v.gravity = cp_gravity;
@@ -5744,7 +5750,7 @@ void HwDLL::SetTASLogging(bool enabled)
 			return;
 		}
 		const int buildNumber = ORIG_build_number ? ORIG_build_number() : -1;
-		const char *gameDir = ClientDLL::GetInstance().pEngfuncs->pfnGetGameDirectory();
+		const char *gameDir = GetGameDir(false).c_str();
 		logWriter.StartLog(tasLogFile, BUNNYMODXT_VERSION, buildNumber, gameDir);
 		tasLogging = true;
 		ORIG_Con_Printf("Started TAS logging into %s\n", filename.c_str());
@@ -6833,7 +6839,7 @@ bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
 	return false;
 }
 
-std::string GetGameDir(bool lowercase)
+std::string HwDLL::GetGameDir(bool lowercase)
 {
 	if (gamedir.empty())
 	{
@@ -6860,12 +6866,23 @@ std::string GetGameDir(bool lowercase)
 		}
 	}
 
-	if (lowercase) ? return gamedir_lw; : return gamedir;
+	if (lowercase)
+		return gamedir_lw;
+	else
+		return gamedir;
 }
 
-std::string GetGameDir()
+std::string HwDLL::GetGameDir()
 {
 	return GetGameDir(true);
+}
+
+int HwDLL::GetBuildNumber()
+{
+	if (ORIG_build_number)
+		return ORIG_build_number();
+	else
+		return 0;
 }
 
 HLStrafe::PlayerData HwDLL::GetPlayerData()
@@ -6951,11 +6968,9 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 	vars.Bounce = CVars::sv_bounce.GetFloat();
 	vars.Bhopcap = CVars::bxt_bhopcap.GetBool();
 
-	static bool is_paranoia_dir = cl.DoesGameDirMatch("paranoia");
-	is_tfc_dir = cl.DoesGameDirMatch("tfc");
-	is_cstrike_dir = cl.DoesGameDirMatch("cstrike") || cl.DoesGameDirMatch("czero");
+	bool is_cstrike_dir = IsGameDirMatch(MP_CS) || IsGameDirMatch(MP_CSCZ);
 
-	if (is_paranoia_dir)
+	if (IsGameDirMatch(PARANOIA))
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed() * CVars::sv_maxspeed.GetFloat() / 100.0f; // GetMaxSpeed is factor here
 	else if (cl.pEngfuncs && (cl.pEngfuncs->GetClientMaxspeed() > 0.0f) && (CVars::sv_maxspeed.GetFloat() > cl.pEngfuncs->GetClientMaxspeed()))
 		vars.Maxspeed = cl.pEngfuncs->GetClientMaxspeed(); // Get true maxspeed in other mods (example: CS 1.6)
@@ -6972,7 +6987,7 @@ HLStrafe::MovementVars HwDLL::GetMovementVars()
 		vars.BhopcapMaxspeedScale = 1.7f;
 	}
 
-	if (!is_cstrike_dir && !is_tfc_dir)
+	if (!is_cstrike_dir && !IsGameDirMatch(MP_TFC))
 		vars.UseSlow = true;
 
 	if (svs->maxclients >= 1) {
@@ -8054,7 +8069,7 @@ HOOK_DEF_1(HwDLL, void, __cdecl, VGuiWrap_Paint, int, paintAll)
 
 HOOK_DEF_3(HwDLL, int, __cdecl, DispatchDirectUserMsg, char*, pszName, int, iSize, void*, pBuf)
 {
-	if (ClientDLL::GetInstance().DoesGameDirContain("czeror") && !std::strcmp(pszName, "InitHUD"))
+	if (IsGameDirStartsWith(CSCZDS) && !std::strcmp(pszName, "InitHUD"))
 		return ORIG_DispatchDirectUserMsg(0, iSize, pBuf);
 	else
 		return ORIG_DispatchDirectUserMsg(pszName, iSize, pBuf);
@@ -8235,7 +8250,7 @@ HOOK_DEF_0(HwDLL, void, __cdecl, R_DrawParticles)
 
 HOOK_DEF_0(HwDLL, int, __cdecl, BUsesSDLInput)
 {
-	if (ClientDLL::GetInstance().DoesGameDirMatch("bshift_cutsceneless") || CVars::bxt_fix_mouse_horizontal_limit.GetBool())
+	if (IsGameDirStartsWith(BSHIFT) || CVars::bxt_fix_mouse_horizontal_limit.GetBool())
 		return true;
 	else
 		return ORIG_BUsesSDLInput();
@@ -8435,16 +8450,13 @@ HOOK_DEF_1(HwDLL, void, __cdecl, LoadThisDll, const char*, szDllFilename)
 	auto oldszDllFilename = szDllFilename;
 	std::string newszDllFilename;
 
-	auto &hw = HwDLL::GetInstance();
-	hw.is_cstrike_dir = ClientDLL::GetInstance().DoesGameDirMatch("cstrike");
-
 	if (boost::ends_with(szDllFilename, "metamod" DLL_EXTENSION))
 	{
 		EngineDevMsg("[hw dll] Metamod detected.\n");
 
 		bool is_failed = false;
 
-		if (hw.is_cstrike_dir)
+		if (IsGameDirMatch(MP_CS))
 		{
 			#ifdef _WIN32
 			const std::string cs_lib = "dlls\\mp";

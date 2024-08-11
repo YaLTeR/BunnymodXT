@@ -228,7 +228,7 @@ namespace discord_integration
 			{"bschapter3", "Captive Freight"},
 			{"bschapter4", "Focal Point"},
 			{"bschapter5", "Power Struggle"},
-			{"bschapter6", "Captive Freight"},
+			{"bschapter6", "Captive Freight / A Leap of Faith"},
 			{"bschapter7", "Outro"},
 			{"bschapter8", "Hazard Course"},
 			{"bschapter9", "Living Quarters Outbound"},
@@ -830,7 +830,7 @@ namespace discord_integration
 			{"paraschool", "hrpchapter10"},
 		};
 
-		const std::unordered_set<std::string> urbicide_maps {
+		const std::unordered_set<std::string_view> urbicide_maps {
 			"urbicide1"s,
 			"urbicide2"s,
 			"urbicide3"s,

@@ -26,6 +26,9 @@ namespace helper_functions
 	void convert_to_lowercase(const char *str);
 	void convert_to_lowercase(std::string &str);
 
+	double ret_bxt_time();
+
+	void reset_gamedir();
 	void set_gamedir_starts_with();
 	void set_gamedir_match();
 

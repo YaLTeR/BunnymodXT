@@ -32,6 +32,8 @@ constexpr float HL1_SLOWDOWN_PLAYER_BY_USE = 0.3f; // https://github.com/ValveSo
 
 constexpr unsigned int off_pev = 4; // CBaseEntity, pev
 
+#define MAX_GAMEDIR_LENGTH 260 // com_gamedir[260]
+
 // - Custom constants
 // Constants whose values you set depending on your code and preferences.
 

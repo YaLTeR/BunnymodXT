@@ -6833,6 +6833,41 @@ bool HwDLL::GetNextMovementFrame(HLTAS::Frame& f)
 	return false;
 }
 
+std::string GetGameDir(bool lowercase)
+{
+	if (gamedir.empty())
+	{
+		auto &sv = ServerDLL::GetInstance();
+		if (sv.pEngfuncs)
+		{
+			char tempGameDir[MAX_GAMEDIR_LENGTH];
+
+			// Get game directory or path to it from engine.
+			sv.pEngfuncs->pfnGetGameDir(tempGameDir);
+
+			// From the path we leave only the end directory.
+			helper_functions::com_filebase(tempGameDir, gamedir);
+
+			// Make a copy of the gamedir, but convert it to lowercase for case-insensitive checks. 
+			// This should be less resource-intensive than if we convert the string to lowercase every time.
+			gamedir_lw = gamedir;
+			helper_functions::convert_to_lowercase(gamedir_lw);
+
+			// Set a value for a special integer variables depending on what your game directory is.
+			// Systematizing the check for game directories by the IDs we marked in the list should have a much more positive effect on performance than if we simply checked the directory name against the input string every time.
+			helper_functions::set_gamedir_match();
+    		helper_functions::set_gamedir_starts_with();
+		}
+	}
+
+	if (lowercase) ? return gamedir_lw; : return gamedir;
+}
+
+std::string GetGameDir()
+{
+	return GetGameDir(true);
+}
+
 HLStrafe::PlayerData HwDLL::GetPlayerData()
 {
 	HLStrafe::PlayerData player{};

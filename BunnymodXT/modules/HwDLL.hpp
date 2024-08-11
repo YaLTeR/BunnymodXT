@@ -541,6 +541,16 @@ public:
 	const char* GetMovetypeName(int moveType);
 	void GetOriginOfEntity(Vector& origin, const edict_t* ent);
 
+	// Start of gamedir block
+	std::string gamedir, gamedir_lw;
+	std::string GetGameDir(bool lowercase);
+	std::string GetGameDir();
+	int GameDirMatchID = -1, GameDirStartsWithID = -1;
+	inline void GameDirInit() { if (gamedir.empty()) GetGameDir(); }
+	inline bool _IsGameDirMatch(int val) { GameDirInit(); if (val == GameDirMatchID) ? return true; : return false; }
+	inline bool _IsGameDirStartsWith(int val) { GameDirInit(); if (val == GameDirStartsWithID) ? return true; : return false; }
+	// End of gamedir block
+
 	bool ducktap;
 	edict_t **sv_player;
 protected:

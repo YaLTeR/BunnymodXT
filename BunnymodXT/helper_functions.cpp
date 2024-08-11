@@ -105,4 +105,19 @@ namespace helper_functions
 		_com_filebase(in, len, start);
 		out = std::string(&in[start], len);
 	}
+
+	void convert_to_lowercase(const char *str)
+	{
+		unsigned char *str_lw = (unsigned char *)str;
+		while (*str_lw) 
+		{
+			*str_lw = tolower(*str_lw);
+			str_lw++;
+		}
+	}
+
+	void convert_to_lowercase(std::string &str)
+	{
+		std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c){ return tolower(c); });
+	}
 };

@@ -19,6 +19,13 @@ namespace helper_functions
 	void com_filebase(const char *in, char *out);
 	void com_filebase(const char *in, std::string &out);
 
+	/*
+		Using lowercase is specifically designed so as not to encounter case sensitivity when comparing to the name of the map or game directory (although game may not be happy about if the runner uses a name that does not match the original case from game files / folders, but the main thing is that on our side there should be no issue with this)
+		When you checking in code for a game directory or map name, always write the names in lowercase!
+	*/
+	void convert_to_lowercase(const char *str);
+	void convert_to_lowercase(std::string &str);
+
 	inline void allow_multiple_instances() // Make it possible to run multiple Half-Life instances.
 	{
 		#ifdef _WIN32

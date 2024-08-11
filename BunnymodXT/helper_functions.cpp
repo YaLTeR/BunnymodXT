@@ -60,4 +60,49 @@ namespace helper_functions
 		}
 		#endif
 	}
+
+	void _com_filebase(const char *in, int &len, int &start)
+	{
+		int len, start, end;
+
+		len = strlen(in);
+
+		// Scan backward for '.'
+		end = len - 1;
+		while (end && in[end] != '.' && in[end] != '/' && in[end] != '\\')
+			end--;
+
+		if (in[end] != '.') // No '.', copy to end
+			end = len - 1;
+		else 
+			end--; // Found ',', copy to left of '.'
+
+		// Scan backward for '/'
+		start = len - 1;
+		while (start >= 0 && in[start] != '/' && in[start] != '\\')
+			start--;
+
+		if (in[start] != '/' && in[start] != '\\')
+			start = 0;
+		else 
+			start++;
+
+		// Length of new string
+		len = end - start + 1;
+	}
+
+	void com_filebase(const char *in, char *out)
+	{
+		int len, start;
+		_com_filebase(in, len, start);
+		strncpy(out, &in[start], len);
+		out[len] = 0;
+	}
+
+	void com_filebase(const char *in, std::string &out)
+	{
+		int len, start;
+		_com_filebase(in, len, start);
+		out = std::string(&in[start], len);
+	}
 };

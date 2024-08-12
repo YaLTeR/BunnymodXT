@@ -122,6 +122,8 @@ public:
 
 	bool IsPlayer(edict_t *ent);
 
+	void AddToFullPack_Pre(edict_t *ent, unsigned char **pSet, int &status);
+
 private:
 	ServerDLL() : IHookableDirFilter({ L"dlls", L"cl_dlls"}) {};
 	ServerDLL(const ServerDLL&);

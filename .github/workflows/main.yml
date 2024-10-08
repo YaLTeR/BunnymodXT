@@ -89,7 +89,7 @@ jobs:
       run: git fetch --force --tags
 
     - name: Build the Flatpak package
-      uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
+      uses: flatpak/flatpak-github-actions/flatpak-builder@v6
       with:
         manifest-path: build-aux/flatpak/rs.bxt.BunnymodXT.json
         cache: false

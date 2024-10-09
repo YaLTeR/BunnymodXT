@@ -138,7 +138,7 @@ jobs:
 
     - name: Install Boost
       id: install-boost
-      uses: permanentdaylightt/install-boost@latest
+      uses: MarkusJx/install-boost@v2.4.5
       with:
         boost_version: 1.78.0
         platform_version: 2019

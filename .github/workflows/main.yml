@@ -127,6 +127,9 @@ jobs:
     - name: Fetch tags
       run: git fetch --force --tags
 
+    - name: Install Rust toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+
     - name: Install Rust
       run: |
         rustup toolchain install stable --profile minimal

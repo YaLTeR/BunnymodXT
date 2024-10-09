@@ -34,6 +34,9 @@ jobs:
         sudo apt-get update
         sudo apt-get install g++-multilib libboost-dev mesa-common-dev ninja-build libgl-dev:i386
 
+    - name: Install Rust toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+
     - name: Install Rust
       run: |
         rustup toolchain install stable --profile minimal
@@ -132,7 +135,7 @@ jobs:
 
     - name: Install Boost
       id: install-boost
-      uses: MarkusJx/install-boost@v2.4.5
+      uses: permanentdaylightt/install-boost@latest
       with:
         boost_version: 1.78.0
         platform_version: 2019

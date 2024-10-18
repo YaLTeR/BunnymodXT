@@ -17,20 +17,25 @@ jobs:
         configuration: [Release, Debug]
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
       with:
         submodules: recursive
         # We need the full history to find the tag
         fetch-depth: 0
 
     # We need the tags for the version string
-    - run: git fetch --force --tags
+    - name: Fetch tags
+      run: git fetch --force --tags
 
     - name: Install dependencies
       run: |
         sudo dpkg --add-architecture i386
         sudo apt-get update
         sudo apt-get install g++-multilib libboost-dev mesa-common-dev ninja-build libgl-dev:i386
+
+    - name: Install Rust toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
 
     - name: Install Rust
       run: |
@@ -44,7 +49,8 @@ jobs:
     - name: Build
       run: cmake --build build
 
-    - uses: actions/upload-artifact@v4
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
       with:
         name: BunnymodXT-${{ runner.os }}-${{ matrix.configuration }}
         path: build/libBunnymodXT.so
@@ -72,7 +78,8 @@ jobs:
       options: --privileged
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
       with:
         submodules: recursive
         # We need the full history to find the tag
@@ -81,9 +88,11 @@ jobs:
     - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
     # We need the tags for the version string
-    - run: git fetch --force --tags
+    - name: Fetch tags
+      run: git fetch --force --tags
 
-    - uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
+    - name: Build the Flatpak package
+      uses: flatpak/flatpak-github-actions/flatpak-builder@v6
       with:
         manifest-path: build-aux/flatpak/rs.bxt.BunnymodXT.json
         cache: false
@@ -107,14 +116,19 @@ jobs:
             archive-filename: '3-BunnymodXT-CoFSteam-Windows.7z'
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
       with:
         submodules: recursive
         # We need the full history to find the tag
         fetch-depth: 0
 
     # We need the tags for the version string
-    - run: git fetch --force --tags
+    - name: Fetch tags
+      run: git fetch --force --tags
+
+    - name: Install Rust toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
 
     - name: Install Rust
       run: |
@@ -138,7 +152,8 @@ jobs:
     - name: Build
       run: cmake --build build --config ${{ matrix.configuration }} -j $env:NUMBER_OF_PROCESSORS
 
-    - uses: actions/upload-artifact@v4
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
       with:
         name: BunnymodXT${{ matrix.artifact-label }}-${{ runner.os }}-${{ matrix.configuration }}
         path: build\${{ matrix.configuration }}\BunnymodXT.dll

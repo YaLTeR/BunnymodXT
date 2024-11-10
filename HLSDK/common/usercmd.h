@@ -36,6 +36,10 @@ typedef struct usercmd_s
 	// Experimental player impact stuff.
 	int		impact_index;
 	vec3_t	impact_position;
+
+	#ifdef COF_BUILD
+	qboolean is_donator; // The data type is unknown, but to me it is clearly qboolean.
+	#endif
 } usercmd_t;
 
 #endif // USERCMD_H

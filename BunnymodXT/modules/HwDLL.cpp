@@ -3401,7 +3401,6 @@ struct HwDLL::Cmd_BXT_CH_CheckPoint_Create
 	static void handler()
 	{
 		auto &hw = HwDLL::GetInstance();
-		auto &cl = ClientDLL::GetInstance();
 
 		auto pl = hw.GetPlayerEdict();
 

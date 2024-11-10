@@ -7424,6 +7424,11 @@ void HwDLL::SaveInitialDataToDemo()
 		RuntimeData::Add(RuntimeData::Edicts{ maxEdicts });
 	}
 
+	int bxt_flags = 0;
+	if (is_big_map)
+		bxt_flags |= BXT_FLAGS_BIG_MAP;
+	RuntimeData::Add(RuntimeData::Flags{ bxt_flags });
+
 	auto &hw = HwDLL::GetInstance();
 	lastRecordedHealth = static_cast<int>((*hw.sv_player)->v.health);
 
@@ -7609,11 +7614,6 @@ HOOK_DEF_1(HwDLL, int, __cdecl, Host_FilterTime, float, passedTime)
 			RuntimeData::Add(RuntimeData::PlayerHealth{playerhealth});
 
 		lastRecordedHealth = playerhealth;
-
-		int bxt_flags = 0;
-		if (is_big_map)
-			bxt_flags |= BXT_FLAGS_BIG_MAP;
-		RuntimeData::Add(RuntimeData::Flags{bxt_flags});
 	}
 
 	if (runningFrames) {

@@ -229,6 +229,10 @@ typedef struct clientdata_s
 	vec3_t				vuser2;
 	vec3_t				vuser3;
 	vec3_t				vuser4;
+
+	#ifdef COF_BUILD
+	qboolean isdonator; // The data type is unknown, but to me it is clearly qboolean.
+	#endif
 } clientdata_t;
 
 #include "weaponinfo.h"

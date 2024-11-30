@@ -1157,84 +1157,6 @@ void ClientDLL::StudioAdjustViewmodelAttachments(Vector &vOrigin)
 	vOrigin = last_vieworg + vOut;
 }
 
-void ClientDLL::FileBase(const char *in, char *out)
-{
-	int len, start, end;
-
-	len = strlen(in);
-
-	// scan backward for '.'
-	end = len - 1;
-	while (0 != end && in[end] != '.' && in[end] != '/' && in[end] != '\\')
-		end--;
-
-	if (in[end] != '.')		// no '.', copy to end
-		end = len - 1;
-	else
-		end--;			// Found ',', copy to left of '.'
-
-	// Scan backward for '/'
-	start = len - 1;
-	while (start >= 0 && in[start] != '/' && in[start] != '\\')
-		start--;
-
-	if (in[start] != '/' && in[start] != '\\')
-		start = 0;
-	else
-		start++;
-
-	// Length of new sting
-	len = end - start + 1;
-
-	// Copy partial string
-	strncpy(out, &in[start], len);
-	// Terminate it
-	out[len] = 0;
-}
-
-void ClientDLL::ConvertToLowerCase(const char *str)
-{
-	unsigned char *str_lw = (unsigned char *)str;
-	while (*str_lw) {
-		*str_lw = tolower(*str_lw);
-		str_lw++;
-	}
-}
-
-bool ClientDLL::DoesGameDirMatch(const char *game)
-{
-	if (!pEngfuncs)
-		return false;
-
-	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
-	char gd[1024];
-
-	if (gameDir && gameDir[0])
-	{
-		FileBase(gameDir, gd);
-		ConvertToLowerCase(gd);
-	}
-
-	return !std::strcmp(gd, game);
-}
-
-bool ClientDLL::DoesGameDirContain(const char *game)
-{
-	if (!pEngfuncs)
-		return false;
-
-	const char *gameDir = pEngfuncs->pfnGetGameDirectory();
-	char gd[1024];
-
-	if (gameDir && gameDir[0])
-	{
-		FileBase(gameDir, gd);
-		ConvertToLowerCase(gd);
-	}
-
-	return std::strstr(gd, game);
-}
-
 size_t ClientDLL::GetMapName(char* dest, size_t count)
 {
 	auto map_path = pEngfuncs->pfnGetLevelName();
@@ -1265,7 +1187,7 @@ bool ClientDLL::DoesMapNameMatch(const char *map)
 	GetMapName(map_name, ARRAYSIZE_HL(map_name));
 
 	if (map_name[0])
-		ConvertToLowerCase(map_name);
+		helper_functions::convert_to_lowercase(map_name);
 
 	return !std::strcmp(map_name, map);
 }
@@ -1280,9 +1202,9 @@ bool ClientDLL::DoesMapNameContain(const char *map)
 	GetMapName(map_name, ARRAYSIZE_HL(map_name));
 
 	if (map_name[0])
-		ConvertToLowerCase(map_name);
+		helper_functions::convert_to_lowercase(map_name);
 
-	return std::strstr(map_name, map);
+	return !std::strncmp(map_name, map, strlen(map));
 }
 
 void ClientDLL::SetAngleSpeedCap(bool capped)
@@ -1861,7 +1783,7 @@ HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioSetupBones_Linu
 {
 	ptrdiff_t offpCurrentEntity_Linux;
 	ptrdiff_t offpStudioHeader_Linux;
-	if (DoesGameDirMatch("dod")) {
+	if (IsGameDirMatch(MP_DOD)) {
 		offpCurrentEntity_Linux = 52;
 		offpStudioHeader_Linux = 72;
 	} else {
@@ -1988,7 +1910,7 @@ HOOK_DEF_1(ClientDLL, void, __fastcall, CStudioModelRenderer__StudioRenderModel,
 HOOK_DEF_1(ClientDLL, void, __cdecl, CStudioModelRenderer__StudioRenderModel_Linux, void*, thisptr)
 {
 	ptrdiff_t offpCurrentEntity_Linux;
-	if (DoesGameDirMatch("dod"))
+	if (IsGameDirMatch(MP_DOD))
 		offpCurrentEntity_Linux = 52;
 	else
 		offpCurrentEntity_Linux = 44;

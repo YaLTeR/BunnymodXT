@@ -50,3 +50,13 @@ constexpr steamid_t STEAMID64_CONST = 76561197960265728; // 0x110000100000000
 
 // - Custom macros
 #define GET_PEV(thisptr) *reinterpret_cast<entvars_t**>(reinterpret_cast<uintptr_t>(thisptr) + off_pev);
+#define SET_OR_UNSET_FLAG(boolVar, setVar, flag) boolVar ? (setVar |= flag) : (setVar &= ~flag);
+
+// - Custom enums
+typedef enum
+{
+	BXT_ADDTOFULLPACK_STATE_NO = 0,
+	BXT_ADDTOFULLPACK_STATE_HIDDEN_ENTITIES,
+	BXT_ADDTOFULLPACK_STATE_HIDDEN_ENTITIES_CLIENTSIDE,
+	BXT_ADDTOFULLPACK_STATE_TRIGGERS
+} BXT_ENUM_ADDTOFULLPACK;

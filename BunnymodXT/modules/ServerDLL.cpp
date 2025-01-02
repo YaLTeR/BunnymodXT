@@ -2508,73 +2508,96 @@ void ServerDLL::GetTriggerAlpha(const char *classname, bool inactive, bool addit
 		a = common_alphas[inactive][additive];
 }
 
+void ServerDLL::AddToFullPack_Pre(edict_t *ent, unsigned char **pSet, int &status)
+{
+	if (CVars::bxt_render_far_entities.GetBool()) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/client.cpp#L1114-L1122
+		*pSet = NULL;
+
+	if (!CVars::bxt_show_hidden_entities.GetBool() && !CVars::bxt_show_hidden_entities_clientside.GetBool() && !CVars::bxt_show_triggers_legacy.GetBool())
+		return;
+
+	const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + ent->v.classname;
+	bool is_trigger = !std::strncmp(classname, "trigger_", 8) || !std::strcmp(classname, "func_ladder");
+
+	if (!is_trigger)
+	{
+		if (CVars::bxt_show_hidden_entities.GetBool())
+		{
+			bool show = ent->v.rendermode != kRenderNormal && ent->v.rendermode != kRenderGlow;
+			switch (CVars::bxt_show_hidden_entities.GetInt()) {
+			case 1:
+				show = show && ent->v.renderamt == 0;
+				break;
+			case 2:
+				break;
+			default:
+				show = show || (ent->v.effects & EF_NODRAW) != 0;
+			}
+
+			if (show) {
+				ent->v.effects &= ~EF_NODRAW;
+				ent->v.rendermode = kRenderNormal;
+
+				status = BXT_ADDTOFULLPACK_STATE_HIDDEN_ENTITIES;
+			}
+		}
+		else if (CVars::bxt_show_hidden_entities_clientside.GetBool())
+		{
+			if (ent->v.effects & EF_NODRAW)
+			{
+				ent->v.effects &= ~EF_NODRAW;
+				ent->v.renderamt = 0;
+
+				// e.g. func_wall_toggle is kRenderNormal when it's EF_NODRAW'd, so that'd make it visible always, fix that
+				if (ent->v.rendermode == kRenderNormal)
+					ent->v.rendermode = kRenderTransTexture;
+
+				status = BXT_ADDTOFULLPACK_STATE_HIDDEN_ENTITIES_CLIENTSIDE;
+			}
+		}
+	}
+	else
+	{
+		if (CVars::bxt_show_triggers_legacy.GetBool())
+		{
+			ent->v.effects &= ~EF_NODRAW;
+			ent->v.renderamt = 0;
+			ent->v.rendermode = kRenderTransColor;
+			ent->v.renderfx = kRenderFxTrigger;
+			GetTriggerColor(classname, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z);
+
+			status = BXT_ADDTOFULLPACK_STATE_TRIGGERS;
+		}
+	}
+}
+
 HOOK_DEF_7(ServerDLL, int, __cdecl, AddToFullPack, struct entity_state_s*, state, int, e, edict_t*, ent, edict_t*, host, int, hostflags, int, player, unsigned char*, pSet)
 {
 	if (!HwDLL::GetInstance().ppGlobals) {
 		return ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);
 	}
 
-	if (CVars::bxt_render_far_entities.GetBool()) // https://github.com/ValveSoftware/halflife/blob/c7240b965743a53a29491dd49320c88eecf6257b/dlls/client.cpp#L1114-L1122
-		pSet = NULL;
-
-	auto oldEffects = ent->v.effects;
+	int status = BXT_ADDTOFULLPACK_STATE_NO;
+	bool oldEffectsNodraw = ent->v.effects & EF_NODRAW;
 	auto oldRendermode = ent->v.rendermode;
-	auto oldRenderColor = ent->v.rendercolor;
 	auto oldRenderAmount = ent->v.renderamt;
+	auto oldRenderColor = ent->v.rendercolor;
 	auto oldRenderFx = ent->v.renderfx;
-	auto oldFlags = ent->v.flags;
-	auto oldIUser1 = ent->v.iuser1;
-	auto oldIUser2 = ent->v.iuser2;
 
-	const char *classname = HwDLL::GetInstance().ppGlobals->pStringBase + ent->v.classname;
-	bool is_trigger = std::strncmp(classname, "trigger_", 8) == 0;
-	bool is_ladder = std::strncmp(classname, "func_ladder", 11) == 0;
-
-	if (!is_trigger && CVars::bxt_show_hidden_entities.GetBool()) {
-		bool show = ent->v.rendermode != kRenderNormal && ent->v.rendermode != kRenderGlow;
-		switch (CVars::bxt_show_hidden_entities.GetInt()) {
-		case 1:
-			show = show && ent->v.renderamt == 0;
-			break;
-		case 2:
-			break;
-		default:
-			show = show || (ent->v.effects & EF_NODRAW) != 0;
-		}
-
-		if (show) {
-			ent->v.effects &= ~EF_NODRAW;
-			ent->v.rendermode = kRenderNormal;
-		}
-	} else if (!is_trigger && CVars::bxt_show_hidden_entities_clientside.GetBool()) {
-		if (ent->v.effects & EF_NODRAW)
-		{
-			ent->v.effects &= ~EF_NODRAW;
-			ent->v.renderamt = 0;
-
-			// e.g. func_wall_toggle is kRenderNormal when it's EF_NODRAW'd, so that'd make it visible always, fix that
-			if (ent->v.rendermode == kRenderNormal)
-				ent->v.rendermode = kRenderTransTexture;
-		}
-	}
-	else if ((is_trigger || is_ladder) && CVars::bxt_show_triggers_legacy.GetBool()) {
-		ent->v.effects &= ~EF_NODRAW;
-		ent->v.renderamt = 0;
-		ent->v.rendermode = kRenderTransColor;
-		ent->v.renderfx = kRenderFxTrigger;
-		GetTriggerColor(classname, ent->v.rendercolor.x, ent->v.rendercolor.y, ent->v.rendercolor.z);
-	}
+	AddToFullPack_Pre(ent, &pSet, status);
 
 	auto ret = ORIG_AddToFullPack(state, e, ent, host, hostflags, player, pSet);
 
-	ent->v.effects = oldEffects;
-	ent->v.rendermode = oldRendermode;
-	ent->v.rendercolor = oldRenderColor;
-	ent->v.renderamt = oldRenderAmount;
-	ent->v.renderfx = oldRenderFx;
-	ent->v.flags = oldFlags;
-	ent->v.iuser1 = oldIUser1;
-	ent->v.iuser2 = oldIUser2;
+	if (status != BXT_ADDTOFULLPACK_STATE_NO) {
+		ent->v.effects = SET_OR_UNSET_FLAG(oldEffectsNodraw, ent->v.effects, EF_NODRAW);
+		ent->v.rendermode = oldRendermode;
+	}
+	if (status == BXT_ADDTOFULLPACK_STATE_TRIGGERS) {
+		ent->v.rendercolor = oldRenderColor;
+		ent->v.renderfx = oldRenderFx;
+	}
+	if (status == BXT_ADDTOFULLPACK_STATE_HIDDEN_ENTITIES_CLIENTSIDE || status == BXT_ADDTOFULLPACK_STATE_TRIGGERS)
+		ent->v.renderamt = oldRenderAmount;
 
 	return ret;
 }
@@ -3085,29 +3108,31 @@ HOOK_DEF_3(ServerDLL, void, __fastcall, CChangeLevel__TouchChangeLevel, void*, t
 
 HOOK_DEF_1(ServerDLL, void, __fastcall, CTriggerCamera__FollowTarget, void*, thisptr)
 {
+	if (!CVars::bxt_cof_allow_skipping_all_cutscenes.GetBool())
+	{
+		ORIG_CTriggerCamera__FollowTarget(thisptr);
+		return;
+	}
+
+	bool changed = false, oldSpawnFlagsCoFUnskippable = false;
 	auto pev = GET_PEV(thisptr);
 	if (pev)
 	{
-		bool changed = false;
-		auto oldSpawnFlags = pev->spawnflags;
 		if (CVars::bxt_cof_allow_skipping_all_cutscenes.GetBool())
 		{
-			if (pev->spawnflags & COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE) // "Unskippable" flag from .fgd
+			oldSpawnFlagsCoFUnskippable = pev->spawnflags & COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE;
+			if (oldSpawnFlagsCoFUnskippable) // "Unskippable" flag from .fgd
 			{
 				pev->spawnflags &= ~COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE;
 				changed = true;
 			}
 		}
-
-		ORIG_CTriggerCamera__FollowTarget(thisptr);
-
-		if (changed)
-			pev->spawnflags = oldSpawnFlags;
 	}
-	else 
-	{
-		ORIG_CTriggerCamera__FollowTarget(thisptr);
-	}
+
+	ORIG_CTriggerCamera__FollowTarget(thisptr);
+
+	if (changed)
+		SET_OR_UNSET_FLAG(oldSpawnFlagsCoFUnskippable, pev->spawnflags, COF_TRIGGER_CAMERA_FLAGS_UNSKIPPABLE)
 }
 
 void ServerDLL::TraceLineWrap(const Vector* vecStart, const Vector* vecEnd, int igmon, edict_t* pentIgnore, TraceResult* ptr)

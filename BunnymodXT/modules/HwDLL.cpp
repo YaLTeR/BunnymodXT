@@ -7051,7 +7051,6 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 		if (CVars::_bxt_ch_checkpoint_reset_on_disconnect.GetBool())
 			ch_checkpoint_is_set = false;
-
 	}
 
 	insideCbuf_Execute = true;

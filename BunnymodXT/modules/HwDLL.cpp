@@ -5810,6 +5810,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_allow_keypresses_in_demo);
 	RegisterCVar(CVars::bxt_ch_checkpoint_with_vel);
 	RegisterCVar(CVars::bxt_ch_checkpoint_onground_only);
+	RegisterCVar(CVars::_bxt_ch_checkpoint_reset_on_disconnect);
 
 	if (ORIG_R_SetFrustum && scr_fov_value)
 	{
@@ -7047,7 +7048,10 @@ HOOK_DEF_0(HwDLL, void, __cdecl, Cbuf_Execute)
 
 	if (*state != 5 && *state != 4) {
 		executing = false;
-		ch_checkpoint_is_set = false;
+
+		if (CVars::_bxt_ch_checkpoint_reset_on_disconnect.GetBool())
+			ch_checkpoint_is_set = false;
+
 	}
 
 	insideCbuf_Execute = true;

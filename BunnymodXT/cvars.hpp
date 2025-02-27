@@ -235,6 +235,7 @@
 	X(bxt_ch_hook_speed, "869") \
 	X(bxt_ch_checkpoint_with_vel, "1") \
 	X(bxt_ch_checkpoint_onground_only, "0") \
+	X(_bxt_ch_checkpoint_reset_on_disconnect, "1") \
 	X(bxt_ch_fix_sticky_slide, "0") \
 	X(bxt_ch_fix_sticky_slide_offset, "0.01") \
 	X(bxt_ch_noclip_speed, "0") \

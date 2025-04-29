@@ -3011,28 +3011,23 @@ struct HwDLL::Cmd_BXT_Get_Origin_And_Angles
 	static void handler()
 	{
 		auto &hw = HwDLL::GetInstance();
-		if (hw.GetPlayerEdict())
-		{
-			auto& cl = ClientDLL::GetInstance();
-			auto& sv = ServerDLL::GetInstance();
-			float angles[3];
-			cl.pEngfuncs->GetViewAngles(angles);
+		auto &cl = ClientDLL::GetInstance();
+		auto &sv = ServerDLL::GetInstance();
+		float angles[3];
+		cl.pEngfuncs->GetViewAngles(angles);
 
-			float view[3], end[3];
-			cl.SetupTraceVectors(view, end);
-			const auto tr = sv.TraceLine(view, end, 0, hw.GetPlayerEdict());
+		float view[3], end[3];
+		cl.SetupTraceVectors(view, end);
+		const auto tr = sv.TraceLine(view, end, 0, hw.GetPlayerEdict());
 
-			hw.ORIG_Con_Printf("bxt_set_angles %f %f %f;", angles[0], angles[1], angles[2]);
-			if (CVars::bxt_hud_origin.GetInt() == 2)
-				hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", cl.last_vieworg[0], cl.last_vieworg[1], cl.last_vieworg[2]);
-			else
-				hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", (*hw.sv_player)->v.origin[0], (*hw.sv_player)->v.origin[1], (*hw.sv_player)->v.origin[2]);
-
-			hw.ORIG_Con_Printf("bxt_cam_fixed %f %f %f %f %f %f\n", cl.last_vieworg[0], cl.last_vieworg[1], cl.last_vieworg[2], angles[0], angles[1], angles[2]);
-			hw.ORIG_Con_Printf("Traced point origin: %f %f %f\n", tr.vecEndPos[0], tr.vecEndPos[1], tr.vecEndPos[2]);
-		}
+		hw.ORIG_Con_Printf("bxt_set_angles %f %f %f;", angles[0], angles[1], angles[2]);
+		if (CVars::bxt_hud_origin.GetInt() == 2)
+			hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", cl.last_vieworg[0], cl.last_vieworg[1], cl.last_vieworg[2]);
 		else
-			hw.ORIG_Con_Printf("Player doesn't exist");
+			hw.ORIG_Con_Printf("bxt_ch_set_pos %f %f %f\n", (*hw.sv_player)->v.origin[0], (*hw.sv_player)->v.origin[1], (*hw.sv_player)->v.origin[2]);
+
+		hw.ORIG_Con_Printf("bxt_cam_fixed %f %f %f %f %f %f\n", cl.last_vieworg[0], cl.last_vieworg[1], cl.last_vieworg[2], angles[0], angles[1], angles[2]);
+		hw.ORIG_Con_Printf("Traced point origin: %f %f %f\n", tr.vecEndPos[0], tr.vecEndPos[1], tr.vecEndPos[2]);
 	}
 };
 
@@ -3186,16 +3181,14 @@ struct HwDLL::Cmd_BXT_CH_Entity_Set_Health
 		const auto& serv = ServerDLL::GetInstance();
 		float view[3], end[3];
 		ClientDLL::GetInstance().SetupTraceVectors(view, end);
-		if (HwDLL::GetInstance().GetPlayerEdict())
+
+		const auto tr = serv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+
+		if (tr.pHit)
 		{
-			const auto tr = serv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+			const auto ent = tr.pHit;
 
-			if (tr.pHit)
-			{
-				const auto ent = tr.pHit;
-
-				ent->v.health = hp;
-			}
+			ent->v.health = hp;
 		}
 	}
 
@@ -3297,19 +3290,17 @@ struct HwDLL::Cmd_BXT_CH_Monster_Set_Origin
 		const auto& serv = ServerDLL::GetInstance();
 		float view[3], end[3];
 		ClientDLL::GetInstance().SetupTraceVectors(view, end);
-		if (HwDLL::GetInstance().GetPlayerEdict())
-		{
-			const auto tr = serv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
 
-			if (tr.pHit)
+		const auto tr = serv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+
+		if (tr.pHit)
+		{
+			const auto ent = tr.pHit;
+			if (ent->v.flags & FL_MONSTER)
 			{
-				const auto ent = tr.pHit;
-				if (ent->v.flags & FL_MONSTER)
-				{
-					ent->v.origin[0] = x;
-					ent->v.origin[1] = y;
-					ent->v.origin[2] = z;
-				}
+				ent->v.origin[0] = x;
+				ent->v.origin[1] = y;
+				ent->v.origin[2] = z;
 			}
 		}
 	}

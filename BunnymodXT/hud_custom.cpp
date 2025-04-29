@@ -833,32 +833,16 @@ namespace CustomHud
 
 			float view[3], end[3];
 			ClientDLL::GetInstance().SetupTraceVectors(view, end);
-			edict_t* ent = NULL;
-			if (CVars::bxt_hud_entity_info_mode.GetInt() == 0)
-			{
-				const auto tr = sv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
-				ent = tr.pHit;
-			}
-			else if (CVars::bxt_hud_entity_info_mode.GetInt() == 1)
-			{
-				ent = HwDLL::GetInstance().GetPlayerEdict()->v.groundentity;
-			}
+
+			const auto tr = sv.TraceLine(view, end, 0, HwDLL::GetInstance().GetPlayerEdict());
 
 			std::ostringstream out;
-			if (ent)
+			if (tr.pHit)
 			{
 				out.setf(std::ios::fixed);
 				out.precision(precision);
 
-				if (CVars::bxt_hud_entity_info_mode.GetInt() == 1)
-				{
-					if (sv.ppmove)
-					{
-						playermove_t* pmove = static_cast<playermove_t*>(*sv.ppmove);
-						int onground = pmove->onground;
-						out << "onground: " << onground << "\n";
-					}
-				}
+				const auto ent = tr.pHit;
 
 				edict_t *edicts;
 				hw.GetEdicts(&edicts);

@@ -70,49 +70,6 @@ namespace TriangleDrawing
 		return sourceVector.Normalize();
 	}
 
-	static void ShowGroundEntity(triangleapi_s* pTriAPI)
-	{
-		if (CVars::bxt_hud_entity_info.GetBool() && CVars::bxt_hud_entity_info_mode.GetInt() == 1)
-		{
-			const auto player = HwDLL::GetInstance().GetPlayerEdict();
-			if (player)
-			{
-				edict_t* ent = player->v.groundentity;
-				if (ent)
-				{
-					const auto playerOrigin = player->v.origin;
-					auto forward = ClientDLL::GetInstance().AnglesToForward(player->v.v_angle);
-
-					const auto& si = CustomHud::GetScreenInfo();
-					const auto min_resolution = std::min(si.iHeight, si.iWidth);
-					const auto half_size_pixels = min_resolution / 30.0f;
-					const Vector2D half_size(TriangleUtils::PixelWidthToProportion(half_size_pixels), TriangleUtils::PixelHeightToProportion(half_size_pixels));
-
-
-					pTriAPI->RenderMode(kRenderTransColor);
-					pTriAPI->CullFace(TRI_NONE);
-					pTriAPI->Color4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-					auto bmodelOrigin = ent->v.absmin + 0.5 * ent->v.size;
-					const auto disp = bmodelOrigin - playerOrigin - player->v.view_ofs;
-
-					// Prevent drawing entities that are behind us. WorldToScreen doesn't prevent this automatically.
-					if (DotProduct(forward, disp) > 0.0f)
-					{
-						Vector screen_point;
-						pTriAPI->WorldToScreen(bmodelOrigin, screen_point);
-
-						TriangleUtils::DrawScreenRectangle(
-							pTriAPI,
-							screen_point.Make2D() - half_size,
-							screen_point.Make2D() + half_size
-						);
-					}
-				}
-			}
-		}
-	}
-
 	static void DrawUseableEntities(triangleapi_s *pTriAPI)
 	{
 		if (!CVars::bxt_hud_useables.GetBool())
@@ -2430,7 +2387,6 @@ namespace TriangleDrawing
 		DrawNodes(pTriAPI);
 		DrawDisplacerTargets(pTriAPI);
 		DrawUseableEntities(pTriAPI);
-		ShowGroundEntity(pTriAPI);
 		DrawTriggers(pTriAPI);
 		DrawCustomTriggers(pTriAPI);
 		DrawAbsMinMax(pTriAPI);

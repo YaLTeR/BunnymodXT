@@ -69,6 +69,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, DispatchKeyValue, edict_t* pentKeyvalue, KeyValueData* pkvd)
 
 public:
+	void** ppmove;
 	static ServerDLL& GetInstance()
 	{
 		static ServerDLL instance;
@@ -164,7 +165,6 @@ protected:
 	void DoWouldCrashMessage();
 	void CoFChanges();
 
-	void **ppmove;
 	ptrdiff_t offPlayerIndex;
 	ptrdiff_t offOldbuttons;
 	ptrdiff_t offOnground;

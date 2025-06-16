@@ -243,7 +243,10 @@
 	X(bxt_ch_trigger_tp_keeps_momentum_velocity, "1") \
 	X(bxt_ch_trigger_tp_keeps_momentum_velocity_redirect, "0") \
 	X(bxt_ch_trigger_tp_keeps_momentum_viewangles, "1") \
-	X(bxt_ch_trigger_tp_landmark, "0")
+	X(bxt_ch_trigger_tp_landmark, "0") \
+	X(bxt_livesplit_last_delta, "0") \
+	X(bxt_livesplit_last_delta_offset, "") \
+	X(bxt_livesplit_last_delta_anchor, "")
 
 class CVarWrapper
 {

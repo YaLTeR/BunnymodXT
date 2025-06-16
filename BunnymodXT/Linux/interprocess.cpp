@@ -127,4 +127,8 @@ namespace Interprocess
 	void WriteBSALeapOfFaith(const Time& time)
 	{
 	}
+
+	std::string ReadLastSplitDelta() {
+		return "-";
+	}
 }

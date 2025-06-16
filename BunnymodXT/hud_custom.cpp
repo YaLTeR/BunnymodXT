@@ -1677,6 +1677,66 @@ namespace CustomHud
 		// but we could make a cvar for it
 	}
 
+	void DrawSplitDelta(float flTime) {
+		if (!CVars::bxt_livesplit_last_delta.GetBool())
+			return;
+
+		int x, y;
+		if (CVars::bxt_livesplit_last_delta_offset.GetString().empty()) {
+			// Default to being above the timer
+			GetPosition(CVars::bxt_livesplit_last_delta_offset, CVars::bxt_hud_timer_anchor, &x, &y, 0, -(NumberHeight+10));
+		}
+		else
+			GetPosition(CVars::bxt_livesplit_last_delta_offset, CVars::bxt_livesplit_last_delta_anchor, &x, &y, 0, 0);
+
+		std::string sDelta = Interprocess::ReadLastSplitDelta();
+
+		bool is_positive = (sDelta[0] != '-');
+
+		float r = 0, g = 0, b = 0;
+		if (is_positive) {
+			r = 255;
+			sDelta.insert(sDelta.begin() + 0, '+');
+		}
+		else {
+			g = 255;
+		}
+
+		if (sDelta.length() != 18) { // e.g. "-00:00:05.7972429\n"
+			DrawString(x, y, "-");
+			return;
+		}
+
+		int h = 0, m = 0, s = 0, ms = 0;
+		const auto match_count = std::sscanf(sDelta.c_str(), "%*[+-]%d:%d:%d.%d", &h, &m, &s, &ms);
+
+		if (match_count != 4) {
+			DrawString(x, y, "Livesplit error");
+			return;
+		}
+
+		if (h != 0) {
+			x = DrawNumber(h, x, y, r, g, b);
+			DrawColon(x, y, r, g, b);
+			x += NumberWidth;
+		}
+		if (h != 0 || m != 0) {
+			int fieldMinWidth = (h && m < 10) ? 2 : 1;
+			x = DrawNumber(m, x, y, r, g, b, fieldMinWidth);
+			DrawColon(x, y, r, g, b);
+			x += NumberWidth;
+		}
+
+		int fieldMinWidth = ((h || m) && s < 10) ? 2 : 1;
+		x = DrawNumber(s, x, y, r, g, b, fieldMinWidth);
+
+		DrawDecimalSeparator(x, y, r, g, b);
+		x += NumberWidth;
+
+		ms /= 10000;
+		DrawNumber(ms, x, y, r, g, b, 3);
+	}
+
 	void Init()
 	{
 		SpriteList = nullptr;
@@ -1780,6 +1840,7 @@ namespace CustomHud
 		DrawCrosshair(flTime);
 		DrawStamina(flTime);
 		DrawSplit(flTime);
+		DrawSplitDelta(flTime);
 
 		receivedAccurateInfo = false;
 		frame_bulk_selected = false;

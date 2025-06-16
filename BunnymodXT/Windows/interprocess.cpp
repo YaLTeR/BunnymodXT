@@ -9,6 +9,7 @@ namespace Interprocess
 {
 	static HANDLE pipe_tasview = INVALID_HANDLE_VALUE;
 	static HANDLE pipe_bunnysplit = INVALID_HANDLE_VALUE;
+	static HANDLE pipe_livesplit = INVALID_HANDLE_VALUE;
 	static OVERLAPPED overlapped;
 	static bool writing_to_pipe;
 
@@ -60,10 +61,37 @@ namespace Interprocess
 		}
 	}
 
+	static int InitLiveSplitPipe()
+	{
+		pipe_livesplit = CreateFile(
+			"\\\\.\\pipe\\" LIVESPLIT_PIPE_NAME,
+			GENERIC_READ | GENERIC_WRITE,
+			0,
+			nullptr,
+			OPEN_EXISTING,
+			0,
+			nullptr);
+
+		if (pipe_livesplit == INVALID_HANDLE_VALUE) {
+			EngineDevWarning("Error opening the LiveSplit pipe: %d\n", GetLastError());
+			return -1;
+		}
+		
+		if(!SetNamedPipeHandleState(pipe_livesplit, PIPE_READMODE_BYTE, nullptr, nullptr)) {
+			EngineDevWarning("SetNamedPipeHandleState fail\n");
+			return -1;
+		}
+
+		EngineDevMsg("Opened the LiveSplit pipe.\n");
+
+		return 0;
+	}
+
 	void Initialize()
 	{
 		InitTASViewPipe();
 		InitBunnySplitPipe();
+		InitLiveSplitPipe();
 	}
 
 	static void ShutdownTASViewPipe()
@@ -87,10 +115,20 @@ namespace Interprocess
 		std::memset(&overlapped, 0, sizeof(overlapped));
 	}
 
+	static void ShutdownLiveSplitPipe()
+	{
+		if (pipe_livesplit != INVALID_HANDLE_VALUE) {
+			CloseHandle(pipe_livesplit);
+			EngineDevMsg("Closed the LiveSlip pipe\n");
+		}
+		pipe_livesplit = INVALID_HANDLE_VALUE;
+	}
+
 	void Shutdown()
 	{
 		ShutdownTASViewPipe();
 		ShutdownBunnySplitPipe();
+		ShutdownLiveSplitPipe();
 	}
 
 	void Write(const std::vector<char>& data) {
@@ -297,5 +335,34 @@ namespace Interprocess
 		AddTimeToBuffer(buf.data() + 3, time);
 
 		WriteBunnySplit(buf);
+	}
+
+	std::string ReadLastSplitDelta()
+	{
+		if (pipe_livesplit == INVALID_HANDLE_VALUE) {
+			if (InitLiveSplitPipe() == -1)
+				return "-";
+		}
+
+		const std::string msg = "getdelta\n";
+
+		DWORD writtenBytes = 0;
+		if (!WriteFile(pipe_livesplit, msg.c_str(), msg.length(), &writtenBytes, nullptr)) {
+			EngineDevWarning("ReadLastSplitDelta: WriteFile fail\n");
+			return "-";
+		}
+		
+		DWORD readSize = 0;
+		constexpr DWORD BUF_LEN = 32;
+		char replyBuf[BUF_LEN];
+
+		if (!ReadFile(pipe_livesplit, replyBuf, sizeof(replyBuf), &readSize, nullptr)) {
+			EngineDevWarning("ReadLastSplitDelta: ReadFile error\n");
+			return "-";
+		}
+
+		replyBuf[readSize] = '\0';
+
+		return replyBuf;
 	}
 }

@@ -2933,7 +2933,7 @@ std::vector<const Vector *> ServerDLL::GetNodePositions() const
 	return positions;
 }
 
-std::vector<const Vector *> ServerDLL::GetDisplacerTargets() const
+std::vector<const Vector *> ServerDLL::GetDisplacerTargetOrigins() const
 {
 	std::vector<const Vector *> targets;
 	edict_t *pent = nullptr;
@@ -2947,6 +2947,48 @@ std::vector<const Vector *> ServerDLL::GetDisplacerTargets() const
 	}
 
 	return targets;
+}
+
+std::vector<const Vector *> ServerDLL::GetDisplacerTargetAngles() const
+{
+	std::vector<const Vector*> targets;
+	edict_t* pent = nullptr;
+
+	for (;;) {
+		pent = pEngfuncs->pfnFindEntityByString(pent, "classname", "info_displacer_earth_target");
+		if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent))
+			break;
+
+		targets.push_back(&pent->v.angles);
+	}
+
+	return targets;
+}
+
+const Vector* ServerDLL::GetNearestDisplacerTarget() const
+{
+	const Vector* nearest = nullptr;
+	float distance = 99999999;
+	edict_t* pent = nullptr;
+	const auto player = HwDLL::GetInstance().GetPlayerEdict();
+	if (!player)
+		return nullptr;
+
+	const auto playerOrigin = player->v.origin;
+	for (;;) {
+		pent = pEngfuncs->pfnFindEntityByString(pent, "classname", "info_displacer_earth_target");
+		if (!pent || !pEngfuncs->pfnEntOffsetOfPEntity(pent))
+			break;
+
+		float thisdist = (pent->v.origin - playerOrigin).Length();
+		if (distance > thisdist)
+		{
+			distance = thisdist;
+			nearest = &pent->v.origin;
+		}
+	}
+
+	return nearest;
 }
 
 bool ServerDLL::GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres, int &sequence, float &frame) const

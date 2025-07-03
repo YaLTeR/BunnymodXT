@@ -85,7 +85,9 @@ public:
 
 	std::vector<const edict_t *> GetUseableEntities(const Vector &origin, float radius) const;
 	std::vector<const Vector *> GetNodePositions() const;
-	std::vector<const Vector *> GetDisplacerTargets() const;
+	std::vector<const Vector *> GetDisplacerTargetOrigins() const;
+	std::vector<const Vector *> GetDisplacerTargetAngles() const;
+	const Vector* GetNearestDisplacerTarget() const;
 	bool GetNihilanthInfo(float &health, int &level, int &irritation, bool &recharger, int &nspheres, int &sequence, float &frame) const;
 
 	bool GetGonarchInfo(float& health, int& sequence, float& frame) const;

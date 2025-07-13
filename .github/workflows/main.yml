@@ -90,7 +90,7 @@ jobs:
 
   build-windows:
     name: Build on Windows (${{ matrix.configuration }}, COF=${{ matrix.cof }})
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     strategy:
       fail-fast: false
@@ -124,10 +124,10 @@ jobs:
 
     - name: Install Boost
       id: install-boost
-      uses: MarkusJx/install-boost@v2.4.5
+      uses: MarkusJx/install-boost@v2.5.0
       with:
         boost_version: 1.78.0
-        platform_version: 2019
+        platform_version: 2022
         toolset: msvc
 
     - name: Generate the build system

@@ -76,9 +76,6 @@ public:
 
 	void StudioAdjustViewmodelAttachments(Vector &vOrigin);
 
-	bool DoesGameDirMatch(const char *game);
-	bool DoesGameDirContain(const char *game);
-
 	size_t GetMapName(char* dest, size_t count);
 	bool DoesMapNameMatch(const char *map);
 	bool DoesMapNameContain(const char *map);
@@ -109,9 +106,6 @@ public:
 	void SetAngleSpeedCap(bool capped);
 
 	void SetSpeedScaling(bool scaled);
-
-	void FileBase(const char *in, char *out);
-	void ConvertToLowerCase(const char *str);
 
 	void SetupTraceVectors(float start[3], float end[3]);
 

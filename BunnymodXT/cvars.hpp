@@ -160,12 +160,15 @@
 	X(bxt_hud_speedometer, "1") \
 	X(bxt_hud_speedometer_offset, "") \
 	X(bxt_hud_speedometer_anchor, "0.5 1") \
+	X(bxt_hud_speedometer_alignment, "1") \
 	X(bxt_hud_jumpspeed, "0") \
 	X(bxt_hud_jumpspeed_offset, "") \
 	X(bxt_hud_jumpspeed_anchor, "0.5 1") \
+	X(bxt_hud_jumpspeed_alignment, "1") \
 	X(bxt_hud_jumpdistance, "0") \
 	X(bxt_hud_jumpdistance_offset, "") \
 	X(bxt_hud_jumpdistance_anchor, "0.5 1") \
+	X(bxt_hud_jumpdistance_alignment, "1") \
 	X(bxt_hud_health, "0") \
 	X(bxt_hud_health_offset, "") \
 	X(bxt_hud_health_anchor, "0.5 1") \

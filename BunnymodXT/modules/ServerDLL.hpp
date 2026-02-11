@@ -10,6 +10,7 @@ class ServerDLL : public IHookableDirFilter
 	HOOK_DECL(void, __cdecl, PM_Jump)
 	HOOK_DECL(void, __cdecl, PM_PreventMegaBunnyJumping)
 	HOOK_DECL(void, __cdecl, PM_PlayerMove, qboolean server)
+	HOOK_DECL(int, __cdecl, PM_CheckStuck)
 	HOOK_DECL(int, __cdecl, PM_ClipVelocity, float in[3], float normal[3], float out[3], float overbounce)
 	HOOK_DECL(void, __cdecl, PM_WaterMove)
 	HOOK_DECL(void, __cdecl, PM_WalkMove)
@@ -135,8 +136,6 @@ protected:
 	_CBasePlayer__ForceClientDllUpdate ORIG_CBasePlayer__ForceClientDllUpdate;
 	typedef void(__cdecl *_CBasePlayer__ForceClientDllUpdate_Linux)(void *thisptr);
 	_CBasePlayer__ForceClientDllUpdate_Linux ORIG_CBasePlayer__ForceClientDllUpdate_Linux;
-	typedef int(__cdecl* _PM_CheckStuck)();
-	_PM_CheckStuck ORIG_PM_CheckStuck;
 	typedef void*(__cdecl *_PM_Ladder)();
 	_PM_Ladder ORIG_PM_Ladder;
 	typedef int(__cdecl *_CChangeLevel__InTransitionVolume)(void *pEntity, char *pVolumeName);

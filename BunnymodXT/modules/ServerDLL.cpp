@@ -140,6 +140,7 @@ void ServerDLL::Hook(const std::wstring& moduleName, void* moduleHandle, void* m
 			ORIG_PM_Jump, HOOKED_PM_Jump,
 			ORIG_PM_PreventMegaBunnyJumping, HOOKED_PM_PreventMegaBunnyJumping,
 			ORIG_PM_PlayerMove, HOOKED_PM_PlayerMove,
+			ORIG_PM_CheckStuck, HOOKED_PM_CheckStuck,
 			ORIG_PM_ClipVelocity, HOOKED_PM_ClipVelocity,
 			ORIG_PM_WaterMove, HOOKED_PM_WaterMove,
 			ORIG_PM_WalkMove, HOOKED_PM_WalkMove,
@@ -198,6 +199,7 @@ void ServerDLL::Unhook()
 			ORIG_PM_Jump,
 			ORIG_PM_PreventMegaBunnyJumping,
 			ORIG_PM_PlayerMove,
+			ORIG_PM_CheckStuck,
 			ORIG_PM_ClipVelocity,
 			ORIG_PM_WaterMove,
 			ORIG_PM_WalkMove,
@@ -256,6 +258,7 @@ void ServerDLL::Clear()
 	ORIG_PM_Jump = nullptr;
 	ORIG_PM_PreventMegaBunnyJumping = nullptr;
 	ORIG_PM_PlayerMove = nullptr;
+	ORIG_PM_CheckStuck = nullptr;
 	ORIG_PM_ClipVelocity = nullptr;
 	ORIG_PM_WaterMove = nullptr;
 	ORIG_PM_WalkMove = nullptr;
@@ -299,7 +302,6 @@ void ServerDLL::Clear()
 	ORIG_CChangeLevel__UseChangeLevel = nullptr;
 	ORIG_CChangeLevel__TouchChangeLevel = nullptr;
 	ORIG_CTriggerCamera__FollowTarget = nullptr;
-	ORIG_PM_CheckStuck = nullptr;
 	ORIG_CBaseEntity__FireBullets = nullptr;
 	ORIG_DispatchSpawn = nullptr;
 	ORIG_DispatchTouch = nullptr;
@@ -1898,22 +1900,6 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 {
 	HwDLL &hwDLL = HwDLL::GetInstance();
 
-	bool stuck_cur_frame = false;
-	static bool not_stuck_prev_frame = false;
-
-	if (ORIG_PM_CheckStuck)
-	{
-		stuck_cur_frame = ORIG_PM_CheckStuck();
-		if (!CVars::bxt_fire_on_stuck.IsEmpty() && stuck_cur_frame && not_stuck_prev_frame)
-		{
-			std::ostringstream ss;
-			ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
-
-			hwDLL.ORIG_Cbuf_InsertText(ss.str().c_str());
-		}
-		not_stuck_prev_frame = !stuck_cur_frame;
-	}
-
 	CoFChanges();
 
 	if (!ppmove)
@@ -1981,6 +1967,23 @@ HOOK_DEF_1(ServerDLL, void, __cdecl, PM_PlayerMove, qboolean, server)
 	}
 
 	CustomHud::UpdatePlayerInfo(velocity, origin);
+}
+
+HOOK_DEF_0(ServerDLL, int, __cdecl, PM_CheckStuck) 
+{
+	HwDLL &hwDLL = HwDLL::GetInstance();
+	bool stuck_cur_frame = false;
+	static bool not_stuck_prev_frame = false;
+	stuck_cur_frame = ORIG_PM_CheckStuck();
+	if (!CVars::bxt_fire_on_stuck.IsEmpty() && stuck_cur_frame && not_stuck_prev_frame)
+	{
+		std::ostringstream ss;
+		ss << CVars::bxt_fire_on_stuck.GetString().c_str() << "\n";
+
+		hwDLL.ORIG_Cbuf_InsertText(ss.str().c_str());
+	}
+	not_stuck_prev_frame = !stuck_cur_frame;
+	return stuck_cur_frame;
 }
 
 HOOK_DEF_4(ServerDLL, int, __cdecl, PM_ClipVelocity, float*, in, float*, normal, float*, out, float, overbounce)

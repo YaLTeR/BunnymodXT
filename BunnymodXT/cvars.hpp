@@ -146,6 +146,7 @@
 	X(bxt_hud_distance_offset, "") \
 	X(bxt_hud_distance_anchor, "1 0") \
 	X(bxt_hud_entity_info, "0") \
+	X(bxt_hud_entity_info_mode, "0") \
 	X(bxt_hud_entity_info_offset, "") \
 	X(bxt_hud_entity_info_anchor, "1 0") \
 	X(bxt_hud_selfgauss, "0") \

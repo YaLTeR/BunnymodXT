@@ -795,7 +795,7 @@ namespace CustomHud
 
 	void DrawDistance(float flTime)
 	{
-		if (CVars::bxt_hud_distance.GetBool())
+		if (CVars::bxt_hud_distance.GetBool() && HwDLL::GetInstance().GetPlayerEdict())
 		{
 			int x, y;
 			GetPosition(CVars::bxt_hud_distance_offset, CVars::bxt_hud_distance_anchor, &x, &y, -200, (si.iCharHeight * 13) + 3);
@@ -823,7 +823,7 @@ namespace CustomHud
 
 	void DrawEntityInfo(float flTime)
 	{
-		if (CVars::bxt_hud_entity_info.GetBool())
+		if (CVars::bxt_hud_entity_info.GetBool() && HwDLL::GetInstance().GetPlayerEdict())
 		{
 			int x, y;
 			GetPosition(CVars::bxt_hud_entity_info_offset, CVars::bxt_hud_entity_info_anchor, &x, &y, -200, (si.iCharHeight * 17) + 3);
@@ -912,39 +912,6 @@ namespace CustomHud
 		}
 	}
 
-	static void GetSelfgaussInfo(bool &selfgaussable, float &length, int &hitGroup)
-	{
-		selfgaussable = false;
-
-		float start[3], end[3];
-		ClientDLL::GetInstance().SetupTraceVectors(start, end);
-
-		auto tr = ServerDLL::GetInstance().TraceLine(start, end, 0, HwDLL::GetInstance().GetPlayerEdict());
-
-		if (!tr.pHit || !tr.pHit->pvPrivateData || tr.pHit->v.solid != SOLID_BSP || tr.pHit->v.takedamage)
-			return;
-
-		Vector forward, right, up;
-		ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player.viewangles, forward, right, up);
-		float n = -DotProduct(forward, tr.vecPlaneNormal);
-
-		if (n < 0.5)
-			return;
-
-		auto beamTr = ServerDLL::GetInstance().TraceLine(tr.vecEndPos + 8 * forward, end, 0, nullptr);
-
-		if (beamTr.fAllSolid)
-			return;
-
-		selfgaussable = true;
-
-		beamTr = ServerDLL::GetInstance().TraceLine(beamTr.vecEndPos, tr.vecEndPos, 0, nullptr);
-		length = (beamTr.vecEndPos - tr.vecEndPos).Length();
-
-		tr = ServerDLL::GetInstance().TraceLine(start, end, 0, nullptr);
-		hitGroup = tr.iHitgroup;
-	}
-
 	void DrawSelfgaussInfo(float flTime)
 	{
 		static const char *HITGROUP_STRING[] = {
@@ -958,29 +925,107 @@ namespace CustomHud
 			"Right Leg"
 		};
 
-		if (CVars::bxt_hud_selfgauss.GetBool())
+		if (CVars::bxt_hud_selfgauss.GetBool() && HwDLL::GetInstance().GetPlayerEdict())
 		{
 			int x, y;
-			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, -200, (si.iCharHeight * 34) + 3);
-
-			bool selfgaussable;
-			int hitGroup = 0; // It's always initialized if selfgaussable is set to true, but GCC issues a warning anyway.
+			int xOffset = (CVars::bxt_hud_selfgauss.GetInt() % 2 == 0) ? -1000 : -250;
+			GetPosition(CVars::bxt_hud_selfgauss_offset, CVars::bxt_hud_selfgauss_anchor, &x, &y, xOffset, (si.iCharHeight * 34) + 3);
+			int hitGroup = 0;
 			float threshold;
-			GetSelfgaussInfo(selfgaussable, threshold, hitGroup);
-
 			std::ostringstream out;
+			float start[3], end[3];
+			ClientDLL::GetInstance().SetupTraceVectors(start, end);
+
 			out << "Selfgauss:\n";
-			if (selfgaussable)
+			auto tr = ServerDLL::GetInstance().TraceLine(start, end, 0, HwDLL::GetInstance().GetPlayerEdict());
+			Vector debugpos;
+			if (CVars::bxt_hud_selfgauss.GetInt() % 2 == 0)
 			{
-				out.setf(std::ios::fixed);
-				out.precision(precision);
-				out << "Threshold: " << threshold << '\n'
-					<< "Hit Group: " << HITGROUP_STRING[hitGroup];
+				debugpos = start;
+				out << "line 1: " << debugpos[0] << " " << debugpos[1] << " " << debugpos[2];
+				debugpos = end;
+				out << " to " << debugpos[0] << " " << debugpos[1] << " " << debugpos[2];
+				debugpos = tr.vecEndPos;
+				out << " hit " << debugpos[0] << " " << debugpos[1] << " " << debugpos[2] << "\n";
 			}
-			else
+
+			if (!tr.pHit || !tr.pHit->pvPrivateData || tr.pHit->v.solid != SOLID_BSP || tr.pHit->v.takedamage)
 			{
-				out << "Cannot selfgauss";
+				if (!tr.pHit)
+					out << "Cannot selfgauss\n(Nothing hit)\n";
+				else
+				{
+					if (!tr.pHit->pvPrivateData)
+						out << "Cannot selfgauss\n(Other)\n";
+					if (tr.pHit->v.solid != SOLID_BSP)
+						out << "Cannot selfgauss\n(Target is model)\n";
+					if (tr.pHit->v.takedamage)
+						out << "Cannot selfgauss\n(Target takes damage)\n";
+				}
 			}
+
+			Vector forward, right, up;
+			ClientDLL::GetInstance().pEngfuncs->pfnAngleVectors(player.viewangles, forward, right, up);
+			float n = -DotProduct(forward, tr.vecPlaneNormal);
+
+			if (n < 0.5)
+			{
+				out << "Cannot selfgauss\n(dot " << n << " < 0.5)\n";
+			}
+			Vector beamstart = tr.vecEndPos + 8 * forward;
+			auto beamTr = ServerDLL::GetInstance().TraceLine(beamstart, end, 0, nullptr);
+			if (CVars::bxt_hud_selfgauss.GetInt() % 2 == 0)
+			{
+				debugpos = beamstart;
+				out << "line 2: " << debugpos[0] << " " << debugpos[1] << " " << debugpos[2];
+				debugpos = end;
+				out << " to " << debugpos[0] << " " << debugpos[1] << " " << debugpos[2];
+				debugpos = beamTr.vecEndPos;
+				out << " hit " << debugpos[0] << " " << debugpos[1] << " " << debugpos[2] << "\n";
+			}
+
+			if (beamTr.fAllSolid)
+			{
+				out << "Cannot selfgauss\n(nothing on other side)\n";
+			}
+			Vector newStart = beamTr.vecEndPos;
+			beamTr = ServerDLL::GetInstance().TraceLine(newStart, tr.vecEndPos, 0, nullptr);
+			if (CVars::bxt_hud_selfgauss.GetInt() % 2 == 0)
+			{
+				debugpos = newStart;
+				out << "line 3: " << debugpos[0] << " " << debugpos[1] << " " << debugpos[2];
+				debugpos = tr.vecEndPos;
+				out << " to " << debugpos[0] << " " << debugpos[1] << " " << debugpos[2];
+				debugpos = beamTr.vecEndPos;
+				out << " hit " << debugpos[0] << " " << debugpos[1] << " " << debugpos[2] << "\n";
+			}
+			threshold = (beamTr.vecEndPos - tr.vecEndPos).Length();
+			out.setf(std::ios::fixed);
+			out.precision(precision);
+			out << "Thickness: " << threshold << '\n';
+			if (threshold < 25 && CVars::bxt_hud_selfgauss.GetInt() <= 2)
+			{
+				out << "Cannot selfgauss\n(too thin < 25)\n";
+			}
+			else if (threshold < 66.6 && CVars::bxt_hud_selfgauss.GetInt() >= 3)
+			{
+				out << "Cannot selfgauss in DM\n(too thin < 66.6)\n";
+			}
+			else if (threshold >= 200)
+			{
+				out << "Always selfgauss >= 200\n";
+			}
+			else if (CVars::bxt_hud_selfgauss.GetInt() <= 2)
+			{
+				out << "Max charge: " << threshold / 200 * 4 << "s\n";
+			}
+			else if (CVars::bxt_hud_selfgauss.GetInt() >= 3)
+			{
+				out << "Max charge: " << threshold / 200 * 1.5 << "s\n";
+			}
+			tr = ServerDLL::GetInstance().TraceLine(start, end, 0, nullptr);
+			hitGroup = tr.iHitgroup;
+			out << "Hit Group: " << HITGROUP_STRING[hitGroup];
 			DrawMultilineString(x, y, out.str());
 		}
 	}

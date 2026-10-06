@@ -18,6 +18,7 @@ enum class EventType : unsigned char {
 
 #define MQ_NAME "BunnymodXT-TASView"
 #define BUNNYSPLIT_PIPE_NAME "BunnymodXT-BunnySplit"
+#define LIVESPLIT_PIPE_NAME "LiveSplit"
 
 // - Game constants
 // Constants that are taken from the game code and you don't want to add for them the corresponding header, then leave them here.

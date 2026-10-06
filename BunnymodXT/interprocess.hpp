@@ -24,4 +24,6 @@ namespace Interprocess
 	void WriteTimerReset(const Time& time);
 	void WriteTimerStart(const Time& time);
 	void WriteBSALeapOfFaith(const Time& time);
+
+	std::string ReadLastSplitDelta();
 }

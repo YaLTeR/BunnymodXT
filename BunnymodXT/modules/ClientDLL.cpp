@@ -1071,6 +1071,9 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_split_anchor);
 		REG(bxt_hud_split_duration);
 		REG(bxt_hud_split_fadeout);
+		REG(bxt_livesplit_last_delta);
+		REG(bxt_livesplit_last_delta_offset);
+		REG(bxt_livesplit_last_delta_anchor);
 	}
 
 	if (ORIG_HUD_Redraw) {

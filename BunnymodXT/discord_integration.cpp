@@ -83,226 +83,167 @@ namespace discord_integration
 
 				// Declare these outside of the following block, so they are in scope for Discord_UpdatePresence().
 				char map_name[64];
+				const char* game_dir = hw.GetGameDir(false).c_str();
 				char buffer_details[128];
 
-				// Convert BXT timer to seconds
-				const auto& gt = CustomHud::GetTime();
-				int total_time = (gt.hours * 60 * 60) + (gt.minutes * 60) + gt.seconds;
+				#define set_discord_image(img) \
+				if (BXT_CONCAT(img, _map_name_to_thumbnail).find(map_name) != BXT_CONCAT(img, _map_name_to_thumbnail).cend()) \
+				{ \
+					presence.largeImageKey = BXT_CONCAT(img, _map_name_to_thumbnail).find(map_name)->second.data(); \
+					presence.largeImageText = BXT_CONCAT(img, _thumbnail_to_chapter).find(presence.largeImageKey)->second.data(); \
+				}
 
-				if (cl.pEngfuncs)
+				#define set_discord_image_as_map_name(map_list) \
+				if (BXT_CONCAT(map_list, _maps).find(map_name) != BXT_CONCAT(map_list, _maps).cend()) \
+				{ \
+					presence.largeImageKey = map_name; \
+					presence.largeImageText = map_name; \
+				}
+
+				if (game_dir && game_dir[0])
 				{
-					char gd[1024];
-					// Game directory.
-					const char* gameDir = cl.pEngfuncs->pfnGetGameDirectory();
-					if (gameDir && gameDir[0])
+					// Yes GCC we know this can be truncated.
+					#if defined(__GNUC__) && !defined(__clang__)
+					#pragma GCC diagnostic push
+					#pragma GCC diagnostic ignored "-Wformat-truncation"
+					#endif
+					snprintf(buffer_details, sizeof(buffer_details), "Build: %i | Game: %s", hw.GetBuildNumber(), game_dir);
+					#if defined(__GNUC__) && !defined(__clang__)
+					#pragma GCC diagnostic pop
+					#endif
+
+					presence.details = buffer_details;
+				}
+
+				if (cur_state != game_state::NOT_PLAYING)
+				{
+					// Get the map name and icon.
+					cl.GetMapName(map_name, ARRAYSIZE_HL(map_name));
+					if (game_dir && game_dir[0] && map_name[0])
 					{
-						cl.FileBase(gameDir, gd);
+						// Adjust map_name to lowercase
+						helper_functions::convert_to_lowercase(map_name);
 
 						// Yes GCC we know this can be truncated.
 						#if defined(__GNUC__) && !defined(__clang__)
 						#pragma GCC diagnostic push
 						#pragma GCC diagnostic ignored "-Wformat-truncation"
 						#endif
-						if (hw.ORIG_build_number)
-							snprintf(buffer_details, sizeof(buffer_details), "Game: %s | Build: %i", gd, hw.ORIG_build_number());
-						else
-							snprintf(buffer_details, sizeof(buffer_details), "Game: %s", gd);
+						snprintf(buffer_details, sizeof(buffer_details), "Build: %i | Map: %s | Game: %s", hw.GetBuildNumber(), map_name, game_dir);
 						#if defined(__GNUC__) && !defined(__clang__)
 						#pragma GCC diagnostic pop
 						#endif
 
+						presence.largeImageText = map_name;
 						presence.details = buffer_details;
-					}
 
-					if (cur_state != game_state::NOT_PLAYING)
-					{
-						// Get the map name and icon.
-						cl.GetMapName(map_name, ARRAYSIZE_HL(map_name));
-						if (gameDir && gameDir[0] && map_name[0])
+						if (IsGameDirMatch(HL))
 						{
-							// Adjust map_name to lowercase
-							cl.ConvertToLowerCase(map_name);
+							set_discord_image(hl1)
+						}
+						else if (IsGameDirMatch(OPFOR))
+						{
+							set_discord_image(op4)
+						}
+						else if (IsGameDirStartsWith(BSHIFT))
+						{
+							set_discord_image(bs)
+						}
+						else if (IsGameDirStartsWith(GUNMAN))
+						{
+							if (gmc_map_name_to_thumbnail.find(map_name) != gmc_map_name_to_thumbnail.cend())
+							{
+								presence.largeImageKey = gmc_map_name_to_thumbnail.find(map_name)->second.data();
 
-							// Yes GCC we know this can be truncated.
-							#if defined(__GNUC__) && !defined(__clang__)
-							#pragma GCC diagnostic push
-							#pragma GCC diagnostic ignored "-Wformat-truncation"
-							#endif
-							if (hw.ORIG_build_number)
-								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s | Build: %i", map_name, gd, hw.ORIG_build_number());
-							else
-								snprintf(buffer_details, sizeof(buffer_details), "Map: %s | Game: %s", map_name, gd);
-							#if defined(__GNUC__) && !defined(__clang__)
-							#pragma GCC diagnostic pop
-							#endif
+								if (!strncmp(presence.largeImageKey, "gmcchapter4", 11))
+									presence.largeImageText = "Rust";
+								else
+									presence.largeImageText = gmc_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
+							}
+						}
+						else if (IsGameDirStartsWith(CSCZDS))
+						{
+							set_discord_image(czds)
+						}
+						else if (IsGameDirMatch(WANTED))
+						{
+							set_discord_image(wanted)
+						}
+						else if (IsGameDirMatch(ECHOES))
+						{
+							set_discord_image(echoes)
+						}
+						else if (IsGameDirMatch(CAGED))
+						{
+							set_discord_image(caged)
+						}
+						else if (IsGameDirStartsWith(POKE646))
+						{
+							set_discord_image(poke646)
+						}
+						else if (IsGameDirStartsWith(PARANOIA))
+						{
+							if (paranoia_map_name_to_thumbnail.find(map_name) != paranoia_map_name_to_thumbnail.cend())
+							{
+								presence.largeImageKey = paranoia_map_name_to_thumbnail.find(map_name)->second.data();
 
-							presence.largeImageText = map_name;
-							presence.details = buffer_details;
+								if (!strncmp(presence.largeImageKey, "paranoiachapter1", 16))
+									presence.largeImageText = "Army";
+								else if (!strncmp(presence.largeImageKey, "paranoiachapter2", 16))
+									presence.largeImageText = "Industrial";
+								else if (!strncmp(presence.largeImageKey, "paranoiachapter3", 16))
+									presence.largeImageText = "Bunker";
+							}
+						}
+						else if (IsGameDirMatch(TWHLTOWER2))
+						{
+							set_discord_image(twhltower2)
+						}
+						else if (IsGameDirMatch(AOMDC))
+						{
+							if (aomdc_map_name_to_thumbnail.find(map_name) != aomdc_map_name_to_thumbnail.cend())
+							{
+								presence.largeImageKey = aomdc_map_name_to_thumbnail.find(map_name)->second.data();
 
-							// Adjust gameDir to lowercase
-							cl.ConvertToLowerCase(gd);
+								if (aomdc_map_name_to_chapter_misc.find(map_name) != aomdc_map_name_to_chapter_misc.cend())
+									presence.largeImageText = aomdc_map_name_to_chapter_misc.find(map_name)->second.data();
+								else if (!strncmp(map_name, "1", 1) || !strncmp(map_name, "cityx", 5))
+									presence.largeImageText = "Ending 1 or 4";
+								else if (!strncmp(map_name, "2", 1))
+									presence.largeImageText = "Ending 2 or 4";
+								else if (!strncmp(map_name, "3", 1) || !strncmp(map_name, "cityz", 5))
+									presence.largeImageText = "Ending 3 or 4";
+								else if (!strncmp(map_name, "4", 1))
+									presence.largeImageText = "Ending 4";
+								else
+									presence.largeImageText = "All Endings";
+							}
+						}
+						else if (IsGameDirMatch(HLRATS_PARASOMNIA))
+						{
+							set_discord_image(hlrats_parasomnia)
+						}
+						else if (IsGameDirMatch(URBICIDE))
+						{
+							set_discord_image_as_map_name(urbicide)
+						}
+						else if (IsGameDirStartsWith(HUNGER))
+						{
+							if (th_map_name_to_thumbnail.find(map_name) != th_map_name_to_thumbnail.cend())
+							{
+								presence.largeImageKey = th_map_name_to_thumbnail.find(map_name)->second.data();
 
-							if (!strncmp(gd, "valve", 5) || !strcmp(gd, "abh") || !strncmp(gd, "glitchless", 10))
-							{
-								if (hl1_map_name_to_thumbnail.find(map_name) != hl1_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = hl1_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = hl1_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
+								if (!strncmp(presence.largeImageKey, "thchapter1", 10))
+									presence.largeImageText = "They Hunger Episode 1";
+								else if (!strncmp(presence.largeImageKey, "thchapter2", 10))
+									presence.largeImageText = "They Hunger Episode 2";
+								else if (!strncmp(presence.largeImageKey, "thchapter3", 10))
+									presence.largeImageText = "They Hunger Episode 3";
 							}
-							else if (!strncmp(gd, "gearbox", 7))
-							{
-								if (op4_map_name_to_thumbnail.find(map_name) != op4_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = op4_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = op4_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
-							}
-							else if (!strncmp(gd, "bshift", 6))
-							{
-								if (bs_map_name_to_thumbnail.find(map_name) != bs_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = bs_map_name_to_thumbnail.find(map_name)->second.data();
-
-									int state;
-									if (!strcmp(map_name, "ba_teleport2") && sv.GetGlobalState("powercomplete"s, state) && state == 1)
-										presence.largeImageText = "A Leap of Faith";
-									else
-										presence.largeImageText = bs_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
-							}
-							else if (!strncmp(gd, "rewolf", 6))
-							{
-								if (gmc_map_name_to_thumbnail.find(map_name) != gmc_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = gmc_map_name_to_thumbnail.find(map_name)->second.data();
-
-									if (!strncmp(presence.largeImageKey, "gmcchapter4", 11))
-										presence.largeImageText = "Rust";
-									else
-										presence.largeImageText = gmc_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
-							}
-							else if (!strncmp(gd, "czeror", 6))
-							{
-								if (czds_map_name_to_thumbnail.find(map_name) != czds_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = czds_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = czds_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
-							}
-							else if (!strncmp(gd, "wantedsp", 8))
-							{
-								if (wanted_map_name_to_thumbnail.find(map_name) != wanted_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = wanted_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = wanted_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
-							}
-							else if (!strncmp(gd, "echoes", 6))
-							{
-								if (echoes_map_name_to_thumbnail.find(map_name) != echoes_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = echoes_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = echoes_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
-							}
-							else if (!strncmp(gd, "caged_fgs", 9))
-							{
-								if (caged_map_name_to_thumbnail.find(map_name) != caged_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = caged_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = caged_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
-							}
-							else if (!strncmp(gd, "poke646", 7))
-							{
-								if (poke646_map_name_to_thumbnail.find(map_name) != poke646_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = poke646_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = poke646_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
-							}
-							else if (!strncmp(gd, "paranoia", 8))
-							{
-								if (paranoia_map_name_to_thumbnail.find(map_name) != paranoia_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = paranoia_map_name_to_thumbnail.find(map_name)->second.data();
-
-									if (!strncmp(presence.largeImageKey, "paranoiachapter1", 16))
-										presence.largeImageText = "Army";
-									else if (!strncmp(presence.largeImageKey, "paranoiachapter2", 16))
-										presence.largeImageText = "Industrial";
-									else if (!strncmp(presence.largeImageKey, "paranoiachapter3", 16))
-										presence.largeImageText = "Bunker";
-								}
-							}
-							else if (!strncmp(gd, "twhltower2", 10))
-							{
-								if (twhltower2_map_name_to_thumbnail.find(map_name) != twhltower2_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = twhltower2_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = twhltower2_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
-							}
-							else if (!strncmp(gd, "aomdc", 5))
-							{
-								if (aomdc_map_name_to_thumbnail.find(map_name) != aomdc_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = aomdc_map_name_to_thumbnail.find(map_name)->second.data();
-
-									if (aomdc_map_name_to_chapter_misc.find(map_name) != aomdc_map_name_to_chapter_misc.cend())
-										presence.largeImageText = aomdc_map_name_to_chapter_misc.find(map_name)->second.data();
-									else if (!strncmp(map_name, "1", 1) || !strncmp(map_name, "cityx", 5))
-										presence.largeImageText = "Ending 1 or 4";
-									else if (!strncmp(map_name, "2", 1))
-										presence.largeImageText = "Ending 2 or 4";
-									else if (!strncmp(map_name, "3", 1) || !strncmp(map_name, "cityz", 5))
-										presence.largeImageText = "Ending 3 or 4";
-									else if (!strncmp(map_name, "4", 1))
-										presence.largeImageText = "Ending 4";
-									else
-										presence.largeImageText = "All Endings";
-								}
-							}
-							else if (!strncmp(gd, "hrp", 3))
-							{
-								if (hlrats_parasomnia_map_name_to_thumbnail.find(map_name) != hlrats_parasomnia_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = hlrats_parasomnia_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = hlrats_parasomnia_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
-							}
-							else if (!strncmp(gd, "hl_urbicide", 11))
-							{
-								if (urbicide_maps.find(map_name) != urbicide_maps.cend())
-								{
-									presence.largeImageKey = map_name;
-									presence.largeImageText = map_name;
-								}
-							}
-							else if (!strncmp(gd, "hunger", 6))
-							{
-								if (th_map_name_to_thumbnail.find(map_name) != th_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = th_map_name_to_thumbnail.find(map_name)->second.data();
-
-									if (!strncmp(presence.largeImageKey, "thchapter1", 10))
-										presence.largeImageText = "They Hunger Episode 1";
-									else if (!strncmp(presence.largeImageKey, "thchapter2", 10))
-										presence.largeImageText = "They Hunger Episode 2";
-									else if (!strncmp(presence.largeImageKey, "thchapter3", 10))
-										presence.largeImageText = "They Hunger Episode 3";
-								}
-							}
-							else if (!strncmp(gd, "cryoffear", 9))
-							{
-								if (cof_map_name_to_thumbnail.find(map_name) != cof_map_name_to_thumbnail.cend())
-								{
-									presence.largeImageKey = cof_map_name_to_thumbnail.find(map_name)->second.data();
-									presence.largeImageText = cof_thumbnail_to_chapter.find(presence.largeImageKey)->second.data();
-								}
-							}
+						}
+						else if (IsGameDirStartsWith(COF))
+						{
+							set_discord_image(cof)
 						}
 					}
 				}
@@ -310,8 +251,9 @@ namespace discord_integration
 				char buffer_state[128];
 				char buffer_stop[128];
 
+				double total_time = helper_functions::ret_bxt_time();
 				const auto current_timestamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-				start_timestamp = current_timestamp - total_time;
+				start_timestamp = current_timestamp - static_cast<int>(total_time);
 
 				const char *skillName;
 
@@ -329,6 +271,8 @@ namespace discord_integration
 					default:
 						skillName = "";
 				}
+
+				const auto& gt = CustomHud::GetTime();
 
 				if (CVars::host_framerate.GetFloat() > 0.0f)
 					snprintf(buffer_state, sizeof(buffer_state), "%s | FPS (HFR): %.1f | %s", state.c_str(), 1.0f / CVars::host_framerate.GetFloat(), skillName);
@@ -351,7 +295,7 @@ namespace discord_integration
 
 					presence.startTimestamp = start_timestamp;
 				}
-				else if ((gt.milliseconds == 0 && total_time == 0) && !CustomHud::GetCountingTime())
+				else if ((total_time == 0.0) && !CustomHud::GetCountingTime())
 				{
 					if (cl.pEngfuncs && cl.pEngfuncs->pDemoAPI->IsPlayingback()) {
 						presence.smallImageKey = "discord_brown";
@@ -363,7 +307,7 @@ namespace discord_integration
 
 					presence.startTimestamp = current_timestamp;
 				}
-				else if ((gt.milliseconds > 0 || total_time > 0) && !CustomHud::GetCountingTime())
+				else if ((total_time > 0.0) && !CustomHud::GetCountingTime())
 				{
 					snprintf(buffer_stop, sizeof(buffer_stop), "Timer stopped at %d:%02d:%02d.%03d", gt.hours, gt.minutes, gt.seconds, gt.milliseconds);
 					presence.state = buffer_stop;

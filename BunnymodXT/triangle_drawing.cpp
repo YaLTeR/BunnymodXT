@@ -36,8 +36,24 @@ namespace TriangleDrawing
 		pTriAPI->RenderMode(kRenderTransAdd);
 		pTriAPI->CullFace(TRI_NONE);
 		pTriAPI->Color4f(0.0f, 0.627f, 0.0f, 1.0f);
-		for (const Vector* position : ServerDLL::GetInstance().GetDisplacerTargets()) {
-			TriangleUtils::DrawPyramid(pTriAPI, *position, 5, 15);
+		std::vector<const Vector*> positions = ServerDLL::GetInstance().GetDisplacerTargetOrigins();
+		std::vector<const Vector*> angles = ServerDLL::GetInstance().GetDisplacerTargetAngles();
+		for (int i = 0; i < positions.size(); i++)
+		{
+			const Vector* pos = positions[i];
+			TriangleUtils::DrawPyramid(pTriAPI, *pos, 5, 15);
+			Vector fwd = ClientDLL::GetInstance().AnglesToForward(*angles[i]);
+			TriangleUtils::DrawLine(pTriAPI, *pos, *pos + fwd * 20);
+		}
+		const Vector* nearest = ServerDLL::GetInstance().GetNearestDisplacerTarget();
+		if (nearest)
+		{
+			const auto player = HwDLL::GetInstance().GetPlayerEdict();
+			if (!player)
+				return;
+
+			const auto playerOrigin = player->v.origin;
+			TriangleUtils::DrawLine(pTriAPI, playerOrigin, *nearest);
 		}
 	}
 

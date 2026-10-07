@@ -249,4 +249,9 @@ else()
 	target_link_libraries (BunnymodXT opengl32)
 endif ()
 
+if (MSVC)
+	# https://www.boost.org/doc/libs/latest/libs/winapi/doc/html/winapi/config.html
+	target_compile_definitions(BunnymodXT PUBLIC BOOST_USE_WINAPI_VERSION=0x0601) # Windows 7
+endif ()
+
 install (TARGETS BunnymodXT)

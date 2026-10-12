@@ -1005,6 +1005,7 @@ void ClientDLL::RegisterCVarsAndCommands()
 		REG(bxt_hud_distance_offset);
 		REG(bxt_hud_distance_anchor);
 		REG(bxt_hud_entity_info);
+		REG(bxt_hud_entity_info_mode);
 		REG(bxt_hud_entity_info_offset);
 		REG(bxt_hud_entity_info_anchor);
 		REG(bxt_hud_selfgauss);

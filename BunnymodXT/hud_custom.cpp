@@ -40,6 +40,9 @@ namespace CustomHud
 	static int NumberWidth;
 	static int NumberHeight;
 
+	static const int NumberAlignmentCenter = ( 1 << 0 );
+	static const int NumberAlignmentRight = ( 1 << 1 );
+
 	struct FrameBulkStatus {
 		bool strafe;
 		HLTAS::StrafeType strafe_type;
@@ -301,8 +304,10 @@ namespace CustomHud
 		DrawBitmap(x, y, line_right, linesprite_width, linesprite_height, r, g, b);
 	}
 
-	static int DrawNumber(int number, int x, int y, int r, int g, int b, int fieldMinWidth = 1)
+	static int DrawNumber(int number, int x, int y, int r, int g, int b, int fieldMinWidth = 1, int alignment = 0)
 	{
+		bool negative = false;
+
 		if (number < 0)
 		{
 			if (number == std::numeric_limits<int>::min())
@@ -312,7 +317,7 @@ namespace CustomHud
 			else
 			{
 				number = abs(number);
-				DrawLine(x - NumberWidth, y + NumberHeight / 2 , NumberWidth, r, g, b);
+				negative = true;
 			}
 		}
 
@@ -327,6 +332,23 @@ namespace CustomHud
 
 			digits[i] = number % 10;
 			number /= 10;
+		}
+
+		if (alignment != 0)
+		{
+			// The iterator 'i' stores the total number of numbers we need to draw
+			const int iNumberFullWidth = ( fieldMinWidth >= i ? fieldMinWidth : i ) * NumberWidth;
+
+			if ( alignment & NumberAlignmentCenter )
+				x -= iNumberFullWidth / 2;
+
+			if ( alignment & NumberAlignmentRight )
+				x -= iNumberFullWidth;
+		}
+
+		if (negative)
+		{
+			DrawLine(x - NumberWidth, y + NumberHeight / 2, NumberWidth, r, g, b);
 		}
 
 		for (; fieldMinWidth > 10; --fieldMinWidth)
@@ -346,9 +368,9 @@ namespace CustomHud
 		return x;
 	}
 
-	static inline int DrawNumber(int number, int x, int y, int fieldMinWidth = 1)
+	static inline int DrawNumber(int number, int x, int y, int fieldMinWidth = 1, int alignment = 0)
 	{
-		return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2], fieldMinWidth);
+		return DrawNumber(number, x, y, hudColor[0], hudColor[1], hudColor[2], fieldMinWidth, alignment);
 	}
 
 	static inline int DrawNumberTimer(int number, int x, int y, int fieldMinWidth = 1)
@@ -620,7 +642,7 @@ namespace CustomHud
 		{
 			int x, y;
 			GetPosition(CVars::bxt_hud_speedometer_offset, CVars::bxt_hud_speedometer_anchor, &x, &y, 0, -2 * NumberHeight);
-			DrawNumber(static_cast<int>(trunc(length(player.velocity[0], player.velocity[1]))), x, y);
+			DrawNumber(static_cast<int>(trunc(length(player.velocity[0], player.velocity[1]))), x, y, 1, CVars::bxt_hud_speedometer_alignment.GetInt());
 		}
 	}
 
@@ -700,7 +722,7 @@ namespace CustomHud
 
 			int x, y;
 			GetPosition(CVars::bxt_hud_jumpspeed_offset, CVars::bxt_hud_jumpspeed_anchor, &x, &y, 0, -3 * NumberHeight);
-			DrawNumber(static_cast<int>(trunc(jumpSpeed)), x, y, r, g, b);
+			DrawNumber(static_cast<int>(trunc(jumpSpeed)), x, y, r, g, b, 1, CVars::bxt_hud_jumpspeed_alignment.GetInt());
 		}
 
 		vecCopy(player.velocity, prevVel);
@@ -750,7 +772,7 @@ namespace CustomHud
 
 			int x, y;
 			GetPosition(CVars::bxt_hud_jumpdistance_offset, CVars::bxt_hud_jumpdistance_anchor, &x, &y, 0, -4 * NumberHeight);
-			DrawNumber(static_cast<int>(trunc(jumpDistance)), x, y, hudColor[0], hudColor[1], hudColor[2]);
+			DrawNumber(static_cast<int>(trunc(jumpDistance)), x, y, hudColor[0], hudColor[1], hudColor[2], 1, CVars::bxt_hud_jumpdistance_alignment.GetInt());
 		}
 
 		vecCopy(player.origin, prevPlayerOrigin);

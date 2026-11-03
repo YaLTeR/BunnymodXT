@@ -21,9 +21,14 @@ namespace CustomTriggers
 		virtual void touch();
 
 	public:
+		// if empty all maps. Else single map.
+		std::string map_name; 
+
 		Trigger(Vector corner1, Vector corner2);
 		Trigger(Vector corner1, Vector corner2, std::string command);
+		Trigger(Vector corner1, Vector corner2, std::string command, std::string map_name);
 		virtual ~Trigger() = default;
+		bool is_on_current_map() const;
 
 		std::pair<Vector, Vector> get_corner_positions() const;
 		const std::string& get_command() const;

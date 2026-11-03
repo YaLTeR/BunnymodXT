@@ -20,7 +20,6 @@ namespace Splits
 
 	Split::Split()
 		: Trigger(Vector(0, 0, 0), Vector(0, 0, 0))
-		, map_name()
 		, name()
 		, track_horizontal_speed(true)
 		, track_vertical_speed(false)
@@ -36,7 +35,6 @@ namespace Splits
 
 	Split::Split(std::string targetname)
 		: Trigger(Vector(0, 0, 0), Vector(0, 0, 0))
-		, map_name()
 		, name(targetname)
 		, track_horizontal_speed(true)
 		, track_vertical_speed(false)
@@ -51,8 +49,7 @@ namespace Splits
 	}
 
 	Split::Split(std::string targetname, std::string map_name)
-		: Trigger(Vector(0, 0, 0), Vector(0, 0, 0))
-		, map_name(map_name)
+		: Trigger(Vector(0, 0, 0), Vector(0, 0, 0), std::string(), map_name)
 		, name(targetname)
 		, track_horizontal_speed(true)
 		, track_vertical_speed(false)
@@ -68,7 +65,6 @@ namespace Splits
 
 	Split::Split(Vector corner1, Vector corner2)
 		: Trigger(corner1, corner2)
-		, map_name()
 		, name()
 		, track_horizontal_speed(true)
 		, track_vertical_speed(false)
@@ -83,8 +79,7 @@ namespace Splits
 	}
 
 	Split::Split(Vector corner1, Vector corner2, std::string map_name)
-		: Trigger(corner1, corner2)
-		, map_name(map_name)
+		: Trigger(corner1, corner2, std::string(), map_name)
 		, name()
 		, track_horizontal_speed(true)
 		, track_vertical_speed(false)
@@ -99,8 +94,7 @@ namespace Splits
 	}
 
 	Split::Split(Vector corner1, Vector corner2, std::string map_name, std::string name)
-		: Trigger(corner1, corner2)
-		, map_name(map_name)
+		: Trigger(corner1, corner2, std::string(), map_name)
 		, name(name)
 		, track_horizontal_speed(true)
 		, track_vertical_speed(false)
@@ -143,7 +137,7 @@ namespace Splits
 		if (placing)
 			return;
 
-		if (!map_name.empty() && map_name != HwDLL::GetInstance().lastLoadedMap)
+		if (!is_on_current_map())
 		{
 			// This split is scoped to one specific map, and we're not in that map
 			return;

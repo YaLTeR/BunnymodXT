@@ -454,6 +454,7 @@ protected:
 	struct Cmd_BXT_Triggers_Export;
 	struct Cmd_BXT_Triggers_List;
 	struct Cmd_BXT_Triggers_SetCommand;
+	struct Cmd_BXT_Triggers_Set_Map;
 	struct Cmd_BXT_Triggers_Place_Up;
 	struct Cmd_BXT_Triggers_Place_Down;
 	struct Cmd_BXT_Record;

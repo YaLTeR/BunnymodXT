@@ -8,9 +8,7 @@ namespace Splits
 	class Split : public CustomTriggers::Trigger
 	{
 	public:
-		// If non-empty, it means this split is scoped to a single map, and
-		// it won't work outside of it. If empty, it's applied on every map
-		std::string map_name;
+		// map_name (inherited from Trigger) scopes the split to a single map.
 
 		// Split name that can be matched with the list of "maps" provided in BunnySplit
 		std::string name;

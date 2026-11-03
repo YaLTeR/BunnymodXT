@@ -222,6 +222,9 @@ namespace TriangleDrawing
 		pTriAPI->CullFace(TRI_NONE);
 
 		for (const auto& trigger : CustomTriggers::triggers) {
+			if (!trigger.is_on_current_map())
+				continue;
+
 			auto corner_positions = trigger.get_corner_positions();
 
 			pTriAPI->RenderMode(kRenderTransAdd);
@@ -423,7 +426,7 @@ namespace TriangleDrawing
 		pTriAPI->CullFace(TRI_NONE);
 
 		for (const auto& split : Splits::splits) {
-			if (!split.map_name.empty() && split.map_name != HwDLL::GetInstance().lastLoadedMap)
+			if (!split.is_on_current_map())
 			{
 				// Discard splits that are not scoped to the current map
 				continue;

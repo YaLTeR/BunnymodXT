@@ -53,6 +53,21 @@ namespace CustomTriggers
 		normalize();
 	}
 
+	Trigger::Trigger(Vector corner1, Vector corner2, std::string command, std::string map_name)
+		: command(command)
+		, player_touching(false)
+		, corner_min(corner1)
+		, corner_max(corner2)
+		, map_name(map_name)
+	{
+		normalize();
+	}
+
+	bool Trigger::is_on_current_map() const
+	{
+		return map_name.empty() || map_name == HwDLL::GetInstance().lastLoadedMap;
+	}
+
 	std::pair<Vector, Vector> Trigger::get_corner_positions() const
 	{
 		return std::make_pair(corner_min, corner_max);
@@ -85,6 +100,11 @@ namespace CustomTriggers
 
 	void Trigger::update(const Vector& player_position, bool ducking)
 	{
+		if (!is_on_current_map()) {
+			player_touching = false;
+			return;
+		}
+
 		const Vector& hull_max = ducking ? VEC_DUCK_HULL_MAX : VEC_HULL_MAX;
 		const Vector& hull_min = ducking ? VEC_DUCK_HULL_MIN : VEC_HULL_MIN;
 
@@ -106,6 +126,11 @@ namespace CustomTriggers
 
 	void Trigger::update(const Vector& player_position_start, const Vector& player_position_end, bool ducking)
 	{
+		if (!is_on_current_map()) {
+			player_touching = false;
+			return;
+		}
+
 		const Vector& hull_max = ducking ? VEC_DUCK_HULL_MAX : VEC_HULL_MAX;
 		const Vector& hull_min = ducking ? VEC_DUCK_HULL_MIN : VEC_HULL_MIN;
 

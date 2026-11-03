@@ -3993,11 +3993,16 @@ struct HwDLL::Cmd_BXT_TAS_Jumpbug_Up
 
 struct HwDLL::Cmd_BXT_Triggers_Add
 {
-	USAGE("Usage: bxt_triggers_add <x1> <y1> <z1> <x2> <y2> <z2>\n Adds a custom trigger in a form of axis-aligned cuboid with opposite corners at coordinates (x1, y1, z1) and (x2, y2, z2).\n");
+	USAGE("Usage: bxt_triggers_add <x1> <y1> <z1> <x2> <y2> <z2> [map_name]\n Adds a custom trigger in a form of axis-aligned cuboid with opposite corners at coordinates (x1, y1, z1) and (x2, y2, z2).\n If a map name is given, the trigger only works on that map.\n");
 
 	static void handler(float x1, float y1, float z1, float x2, float y2, float z2)
 	{
 		CustomTriggers::triggers.emplace_back(Vector(x1, y1, z1), Vector(x2, y2, z2));
+	}
+
+	static void handler(float x1, float y1, float z1, float x2, float y2, float z2, const char* map_name)
+	{
+		CustomTriggers::triggers.emplace_back(Vector(x1, y1, z1), Vector(x2, y2, z2), std::string(), std::string(map_name));
 	}
 };
 
@@ -4012,7 +4017,7 @@ struct HwDLL::Cmd_BXT_Triggers_Place_Down
 		CustomTriggers::placing = true;
 		Vector start = trace.EndPos;
 		CustomTriggers::place_start = start;
-		CustomTriggers::triggers.emplace_back(start, start);
+		CustomTriggers::triggers.emplace_back(start, start, std::string(), HwDLL::GetInstance().lastLoadedMap);
 	}
 
 	static void handler(const char*)
@@ -4117,6 +4122,9 @@ struct HwDLL::Cmd_BXT_Triggers_Export
 				oss << command_separator << "bxt_triggers_setcommand \""
 					<< t.get_command().substr(0, t.get_command().size() - 1) << '\"';
 
+			if (!t.map_name.empty())
+				oss << command_separator << "bxt_triggers_set_map \"" << t.map_name << '\"';
+
 			hw.ORIG_Con_Printf("%s", oss.str().c_str());
 
 			first = false;
@@ -4128,9 +4136,9 @@ struct HwDLL::Cmd_BXT_Triggers_Export
 
 struct HwDLL::Cmd_BXT_Triggers_List
 {
-	NO_USAGE();
+	USAGE("Usage: bxt_triggers_list [map_name]\n Lists the custom triggers. If a map name is given, lists only the triggers scoped to that map.\n");
 
-	static void handler()
+	static void list(const char* map_name)
 	{
 		auto& hw = HwDLL::GetInstance();
 
@@ -4139,17 +4147,41 @@ struct HwDLL::Cmd_BXT_Triggers_List
 			return;
 		}
 
+		bool found = false;
 		for (size_t i = 0; i < CustomTriggers::triggers.size(); ++i) {
 			const auto& t = CustomTriggers::triggers[i];
+			if (map_name && t.map_name != map_name)
+				continue;
+
 			const auto corners = t.get_corner_positions();
 
+			// The ids stay the ones bxt_triggers_delete and the other commands take, also when filtering by map.
 			std::ostringstream oss;
 			oss << i + 1 << ": `" << t.get_command().substr(0, t.get_command().size() - 1) << "` - ("
 				<< corners.first.x << ", " << corners.first.y << ", " << corners.first.z << ") | ("
-				<< corners.second.x << ", " << corners.second.y << ", " << corners.second.z << ")\n";
+				<< corners.second.x << ", " << corners.second.y << ", " << corners.second.z << ")";
+
+			if (!t.map_name.empty())
+				oss << " - `" << t.map_name << '`';
+
+			oss << '\n';
 
 			hw.ORIG_Con_Printf("%s", oss.str().c_str());
+			found = true;
 		}
+
+		if (!found)
+			hw.ORIG_Con_Printf("There are no triggers in the specified map.\n");
+	}
+
+	static void handler()
+	{
+		list(nullptr);
+	}
+
+	static void handler(const char* map_name)
+	{
+		list(map_name);
 	}
 };
 
@@ -4175,6 +4207,31 @@ struct HwDLL::Cmd_BXT_Triggers_SetCommand
 		}
 
 		CustomTriggers::triggers[id - 1].set_command(command);
+	}
+};
+
+struct HwDLL::Cmd_BXT_Triggers_Set_Map
+{
+	USAGE("Usage: bxt_triggers_set_map <name>\n Sets the last placed trigger's map (scope). An empty name (\"\") makes it work on every map.\n bxt_triggers_set_map <id> <name>\n Sets the map of a trigger with the given id.\n");
+
+	static void handler(const char* new_map)
+	{
+		if (CustomTriggers::triggers.empty()) {
+			HwDLL::GetInstance().ORIG_Con_Printf("You haven't placed any triggers.\n");
+			return;
+		}
+
+		CustomTriggers::triggers.back().map_name = new_map;
+	}
+
+	static void handler(unsigned long id, const char* new_map)
+	{
+		if (id == 0 || CustomTriggers::triggers.size() < id) {
+			HwDLL::GetInstance().ORIG_Con_Printf("There's no trigger with this id.\n");
+			return;
+		}
+
+		CustomTriggers::triggers[id - 1].map_name = new_map;
 	}
 };
 
@@ -5901,15 +5958,19 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_TAS_Ducktap_Up, Handler<>, Handler<const char*>>("-bxt_tas_ducktap");
 	wrapper::Add<Cmd_BXT_TAS_Jumpbug_Down, Handler<>, Handler<const char*>>("+bxt_tas_jumpbug");
 	wrapper::Add<Cmd_BXT_TAS_Jumpbug_Up, Handler<>, Handler<const char*>>("-bxt_tas_jumpbug");
-	wrapper::Add<Cmd_BXT_Triggers_Add, Handler<float, float, float, float, float, float>>("bxt_triggers_add");
+	wrapper::Add<
+		Cmd_BXT_Triggers_Add,
+		Handler<float, float, float, float, float, float>,
+		Handler<float, float, float, float, float, float, const char*>>("bxt_triggers_add");
 	wrapper::Add<Cmd_BXT_Triggers_Clear, Handler<>>("bxt_triggers_clear");
 	wrapper::Add<Cmd_BXT_Triggers_Delete, Handler<>, Handler<unsigned long>>("bxt_triggers_delete");
 	wrapper::Add<Cmd_BXT_Triggers_Export, Handler<const char*>>("bxt_triggers_export");
-	wrapper::Add<Cmd_BXT_Triggers_List, Handler<>>("bxt_triggers_list");
+	wrapper::Add<Cmd_BXT_Triggers_List, Handler<>, Handler<const char*>>("bxt_triggers_list");
 	wrapper::Add<
 		Cmd_BXT_Triggers_SetCommand,
 		Handler<const char*>,
 		Handler<unsigned long, const char*>>("bxt_triggers_setcommand");
+	wrapper::Add<Cmd_BXT_Triggers_Set_Map, Handler<const char*>, Handler<unsigned long, const char*>>("bxt_triggers_set_map");
 	wrapper::Add<Cmd_BXT_Triggers_Place_Down, Handler<>, Handler<const char*>>("+bxt_triggers_place");
 	wrapper::Add<Cmd_BXT_Triggers_Place_Up, Handler<>, Handler<const char*>>("-bxt_triggers_place");
 	wrapper::Add<Cmd_BXT_Record, Handler<const char *>>("bxt_record");

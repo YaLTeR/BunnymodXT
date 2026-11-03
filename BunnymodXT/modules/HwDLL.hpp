@@ -791,4 +791,9 @@ public:
 
 protected:
 	void **g_sv_delta;
+
+	// 20x20 tiling table. Engine fills it with RandomLong once.
+	static constexpr size_t RANDOM_TILING_TABLE_SIZE = 20 * 20;
+	int *randomTilingTable;
+	void PopulateRandomTilingTable();
 };

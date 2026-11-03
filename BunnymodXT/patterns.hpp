@@ -787,6 +787,13 @@ namespace patterns
 		PATTERNS(SV_LookupDelta,
 			"HL-SteamPipe",
 			"55 8B EC 56 8B 35 ?? ?? ?? ?? 57 8B 7D ?? 85 F6 74 ?? 8B 46 ?? 50 57 E8 ?? ?? ?? ?? 83 C4 08 85 C0 74 ?? 8B 36 85 F6 75 ?? 57")
+
+		PATTERNS(R_TextureAnimation,
+			"HL-SteamPipe",
+			"55 8B EC 8B 45 08 53 56 57 8B 48 2C A1 ?? ?? ?? ?? 85 C0 8B 79 24 75 29 BE ?? ?? ?? ?? BB 14 00 00 00 68 FF 7F 00 00 6A 00 E8",
+			"HL-4554",
+			"53 55 8B 6C 24 0C 56 57 8B 45 2C 8B 78 24 A1 ?? ?? ?? ?? 85 C0 75 29 BE ?? ?? ?? ?? BB 14 00 00 00 68 FF 7F 00 00 6A 00 E8"
+		);
 	}
 
 	namespace server

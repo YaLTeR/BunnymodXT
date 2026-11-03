@@ -3,6 +3,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <cerrno>
+#include <random>
 #include <GL/gl.h>
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
@@ -894,6 +895,8 @@ void HwDLL::Clear()
 	tas_studio_norefresh_override = 0;
 
 	g_sv_delta = nullptr;
+
+	randomTilingTable = nullptr;
 
 	if (resetState == ResetState::NORMAL) {
 		input.Clear();
@@ -2047,6 +2050,23 @@ void HwDLL::FindStuff()
 				}
 			});
 
+		void *R_TextureAnimation;
+		auto fR_TextureAnimation = FindAsync(
+			R_TextureAnimation,
+			patterns::engine::R_TextureAnimation,
+			[&](auto pattern) {
+				switch (pattern - patterns::engine::R_TextureAnimation.cbegin())
+				{
+				default:
+				case 0: // HL-SteamPipe.
+					randomTilingTable = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(R_TextureAnimation) + 13);
+					break;
+				case 1: // HL-4554.
+					randomTilingTable = *reinterpret_cast<int**>(reinterpret_cast<uintptr_t>(R_TextureAnimation) + 15);
+					break;
+				}
+			});
+
 		{
 			auto pattern = fClientDLL_CheckStudioInterface.get();
 			if (ClientDLL_CheckStudioInterface) {
@@ -2321,6 +2341,17 @@ void HwDLL::FindStuff()
 			} else {
 				EngineDevWarning("[hw dll] Could not find SV_LookupDelta.\n");
 				EngineWarning("[hw dll] Loading big maps on the fly is not available.\n");
+			}
+		}
+
+		{
+			auto pattern = fR_TextureAnimation.get();
+			if (R_TextureAnimation) {
+				EngineDevMsg("[hw dll] Found R_TextureAnimation at %p (using the %s pattern).\n", R_TextureAnimation, pattern->name());
+				EngineDevMsg("[hw dll] Found the random tiling table at %p.\n", randomTilingTable);
+			} else {
+				EngineDevWarning("[hw dll] Could not find R_TextureAnimation.\n");
+				EngineWarning("[hw dll] bxt_texture_rng is not available.\n");
 			}
 		}
 
@@ -5768,6 +5799,7 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	RegisterCVar(CVars::bxt_skybox_remove);
 	RegisterCVar(CVars::bxt_skybox_name);
 	RegisterCVar(CVars::bxt_water_remove);
+	RegisterCVar(CVars::bxt_texture_rng);
 	RegisterCVar(CVars::bxt_stop_demo_on_changelevel);
 	RegisterCVar(CVars::bxt_tas_editor_simulate_for_ms);
 	RegisterCVar(CVars::bxt_tas_editor_camera_editor);
@@ -7768,8 +7800,35 @@ HOOK_DEF_0(HwDLL, void, __cdecl, SCR_UpdateScreen)
 {
 	if (CVars::_bxt_norefresh.GetBool())
 		return;
-	else
-		return ORIG_SCR_UpdateScreen();
+
+	if (randomTilingTable && randomTilingTable[0] != 0) {
+		randomTilingTable = nullptr;
+		EngineWarning("bxt_texture_rng is not available until the game is restarted.\n");
+	}
+
+	ORIG_SCR_UpdateScreen();
+
+	if (randomTilingTable)
+		PopulateRandomTilingTable();
+}
+
+void HwDLL::PopulateRandomTilingTable()
+{
+	if (randomTilingTable[0] == 0)
+		return;
+
+	if (!CVars::bxt_texture_rng.IsEmpty()) {
+		std::mt19937 gen(CVars::bxt_texture_rng.GetUint()); // Stable.
+		for (size_t i = 0; i < RANDOM_TILING_TABLE_SIZE; ++i)
+			randomTilingTable[i] = static_cast<int>(gen() % 0x8000); // RandomLong(0, 0x7FFF).
+
+		// R_TextureAnimation refills the table if [0] == 0. 2520 is a multiple of every texture variant count (1-10).
+		if (randomTilingTable[0] == 0)
+			randomTilingTable[0] = 2520;
+	}
+
+	// Once per process: the table never changes again, so it can't change during a run.
+	randomTilingTable = nullptr;
 }
 
 HOOK_DEF_3(HwDLL, void, __cdecl, LoadAndDecryptHwDLL, int, a, void*, b, void*, c)

@@ -3,6 +3,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <cerrno>
+#include <filesystem>
 #include <GL/gl.h>
 #include "../sptlib-wrapper.hpp"
 #include <SPTLib/MemUtils.hpp>
@@ -5985,6 +5986,18 @@ void HwDLL::RegisterCVarsAndCommandsIfNeeded()
 	wrapper::Add<Cmd_BXT_Enable_Big_Map, Handler<>>("bxt_enable_big_map");
 }
 
+// Create missing demopath in game directory. Reject paths with root ("C:", "/*") or dot-segment ("..").
+static void CreateDemoFolders(const std::string &demoName)
+{
+	const auto &cl = ClientDLL::GetInstance();
+	const auto folder = std::filesystem::path(demoName).parent_path();
+	if (!cl.pEngfuncs || folder.empty() || folder.has_root_path() || demoName.find("..") != std::string::npos)
+		return;
+
+	std::error_code ec;
+	std::filesystem::create_directories(std::filesystem::path(cl.pEngfuncs->pfnGetGameDirectory()) / folder, ec);
+}
+
 void HwDLL::InsertCommands()
 {
 	bool runningFramesBackup = runningFrames;
@@ -6803,13 +6816,15 @@ void HwDLL::InsertCommands()
 
 	if (*reinterpret_cast<int*>(cls) == 5) {
 		if (!recordDemoName.empty()) {
+			CreateDemoFolders(recordDemoName);
 			std::ostringstream ss;
-			ss << "record " << recordDemoName.c_str() << "\n";
+			ss << "record \"" << recordDemoName.c_str() << "\"\n";
 			ORIG_Cbuf_InsertText(ss.str().c_str());
 			recordDemoName.clear();
 		}
 
 		if (autoRecordNow) {
+			CreateDemoFolders(autoRecordDemoName);
 			std::ostringstream ss;
 			ss << "record \"" << autoRecordDemoName.c_str() << '_' << autoRecordDemoNumber++ << "\"\n";
 			ORIG_Cbuf_InsertText(ss.str().c_str());

@@ -184,7 +184,7 @@ namespace Splits
 			if (!record_name.empty())
 			{
 				std::ostringstream ss;
-				ss << "bxt_autorecord " << record_name << "\n";
+				ss << "bxt_autorecord \"" << record_name << "\"\n";
 				HwDLL::GetInstance().ORIG_Cbuf_InsertText(ss.str().c_str());
 			}
 		}

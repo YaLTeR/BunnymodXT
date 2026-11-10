@@ -88,13 +88,14 @@ else ()
 		"${CMAKE_SHARED_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 endif ()
 
-include(cotire)
-
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 git_describe(GIT_TAG --tags)
 git_local_changes(GIT_LOCAL_CHANGES)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/BunnymodXT/git_revision.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/BunnymodXT/git_revision.cpp" @ONLY)
+
+# Let CMake 4 configure the dependencies that still declare support for CMake < 3.5.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 # Add discord-rpc
 set(BUILD_EXAMPLES OFF CACHE BOOL "build discord-rpc examples" FORCE)
@@ -112,7 +113,8 @@ if(MSVC)
 else(MSVC)
 	if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 		target_compile_options(discord-rpc PRIVATE
-			$<$<COMPILE_LANGUAGE:CXX>:-Wno-class-memaccess>)
+			$<$<COMPILE_LANGUAGE:CXX>:-Wno-class-memaccess>
+			$<$<COMPILE_LANGUAGE:CXX>:-Wno-template-body>)
 	endif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif(MSVC)
 
@@ -223,12 +225,8 @@ set_target_properties(BunnymodXT PROPERTIES
 	CXX_STANDARD 17
 	CXX_STANDARD_REQUIRED ON)
 
-# Interaction between Cotire and C++17 enforcement breaks Clang,
-# and due to something severely outdated in Cotire GCC refuses to use its precompiled headers too.
 if (MSVC)
-	set_target_properties(BunnymodXT PROPERTIES
-		COTIRE_CXX_PREFIX_HEADER_INIT "BunnymodXT/stdafx.hpp")
-	cotire(BunnymodXT)
+	target_precompile_headers(BunnymodXT PRIVATE BunnymodXT/stdafx.hpp)
 endif ()
 
 if (NOT MSVC)
